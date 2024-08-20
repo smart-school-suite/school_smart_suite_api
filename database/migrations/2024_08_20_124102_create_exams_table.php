@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('teacher', function (Blueprint $table) {
+        Schema::create('exams', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('school_branches_id');
             $table->foreign('school_branches_id')->references('id')->on('school_branches')->onDelete('cascade');
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->string('profile_pricture');
-            $table->rememberToken();
+            $table->string('exam_name');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->string('level');
+            $table->decimal('weighted_mark', 3, 2);
+            $table->string('semester');
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('teacher');
+        Schema::dropIfExists('exams');
     }
 };

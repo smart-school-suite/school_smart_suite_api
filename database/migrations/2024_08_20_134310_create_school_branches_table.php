@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('school_branches', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('school_id');
-            $table->string('school_id')->references('id')->on('school');
+            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('branch_name');
             $table->string('address');
             $table->string('city');
