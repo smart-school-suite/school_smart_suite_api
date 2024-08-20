@@ -12,9 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('edumanage_admin', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('phone_number');
+            $table->string('profile_picture');
+            $table->string('password');
+            $table->rememberToken();
             $table->timestamps();
         });
+        
     }
 
     /**

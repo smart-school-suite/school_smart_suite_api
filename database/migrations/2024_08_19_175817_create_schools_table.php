@@ -12,7 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('schools', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('country');
+            $table->string('name');
+            $table->string('address');
+            $table->string('city');
+            $table->string('state');
+            $table->string('postal_code')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->string('website')->nullable();
+            $table->string('type'); // e.g., public, private
+            $table->integer('established_year')->nullable();
+            $table->string('director_name')->nullable();
             $table->timestamps();
         });
     }
