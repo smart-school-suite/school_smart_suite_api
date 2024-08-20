@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Student extends Model
+{
+    use HasFactory ;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'first_name',
+        'last_name',
+        'DOB',
+        'gender',
+        'phone_number',
+        'level',
+        'shool_branches_id',
+        'specialty_id',
+        'department_id',
+        'religion',
+        'email',
+        'profile_picture'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    public $keyType = 'string';
+    public $table = 'student';
+    public $incrementing = 'false';
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+
+    public function courses(): HasMany {
+        return $this->hasMany(Courses::class);
+    }
+
+    public function department(): BelongsTo {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function exams(): HasMany {
+        return $this->hasMany(Exams::class);
+    }
+
+    public function feepayment(): HasMany {
+        return $this->hasMany(Feepayment::class);
+    }
+
+    public function marks(): HasMany {
+        return $this->hasMany(Marks::class);
+    }
+
+    public function parents(): BelongsTo {
+        return $this->belongsTo(Parents::class);
+    }
+
+    public function school(): BelongsTo {
+        return $this->belongsTo(School::class);
+    }
+
+    public function schoolbranches(): BelongsTo {
+        return $this->belongsTo(Schoolbranches::class);
+    }
+
+    public function specialty(): BelongsTo {
+        return $this->belongsTo(Specialty::class);
+    }
+
+}
