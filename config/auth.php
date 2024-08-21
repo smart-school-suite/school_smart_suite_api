@@ -40,6 +40,37 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'api' => [
+            'driver' => 'token',
+            'provider' => 'users',
+            'hash' => false,
+        ],
+    
+        'edumanageadmin' => [
+            'driver' => 'sanctum',
+            'table' => 'personal_access_tokens',
+            'provider' => 'edumanageadmin',
+        ],
+        'parent' => [
+            'driver' => 'sanctum',
+            'table' => 'personal_access_tokens',
+            'provider' => 'parent'
+        ],
+        'teacher' => [
+            'driver' => 'sanctum',
+            'table' => 'personal_access_tokens',
+            'provider' => 'teacher'
+        ],
+        'student' => [
+            'driver' => 'sanctum',
+            'table' => 'personal_access_tokens',
+            'provider' => 'student'
+        ],
+        'schooladmin' => [
+            'driver' => 'sanctum',
+            'table' => 'persona_access_tokens',
+            'provider' => 'schooladmin'
+        ]
     ],
 
     /*

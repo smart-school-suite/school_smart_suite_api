@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
+    use HasFactory, HasRoles, HasApiTokens ;
     /**
      * The attributes that are mass assignable.
      *
@@ -41,6 +45,7 @@ class Teacher extends Model
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'teacher';
+    protected $authTokenColumn = 'token';
 
     protected function casts(): array
     {
@@ -49,7 +54,17 @@ class Teacher extends Model
             'password' => 'hashed',
         ];
     }
-
+    
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
+    }
     public function school(): BelongsTo {
         return $this->belongsTo(School::class);
     }

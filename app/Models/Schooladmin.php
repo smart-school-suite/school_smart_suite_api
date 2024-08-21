@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Schooladmin extends Model
 {
-    use HasFactory;
+    use HasFactory, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -41,6 +44,7 @@ class Schooladmin extends Model
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'school_admin';
+    protected $authTokenColumn = 'token';
 
     protected function casts(): array
     {
@@ -52,5 +56,16 @@ class Schooladmin extends Model
 
     public function school(): BelongsTo {
         return $this->belongsTo(School::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
     }
 }

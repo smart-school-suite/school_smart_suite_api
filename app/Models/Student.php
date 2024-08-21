@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Student extends Model
 {
-    use HasFactory ;
+    use HasFactory, HasRoles, HasApiTokens ;
 
     /**
      * The attributes that are mass assignable.
@@ -45,6 +48,7 @@ class Student extends Model
     public $keyType = 'string';
     public $table = 'student';
     public $incrementing = 'false';
+    protected $authTokenColumn = 'token';
 
     /**
      * Get the attributes that should be cast.
@@ -59,6 +63,16 @@ class Student extends Model
         ];
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
+    }
 
     public function courses(): HasMany {
         return $this->hasMany(Courses::class);

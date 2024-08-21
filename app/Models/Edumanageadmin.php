@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Str;
 class Edumanageadmin extends Model
 {
-    use HasFactory ;
+    use HasFactory, HasRoles, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -35,6 +37,7 @@ class Edumanageadmin extends Model
     public $keyType = 'string';
     public $table = 'edumanage_admin';
     public $incrementing = 'false';
+    protected $authTokenColumn = 'token';
 
     /**
      * Get the attributes that should be cast.
@@ -47,6 +50,17 @@ class Edumanageadmin extends Model
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+      
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
     }
   
 }
