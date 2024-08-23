@@ -49,27 +49,27 @@ return [
         'edumanageadmin' => [
             'driver' => 'sanctum',
             'table' => 'personal_access_tokens',
-            'provider' => 'edumanageadmin',
+            'provider' => 'edumanageadmins',
         ],
         'parent' => [
             'driver' => 'sanctum',
             'table' => 'personal_access_tokens',
-            'provider' => 'parent'
+            'provider' => 'parents'
         ],
         'teacher' => [
             'driver' => 'sanctum',
             'table' => 'personal_access_tokens',
-            'provider' => 'teacher'
+            'provider' => 'teachers'
         ],
         'student' => [
             'driver' => 'sanctum',
             'table' => 'personal_access_tokens',
-            'provider' => 'student'
+            'provider' => 'students'
         ],
         'schooladmin' => [
             'driver' => 'sanctum',
             'table' => 'persona_access_tokens',
-            'provider' => 'schooladmin'
+            'provider' => 'schooladmins'
         ]
     ],
 
@@ -100,6 +100,31 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        'edumanageadmins' => [
+           'driver' => 'eloquent',
+           'model' => env('AUTH_MODEL', App\Models\Edumanageadmin::class), 
+        ],
+
+        'parents' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Parents::class),
+        ],
+
+        'teachers' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Teacher::class),
+        ],
+
+        'students' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Student::class),
+        ],
+
+        'school_admins' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Schooladmin::class)
+        ]
     ],
 
     /*
