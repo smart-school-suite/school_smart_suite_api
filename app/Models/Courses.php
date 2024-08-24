@@ -50,6 +50,10 @@ class Courses extends Model
         return $this->belongsTo(Schoolbranches::class);
     }
 
+    public function examtimetable(): BelongsTo {
+        return $this->belongsTo(Examtimetable::class);
+    }
+
     public function specialty(): BelongsTo {
         return $this->belongsTo(Specialty::class);
     }
