@@ -21,6 +21,7 @@ class Schooladmin extends Model
     protected $fillable = [
         'name',
         'email',
+        'school_id',
         'password',
         'profile_picture',
         'role'
@@ -55,7 +56,7 @@ class Schooladmin extends Model
     }
 
     public function school(): BelongsTo {
-        return $this->belongsTo(School::class);
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     protected static function boot()

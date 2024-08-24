@@ -19,6 +19,10 @@ return new class extends Migration
             $table->foreign('courses_id')->references('id')->on('courses')->onDelete('cascade');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams')->onDelete('cascade');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels')->onDelete('cascade');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty')->onDelete('cascade');
             $table->decimal('score', 3, 2);
             $table->string('grade');
             $table->timestamps();

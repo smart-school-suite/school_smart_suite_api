@@ -14,7 +14,10 @@ class Marks extends Model
         'student_id',
         'courses_id',
         'exam_id',
+        'level_id',
         'score',
+        'specialty_id',
+        'school_branch_id',
         'grade'
     ];
 

@@ -16,7 +16,7 @@ class Exams extends Model
         'exam_name',
         'start_date',
         'end_date',
-        'level',
+        'level_id',
         'weighted_mark',
         'semester'
     ];
@@ -51,6 +51,10 @@ class Exams extends Model
 
     public function student(): BelongsTo {
         return $this->belongsTo(Student::class);
+    }
+
+    public function grade(): HasMany {
+        return $this->hasMany(Grades::class);
     }
 
     

@@ -59,4 +59,5 @@ class departmentController extends Controller
         return response()->json(['department' => $list_of_all_departments], 200);
     }
 
+
 }

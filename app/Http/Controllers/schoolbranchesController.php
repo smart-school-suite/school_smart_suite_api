@@ -74,5 +74,10 @@ class schoolbranchesController extends Controller
         return response()->json(['school_branch' => $school_branch], 200);
     }
 
+    public function get_all_school_branches_with_relations(Request $request){
+        $school_data = Schoolbranches::with('school');
+        return response()->json(['school_data' => $school_data], 200);
+    }
+
     
 }

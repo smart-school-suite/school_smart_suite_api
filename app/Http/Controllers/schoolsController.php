@@ -1,11 +1,83 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\School;
 use Illuminate\Http\Request;
 
 class schoolsController extends Controller
 {
     //
 
+    public function register_school_to_edumanage(Request $request){
+        $request->validate([
+           'country_id' => 'required|string',
+           'name' => 'required|string',
+           'address' =>  'required|string',
+           'city' => 'required|string',
+           'state' => 'required|string',
+           'postal_code' => 'string',
+           'phone' => 'required|string',
+           'email' => 'required|email',
+           'website' => 'string',
+           'type' => 'string|required',
+           'established_year' => 'string|required',
+           'director_name' => 'string|required'
+        ]);
+
+       $new_school_instance = new School();
+
+       $new_school_instance->country_id = $request->country_id;
+       $new_school_instance->name = $request->name;
+       $new_school_instance->address = $request->address;
+       $new_school_instance->city = $request->city;
+       $new_school_instance->state = $request->state;
+       $new_school_instance->postal_code = $request->postal_code;
+       $new_school_instance->phone = $request->phone;
+       $new_school_instance->email = $request->email;
+       $new_school_instance->website = $request->website;
+       $new_school_instance->type = $request->type;
+       $new_school_instance->established_year = $request->established_year;
+       $new_school_instance->director_name = $request->director_name;
+
+       $new_school_instance->save();
+
+       return response()->json(['message' => 'School created succesfully'], 200);
+    }
+
+
+    public function update_school(Request $request, $school_id){
+        $school = School::find($school_id);
+        if(!$school){
+            return response()->json(['message' => 'school not found'], 409);
+        }
+
+        $school_data = $request->all();
+        $school_data =  array_filter($school_data);
+        $school->fill($school_data);
+
+        return response()->json(['message' => 'school updated succesfully'], 200);
+
+    }
+
+    public function delete_school(Request $request, $school_id){
+        $school = School::find($school_id);
+        if($school){
+            return response()->json(['message' => 'school not found'], 409);
+        }
+
+        $school->delete();
+
+        return response()->json(['message' => 'school deleted succesfully'], 200);
+    }
+
+    public function get_all_schools(Request $request){
+        $school = School::all();
+        return response()->json(['schools_data' => $school], 200);
+    }
+
+    public function get_schools_with_branches(Request $request){
+        $school = School::with('schoolbranches')->get();
+        return response()->json(['school_data' => $school], 200);
+    }
+    
 }

@@ -22,6 +22,33 @@ class parentsController extends Controller
         $parents = Parents::with('student');
         return response()->json(['parent' => $parents], 200);
     }
+    
+    public function delete_parent_with_scope(Request $request, $parent_id){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $parent_data = Parents::Where('school_id',  $currentSchool->id)->find($parent_id);
+        if(!$parent_data){
+            return response()->json(['message' => 'Parent not found'], 409);
+        }
 
+        $parent_data->delete();
+
+        return response()->json(['message' => 'Parent deleted sucessfully'], 200);
+    }
+
+    public function update_parent_with_scope(Request $request, $parent_id){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $parent_data = Parents::Where('school_id',  $currentSchool->id)->find($parent_id);
+        if(!$parent_data){
+            return response()->json(['message' => 'Parent not found'], 409);
+        }
+
+        $parent_data_request = $request->all();
+        $parent_data_request = array_filter($parent_data_request);
+        $parent_data->fill($parent_data);
+
+        return response()->json(['message' => 'Parent data updated succefully'], 201);
+    }
+
+    
     
 }

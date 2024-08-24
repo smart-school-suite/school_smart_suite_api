@@ -95,7 +95,7 @@ class Student extends Model
     }
 
     public function parents(): BelongsTo {
-        return $this->belongsTo(Parents::class);
+        return $this->belongsTo(Parents::class, 'parent_id');
     }
 
     public function school(): BelongsTo {
