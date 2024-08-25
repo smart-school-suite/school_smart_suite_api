@@ -50,6 +50,10 @@ class studentController extends Controller
         return response()->json(['student_data' => $student_data_scoped], 201);
     }
 
+    public function generate_student_report_card(Request $request, $student_id){
+        
+    }
+
     
     
 }

@@ -72,15 +72,75 @@ class examtimetableController extends Controller
         return response()->json(['message' => 'exam entry deleted sucessfully'], 200);
     }
 
-    public function update_exam_time_table_scoped(Request $request, $exam_id){
+    
+        public function update_exam_time_table_scoped(Request $request, $exam_id)
+        {
+        // Retrieve the current school from request attributes
         $currentSchool = $request->attributes->get('currentSchool');
-        $exam_data_entry = Examtimetable::Where('school_branch_id', $currentSchool->id)->find($exam_id);
-        if(!$exam_data_entry){
+
+        // Find the exam timetable entry for the given exam_id in the current school
+        $exam_data_entry = ExamTimetable::where('school_branch_id', $currentSchool->id)->find($exam_id);
+        
+        // Check if the exam data entry exists
+        if (!$exam_data_entry) {
             return response()->json(['message' => 'Exam not found'], 409);
         }
 
-        
+        // Validate the incoming request data
+        $request->validate([
+            'course_id' => 'sometimes|exists:courses,id',
+            'exam_id' => 'sometimes|exists:exams,id',
+            'specialty_id' => 'sometimes|exists:specialties,id',
+            'level_id' => 'sometimes|exists:educationlevels,id', // Assuming level_id is also an attribute
+            'day' => 'sometimes|string', // Validate day as a string (modify as needed)
+            'start_time' => 'sometimes|date',
+            'end_time' => 'sometimes|date|after:start_time',
+        ]);
+
+        // Only calculate start and end times if they are provided
+        $startTime = null;
+        $endTime = null;
+        if ($request->has('start_time') && $request->has('end_time')) {
+            $startTime = \Carbon\Carbon::parse($request->start_time);
+            $endTime = \Carbon\Carbon::parse($request->end_time);
+        }
+
+        // Check for overlapping timetables
+        $overlappingTimetables = ExamTimetable::where('school_branch_id', $currentSchool->id)
+            ->where('course_id', $request->course_id)
+            ->where('specialty_id', $request->specialty_id)
+            ->where('level_id', $request->level_id)
+            ->where('day', $request->day)
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->whereBetween('start_time', [$startTime, $endTime])
+                      ->orWhereBetween('end_time', [$startTime, $endTime])
+                      ->orWhere(function ($query) use ($startTime, $endTime) {
+                          $query->where('start_time', '<=', $startTime)
+                                ->where('end_time', '>=', $endTime);
+                      });
+            })
+            ->exists();
+
+        if ($overlappingTimetables) {
+            return response()->json(['message' => 'The timetable overlaps with an existing course. Please choose a different time.'], 409);
+        }
+
+        // Get all request data and filter out any empty values
+        $exam_timetable_data = array_filter($request->all());
+
+        // Update start_time and end_time to calculate new duration if they are provided
+        if (isset($startTime) && isset($endTime)) {
+            $exam_timetable_data['duration'] = $startTime->diffInMinutes($endTime);
+        }
+
+        // Fill the existing exam data entry with new data
+        $exam_data_entry->fill($exam_timetable_data);
+        $exam_data_entry->save(); // Don't forget to save the changes!
+
+        return response()->json(['message' => 'Exam timetable updated successfully'], 200);
     }
+
+    
 
 
     public function generate_time_table_for_specialty(Request $request, $specialty_id, $level_id){
