@@ -21,10 +21,9 @@ class Schooladmin extends Model
     protected $fillable = [
         'name',
         'email',
-        'school_id',
         'password',
         'profile_picture',
-        'role'
+        'school_branch_id',
     ];
 
     /**

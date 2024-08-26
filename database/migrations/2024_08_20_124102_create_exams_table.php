@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('exams', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branches_id');
-            $table->foreign('school_branches_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_name');
             $table->date('start_date');
             $table->date('end_date');

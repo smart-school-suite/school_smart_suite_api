@@ -9,6 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
@@ -26,8 +27,8 @@ class Student extends Model
         'DOB',
         'gender',
         'phone_number',
-        'level',
-        'shool_branches_id',
+        'level_id',
+        'school_branch_id',
         'specialty_id',
         'department_id',
         'religion',
@@ -108,6 +109,10 @@ class Student extends Model
 
     public function specialty(): BelongsTo {
         return $this->belongsTo(Specialty::class);
+    }
+
+    public function level(): HasOne {
+        return $this->hasOne(Educationlevels::class);
     }
 
 }

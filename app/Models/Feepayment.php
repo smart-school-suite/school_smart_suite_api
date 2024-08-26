@@ -13,6 +13,7 @@ class Feepayment extends Model
     protected $fillable = [
         'student_id',
         'fee_name',
+        'school_branch_id',
         'amount'
     ];
 

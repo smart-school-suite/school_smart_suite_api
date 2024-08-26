@@ -23,7 +23,8 @@ class School extends Model
        'website',
        'type',
        'established_year',
-       'director_name'
+       'director_name',
+       'school_branch_id',
     ];
 
     public $keyType = 'schools';

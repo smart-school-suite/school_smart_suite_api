@@ -10,7 +10,6 @@ class instructoravailabilityController extends Controller
     public function create_availability(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-           'school_branch_id' => 'required|string',
            'teacher_id' => 'required|string',
            'day_of_week' => 'required|string',
            'start_time' => 'required|date_format:H:i',
@@ -27,9 +26,10 @@ class instructoravailabilityController extends Controller
         $new_availability_instance->day_of_week = $request->day_of_week;
         $new_availability_instance->start_time = $request->start_time;
         $new_availability_instance->end_time = $request->end_time;
+        $new_availability_instance->level_id = $request->level_id;
         $new_availability_instance->specialty_id = $request->specialty_id;
 
-        $clashExists = InstructorAvailability::where('school_id', $currentSchool->id) // Scope to current school
+        $clashExists = InstructorAvailability::where('school_branch_id', $currentSchool->id) // Scope to current school
         ->where('teacher_id', $request->teacher_id)
         ->where('level_id', $request->level_id)
         ->where('semester_id', $request->semester_id)
@@ -79,12 +79,12 @@ class instructoravailabilityController extends Controller
 
     public function update_teacher_avialability(Request $request,  $availabilty_id){
         $currentSchool = $request->attributes->get('currentSchool');
-        $timetable = InstructorAvailability::where('school_id', $currentSchool->id)->find($availabilty_id);
+        $timetable = InstructorAvailability::where('school_branch_id', $currentSchool->id)->find($availabilty_id);
         if(!$timetable){
             return response()->json(['message' => 'Teacher with this availability not found'], 404);
         }
 
-        $clashExists = InstructorAvailability::where('school_id', $currentSchool->id)
+        $clashExists = InstructorAvailability::where('school_branch_id', $currentSchool->id)
         ->where('instructor_id', $request->teacher_id ?? $timetable->teacher_id)
         ->where('degree_level', $request->degree_level ?? $timetable->degree_level)
         ->where('semester', $request->semester ?? $timetable->semester)
@@ -113,7 +113,7 @@ class instructoravailabilityController extends Controller
 
     public function delete_scoped_teacher_availability(Request $request, $availabilty_id){
         $currentSchool = $request->attributes->get('currentSchool');
-        $availabilty_data = InstructorAvailability::where('school_id', $currentSchool->id)->find($availabilty_id);
+        $availabilty_data = InstructorAvailability::where('school_branch_id', $currentSchool->id)->find($availabilty_id);
         if(!$availabilty_data){
             return response()->json(['message' => 'Aviability details not found'], 404);
         }

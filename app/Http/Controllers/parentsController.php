@@ -9,7 +9,7 @@ class parentsController extends Controller
 {
     public function get_all_parents_within_a_School_without_relations(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $parents = Parents::Where('school_id', $currentSchool->id)->get();
+        $parents = Parents::Where('school_branch_id', $currentSchool->id)->get();
         return response()->json(['parents' => $parents], 200);
     }
 
@@ -25,7 +25,7 @@ class parentsController extends Controller
     
     public function delete_parent_with_scope(Request $request, $parent_id){
         $currentSchool = $request->attributes->get('currentSchool');
-        $parent_data = Parents::Where('school_id',  $currentSchool->id)->find($parent_id);
+        $parent_data = Parents::Where('school_branch_id', $currentSchool->id)->find($parent_id);
         if(!$parent_data){
             return response()->json(['message' => 'Parent not found'], 409);
         }
@@ -37,7 +37,7 @@ class parentsController extends Controller
 
     public function update_parent_with_scope(Request $request, $parent_id){
         $currentSchool = $request->attributes->get('currentSchool');
-        $parent_data = Parents::Where('school_id',  $currentSchool->id)->find($parent_id);
+        $parent_data = Parents::Where('school_branch_id', $currentSchool->id)->find($parent_id);
         if(!$parent_data){
             return response()->json(['message' => 'Parent not found'], 409);
         }

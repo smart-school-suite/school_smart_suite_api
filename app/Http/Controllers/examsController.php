@@ -12,7 +12,6 @@ class examsController extends Controller
    public function create_exam_scoped(Request $request){
       $currentSchool = $request->attributes->get('currentSchool');
       $request->validate([
-        'school_branch_id' => 'required|string',
         'exam_name' => 'required|string',
         'start_date' => 'required|date',
         'end_date' => 'required|date',

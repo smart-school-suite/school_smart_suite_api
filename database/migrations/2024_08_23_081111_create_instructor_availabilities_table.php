@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels')->onDelete('cascade');
             $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('')->onDelete('cascade');
+            $table->foreign('semester_id')->references('id')->on('semester')->onDelete('cascade');
             $table->string('day_of_week'); // e.g., 'Monday', 'Tuesday'
             $table->time('start_time');
             $table->time('end_time');

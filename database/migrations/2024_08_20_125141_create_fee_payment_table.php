@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('fee_name');
             $table->decimal('amount', 8, 2);
             $table->timestamps();

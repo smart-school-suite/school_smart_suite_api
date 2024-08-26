@@ -17,9 +17,10 @@ class Courses extends Model
        'course_title',
        'specialty_id',
        'department_id',
+       'school_branch_id',
        'credit',
        'semester',
-       'level'
+       'level_id'
     ];
 
     public $keyType = 'string';

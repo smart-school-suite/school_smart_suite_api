@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('shool_branches_id');
-            $table->foreign('shool_branches_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('event_name');
             $table->date('event_date');
             $table->string('location');

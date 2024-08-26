@@ -19,12 +19,11 @@ class Teacher extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'school_branches_id',
+        'school_branch_id',
+        'phone_number',
         'email',
         'name',
-        'password',
         'profile_picture',
-        'role'
     ];
 
     /**

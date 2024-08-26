@@ -12,13 +12,14 @@ class Exams extends Model
     use HasFactory;
 
     protected $fillable = [
-        'school_branches_id',
+        'school_branch_id',
         'exam_name',
         'start_date',
         'end_date',
         'level_id',
+        'department_id',
         'weighted_mark',
-        'semester'
+        'semester_id'
     ];
 
     public $keyType = 'string';
@@ -31,6 +32,10 @@ class Exams extends Model
 
     public function department(): BelongsTo {
         return $this->belongsTo(Department::class);
+    }
+
+    public function semester(): BelongsTo {
+        return $this->belongsTo(Semester::class);
     }
 
     public function marks(): HasMany {

@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('parents', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('name');
             $table->string('address');
             $table->string('phone_number');
+            $table->string('password');
             $table->string('language_preference');
             $table->timestamps();
         });

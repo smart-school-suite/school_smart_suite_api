@@ -16,7 +16,8 @@ class Events extends Model
         'event_name',
         'event_date',
         'location',
-        'attendance'
+        'attendance',
+        'school_branch_id'
     ];
 
     public $incrementing = 'false';

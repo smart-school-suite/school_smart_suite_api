@@ -9,15 +9,15 @@ class departmentController extends Controller
 {
     //
     public function create_school_department(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
          $request->validate([
-            'school_branches_id' => 'required|string',
             'department_name' => 'required|string',
             'HOD' => 'string'
          ]);
 
          $department = new Department();
 
-         $department->school_branches_id = $request->school_branches_id;
+         $department->school_branch_id = $currentSchool->school_branch_id;
          $department->department_name = $request->department_name;
          $department->HOD = $request->HOD;
 
@@ -27,7 +27,8 @@ class departmentController extends Controller
     }
 
     public function delete_school_department(Request $request, $department_id){
-          $department = Department::find($department_id);
+          $currentSchool = $request->attributes->get('currentSchool');
+          $department = Department::Where('school_branch', $currentSchool->id)->find($department_id);
           if(!$department){
             return response()->json(['message' => 'Department not found'], 404);
           }
@@ -36,10 +37,11 @@ class departmentController extends Controller
     }
 
     public function update_school_department(Request $request, $department_id){
-         $department = Department::find($department_id);
-         if(!$department){
-            return response()->json(['message' => 'Department not found'], 200);
-         }
+        $currentSchool = $request->attributes->get('currentSchool');
+          $department = Department::Where('school_branch', $currentSchool->id)->find($department_id);
+          if(!$department){
+            return response()->json(['message' => 'Department not found'], 404);
+          }
          $department_data = $request->all();
          $department_data = array_filter($department_data);
          $department->fill($department_data);
@@ -50,7 +52,8 @@ class departmentController extends Controller
     }
 
     public function get_all_school_department_with_school_branches(Request $request){
-        $eager_loaded_data_of_department_with_school_branch = Department::with('schoolbranches');
+        $currentSchool = $request->attributes->get('currentSchool');
+        $eager_loaded_data_of_department_with_school_branch = Department::Where('school_branch_id', $currentSchool->id);
         return response()->json(['department' => $eager_loaded_data_of_department_with_school_branch], 200);
     }
 

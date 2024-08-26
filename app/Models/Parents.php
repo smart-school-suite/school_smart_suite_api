@@ -20,11 +20,11 @@ class Parents extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'student_id',
         'name',
         'address',
         'phone_number',
-        'language_preference'
+        'language_preference',
+        'school_branch_id',
      ];
 
     /**

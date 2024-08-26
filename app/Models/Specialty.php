@@ -16,7 +16,8 @@ class Specialty extends Model
         'specialty_name',
         'registration_fee',
         'school_fee',
-        'level'
+        'level',
+        'school_branch_id',
     ];
 
     public $keyType = 'string';

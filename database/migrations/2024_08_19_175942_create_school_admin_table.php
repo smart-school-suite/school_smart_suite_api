@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('school_admin', function (Blueprint $table) {
             $table->string('id')->primary();
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();

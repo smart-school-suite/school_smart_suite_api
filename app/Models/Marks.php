@@ -33,5 +33,8 @@ class Marks extends Model
         return $this->belongsTo(Student::class);
     }
     
+    public function exams(): BelongsTo {
+        return $this->belongsTo(Exams::class);
+    }
     
 }

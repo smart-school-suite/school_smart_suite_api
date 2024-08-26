@@ -44,6 +44,7 @@ class teacherController extends Controller
         $teacher_data_request = $request->all();
         $teacher_data_request = array_filter($teacher_data_request);
         $teacher_data->fill();
+        $teacher_data->save();
 
         return response()->json(['message' => 'Teacher updated succefully'], 201);
     }

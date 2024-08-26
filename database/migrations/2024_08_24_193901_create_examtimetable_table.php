@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('course_id');
             $table->foreign('course_id')->references('id')->on('courses');
-            $table->foreign('specialty_id');
+            $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('day');
             $table->dateTime('start_time');

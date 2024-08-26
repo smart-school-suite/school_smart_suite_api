@@ -11,7 +11,7 @@ class schooladminController extends Controller
     public function update_school_admin(Request $request, $school_admin_id){
         $currentSchool = $request->attributes->get('currentSchool');
 
-        $school_admin = Schooladmin::Where('school_id', $currentSchool->id)->find($school_admin_id);
+        $school_admin = Schooladmin::Where('school_branch_id', $currentSchool->id)->find($school_admin_id);
         if(!$school_admin){
             return response()->json(['message' => 'Admin not found'], 409);
         }
@@ -26,7 +26,7 @@ class schooladminController extends Controller
     public function delete_school_admin(Request $request, $school_admin_id){
         $currentSchool = $request->attributes->get('currentSchool');
 
-        $school_admin = Schooladmin::Where('school_id', $currentSchool->id)->find($school_admin_id);
+        $school_admin = Schooladmin::Where('school_branch_id', $currentSchool->id)->find($school_admin_id);
         if(!$school_admin){
             return response()->json(['message' => 'Admin not found'], 409);
         }
@@ -38,7 +38,7 @@ class schooladminController extends Controller
 
     public function get_all_school_admins_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $school_admins = Schooladmin::Where('school_id', $currentSchool->id);
+        $school_admins = Schooladmin::Where('school_branch_id', $currentSchool->id);
 
         return response()->json(['school_admin_data' => $school_admins], 201);
         
