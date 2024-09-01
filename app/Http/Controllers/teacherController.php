@@ -10,13 +10,13 @@ class teacherController extends Controller
 
     public function get_all_teachers_Without_relations(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $teachers = Teacher::Where('school_id', $currentSchool->id)->get();
+        $teachers = Teacher::Where('school_branch_id', $currentSchool->id)->get();
         return response()->json(['teachers' => $teachers], 200);
     }
 
     public function get_all_teachers_with_relations_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $teachers = Teacher::where('school_id', $currentSchool->id)
+        $teachers = Teacher::where('school_branch_id', $currentSchool->id)
         ->with('courses', 'instructoravailability');
           
         return response()->json(['teacher_data' => $teachers], 201);
@@ -24,7 +24,7 @@ class teacherController extends Controller
 
     public function delete_teacher_scoped(Request $request, $teacher_id){
         $currentSchool = $request->attributes->get('currentSchool');
-        $teacher_data = Teacher::Where('school_id', $currentSchool->id)->find($teacher_id);
+        $teacher_data = Teacher::Where('school_branch_id', $currentSchool->id)->find($teacher_id);
         if(!$teacher_id){
             return response()->json(['message' => 'Teacher deleted succefully'], 409);
         }
@@ -36,7 +36,7 @@ class teacherController extends Controller
 
     public function update_teacher_data_scoped(Request $request, $teacher_id){
         $currentSchool = $request->attributes->get('currentSchool');
-        $teacher_data = Teacher::Where('school_id', $currentSchool->id)->find($teacher_id);
+        $teacher_data = Teacher::Where('school_branch_id', $currentSchool->id)->find($teacher_id);
         if(!$teacher_data){
             return response()->json(['message' => 'Teacher deleted succefully'], 409);
         }

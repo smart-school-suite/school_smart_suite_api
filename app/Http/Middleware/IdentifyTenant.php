@@ -17,10 +17,14 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $schoolId = $request->route('school-branch-id');
+        $schoolId = $request->route('school_id');
         
         // Find the school based on the ID
         $school = Schoolbranches::findOrFail($schoolId);
+
+        if(!$school){
+            return redirect('/') && response()->json(['message' => 'school brnach not found']);
+        }
 
         // Set the current school in the request so it can be used in controllers
         $request->attributes->set('currentSchool', $school);

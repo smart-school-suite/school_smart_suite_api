@@ -56,7 +56,13 @@ class eventsController extends Controller
 
          return response()->json(['message' => 'Event deleted sucessfully'], 200);
     }
+     
 
+    public function get_all_events(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $event_data = Events::where('school_id', $currentSchool->id)->get();
+        return response()->json(['events_data' => $event_data], 200);
+    }
     public function get_all_events_with_relations(Request $request){
         $created_event_data = Events::with('schoolbranches');
 

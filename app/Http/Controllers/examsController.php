@@ -13,10 +13,10 @@ class examsController extends Controller
       $currentSchool = $request->attributes->get('currentSchool');
       $request->validate([
         'exam_name' => 'required|string',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date',
+        'start_date' => 'required',
+        'end_date' => 'required',
         'level_id' => 'string|required',
-        'weighted_mark' => 'required|decimal',
+        'weighted_mark' => 'required',
         'semester' => 'required|string'
       ]);
 

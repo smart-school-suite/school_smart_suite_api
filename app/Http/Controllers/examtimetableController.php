@@ -61,10 +61,10 @@ class examtimetableController extends Controller
         return response()->json(['message' => 'Exam timetable created successfully!', 'timetable' => $timetable], 201);
     }
 
-    public function delete_exam_time_table_scoped(Request $request, $exam_id)
+    public function delete_exam_time_table_scoped(Request $request, $examtimetable_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $exam_data_entry = Examtimetable::Where('school_branch_id', $currentSchool->id)->find($exam_id);
+        $exam_data_entry = Examtimetable::Where('school_branch_id', $currentSchool->id)->find($examtimetable_id);
         if (!$exam_data_entry) {
             return response()->json(['message' => 'Exam not found'], 409);
         }
@@ -75,13 +75,13 @@ class examtimetableController extends Controller
     }
 
 
-    public function update_exam_time_table_scoped(Request $request, $exam_id)
+    public function update_exam_time_table_scoped(Request $request, $examtimetable_id)
     {
         // Retrieve the current school from request attributes
         $currentSchool = $request->attributes->get('currentSchool');
 
         // Find the exam timetable entry for the given exam_id in the current school
-        $exam_data_entry = ExamTimetable::where('school_branch_id', $currentSchool->id)->find($exam_id);
+        $exam_data_entry = ExamTimetable::where('school_branch_id', $currentSchool->id)->find($examtimetable_id);
 
         // Check if the exam data entry exists
         if (!$exam_data_entry) {

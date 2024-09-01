@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 class Edumanageadmin extends Model
 {
-    use HasFactory, HasRoles, HasApiTokens;
+    use HasFactory,  HasApiTokens;
 
     /**
      * The attributes that are mass assignable.

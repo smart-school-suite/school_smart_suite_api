@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Events extends Model
@@ -40,5 +41,14 @@ class Events extends Model
         return $this->hasMany(Specialty::class);
     }
    
-    
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
+    }
 }

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use App\Models\Country;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schoolbranches extends Model
@@ -79,5 +81,16 @@ class Schoolbranches extends Model
 
     public function teacher() : HasMany {
         return $this->hasMany(Teacher::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 25);
+         });
+      
     }
 }

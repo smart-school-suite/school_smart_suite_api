@@ -20,7 +20,7 @@ class schoolsController extends Controller
            'email' => 'required|email',
            'website' => 'string',
            'type' => 'string|required',
-           'established_year' => 'string|required',
+           'established_year' => 'string',
            'director_name' => 'string|required'
         ]);
 

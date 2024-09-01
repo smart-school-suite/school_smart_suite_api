@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Educationlevels extends Model
 {
@@ -28,5 +30,17 @@ class Educationlevels extends Model
             $user->id = substr($uuid, 0, 10);
          });
       
+    }
+
+    public function specialty() : HasMany {
+       return $this->hasMany(Specialty::class);
+    }
+
+    public function mark() : HasMany {
+      return $this->hasMany(Marks::class, 'level_id');
+    }
+
+    public function student(): HasMany {
+       return $this->hasMany(Student::class, 'level_id');
     }
 }

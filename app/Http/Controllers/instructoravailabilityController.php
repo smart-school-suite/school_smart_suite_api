@@ -12,10 +12,10 @@ class instructoravailabilityController extends Controller
         $request->validate([
            'teacher_id' => 'required|string',
            'day_of_week' => 'required|string',
-           'start_time' => 'required|date_format:H:i',
            'specialty_id' => 'required|string',
            'level_id' => 'required|string',
            'semester_id' => 'required|string',
+           'start_time' => 'required|date_format:H:i',
            'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
@@ -27,6 +27,7 @@ class instructoravailabilityController extends Controller
         $new_availability_instance->start_time = $request->start_time;
         $new_availability_instance->end_time = $request->end_time;
         $new_availability_instance->level_id = $request->level_id;
+        $new_availability_instance->semester_id = $request->semester_id;
         $new_availability_instance->specialty_id = $request->specialty_id;
 
         $clashExists = InstructorAvailability::where('school_branch_id', $currentSchool->id) // Scope to current school
@@ -61,8 +62,10 @@ class instructoravailabilityController extends Controller
         return response()->json(['teacher_avialability' => $teacher_availability_data], 200);
     }
 
-    public function get_all_avialability_not_scoped(Request $request){
-        $teacher_availability_data = InstructorAvailability::all();
+    public function get_all_avialability_not_scoped(Request $request, $teacher_id){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $teacher_availability_data = InstructorAvailability::Where('school_branch_id', $currentSchool->id)->
+        Where('teacher_id', $teacher_id)->get();
         return response()->json(['teacher_avialability' => $teacher_availability_data], 200);
     }
 

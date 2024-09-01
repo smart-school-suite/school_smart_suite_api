@@ -14,9 +14,10 @@ class semesterController extends Controller
         ]);
 
         $new_semster_instance = new Semester();
-        $new_semster_instance->name = $request->new;
+        $new_semster_instance->name = $request->name;
         $new_semster_instance->save();
-
+      
+        return response()->json(['message' => 'semester created succesfully'], 200);
     }
 
     public function delete_semester(Request $request, $semester_id){

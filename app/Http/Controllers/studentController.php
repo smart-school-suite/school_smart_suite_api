@@ -14,7 +14,7 @@ class studentController extends Controller
     public function get_all_students_in_school(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $students = Student::where('school_branch_id', $currentSchool->id)->get();
+        $students = Student::where('school_branch_id', $currentSchool->id)->with('parents')->get();
         return response()->json(['students' => $students], 200);
     }
 
@@ -59,62 +59,77 @@ class studentController extends Controller
 
     public function generate_student_report_card(Request $request, $student_id, $level_id, $exam_id)
     {
+        $student_id = $request->route('student_id');
+        $level_id = $request->route('level_id');
+        $exam_id = $request->route('exam_id');
         $currentSchool = $request->attributes->get('currentSchool');
-        $student = Student::Where('school_branch_id', $currentSchool->id)->with('specialty')->findOrFail($student_id); // Assuming specialty is a relation
-        $exam_data = Exams::with('department')->findOrFail($exam_id);
+        $student = Student::Where('school_branch_id', $currentSchool->id)->with(['specialty', 'department', 'level'])->findOrFail($student_id); // Assuming specialty is a relation
+        
         $marks = Marks::where('school_branch_id', $currentSchool->id)
-            ->where('student_id', $student_id)
-            ->where('level_id', $level_id)
-            ->where('exam_id', $exam_id)
-            ->with(['course', 'exams'])
-            ->get();
+        ->with(['course', 'exams'])
+        ->where('student_id', $student_id)
+        ->where('level_id', $level_id)
+        ->where('exam_id', $exam_id)
+        ->get();
         if ($marks->isEmpty()) {
             return response()->json(['message' => 'No marks found for this student.'], 404);
         }
+        
         $reportData = $this->generateReportData($marks, $student);
-
+        
         return response()->json($reportData, 200);
     }
-
+    
     private function generateReportData($marks, $student)
     {
         $totalScore = 0;
         $totalCredits = 0;
         $totalGradePoints = 0;
         $reportCard = [];
-
+    
         foreach ($marks as $mark) {
             $courseCredit = $mark->course->credit;
             $score = $mark->score;
             $grade = $mark->grade;
             $determinant = in_array($grade, ['A', 'B', 'C']) ? 'pass' : 'resit';
             $points = $this->gradeToPoints($grade) * $courseCredit;
-            $totalScore += $score;
-            $totalCredits += $courseCredit;
+            
+            // Update totals
+            $totalScore += $score; 
+            $totalCredits += $courseCredit; 
             $totalGradePoints += $points;
+    
+            // Add entry to report card
             $reportCard[] = [
-                'course' => $mark->course->title,
+                'course' => $mark->course->course_title,
                 'credit' => $courseCredit,
                 'score' => $score,
                 'grade' => $grade,
                 'determinant' => $determinant
             ];
         }
-
+    
+        // Calculate GPA
         $gpa = $totalCredits > 0 ? $totalGradePoints / $totalCredits : 0;
-
+    
+        // Prepare student details
+        // Note that $marks is a collection, so you need to decide how to get exam details.
+        // We assume using the first mark; adjust as needed.
+        $examName = $marks->isNotEmpty() ? $marks->first()->exams->exam_name : null;
+        
         $studentDetails = [
             'student_name' => $student->name,
             'level' => $student->level->level, 
-            'leve_name' => $student->level->name,
-            'exam_name' => $marks->exams->exam_name,
-            'exam_semester' => $marks->exams->semester->name,
-            'department' => $student->department, 
-            'specialty' => $student->specialty->name, 
+            'level_name' => $student->level->name,
+            'exam_name' => $examName,
+            // Uncomment and adjust if needed. Ensure $marks has associated exams.
+            //'exam_semester' => $marks->first()->exams->semester->name,
+            'department' => $student->department->department_name, 
+            'specialty' => $student->specialty->specialty_name, 
             'gpa' => round($gpa, 2), 
             'total_score' => $totalScore
         ];
-
+    
         return [
             'report_card' => $reportCard,
             'student_details' => $studentDetails

@@ -12,7 +12,6 @@ class marksController extends Controller
     public function add_student_mark(Request $request)
     {
         $request->validate([
-            'school_branch_id' => 'required|string',
             'student_id' => 'required|string',
             'courses_id' => 'required|string',
             'exam_id' => 'required|string',
@@ -24,8 +23,7 @@ class marksController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         //checking if student with this mark already exist
 
-        $check_if_duplicate_records = Marks::Where('school_id', $currentSchool->id)
-            ->Where('school_branch_id', $request->school_branch_id)
+        $check_if_duplicate_records = Marks::Where('school_branch_id', $request->school_branch_id)
             ->Where('courses_id', $request->courses_id)
             ->Where('exam_id', $request->exam_id)
             ->Where('level_id', $request->level_id)
@@ -56,6 +54,7 @@ class marksController extends Controller
             'exam_id' => $exam->id,
             'score' => $request->score,
             'grade' => $grade,
+            'level_id' => $request->level_id,
             'courses_id' => $request->courses_id, // Assuming this is being provided in the request
             'school_branch_id' => $currentSchool->id,
             'specialty_id' => $request->specialty_id

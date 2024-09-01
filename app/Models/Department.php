@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
 
 class Department extends Model
 {
@@ -53,5 +54,14 @@ class Department extends Model
     public function events(): HasMany {
       return $this->hasMany(Events::class);
     }
-    
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
+    }
 }

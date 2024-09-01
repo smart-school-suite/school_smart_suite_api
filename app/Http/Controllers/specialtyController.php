@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Specialty;
 use App\Models\Tenantspecialty;
 use Illuminate\Http\Request;
@@ -14,13 +15,17 @@ class specialtyController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-            'department_id' => 'required|string',
             'specialty_name' => 'required|string',
-            'registration_fee' => 'required|decimal:1,1000000',
-            'school_fee' => 'required|decimal:1, 1000000',
+            'department_id' => 'required|string',
+            'registration_fee' => 'required|decimal:0, 2',
+            'school_fee' => 'required|decimal:0, 2',
             'level_id' => 'required|string'
         ]);
-
+         
+        $check_department = Department::where('school_branch_id', $currentSchool->id)->find($request->department_id);
+        if(!$check_department){
+            return response()->json(['message' => 'This deparment was not found'], 409);
+        }
         $specialty = new Specialty();
         $specialty->school_branch_id = $currentSchool->id;
         $specialty->department_id = $request->department_id;
@@ -75,7 +80,7 @@ class specialtyController extends Controller
     public function get_all_tenant_School_specailty_scoped(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $specialty_data = Specialty::Where('school_branch_id', $currentSchool->id)->get();
+        $specialty_data = Specialty::Where('school_branch_id', $currentSchool->id)->with('level')->get();
         return response()->json(['specialties', $specialty_data], 200);
     }
 }

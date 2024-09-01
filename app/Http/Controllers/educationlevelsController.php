@@ -47,5 +47,10 @@ class educationlevelsController extends Controller
          return response()->json(['message' => 'Education level deleted succesfully'], 200);
     }
 
+    public function get_all_education_leves(Request $request){
+        $education_levels = Educationlevels::all();
+        return response()->json(['education_level' => $education_levels], 200);
+    }
+
     
 }

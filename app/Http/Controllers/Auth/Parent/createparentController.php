@@ -14,9 +14,9 @@ class createparentController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:15|unique:users',
+            'phone_number' => 'required|string|max:15',
             'language_preference' => 'required|string|max:10',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
         ]);
 
         Parents::create([

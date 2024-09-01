@@ -23,6 +23,7 @@ class createstudentController extends Controller
             'specialty_id' => 'required|string',
             'department_id' => 'required|string',
             'religion' => 'required|string',
+            'parent_id' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|string|min:8'
         ]);
@@ -32,6 +33,7 @@ class createstudentController extends Controller
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
             'DOB' => $validatedData['DOB'],
+            'parent_id' => $validatedData['parent_id'],
             'gender' => $validatedData['gender'],
             'phone_number' => $validatedData['phone_number'],
             'level_id' => $validatedData['level_id'],

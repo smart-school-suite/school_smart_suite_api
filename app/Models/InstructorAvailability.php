@@ -18,7 +18,8 @@ class InstructorAvailability extends Model
         'start_time',
         'end_time',
         'level_id',
-        'semester_id'
+        'semester_id',
+        'specialty_id'
     ];
 
     public $incrementing = 'false';

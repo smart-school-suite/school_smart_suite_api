@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('specialty_name');
             $table->decimal('registration_fee', 8, 2);
             $table->decimal('school_fee', 8, 2);
-            $table->string('level');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
             $table->timestamps();
         });
     }

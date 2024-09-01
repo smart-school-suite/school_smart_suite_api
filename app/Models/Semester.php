@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Semester extends Model
 {
@@ -17,6 +19,10 @@ class Semester extends Model
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'semester';
+
+    public function exams(): BelongsTo {
+        return $this->belongsTo(Exams::class);
+    }
 
     protected static function boot()
     {

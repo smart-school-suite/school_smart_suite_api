@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
@@ -13,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
-    use HasFactory, HasRoles, HasApiTokens ;
+    use HasFactory,  HasApiTokens ;
 
     /**
      * The attributes that are mass assignable.
@@ -31,8 +30,10 @@ class Student extends Model
         'school_branch_id',
         'specialty_id',
         'department_id',
+        'parent_id',
         'religion',
         'email',
+        'password',
         'profile_picture'
     ];
 
@@ -80,7 +81,7 @@ class Student extends Model
     }
 
     public function department(): BelongsTo {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function exams(): HasMany {
@@ -92,7 +93,7 @@ class Student extends Model
     }
 
     public function marks(): HasMany {
-        return $this->hasMany(Marks::class);
+        return $this->hasMany(Marks::class, 'student_id');
     }
 
     public function parents(): BelongsTo {
@@ -104,15 +105,15 @@ class Student extends Model
     }
 
     public function schoolbranches(): BelongsTo {
-        return $this->belongsTo(Schoolbranches::class);
+        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 
     public function specialty(): BelongsTo {
-        return $this->belongsTo(Specialty::class);
+        return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
-    public function level(): HasOne {
-        return $this->hasOne(Educationlevels::class);
+    public function level(): BelongsTo {
+        return $this->belongsTo(Educationlevels::class, 'level_id');
     }
 
 }

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Parents extends Model
 {
-    use HasFactory, HasRoles, HasApiTokens;
+    use HasFactory, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +25,7 @@ class Parents extends Model
         'phone_number',
         'language_preference',
         'school_branch_id',
+        'password',
      ];
 
     /**
@@ -38,7 +39,7 @@ class Parents extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'student';
+    public $table = 'parents';
     public $incrementing = 'false';
     protected $authTokenColumn = 'token';
 
@@ -65,7 +66,7 @@ class Parents extends Model
     }
 
     public function student(): HasMany {
-        return $this->hasMany(Student::class);
+        return $this->hasMany(Student::class, 'parent_id');
     }
     protected static function boot()
     {

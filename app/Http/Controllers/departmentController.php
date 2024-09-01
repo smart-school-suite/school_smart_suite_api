@@ -17,7 +17,7 @@ class departmentController extends Controller
 
          $department = new Department();
 
-         $department->school_branch_id = $currentSchool->school_branch_id;
+         $department->school_branch_id = $currentSchool->id;
          $department->department_name = $request->department_name;
          $department->HOD = $request->HOD;
 

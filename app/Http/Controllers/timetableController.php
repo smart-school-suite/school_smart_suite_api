@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\InstructorAvailability;
+use Carbon\Carbon;
 use App\Models\Timetable;
 
 class timetableController extends Controller
@@ -14,6 +15,7 @@ class timetableController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
             'teacher_id' => 'required|string',
+            'course_id' => 'required|exists:courses,id',
             'day_of_week' => 'required|string',
             'start_time' => 'required|date_format:H:i',
             'specialty_id' => 'required|string',
@@ -24,7 +26,7 @@ class timetableController extends Controller
 
         $time_table_data = new Timetable();
 
-        $clashExists = InstructorAvailability::where('school_id', $currentSchool->id) // Scope to current school
+        $check_if_teacher_avialable = InstructorAvailability::where('school_branch_id', $currentSchool->id) // Scope to current school
             ->where('teacher_id', $request->teacher_id)
             ->where('level_id', $request->level_id)
             ->where('semester_id', $request->semester_id)
@@ -40,8 +42,35 @@ class timetableController extends Controller
             })
             ->exists();
 
-        if (!$clashExists) {
+        $check_if_teacher_already_available_on_this_time = Timetable::where('school_branch_id', $currentSchool->id) // Scope to current school
+        ->where('teacher_id', $request->teacher_id)
+        ->where('level_id', $request->level_id)
+        ->where('semester_id', $request->semester_id)
+        ->where('specialty_id', $request->specialty_id)
+        ->where('day_of_week', $request->day_of_week)
+        ->where(function ($query) use ($request) {
+            $query->whereBetween('start_time', [$request->start_time, $request->end_time])
+                ->orWhereBetween('end_time', [$request->start_time, $request->end_time])
+                ->orWhere(function ($query) use ($request) {
+                    $query->where('start_time', '<=', $request->start_time)
+                        ->where('end_time', '>=', $request->end_time);
+                });
+        })
+        ->exists();
+
+        if(!$check_if_teacher_avialable){
+            return response()->json(['message' => 'Teacher is not available at this time'], 200);
+        }
+
+        if($check_if_teacher_already_available_on_this_time){
+            return response()->json(['message' => 'Teacher is already assign to this time']);
+        }
+        
+        if($check_if_teacher_avialable && !$check_if_teacher_already_available_on_this_time){
+
+
             $time_table_data->school_branch_id = $currentSchool->id;
+            $time_table_data->course_id = $request->course_id;
             $time_table_data->teacher_id = $request->teacher_id;
             $time_table_data->day_of_week = $request->day_of_week;
             $time_table_data->specialty_id = $request->specialty_id;
@@ -53,9 +82,9 @@ class timetableController extends Controller
             $time_table_data->save();
 
             return response()->json(['message' => 'Entry created succesfully'], 200);
-        } else {
-            return response()->json(['error' => 'Teacher not available within this time slot'], 409);
         }
+
+        
     }
 
 
@@ -111,6 +140,8 @@ class timetableController extends Controller
 
     public function generate_time_table_scoped(Request $request, $specailty_id, $level_id)
     {
+        $specailty_id = $request->route('specailty_id');
+        $level_id = $request->route('level_id');
         $currentSchool = $request->attributes->get('currentSchool');
 
         // Fetch timetable entries for the current school branch
@@ -120,24 +151,23 @@ class timetableController extends Controller
             ->with(['course', 'teacher']) // Eager load related course and teacher
             ->get();
 
+
         // Initialize the timetable structure
         $time_table = [
             "monday" => [],
             "tuesday" => [],
             "wednesday" => [],
             "thursday" => [],
-            "friday" => [],
-            "saturday" => [],
-            "sunday" => []
+            "friday" => []
         ];
         foreach ($timetables as $entry) {
             $day = strtolower($entry->day_of_week);
 
             if (array_key_exists($day, $time_table)) {
                 $time_table[$day][] = [
-                    "course" => $entry->course->name,
-                    "start_time" => $entry->start_time->format('g:i A'),
-                    "end_time" => $entry->end_time->format('g:i A'),
+                    "course" => $entry->course->course_title,
+                    "start_time" => Carbon::parse($entry->start_time)->format('g:i A'),
+                    "end_time" => Carbon::parse($entry->end_time)->format('g:i A'),
                     "teacher" => $entry->teacher->name
                 ];
             }

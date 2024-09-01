@@ -13,12 +13,14 @@ class createteacherController extends Controller
     public function create_teacher(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
+           'name' => 'required|String',
            'email' => 'required|email|string',
            'password' => 'required|string|min:8',
            'phone_number' => 'required|string',
         ]);
 
          $new_teacher_instance = new Teacher();
+         $new_teacher_instance->name = $request->name;
          $new_teacher_instance->school_branch_id = $currentSchool->id;
          $new_teacher_instance->email = $request->email;
          $new_teacher_instance->phone_number = $request->phone_number;

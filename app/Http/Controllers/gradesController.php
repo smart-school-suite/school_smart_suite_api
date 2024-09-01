@@ -10,18 +10,18 @@ class gradesController extends Controller
     public function make_grade_for_exam_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-            'letter_grade' => 'required|string|max:1|min:1',
-            'minimum_score' => 'required|decimal:min,max',
-            'exam_id' => 'required|string'
+            'letter_grade' => 'required|string|size:1',
+            'minimum_score' => 'required|numeric|min:0|max:100', // Example values for a score
+            'exam_id' => 'required|string',
         ]);
        
         $new_grade_instance = new Grades();
        
         $check_grade = Grades::Where('school_branch_id', $currentSchool->id)
-        ->Where('exam_id', $request->grade_id)
+        ->Where('exam_id', $request->exam_id)
         ->Where('minimum_score', $request->minimum_score)
         ->Where('letter_grade', $request->letter_grade)
-        ->exist();
+        ->exists();
 
         if($check_grade){
             return response()->json(['message' => 'Grades already exist'], 409);
@@ -42,7 +42,7 @@ class gradesController extends Controller
     public function get_all_grades_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $grades_data = Grades::where('school_branch_id', $currentSchool->id)
-        ->with('exams')->get();
+        ->with('exam')->get();
         return response()->json(['grades_data' => $grades_data], 200);
     }
 

@@ -12,7 +12,6 @@ class loginschooladmincontroller extends Controller
 {
     //
     public function login_school_admin(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
             'email' => 'required|string',
             'password' => 'required',

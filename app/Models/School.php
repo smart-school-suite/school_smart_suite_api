@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Country;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class School extends Model
@@ -12,6 +14,7 @@ class School extends Model
     use HasFactory;
 
     protected $fillable = [
+       'id',
        'country_id',
        'name',
        'address',
@@ -24,10 +27,9 @@ class School extends Model
        'type',
        'established_year',
        'director_name',
-       'school_branch_id',
     ];
 
-    public $keyType = 'schools';
+    public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'schools';
 
@@ -81,5 +83,16 @@ class School extends Model
 
     public function teacher() : HasMany {
         return $this->hasMany(Teacher::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+       
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+      
     }
 }

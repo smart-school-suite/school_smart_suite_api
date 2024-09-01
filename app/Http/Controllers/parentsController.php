@@ -19,7 +19,8 @@ class parentsController extends Controller
     }
 
     public function get_all_parents_with_relations_without_scope(Request $request){
-        $parents = Parents::with('student');
+        $currentSchool = $request->attributes->get('currentSchool');
+        $parents = Parents::Where('school_branch_id', $currentSchool->id)->with('student')->get();
         return response()->json(['parent' => $parents], 200);
     }
     

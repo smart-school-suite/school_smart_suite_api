@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    use HasFactory, HasRoles, HasApiTokens ;
+    use HasFactory, HasApiTokens ;
     /**
      * The attributes that are mass assignable.
      *
@@ -80,5 +80,8 @@ class Teacher extends Model
         return $this->hasMany(InstructorAvailability::class);
     }
 
+    public function timetable(): HasMany {
+        return $this->hasMany(Timetable::class);
+    }
     
 }

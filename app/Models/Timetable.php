@@ -22,6 +22,11 @@ class Timetable extends Model
         'end_time'
     ];
 
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+    ];
+
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'timetables';

@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class Schooladmin extends Model
 {
-    use HasFactory, HasApiTokens, HasRoles;
+    use HasFactory, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -64,7 +64,7 @@ class Schooladmin extends Model
        
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
+            $user->id = substr($uuid, 0, 25);
          });
       
     }

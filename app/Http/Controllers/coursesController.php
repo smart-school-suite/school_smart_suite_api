@@ -10,6 +10,7 @@ class coursesController extends Controller
       //
       public function create_course(Request $request)
       {
+            $currentSchool = $request->attributes->get('currentSchool');
             $request->validate([
                   'course_code' => 'required|string',
                   'course_title' => 'required|string',
@@ -26,6 +27,7 @@ class coursesController extends Controller
             $course->specialty_id = $request->specialty_id;
             $course->department_id = $request->department_id;
             $course->credit = $request->credit;
+            $course->school_branch_id = $currentSchool->id;
             $course->semester = $request->semester;
             $course->level_id = $request->level_id;
 
@@ -55,7 +57,8 @@ class coursesController extends Controller
 
       public function get_all_courses_with_no_relation(Request $request)
       {
-            $course = Courses::all();
+            $currentSchool = $request->attributes->get('currentSchool');
+            $course = Courses::where('school_branch_id', $currentSchool->id)->get();
             return response()->json(['courses' => $course], 200);
       }
 
