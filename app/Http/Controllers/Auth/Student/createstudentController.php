@@ -11,6 +11,7 @@ class createstudentController extends Controller
 {
     //
     public function create_student(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
         $validatedData = $request->validate([
             'name' => 'required|string',
             'first_name' => 'required|string',
@@ -19,7 +20,6 @@ class createstudentController extends Controller
             'gender' => 'required|string',
             'phone_number' => 'required|string',
             'level_id' => 'required|string',
-            'school_branch_id' => 'required|string',
             'specialty_id' => 'required|string',
             'department_id' => 'required|string',
             'religion' => 'required|string',
@@ -39,7 +39,7 @@ class createstudentController extends Controller
             'department_id' => $validatedData['department_id'],
             'religion' => $validatedData['religion'],
             'email' => $validatedData['email'],
-            'school_branch_id' => $validatedData['school_branch_id'],
+            'school_branch_id' => $currentSchool->id,
             'password' => Hash::make($validatedData['password']), // Hash the password
         ]);
  

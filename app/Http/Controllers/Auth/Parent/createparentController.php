@@ -10,12 +10,12 @@ class createparentController extends Controller
 {
     //
     public function create_parent(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'phone_number' => 'required|string|max:15|unique:users',
             'language_preference' => 'required|string|max:10',
-            'school_branch_id' => 'required|exists:school_branches,id',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -24,7 +24,7 @@ class createparentController extends Controller
             'address' => $validatedData['address'],
             'phone_number' => $validatedData['phone_number'],
             'language_preference' => $validatedData['language_preference'],
-            'school_branch_id' => $validatedData['school_branch_id'],
+            'school_branch_id' => $currentSchool->id,
             'password' => Hash::make($validatedData['password']), // Hash the password
         ]);
 

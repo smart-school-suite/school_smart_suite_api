@@ -10,14 +10,13 @@ use Illuminate\Http\Request;
 
 class logincontroller extends Controller
 {
-    public function loginuser(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
+    public function login_parent(Request $request){
         $request->validate([
             'phone_number' => 'required|string',
             'password' => 'required',
         ]);
         
-        $user = Parents::Where('school_branch_id', $currentSchool->id)->where('email', $request->email)->first();
+        $user = Parents::where('phone_number', $request->phone_number)->first();
             
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([

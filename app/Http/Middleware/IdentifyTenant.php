@@ -17,7 +17,7 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $schoolId = $request->route('school');
+        $schoolId = $request->route('school-branch-id');
         
         // Find the school based on the ID
         $school = Schoolbranches::findOrFail($schoolId);
@@ -25,18 +25,6 @@ class IdentifyTenant
         // Set the current school in the request so it can be used in controllers
         $request->attributes->set('currentSchool', $school);
 
-        // Determine which guard is being accessed
-        $user = Auth::guard('schooladmin')->user() 
-                ?? Auth::guard('parent')->user() 
-                ?? Auth::guard('teacher')->user()
-                ?? Auth::guard('student')->user();
-
-        if ($user) {
-            // Ensure the user belongs to the identified school
-            if ($user->school_id !== $school->id) {
-                abort(403, 'Unauthorized access to this school data.');
-            }
-        }
 
         return $next($request);
     }

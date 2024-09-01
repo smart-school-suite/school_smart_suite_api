@@ -12,17 +12,16 @@ class loginstudentcontroller extends Controller
 {
     //
     public function login_student(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
             'email' => 'required|string',
             'password' => 'required',
         ]);
         
-        $user = Student::Where('school_branch_id', $currentSchool->id)->where('email', $request->email)->first();
+        $user = Student::where('email', $request->email)->first();
             
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'phone_number' => ['The provided credentials are incorrect.'],
+                'email' => ['The provided credentials are incorrect.'],
                 'password' => ['Password is invalid']
             ]);
         }

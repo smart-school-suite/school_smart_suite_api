@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('exam_name');
             $table->date('start_date');
             $table->date('end_date');
-            $table->string('level');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
             $table->decimal('weighted_mark', 3, 2);
             $table->string('semester');
             $table->timestamps();

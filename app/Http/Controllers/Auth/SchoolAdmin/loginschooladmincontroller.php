@@ -18,7 +18,7 @@ class loginschooladmincontroller extends Controller
             'password' => 'required',
         ]);
         
-        $user = Schooladmin::Where('school_branch_id', $currentSchool->id)->where('email', $request->email)->first();
+        $user = Schooladmin::where('email', $request->email)->first();
             
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([

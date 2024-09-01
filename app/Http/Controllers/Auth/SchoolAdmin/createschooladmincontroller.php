@@ -11,6 +11,7 @@ class createschooladmincontroller extends Controller
 {
     //
     public function create_school_admin(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email',
@@ -20,6 +21,7 @@ class createschooladmincontroller extends Controller
         $new_school_admin_instance = new Schooladmin();
         $new_school_admin_instance->name = $request->name;
         $new_school_admin_instance->email = $request->email;
+        $new_school_admin_instance->school_branch = $currentSchool->id;
         $new_school_admin_instance->password = Hash::make($request->password);
 
         $new_school_admin_instance->save();
