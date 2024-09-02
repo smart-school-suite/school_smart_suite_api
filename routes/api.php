@@ -107,6 +107,7 @@ Route::prefix('teacher')->group(function () {
     Route::middleware([IdentifyTenant::class])->put('/update-teacher/{teacher_id}/{school_id}', [teacherController::class, 'update_teacher_data_scoped']);
     Route::middleware([IdentifyTenant::class])->get('/get-all-teachers/{school_id}', [teacherController::class, 'get_all_teachers_Without_relations']);
     Route::middleware([IdentifyTenant::class])->get('/get-teachers-with-relations/{school_id}', [teacherController::class, 'get_all_teachers_with_relations_scoped']);
+    Route::middleware([IdentifyTenant::class])->get('/get-teacher-timetable/{school_id}/{teacher_id}', [teacherController::class, 'get_my_timetable']);
 });
 
 Route::prefix('reset-password')->group( function () {

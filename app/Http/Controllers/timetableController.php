@@ -144,6 +144,7 @@ class timetableController extends Controller
         $level_id = $request->route('level_id');
         $currentSchool = $request->attributes->get('currentSchool');
 
+
         $timetables = Timetable::where('school_branch_id', $currentSchool->id)
             ->where('specialty_id', $specailty_id)
             ->where('level_id', $level_id)

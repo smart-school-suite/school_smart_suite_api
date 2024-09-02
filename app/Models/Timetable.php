@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Timetable extends Model
 {
@@ -52,6 +53,10 @@ class Timetable extends Model
 
     public function teacher(): BelongsTo {
         return $this->belongsTo(Teacher::class, 'teacher_id');
+    }
+
+    public function level(): BelongsTo {
+        return $this->belongsTo(Educationlevels::class, 'level_id');
     }
 
 
