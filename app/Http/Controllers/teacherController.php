@@ -54,6 +54,9 @@ class teacherController extends Controller
     }
 
 
+    public function get_my_timetable(Request $request){
+        
+    }
     
 
 

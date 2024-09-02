@@ -3,22 +3,28 @@
 use App\Http\Controllers\Auth\Edumanage\createeduadmincontroller;
 use App\Http\Controllers\Auth\Edumanage\logineduadmincontroller;
 use App\Http\Controllers\Auth\Edumanage\logouteduadmincontroller;
+use App\Http\Controllers\Auth\Parent\changepasswordController;
 use App\Http\Controllers\Auth\Parent\createparentController;
 use App\Http\Controllers\Auth\Parent\getauthenticatedparentcontroller;
 use App\Http\Controllers\Auth\Parent\logincontroller;
 use App\Http\Controllers\Auth\Parent\logoutcontroller;
+use App\Http\Controllers\Auth\Parent\resetpasswordController as ParentResetpasswordController;
 use App\Http\Controllers\Auth\SchoolAdmin\createschooladmincontroller;
 use App\Http\Controllers\Auth\SchoolAdmin\getauthenticatedschoolcontroller;
 use App\Http\Controllers\Auth\SchoolAdmin\loginschooladmincontroller;
 use App\Http\Controllers\Auth\SchoolAdmin\logoutschooladmincontroller;
+use App\Http\Controllers\Auth\Student\changepasswordController as StudentChangepasswordController;
 use App\Http\Controllers\Auth\Student\createstudentController;
 use App\Http\Controllers\Auth\Student\getauthenticatedstudentcontroller;
 use App\Http\Controllers\Auth\Student\loginstudentcontroller;
 use App\Http\Controllers\Auth\Student\logoutstudentcontroller;
+use App\Http\Controllers\Auth\Student\resetpasswordController;
+use App\Http\Controllers\Auth\Teacher\changepasswordController as TeacherChangepasswordController;
 use App\Http\Controllers\Auth\Teacher\createteacherController;
 use App\Http\Controllers\Auth\Teacher\getauthenticatedteachercontroller;
 use App\Http\Controllers\Auth\Teacher\loginteachercontroller;
 use App\Http\Controllers\Auth\Teacher\logoutteachercontroller;
+use App\Http\Controllers\Auth\Teacher\resetpasswordController as TeacherResetpasswordController;
 use App\Http\Controllers\countryController;
 use App\Http\Controllers\coursesController;
 use App\Http\Controllers\departmentController;
@@ -31,6 +37,7 @@ use App\Http\Controllers\gradesController;
 use App\Http\Controllers\instructoravailabilityController;
 use App\Http\Controllers\marksController;
 use App\Http\Controllers\parentsController;
+use App\Http\Controllers\Passwordresetcontroller;
 use App\Http\Controllers\schooladminController;
 use App\Http\Controllers\schoolbranchesController;
 use App\Http\Controllers\schoolsController;
@@ -55,6 +62,8 @@ Route::prefix('edumanage-admin')->group( function (){
 
 Route::prefix('parent')->group(function () {
     Route::post('/login', [logincontroller::class, 'login_parent']);
+    Route::post('/reset-password', [ParentResetpasswordController::class, 'reset_password']);
+    Route::middleware('auth:sanctum')->post('/change-password', [changepasswordController::class, 'change_parent_password']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutcontroller::class, 'logout_parent']);
     Route::middleware('auth:sanctum')->post('/auth-parent', [getauthenticatedparentcontroller::class, 'get_authenticated_parent']);
     Route::middleware([IdentifyTenant::class])->post('/create-parent/{school_id}', [createparentController::class, 'create_parent']);
@@ -67,6 +76,8 @@ Route::prefix('parent')->group(function () {
 Route::prefix('student')->group(function () {
     Route::post('/login', [loginstudentcontroller::class, 'login_student']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutstudentcontroller::class, 'logout_parent']);
+    Route::middleware('auth:sanctum')->post('/change-password', [StudentChangepasswordController::class, 'change_student_password']);
+    Route::post('/reset-password', [resetpasswordController::class, 'reset_password']);
     Route::middleware('auth:sanctum')->post('/auth-student', [getauthenticatedstudentcontroller::class, 'get_authenticated_student']);
     Route::middleware([IdentifyTenant::class])->post('/create-student/{school_id}', [createstudentController::class, 'create_student']);
     Route::middleware([IdentifyTenant::class])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}/{school_id}', [studentController::class, 'generate_student_report_card']);
@@ -87,6 +98,8 @@ Route::prefix('school-admin')->group(function () {
 
 Route::prefix('teacher')->group(function () {
     Route::post('/login', [loginteachercontroller::class, 'login_teacher']);
+    Route::post('/reset-password', [TeacherResetpasswordController::class, 'reset_password']);
+    Route::middleware('auth:sanctum')->post('/change-password', [TeacherChangepasswordController::class, 'change_teacher_password']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutteachercontroller::class, 'logout_teacher']);
     Route::middleware('auth:sanctum')->post('/auth-teacher', [getauthenticatedteachercontroller::class, 'get_authenticated_teacher']);
     Route::middleware([IdentifyTenant::class])->post('/create-teacher/{school_id}', [createteacherController::class, 'create_teacher']);
@@ -94,6 +107,11 @@ Route::prefix('teacher')->group(function () {
     Route::middleware([IdentifyTenant::class])->put('/update-teacher/{teacher_id}/{school_id}', [teacherController::class, 'update_teacher_data_scoped']);
     Route::middleware([IdentifyTenant::class])->get('/get-all-teachers/{school_id}', [teacherController::class, 'get_all_teachers_Without_relations']);
     Route::middleware([IdentifyTenant::class])->get('/get-teachers-with-relations/{school_id}', [teacherController::class, 'get_all_teachers_with_relations_scoped']);
+});
+
+Route::prefix('reset-password')->group( function () {
+     Route::post('/request-otp', [Passwordresetcontroller::class, 'request_password_reset_otp']);
+     Route::post('/validate-otp', [Passwordresetcontroller::class, 'verify_otp']);    
 });
 
 Route::prefix('school')->group(function () {

@@ -144,15 +144,13 @@ class timetableController extends Controller
         $level_id = $request->route('level_id');
         $currentSchool = $request->attributes->get('currentSchool');
 
-        // Fetch timetable entries for the current school branch
         $timetables = Timetable::where('school_branch_id', $currentSchool->id)
             ->where('specialty_id', $specailty_id)
             ->where('level_id', $level_id)
-            ->with(['course', 'teacher']) // Eager load related course and teacher
+            ->with(['course', 'teacher']) 
             ->get();
 
 
-        // Initialize the timetable structure
         $time_table = [
             "monday" => [],
             "tuesday" => [],
