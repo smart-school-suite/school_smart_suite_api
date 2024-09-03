@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Exams;
 use Illuminate\Http\Request;
 use App\Models\Marks;
+use App\Models\Reportcard;
 use App\Models\Student;
 
 class studentController extends Controller
@@ -63,7 +64,8 @@ class studentController extends Controller
         $level_id = $request->route('level_id');
         $exam_id = $request->route('exam_id');
         $currentSchool = $request->attributes->get('currentSchool');
-        $student = Student::Where('school_branch_id', $currentSchool->id)->with(['specialty', 'department', 'level'])->findOrFail($student_id); // Assuming specialty is a relation
+        $student = Student::Where('school_branch_id', $currentSchool->id)
+        ->with(['specialty', 'department', 'level'])->findOrFail($student_id); 
         
         $marks = Marks::where('school_branch_id', $currentSchool->id)
         ->with(['course', 'exams'])
@@ -75,12 +77,12 @@ class studentController extends Controller
             return response()->json(['message' => 'No marks found for this student.'], 404);
         }
         
-        $reportData = $this->generateReportData($marks, $student);
+        $reportData = $this->generateReportData($marks, $student, $currentSchool);
         
         return response()->json($reportData, 200);
     }
     
-    private function generateReportData($marks, $student)
+    private function generateReportData($marks, $student, $currentSchool)
     {
         $totalScore = 0;
         $totalCredits = 0;
@@ -130,12 +132,74 @@ class studentController extends Controller
             'total_score' => $totalScore
         ];
     
-        return [
-            'report_card' => $reportCard,
-            'student_details' => $studentDetails
-        ];
+       $exam_id = $marks->first()->exams->id;
+
+       return $this->create_student_record($currentSchool, $student, $exam_id,  $gpa, $totalScore, $reportCard, $studentDetails);
     }
 
+    //function to creaete student record in the report_cards table
+    private function create_student_record($currentSchool, $student, $exam_id,  $gpa, $totalScore, $student_records, $studentDetails){
+     
+        $reportCard = ReportCard::where('school_branch_id', $currentSchool->id)
+             ->where('student_id', $student->id)
+            ->where('exam_id', $exam_id)
+            ->where('level_id', $student->level->id)
+            ->where('specialty_id', $student->specialty->id)
+            ->where('department_id', $student->department->id)
+            ->first();
+         
+            if($reportCard){
+                
+                $existingRecords = json_decode($reportCard->student_records, true);
+                if ($this->recordsDiff($existingRecords, $student_records)) {
+                    // Update the existing record
+                    $reportCard->update([
+                        'school_branch_id' => $currentSchool->id,
+                        'specialty_id' => $student->specialty->id,
+                        'gpa' => $gpa,
+                        'student_id' => $student->id,
+                        'total_score' =>  $totalScore,
+                        'department_id' => $student->department->id,
+                        'level_id' => $student->level->id,
+                        'exam_id' => $exam_id,
+                        'student_records' => json_encode($student_records),
+                    ]);
+                    return response()->json([
+                        'message' => 'Report card updated successfully',
+                        'report_card' => $$student_records,
+                        'student_details' => $studentDetails
+                    ], 200);
+                } else {
+                    return response()->json(['message' => 
+                    'No changes detected',
+                    'report_card' => $student_records,
+                    'student_details' => $studentDetails
+                ], 204);
+                }
+            }
+
+            else {
+                // Create a new record since it doesn't exist
+                ReportCard::create([
+                    'school_branch_id' => $currentSchool->id,
+                    'student_id' => $student->id,
+                    'exam_id' => $exam_id,
+                    'specialty_id' => $student->specialty->id,
+                    'gpa' => $gpa,
+                    'total_score' => $totalScore,
+                    'department_id' => $student->department->id,
+                    'level_id' => $student->level->id,
+                    'student_records' => json_encode($student_records),
+                ]);
+                return response()->json([
+                    'message' => 'Report card created successfully',
+                    'report_card' => $student_records,
+                    'student_details' => $studentDetails
+                ], 201);
+            }
+    }
+
+    //grade to points
     private function gradeToPoints($grade)
     {
         switch ($grade) {
@@ -153,5 +217,10 @@ class studentController extends Controller
             default:
                 return 0.0; 
         }
+    }
+
+    private function recordsDiff(array $existingRecords, array $newRecords)
+    {
+        return $existingRecords !== $newRecords;
     }
 }

@@ -46,6 +46,7 @@ use App\Http\Controllers\specialtyController;
 use App\Http\Controllers\studentController;
 use App\Http\Controllers\teacherController;
 use App\Http\Controllers\timetableController;
+use App\Http\Controllers\transcriptController;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -222,5 +223,11 @@ Route::middleware([IdentifyTenant::class])->prefix('event')->group( function () 
      Route::put('/update-event/{event_id}/{school_id}', [eventsController::class, 'update_school_event']);
      Route::delete('/delete-event/{event_id}/{school_id}', [eventsController::class, 'delete_school_event']);
      Route::get('/school-events/{school_id}', [eventsController::class, 'et_all_events']);
+});
+
+
+Route::middleware([IdentifyTenant::class])->prefix('student-records')->group( function () {
+    Route::get('/generate-transcript/{student_id}/{school_id}', [transcriptController::class, 'generate_student_transcript']);
+    Route::get('/class-ranking/{specialty_id}/{level_id}/{school_id}', [transcriptController::class, 'student_exam_ranking']);
 });
 

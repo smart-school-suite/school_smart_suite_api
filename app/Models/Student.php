@@ -116,4 +116,8 @@ class Student extends Model
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
 
+    public function transcript(): HasMany {
+        return $this->hasMany(Reportcard::class, 'student_id');
+    }
+
 }
