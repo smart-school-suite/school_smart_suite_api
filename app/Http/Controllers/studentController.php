@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\Examresultsreleased;
 use App\Models\Exams;
 use Illuminate\Http\Request;
 use App\Models\Marks;
@@ -191,6 +192,9 @@ class studentController extends Controller
                     'level_id' => $student->level->id,
                     'student_records' => json_encode($student_records),
                 ]);
+
+
+                event(new Examresultsreleased($student->id, $exam_id, $currentSchool));
                 return response()->json([
                     'message' => 'Report card created successfully',
                     'report_card' => $student_records,
