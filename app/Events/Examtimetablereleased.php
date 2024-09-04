@@ -10,24 +10,24 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class Examresultsreleased
+class Examtimetablereleased
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
      */
-     public $student_id;
-     public $exam_id;
-     public $currentSchool;
-     public $specailty_id;
-    public function __construct($student_id, $exam_id, $currentSchool, $specailty_id)
+    public $exam_id;
+    public $specialty_id;
+    public $level_id;
+    public $school_branch_id;
+    public function __construct($exam_id, $specialty_id, $school_branch_id, $level_id)
     {
         //
-        $this->student_id = $student_id;
-        $this->exam_id = $exam_id;
-        $this->currentSchool = $currentSchool;
-        $this->specailty_id = $specailty_id;
+        $this->$exam_id = $exam_id;
+        $this->specialty_id = $specialty_id;
+        $this->school_branch_id = $school_branch_id;
+        $this->level_id = $level_id;
     }
 
     /**
