@@ -38,7 +38,7 @@ class changepasswordController extends Controller
     protected function updatePassword($authenticated_teacher, string $newPassword): bool
     {
 
-        $$authenticated_teacher->password = Hash::make($newPassword);
+        $authenticated_teacher->password = Hash::make($newPassword);
         return $authenticated_teacher->save(); 
     }
 }
