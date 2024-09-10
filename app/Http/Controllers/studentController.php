@@ -194,7 +194,7 @@ class studentController extends Controller
                 ]);
 
 
-                event(new Examresultsreleased($student->id, $exam_id, $currentSchool));
+               // event(new Examresultsreleased($student->id, $exam_id, $currentSchool));
                 return response()->json([
                     'message' => 'Report card created successfully',
                     'report_card' => $student_records,

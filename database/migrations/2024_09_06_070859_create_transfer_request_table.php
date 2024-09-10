@@ -30,8 +30,6 @@ return new class extends Migration
             $table->string('department_id');
             $table->foreign('department_id')->references('id')->on('department');
             $table->string('department_name');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
             $table->string('student_name');
             $table->string('status')->default('Pending');
             $table->string('parent_id');

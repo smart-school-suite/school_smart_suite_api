@@ -10,8 +10,9 @@ class gradesController extends Controller
     public function make_grade_for_exam_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-            'letter_grade' => 'required|string|size:1',
+            'letter_grade_id' => 'required|string',
             'minimum_score' => 'required|numeric|min:0|max:100', // Example values for a score
+            'grade_points' => 'required|numeric|min:0|max:10',
             'exam_id' => 'required|string',
         ]);
        
@@ -20,7 +21,8 @@ class gradesController extends Controller
         $check_grade = Grades::Where('school_branch_id', $currentSchool->id)
         ->Where('exam_id', $request->exam_id)
         ->Where('minimum_score', $request->minimum_score)
-        ->Where('letter_grade', $request->letter_grade)
+        ->where('grade_points', $request->grade_points)
+        ->Where('letter_grade_id', $request->letter_grade_id)
         ->exists();
 
         if($check_grade){
@@ -28,7 +30,8 @@ class gradesController extends Controller
         }
 
         $new_grade_instance->school_branch_id = $currentSchool->id;
-        $new_grade_instance->letter_grade = $request->letter_grade;
+        $new_grade_instance->letter_grade_id = $request->letter_grade_id;
+        $new_grade_instance->grade_points = $request->grade_points;
         $new_grade_instance->exam_id = $request->exam_id;
         $new_grade_instance->minimum_score = $request->minimum_score;
 
@@ -69,7 +72,6 @@ class gradesController extends Controller
         if(!$check_grades_data){
             return response()->json(['message' => 'grade data not found'], 409);
         }
-        
 
         $check_grades_data->delete();
 

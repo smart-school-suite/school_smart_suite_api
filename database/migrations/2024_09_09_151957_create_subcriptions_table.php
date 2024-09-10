@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('semesters', function (Blueprint $table) {
+        Schema::create('subcriptions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
-            $table->string('program_name');
+            $table->integer('max_number_students');
+            $table->decimal('monthly_price', 8, 2);
+            $table->decimal('yearly_price', 8, 2);
+            $table->string('description_id');
+            $table->foreign('description_id')->references('id')->on('subcription_features');
             $table->timestamps();
         });
     }
@@ -24,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('semesters');
+        Schema::dropIfExists('subcriptions');
     }
 };

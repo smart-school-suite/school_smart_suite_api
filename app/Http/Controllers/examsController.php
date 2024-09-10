@@ -15,9 +15,10 @@ class examsController extends Controller
         'exam_name' => 'required|string',
         'start_date' => 'required',
         'end_date' => 'required',
+        'exam_type_id' => 'required|string',
         'level_id' => 'string|required',
         'weighted_mark' => 'required',
-        'semester' => 'required|string'
+        'semester_id' => 'required|string'
       ]);
 
       $new_examdata_instance = new Exams();
@@ -26,8 +27,9 @@ class examsController extends Controller
       $new_examdata_instance->start_date = $request->start_date;
       $new_examdata_instance->end_date = $request->end_date;
       $new_examdata_instance->level_id = $request->level_id;
+      $new_examdata_instance->exam_type_id = $request->exam_type_id;
       $new_examdata_instance->weighted_mark = $request->weighted_mark;
-      $new_examdata_instance->semester = $request->semester;
+      $new_examdata_instance->semester_id = $request->semester_id;
 
       $new_examdata_instance->save();
 

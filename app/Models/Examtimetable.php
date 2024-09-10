@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Examtimetable extends Model
@@ -47,5 +48,9 @@ class Examtimetable extends Model
 
     public function course(): HasMany {
         return $this->hasMany(Courses::class, 'course_id');
+    }
+
+    public function exam(): BelongsTo {
+        return $this->belongsTo(Exams::class, 'exam_id');
     }
 }

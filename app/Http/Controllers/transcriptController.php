@@ -32,7 +32,6 @@ class transcriptController extends Controller
         ->with(['student'])
         ->get();
        
-       // return response()->json($student_records);
         $rankedStudents = [];
         $currentRank = 1;
         $previousGPA = null;

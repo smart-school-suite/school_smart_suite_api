@@ -6,22 +6,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Grades extends Model
+class Schoolexpensescategory extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'school_branch_id',
-        'letter_grade_id',
-        'grade_points',
-        'exam_id',
-        'minimum_score'
+      'school_branch_id',
+      'name'
     ];
 
-    public $keyType = 'string';
+    public $table = 'school_expenses_category';
     public $incrementing = 'false';
-    public $table = 'grades';
+    public $keyType = 'string';
 
     protected static function boot()
     {
@@ -33,8 +31,8 @@ class Grades extends Model
          });
       
     }
-    
-    public function exam() : BelongsTo {
-        return $this->belongsTo(Exams::class, 'exam_id');
+
+    public function schoolexpenses(): BelongsTo {
+      return $this->belongsTo(SchoolExpenses::class, 'expenses_category_id');
     }
 }

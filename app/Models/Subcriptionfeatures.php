@@ -7,21 +7,18 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Grades extends Model
+class Subcriptionfeatures extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'school_branch_id',
-        'letter_grade_id',
-        'grade_points',
-        'exam_id',
-        'minimum_score'
+        'name',
+        'description'
     ];
 
-    public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'grades';
+    public $table = 'subcription_features';
+    public $keyType = 'string';
 
     protected static function boot()
     {
@@ -33,8 +30,8 @@ class Grades extends Model
          });
       
     }
-    
-    public function exam() : BelongsTo {
-        return $this->belongsTo(Exams::class, 'exam_id');
+
+    public function subcription(): BelongsTo {
+        return $this->belongsTo(Subcription::class, 'description_id');
     }
 }

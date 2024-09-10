@@ -8,38 +8,38 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Semester extends Model
+class SchoolExpenses extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'program_name'
+        'expenses_category_id',
+        'school_branch_id',
+        'date',
+        'amount',
+        'description'
     ];
 
-    public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'semester';
+    public $keyType = 'string';
+    public $table = 'school_expenses';
 
-    public function exams(): BelongsTo {
-        return $this->belongsTo(Exams::class);
-    }
-
-    public function examtype(): BelongsTo {
-        return $this->belongsTo(Examtype::class);
-    }
-
-    public function timetable(): BelongsTo {
-        return $this->belongsTo(Timetable::class, 'semeter_id');
-    }
     protected static function boot()
     {
         parent::boot();
        
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
+            $user->id = substr($uuid, 0, 25);
          });
       
     }
+    public function schoolbranch(): BelongsTo {
+        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
+    }
+
+    public function schoolexpensescategory(): HasMany {
+        return $this->hasMany(Schoolexpensescategory::class, 'expenses_category_id');
+    }
+
 }

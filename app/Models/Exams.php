@@ -14,7 +14,7 @@ class Exams extends Model
 
     protected $fillable = [
         'school_branch_id',
-        'exam_name',
+        'exam_type_id',
         'start_date',
         'end_date',
         'level_id',
@@ -61,6 +61,14 @@ class Exams extends Model
 
     public function grade(): HasMany {
         return $this->hasMany(Grades::class);
+    }
+
+    public function examtype(): HasMany {
+        return $this->hasMany(Examtype::class, 'exam_type_id');
+    }
+
+    public function examtimetable(): HasMany {
+        return $this->hasMany(Examtimetable::class, 'exam_id');
     }
 
     protected static function boot()

@@ -17,9 +17,12 @@ class TransferrequestEvent
     /**
      * Create a new event instance.
      */
-    public function __construct()
+
+    public $school_branch_id;
+    public function __construct($school_branch_id)
     {
         //
+        $this->school_branch_id = $school_branch_id;
     }
 
     /**

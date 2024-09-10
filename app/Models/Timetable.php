@@ -20,7 +20,8 @@ class Timetable extends Model
         'teacher_id',
         'day_of_week',
         'start_time',
-        'end_time'
+        'end_time',
+        'semeter_id'
     ];
 
     protected $casts = [
@@ -58,6 +59,9 @@ class Timetable extends Model
     public function level(): BelongsTo {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
-
+ 
+   public function semester(): HasMany {
+        return $this->hasMany(Semester::class, 'semeter_id');
+   }
 
 }

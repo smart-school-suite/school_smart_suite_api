@@ -3,32 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class StudentRecords extends Model
+class Examtype extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-       'school_branch_id',
-       'student_id',
-       'academic_year',
-       'level_id',
-       'exam_id',
-       'student_name',
-       'GPA',
-       'records'
+      'semester_id',
+      'exam_name'
     ];
+
 
     public $incrementing = 'false';
     public $keyType = 'string';
-    public $table = 'studentrecords';
-
-    public function student() : BelongsTo {
-        return $this->belongsTo(Student::class);
-    }
+    public $table = 'exam_type';
 
     protected static function boot()
     {
@@ -40,4 +32,12 @@ class StudentRecords extends Model
          });
       
     }
+     
+   public function semesters(): HasMany {
+      return $this->hasMany(Semester::class, 'semester_id');
+   }
+
+   public function exams(): BelongsTo {
+      return $this->belongsTo(Exams::class);
+   }
 }

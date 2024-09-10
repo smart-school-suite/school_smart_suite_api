@@ -5,23 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Grades extends Model
+class Subcription extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'school_branch_id',
-        'letter_grade_id',
-        'grade_points',
-        'exam_id',
-        'minimum_score'
+            'name' ,
+            'max_number_students' ,
+            'monthly_price',
+            'yearly_price',
+            'description_id' 
     ];
 
-    public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'grades';
+    public $table = 'subcriptions';
+    public $keyType = 'string';
 
     protected static function boot()
     {
@@ -33,8 +33,8 @@ class Grades extends Model
          });
       
     }
-    
-    public function exam() : BelongsTo {
-        return $this->belongsTo(Exams::class, 'exam_id');
+
+    public function subfeatures(): HasMany {
+        return $this->hasMany(Subcriptionfeatures::class, 'description_id');
     }
 }

@@ -33,21 +33,30 @@ use App\Http\Controllers\edumanageadminController;
 use App\Http\Controllers\eventsController;
 use App\Http\Controllers\examsController;
 use App\Http\Controllers\examtimetableController;
+use App\Http\Controllers\Examtypecontroller;
 use App\Http\Controllers\gradesController;
 use App\Http\Controllers\instructoravailabilityController;
+use App\Http\Controllers\letterGradecontroller;
 use App\Http\Controllers\marksController;
 use App\Http\Controllers\parentsController;
 use App\Http\Controllers\Passwordresetcontroller;
 use App\Http\Controllers\schooladminController;
 use App\Http\Controllers\schoolbranchesController;
+use App\Http\Controllers\Schoolexpensescategorycontroller;
+use App\Http\Controllers\SchoolexpensesController;
 use App\Http\Controllers\schoolsController;
 use App\Http\Controllers\semesterController;
 use App\Http\Controllers\specialtyController;
 use App\Http\Controllers\studentController;
+use App\Http\Controllers\StudentPerformanceReportController;
+use App\Http\Controllers\SubcriptionController;
 use App\Http\Controllers\teacherController;
 use App\Http\Controllers\timetableController;
 use App\Http\Controllers\transcriptController;
+use App\Http\Controllers\Transferrequestcontroller;
+use App\Http\Controllers\transferstudentController;
 use App\Http\Middleware\IdentifyTenant;
+use App\Models\Subcriptionfeatures;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -229,5 +238,61 @@ Route::middleware([IdentifyTenant::class])->prefix('event')->group( function () 
 Route::middleware([IdentifyTenant::class])->prefix('student-records')->group( function () {
     Route::get('/generate-transcript/{student_id}/{school_id}', [transcriptController::class, 'generate_student_transcript']);
     Route::get('/class-ranking/{specialty_id}/{level_id}/{school_id}', [transcriptController::class, 'student_exam_ranking']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('student-transfer')->group( function (){
+     Route::post('/transfer-student/{school_id}', [Transferrequestcontroller::class, 'create_student_tranafer_request']);
+     Route::get('/student-records/{school_id}', [Transferrequestcontroller::class, 'request_student_records']);
+     Route::delete('/delete-transfer-request/{school_id}/{transfer_id}', [Transferrequestcontroller::class, 'delete_transfer_request']);
+     Route::get('/my-transfer-request/{school_id}', [Transferrequestcontroller::class, 'get_transfer_request']);
+     Route::get('/get-transfer/{school_id}/{student_id}', [transferstudentController::class, 'get_my_transfers']);
+     Route::get('/get-all/student-transfers/{school_id}', [transferstudentController::class, 'get_student_transfers']);
+     Route::post('/respond/transfer-request/{school_id}/{status}/{transfer_id}', [Transferrequestcontroller::class, 'respond_to_transfer_request']);
+});
+
+Route::prefix('exam-type')->group( function (){
+    Route::post('/create-exam-type', [Examtypecontroller::class, 'create_exam_type']);
+    Route::get('/exam_types', [Examtypecontroller::class, 'get_all_exam_type']);
+    Route::delete('/exam-type/{exam_id}', [Examtypecontroller::class,'delete_exam_type']);
+    Route::put('/update-exam-type/{exam_id}', [Examtypecontroller::class, 'update_exam_type']);
+});
+
+Route::prefix('letter-grade')->group(  function () {
+   Route::post('/create-letter-grade', [letterGradecontroller::class, 'create_letter_grade']);
+   Route::get('/get-letter-grades', [letterGradecontroller::class, 'get_all_letter_grades']);
+   Route::delete('/delete-letter-grade/{letter_grade_id}', [letterGradecontroller::class, 'delete_letter_grade']);
+   Route::put('/update-letter-grate/{letter_grade_id}', [letterGradecontroller::class, 'update_letter_grade']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('grades-analytics')->group( function () {
+   Route::get('/get-risky-subjects/{school_id}', [StudentPerformanceReportController::class, 'high_risk_course_tracking']);
+   Route::post('/calculate-desired-gpa/{school_id}', [StudentPerformanceReportController::class, 'calculate_desired_gpa']);
+   
+});
+
+Route::prefix('subcription')->group( function () {
+   Route::post('/creat-subcription', [SubcriptionController::class, 'create_subcription']);
+   Route::put('/update-subription/{subcription_id}', [SubcriptionController::class, 'update_subcription']);
+   Route::delete('/delete-subcription/{subcription_id}', [SubcriptionController::class, 'delete_subcription']);
+   Route::get('/get-subcription-plans', [SubcriptionController::class, 'get_all_subcription_plans']);
+   Route::post('/create-feature', [Subcriptionfeatures::class, 'create_subcription_feature']);
+   Route::get('/get-subcription-features', [Subcriptionfeatures::class, 'get_all_features']);
+   Route::put('/update-feature/{feature_id}', [Subcriptionfeatures::class, 'update_subcription_feature']);
+   Route::delete('/delete-feature/{feature_id}', [Subcriptionfeatures::class, 'delete_subcription_feature']);
+});
+
+
+Route::middleware([IdentifyTenant::class])->prefix('school-expenses')->group( function () {
+    Route::post('/create-expenses/{school_id}', [SchoolexpensesController::class, 'add_new_expense']);
+    Route::delete('/delete-expenses/{school_id}/{expense_id}', [SchoolexpensesController::class, 'delete_expense']);
+    Route::get('/my-expenses/{school_id}', [SchoolexpensesController::class, 'get_all_expenses']);
+    Route::put('/update-expenses/{school_id}/{expense_id}', [SchoolexpensesController::class, 'update_expense']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('school-expenses-category')->group( function () {
+    Route::post('/create-category/{school_id}', [Schoolexpensescategorycontroller::class, 'create_category_expenses']);
+    Route::delete('/delete-category/{school_id}/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'delete_category_expense']);
+    Route::get('/get-category-expenses/{school_id}', [Schoolexpensescategorycontroller::class, 'get_all_category_expenses']);
+    Route::put('/update-category/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'update_category_expenses']);
 });
 

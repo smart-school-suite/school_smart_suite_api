@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('semesters', function (Blueprint $table) {
+        Schema::create('exam_type', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
-            $table->string('program_name');
+            $table->string('semester_id');
+            $table->foreign('semester_id')->references('id')->on('semesters');
+            $table->string('exam_name');
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('semesters');
+        Schema::dropIfExists('exam_type');
     }
 };

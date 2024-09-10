@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Parents;
+use App\Models\Reportcard;
 use App\Models\Student;
-use App\Models\StudentRecords;
 use App\Models\Transferedstudents;
 use App\Models\Transferrequest;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -14,10 +14,9 @@ class Transferrequestcontroller extends Controller
 {
     //
     public function create_student_tranafer_request(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-        'current_school_id' => 'required|string',
         'target_school_id' => 'required|string',
-        'current_school_name' => 'required|string',
         'target_school_name' => 'required|string',
         'specialty_name' => 'required|string',
         'specialty_id' => 'required|string',
@@ -32,9 +31,9 @@ class Transferrequestcontroller extends Controller
 
         $new_student_transfer_request = new Transferrequest();
 
-        $new_student_transfer_request->current_school_id = $request->current_school_id;
+        $new_student_transfer_request->current_school_id = $currentSchool->id;
         $new_student_transfer_request->target_school_id = $request->target_school_id;
-        $new_student_transfer_request->current_school_name = $request->current_school_name;
+        $new_student_transfer_request->current_school_name = $currentSchool->branch_name;
         $new_student_transfer_request->target_school_name = $request->target_school_name;
         $new_student_transfer_request->specialty_name = $request->specialty_name;
         $new_student_transfer_request->specialty_id = $request->specialty_id;
@@ -58,7 +57,7 @@ class Transferrequestcontroller extends Controller
             return response()->json(['message' => 'Transfer request for this student not found'], 200);
         }
         
-        $student_records_data = StudentRecords::where('school_branch_id', $current_school_id)
+        $student_records_data = Reportcard::where('school_branch_id', $current_school_id)
                                 ->where('student_id', $student_id)
                                 ->get();
 
@@ -140,7 +139,7 @@ class Transferrequestcontroller extends Controller
     }
 
     private function handle_transfer_data($current_school_id, $target_school_id, $student_id, ){
-        $student_records = StudentRecords::where('school_branch_id', $current_school_id)
+        $student_records = Reportcard::where('school_branch_id', $current_school_id)
                            ->where('student_id', $student_id)
                             ->get();
           foreach ($student_records as $records){ 
