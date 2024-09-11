@@ -19,10 +19,7 @@ return new class extends Migration
             $table->string('address');
             $table->string('city');
             $table->string('state');
-            $table->string('postal_code')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('email')->nullable();
-            $table->string('website')->nullable();
+            $table->integer('semester')->default(2);
             $table->string('type'); // e.g., public, private
             $table->integer('established_year')->nullable();
             $table->string('director_name')->nullable();

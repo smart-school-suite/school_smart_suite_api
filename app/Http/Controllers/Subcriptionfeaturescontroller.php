@@ -10,7 +10,7 @@ class Subcriptionfeaturescontroller extends Controller
     //
    public function create_subcription_feature(Request $request){
       $request->validate([
-        'name' => 'required}String',
+        'name' => 'required|String',
         'description' => 'required'
       ]);
 

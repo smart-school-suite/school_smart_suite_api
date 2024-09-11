@@ -47,6 +47,7 @@ use App\Http\Controllers\SchoolexpensesController;
 use App\Http\Controllers\schoolsController;
 use App\Http\Controllers\semesterController;
 use App\Http\Controllers\specialtyController;
+use App\Http\Controllers\Studentbatchcontroller;
 use App\Http\Controllers\studentController;
 use App\Http\Controllers\StudentPerformanceReportController;
 use App\Http\Controllers\SubcriptionController;
@@ -296,3 +297,9 @@ Route::middleware([IdentifyTenant::class])->prefix('school-expenses-category')->
     Route::put('/update-category/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'update_category_expenses']);
 });
 
+Route::middleware([IdentifyTenant::class])->prefix('student-batches')->group( function (){
+    Route::post('/create-batch/{school_id}', [Studentbatchcontroller::class, 'create_student_batch']);
+    Route::get('/student-batches/{school_id}', [Studentbatchcontroller::class, 'get_all_student_batches']);
+    Route::delete('/delete-batch/{school_id}/{batch_id}', [Studentbatchcontroller::class, 'delete_student_batch']);
+    Route::put('/update-batch/{school_id}/{batch_id}', [Studentbatchcontroller::class, 'update_student_batch']);
+});

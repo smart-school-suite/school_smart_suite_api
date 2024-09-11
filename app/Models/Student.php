@@ -31,6 +31,7 @@ class Student extends Model
         'specialty_id',
         'department_id',
         'parent_id',
+        'student_batch_id',
         'religion',
         'email',
         'password',
@@ -119,5 +120,8 @@ class Student extends Model
     public function transcript(): HasMany {
         return $this->hasMany(Reportcard::class, 'student_id');
     }
-
+     
+    public function studentBatch(): HasMany {
+        return $this->hasMany(studentBatch::class, 'student_batch_id');
+    }
 }
