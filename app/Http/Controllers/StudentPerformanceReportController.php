@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Examtimetable;
 use App\Models\Grades;
+use App\Models\Reportcard;
 use App\Models\Student;
-use App\Models\StudentRecords;
 use App\Models\Timetable;
 use Illuminate\Http\Request;
 
@@ -19,7 +19,7 @@ class StudentPerformanceReportController extends Controller
             return response()->json(['message' => 'Student not found'], 404);
         }
 
-        $student_ca_records = StudentRecords::with(['exam.examType' => function($query) {
+        $student_ca_records = Reportcard::with(['exam.examType' => function($query) {
             $query->whereIn('exam_name', ['first_semester_ca', 'second_semester_ca']); // Adjusting the naming convention
         }])
         ->where('school_branch_id', $currentSchool->id)
@@ -136,83 +136,5 @@ class StudentPerformanceReportController extends Controller
     }
 
 
-    public function track_student_performance(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $student_id = $request->route('student_id');
-        $records = StudentRecords::where('school_branch_id', $currentSchool->id)
-                                   ->where('student_id', $student_id)
-                                   ->get();
 
-        if($records->isEmpty()){
-            return response()->json(['message' => 'No records found for this student'], 404);
-        }
-
-        $currentGPA = $records->last()->GPA; 
-        $highestGPA = $records->max('GPA');
-        $totalExams = $records->count();
-        $averageGPA = $records->average('GPA');
-
-        // Advanced Metrics
-        $gpaTrend = $this->calculateGpaTrend($records); // Trend over time
-        $performanceForecast = $this->forecastPerformance($records); // Future performance prediction
-        $strengthsWeaknesses = $this->identifyStrengthsWeaknesses($records); // Subject-based analysis
-        
-        $passCount = $records->filter(fn ($record) => $record->GPA >= 2.0)->count();
-        $passPercentage = ($passCount > 0) ? ($passCount / $totalExams) * 100 : 0;
-
-        // Group by academic year
-        $gpaByYear = $records->groupBy('academic_year')->map(function ($yearRecords) {
-            return [
-                'year' => $yearRecords->first()->academic_year,
-                'averageGPA' => $yearRecords->average('GPA'),
-                'passPercentage' => $yearRecords->filter(fn ($record) => $record->GPA >= 2.0)->count() / $yearRecords->count() * 100,
-            ];
-        });
-
-
-    } 
-
-    private function forecastPerformance($records)
-    {
-        // Simple linear regression for forecasting based on past performance
-        // Note: In a real-world application, consider using a machine learning library
-        $gpas = $records->pluck('GPA')->toArray();
-        $futureGPA = $this->linearRegressionForecast($gpas);
-
-        return [
-            'predicted_next_gpa' => $futureGPA,
-            'confidence_interval' => [min($gpas) - 0.5, max($gpas) + 0.5], // Example CI
-        ];
-    }
-
-    private function linearRegressionForecast($data)
-    {
-        // Placeholder for linear regression logic
-        // Implement with proper statistical methods or libraries
-        return end($data) + 0.2; // Predict next GPA slightly higher as an example
-    }
-
-    private function identifyStrengthsWeaknesses($records)
-    {
-        // Example: Grouping by subjects (assuming 'subject' exists)
-        $subjectPerformance = $records->groupBy('subject_id')->map(function ($subjectRecords) {
-            return [
-                'subject_id' => $subjectRecords->first()->subject_id,
-                'averageGPA' => $subjectRecords->average('GPA'),
-                'passPercentage' => $subjectRecords->filter(fn ($record) => $record->GPA >= 2.0)->count() / $subjectRecords->count() * 100,
-            ];
-        });
-
-        return $subjectPerformance->values();
-    }
-
-    private function calculateGpaTrend($records)
-    {
-        // Calculate GPA trend over time
-        $trend = [];
-        foreach ($records->groupBy('exam_date') as $date => $group) {
-            $trend[$date] = $group->average('GPA');
-        }
-        return $trend;
-    }
 }

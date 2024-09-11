@@ -14,7 +14,8 @@ class Examtype extends Model
 
     protected $fillable = [
       'semester_id',
-      'exam_name'
+      'exam_name',
+      'program_name'
     ];
 
 
@@ -33,11 +34,11 @@ class Examtype extends Model
       
     }
      
-   public function semesters(): HasMany {
-      return $this->hasMany(Semester::class, 'semester_id');
+   public function semesters(): BelongsTo {
+      return $this->belongsTo(Semester::class, 'semester_id');
    }
 
-   public function exams(): BelongsTo {
-      return $this->belongsTo(Exams::class);
+   public function exams(): HasMany {
+      return $this->hasMany(Exams::class, 'exam_type_id');
    }
 }

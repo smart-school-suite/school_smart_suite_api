@@ -16,7 +16,8 @@ class Grades extends Model
         'letter_grade_id',
         'grade_points',
         'exam_id',
-        'minimum_score'
+        'minimum_score',
+        'grade_status',
     ];
 
     public $keyType = 'string';
@@ -36,5 +37,9 @@ class Grades extends Model
     
     public function exam() : BelongsTo {
         return $this->belongsTo(Exams::class, 'exam_id');
+    }
+
+    public function lettergrade(): BelongsTo {
+        return $this->belongsTo(LetterGrade::class, 'letter_grade_id');
     }
 }

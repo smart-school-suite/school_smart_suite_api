@@ -19,7 +19,7 @@ class Courses extends Model
        'department_id',
        'school_branch_id',
        'credit',
-       'semester',
+       'semester_id',
        'level_id'
     ];
 

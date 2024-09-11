@@ -12,8 +12,9 @@ class gradesController extends Controller
         $request->validate([
             'letter_grade_id' => 'required|string',
             'minimum_score' => 'required|numeric|min:0|max:100', // Example values for a score
-            'grade_points' => 'required|numeric|min:0|max:10',
+            'grade_points' => 'required',
             'exam_id' => 'required|string',
+            'grade_status' => 'required|string'
         ]);
        
         $new_grade_instance = new Grades();
@@ -21,7 +22,6 @@ class gradesController extends Controller
         $check_grade = Grades::Where('school_branch_id', $currentSchool->id)
         ->Where('exam_id', $request->exam_id)
         ->Where('minimum_score', $request->minimum_score)
-        ->where('grade_points', $request->grade_points)
         ->Where('letter_grade_id', $request->letter_grade_id)
         ->exists();
 
@@ -33,6 +33,7 @@ class gradesController extends Controller
         $new_grade_instance->letter_grade_id = $request->letter_grade_id;
         $new_grade_instance->grade_points = $request->grade_points;
         $new_grade_instance->exam_id = $request->exam_id;
+        $new_grade_instance->grade_status = $request->grade_status;
         $new_grade_instance->minimum_score = $request->minimum_score;
 
 
@@ -45,12 +46,13 @@ class gradesController extends Controller
     public function get_all_grades_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $grades_data = Grades::where('school_branch_id', $currentSchool->id)
-        ->with('exam')->get();
+        ->with(['exam.examtype.semesters', 'lettergrade'])->get();
         return response()->json(['grades_data' => $grades_data], 200);
     }
 
-    public function update_grades_scoped(Request $request, $grades_id){
+    public function update_grades_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
+        $grades_id = $request->route('grade_id');
         $check_grades_data = Grades::where('school_branch_id', $currentSchool->id)
         ->find($grades_id);
         if(!$check_grades_data){
@@ -60,6 +62,7 @@ class gradesController extends Controller
         $grades_data = $request->all();
         $grades_data = array_filter($grades_data);
         $check_grades_data->fill($grades_data);
+        $check_grades_data->save();
 
         return response()->json(['message' => 'Grade updated succefully'], 200);
 

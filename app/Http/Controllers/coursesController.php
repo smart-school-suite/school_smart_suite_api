@@ -17,7 +17,7 @@ class coursesController extends Controller
                   'specialty_id' => 'required|string',
                   'department_id' => 'required|string',
                   'credit' => 'required|integer',
-                  'semester' => 'required|string',
+                  'semester_id' => 'required|string',
                   'level_id' => 'required|string'
             ]);
 
@@ -28,7 +28,7 @@ class coursesController extends Controller
             $course->department_id = $request->department_id;
             $course->credit = $request->credit;
             $course->school_branch_id = $currentSchool->id;
-            $course->semester = $request->semester;
+            $course->semester_id = $request->semester_id;
             $course->level_id = $request->level_id;
 
             $course->save();

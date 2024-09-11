@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('teacher_id');
             $table->foreign('teacher_id')->references('id')->on('teacher')->onDelete('cascade');
             $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('semester')->onDelete('cascade');
+            $table->foreign('semester_id')->references('id')->on('semesters');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels')->onDelete('cascade');
             $table->string('school_branch_id');

@@ -13,12 +13,14 @@ class Examtypecontroller extends Controller
         $request->validate([
            'semester_id' => 'required|string',
            'exam_name' => 'required|string',
+           'program_name' => 'required|string',
         ]);
 
         $new_exam_type_instance = new Examtype();
 
         $new_exam_type_instance->semester_id = $request->semester_id;
         $new_exam_type_instance->exam_name = $request->exam_name;
+        $new_exam_type_instance->program_name = $request->program_name;
 
         $new_exam_type_instance->save();
 

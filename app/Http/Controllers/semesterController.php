@@ -10,11 +10,13 @@ class semesterController extends Controller
     //
     public function create_semester(Request $request){
         $request->validate([
-            'name' => 'string|required'
+            'name' => 'string|required',
+            'program_name' => 'string|required'
         ]);
 
         $new_semster_instance = new Semester();
         $new_semster_instance->name = $request->name;
+        $new_semster_instance->program_name = $request->program_name;
         $new_semster_instance->save();
       
         return response()->json(['message' => 'semester created succesfully'], 200);
@@ -27,6 +29,8 @@ class semesterController extends Controller
         }
 
         $semester->delete();
+
+        return response()->json(['semester deleted successfully'], 200);
     }
 
     public function update_semester(Request $request, $semester_id){

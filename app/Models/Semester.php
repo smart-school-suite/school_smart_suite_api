@@ -19,14 +19,14 @@ class Semester extends Model
 
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'semester';
+    public $table = 'semesters';
 
-    public function exams(): BelongsTo {
-        return $this->belongsTo(Exams::class);
+    public function exams(): HasMany {
+        return $this->hasMany(Exams::class);
     }
 
-    public function examtype(): BelongsTo {
-        return $this->belongsTo(Examtype::class);
+    public function examtype(): HasMany {
+        return $this->hasMany(Examtype::class);
     }
 
     public function timetable(): BelongsTo {

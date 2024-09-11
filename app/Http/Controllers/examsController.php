@@ -12,7 +12,6 @@ class examsController extends Controller
    public function create_exam_scoped(Request $request){
       $currentSchool = $request->attributes->get('currentSchool');
       $request->validate([
-        'exam_name' => 'required|string',
         'start_date' => 'required',
         'end_date' => 'required',
         'exam_type_id' => 'required|string',
@@ -23,7 +22,6 @@ class examsController extends Controller
 
       $new_examdata_instance = new Exams();
       $new_examdata_instance->school_branch_id = $currentSchool->id;
-      $new_examdata_instance->exam_name = $request->exam_name;
       $new_examdata_instance->start_date = $request->start_date;
       $new_examdata_instance->end_date = $request->end_date;
       $new_examdata_instance->level_id = $request->level_id;
@@ -39,6 +37,7 @@ class examsController extends Controller
 
    public function update_exam_scoped(Request $request, $exam_id){
       $currentSchool = $request->attributes->get('currentSchool');
+      $exam_id = $request->route('exam_id');
       $school_data = Exams::where('school_branch_id', $currentSchool->id)
       ->find($exam_id);
       if(!$school_data){
@@ -48,6 +47,7 @@ class examsController extends Controller
       $exam_data = $request->all();
       $exam_data = array_filter($exam_data);
       $school_data->fill($exam_data);
+      $school_data->save();
 
       return response()->json(['message' => 'Exam data updated succesfully'], 201);
    }
@@ -68,7 +68,9 @@ class examsController extends Controller
 
    public function get_all_exams(Request $request){
     $currentSchool = $request->attributes->get('currentSchool');
-    $exam_data = Exams::where('school_branch_id', $currentSchool->id)->get();
+    $exam_data = Exams::where('school_branch_id', $currentSchool->id)
+                       ->with(['examtype', 'semester'])
+                       ->get();
     return response()->json(['exam_data' => $exam_data], 201);
    }
 

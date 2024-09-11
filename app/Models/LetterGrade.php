@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LetterGrade extends Model
 {
@@ -27,5 +28,9 @@ class LetterGrade extends Model
             $user->id = substr($uuid, 0, 10);
          });
       
+    }
+
+    public function exams(): HasMany {
+        return $this->hasMany(Exams::class, 'letter_grade_id');
     }
 }

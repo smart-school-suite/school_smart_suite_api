@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_type_id');
-            $table->foreign('exam__type_id')->references('id')->on('exam_type');
+            $table->foreign('exam_type_id')->references('id')->on('exam_type');
             $table->date('start_date');
             $table->date('end_date');
             $table->string('level_id');

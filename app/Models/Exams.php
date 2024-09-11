@@ -35,8 +35,8 @@ class Exams extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function semester(): HasMany {
-        return $this->hasMany(Semester::class, 'semester_id');
+    public function semester(): BelongsTo {
+        return $this->belongsTo(Semester::class, 'semester_id');
     }
 
     public function marks(): HasMany {
@@ -63,8 +63,8 @@ class Exams extends Model
         return $this->hasMany(Grades::class);
     }
 
-    public function examtype(): HasMany {
-        return $this->hasMany(Examtype::class, 'exam_type_id');
+    public function examtype(): BelongsTo {
+        return $this->belongsTo(Examtype::class, 'exam_type_id');
     }
 
     public function examtimetable(): HasMany {

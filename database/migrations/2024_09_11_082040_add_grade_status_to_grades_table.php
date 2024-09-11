@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::table('grades', function (Blueprint $table) {
+            $table->string('grade_status')->default('resit'); 
+        });
     }
 
     /**
@@ -19,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('grades', function (Blueprint $table) {
+            //
+            $table->dropColumn('grade_status');
+        });
     }
 };

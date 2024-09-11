@@ -11,7 +11,7 @@ class letterGradecontroller extends Controller
 
     public function create_letter_grade(Request $request){
         $request->validate([
-            'letter_grade'
+            'letter_grade' => 'required|string'
         ]);
 
         $new_letter_grade_instance = new LetterGrade();
