@@ -17,8 +17,6 @@ return new class extends Migration
             $table->integer('max_number_students');
             $table->decimal('monthly_price', 8, 2);
             $table->decimal('yearly_price', 8, 2);
-            $table->string('description_id');
-            $table->foreign('description_id')->references('id')->on('subcription_features');
             $table->timestamps();
         });
     }

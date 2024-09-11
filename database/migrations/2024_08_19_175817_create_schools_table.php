@@ -13,16 +13,16 @@ return new class extends Migration
     {
         Schema::create('schools', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('country_id');
-            $table->foreign('country_id')->references('id')->on('country');
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('address');
             $table->string('city');
             $table->string('state');
             $table->integer('semester')->default(2);
             $table->string('type'); // e.g., public, private
             $table->integer('established_year')->nullable();
+            $table->string('school_logo')->nullable();
             $table->string('director_name')->nullable();
+            $table->text('motor');
             $table->timestamps();
         });
     }

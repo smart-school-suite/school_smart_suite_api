@@ -18,14 +18,10 @@ return new class extends Migration
             $table->string('last_name');
             $table->date('DOB');
             $table->string('gender');
-            $table->string('phone_number');
-            $table->string('level')->default('100');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty')->onDelete('cascade');
-            $table->string('department_id');
-            $table->foreign('department_id')->references('id')->on('department')->onDelete('cascade');
+            $table->string('fee_status')->default('owing');
+            $table->decimal('total_fee_debt', 8, 2);
+            $table->string('phone_one')->nullable();
+            $table->string('phone_two')->nullable();
             $table->string('religion')->nullable();
             $table->string('email')->unique();
             $table->string('password');

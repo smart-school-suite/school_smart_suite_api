@@ -13,17 +13,9 @@ return new class extends Migration
     {
         Schema::create('exams', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('exam_type_id');
-            $table->foreign('exam_type_id')->references('id')->on('exam_type');
             $table->date('start_date');
             $table->date('end_date');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
-            $table->decimal('weighted_mark', 3, 2);
-            $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('semesters');
+            $table->decimal('weighted_mark', 4, 2);
             $table->timestamps();
         });
     }

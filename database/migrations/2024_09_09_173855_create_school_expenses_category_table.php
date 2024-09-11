@@ -14,8 +14,6 @@ return new class extends Migration
         Schema::create('school_expenses_category', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name')->unique();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->timestamps();
         });
     }

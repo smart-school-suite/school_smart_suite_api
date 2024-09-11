@@ -13,8 +13,6 @@ return new class extends Migration
     {
         Schema::create('department', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('department_name');
             $table->string('HOD')->nullable();
             $table->timestamps();

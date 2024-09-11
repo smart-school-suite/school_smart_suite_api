@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('parents', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('name');
             $table->string('address');
-            $table->string('phone_number');
             $table->string('password');
             $table->string('profile_picture')->nullable();
             $table->string('language_preference');
+            $table->string('phone_three')->nullable();
+            $table->string('phone_one')->nullable();
+            $table->string('phone_two')->nullable();
             $table->timestamps();
         });
     }

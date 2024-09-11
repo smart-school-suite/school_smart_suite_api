@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('exam_type', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('semesters');
             $table->string('exam_name');
+            $table->string('program_name');
             $table->timestamps();
         });
     }

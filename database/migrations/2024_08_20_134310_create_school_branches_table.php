@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('school_branches', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_id');
-            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('branch_name');
             $table->string('address');
             $table->string('city');
             $table->string('state');
             $table->string('postal_code')->nullable();
-            $table->string('phone')->nullable();
+            $table->string('phone_one')->nullable();
+            $table->string('phone_two')->nullable();
             $table->string('email')->nullable();
             $table->string('website')->nullable();
             $table->timestamps(); 

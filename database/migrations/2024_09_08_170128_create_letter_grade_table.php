@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('letter_grade', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('letter_grade');
+            $table->string('letter_grade')->unique();
             $table->timestamps();
         });
     }

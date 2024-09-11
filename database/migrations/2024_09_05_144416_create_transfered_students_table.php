@@ -13,8 +13,6 @@ return new class extends Migration
     {
         Schema::create('transfered_students', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_name');
             $table->string('from');
             $table->string('to');

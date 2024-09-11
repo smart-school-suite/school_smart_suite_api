@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('teacher', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
             $table->string('profile_pricture')->nullable();
-            $table->string('phone_number');
+            $table->string('phone_one')->nullable();
+            $table->string('phone_two')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

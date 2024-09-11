@@ -14,8 +14,6 @@ return new class extends Migration
         Schema::create('student_batch', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->timestamps();
         });
     }
