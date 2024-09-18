@@ -25,7 +25,8 @@ class Student extends Model
         'last_name',
         'DOB',
         'gender',
-        'phone_number',
+        'phone_one',
+        'phone_two',
         'level_id',
         'school_branch_id',
         'specialty_id',
@@ -33,6 +34,7 @@ class Student extends Model
         'parent_id',
         'student_batch_id',
         'religion',
+        'total_fee_debt',
         'email',
         'password',
         'profile_picture'

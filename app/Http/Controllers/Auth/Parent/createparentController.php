@@ -14,7 +14,8 @@ class createparentController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:15',
+            'phone_one' => 'string',
+            'phone_two' => 'string',
             'language_preference' => 'required|string|max:10',
             'password' => 'required|string|min:8',
         ]);
@@ -22,7 +23,8 @@ class createparentController extends Controller
         Parents::create([
             'name' => $validatedData['name'],
             'address' => $validatedData['address'],
-            'phone_number' => $validatedData['phone_number'],
+            'phone_one' => $validatedData['phone_one'],
+            'phone_two' => $validatedData['phone_two'],
             'language_preference' => $validatedData['language_preference'],
             'school_branch_id' => $currentSchool->id,
             'password' => Hash::make($validatedData['password']), // Hash the password

@@ -26,7 +26,10 @@ class gradesController extends Controller
         ->exists();
 
         if($check_grade){
-            return response()->json(['message' => 'Grades already exist'], 409);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Grades already exist'
+            ], 409);
         }
 
         $new_grade_instance->school_branch_id = $currentSchool->id;
@@ -39,7 +42,11 @@ class gradesController extends Controller
 
         $new_grade_instance->save();
 
-        return response()->json(['message' => 'Grade created succefully'], 200);
+        return response()->json([
+             'status' => 'ok',
+            'message' => 'Grade created succefully',
+             $new_grade_instance
+        ], 200);
         
     }
 
@@ -56,7 +63,10 @@ class gradesController extends Controller
         $check_grades_data = Grades::where('school_branch_id', $currentSchool->id)
         ->find($grades_id);
         if(!$check_grades_data){
-            return response()->json(['message' => 'grade data not found'], 409);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'grade data not found'
+            ], 409);
         }
 
         $grades_data = $request->all();

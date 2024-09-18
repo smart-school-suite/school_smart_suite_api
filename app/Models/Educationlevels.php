@@ -14,7 +14,8 @@ class Educationlevels extends Model
 
     protected $fillable = [
        'name',
-       'level'
+       'level',
+       'program_name'
     ];
 
     public $keyType = 'string';

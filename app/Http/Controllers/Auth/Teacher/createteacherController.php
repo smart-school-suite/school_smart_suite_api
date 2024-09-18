@@ -16,14 +16,16 @@ class createteacherController extends Controller
            'name' => 'required|String',
            'email' => 'required|email|string',
            'password' => 'required|string|min:8',
-           'phone_number' => 'required|string',
+           'phone_one' => 'string',
+           'phone_two' => 'string'
         ]);
 
          $new_teacher_instance = new Teacher();
          $new_teacher_instance->name = $request->name;
          $new_teacher_instance->school_branch_id = $currentSchool->id;
          $new_teacher_instance->email = $request->email;
-         $new_teacher_instance->phone_number = $request->phone_number;
+         $new_teacher_instance->phone_one = $request->phone_one;
+         $new_teacher_instance->phone_two = $request->phone_two;
          $new_teacher_instance->password = Hash::make($request->password);
 
          $new_teacher_instance->save();

@@ -19,7 +19,8 @@ class Marks extends Model
         'score',
         'specialty_id',
         'school_branch_id',
-        'grade'
+        'grade',
+        'student_batch_id'
     ];
 
     public $keyType = 'string';

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subcriptionfeatures extends Model
 {
@@ -31,7 +32,7 @@ class Subcriptionfeatures extends Model
       
     }
 
-    public function subcription(): BelongsTo {
-        return $this->belongsTo(Subcription::class, 'description_id');
+    public function subcription(): HasMany {
+        return $this->hasMany(Subcription::class, 'description_id');
     }
 }

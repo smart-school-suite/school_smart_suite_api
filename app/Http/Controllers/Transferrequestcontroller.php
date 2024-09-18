@@ -157,7 +157,8 @@ class Transferrequestcontroller extends Controller
         $find_parents->save();
     }
 
-    private function register_student($current_school_id, $target_school_id, $specialty_id, $department_id, $level_id, $student_id){
+    private function register_student($current_school_id, $target_school_id, 
+    $specialty_id, $department_id, $level_id, $student_id){
           $find_student = Student::where('school_branch_id', $current_school_id)
                           ->find($student_id);
            $find_student->specialty_id = $specialty_id;
