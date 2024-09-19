@@ -17,7 +17,9 @@ class examsController extends Controller
         'exam_type_id' => 'required|string',
         'level_id' => 'string|required',
         'weighted_mark' => 'required',
-        'semester_id' => 'required|string'
+        'semester_id' => 'required|string',
+        'grade_points' => 'required|numeric',
+        'grade_status' => 'string'
       ]);
 
       $new_examdata_instance = new Exams();
@@ -28,7 +30,8 @@ class examsController extends Controller
       $new_examdata_instance->exam_type_id = $request->exam_type_id;
       $new_examdata_instance->weighted_mark = $request->weighted_mark;
       $new_examdata_instance->semester_id = $request->semester_id;
-
+      $new_examdata_instance->grade_points = floatval($request->grade_points);
+      $new_examdata_instance->grade_status = $request->grade_status;
       $new_examdata_instance->save();
 
       return response()->json(['message' => 'exam created succesfully'], 200);
@@ -49,7 +52,10 @@ class examsController extends Controller
       $school_data->fill($exam_data);
       $school_data->save();
 
-      return response()->json(['message' => 'Exam data updated succesfully'], 201);
+      return response()->json([
+        'status' => 'ok',
+        'message' => 'Exam data updated succesfully'
+      ], 201);
    }
 
 

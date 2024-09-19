@@ -20,7 +20,8 @@ class Schoolbranches extends Model
         'city',
         'state',
         'postal_code',
-        'phone',
+        'phone_one',
+        'phone_two',
         'email',
     ];
 

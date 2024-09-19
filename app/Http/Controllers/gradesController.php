@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 use App\Models\Grades;
+use App\Models\Exams;
 use Illuminate\Http\Request;
 
 class gradesController extends Controller
 {
-    //
+    //when creating grades for EXAM (FIRST_SEMESTER, SECOND_SEMESTER, THIRD_SEMESTER, NTH_SEMESETER) 
+    //You need to take into consideration the related weighted mark of the ca
+    // eg if weighted mark for ca = 30 and weighted_exam_mark = 70 then means your grades of the exam will be based on
+    // 30 + 70 = 100 which is 100
     public function make_grade_for_exam_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
@@ -26,9 +30,23 @@ class gradesController extends Controller
         ->exists();
 
         if($check_grade){
-            return response()->json(['message' => 'Grades already exist'], 409);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Grades already exist'
+            ], 409);
         }
-
+         
+        $find_exam = Exams::where('school_branch_id', $currentSchool->id)
+                           ->where('exam_id', $request->exam_id)
+                            ->find();
+        if($request->minimum_score > $find_exam->weighted_mark ){
+            return response()->json([
+                 'status' => 'ok',
+                 'message' => 'Score cannot be greater than exam mark',
+                 'exam_max_score' => $find_exam->weighted_mark,
+                 'minimum_score' => $request->minimum_score
+            ], 409);
+        }
         $new_grade_instance->school_branch_id = $currentSchool->id;
         $new_grade_instance->letter_grade_id = $request->letter_grade_id;
         $new_grade_instance->grade_points = $request->grade_points;
@@ -39,7 +57,11 @@ class gradesController extends Controller
 
         $new_grade_instance->save();
 
-        return response()->json(['message' => 'Grade created succefully'], 200);
+        return response()->json([
+             'status' => 'ok',
+            'message' => 'Grade created succefully',
+             $new_grade_instance
+        ], 200);
         
     }
 
@@ -56,7 +78,10 @@ class gradesController extends Controller
         $check_grades_data = Grades::where('school_branch_id', $currentSchool->id)
         ->find($grades_id);
         if(!$check_grades_data){
-            return response()->json(['message' => 'grade data not found'], 409);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'grade data not found'
+            ], 409);
         }
 
         $grades_data = $request->all();

@@ -5,22 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Subcriptionfeatures extends Model
+class Resitablecourses extends Model
 {
     use HasFactory;
-
+  
     protected $fillable = [
-        'name',
-        'description'
+        'school_branch_id',
+        'courses_id',
+        'specialty_id',
+        'exam_id',
+        'level_id'
     ];
 
     public $incrementing = 'false';
-    public $table = 'subcription_features';
+    public $table = 'resitable_courses';
     public $keyType = 'string';
-
+    
     protected static function boot()
     {
         parent::boot();
@@ -31,8 +32,6 @@ class Subcriptionfeatures extends Model
          });
       
     }
+    
 
-    public function subcription(): HasMany {
-        return $this->hasMany(Subcription::class, 'description_id');
-    }
 }

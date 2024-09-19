@@ -10,13 +10,15 @@ class educationlevelsController extends Controller
     public function create_education_levels(Request $request){
         $request->validate([
             'name' => 'required|string',
-            'level' => 'required|string'
+            'level' => 'required|string',
+            'program_name' => 'required|string' 
         ]);
 
         $education_level_instance = new Educationlevels();
 
         $education_level_instance->name = $request->name;
         $education_level_instance->level = $request->level;
+        $education_level_instance->program_name = $request->program_name;
 
         $education_level_instance->save();
 

@@ -33,7 +33,11 @@ class coursesController extends Controller
 
             $course->save();
 
-            return response()->json(['message' => 'course created succesfully'], 200);
+            return response()->json([
+                  'status' => 'ok',
+                  'message' => 'course created succesfully',
+                   $course,
+            ], 200);
       }
 
       public function delete_course(Request $request, $course_id)

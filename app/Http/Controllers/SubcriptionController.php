@@ -11,9 +11,9 @@ class SubcriptionController extends Controller
     public function create_subcription(Request $request){
         $request->validate([
             'name' => 'required|string',
-            'max_number_students' => 'required|string',
-            'monthly_price' => 'required|decimal:min,max',
-            'yearly_price' => 'required|decimal:min,max',
+            'max_number_students' => 'required|integer',
+            'monthly_price' => 'required',
+            'yearly_price' => 'required',
             'description_id' => 'required|string'
         ]);
 
@@ -23,6 +23,7 @@ class SubcriptionController extends Controller
         $new_subcription_instance->max_number_students = $request->max_number_students;
         $new_subcription_instance->monthly_price = $request->monthly_price;
         $new_subcription_instance->yearly_price = $request->yearly_price;
+        $new_subcription_instance->description_id = $request->description_id;
 
         $new_subcription_instance->save();
 

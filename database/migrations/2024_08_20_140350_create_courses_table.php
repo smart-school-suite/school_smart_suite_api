@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('course_code');
             $table->string('course_title');
             $table->integer('credit');
-            $table->string('semester');
-            $table->string('level');
             $table->timestamps();
         });
     }

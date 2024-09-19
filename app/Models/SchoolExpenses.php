@@ -24,6 +24,13 @@ class SchoolExpenses extends Model
     public $keyType = 'string';
     public $table = 'school_expenses';
 
+    public function schoolbranch(): BelongsTo {
+        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
+    }
+    
+    public function schoolexpensescategory(): HasMany {
+        return $this->hasMany(Schoolexpensescategory::class, 'expenses_category_id');
+    }
     protected static function boot()
     {
         parent::boot();
@@ -33,13 +40,6 @@ class SchoolExpenses extends Model
             $user->id = substr($uuid, 0, 25);
          });
       
-    }
-    public function schoolbranch(): BelongsTo {
-        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
-    }
-
-    public function schoolexpensescategory(): HasMany {
-        return $this->hasMany(Schoolexpensescategory::class, 'expenses_category_id');
     }
 
 }

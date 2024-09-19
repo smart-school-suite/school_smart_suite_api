@@ -9,6 +9,7 @@ class Studentbatchcontroller extends Controller
 {
     //
     public function create_student_batch(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
              'name' => 'required|string'
         ]);
@@ -16,7 +17,7 @@ class Studentbatchcontroller extends Controller
         $new_student_batch_instance = new Studentbatch();
 
         $new_student_batch_instance->name = $request->name;
-        $new_student_batch_instance->school_branch_id = $request->school_branch_id;
+        $new_student_batch_instance->school_branch_id = $currentSchool->id;
 
         $new_student_batch_instance->save();
 

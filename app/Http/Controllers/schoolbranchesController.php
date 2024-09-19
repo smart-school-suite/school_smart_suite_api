@@ -16,7 +16,9 @@ class schoolbranchesController extends Controller
             'city' => 'required|string',
             'state' => 'required|string',
             'postal_code' => 'required|string',
-            'phone' => 'required|string',
+            'website' => 'string',
+            'phone_one' => 'required|string',
+            'phone_two' => 'required|string',
             'email' => 'required|email|string',
          ]);
 
@@ -28,7 +30,9 @@ class schoolbranchesController extends Controller
          $new_school_branch_instance->city = $request->city;
          $new_school_branch_instance->state = $request->state;
          $new_school_branch_instance->postal_code = $request->postal_code;
-         $new_school_branch_instance->phone = $request->phone;
+         $new_school_branch_instance->phone_two = $request->phone_two;
+         $new_school_branch_instance->phone_one = $request->phone_one;
+         $new_school_branch_instance->website = $request->website;
          $new_school_branch_instance->email = $request->email;
 
          $new_school_branch_instance->save();

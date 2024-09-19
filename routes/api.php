@@ -40,6 +40,7 @@ use App\Http\Controllers\letterGradecontroller;
 use App\Http\Controllers\marksController;
 use App\Http\Controllers\parentsController;
 use App\Http\Controllers\Passwordresetcontroller;
+use App\Http\Controllers\Reportcardgenerationcontroller;
 use App\Http\Controllers\schooladminController;
 use App\Http\Controllers\schoolbranchesController;
 use App\Http\Controllers\Schoolexpensescategorycontroller;
@@ -51,13 +52,14 @@ use App\Http\Controllers\Studentbatchcontroller;
 use App\Http\Controllers\studentController;
 use App\Http\Controllers\StudentPerformanceReportController;
 use App\Http\Controllers\SubcriptionController;
+use App\Http\Controllers\Subcriptionfeaturescontroller;
 use App\Http\Controllers\teacherController;
 use App\Http\Controllers\timetableController;
 use App\Http\Controllers\transcriptController;
 use App\Http\Controllers\Transferrequestcontroller;
 use App\Http\Controllers\transferstudentController;
+use App\Http\Controllers\feepaymentController;
 use App\Http\Middleware\IdentifyTenant;
-use App\Models\Subcriptionfeatures;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -91,7 +93,7 @@ Route::prefix('student')->group(function () {
     Route::post('/reset-password', [resetpasswordController::class, 'reset_password']);
     Route::middleware('auth:sanctum')->post('/auth-student', [getauthenticatedstudentcontroller::class, 'get_authenticated_student']);
     Route::middleware([IdentifyTenant::class])->post('/create-student/{school_id}', [createstudentController::class, 'create_student']);
-    Route::middleware([IdentifyTenant::class])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}/{school_id}', [studentController::class, 'generate_student_report_card']);
+    Route::middleware([IdentifyTenant::class])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}/{school_id}', [Reportcardgenerationcontroller::class, 'generate_student_report_card']);
     Route::middleware([IdentifyTenant::class])->get('/get-students/{school_id}', [studentController::class, 'get_all_students_in_school']);
     Route::middleware([IdentifyTenant::class])->put('/update-student/{student_id}/{school_id}', [studentController::class, 'update_student_scoped']);
     Route::middleware([IdentifyTenant::class])->delete('/delete-student/{school_id}/{student_id}', [studentController::class, 'delete_Student_Scoped']);
@@ -174,6 +176,7 @@ Route::middleware([IdentifyTenant::class])->prefix('marks')->group( function (){
     Route::post('/add-student-mark/{school_id}', [marksController::class, 'add_student_mark']);
     Route::put('/update-student-mark/{school_id}/{mark_id}', [marksController::class, 'update_student_mark_scoped']);
     Route::delete('/delete-student-mark/{school_id}/{mark_id}', [marksController::class, 'delete_mark_of_student_scoped']);
+    Route::get('/scores-exam/{student_id}/{exam_id}/{school_id}', [marksController::class, 'get_all_student_marks']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('teacher-avialability')->group( function (){
@@ -276,10 +279,10 @@ Route::prefix('subcription')->group( function () {
    Route::put('/update-subription/{subcription_id}', [SubcriptionController::class, 'update_subcription']);
    Route::delete('/delete-subcription/{subcription_id}', [SubcriptionController::class, 'delete_subcription']);
    Route::get('/get-subcription-plans', [SubcriptionController::class, 'get_all_subcription_plans']);
-   Route::post('/create-feature', [Subcriptionfeatures::class, 'create_subcription_feature']);
-   Route::get('/get-subcription-features', [Subcriptionfeatures::class, 'get_all_features']);
-   Route::put('/update-feature/{feature_id}', [Subcriptionfeatures::class, 'update_subcription_feature']);
-   Route::delete('/delete-feature/{feature_id}', [Subcriptionfeatures::class, 'delete_subcription_feature']);
+   Route::post('/create-feature', [Subcriptionfeaturescontroller::class, 'create_subcription_feature']);
+   Route::get('/get-subcription-features', [Subcriptionfeaturescontroller::class, 'get_all_features']);
+   Route::put('/update-feature/{feature_id}', [Subcriptionfeaturescontroller::class, 'update_subcription_feature']);
+   Route::delete('/delete-feature/{feature_id}', [Subcriptionfeaturescontroller::class, 'delete_subcription_feature']);
 });
 
 
@@ -302,4 +305,11 @@ Route::middleware([IdentifyTenant::class])->prefix('student-batches')->group( fu
     Route::get('/student-batches/{school_id}', [Studentbatchcontroller::class, 'get_all_student_batches']);
     Route::delete('/delete-batch/{school_id}/{batch_id}', [Studentbatchcontroller::class, 'delete_student_batch']);
     Route::put('/update-batch/{school_id}/{batch_id}', [Studentbatchcontroller::class, 'update_student_batch']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('fee-payment')->group( function (){
+    Route::post('/pay-fees/{school_id}', [feepaymentController::class, 'pay_school_fees']);
+    Route::get('/paid-fees/{school_id}', [feepaymentController::class, 'get_all_fees_paid']);
+    Route::put('/update-payment/{school_id}/{fee_id}', [feepaymentController::class, 'update_student_fee_payment']);
+    Route::delete('/delete-payment-record/{school_id}/{fee_id}', [feepaymentController::class, 'delete_fee_payment_record']);
 });

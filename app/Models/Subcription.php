@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subcription extends Model
@@ -34,7 +35,7 @@ class Subcription extends Model
       
     }
 
-    public function subfeatures(): HasMany {
-        return $this->hasMany(Subcriptionfeatures::class, 'description_id');
+    public function subfeatures(): BelongsTo {
+        return $this->belongsTo(Subcriptionfeatures::class, 'description_id');
     }
 }

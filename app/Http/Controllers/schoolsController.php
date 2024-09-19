@@ -15,13 +15,12 @@ class schoolsController extends Controller
            'address' =>  'required|string',
            'city' => 'required|string',
            'state' => 'required|string',
-           'postal_code' => 'string',
-           'phone' => 'required|string',
-           'email' => 'required|email',
-           'website' => 'string',
+           'MAX_GPA' => 'required',
+           'motor' => 'required',
            'type' => 'string|required',
            'established_year' => 'string',
-           'director_name' => 'string|required'
+           'director_name' => 'string|required',
+           'subcription_id' => 'string|required'
         ]);
 
        $new_school_instance = new School();
@@ -31,14 +30,12 @@ class schoolsController extends Controller
        $new_school_instance->address = $request->address;
        $new_school_instance->city = $request->city;
        $new_school_instance->state = $request->state;
-       $new_school_instance->postal_code = $request->postal_code;
-       $new_school_instance->phone = $request->phone;
-       $new_school_instance->email = $request->email;
-       $new_school_instance->website = $request->website;
+       $new_school_instance->MAX_GPA = $request->MAX_GPA;
+       $new_school_instance->motor = $request->motor;
        $new_school_instance->type = $request->type;
        $new_school_instance->established_year = $request->established_year;
        $new_school_instance->director_name = $request->director_name;
-
+       $new_school_instance->subcription_id = $request->subcription_id;
        $new_school_instance->save();
 
        return response()->json(['message' => 'School created succesfully'], 200);
