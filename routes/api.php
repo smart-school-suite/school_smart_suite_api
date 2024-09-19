@@ -58,8 +58,8 @@ use App\Http\Controllers\timetableController;
 use App\Http\Controllers\transcriptController;
 use App\Http\Controllers\Transferrequestcontroller;
 use App\Http\Controllers\transferstudentController;
+use App\Http\Controllers\feepaymentController;
 use App\Http\Middleware\IdentifyTenant;
-use App\Models\Subcriptionfeatures;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -305,4 +305,11 @@ Route::middleware([IdentifyTenant::class])->prefix('student-batches')->group( fu
     Route::get('/student-batches/{school_id}', [Studentbatchcontroller::class, 'get_all_student_batches']);
     Route::delete('/delete-batch/{school_id}/{batch_id}', [Studentbatchcontroller::class, 'delete_student_batch']);
     Route::put('/update-batch/{school_id}/{batch_id}', [Studentbatchcontroller::class, 'update_student_batch']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('fee-payment')->group( function (){
+    Route::post('/pay-fees/{school_id}', [feepaymentController::class, 'pay_school_fees']);
+    Route::get('/paid-fees/{school_id}', [feepaymentController::class, 'get_all_fees_paid']);
+    Route::put('/update-payment/{school_id}/{fee_id}', [feepaymentController::class, 'update_student_fee_payment']);
+    Route::delete('/delete-payment-record/{school_id}/{fee_id}', [feepaymentController::class, 'delete_fee_payment_record']);
 });
