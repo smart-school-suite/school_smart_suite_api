@@ -59,6 +59,7 @@ use App\Http\Controllers\transcriptController;
 use App\Http\Controllers\Transferrequestcontroller;
 use App\Http\Controllers\transferstudentController;
 use App\Http\Controllers\feepaymentController;
+use App\Http\Controllers\studentpromotionController;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -97,6 +98,7 @@ Route::prefix('student')->group(function () {
     Route::middleware([IdentifyTenant::class])->get('/get-students/{school_id}', [studentController::class, 'get_all_students_in_school']);
     Route::middleware([IdentifyTenant::class])->put('/update-student/{student_id}/{school_id}', [studentController::class, 'update_student_scoped']);
     Route::middleware([IdentifyTenant::class])->delete('/delete-student/{school_id}/{student_id}', [studentController::class, 'delete_Student_Scoped']);
+    Route::middleware([IdentifyTenant::class])->post('/promote-student/{school_id}', [studentpromotionController::class, 'promote_student_to_another_class']);
 });
 
 Route::prefix('school-admin')->group(function () {
