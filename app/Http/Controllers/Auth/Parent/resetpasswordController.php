@@ -15,7 +15,6 @@ class resetpasswordController extends Controller
             'password' => 'required|min:6|confirmed',
         ]);
     
-
         $email = session('password_reset_email');
          
         $new_password = Hash::make($request->password);
@@ -24,7 +23,10 @@ class resetpasswordController extends Controller
         
         session()->forget('password_reset_email');
 
-        return response()->json(['message' => 'Password has been successfully reset'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Password has been successfully reset'
+        ], 200);
         
     }
 }

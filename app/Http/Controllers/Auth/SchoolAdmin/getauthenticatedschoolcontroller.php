@@ -10,6 +10,10 @@ class getauthenticatedschoolcontroller extends Controller
     //
     public function get_authenticated_school_admin(Request $request){
         $schooladmin_authenticated_data = auth()->guard('schooladmin')->user();
-        return response()->json(['schooladmin_user' => $schooladmin_authenticated_data], 200);
+        return response()->json([
+            'status' => 'ok',
+            "message" => 'school admin user fetched succefully',
+            'schooladmin_user' => $schooladmin_authenticated_data
+        ], 200);
     }
 }

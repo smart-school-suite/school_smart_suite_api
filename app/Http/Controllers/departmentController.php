@@ -23,24 +23,38 @@ class departmentController extends Controller
 
          $department->save();
 
-         return response()->json(['message' => 'Department created sucessfully'], 200);
+         return response()->json([
+           'status' => 'ok',
+           'message' => 'Department created sucessfully',
+           'department' => $department
+         ], 200);
     }
 
     public function delete_school_department(Request $request, $department_id){
           $currentSchool = $request->attributes->get('currentSchool');
           $department = Department::Where('school_branch', $currentSchool->id)->find($department_id);
           if(!$department){
-            return response()->json(['message' => 'Department not found'], 404);
+            return response()->json([
+              'status' => 'ok',
+              'message' => 'Department not found'
+            ], 404);
           }
           $department->delete();
-          return response()->json(['message' => 'Department deleted sucessfully'], 200);
+          return response()->json([
+            'status' => 'ok',
+            'message' => 'Department deleted sucessfully',
+            'department' => $department
+          ], 200);
     }
 
     public function update_school_department(Request $request, $department_id){
         $currentSchool = $request->attributes->get('currentSchool');
           $department = Department::Where('school_branch', $currentSchool->id)->find($department_id);
           if(!$department){
-            return response()->json(['message' => 'Department not found'], 404);
+            return response()->json([
+              'status' => 'ok',
+              'message' => 'Department not found'
+            ], 404);
           }
          $department_data = $request->all();
          $department_data = array_filter($department_data);
@@ -48,18 +62,42 @@ class departmentController extends Controller
 
          $department->save();
 
-         return response()->json(['message' => 'Department updated sucessfully'], 200);
+         return response()->json([
+            'status' => 'ok',
+            'message' => 'Department updated sucessfully',
+            'department' => $department
+         ], 200);
     }
 
     public function get_all_school_department_with_school_branches(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $eager_loaded_data_of_department_with_school_branch = Department::Where('school_branch_id', $currentSchool->id);
-        return response()->json(['department' => $eager_loaded_data_of_department_with_school_branch], 200);
+        if($eager_loaded_data_of_department_with_school_branch->isEmpty()){
+          return response()->json([
+             'status' => 'ok',
+             'message' => 'no records found'
+          ], 400);
+        }
+        return response()->json([
+          'status' => 'ok',
+          'message' => 'records fetched succefully',
+          'department' => $eager_loaded_data_of_department_with_school_branch
+        ], 200);
     }
 
     public function get_all_department_without_school_branches(Request $request){
         $list_of_all_departments = Department::all();
-        return response()->json(['department' => $list_of_all_departments], 200);
+        if($list_of_all_departments->isEmpty()){
+            return response()->json([
+              'status' => 'ok',
+              'message' => 'no records found'
+            ], 400);
+        }
+        return response()->json([
+          'status' => 'ok',
+          'message' => 'department fetched succefully',
+          'department' => $list_of_all_departments
+        ], 200);
     }
 
 

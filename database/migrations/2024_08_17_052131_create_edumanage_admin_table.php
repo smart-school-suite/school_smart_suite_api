@@ -16,12 +16,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone_number');
-            $table->string('profile_picture');
+            $table->string('profile_picture')->nullable();
             $table->string('password');
+            $table->string('otp')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
-        
     }
 
     /**

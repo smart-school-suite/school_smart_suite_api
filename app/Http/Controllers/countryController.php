@@ -19,13 +19,20 @@ class countryController extends Controller
          
          $country->save();
 
-         return response()->json(['message' => 'country created sucessfully'], 200);
+         return response()->json([
+            'status' => 'ok',
+            'message' => 'country created sucessfully',
+            'country' => $country
+         ], 200);
     }
 
     public function update_country(Request $request, $country_id){
          $country = Country::find($country_id);
          if(!$country){
-             return response()->json(['message' => 'could not find country'], 404);
+             return response()->json([
+                'status' => 'ok',
+                'message' => 'could not find country'
+             ], 404);
          }
 
          $country_data = $request->all();
@@ -34,28 +41,50 @@ class countryController extends Controller
 
          $country->save();
 
-         return response()->json(['message' => 'country updated succesfully'], 200);
+         return response()->json([
+            'status' => 'ok',
+            'message' => 'country updated succesfully'
+         ], 200);
     }
 
     public function delete_country(Request $request, $country_id){
         $country = Country::find($country_id);
         if(!$country){
-            return response()->json(['message' => 'could not find country'], 404);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'could not find country'
+            ], 404);
         }
 
         $country->delete();
 
-        return response()->json(['message' => 'country deleted succesfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'country deleted succesfully'
+        ], 200);
     }
 
     public function get_all_countries(Request $request){
         $country = Country::all();
-        
-        return response()->json(['countries' => $country], 200);
+        if($country->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Could not find any records'
+            ], 409);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'countries fetched succefully',
+            'countries' => $country
+        ], 200);
     }
 
     public function get_all_countries_with_all_relations(Request $request){
         $country_data_with_relations = Country::with('school');
-        return response()->json(['country_data' => $country_data_with_relations], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Country with relations fetched succefully',
+            'country_data' => $country_data_with_relations
+        ], 200);
     }
 }

@@ -24,24 +24,38 @@ class Examtypecontroller extends Controller
 
         $new_exam_type_instance->save();
 
-        return response()->json(['message' => 'exam type created succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'exam type created succefully',
+            'exam_type_created' => $new_exam_type_instance
+        ], 200);
     }
 
     public function delete_exam_type(Request $request, $exam_id){
         $find_exam_type = Examtype::find($exam_id);
         if(!$find_exam_type){
-            return response()->json(['message' => 'exam not found'], 404);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'exam not found'
+            ], 404);
         }
 
         $find_exam_type->delete();
 
-        return response()->json(['message' => 'exam deleted succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'exam deleted succefully',
+            'deleted_exam' => $find_exam_type
+        ], 200);
     }
 
     public function update_exam_type(Request $request, $exam_id){
         $find_exam_type = Examtype::find($exam_id);
         if(!$find_exam_type){
-            return response()->json(['message' => 'exam not found'], 404);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'exam not found'
+            ], 404);
         }
 
         $exam_data = $request->all();
@@ -49,13 +63,25 @@ class Examtypecontroller extends Controller
         $find_exam_type->fill($filted_exam_data);
         $find_exam_type->save();
 
-        return response()->json(['message' => 'exam updated succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'exam updated succefully'
+        ], 200);
     }
 
     public function get_all_exam_type(Request $request){
         $exam_type_data = Examtype::all();
-        
-        return response()->json(['exam_data' => $exam_type_data], 200);
+        if($exam_type_data->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No records found'
+            ], 400);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Exam records fetched succefully',
+            'exam_data' => $exam_type_data
+        ], 200);
     }
     
 }

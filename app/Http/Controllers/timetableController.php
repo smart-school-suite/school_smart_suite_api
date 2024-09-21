@@ -59,11 +59,17 @@ class timetableController extends Controller
         ->exists();
 
         if(!$check_if_teacher_avialable){
-            return response()->json(['message' => 'Teacher is not available at this time'], 200);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Teacher is not available at this time'
+            ], 200);
         }
 
         if($check_if_teacher_already_available_on_this_time){
-            return response()->json(['message' => 'Teacher is already assign to this time']);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Teacher is already assign to this time'
+            ], 200);
         }
         
         if($check_if_teacher_avialable && !$check_if_teacher_already_available_on_this_time){
@@ -81,7 +87,11 @@ class timetableController extends Controller
 
             $time_table_data->save();
 
-            return response()->json(['message' => 'Entry created succesfully'], 200);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Entry created succesfully',
+                'created_timetable_entry' => $time_table_data
+            ], 200);
         }
 
         

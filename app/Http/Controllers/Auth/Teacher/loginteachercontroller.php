@@ -21,13 +21,17 @@ class loginteachercontroller extends Controller
             
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'phone_number' => ['The provided credentials are incorrect.'],
-                'password' => ['Password is invalid']
+                'status' => 'ok',
+                'phone_number' => 'The provided credentials are incorrect',
+                'password' => 'Password is invalid'
             ]);
         }
     
         $token = $user->createToken('teacherToken')->plainTextToken;
     
-        return response()->json(['message' => 'Logged in successfully', 'token' => $token]);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Logged in successfully', 
+            'token' => $token]);
     }
 }

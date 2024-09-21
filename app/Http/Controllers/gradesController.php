@@ -89,7 +89,10 @@ class gradesController extends Controller
         $check_grades_data->fill($grades_data);
         $check_grades_data->save();
 
-        return response()->json(['message' => 'Grade updated succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Grade updated succefully'
+        ], 200);
 
     }
 
@@ -98,12 +101,19 @@ class gradesController extends Controller
         $check_grades_data = Grades::where('school_branch_id', $currentSchool->id)
         ->find($grades_id);
         if(!$check_grades_data){
-            return response()->json(['message' => 'grade data not found'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'grade data not found'
+            ], 409);
         }
 
         $check_grades_data->delete();
 
-        return response()->json(['message' => 'Grade deleted sucessfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Grade deleted sucessfully',
+            'deleted_grade' => $check_grades_data
+        ], 200);
     }
 
     

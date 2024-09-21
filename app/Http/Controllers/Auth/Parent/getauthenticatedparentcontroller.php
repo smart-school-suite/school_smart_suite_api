@@ -10,6 +10,10 @@ class getauthenticatedparentcontroller extends Controller
     //
     public function get_authenticated_parent(Request $request){
         $parent_authenticated_data = auth()->guard('parent')->user();
-        return response()->json(['parent_user' => $parent_authenticated_data], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'authenticated parent fetched succefully',
+            'parent_user' => $parent_authenticated_data
+        ], 200);
     }
 }

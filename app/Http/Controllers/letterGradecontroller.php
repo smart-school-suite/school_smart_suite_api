@@ -20,30 +20,54 @@ class letterGradecontroller extends Controller
 
         $new_letter_grade_instance->save();
 
-        return response()->json(['message' => 'Letter grade created succesfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Letter grade created succesfully',
+            'created_letter_grade' => $new_letter_grade_instance
+        ], 200);
     }
 
     public function get_all_letter_grades(Request $request){
         $grades_data = LetterGrade::all();
-
-        return response()->json(['letter_grades' => $grades_data], 200);
+         
+        if($grades_data->isEmpty()){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Letter grade created succesfully'
+            ], 400);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Letter grade data fetched succefully',
+            'letter_grades' => $grades_data
+        ], 200);
     }
 
     public function delete_letter_grade(Request $request, $letter_grade_id){
         $find_letter_grade = LetterGrade::find($letter_grade_id);
         if(!$find_letter_grade){
-            return response()->json(['message' => 'Letter grade not found'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Letter grade not found'
+            ], 404);
         }
 
         $find_letter_grade->delete();
 
-        return response()->json(['message' => 'Letter grade deleted succesfully'], 200);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Letter grade deleted succesfully',
+            'deleted_letter_grade' => $find_letter_grade
+        ], 200);
     }
 
     public function update_letter_grade(Request $request, $letter_grade_id){
         $find_letter_grade = LetterGrade::find($letter_grade_id);
         if(!$find_letter_grade){
-            return response()->json(['message' => 'Letter grade not found'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Letter grade not found'
+            ], 404);
         }
 
         $fillable_data = $request->all();
@@ -52,7 +76,11 @@ class letterGradecontroller extends Controller
 
         $find_letter_grade->save();
 
-        return response()->json(['message' => 'Letter grade updated succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Letter grade updated succefully',
+            'updated_letter_grade' => $find_letter_grade
+        ], 200);
     }
     
 }

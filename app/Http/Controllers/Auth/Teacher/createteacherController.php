@@ -30,6 +30,10 @@ class createteacherController extends Controller
 
          $new_teacher_instance->save();
 
-         return response()->json(['message' => 'teacher created sucessfully'], 200);
+         return response()->json([
+            'status' => 'ok',
+            'message' => 'teacher created sucessfully',
+            'teacher' => $new_teacher_instance,
+         ], 200);
     }
 }

@@ -10,6 +10,10 @@ class getauthenticatedteachercontroller extends Controller
     //
     public function get_authenticated_teacher(Request $request){
         $teacher_authenticated_data = auth()->guard('teacher')->user();
-         return response()->json(['teacher_user' => $teacher_authenticated_data], 200);
+         return response()->json([
+            'status' => 'ok',
+            'message' => 'teacher authenticated teacher fetched succesfull',
+            'teacher_user' => $teacher_authenticated_data
+         ], 200);
     }
 }

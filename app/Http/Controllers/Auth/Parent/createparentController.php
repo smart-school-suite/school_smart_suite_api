@@ -30,6 +30,9 @@ class createparentController extends Controller
             'password' => Hash::make($validatedData['password']), // Hash the password
         ]);
 
-        return response()->json(['message' => 'Account creation was successful.' ], 201);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Account creation was successful.'
+         ], 201);
     }
 }

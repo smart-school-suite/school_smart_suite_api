@@ -59,6 +59,8 @@ use App\Http\Controllers\transcriptController;
 use App\Http\Controllers\Transferrequestcontroller;
 use App\Http\Controllers\transferstudentController;
 use App\Http\Controllers\feepaymentController;
+use App\Http\Controllers\Auth\Edumanage\changeedumanagepasswordcontroller;
+use App\Http\Controllers\Auth\Edumanage\getauthenticatededumanageadmincontroller;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -66,10 +68,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('edumanage-admin')->group( function (){
     Route::post('/create-admin', [createeduadmincontroller::class, 'create_edumanage_admin']);
-    Route::middleware('auth:sanctum')->post('/login-admin', [logineduadmincontroller::class, 'login_edumanage_admin']);
+    Route::middleware('web')->post('/login-admin', [logineduadmincontroller::class, 'login_edumanage_admin']);
     Route::middleware('auth:sanctum')->post('/logout-admin', [logouteduadmincontroller::class, 'logout_eduadmin']);
     Route::get('/get-all-admins', [edumanageadminController::class, 'get_all_eduamage_admins']);
+    Route::middleware('auth:sanctum')->post('/change-password', [changeedumanagepasswordcontroller::class, 'change_edumanageadmin_password']);
     Route::delete('/delete-admin/{edumanage_admin_id}', [edumanageadminController::class, 'delete_edumanage_admin']);
+    Route::middleware('auth:sanctum')->get('/auth-edumanage-admin', [getauthenticatededumanageadmincontroller::class, 'get_authenticated_eduamanageadmin']);
+    Route::middleware(['auth:sanctum', 'web'])->post('/verify-otp', [logineduadmincontroller::class, 'verify_otp']);
     Route::put('/update-admin/{edumanage_admin_id}', [edumanageadminController::class, 'update_edumanage_admin']);
 });
 
@@ -111,10 +116,10 @@ Route::prefix('school-admin')->group(function () {
 
 Route::prefix('teacher')->group(function () {
     Route::post('/login', [loginteachercontroller::class, 'login_teacher']);
-    Route::post('/reset-password', [TeacherResetpasswordController::class, 'reset_password']);
+    Route::middleware('web')->post('/reset-password', [TeacherResetpasswordController::class, 'reset_password']);
     Route::middleware('auth:sanctum')->post('/change-password', [TeacherChangepasswordController::class, 'change_teacher_password']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutteachercontroller::class, 'logout_teacher']);
-    Route::middleware('auth:sanctum')->post('/auth-teacher', [getauthenticatedteachercontroller::class, 'get_authenticated_teacher']);
+    Route::middleware('auth:sanctum')->get('/auth-teacher', [getauthenticatedteachercontroller::class, 'get_authenticated_teacher']);
     Route::middleware([IdentifyTenant::class])->post('/create-teacher/{school_id}', [createteacherController::class, 'create_teacher']);
     Route::middleware([IdentifyTenant::class])->delete('/delete-teacher/{teacher_id}/{school_id}', [teacherController::class, 'delete_teacher_scoped']);
     Route::middleware([IdentifyTenant::class])->put('/update-teacher/{teacher_id}/{school_id}', [teacherController::class, 'update_teacher_data_scoped']);
@@ -124,8 +129,8 @@ Route::prefix('teacher')->group(function () {
 });
 
 Route::prefix('reset-password')->group( function () {
-     Route::post('/request-otp', [Passwordresetcontroller::class, 'request_password_reset_otp']);
-     Route::post('/validate-otp', [Passwordresetcontroller::class, 'verify_otp']);    
+     Route::middleware('web')->post('/request-otp', [Passwordresetcontroller::class, 'request_password_reset_otp']);
+     Route::middleware('web')->post('/validate-otp', [Passwordresetcontroller::class, 'verify_otp']);    
 });
 
 Route::prefix('school')->group(function () {

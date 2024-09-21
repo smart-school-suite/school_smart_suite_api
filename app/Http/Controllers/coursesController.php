@@ -45,17 +45,23 @@ class coursesController extends Controller
             $currentSchool = $request->attributes->get('currentSchool');
             $course = Courses::Where('school_branch_id', $currentSchool->id)->find($course_id);
             if (!$course) {
-                  return response()->json(['message' => 'course not found'], 404);
+                  return response()->json([
+                        'status' => 'ok',
+                        'message' => 'course not found'
+                  ], 404);
             }
             $course->delete();
 
-            return response()->json(['message' => 'course deleted successfully'], 200);
+            return response()->json([
+                  'status' => 'ok',
+                  'message' => 'course deleted successfully'
+            ], 200);
       }
 
       public function get_all_courses_with_department_specialty(Request $request)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $course = Courses::where('school_branch_id', $currentSchool->id)->with('department', 'specialty');
+            $course = Courses::where('school_branch_id', $currentSchool->id)->with(['department', 'specialty']);
             return response()->json(['courses' => $course], 200);
       }
 
@@ -63,7 +69,17 @@ class coursesController extends Controller
       {
             $currentSchool = $request->attributes->get('currentSchool');
             $course = Courses::where('school_branch_id', $currentSchool->id)->get();
-            return response()->json(['courses' => $course], 200);
+            if($course->isEmpty()){
+                  return response()->json([
+                        'status' => 'ok',
+                        'message' => 'could not find any courses'
+                  ], 400);
+            }
+            return response()->json([
+                  'status' => 'ok',
+                  'message' => 'fetch succesfull',
+                  'courses' => $course
+            ], 200);
       }
 
       public function update_course(Request $request, $course_id)
@@ -71,7 +87,10 @@ class coursesController extends Controller
             $currentSchool = $request->attributes->get('currentSchool');
             $course = Courses::Where('school_branch_id', $currentSchool->id)->find($course_id);
             if (!$course) {
-                  return response()->json(['message' => 'course not found'], 200);
+                  return response()->json([
+                        'status' => 'ok',
+                        'message' => 'course not found'
+                  ], 200);
             }
 
             $course_data = $request->all();
@@ -80,6 +99,9 @@ class coursesController extends Controller
 
             $course->save();
 
-            return response()->json(['message' => 'Course updated succefully'], 200);
+            return response()->json([
+                  'status' => 'ok',
+                  'message' => 'Course updated succefully'
+            ], 200);
       }
 }

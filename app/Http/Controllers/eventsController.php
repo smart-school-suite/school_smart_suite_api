@@ -27,14 +27,21 @@ class eventsController extends Controller
 
         $new_event_instance->save();
 
-        return response()->json(['message' => 'event created succesfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'event created succesfully',
+            'new_event' => $new_event_instance
+        ], 200);
 
     }
 
     public function update_school_event(Request $request, $event_id){
           $created_event = Events::find($event_id);
           if(!$created_event){
-             return response()->json(['message' => 'event not found'], 404);
+             return response()->json([
+                'status' => 'ok',
+                'message' => 'event not found'
+             ], 404);
           }
 
           $event_data = $request->all();
@@ -43,37 +50,37 @@ class eventsController extends Controller
 
           $created_event->save();
 
-          return response()->json(['message' => 'event updated sucessfully'], 200);
+          return response()->json([
+            'status' => 'ok',
+            'message' => 'event updated sucessfully'
+          ], 200);
     }
 
     public function delete_school_event(Request $request, $event_id){
          $created_event = Events::find($event_id);
          if(!$created_event){
-            return response()->json(['message' => 'Event not found'], 404);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Event not found'
+            ], 404);
          }
 
          $created_event->delete();
 
-         return response()->json(['message' => 'Event deleted sucessfully'], 200);
+         return response()->json([
+              'status' => 'ok',
+              'message' => 'Event deleted sucessfully'
+         ], 200);
     }
      
 
     public function get_all_events(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $event_data = Events::where('school_id', $currentSchool->id)->get();
-        return response()->json(['events_data' => $event_data], 200);
+        return response()->json([
+            'status' => 'ok',
+            'events_data' => $event_data
+        ], 200);
     }
-    public function get_all_events_with_relations(Request $request){
-        $created_event_data = Events::with('schoolbranches');
-
-        return response()->json(['events' => $created_event_data], 200);
-    }
-
-    public function get_all_events_without_relations(Request $request){
-        $created_event_data = Events::all();
-
-        return response()->json(['events' => $created_event_data], 200);
-    }
-
     
 }

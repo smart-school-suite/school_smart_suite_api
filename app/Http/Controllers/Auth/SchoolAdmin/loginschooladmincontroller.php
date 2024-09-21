@@ -21,13 +21,18 @@ class loginschooladmincontroller extends Controller
             
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-                'password' => ['Password is invalid']
+                    'status' => 'ok',
+                    'message' => 'The provided credentials are incorrect.',
+                     'message' => 'Password is invalid'
             ]);
         }
     
         $token = $user->createToken('schooladminToken')->plainTextToken;
     
-        return response()->json(['message' => 'Logged in successfully', 'token' => $token]);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Logged in successfully',
+             'token' => $token
+            ]);
     }
 }

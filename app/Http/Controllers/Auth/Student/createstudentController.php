@@ -55,7 +55,10 @@ class createstudentController extends Controller
         ]);
  
 
-        return response()->json(['message' => 'student created succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'student created succefully'
+        ], 200);
 
     }
 }

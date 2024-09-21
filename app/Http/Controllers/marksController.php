@@ -173,15 +173,22 @@ class marksController extends Controller
     public function delete_mark_of_student_scoped(Request $request, $mark_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $check_if_school_exist = Marks::Where('school_branch_id', $currentSchool->id)->find($mark_id);
+        $check_if_mark_exist = Marks::Where('school_branch_id', $currentSchool->id)->find($mark_id);
 
-        if (!$check_if_school_exist) {
-            return response()->json(['message' => 'Student mark record not found'], 409);
+        if (!$check_if_mark_exist) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Student mark record not found'
+            ], 409);
         }
 
-        $check_if_school_exist->delete();
+        $check_if_mark_exist->delete();
 
-        return response()->json(['message' => 'Student mark deleted succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Student mark deleted succefully',
+            'deleted_mark' => $check_if_mark_exists 
+        ], 200);
     }
 
     public function update_student_mark_scoped(Request $request)
@@ -191,7 +198,10 @@ class marksController extends Controller
         $check_if_mark_exists = Marks::Where('school_branch_id', $currentSchool->id)->find($mark_id);
 
         if (!$check_if_mark_exists) {
-            return response()->json(['message' => 'Student mark record not found'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Student mark record not found'
+            ], 409);
         }
 
         $student_mark_data = $request->all();
@@ -203,7 +213,7 @@ class marksController extends Controller
         return response()->json([
             'status' => 'ok',
             'message' => 'Student mark updated succefully',
-            $check_if_mark_exists
+            'update_mark' => $check_if_mark_exists
         ], 200);
     }
 

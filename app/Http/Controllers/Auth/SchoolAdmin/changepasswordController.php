@@ -19,14 +19,20 @@ class changepasswordController extends Controller
 
         if (!$this->checkCurrentPassword($authenticated_schooladmin, $request->current_password)) {
             throw ValidationException::withMessages([
-                'current_password' => ['Current password is incorrect.'],
+                'current_password' => [
+                    'status' => 'ok',
+                    'message' => 'Current password is incorrect.'
+                ],
             ]);
         }
 
         
 
         if ($this->updatePassword($authenticated_schooladmin, $request->new_password)) {
-            return response()->json(['message' => 'Password changed successfully.'], 200);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Password changed successfully.'
+            ], 200);
         }
     }
 

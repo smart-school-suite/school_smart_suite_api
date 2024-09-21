@@ -26,6 +26,10 @@ class createschooladmincontroller extends Controller
 
         $new_school_admin_instance->save();
 
-        return response()->json(['message' => 'School admin created succesfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'School admin created succesfully',
+            'school_admin_data' => $new_school_admin_instance,
+        ], 200);
     }
 }
