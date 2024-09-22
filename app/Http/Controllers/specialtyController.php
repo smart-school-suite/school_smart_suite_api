@@ -36,7 +36,11 @@ class specialtyController extends Controller
 
         $specialty->save();
 
-        return response()->json(['message' => 'specialty created sucessfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'specialty created sucessfully',
+            'created_specialty' => $specialty
+        ], 200);
     }
 
 
@@ -46,12 +50,19 @@ class specialtyController extends Controller
         $specialty = Specialty::Where('school_branch_id', $currentSchool->id)->find($specialty_id);
 
         if (!$specialty) {
-            return response()->json(['message' => 'specialty not found'], 404);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'specialty not found'
+            ], 404);
         }
 
         $specialty->delete();
 
-        return response()->json(['message' => 'Specialty deleted successfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Specialty deleted successfully',
+            'created_specialty' => $specialty
+        ], 200);
     }
 
     public function update_school_specialty(Request $request, $specialty_id)
@@ -59,22 +70,39 @@ class specialtyController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $specialty = Specialty::Where('school_branch_id', $currentSchool->id)->find($specialty_id);
         if (!$specialty) {
-            return response()->json(['message' => 'specialty not found'], 404);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'specialty not found'
+            ], 404);
         }
 
         $specialty_data = $request->all();
         $specialty_data = array_filter($specialty_data);
         $specialty->fill($specialty_data);
-
         $specialty->save();
-        return response()->json(['message' => 'specialty updated sucessfully'], 200);
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'specialty updated sucessfully',
+            'created_specialty' => $specialty
+        ], 200);
     }
 
 
     public function get_all_school_specialty(Request $request)
     {
         $specialty_data = Specialty::all();
-        return response()->json(['specialty' => $specialty_data], 200);
+        if($specialty_data->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No records found'
+            ], 409);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'specialties fetched succesfully',
+            'specialty' => $specialty_data
+        ], 200);
     }
 
     public function get_all_tenant_School_specailty_scoped(Request $request)

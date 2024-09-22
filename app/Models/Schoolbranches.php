@@ -84,6 +84,7 @@ class Schoolbranches extends Model
         return $this->hasMany(Teacher::class);
     }
 
+
     protected static function boot()
     {
         parent::boot();

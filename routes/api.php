@@ -65,6 +65,7 @@ use App\Http\Controllers\studentpromotionController;
 use App\Http\Controllers\studentResitController;
 use App\Http\Controllers\ResitcontrollerTimetable;
 use App\Http\Middleware\IdentifyTenant;
+use App\Http\Middleware\Limitstudents;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -100,7 +101,7 @@ Route::prefix('student')->group(function () {
     Route::middleware('auth:sanctum')->post('/change-password', [StudentChangepasswordController::class, 'change_student_password']);
     Route::post('/reset-password', [resetpasswordController::class, 'reset_password']);
     Route::middleware('auth:sanctum')->post('/auth-student', [getauthenticatedstudentcontroller::class, 'get_authenticated_student']);
-    Route::middleware([IdentifyTenant::class])->post('/create-student/{school_id}', [createstudentController::class, 'create_student']);
+    Route::middleware([IdentifyTenant::class, Limitstudents::class])->post('/create-student/{school_id}/{main_school}', [createstudentController::class, 'create_student']);
     Route::middleware([IdentifyTenant::class])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}/{school_id}', [Reportcardgenerationcontroller::class, 'generate_student_report_card']);
     Route::middleware([IdentifyTenant::class])->get('/get-students/{school_id}', [studentController::class, 'get_all_students_in_school']);
     Route::middleware([IdentifyTenant::class])->put('/update-student/{student_id}/{school_id}', [studentController::class, 'update_student_scoped']);

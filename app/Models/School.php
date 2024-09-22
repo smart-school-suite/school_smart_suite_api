@@ -83,7 +83,10 @@ class School extends Model
     public function teacher() : HasMany {
         return $this->hasMany(Teacher::class);
     }
-
+    
+    public function subcription(): BelongsTo {
+        return $this->belongsTo(Subcription::class, 'subcription_id');
+    }
     protected static function boot()
     {
         parent::boot();

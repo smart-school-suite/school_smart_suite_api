@@ -23,7 +23,10 @@ class IdentifyTenant
         $school = Schoolbranches::findOrFail($schoolId);
 
         if(!$school){
-            return redirect('/') && response()->json(['message' => 'school brnach not found']);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'school brnach not found'
+            ], 400);
         }
 
         // Set the current school in the request so it can be used in controllers

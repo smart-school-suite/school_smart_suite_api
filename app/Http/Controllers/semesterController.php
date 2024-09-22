@@ -19,24 +19,38 @@ class semesterController extends Controller
         $new_semster_instance->program_name = $request->program_name;
         $new_semster_instance->save();
       
-        return response()->json(['message' => 'semester created succesfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'semester created succesfully',
+            'created_semester' => $new_semster_instance
+        ], 200);
     }
 
     public function delete_semester(Request $request, $semester_id){
         $semester = Semester::find($semester_id);
         if(!$semester){
-            return response()->json(['message' => 'Semester not found']);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Semester not found'
+            ], 409);
         }
 
         $semester->delete();
 
-        return response()->json(['semester deleted successfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'semester deleted successfully',
+            'deleted_semester' => $semester
+        ], 200);
     }
 
     public function update_semester(Request $request, $semester_id){
         $semester = Semester::find($semester_id);
         if(!$semester){
-            return response()->json(['message' => 'Semester not found']);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Semester not found'
+            ], 409);
         }
 
         $semester_data = $request->all();
@@ -45,11 +59,25 @@ class semesterController extends Controller
 
         $semester->save();
 
-        return response()->json(['message' => 'semester updated succesully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'semester updated succesully',
+            'updated_semester' => $semester
+        ], 200);
     }
 
     public function get_all_semesters(Request $request){
         $semester_data = Semester::all();
-        return response()->json(['semester_data' => $semester_data], 200);
+        if($semester_data->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'records seem to be empty'
+            ], 409);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Records fetched sucessfully',
+            'semester_data' => $semester_data
+        ], 200);
     }
 }
