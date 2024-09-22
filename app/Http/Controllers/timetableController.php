@@ -61,14 +61,16 @@ class timetableController extends Controller
         if(!$check_if_teacher_avialable){
             return response()->json([
                 'status' => 'ok',
-                'message' => 'Teacher is not available at this time'
+                'message' => 'Teacher is not available at this time',
+                'data' => $check_if_teacher_avialable
             ], 200);
         }
 
         if($check_if_teacher_already_available_on_this_time){
             return response()->json([
                 'status' => 'ok',
-                'message' => 'Teacher is already assign to this time'
+                'message' => 'Teacher is already assign to this time',
+                'data' => $check_if_teacher_already_available_on_this_time
             ], 200);
         }
         
@@ -103,12 +105,19 @@ class timetableController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $time_table = Timetable::Where('school_id', $currentSchool->id)->find($timetable_id);
         if (!$time_table) {
-            return response()->json(['message' => 'Entry not created'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Entry not created'
+            ], 409);
         }
 
         $time_table->delete();
 
-        return response()->json(['message' => 'Entry deleted sucessfully'], 200);
+        return response()->json([
+             'status' => 'ok',
+             'message' => 'Entry deleted sucessfully',
+             'deleted_timetable' => $time_table
+        ], 200);
     }
 
 
@@ -117,7 +126,10 @@ class timetableController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $time_table = Timetable::where('school_id', $currentSchool->id)->find($timetable_id);
         if (!$time_table) {
-            return response()->json(['message' => 'Entry not found'], 200);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Entry not found'
+            ], 409);
         }
 
         $clashExists = InstructorAvailability::where('school_id', $currentSchool->id) // Scope to current school
@@ -141,9 +153,17 @@ class timetableController extends Controller
             $entry_data = array_filter($entry_data);
             $time_table->fill($entry_data);
             $time_table->save();
-            return response()->json(['message' => 'Entry created succesfully'], 200);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Entry created succesfully',
+                'updated_timetable' => $clashExists
+            ], 200);
         } else {
-            return response()->json(['error' => 'Teacher not available within this time slot'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Teacher not available within this time slot',
+                'clashes' => $clashExists,
+            ], 409);
         }
     }
 
@@ -161,7 +181,12 @@ class timetableController extends Controller
             ->with(['course', 'teacher']) 
             ->get();
 
-
+        if($timetables->isEmpty()){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Timetable records seem to be empty'
+            ], 409);
+        }
         $time_table = [
             "monday" => [],
             "tuesday" => [],
@@ -182,6 +207,10 @@ class timetableController extends Controller
             }
         }
 
-        return response()->json($time_table);
+        return response()->json([
+             'status' => 'ok',
+             'message' => 'Time table fetched succefully',
+             'timetable' => $time_table
+        ], 200);
     }
 }

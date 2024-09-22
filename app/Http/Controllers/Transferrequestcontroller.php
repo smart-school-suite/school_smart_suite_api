@@ -47,6 +47,12 @@ class Transferrequestcontroller extends Controller
 
         $new_student_transfer_request->save();
 
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'student transfer request created sucessfully',
+            'transfer_request' => $new_student_transfer_request
+        ], 200);
+
     }
 
     public function request_student_records(Request $request, $current_school_id, $student_id){
@@ -54,12 +60,21 @@ class Transferrequestcontroller extends Controller
         $current_school_id = $request->route('current_school_id');
         $find_transfer_request = Transferrequest::find($student_id);
         if(!$student_id){
-            return response()->json(['message' => 'Transfer request for this student not found'], 200);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transfer request for this student not found'
+            ], 200);
         }
         
         $student_records_data = Reportcard::where('school_branch_id', $current_school_id)
                                 ->where('student_id', $student_id)
                                 ->get();
+         if($student_records_data->isEmpty()){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Student records not found'
+            ], 409);
+         }
 
          $pdf = PDF::loadView('student_transcript', compact($student_records_data));
 
@@ -73,12 +88,19 @@ class Transferrequestcontroller extends Controller
                                     ->find($transfer_id);
         
         if(!$find_transfer_request){
-            return response()->json(['message' => 'transfer request not found'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'transfer request not found'
+            ], 404);
         }
 
         $find_transfer_request->delete();
 
-        return response()->json(['message' => 'Transfer request created succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Transfer request created succefully',
+            'student_transfer' => $find_transfer_request
+        ], 200);
     }
 
     public function get_transfer_request(Request $request){
@@ -86,7 +108,18 @@ class Transferrequestcontroller extends Controller
         $transfer_request = Transferrequest::where('current_school_id',  $currentSchool->id)
                             ->get();
 
-        return response()->json(['transfer_request' => $transfer_request], 200);
+        if($transfer_request->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No transfer request found'
+            ], 409);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'student records fetched succefully',
+            'transfer_request' => $transfer_request
+        ], 200);
     }
 
     public function respond_to_transfer_request(Request $request, $transfer_id, $status){
@@ -95,7 +128,10 @@ class Transferrequestcontroller extends Controller
         $find_transfer_request = Transferrequest::where('target_school_id', $target_school->id)
                                    ->find($transfer_id);
         if(!$find_transfer_request){
-            return response()->json(['message' => 'Request not found it must have been deleted'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Request not found it must have been deleted'
+            ], 404);
         }
              
         if($status == 'Accept'){
@@ -129,12 +165,18 @@ class Transferrequestcontroller extends Controller
                 'department' => $find_transfer_request->department_name,
             ]);
             
-            return response()->json(['message' => 'Student tranferred succesfully'], 200);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Student tranferred succesfully'
+            ], 200);
         }
         else{
             $find_transfer_request->status = 'Rejected';
 
-            return response()->json(['message' => 'Student transfer rejected'], 200);
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Student transfer rejected'
+            ], 200);
         }
     }
 

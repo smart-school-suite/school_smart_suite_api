@@ -13,7 +13,17 @@ class teacherController extends Controller
     public function get_all_teachers_Without_relations(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $teachers = Teacher::Where('school_branch_id', $currentSchool->id)->get();
-        return response()->json(['teachers' => $teachers], 200);
+        if($teachers->isEmpty()){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Teacher records seem to be empty'
+            ]);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'teachers fetched succefully',
+            'teachers' => $teachers
+        ], 200);
     }
 
     public function get_all_teachers_with_relations_scoped(Request $request){
@@ -28,19 +38,29 @@ class teacherController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $teacher_data = Teacher::Where('school_branch_id', $currentSchool->id)->find($teacher_id);
         if(!$teacher_id){
-            return response()->json(['message' => 'Teacher deleted succefully'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Teacher Not found'
+            ], 409);
         }
         
         $teacher_data->delete();
 
-        return response()->json(['message' => 'Teacher deleted sucessfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'deleted_teacher' => $teacher_data,
+            'message' => 'Teacher deleted sucessfully'
+        ], 200);
     }
 
     public function update_teacher_data_scoped(Request $request, $teacher_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $teacher_data = Teacher::Where('school_branch_id', $currentSchool->id)->find($teacher_id);
         if(!$teacher_data){
-            return response()->json(['message' => 'Teacher deleted succefully'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Teacher deleted succefully'
+            ], 409);
         }
         
         $teacher_data_request = $request->all();
@@ -48,7 +68,11 @@ class teacherController extends Controller
         $teacher_data->fill();
         $teacher_data->save();
 
-        return response()->json(['message' => 'Teacher updated succefully'], 201);
+        return response()->json([
+            'status' => 'ok',
+            'updated_teacher' => $teacher_data,
+            'message' => 'Teacher updated sucessfully'
+        ], 201);
     }
     public function get_all_teachers_not_scoped(Request $request){
           $teacher_data = teacher::all();
@@ -64,6 +88,13 @@ class teacherController extends Controller
            ->where('teacher_id', $teacher_id)
            ->with(['specialty', 'course', 'level'])
            ->get();
+
+           if($teacher_timetable_data->isEmpty()){
+              return response()->json([
+                 'status' => 'error',
+                 'message' => 'No records found'
+              ], 409);
+           }
         
            //return response()->json($teacher_timetable_data);
            $time_table = [
@@ -89,7 +120,11 @@ class teacherController extends Controller
                 ];
             }
         }
-        return response()->json($time_table);
+        return response()->json([
+             'status' => 'ok',
+             'message' => 'Teacher time table fetched succefully',
+             'teacher_timetable' => $time_table
+        ], 200);
     } 
     
 

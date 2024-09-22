@@ -59,12 +59,11 @@ use App\Http\Controllers\transcriptController;
 use App\Http\Controllers\Transferrequestcontroller;
 use App\Http\Controllers\transferstudentController;
 use App\Http\Controllers\feepaymentController;
-<<<<<<< HEAD
 use App\Http\Controllers\Auth\Edumanage\changeedumanagepasswordcontroller;
 use App\Http\Controllers\Auth\Edumanage\getauthenticatededumanageadmincontroller;
-=======
 use App\Http\Controllers\studentpromotionController;
->>>>>>> c43ff15fd5fdd2fc0107cce9cb28e199ccd030d6
+use App\Http\Controllers\studentResitController;
+use App\Http\Controllers\ResitcontrollerTimetable;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -322,4 +321,15 @@ Route::middleware([IdentifyTenant::class])->prefix('fee-payment')->group( functi
     Route::get('/paid-fees/{school_id}', [feepaymentController::class, 'get_all_fees_paid']);
     Route::put('/update-payment/{school_id}/{fee_id}', [feepaymentController::class, 'update_student_fee_payment']);
     Route::delete('/delete-payment-record/{school_id}/{fee_id}', [feepaymentController::class, 'delete_fee_payment_record']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('student-resit')->group( function () {
+    Route::get('/get-student-resits/{school_id}/{student_id}', [studentResitController::class, 'get_my_resits']);
+    Route::put('/pay-for-resit/{school_id}/{resit_id}', [studentResitController::class, 'pay_for_resit']);
+    Route::put('/update-resit-status/{school_id}/{resit_id}', [studentResitController::class, 'update_exam_status']);
+    Route::put('/update-resit/{school_id}/{resit_id}', [studentResitController::class, 'update_student_resit']);
+    Route::delete('/delete-resit/{resit_id}/{school_id}', [studentResitController::class, 'delete_student_resit_record']);
+    Route::post('/resit-timetable/{school_id}', [studentResitController::class, 'create_resit_timetable_entry']);
+    Route::get('/get-specialty-resit/{specialty_id}/{exam_id}', [ResitcontrollerTimetable::class, 'get_resits_for_specialty']);
+    Route::get('/generate-resit-timetable/{school_id}/{exam_id}', [ResitcontrollerTimetable::class, '']);
 });

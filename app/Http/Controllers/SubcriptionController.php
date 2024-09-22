@@ -27,14 +27,21 @@ class SubcriptionController extends Controller
 
         $new_subcription_instance->save();
 
-        return response()->json(['message' => 'subcription plan created succefully'], 200);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'records created succesfully',
+            'created_data' => $new_subcription_instance
+        ], 200);
     }
 
     public function update_subcription(Request $request, $subcription_id){
         $find_subcription = Subcription::find($subcription_id);
         
         if(!$find_subcription){
-            return response()->json(['message' => 'Subcription plan not found'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Subcription plan not found'
+            ], 409);
         }
 
         $fillable_data = $request->all();
@@ -42,23 +49,44 @@ class SubcriptionController extends Controller
         $find_subcription->fill($filtered_data);
         $find_subcription->save();
 
-        return response()->json(['message' => 'Subcription updated succefully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Subcription updated succefully'
+        ], 200);
     }
 
     public function delete_subcription(Request $request, $subcription_id){
         $find_subcription = Subcription::find($subcription_id);
         
         if(!$find_subcription){
-            return response()->json(['message' => 'Subcription plan not found'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Subcription plan not found'
+            ], 404);
         }
 
         $find_subcription->delete();
 
-        return response()->json(['message' => 'subcription plan deleted sucessfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'subcription plan deleted sucessfully',
+            'deleted_subcription' => $find_subcription
+        ], 200);
     }
 
     public function get_all_subcription_plans(Request $request){
         $subcription_data = Subcription::with(['subfeatures'])->get();
-        return response()->json(['subcription_data' => $subcription_data], 200);
+        if($subcription_data->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No records found'
+            ], 409);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Subcription created succefully',
+            'subcription_data' => $subcription_data
+        ], 200);
     }
 }

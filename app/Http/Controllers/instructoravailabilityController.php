@@ -142,13 +142,15 @@ class instructoravailabilityController extends Controller
     if ($clashExists) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Time slot clash with existing timetable entries'
+            'message' => 'Time slot clash with existing timetable entries',
+            'timeslot' => $clashExists
         ], 409);
     }
 
         $availabilty_data = $request->all();
         $availabilty_data = array_filter($availabilty_data);
         $timetable->fill();
+        $timetable->save();
 
         return response()->json([
             'status' => 'ok',

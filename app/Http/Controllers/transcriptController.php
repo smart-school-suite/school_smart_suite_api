@@ -17,7 +17,18 @@ class transcriptController extends Controller
           ->where('student_id', $student_id)
           ->with(['student'])->get();
 
-          return response()->json(['student_transcript' => $student_transcript], 200);
+          if(!$student_transcript->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Transcrip records is empty',
+            ], 409);
+          }
+
+          return response()->json([
+             'status' => 'ok',
+             'message' => 'Student transcipt fetched succesfully',
+             'student_transcript' => $student_transcript
+          ], 200);
 
     }
 
@@ -31,7 +42,12 @@ class transcriptController extends Controller
         ->orderBy('gpa', 'desc')
         ->with(['student'])
         ->get();
-       
+       if($student_records->isEmpty()){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'student records is empty'
+            ], 409);
+       }
         $rankedStudents = [];
         $currentRank = 1;
         $previousGPA = null;
@@ -58,7 +74,8 @@ class transcriptController extends Controller
         }
 
         return response()->json([
-             'message' => 'Fetch succesfull with results',
+             'status' => 'ok',
+             'message' => 'Student rankings fetch sucessfull',
              'ranked_students' => $rankedStudents,
         ], 200);
 

@@ -7,12 +7,14 @@ use App\Models\Grades;
 use App\Models\Exams;
 use App\Models\Resitablecourses;
 use App\Models\Student;
+use App\Models\Studentresit;
 use Illuminate\Http\Request;
 
 class marksController extends Controller
 {
     public function add_student_mark(Request $request)
     {
+        $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
             'student_id' => 'required|string',
             'courses_id' => 'required|string',
@@ -22,7 +24,6 @@ class marksController extends Controller
             'score' => 'required'
         ]);
 
-        $currentSchool = $request->attributes->get('currentSchool');
         //checking if student with this mark already exist
 
         $find_student = Student::where('school_branch_id', $currentSchool->id)->find($request->student_id);
@@ -108,8 +109,15 @@ class marksController extends Controller
                 $request->exam_id
             );
             
-            $this->create_resitable_courses($grade, $request->courses_id, 
-            $request->exam_id, $request->specialty_id, $currentSchool, $request->level_id);
+            $this->create_resitable_courses(
+                $grade, 
+                $request->courses_id, 
+                $request->exam_id, 
+                $request->specialty_id, 
+                $currentSchool, 
+                $request->level_id,
+                $request->student_id
+            );
             
             Marks::create([
                 'student_id' => $request->student_id,
@@ -187,7 +195,7 @@ class marksController extends Controller
         return response()->json([
             'status' => 'ok',
             'message' => 'Student mark deleted succefully',
-            'deleted_mark' => $check_if_mark_exists 
+            'deleted_mark' => $check_if_mark_exist
         ], 200);
     }
 
@@ -228,7 +236,7 @@ class marksController extends Controller
 
         if (!$student_id || !$find_exam || is_null($find_student)) {
             return response()->json([
-                'status' => 'ok',
+                'status' => 'error',
                 'message' => 'The provided credentials are invalid'
             ]);
         }
@@ -284,22 +292,36 @@ class marksController extends Controller
         ];
     }
 
-    private function create_resitable_courses($letter_grade, $courses_id, $exam_id, $specialty_id, $currentSchool, $level_id)
+    private function create_resitable_courses($letter_grade, $courses_id, $exam_id, $specialty_id, $currentSchool, $level_id, $student_id)
     {
         $check_if_resit_course_already_exist = Resitablecourses::where('school_branch_id', $currentSchool->id)
         ->where('specialty_id', $specialty_id)
         ->where('courses_id', $courses_id)
         ->where('level_id', $level_id)
         ->exists();
+        $grades = Grades::with('lettergrade') 
+        ->where('school_branch_id', $currentSchool->id)
+        ->where('exam_id', $exam_id)
+        ->orderBy('minimum_score', 'desc')
+        ->get();
         
         if ($check_if_resit_course_already_exist) {
-            return; 
+            foreach ($grades as $grade_data) {
+                if ($grade_data->lettergrade->letter_grade === $letter_grade && 
+                $grade_data->grade_status === 'resit') {
+                    Studentresit::create([
+                        'school_branch_id' => $currentSchool->id,
+                        'student_id' => $student_id,
+                        'course_id' => $courses_id,
+                        'exam_id' => $exam_id,
+                        'specialty_id' => $specialty_id,
+                        'level_id' => $level_id 
+                    ]);
+                    break; 
+                }
+            }
+           
         } else {
-            $grades = Grades::with('lettergrade') 
-            ->where('school_branch_id', $currentSchool->id)
-            ->where('exam_id', $exam_id)
-            ->orderBy('minimum_score', 'desc')
-            ->get();
             
             foreach ($grades as $grade_data) {
                 if ($grade_data->lettergrade->letter_grade === $letter_grade && 
@@ -317,4 +339,5 @@ class marksController extends Controller
             }
         }
     }
+
 }

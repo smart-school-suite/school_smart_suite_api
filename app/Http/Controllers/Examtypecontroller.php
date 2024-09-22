@@ -70,7 +70,7 @@ class Examtypecontroller extends Controller
     }
 
     public function get_all_exam_type(Request $request){
-        $exam_type_data = Examtype::all();
+        $exam_type_data = Examtype::with('semesters')->get();
         if($exam_type_data->isEmpty()){
             return response()->json([
                 'status' => 'ok',

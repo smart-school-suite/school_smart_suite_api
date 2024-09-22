@@ -45,7 +45,8 @@ class examtimetableController extends Controller
         if ($overlappingTimetables) {
             return response()->json([
                 'status' => 'ok',
-                'message' => 'The timetable overlaps with an existing course. Please choose a different time.'
+                'message' => 'The timetable overlaps with an existing course. Please choose a different time.',
+                'overlapping_schedule' => $overlappingTimetables
             ], 409);
         }
 
