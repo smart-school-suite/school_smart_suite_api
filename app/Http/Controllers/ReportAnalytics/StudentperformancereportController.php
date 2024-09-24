@@ -18,7 +18,10 @@ class StudentperformancereportController extends Controller
             ->where('student_id', $student_id)
             ->get();
         if ($student_records_data->isEmpty()) {
-            return response()->json(['message' => 'No student data found for this student'], 400);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No student data found for this student',
+            ], 400);
         }
 
         $totalGPA = 0;
@@ -120,8 +123,4 @@ class StudentperformancereportController extends Controller
         return ($previousGPA - $latestGPA) >= 0.5; // Warning if the drop is 0.5 or more
     }
 
-
-    public function monitor_general_student_gpa_performance(Request $request){
-        
-    }
 }

@@ -38,4 +38,8 @@ class Subcription extends Model
     public function subfeatures(): BelongsTo {
         return $this->belongsTo(Subcriptionfeatures::class, 'description_id');
     }
+
+    public function schools(): BelongsTo {
+        return $this->belongsTo(School::class, 'subcription_id');
+    }
 }

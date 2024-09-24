@@ -20,7 +20,10 @@ class Passwordresetcontroller extends Controller
         $check_if_user_exist = Student::where('email', $email)->exists();
 
         if(!$check_if_user_exist){
-            return response()->json(['message' => "No user exist with this email"], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => "No user exist with this email"
+            ], 409);
         }
 
         $otp = Str::random(6); 
@@ -40,7 +43,10 @@ class Passwordresetcontroller extends Controller
      //           ->subject('Your OTP for Password Reset');
    // });
 
-    return response()->json(['message' => 'A code has been sent to your email']);
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'A code has been sent to your email'
+    ], 200);
     }
 
     public function verify_otp(Request $request){
@@ -59,7 +65,10 @@ class Passwordresetcontroller extends Controller
 
         if (!$passwordReset) {
 
-        return response()->json(['message' => 'Invalid or expired OTP'], 400);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid or expired OTP'
+        ], 400);
 
        }
 

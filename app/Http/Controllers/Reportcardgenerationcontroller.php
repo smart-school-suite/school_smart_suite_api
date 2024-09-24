@@ -162,8 +162,7 @@ class Reportcardgenerationcontroller extends Controller
                 ], 200);
             } else {
                 return response()->json([
-                    'message' =>
-                    'No changes detected',
+                    'message' =>'No changes detected',
                     'report_card' => $student_records,
                     'student_details' => $studentDetails
                 ], 204);

@@ -13,14 +13,15 @@ class parentsController extends Controller
         return response()->json(['parents' => $parents], 200);
     }
 
-    public function get_all_parents_without_relations_without_teenant_scope(Request $request){
-        $parents = Parents::all();
-        return response()->json(['parent' => $parents], 200);
-    }
-
     public function get_all_parents_with_relations_without_scope(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $parents = Parents::Where('school_branch_id', $currentSchool->id)->with('student')->get();
+        if($parents->isEmpty()){
+            return response()->json([
+                 'status' => 'ok',
+                 'message' => 'parent data appears to be empty'
+            ], 409);
+        }
         return response()->json(['parent' => $parents], 200);
     }
     
@@ -28,26 +29,41 @@ class parentsController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $parent_data = Parents::Where('school_branch_id', $currentSchool->id)->find($parent_id);
         if(!$parent_data){
-            return response()->json(['message' => 'Parent not found'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Parent not found'
+            ], 409);
         }
 
         $parent_data->delete();
 
-        return response()->json(['message' => 'Parent deleted sucessfully'], 200);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Parent deleted sucessfully',
+            'deleted_parent' => $parent_data
+        ], 200);
     }
 
     public function update_parent_with_scope(Request $request, $parent_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $parent_data = Parents::Where('school_branch_id', $currentSchool->id)->find($parent_id);
         if(!$parent_data){
-            return response()->json(['message' => 'Parent not found'], 409);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Parent not found'
+            ], 409);
         }
 
         $parent_data_request = $request->all();
         $parent_data_request = array_filter($parent_data_request);
         $parent_data->fill($parent_data);
+        $parent_data->save();
 
-        return response()->json(['message' => 'Parent data updated succefully'], 201);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Parent data updated succefully',
+            'updated_parent' => $parent_data
+        ], 201);
     }
 
     

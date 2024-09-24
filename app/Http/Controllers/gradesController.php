@@ -32,7 +32,8 @@ class gradesController extends Controller
         if($check_grade){
             return response()->json([
                 'status' => 'ok',
-                'message' => 'Grades already exist'
+                'message' => 'Grades already exist',
+                'existing_grade' => $check_grade
             ], 409);
         }
          
