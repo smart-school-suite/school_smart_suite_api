@@ -17,7 +17,7 @@ class Limitstudents
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $schoolId = $request->route('main_school');
+        $schoolId = $request->header('SCHOOL-KEY');
         
         // Find the school based on the ID
         $school = School::with('subcription')->findOrFail($schoolId);
