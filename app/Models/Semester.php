@@ -32,6 +32,9 @@ class Semester extends Model
     public function timetable(): BelongsTo {
         return $this->belongsTo(Timetable::class, 'semeter_id');
     }
+    public function courses(): HasMany {
+         return $this->hasMany(Courses::class);
+    }
     protected static function boot()
     {
         parent::boot();

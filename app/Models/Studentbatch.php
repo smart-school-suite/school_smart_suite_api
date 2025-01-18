@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class Studentbatch extends Model
 {
@@ -31,7 +32,7 @@ class Studentbatch extends Model
       
     }
 
-    public function student(): BelongsTo {
-        return $this->belongsTo(Student::class, 'student_batch_id');
+    public function student(): HasMany {
+        return $this->hasMany(Student::class, 'student_batch_id');
     }
 }

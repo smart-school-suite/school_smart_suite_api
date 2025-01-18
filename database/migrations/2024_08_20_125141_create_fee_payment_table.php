@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fee_payment', function (Blueprint $table) {
+        Schema::create('fee_payment_transactions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('fee_name');
             $table->decimal('amount', 8, 2);
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fee_payment');
+        Schema::dropIfExists('fee_payment_transactions');
     }
 };

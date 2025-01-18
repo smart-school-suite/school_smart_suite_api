@@ -32,7 +32,7 @@ class Schoolexpensescategory extends Model
       
     }
 
-    public function schoolexpenses(): BelongsTo {
-      return $this->belongsTo(SchoolExpenses::class, 'expenses_category_id');
+    public function schoolexpenses(): HasMany {
+      return $this->hasMany(SchoolExpenses::class, 'expenses_category_id');
     }
 }

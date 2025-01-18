@@ -13,7 +13,7 @@ class studentController extends Controller
     public function get_all_students_in_school(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $students = Student::where('school_branch_id', $currentSchool->id)->with('parents')->get();
+        $students = Student::where('school_branch_id', $currentSchool->id)->with(['guardianOne','guardianTwo', 'specialty', 'level', 'studentBatch'])->get();
         return response()->json([
             'status' => 'ok',
             'message' => 'student records fetched sucessfully',
@@ -84,6 +84,27 @@ class studentController extends Controller
         ], 201);
     }
 
+    public function student_details(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $student_id  = $request->route('student_id');
+         
+        $find_student = Student::find($student_id);
+        if(!$find_student){
+             return response()->json([
+                "status" => "error",
+                "message" => "Student Not Found"
+             ], 400);
+        }
+        $student_details = Student::where("school_branch_id", $currentSchool->id)
+                            ->where("id", $student_id)
+                            ->with(['guardianOne','guardianTwo', 'specialty', 'level', 'studentBatch', 'department'])->get();
+        
+        return response()->json([
+            "status" => "ok",
+            "message" => "Student Details fetched succefully",
+            "student_details" => $student_details
+        ], 201);
+    }
 
 
 }

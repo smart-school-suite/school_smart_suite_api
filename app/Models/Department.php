@@ -23,8 +23,8 @@ class Department extends Model
     public $table = 'department';
     public $incrementing = 'false';
 
-    public function courses(): HasMany {
-       return $this->hasMany(Courses::class);
+    public function courses(): BelongsTo {
+       return $this->belongsTo(Courses::class);
     }
 
     public function exams(): HasMany {

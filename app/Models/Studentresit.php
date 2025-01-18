@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Studentresit extends Model
 {
@@ -35,5 +37,21 @@ class Studentresit extends Model
             $user->id = substr($uuid, 0, 10);
          });
       
+    }
+
+    public function courses(): BelongsTo {
+        return $this->belongsTo(Courses::class, 'course_id');
+     }
+     public function level(): BelongsTo {
+        return $this->belongsTo(Educationlevels::class, 'level_id');
+     }
+     public function specialty(): BelongsTo {
+        return $this->belongsTo(Specialty::class, 'specialty_id');
+      }
+      public function student(): BelongsTo {
+        return $this->belongsTo(Student::class, 'student_id');
+      }
+      public function exam(): BelongsTo {
+        return $this->belongsTo(Exams::class, 'exam_id');
     }
 }

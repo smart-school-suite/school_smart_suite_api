@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subcription_features', function (Blueprint $table) {
+        Schema::create('otp', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
-            $table->text('description');
+            $table->string('token_header');
+            $table->string('user_id');
+            $table->string('otp')->index();
+            $table->timestamp('expires_at')->nullable(); // OTP expiration time
+            $table->boolean('used')->default(false);
             $table->timestamps();
         });
     }
@@ -24,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subcription_features');
+        Schema::dropIfExists('otp');
     }
 };

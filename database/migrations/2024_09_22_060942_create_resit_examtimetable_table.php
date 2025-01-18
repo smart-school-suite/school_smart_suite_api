@@ -12,7 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('resit_examtimetable', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
+            $table->string('day');
+            $table->dateTime('start_time');
+            $table->dateTime('end_time');
+            $table->string('duration');
+            $table->string('school_year');
             $table->timestamps();
         });
     }

@@ -119,4 +119,47 @@ class studentResitController extends Controller
             'resits' => $get_resit_data
         ], 200);
     }
+
+    public function get_student_resits(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $get_resit_data = Studentresit::where('school_branch_id', $currentSchool->id)
+                                       ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
+                                        ->get();
+        if($get_resit_data->isEmpty()){
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Congratulations you have no resits'
+            ]);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Student resit records fetched succesfully',
+            'resits' => $get_resit_data
+        ], 200);
+    }
+
+    public function student_resit_details(Request $request){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $resit_id = $request->route("resit_id");
+
+         $find_resit = Studentresit::find($resit_id);
+         if(!$find_resit){
+             return response()->json([
+                "status" => "error",
+                "message" => "Resit not found",
+
+             ], 400);
+         }
+         $get_resit_data = Studentresit::where('school_branch_id', $currentSchool->id)
+          ->where("id", $resit_id)
+         ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
+          ->get();
+        
+        return response()->json([
+             "status" => "ok",
+             "message" => "Resit Data fetched sucessfully",
+             "resit_details" => $get_resit_data
+        ], 200);
+        
+    }
 }

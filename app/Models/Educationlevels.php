@@ -44,9 +44,16 @@ class Educationlevels extends Model
     public function student(): HasMany {
        return $this->hasMany(Student::class, 'level_id');
     }
-
-    public function timetable(): HasMany {
-      
+    public function courses(): HasMany {
+       return $this->hasMany(Courses::class);
+    }
+    public function timetable(): HasMany {   
        return $this->hasMany(Timetable::class);
+    }
+    public function exam(): HasMany {
+       return $this->hasMany(Exams::class);
+    }
+    public function studentresit(): HasMany {
+       return $this->hasMany(Studentresit::class);
     }
 }

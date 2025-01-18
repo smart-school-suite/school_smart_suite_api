@@ -75,8 +75,15 @@ class teacherController extends Controller
         ], 201);
     }
     public function get_all_teachers_not_scoped(Request $request){
-          $teacher_data = teacher::all();
-          return response()->json(['teacher_data' => $teacher_data ], 201);
+          $currentSchool = $request->attributes->get('currentSchool');
+          $teacher_data = Teacher::where("school_branch_id", $currentSchool->id)
+                           ->get();
+          
+          return response()->json([
+            "status" => "ok",
+            "message" => "teachers fetched succesfully",
+            'teacher_data' => $teacher_data 
+          ], 201);
     }
 
 
@@ -96,7 +103,6 @@ class teacherController extends Controller
               ], 409);
            }
         
-           //return response()->json($teacher_timetable_data);
            $time_table = [
             "monday" => [],
             "tuesday" => [],
@@ -127,6 +133,27 @@ class teacherController extends Controller
         ], 200);
     } 
     
+   public function get_teacher_details(Request $request){
+       $currentSchool = $request->attributes->get('currentSchool');
+       $teacher_id = $request->route('teacher_id');
+       $find_teacher = Teacher::find($teacher_id);
+       if(!$find_teacher){
+         return response()->json([
+             'status' => "error",
+             "message" => "Teacher not found"
+         ], 400);
+       }
+       $teacher_details = Teacher::where("school_branch_id", $currentSchool->id)
+                                   ->where("id", $teacher_id)
+                                   ->get();
+       
+        return response()->json([
+            "status" => "success",
+            "teacher_id" => $teacher_id,
+            "message" => "Teacher details fetched successfully",
+            "teacher_details" => $teacher_details
+        ], 200);
 
+   }
 
 }

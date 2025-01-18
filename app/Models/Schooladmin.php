@@ -20,9 +20,26 @@ class Schooladmin extends Model
      */
     protected $fillable = [
         'name',
+        'role',
         'email',
         'password',
         'profile_picture',
+        'date_of_birth',
+        'address',
+        'employment_status',
+        'hire_date',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'last_performance_review',
+        'work_location',
+        'position',
+        'highest_qualification',
+        'field_of_study',
+        'cultural_background',
+        'religion',
+        'years_experience',
+        'salary',
+        'city',
         'school_branch_id',
     ];
 
@@ -55,17 +72,22 @@ class Schooladmin extends Model
     }
 
     public function school(): BelongsTo {
-        return $this->belongsTo(School::class, 'school_id');
+        return $this->belongsTo(School::class, 'school_branch_id');
+    }
+
+    public function otps()
+    {
+        return $this->morphMany(Otp::class, 'otpable');
     }
 
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 25);
          });
-      
+
     }
 }

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('student_batch', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
+            $table->date('graduation_date');
             $table->timestamps();
         });
     }

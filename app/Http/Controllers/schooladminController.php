@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 use App\Models\Schooladmin;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
 
 class schooladminController extends Controller
 {
     //
-    public function update_school_admin(Request $request, $school_admin_id){
+    public function update_school_admin(Request $request, ){
         $currentSchool = $request->attributes->get('currentSchool');
-
+        $school_admin_id = $request->route("school_admin_id");
         $school_admin = Schooladmin::Where('school_branch_id', $currentSchool->id)->find($school_admin_id);
         if(!$school_admin){
             return response()->json([
@@ -53,7 +54,7 @@ class schooladminController extends Controller
 
     public function get_all_school_admins_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $school_admins = Schooladmin::Where('school_branch_id', $currentSchool->id);
+        $school_admins = Schooladmin::Where('school_branch_id', $currentSchool->id)->get();
         if($school_admins->isEmpty()){
             return response()->json([
                 'status' => 'ok',
@@ -65,7 +66,88 @@ class schooladminController extends Controller
             'message' => 'school administrators fetch sucessfull',
             'school_admin_data' => $school_admins
         ], 201);
-        
+
+    }
+
+    public function school_admin_details(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $school_admin_id = $request->route('school_admin_id');
+
+        $find_admin = Schooladmin::find($school_admin_id);
+
+        if(!$find_admin){
+             return response()->json([
+                 "status" => "error",
+                 "message" => "Admin not Found"
+             ], 400);
+        }
+        $school_admin_details = Schooladmin::where('school_branch_id', $currentSchool->id)
+                                ->where('id', $school_admin_id)
+                                ->get();
+
+
+        return response()->json([
+             "status" => "success",
+             "message" => "school amdin details fetched succefully",
+             "school_admin_details" => $school_admin_details
+        ], 201);
+
+    }
+
+    public function create_School_admin_on_sign_up(Request $request){
+        $request->validate([
+            'name' => "required|string",
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'role' => 'required|string',
+            'date_of_birth' => 'required|date',
+            'address' => 'required|string',
+            'employment_status' => 'required|string',
+            'hire_date' => 'required|date',
+            'emergency_contact_name' => 'required|string',
+            'emergency_contact_phone' => 'required|String',
+            'last_performance_review' => 'required|string',
+            'work_location' => 'required|string',
+            'position' => 'required|string',
+            'highest_qualification' => 'required|string',
+            'field_of_study' => 'required|string',
+            'cultural_background' => 'required|string',
+            'religion' => 'required|string',
+            'years_experience' => 'required',
+            'salary' => 'required',
+            'school_branch_id' => 'required|string',
+        ]);
+
+        $new_school_admin_instance = new Schooladmin();
+        $new_school_admin_instance->name = $request->name;
+        $new_school_admin_instance->email = $request->email;
+        $new_school_admin_instance->role = $request->role;
+        $new_school_admin_instance->password = Hash::make($request->password);
+        $new_school_admin_instance->date_of_birth = $request->date_of_birth;
+        $new_school_admin_instance->address = $request->address;
+        $new_school_admin_instance->employment_status = $request->employment_status;
+        $new_school_admin_instance->hire_date = $request->hire_date;
+        $new_school_admin_instance->emergency_contact_name = $request->emergency_contact_name;
+        $new_school_admin_instance->emergency_contact_phone = $request->emergency_contact_phone;
+        $new_school_admin_instance->last_performance_review = $request->last_performance_review;
+        $new_school_admin_instance->work_location = $request->work_location;
+        $new_school_admin_instance->position = $request->position;
+        $new_school_admin_instance->highest_qualification = $request->highest_qualification;
+        $new_school_admin_instance->field_of_study = $request->field_of_study;
+        $new_school_admin_instance->cultural_background = $request->cultural_background;
+        $new_school_admin_instance->religion = $request->religion;
+        $new_school_admin_instance->years_experience = $request->years_experience;
+        $new_school_admin_instance->salary = $request->salary;
+        $new_school_admin_instance->school_branch_id = $request->school_branch_id;
+
+        $new_school_admin_instance->save();
+
+        return response()->json([
+            'status' => "ok",
+            'message' => 'School admin created succefully',
+            'school_admin' => $new_school_admin_instance
+        ], 200);
+
     }
 
 }

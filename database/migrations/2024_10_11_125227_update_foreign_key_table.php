@@ -15,8 +15,6 @@ return new class extends Migration
         Schema::table('schools', function (Blueprint $table) {
             $table->string('country_id')->after('id');
             $table->foreign('country_id')->references('id')->on('country');
-            $table->string('subcription_id');
-            $table->foreign('subcription_id')->references('id')->on('subcriptions');
         });
 
         Schema::table('school_admin', function (Blueprint $table){
@@ -69,9 +67,11 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
             $table->string('semester_id');
             $table->foreign('semester_id')->references('id')->on('semesters');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty');
         });
 
-        Schema::table('fee_payment', function (Blueprint $table){
+        Schema::table('fee_payment_transactions', function (Blueprint $table){
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
@@ -110,8 +110,10 @@ return new class extends Migration
             $table->foreign('department_id')->references('id')->on('department')->onDelete('cascade');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
-            $table->string('parent_id');
-            $table->foreign('parent_id')->references('id')->on('parents');
+            $table->string('guadian_one_id');
+            $table->foreign('guadian_one_id')->references('id')->on('parents');
+            $table->string('guadian_two_id')->nullable();
+            $table->foreign('guadian_two_id')->references('id')->on('parents');
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
@@ -210,12 +212,8 @@ return new class extends Migration
             $table->string('semester_id');
             $table->foreign('semester_id')->references('id')->on('semesters');
         });
-       
-        Schema::table('subcriptions', function (Blueprint $table){
-            $table->string('description_id');
-            $table->foreign('description_id')->references('id')->on('subcription_features');
-        });
-       
+
+
         Schema::table('school_expenses', function (Blueprint $table){
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
@@ -246,8 +244,9 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
         });
 
+
         Schema::table('student_resit', function (Blueprint $table){
-            $table->string('school_branch_id')->after('id');
+            $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -257,9 +256,50 @@ return new class extends Migration
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
-        });    
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+        });
 
-       
+        Schema::table('staff_holiday', function(Blueprint $table){
+            $table->string('school_admin_id');
+            $table->foreign('school_admin_id')->references('id')->on('school_admin');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+
+
+        Schema::table('disciplinary_committee_cases', function(Blueprint $table){
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('dismissed_students', function(Blueprint $table){
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('school_subscriptions', function(Blueprint $table) {
+            $table->string('school_id');
+            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->string('rate_card_id');
+            $table->foreign('rate_card_id')->references('id')->on('rate_cards');
+        });
+
+        Schema::table('payments', function(Blueprint $table) {
+            $table->string('school_subscription_id');
+            $table->foreign('school_subscription_id')->references('id')->on('school_subscriptions');
+            $table->string('school_id');
+            $table->foreign('school_id')->references('id')->on('schools');
+        });
     }
 
     /**

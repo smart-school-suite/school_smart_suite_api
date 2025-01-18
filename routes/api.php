@@ -51,8 +51,6 @@ use App\Http\Controllers\specialtyController;
 use App\Http\Controllers\Studentbatchcontroller;
 use App\Http\Controllers\studentController;
 use App\Http\Controllers\StudentPerformanceReportController;
-use App\Http\Controllers\SubcriptionController;
-use App\Http\Controllers\Subcriptionfeaturescontroller;
 use App\Http\Controllers\teacherController;
 use App\Http\Controllers\timetableController;
 use App\Http\Controllers\transcriptController;
@@ -61,9 +59,13 @@ use App\Http\Controllers\transferstudentController;
 use App\Http\Controllers\feepaymentController;
 use App\Http\Controllers\Auth\Edumanage\changeedumanagepasswordcontroller;
 use App\Http\Controllers\Auth\Edumanage\getauthenticatededumanageadmincontroller;
+use App\Http\Controllers\Auth\SchoolAdmin\validateOtpController;
 use App\Http\Controllers\studentpromotionController;
 use App\Http\Controllers\studentResitController;
 use App\Http\Controllers\ResitcontrollerTimetable;
+use App\Http\Controllers\SchoolSubscriptionController;
+use App\Http\Controllers\RatesCardController;
+use App\Http\Controllers\SubscriptionPaymentController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\Limitstudents;
 use Illuminate\Http\Request;
@@ -88,11 +90,12 @@ Route::prefix('parent')->group(function () {
     Route::middleware('auth:sanctum')->post('/change-password', [changepasswordController::class, 'change_parent_password']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutcontroller::class, 'logout_parent']);
     Route::middleware('auth:sanctum')->post('/auth-parent', [getauthenticatedparentcontroller::class, 'get_authenticated_parent']);
-    Route::middleware([IdentifyTenant::class])->post('/create-parent', [createparentController::class, 'create_parent']);
-    Route::middleware([IdentifyTenant::class])->delete('/delete-parent/{parent_id}', [parentsController::class, 'delete_parent_with_scope']);
-    Route::middleware([IdentifyTenant::class])->put('/update-parent/{parent_id}', [parentsController::class, 'update_parent_with_scope']);
-    Route::middleware([IdentifyTenant::class])->get('/get-parents-no-relations', [parentsController::class, 'get_all_parents_within_a_School_without_relations']);
-    Route::middleware([IdentifyTenant::class])->get('/get-parents-with-relations', [parentsController::class, 'get_all_parents_with_relations_without_scope']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/create-parent', [createparentController::class, 'create_parent']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-parent/{parent_id}', [parentsController::class, 'delete_parent_with_scope']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-parent/{parent_id}', [parentsController::class, 'update_parent_with_scope']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-parents-no-relations', [parentsController::class, 'get_all_parents_within_a_School_without_relations']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-parents-with-relations', [parentsController::class, 'get_all_parents_with_relations_without_scope']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/parent-details/{parent_id}', [parentsController::class, 'get_parent_details']);
 });
 
 Route::prefix('student')->group(function () {
@@ -101,22 +104,27 @@ Route::prefix('student')->group(function () {
     Route::middleware('auth:sanctum')->post('/change-password', [StudentChangepasswordController::class, 'change_student_password']);
     Route::post('/reset-password', [resetpasswordController::class, 'reset_password']);
     Route::middleware('auth:sanctum')->post('/auth-student', [getauthenticatedstudentcontroller::class, 'get_authenticated_student']);
-    Route::middleware([IdentifyTenant::class, Limitstudents::class])->post('/create-student/{main_school}', [createstudentController::class, 'create_student']);
-    Route::middleware([IdentifyTenant::class])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}', [Reportcardgenerationcontroller::class, 'generate_student_report_card']);
-    Route::middleware([IdentifyTenant::class])->get('/get-students', [studentController::class, 'get_all_students_in_school']);
-    Route::middleware([IdentifyTenant::class])->put('/update-student/{student_id}', [studentController::class, 'update_student_scoped']);
-    Route::middleware([IdentifyTenant::class])->delete('/delete-student/{student_id}', [studentController::class, 'delete_Student_Scoped']);
-    Route::middleware([IdentifyTenant::class])->post('/promote-student', [studentpromotionController::class, 'promote_student_to_another_class']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/create-student', [createstudentController::class, 'create_student']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}', [Reportcardgenerationcontroller::class, 'generate_student_report_card']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-students', [studentController::class, 'get_all_students_in_school']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/student-details/{student_id}', [studentController::class, 'student_details']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-student/{student_id}', [studentController::class, 'update_student_scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-student/{student_id}', [studentController::class, 'delete_Student_Scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/promote-student', [studentpromotionController::class, 'promote_student_to_another_class']);
 });
 
 Route::prefix('school-admin')->group(function () {
     Route::post('/login', [loginschooladmincontroller::class, 'login_school_admin']);
+    Route::post('/verify-otp', [validateOtpController::class, 'verify_otp']);
+    Route::post("/request-otp", [validateOtpController::class,"request_another_code"]);
+    Route::post('/register/super-admin', [schooladmincontroller::class,'create_School_admin_on_sign_up']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutschooladmincontroller::class, 'logout_school_admin']);
-    Route::middleware('auth:sanctum')->post('/auth-school-admin', [getauthenticatedschoolcontroller::class, 'get_authenticated_school_admin']);
-    Route::middleware([IdentifyTenant::class])->post('/create-school-admin', [createschooladmincontroller::class, 'create_school_admin']);
-    Route::middleware([IdentifyTenant::class])->put('/update-school-admin/{school_admin_id}', [schooladminController::class, 'update_school_admin']);
-    Route::middleware([IdentifyTenant::class])->delete('/delete-school-admin/{school_admin_id}', [schooladminController::class, 'delete_school_admin']);
-    Route::middleware([IdentifyTenant::class])->get('/get-all-school-admins', [schooladminController::class, 'get_all_school_admins_scoped']);
+    Route::middleware('auth:sanctum')->get('/auth-school-admin', [getauthenticatedschoolcontroller::class, 'get_authenticated_school_admin']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/create-school-admin', [createschooladmincontroller::class, 'create_school_admin']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-school-admin/{school_admin_id}', [schooladminController::class, 'update_school_admin']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-school-admin/{school_admin_id}', [schooladminController::class, 'delete_school_admin']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-all-school-admins', [schooladminController::class, 'get_all_school_admins_scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/school-admin/details/{school_admin_id}', [schooladminController::class, 'school_admin_details']);
 });
 
 Route::prefix('teacher')->group(function () {
@@ -125,212 +133,225 @@ Route::prefix('teacher')->group(function () {
     Route::middleware('auth:sanctum')->post('/change-password', [TeacherChangepasswordController::class, 'change_teacher_password']);
     Route::middleware('auth:sanctum')->post('/logout', [logoutteachercontroller::class, 'logout_teacher']);
     Route::middleware('auth:sanctum')->get('/auth-teacher', [getauthenticatedteachercontroller::class, 'get_authenticated_teacher']);
-    Route::middleware([IdentifyTenant::class])->post('/create-teacher', [createteacherController::class, 'create_teacher']);
-    Route::middleware([IdentifyTenant::class])->delete('/delete-teacher/{teacher_id}', [teacherController::class, 'delete_teacher_scoped']);
-    Route::middleware([IdentifyTenant::class])->put('/update-teacher/{teacher_id}', [teacherController::class, 'update_teacher_data_scoped']);
-    Route::middleware([IdentifyTenant::class])->get('/get-all-teachers', [teacherController::class, 'get_all_teachers_Without_relations']);
-    Route::middleware([IdentifyTenant::class])->get('/get-teachers-with-relations', [teacherController::class, 'get_all_teachers_with_relations_scoped']);
-    Route::middleware([IdentifyTenant::class])->get('/get-teacher-timetable/{teacher_id}', [teacherController::class, 'get_my_timetable']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/create-teacher', [createteacherController::class, 'create_teacher']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-teacher/{teacher_id}', [teacherController::class, 'delete_teacher_scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-teacher/{teacher_id}', [teacherController::class, 'update_teacher_data_scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-all-teachers', [teacherController::class, 'get_all_teachers_not_scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/teacher-details/{teacher_id}', [teacherController::class, 'get_teacher_details']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-teachers-with-relations', [teacherController::class, 'get_all_teachers_with_relations_scoped']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-teacher-timetable/{teacher_id}', [teacherController::class, 'get_my_timetable']);
 });
 
 Route::prefix('reset-password')->group( function () {
      Route::middleware('web')->post('/request-otp', [Passwordresetcontroller::class, 'request_password_reset_otp']);
-     Route::middleware('web')->post('/validate-otp', [Passwordresetcontroller::class, 'verify_otp']);    
+     Route::middleware('web')->post('/validate-otp', [Passwordresetcontroller::class, 'verify_otp']);
 });
 
 Route::prefix('school')->group(function () {
     Route::post('/register', [schoolsController::class, 'register_school_to_edumanage']);
-    Route::put('/update_school', [schoolsController::class, 'update_school']);
+    Route::middleware(['auth:sanctum'])->put('/update_school', [schoolsController::class, 'update_school']);
     Route::get('/registered-schools', [schoolsController::class, 'get_all_schools']);
-    Route::get('/registerd-schools-branches', [schoolsController::class, 'get_schools_with_branches']);
-    Route::delete('/delete-school', [schoolsController::class, 'delete_school']);
+    Route::middleware(['auth:sanctum'])->get('/registerd-schools-branches', [schoolsController::class, 'get_schools_with_branches']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-school/{school_id}', [schoolsController::class, 'delete_school']);
 });
 
 Route::prefix('school-branch')->group(function () {
     Route::post('/register', [schoolbranchesController::class, 'create_school_branch']);
-    Route::delete('/delete-branch/{branch_id}', [schoolbranchesController::class, 'delete_school_branch']);
-    Route::put('/update-branch/{branch_id}', [schoolbranchesController::class, 'update_school_branch']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-branch/{branch_id}', [schoolbranchesController::class, 'delete_school_branch']);
+    Route::middleware(['auth:sanctum'])->put('/update-branch/{branch_id}', [schoolbranchesController::class, 'update_school_branch']);
     Route::middleware([IdentifyTenant::class])->get('/my-school-branches', [schoolbranchesController::class, 'get_all_school_branches_scoped']);
     Route::get('/school-branches', [schoolbranchesController::class, 'get_all_schoool_branches']);
 });
 
 Route::prefix('country')->group(function (){
-    Route::post('/create-country', [countryController::class, 'create_country']);
+    Route::middleware(['auth:sanctum'])->post('/create-country', [countryController::class, 'create_country']);
     Route::get('/countries', [countryController::class, 'get_all_countries']);
-    Route::delete('/delete-country/{country_id}', [countryController::class, 'delete_country']);
-    Route::put('/update-country/{country_id}', [countryController::class, 'update_country']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-country/{country_id}', [countryController::class, 'delete_country']);
+    Route::middleware(['auth:sanctum'])->put('/update-country/{country_id}', [countryController::class, 'update_country']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('department')->group(function (){
-    Route::post('/create-department', [departmentController::class, 'create_school_department']);
-    Route::get('/my-departments', [departmentController::class, 'get_all_department_without_school_branches']);
-    Route::put('/update-department', [departmentController::class, 'update_school_department']);
-    Route::delete('/delete-department/{department_id}', [departmentController::class, 'delete_school_department']);
+    Route::middleware(['auth:sanctum'])->post('/create-department', [departmentController::class, 'create_school_department']);
+    Route::middleware(['auth:sanctum'])->get('/my-departments', [departmentController::class, 'get_all_school_department_with_school_branches']);
+    Route::middleware(['auth:sanctum'])->get('/department-details/{department_id}', [departmentController::class, 'department_details']);
+    Route::middleware(['auth:sanctum'])->put('/update-department', [departmentController::class, 'update_school_department']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-department/{department_id}', [departmentController::class, 'delete_school_department']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('course')->group(function () {
-    Route::post('/create-course', [coursesController::class, 'create_course']);
-    Route::delete('/delete-course/{course_id}', [coursesController::class, 'delete_course']);
-    Route::put('/update-course/{course_id}', [coursesController::class, 'update_course']);
-    Route::get('/my-courses', [coursesController::class, 'get_all_courses_with_no_relation']);
+    Route::middleware(['auth:sanctum'])->post('/create-course', [coursesController::class, 'create_course']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-course/{course_id}', [coursesController::class, 'delete_course']);
+    Route::middleware(['auth:sanctum'])->put('/update-course/{course_id}', [coursesController::class, 'update_course']);
+    Route::middleware(['auth:sanctum'])->get('/my-courses', [coursesController::class, 'get_all_courses_with_no_relation']);
+    Route::middleware(['auth:sanctum'])->get('/course-details/{course_id}', [coursesController::class, 'courses_details']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('specialty')->group(function (){
-    Route::post('/create-specialty', [specialtyController::class, 'create_school_speciality']);
-    Route::delete('/delete-specialty/{specialty_id}', [specialtyController::class, 'delete_school_specialty']);
-    Route::put('/update-specialty/{specialty_id}', [specialtyController::class, 'update_school_specialty']);
-    Route::get('/my-specialties', [specialtyController::class, 'get_all_tenant_School_specailty_scoped']);
+    Route::middleware(['auth:sanctum'])->post('/create-specialty', [specialtyController::class, 'create_school_speciality']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-specialty/{specialty_id}', [specialtyController::class, 'delete_school_specialty']);
+    Route::middleware(['auth:sanctum'])->put('/update-specialty/{specialty_id}', [specialtyController::class, 'update_school_specialty']);
+    Route::middleware(['auth:sanctum'])->get('/my-specialties', [specialtyController::class, 'get_all_tenant_School_specailty_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/specialty-details/{specialty_id}', [specialtyController::class, 'specialty_details']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('marks')->group( function (){
-    Route::post('/add-student-mark', [marksController::class, 'add_student_mark']);
-    Route::put('/update-student-mark/{mark_id}', [marksController::class, 'update_student_mark_scoped']);
-    Route::delete('/delete-student-mark/{mark_id}', [marksController::class, 'delete_mark_of_student_scoped']);
-    Route::get('/scores-exam/{student_id}/{exam_id}', [marksController::class, 'get_all_student_marks']);
+    Route::middleware(['auth:sanctum'])->post('/add-student-mark', [marksController::class, 'add_student_mark']);
+    Route::middleware(['auth:sanctum'])->put('/update-student-mark/{mark_id}', [marksController::class, 'update_student_mark_scoped']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-student-mark/{mark_id}', [marksController::class, 'delete_mark_of_student_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/scores-exam/{student_id}/{exam_id}', [marksController::class, 'get_all_student_marks']);
+    Route::middleware(['auth:sanctum'])->get("/scores-exam/student", [marksController::class, 'get_all_student_scores']);
+    Route::middleware(['auth:sanctum'])->get("/score-details/{mark_id}", [marksController::class, 'get_exam_score_details']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('teacher-avialability')->group( function (){
-    Route::post('/create-availability', [instructoravailabilityController::class, 'create_availability']);
-    Route::delete('/delete-availability/{availabilty_id}', [instructoravailabilityController::class, 'delete_scoped_teacher_availability']);
-    Route::put('/update-availability/{availability_id}', [instructoravailabilityController::class, 'update_teacher_avialability']);
-    Route::get('/teacher-avialability/{school_id/{availability_id}', [instructoravailabilityController::class, 'get_all_avialability_not_scoped']);
+    Route::middleware(['auth:sanctum'])->post('/create-availability', [instructoravailabilityController::class, 'create_availability']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-availability/{availabilty_id}', [instructoravailabilityController::class, 'delete_scoped_teacher_availability']);
+    Route::middleware(['auth:sanctum'])->put('/update-availability/{availability_id}', [instructoravailabilityController::class, 'update_teacher_avialability']);
+    Route::middleware(['auth:sanctum'])->get('/teacher-avialability/{school_id/{availability_id}', [instructoravailabilityController::class, 'get_all_avialability_not_scoped']);
 });
 
 Route::prefix('levels')->group( function (){
-     Route::post('/create-level', [educationlevelsController::class, 'create_education_levels']);
-     Route::put('/update-level/{level_id}', [educationlevelsController::class, 'update_education_levels']);
-     Route::delete('/delete-level/{level_id}', [educationlevelsController::class, 'delete_education_levels']);
-     Route::get('/education-levels', [educationlevelsController::class, 'get_all_education_leves']);  
+     Route::middleware(['auth:sanctum'])->post('/create-level', [educationlevelsController::class, 'create_education_levels']);
+     Route::middleware(['auth:sanctum'])->put('/update-level/{level_id}', [educationlevelsController::class, 'update_education_levels']);
+     Route::middleware(['auth:sanctum'])->delete('/delete-level/{level_id}', [educationlevelsController::class, 'delete_education_levels']);
+     Route::middleware(['auth:sanctum'])->get('/education-levels', [educationlevelsController::class, 'get_all_education_leves']);
 });
 
 
 Route::middleware([IdentifyTenant::class])->prefix('grades')->group( function () {
-     Route::post('/create-grade', [gradesController::class, 'make_grade_for_exam_scoped']);
-     Route::get('/grades-for-exams', [gradesController::class, 'get_all_grades_scoped']);
-     Route::put('/update-grade/{grade_id}', [gradesController::class, 'update_grades_scoped']);
-     Route::delete('/delete-grade/{grade_id}', [gradesController::class, 'delete_grades_scoped']);
+     Route::middleware(['auth:sanctum'])->post('/create-grade', [gradesController::class, 'make_grade_for_exam_scoped']);
+     Route::middleware(['auth:sanctum'])->get('/grades-for-exams', [gradesController::class, 'get_all_grades_scoped']);
+     Route::middleware(['auth:sanctum'])->put('/update-grade/{grade_id}', [gradesController::class, 'update_grades_scoped']);
+     Route::middleware(['auth:sanctum'])->delete('/delete-grade/{grade_id}', [gradesController::class, 'delete_grades_scoped']);
 });
 
 
 Route::middleware([IdentifyTenant::class])->prefix('exams')->group( function () {
-    Route::post('/create-exam', [examsController::class, 'create_exam_scoped']);
-    Route::put('/update-exam/{exam_id}', [examsController::class, 'update_exam_scoped']);
-    Route::get('/getexams', [examsController::class, 'get_all_exams']);
-    Route::delete('/delete-exams/{exam_id}', [examsController::class, 'delete_school_exam']);
+    Route::middleware(['auth:sanctum'])->post('/create-exam', [examsController::class, 'create_exam_scoped']);
+    Route::middleware(['auth:sanctum'])->put('/update-exam/{exam_id}', [examsController::class, 'update_exam_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/getexams', [examsController::class, 'get_all_exams']);
+    Route::middleware(['auth:sanctum'])->get('/exam-details/{exam_id}', [examsController::class, 'get_exam_details']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-exams/{exam_id}', [examsController::class, 'delete_school_exam']);
 });
 
 
 Route::middleware([IdentifyTenant::class])->prefix('exam-timetable')->group( function (){
-    Route::post('/create-timetable', [examtimetableController::class, 'create_exam_timetable']);
-    Route::put('/update-exam-time-table/{examtimetable_id}', [examtimetableController::class, 'update_exam_time_table_scoped']);
-    Route::get('/generate-timetable/{level_id}/{specialty_id}', [examtimetableController::class, 'generate_time_table_for_specialty']);
-    Route::delete('/delete/exam-time-table/{examtimetable_id}', [examtimetableController::class, 'delete_exam_time_table_scoped']);
+    Route::middleware(['auth:sanctum'])->post('/create-timetable', [examtimetableController::class, 'create_exam_timetable']);
+    Route::middleware(['auth:sanctum'])->put('/update-exam-time-table/{examtimetable_id}', [examtimetableController::class, 'update_exam_time_table_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/generate-timetable/{level_id}/{specialty_id}', [examtimetableController::class, 'generate_time_table_for_specialty']);
+    Route::middleware(['auth:sanctum'])->delete('/delete/exam-time-table/{examtimetable_id}', [examtimetableController::class, 'delete_exam_time_table_scoped']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('time-table')->group( function (){
-    Route::post('/create-timetable', [timetableController::class, 'create_time_slots_scoped']);
-    Route::put('/update-timetable/{timetable_id}', [timetableController::class, 'update_time_table_record_scoped']);
-    Route::delete('/delete-timetable/{timetable_id}', [timetableController::class, 'delete_timetable_scoped']);
-    Route::get('/generate-timetable/{level_id}/{specailty_id}', [timetableController::class, 'generate_time_table_scoped']);
+    Route::middleware(['auth:sanctum'])->post('/create-timetable', [timetableController::class, 'create_time_slots_scoped']);
+    Route::middleware(['auth:sanctum'])->put('/update-timetable/{timetable_id}', [timetableController::class, 'update_time_table_record_scoped']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-timetable/{timetable_id}', [timetableController::class, 'delete_timetable_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/generate-timetable/{level_id}/{specailty_id}', [timetableController::class, 'generate_time_table_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/timetable-details/{entry_id}', [timetableController::class, 'get_timetable_details']);
 });
 
 Route::prefix('semester')->group( function() {
-     Route::post('/create-semester', [semesterController::class, 'create_semester']);
-     Route::delete('/delete-semester/{semester_id}', [semesterController::class, 'delete_semester']);
-     Route::get('/semesters', [semesterController::class, 'get_all_semesters']);
-     Route::put('/update-semester/{semester_id}', [semesterController::class, 'update_semester']);
+     Route::middleware(['auth:sanctum'])->post('/create-semester', [semesterController::class, 'create_semester']);
+     Route::middleware(['auth:sanctum'])->delete('/delete-semester/{semester_id}', [semesterController::class, 'delete_semester']);
+     Route::middleware(['auth:sanctum'])->get('/semesters', [semesterController::class, 'get_all_semesters']);
+     Route::middleware(['auth:sanctum'])->put('/update-semester/{semester_id}', [semesterController::class, 'update_semester']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('event')->group( function () {
-     Route::post('/create-event', [eventsController::class, 'create_semester']);
-     Route::put('/update-event/{event_id}', [eventsController::class, 'update_school_event']);
-     Route::delete('/delete-event/{event_id}', [eventsController::class, 'delete_school_event']);
-     Route::get('/school-events', [eventsController::class, 'et_all_events']);
+     Route::middleware(['auth:sanctum'])->post('/create-event', [eventsController::class, 'create_semester']);
+     Route::middleware(['auth:sanctum'])->put('/update-event/{event_id}', [eventsController::class, 'update_school_event']);
+     Route::middleware(['auth:sanctum'])->delete('/delete-event/{event_id}', [eventsController::class, 'delete_school_event']);
+     Route::middleware(['auth:sanctum'])->get('/school-events', [eventsController::class, 'et_all_events']);
 });
 
 
 Route::middleware([IdentifyTenant::class])->prefix('student-records')->group( function () {
-    Route::get('/generate-transcript/{student_id}', [transcriptController::class, 'generate_student_transcript']);
-    Route::get('/class-ranking/{specialty_id}/{level_id}', [transcriptController::class, 'student_exam_ranking']);
+    Route::middleware(['auth:sanctum'])->get('/generate-transcript/{student_id}', [transcriptController::class, 'generate_student_transcript']);
+    Route::middleware(['auth:sanctum'])->get('/class-ranking/{specialty_id}/{level_id}', [transcriptController::class, 'student_exam_ranking']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('student-transfer')->group( function (){
-     Route::post('/transfer-student', [Transferrequestcontroller::class, 'create_student_tranafer_request']);
-     Route::get('/student-records', [Transferrequestcontroller::class, 'request_student_records']);
-     Route::delete('/delete-transfer-request/{transfer_id}', [Transferrequestcontroller::class, 'delete_transfer_request']);
-     Route::get('/my-transfer-request', [Transferrequestcontroller::class, 'get_transfer_request']);
-     Route::get('/get-transfer/{student_id}', [transferstudentController::class, 'get_my_transfers']);
-     Route::get('/get-all/student-transfers', [transferstudentController::class, 'get_student_transfers']);
-     Route::post('/respond/transfer-request/{status}/{transfer_id}', [Transferrequestcontroller::class, 'respond_to_transfer_request']);
+     Route::middleware(['auth:sanctum'])->post('/transfer-student', [Transferrequestcontroller::class, 'create_student_tranafer_request']);
+     Route::middleware(['auth:sanctum'])->get('/student-records', [Transferrequestcontroller::class, 'request_student_records']);
+     Route::middleware(['auth:sanctum'])->delete('/delete-transfer-request/{transfer_id}', [Transferrequestcontroller::class, 'delete_transfer_request']);
+     Route::middleware(['auth:sanctum'])->get('/my-transfer-request', [Transferrequestcontroller::class, 'get_transfer_request']);
+     Route::middleware(['auth:sanctum'])->get('/get-transfer/{student_id}', [transferstudentController::class, 'get_my_transfers']);
+     Route::middleware(['auth:sanctum'])->get('/get-all/student-transfers', [transferstudentController::class, 'get_student_transfers']);
+     Route::middleware(['auth:sanctum'])->post('/respond/transfer-request/{status}/{transfer_id}', [Transferrequestcontroller::class, 'respond_to_transfer_request']);
 });
 
 Route::prefix('exam-type')->group( function (){
-    Route::post('/create-exam-type', [Examtypecontroller::class, 'create_exam_type']);
-    Route::get('/exam_types', [Examtypecontroller::class, 'get_all_exam_type']);
-    Route::delete('/exam-type/{exam_id}', [Examtypecontroller::class,'delete_exam_type']);
-    Route::put('/update-exam-type/{exam_id}', [Examtypecontroller::class, 'update_exam_type']);
+    Route::middleware(['auth:sanctum'])->post('/create-exam-type', [Examtypecontroller::class, 'create_exam_type']);
+    Route::middleware(['auth:sanctum'])->get('/exam_types', [Examtypecontroller::class, 'get_all_exam_type']);
+    Route::middleware(['auth:sanctum'])->delete('/exam-type/{exam_id}', [Examtypecontroller::class,'delete_exam_type']);
+    Route::middleware(['auth:sanctum'])->put('/update-exam-type/{exam_id}', [Examtypecontroller::class, 'update_exam_type']);
 });
 
 Route::prefix('letter-grade')->group(  function () {
-   Route::post('/create-letter-grade', [letterGradecontroller::class, 'create_letter_grade']);
-   Route::get('/get-letter-grades', [letterGradecontroller::class, 'get_all_letter_grades']);
-   Route::delete('/delete-letter-grade/{letter_grade_id}', [letterGradecontroller::class, 'delete_letter_grade']);
-   Route::put('/update-letter-grate/{letter_grade_id}', [letterGradecontroller::class, 'update_letter_grade']);
+   Route::middleware(['auth:sanctum'])->post('/create-letter-grade', [letterGradecontroller::class, 'create_letter_grade']);
+   Route::middleware(['auth:sanctum'])->get('/get-letter-grades', [letterGradecontroller::class, 'get_all_letter_grades']);
+   Route::middleware(['auth:sanctum'])->delete('/delete-letter-grade/{letter_grade_id}', [letterGradecontroller::class, 'delete_letter_grade']);
+   Route::middleware(['auth:sanctum'])->put('/update-letter-grate/{letter_grade_id}', [letterGradecontroller::class, 'update_letter_grade']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('grades-analytics')->group( function () {
-   Route::get('/get-risky-subjects', [StudentPerformanceReportController::class, 'high_risk_course_tracking']);
-   Route::post('/calculate-desired-gpa', [StudentPerformanceReportController::class, 'calculate_desired_gpa']);
-   
+   Route::middleware(['auth:sanctum'])->get('/get-risky-subjects', [StudentPerformanceReportController::class, 'high_risk_course_tracking']);
+   Route::middleware(['auth:sanctum'])->post('/calculate-desired-gpa', [StudentPerformanceReportController::class, 'calculate_desired_gpa']);
+
 });
 
 Route::prefix('subcription')->group( function () {
-   Route::post('/creat-subcription', [SubcriptionController::class, 'create_subcription']);
-   Route::put('/update-subription/{subcription_id}', [SubcriptionController::class, 'update_subcription']);
-   Route::delete('/delete-subcription/{subcription_id}', [SubcriptionController::class, 'delete_subcription']);
-   Route::get('/get-subcription-plans', [SubcriptionController::class, 'get_all_subcription_plans']);
-   Route::post('/create-feature', [Subcriptionfeaturescontroller::class, 'create_subcription_feature']);
-   Route::get('/get-subcription-features', [Subcriptionfeaturescontroller::class, 'get_all_features']);
-   Route::put('/update-feature/{feature_id}', [Subcriptionfeaturescontroller::class, 'update_subcription_feature']);
-   Route::delete('/delete-feature/{feature_id}', [Subcriptionfeaturescontroller::class, 'delete_subcription_feature']);
+   Route::post('/subscribe', [SchoolSubscriptionController::class,'subscribe']);
+   Route::get('/subscribed-schools', [SchoolSubscriptionController::class,'get_all_subscribed_schools']);
+   Route::get('/subscription-details/{subscription_id}', [SchoolSubscriptionController::class,'subcription_details']);
+   Route::post('/create-rate', [RatesCardController::class,'create_rates']);
+   Route::put('/update-rate', [RatesCardController::class,'update_rates_card']);
+   Route::delete('/delete-rate/{rate_id}', [RatesCardController::class,'delete_rate']);
+   Route::get('/rates', [RatesCardController::class,'get_rates']);
+   Route::delete('/delete-transaction', [SubscriptionPaymentController::class,'delete_payment']);
+   Route::get('/my-transactions/{school_id}', [SubscriptionPaymentController::class,'my_transactions']);
+   Route::get('/payment-transactions/{school_id}', [SubscriptionPaymentController::class,'get_all_transactions']);
 });
 
 
 Route::middleware([IdentifyTenant::class])->prefix('school-expenses')->group( function () {
-    Route::post('/create-expenses', [SchoolexpensesController::class, 'add_new_expense']);
-    Route::delete('/delete-expenses/{expense_id}', [SchoolexpensesController::class, 'delete_expense']);
-    Route::get('/my-expenses', [SchoolexpensesController::class, 'get_all_expenses']);
-    Route::put('/update-expenses/{expense_id}', [SchoolexpensesController::class, 'update_expense']);
+    Route::middleware(['auth:sanctum'])->post('/create-expenses', [SchoolexpensesController::class, 'add_new_expense']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-expenses/{expense_id}', [SchoolexpensesController::class, 'delete_expense']);
+    Route::middleware(['auth:sanctum'])->get('/my-expenses', [SchoolexpensesController::class, 'get_all_expenses']);
+    Route::middleware(['auth:sanctum'])->get('/expenses-details/{expense_id}', [SchoolexpensesController::class, 'expenses_details']);
+    Route::middleware(['auth:sanctum'])->put('/update-expenses/{expense_id}', [SchoolexpensesController::class, 'update_expense']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('school-expenses-category')->group( function () {
-    Route::post('/create-category', [Schoolexpensescategorycontroller::class, 'create_category_expenses']);
-    Route::delete('/delete-category/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'delete_category_expense']);
-    Route::get('/get-category-expenses', [Schoolexpensescategorycontroller::class, 'get_all_category_expenses']);
-    Route::put('/update-category/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'update_category_expenses']);
+    Route::middleware(['auth:sanctum'])->post('/create-category', [Schoolexpensescategorycontroller::class, 'create_category_expenses']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-category/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'delete_category_expense']);
+    Route::middleware(['auth:sanctum'])->get('/get-category-expenses', [Schoolexpensescategorycontroller::class, 'get_all_category_expenses']);
+    Route::middleware(['auth:sanctum'])->put('/update-category/{category_expense_id}', [Schoolexpensescategorycontroller::class, 'update_category_expenses']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('student-batches')->group( function (){
-    Route::post('/create-batch', [Studentbatchcontroller::class, 'create_student_batch']);
-    Route::get('/student-batches', [Studentbatchcontroller::class, 'get_all_student_batches']);
-    Route::delete('/delete-batch/{batch_id}', [Studentbatchcontroller::class, 'delete_student_batch']);
-    Route::put('/update-batch/{batch_id}', [Studentbatchcontroller::class, 'update_student_batch']);
+    Route::middleware(['auth:sanctum'])->post('/create-batch', [Studentbatchcontroller::class, 'create_student_batch']);
+    Route::middleware(['auth:sanctum'])->get('/student-batches', [Studentbatchcontroller::class, 'get_all_student_batches']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-batch/{batch_id}', [Studentbatchcontroller::class, 'delete_student_batch']);
+    Route::middleware(['auth:sanctum'])->put('/update-batch/{batch_id}', [Studentbatchcontroller::class, 'update_student_batch']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('fee-payment')->group( function (){
-    Route::post('/pay-fees', [feepaymentController::class, 'pay_school_fees']);
-    Route::get('/paid-fees', [feepaymentController::class, 'get_all_fees_paid']);
-    Route::put('/update-payment/{fee_id}', [feepaymentController::class, 'update_student_fee_payment']);
-    Route::delete('/delete-payment-record/{fee_id}', [feepaymentController::class, 'delete_fee_payment_record']);
+    Route::middleware(['auth:sanctum'])->post('/pay-fees', [feepaymentController::class, 'pay_school_fees']);
+    Route::middleware(['auth:sanctum'])->get('/paid-fees', [feepaymentController::class, 'get_all_fees_paid']);
+    Route::middleware(['auth:sanctum'])->put('/update-payment/{fee_id}', [feepaymentController::class, 'update_student_fee_payment']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-payment-record/{fee_id}', [feepaymentController::class, 'delete_fee_payment_record']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('student-resit')->group( function () {
-    Route::get('/get-student-resits/{student_id}', [studentResitController::class, 'get_my_resits']);
-    Route::put('/pay-for-resit/{resit_id}', [studentResitController::class, 'pay_for_resit']);
-    Route::put('/update-resit-status/{resit_id}', [studentResitController::class, 'update_exam_status']);
-    Route::put('/update-resit/{resit_id}', [studentResitController::class, 'update_student_resit']);
-    Route::delete('/delete-resit/{resit_id}', [studentResitController::class, 'delete_student_resit_record']);
-    Route::post('/resit-timetable', [studentResitController::class, 'create_resit_timetable_entry']);
-    Route::get('/get-specialty-resit/{specialty_id}/{exam_id}', [ResitcontrollerTimetable::class, 'get_resits_for_specialty']);
-    Route::get('/generate-resit-timetable/{exam_id}', [ResitcontrollerTimetable::class, '']);
+    Route::middleware(['auth:sanctum'])->get('/get-student-resits/{student_id}', [studentResitController::class, 'get_my_resits']);
+    Route::middleware(['auth:sanctum'])->put('/pay-for-resit/{resit_id}', [studentResitController::class, 'pay_for_resit']);
+    Route::middleware(['auth:sanctum'])->put('/update-resit-status/{resit_id}', [studentResitController::class, 'update_exam_status']);
+    Route::middleware(['auth:sanctum'])->put('/update-resit/{resit_id}', [studentResitController::class, 'update_student_resit']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-resit/{resit_id}', [studentResitController::class, 'delete_student_resit_record']);
+    Route::middleware(['auth:sanctum'])->post('/resit-timetable', [studentResitController::class, 'create_resit_timetable_entry']);
+    Route::middleware(['auth:sanctum'])->get('/student_resits', [studentResitController::class, 'get_student_resits']);
+    Route::middleware(['auth:sanctum'])->get('/get-specialty-resit/{specialty_id}/{exam_id}', [ResitcontrollerTimetable::class, 'get_resits_for_specialty']);
+    Route::middleware(['auth:sanctum'])->get('/generate-resit-timetable/{exam_id}', [ResitcontrollerTimetable::class, '']);
+    Route::middleware(['auth:sanctum'])->get("/details/{resit_id}", [studentResitController::class, 'student_resit_details']);
 });

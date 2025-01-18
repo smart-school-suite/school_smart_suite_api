@@ -92,7 +92,7 @@ class examsController extends Controller
   {
     $currentSchool = $request->attributes->get('currentSchool');
     $exam_data = Exams::where('school_branch_id', $currentSchool->id)
-      ->with(['examtype', 'semester'])
+      ->with(['examtype', 'semester', 'specialty.level'])
       ->get();
     if ($exam_data->isEmpty()) {
       return response()->json([
@@ -105,5 +105,27 @@ class examsController extends Controller
       'message' => 'Exam data fetched sucessfully',
       'exam_data' => $exam_data
     ], 201);
+  }
+
+  public function get_exam_details(Request $request){
+    $currentSchool = $request->attributes->get('currentSchool');
+    $exam_id = $request->route('exam_id');
+    $find_exam = Exams::find($exam_id);
+    if(!$find_exam){
+       return response()->json([
+         "status" => "error",
+         "message" => "Exam not found"
+       ], 400);
+    }
+
+    $exam_details = Exams::where("school_branch_id", $currentSchool->id)
+                           ->where("id", $exam_id)
+                           ->with(['specialty', 'examtype', 'semester', 'level',])
+                            ->get();
+      return response()->json([
+         "status" => "ok",
+         "message" => "Exam details fetched succefully",
+         "exam_details" => $exam_details
+      ], 201);
   }
 }

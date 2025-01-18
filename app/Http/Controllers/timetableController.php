@@ -213,4 +213,27 @@ class timetableController extends Controller
              'timetable' => $time_table
         ], 200);
     }
+
+    public function get_timetable_details(Request $request){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $entry_id =  $request->route("entry_id");
+         $find_timetable_entry = Timetable::find($entry_id);
+         if(!$find_timetable_entry){
+            return response()->json([
+                 "status" => "error",
+                 "message" => "Timetable entry not found"
+            ], 400);
+         }
+
+         $timetable_details = Timetable::where("school_branch_id", $currentSchool->id)
+                                         ->where("id", $entry_id)
+                                         ->with([''])
+                                         ->get();
+        return response()->json([
+             "status" => "ok",
+             "message" => "Time table details fetched sucessfully",
+             "timetable_details" => $timetable_details
+        ], 200);
+
+    }
 }

@@ -28,8 +28,8 @@ class SchoolExpenses extends Model
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
     
-    public function schoolexpensescategory(): HasMany {
-        return $this->hasMany(Schoolexpensescategory::class, 'expenses_category_id');
+    public function schoolexpensescategory(): BelongsTo {
+        return $this->belongsTo(Schoolexpensescategory::class, 'expenses_category_id');
     }
     protected static function boot()
     {

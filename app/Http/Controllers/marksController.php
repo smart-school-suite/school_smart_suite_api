@@ -83,7 +83,7 @@ class marksController extends Controller
             ], 201);
         } else {
             $get_ca_score = Marks::where('school_branch_id', $currentSchool->id)
-                 ->where('exam_id', $exam_configuration['related_ca']->id)
+                 //->where('exam_id', $exam_configuration['related_ca']->id)
                 ->where('student_id', $find_student->id)
                 ->where('courses_id', $request->courses_id)
                 ->first();
@@ -93,32 +93,32 @@ class marksController extends Controller
                     'message' => 'This student does not have a CA mark for this course'
                 ], 400);
             }
-            if ($request->score + $get_ca_score->score > $exam_configuration['related_ca']->weighted_mark + $exam->weighted_mark) {
-                return response()->json([
-                    'message' => 'student mark exam score plus student marks for ca is grater than the weighted mark for this exam',
-                    'ca_score' =>  $get_ca_score->score,
-                    'exam_score' => $request->score,
-                    'total_score' => $request->score + $get_ca_score->score,
-                    'max_exam_score' => $exam_configuration['related_ca']->weighted_mark + $exam->weighted_mark
-                ]);
-            }
+           // if ($request->score + $get_ca_score->score > $exam_configuration['related_ca']->weighted_mark + $exam->weighted_mark) {
+               // return response()->json([
+                  //  'message' => 'student mark exam score plus student marks for ca is grater than the weighted mark for this exam',
+                 //   'ca_score' =>  $get_ca_score->score,
+                 //   'exam_score' => $request->score,
+                 //   'total_score' => $request->score + $get_ca_score->score,
+                  //  'max_exam_score' => $exam_configuration['related_ca']->weighted_mark + $exam->weighted_mark
+               // ]);
+        //    }
             $grade = $this->determine_letter_grade_of_exam(
                 $request->score,
                 $get_ca_score->score,
                 $currentSchool->id,
                 $request->exam_id
             );
-            
+
             $this->create_resitable_courses(
-                $grade, 
-                $request->courses_id, 
-                $request->exam_id, 
-                $request->specialty_id, 
-                $currentSchool, 
+                $grade,
+                $request->courses_id,
+                $request->exam_id,
+                $request->specialty_id,
+                $currentSchool,
                 $request->level_id,
                 $request->student_id
             );
-            
+
             Marks::create([
                 'student_id' => $request->student_id,
                 'exam_id' => $exam->id,
@@ -299,15 +299,15 @@ class marksController extends Controller
         ->where('courses_id', $courses_id)
         ->where('level_id', $level_id)
         ->exists();
-        $grades = Grades::with('lettergrade') 
+        $grades = Grades::with('lettergrade')
         ->where('school_branch_id', $currentSchool->id)
         ->where('exam_id', $exam_id)
         ->orderBy('minimum_score', 'desc')
         ->get();
-        
+
         if ($check_if_resit_course_already_exist) {
             foreach ($grades as $grade_data) {
-                if ($grade_data->lettergrade->letter_grade === $letter_grade && 
+                if ($grade_data->lettergrade->letter_grade === $letter_grade &&
                 $grade_data->grade_status === 'resit') {
                     Studentresit::create([
                         'school_branch_id' => $currentSchool->id,
@@ -315,18 +315,18 @@ class marksController extends Controller
                         'course_id' => $courses_id,
                         'exam_id' => $exam_id,
                         'specialty_id' => $specialty_id,
-                        'level_id' => $level_id 
+                        'level_id' => $level_id
                     ]);
-                    break; 
+                    break;
                 }
             }
-           
+
         } else {
-            
+
             foreach ($grades as $grade_data) {
-                if ($grade_data->lettergrade->letter_grade === $letter_grade && 
+                if ($grade_data->lettergrade->letter_grade === $letter_grade &&
                 $grade_data->grade_status === 'resit') {
-                    
+
                    Resitablecourses::create([
                      'school_branch_id' => $currentSchool->id,
                      'specialty_id' => $specialty_id,
@@ -334,10 +334,49 @@ class marksController extends Controller
                      'exam_id' => $exam_id,
                      'level_id' => $level_id,
                    ]);
-                    break; 
+                    break;
                 }
             }
         }
+    }
+
+    public function get_all_student_scores(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $student_scores = Marks::where("school_branch_id", $currentSchool->id)->with(['course','student', 'exams.examtype', 'level', 'specialty'])->get();
+        if($student_scores->isEmpty()){
+            return response()->json([
+                "status" => 'error',
+                "message" => 'Looks like an empty set',
+            ], 400);
+        }
+
+        return response()->json([
+            "status" => "ok",
+            "message" => "student scores fetched successfully",
+            "scores" => $student_scores
+        ], 201);
+    }
+
+    public function get_exam_score_details(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $mark_id = $request->route("mark_id");
+        $find_exam_score = Marks::find($mark_id);
+        if(!$find_exam_score){
+             return response()->json([
+                 "status" => "error",
+                 "message" => "Exam score not found"
+             ], 400);
+        }
+
+        $marks_details = Marks::where("school_branch_id", $currentSchool->id)
+                               ->where("id", $mark_id)
+                                ->with(['student','course','exams', 'specialty', 'level'])
+                                ->get();
+        return response()->json([
+            "status" => "ok",
+            "message" => "score details fetched succefully",
+            "score_details" => $marks_details
+        ], 200);
     }
 
 }

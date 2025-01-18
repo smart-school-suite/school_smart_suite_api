@@ -35,8 +35,8 @@ class Courses extends Model
         return $this->hasMany(Exams::class);
     }
 
-    public function department(): BelongsTo {
-        return $this->belongsTo(Department::class);
+    public function department(): HasMany {
+        return $this->hasMany(Department::class);
     }
 
     public function marks(): HasMany {
@@ -67,6 +67,16 @@ class Courses extends Model
         return $this->hasMany(Timetable::class);
     }
 
+    public function level(): BelongsTo {
+         return $this->belongsTo(Educationlevels::class);
+    }
+
+    public function semester(): BelongsTo {
+         return $this->belongsTo(Semester::class);
+    }
+    public function studentresit() : HasMany {
+        return $this->hasMany(Studentresit::class);
+    }
     protected static function boot()
     {
         parent::boot();

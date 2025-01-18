@@ -109,6 +109,32 @@ class specialtyController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $specialty_data = Specialty::Where('school_branch_id', $currentSchool->id)->with('level')->get();
-        return response()->json(['specialties', $specialty_data], 200);
+        return response()->json(['status' => 'ok',
+            'message' => 'specialties fetched succesfully',
+            'specialty' => $specialty_data], 200);
+    }
+
+    public function specialty_details(Request $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $specialty_id = $request->route('specialty_id');
+         $find_specailty = Specialty::find($specialty_id);
+         if(!$find_specailty){
+            return response()->json([
+                "specialty_id" => $specialty_id,
+                 "status" => "error",
+                 "message" => "Specialty not found"
+            ], 400);
+         }
+         $specialty_details = Specialty::where("school_branch_id", $currentSchool->id)
+                                        ->where("id", $specialty_id)
+                                        ->with(['level', 'department'])
+                                        ->get();
+
+         return response()->json([
+             "status" => "ok",
+             "message" => "specialty detials fetched succefully",
+             "specialty_details" => $specialty_details
+         ], 201);
+
     }
 }

@@ -75,7 +75,7 @@ class SchoolexpensesController extends Controller
 
     public function get_all_expenses(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-         $expenses_data = SchoolExpenses::where('school_branch_id', $currentSchool->id)
+         $expenses_data = SchoolExpenses::where('school_branch_id', $currentSchool->id)->with(['schoolexpensescategory'])
                                           ->get();
          if($expenses_data->isEmpty()){
             return response()->json([
@@ -87,5 +87,28 @@ class SchoolexpensesController extends Controller
             'status' => 'ok',
             'expenses_data' => $expenses_data
          ], 200);
+    }
+
+    public function expenses_details(Request $request){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $expense_id = $request->route("expense_id");
+         $find_expenses = SchoolExpenses::find($expense_id);
+         if(!$find_expenses){
+             return response()->json([
+                 "status" => "error",
+                 "message" => "expenses not found",
+                 "id" => $expense_id
+             ], 400);
+         }
+
+         $expenses_details = SchoolExpenses::where("school_branch_id", $currentSchool->id)
+                                             ->where("id", $expense_id)
+                                             ->with(['schoolexpensescategory'])
+                                              ->get();
+        return response()->json([
+             "status" => "ok",
+             "message" => "Expenses details fetched sucessfully",
+             "expenses_details" => $expenses_details
+        ], 201);
     }
 }

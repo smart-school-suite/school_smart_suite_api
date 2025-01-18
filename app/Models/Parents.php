@@ -66,16 +66,20 @@ class Parents extends Model
     }
 
     public function student(): HasMany {
-        return $this->hasMany(Student::class, 'parent_id');
+        return $this->hasMany(Student::class, 'guadian_one_id');
+    }
+    public function otps()
+    {
+        return $this->morphMany(Otp::class, 'otpable');
     }
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 }

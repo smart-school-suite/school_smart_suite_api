@@ -71,12 +71,17 @@ class Student extends Model
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
+    }
+
+    public function otps()
+    {
+        return $this->morphMany(Otp::class, 'otpable');
     }
 
     public function courses(): HasMany {
@@ -99,8 +104,12 @@ class Student extends Model
         return $this->hasMany(Marks::class, 'student_id');
     }
 
-    public function parents(): BelongsTo {
-        return $this->belongsTo(Parents::class, 'parent_id');
+    public function guardianOne(): BelongsTo {
+        return $this->belongsTo(Parents::class, 'guadian_one_id');
+    }
+
+    public function guardianTwo(): BelongsTo {
+         return $this->belongsTo(Parents::class, 'guadian_two_id');
     }
 
     public function school(): BelongsTo {
@@ -122,8 +131,12 @@ class Student extends Model
     public function transcript(): HasMany {
         return $this->hasMany(Reportcard::class, 'student_id');
     }
-     
-    public function studentBatch(): HasMany {
-        return $this->hasMany(studentBatch::class, 'student_batch_id');
+
+    public function studentBatch(): BelongsTo {
+        return $this->belongsTo(studentBatch::class, 'student_batch_id');
+    }
+
+    public function studentresit(): HasMany {
+         return $this->hasMany(Studentresit::class);
     }
 }

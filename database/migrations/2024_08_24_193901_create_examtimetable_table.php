@@ -17,6 +17,7 @@ return new class extends Migration
             $table->dateTime('start_time');
             $table->dateTime('end_time');
             $table->string('duration');
+            $table->string("school_year");
             $table->timestamps();
         });
     }

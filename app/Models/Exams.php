@@ -26,7 +26,7 @@ class Exams extends Model
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'exams';
-   
+
     public function courses(): BelongsTo {
         return $this->belongsTo(Exams::class);
     }
@@ -71,14 +71,20 @@ class Exams extends Model
         return $this->hasMany(Examtimetable::class, 'exam_id');
     }
 
+    public function studentresit(): HasMany {
+         return $this->hasMany(Studentresit::class);
+    }
+    public function level(): BelongsTo {
+        return $this->belongsTo(Educationlevels::class);
+     }
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 }

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->decimal('weighted_mark', 4, 2);
+            $table->string('school_year');
             $table->timestamps();
         });
     }

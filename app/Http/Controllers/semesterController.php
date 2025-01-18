@@ -18,7 +18,7 @@ class semesterController extends Controller
         $new_semster_instance->name = $request->name;
         $new_semster_instance->program_name = $request->program_name;
         $new_semster_instance->save();
-      
+
         return response()->json([
             'status' => 'ok',
             'message' => 'semester created succesfully',

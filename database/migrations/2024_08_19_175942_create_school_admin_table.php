@@ -19,6 +19,26 @@ return new class extends Migration
             $table->string('password');
             $table->string('profile_picture')->nullable();
             $table->string('role');
+            $table->date('date_of_birth')->nullable();
+            $table->string('address')->nullable();
+            $table->string('employment_status')->nullable(); // E.g., Full-time, Part-time, Contractor
+            $table->date('hire_date')->nullable();
+            $table->string('emergency_contact_name')->nullable();
+            $table->string('emergency_contact_phone')->nullable();
+            $table->date('last_performance_review')->nullable();
+            $table->string('work_location')->nullable(); // E.g., Home, Main Office, Branch Location
+            $table->string('position')->nullable(); // E.g., Manager, Developer, Coordinator
+            $table->string('highest_qualification')->nullable(); // e.g., Bachelor's, Master's
+            $table->string('field_of_study')->nullable(); // e.g., Computer Science, Business Administration
+            $table->timestamp('last_login_at')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('leave')->default(false);
+            $table->boolean('holiday')->default(false);
+            $table->string('cultural_background')->nullable();
+            $table->string('religion');
+            $table->integer('years_experience');
+            $table->decimal('salary', 8, 2);
+            $table->string('city')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -32,3 +52,4 @@ return new class extends Migration
         Schema::dropIfExists('school_admin');
     }
 };
+

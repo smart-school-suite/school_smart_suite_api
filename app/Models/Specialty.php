@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use PhpParser\Node\Stmt\Return_;
 
 class Specialty extends Model
 {
@@ -65,6 +64,9 @@ class Specialty extends Model
      }
      public function marks(): HasMany {
       return $this->hasMany(Marks::class, 'specialty_id');
+     }
+     public function studentresit(): HasMany {
+       return $this->hasMany(Studentresit::class);
      }
      protected static function boot()
      {

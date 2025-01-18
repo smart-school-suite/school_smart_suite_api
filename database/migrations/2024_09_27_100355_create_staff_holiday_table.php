@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subcriptions', function (Blueprint $table) {
+        Schema::create('staff_holiday', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
-            $table->integer('max_number_students');
-            $table->decimal('monthly_price', 8, 2);
-            $table->decimal('yearly_price', 8, 2);
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->text('notes')->nullable();
+            $table->text("reason");
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subcriptions');
+        Schema::dropIfExists('staff_holiday');
     }
 };

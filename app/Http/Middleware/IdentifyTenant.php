@@ -17,7 +17,7 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $schoolId = $request->header('SCHOOL-BRANCH-KEY');
+        $schoolId = $request->header('SCHOOL_BRANCH_KEY');
         // Find the school based on the ID
         $school = Schoolbranches::findOrFail($schoolId);
 

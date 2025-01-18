@@ -72,7 +72,7 @@ return [
         'schooladmin' => [
             'driver' => 'sanctum',
             'table' => 'persona_access_tokens',
-            'provider' => 'schooladmins'
+            'provider' => 'school_admins'
         ]
     ],
 

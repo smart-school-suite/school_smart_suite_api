@@ -12,11 +12,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('events', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('event_name');
-            $table->date('event_date');
+            $table->string("id");
+            $table->string('title');
+            $table->timestamp('start')->useCurrent();
+            $table->timestamp('end')->useCurrent();
             $table->string('location');
-            $table->string('attendance');
+            $table->text('description');
+            $table->json('attendees');
+            $table->text('notes')->nullable();
+            $table->string('organizer');
+            $table->string('status');
+            $table->string('category');
+            $table->string('urgency');
+            $table->json('tags')->nullable();
+            $table->string('color');
+            $table->string('duration');
+            $table->string('url')->nullable();
+            $table->string('audience')->nullable();
+            $table->string('feedback_link')->nullable();
+            $table->json('attachments')->nullable();
+            $table->string('background_image')->nullable();
             $table->timestamps();
         });
     }
@@ -29,3 +44,4 @@ return new class extends Migration
         Schema::dropIfExists('events');
     }
 };
+

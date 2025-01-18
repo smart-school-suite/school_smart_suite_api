@@ -19,7 +19,7 @@ class Feepayment extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'fee_payment';
+    public $table = 'fee_payment_transactions';
     public $incrementing = 'false';
 
     public function school(): BelongsTo {

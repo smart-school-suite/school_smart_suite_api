@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Schoolbranches;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class schoolbranchesController extends Controller
@@ -23,7 +24,8 @@ class schoolbranchesController extends Controller
          ]);
 
          $new_school_branch_instance = new Schoolbranches();
-
+         $random_id = Str::uuid()->toString();
+         $new_school_branch_instance->id = $random_id;
          $new_school_branch_instance->school_id = $request->school_id;
          $new_school_branch_instance->branch_name = $request->branch_name;
          $new_school_branch_instance->address = $request->address;
@@ -40,7 +42,8 @@ class schoolbranchesController extends Controller
          return response()->json([
             'status' => 'ok',
             'message' => 'School branch created succesfully',
-            'created_school_branch' => $new_school_branch_instance
+            'created_school_branch' => $new_school_branch_instance,
+            'school_branch_key' => $random_id
          ], 200);
     }
 
@@ -89,9 +92,9 @@ class schoolbranchesController extends Controller
                 'message' => 'school branch not found'
             ], 404);
         }
-       
+
         $school_branch->delete();
-        
+
         return response()->json([
             'status' => 'ok',
             'message' => 'School branch deleted sucessfully',
@@ -115,5 +118,5 @@ class schoolbranchesController extends Controller
         ], 200);
     }
 
-    
+
 }

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('instructor_availabilities', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('day_of_week'); // e.g., 'Monday', 'Tuesday'
+            $table->string('day_of_week');
             $table->time('start_time');
             $table->time('end_time');
             $table->timestamps();

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Country;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class School extends Model
@@ -14,7 +13,7 @@ class School extends Model
     use HasFactory;
 
     protected $fillable = [
-       'id',
+        'id',
        'country_id',
        'name',
        'address',
@@ -43,7 +42,7 @@ class School extends Model
     public function department(): HasMany {
         return $this->hasMany(Department::class);
     }
-    
+
     public function events(): HasMany {
         return $this->hasMany(Events::class);
     }
@@ -83,18 +82,10 @@ class School extends Model
     public function teacher() : HasMany {
         return $this->hasMany(Teacher::class);
     }
-    
-    public function subcription(): BelongsTo {
-        return $this->belongsTo(Subcription::class, 'subcription_id');
-    }
-    protected static function boot()
+
+    public function schoolSubscriptions()
     {
-        parent::boot();
-       
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-      
+        return $this->hasMany(SchoolSubscription::class);
     }
+
 }

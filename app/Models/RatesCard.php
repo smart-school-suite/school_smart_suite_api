@@ -5,34 +5,34 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Subcriptionfeatures extends Model
+class RatesCard extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description'
+        'min_students', 'max_students', 'max_school_admins', 'max_parents',
+        'monthly_rate_per_student', 'yearly_rate_per_student', 'is_active', 'subscription_plan_id'
     ];
 
-    public $incrementing = 'false';
-    public $table = 'subcription_features';
     public $keyType = 'string';
+    public $incrementing = false;
+    public $table = 'rate_cards';
+
+
+    public function schoolSubscriptions()
+    {
+        return $this->hasMany(SchoolSubscription::class);
+    }
 
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
+            $user->id = substr($uuid, 0, 15);
          });
-      
-    }
 
-    public function subcription(): HasMany {
-        return $this->hasMany(Subcription::class, 'description_id');
     }
 }

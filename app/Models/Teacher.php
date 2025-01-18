@@ -53,16 +53,21 @@ class Teacher extends Model
             'password' => 'hashed',
         ];
     }
-    
+
+    public function otps()
+    {
+        return $this->morphMany(Otp::class, 'otpable');
+    }
+
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
     public function school(): BelongsTo {
         return $this->belongsTo(School::class);
@@ -75,7 +80,7 @@ class Teacher extends Model
     public function courses(): HasMany {
         return $this->hasMany(Courses::class);
     }
-    
+
     public function instructoravailability(): HasMany {
         return $this->hasMany(InstructorAvailability::class);
     }
@@ -83,5 +88,5 @@ class Teacher extends Model
     public function timetable(): HasMany {
         return $this->hasMany(Timetable::class);
     }
-    
+
 }

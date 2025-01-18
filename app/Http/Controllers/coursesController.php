@@ -68,7 +68,7 @@ class coursesController extends Controller
       public function get_all_courses_with_no_relation(Request $request)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $course = Courses::where('school_branch_id', $currentSchool->id)->get();
+            $course = Courses::where('school_branch_id', $currentSchool->id)->with(['specialty', 'level', 'semester'])->get();
             if($course->isEmpty()){
                   return response()->json([
                         'status' => 'ok',
@@ -104,4 +104,27 @@ class coursesController extends Controller
                   'message' => 'Course updated succefully'
             ], 200);
       }
+
+      public function courses_details(Request $request){
+             $currentSchool = $request->attributes->get("currentSchool");
+             $course_id = $request->route("course_id");
+             $find_course = Courses::find($course_id);
+             if(!$find_course){
+                  return response()->json([
+                         "status" => "error",
+                         "message" => "Course not found"
+                  ], 200);
+             }
+
+             $course_details = Courses::where("school_branch_id", $currentSchool->id)
+                                       ->with(['level', 'semester', 'specialty'])
+                                       ->where("id", $course_id)
+                                        ->get();
+            
+            return response()->json([
+               "status" => "ok",
+               "message" => "Course Details fetched succefully",
+               "course_details" => $course_details
+            ], 200);
+       }
 }

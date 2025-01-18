@@ -14,11 +14,30 @@ return new class extends Migration
         Schema::create('teacher', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
-            $table->string('email')->unique();
             $table->string('password');
             $table->string('profile_pricture')->nullable();
             $table->string('phone_one')->nullable();
             $table->string('phone_two')->nullable();
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->string('address')->nullable();
+            $table->string('employment_status')->nullable(); // E.g., Full-time, Part-time, Contractor
+            $table->date('hire_date')->nullable();
+            $table->string('emergency_contact_name')->nullable();
+            $table->string('emergency_contact_phone')->nullable();
+            $table->date('last_performance_review')->nullable();
+            $table->string('highest_qualification')->nullable(); // e.g., Bachelor's, Master's
+            $table->string('field_of_study')->nullable(); // e.g., Computer Science, Business Administration
+            $table->timestamp('last_login_at')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('leave')->default(false);
+            $table->boolean('holiday')->default(false);
+            $table->string('city')->nullable();
+            $table->string('cultural_background')->nullable();
+            $table->string('religion');
+            $table->integer('years_experience');
+            $table->decimal('salary', 8, 2);
             $table->rememberToken();
             $table->timestamps();
         });
