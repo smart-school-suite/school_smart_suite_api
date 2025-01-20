@@ -21,7 +21,7 @@ class specialtyController extends Controller
             'school_fee' => 'required|decimal:0, 2',
             'level_id' => 'required|string'
         ]);
-         
+
         $check_department = Department::where('school_branch_id', $currentSchool->id)->find($request->department_id);
         if(!$check_department){
             return response()->json(['message' => 'This deparment was not found'], 409);

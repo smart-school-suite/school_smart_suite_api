@@ -69,12 +69,7 @@ class coursesController extends Controller
       {
             $currentSchool = $request->attributes->get('currentSchool');
             $course = Courses::where('school_branch_id', $currentSchool->id)->with(['specialty', 'level', 'semester'])->get();
-            if($course->isEmpty()){
-                  return response()->json([
-                        'status' => 'ok',
-                        'message' => 'could not find any courses'
-                  ], 400);
-            }
+
             return response()->json([
                   'status' => 'ok',
                   'message' => 'fetch succesfull',
@@ -120,7 +115,7 @@ class coursesController extends Controller
                                        ->with(['level', 'semester', 'specialty'])
                                        ->where("id", $course_id)
                                         ->get();
-            
+
             return response()->json([
                "status" => "ok",
                "message" => "Course Details fetched succefully",

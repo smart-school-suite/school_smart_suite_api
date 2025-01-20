@@ -71,18 +71,8 @@ class departmentController extends Controller
 
     public function get_all_school_department_with_school_branches(Request $request){
       $currentSchool = $request->attributes->get('currentSchool');
-      
-      // Fetch the departments as a collection
-      $departments = Department::where('school_branch_id', $currentSchool->id)->get(); 
-  
-      // Check if the collection is empty
-      if ($departments->isEmpty()) {
-          return response()->json([
-              'status' => 'ok',
-              'message' => 'no records found'
-          ], 400);
-      }
-  
+      $departments = Department::where('school_branch_id', $currentSchool->id)->get();
+
       return response()->json([
           'status' => 'ok',
           'message' => 'records fetched successfully',
@@ -111,13 +101,13 @@ class departmentController extends Controller
        if(!$find_department){
           return response()->json([
              "status" => "error",
-             "message" => "Department not found", 
+             "message" => "Department not found",
           ], 400);
        }
-      
+
        $department_details = Department::where("school_branch_id", $currentSchool->id)
                                        ->where("id", $department_id)->get();
-            
+
         return response()->json([
            "status" => "ok",
            "message" => "Department fetched successfully",
