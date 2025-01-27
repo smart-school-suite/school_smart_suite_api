@@ -22,9 +22,11 @@ class Parents extends Model
     protected $fillable = [
         'name',
         'address',
-        'phone_number',
+        'email',
+        'phone_one',
         'language_preference',
         'school_branch_id',
+        'relationship_to_student',
         'password',
      ];
 

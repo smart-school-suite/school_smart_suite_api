@@ -20,15 +20,14 @@ class InstructorAvailaibiitySeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-    
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
+
+            $schoolBranchId = "d6150672-7255-4b1a-9224-cb8861762548";
             $level_id = DB::table('education_levels')->pluck('id')->toArray();
             $semester_id = DB::table('semesters')->pluck('id')->toArray();
-            $teacher_avialaibility = []; 
-    
+            $teacher_avialaibility = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data);                
-                $schoolBranchId = Arr::random($school_branches);
+                Log::info('Current Row Data: ', $data);
                 $teacher_id = DB::table('teacher')->where("school_branch_id", $schoolBranchId)->pluck('id')->toArray();
                 if(!$teacher_id){
                     Log::warning("teacher not found for school branch id" . $schoolBranchId);
@@ -43,14 +42,14 @@ class InstructorAvailaibiitySeeder extends Seeder
                 $randomSemesterId = Arr::random($semester_id);
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 25);
-                
+
                 if (count($data) >= 2) {
                     $teacher_avialaibility[] = [
-                        'id' => $id, 
-                        'school_branch_id' => $schoolBranchId, 
-                        'day_of_week' => $data[1], 
-                        'start_time' => $data[2],  
-                        'end_time' => $data[3],   
+                        'id' => $id,
+                        'school_branch_id' => $schoolBranchId,
+                        'day_of_week' => $data[1],
+                        'start_time' => $data[2],
+                        'end_time' => $data[3],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'level_id' => $randomLevelId,
@@ -60,9 +59,9 @@ class InstructorAvailaibiitySeeder extends Seeder
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Teacher schedule Array: ', $teacher_avialaibility);
             if (!empty($teacher_avialaibility)) {
                 DB::table('instructor_availabilities')->insert($teacher_avialaibility);

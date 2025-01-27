@@ -33,21 +33,21 @@ class Examtimetable extends Model
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'examtimetable';
-    
+
 
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 
-    public function course(): HasMany {
-        return $this->hasMany(Courses::class, 'course_id');
+    public function course(): BelongsTo {
+        return $this->belongsTo(Courses::class, 'course_id');
     }
 
     public function exam(): BelongsTo {

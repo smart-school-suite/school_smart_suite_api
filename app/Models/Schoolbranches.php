@@ -14,6 +14,7 @@ class Schoolbranches extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'school_id',
         'branch_name',
         'address',
@@ -32,7 +33,7 @@ class Schoolbranches extends Model
     public function country(): BelongsTo {
         return $this->belongsTo(Country::class);
     }
-     
+
     public function school(): BelongsTo {
         return $this->belongsTo(School::class);
     }
@@ -43,7 +44,7 @@ class Schoolbranches extends Model
     public function department(): HasMany {
         return $this->hasMany(Department::class);
     }
-    
+
     public function events(): HasMany {
         return $this->hasMany(Events::class);
     }
@@ -85,14 +86,5 @@ class Schoolbranches extends Model
     }
 
 
-    protected static function boot()
-    {
-        parent::boot();
-       
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 25);
-         });
-      
-    }
+
 }

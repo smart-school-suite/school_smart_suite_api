@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('address');
             $table->string('password');
+            $table->string("email")->unique();
             $table->string('profile_picture')->nullable();
             $table->string('language_preference');
             $table->string('phone_one');
             $table->string('phone_two')->nullable();
-            $table->string("email")->unique();
             $table->string('occupation')->nullable();
             $table->string('relationship_to_student')->nullable();
             $table->string('preferred_contact_method')->default("All");

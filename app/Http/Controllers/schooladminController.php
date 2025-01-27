@@ -100,43 +100,22 @@ class schooladminController extends Controller
             'email' => 'required|email',
             'password' => 'required|string',
             'role' => 'required|string',
-            'date_of_birth' => 'required|date',
-            'address' => 'required|string',
             'employment_status' => 'required|string',
-            'hire_date' => 'required|date',
-            'emergency_contact_name' => 'required|string',
-            'emergency_contact_phone' => 'required|String',
-            'last_performance_review' => 'required|string',
             'work_location' => 'required|string',
             'position' => 'required|string',
-            'highest_qualification' => 'required|string',
-            'field_of_study' => 'required|string',
-            'cultural_background' => 'required|string',
-            'religion' => 'required|string',
-            'years_experience' => 'required',
+            'hire_date' => 'required|date',
             'salary' => 'required',
-            'school_branch_id' => 'required|string',
         ]);
 
         $new_school_admin_instance = new Schooladmin();
         $new_school_admin_instance->name = $request->name;
         $new_school_admin_instance->email = $request->email;
-        $new_school_admin_instance->role = $request->role;
         $new_school_admin_instance->password = Hash::make($request->password);
-        $new_school_admin_instance->date_of_birth = $request->date_of_birth;
-        $new_school_admin_instance->address = $request->address;
+        $new_school_admin_instance->role = $request->role;
         $new_school_admin_instance->employment_status = $request->employment_status;
         $new_school_admin_instance->hire_date = $request->hire_date;
-        $new_school_admin_instance->emergency_contact_name = $request->emergency_contact_name;
-        $new_school_admin_instance->emergency_contact_phone = $request->emergency_contact_phone;
-        $new_school_admin_instance->last_performance_review = $request->last_performance_review;
         $new_school_admin_instance->work_location = $request->work_location;
         $new_school_admin_instance->position = $request->position;
-        $new_school_admin_instance->highest_qualification = $request->highest_qualification;
-        $new_school_admin_instance->field_of_study = $request->field_of_study;
-        $new_school_admin_instance->cultural_background = $request->cultural_background;
-        $new_school_admin_instance->religion = $request->religion;
-        $new_school_admin_instance->years_experience = $request->years_experience;
         $new_school_admin_instance->salary = $request->salary;
         $new_school_admin_instance->school_branch_id = $request->school_branch_id;
 

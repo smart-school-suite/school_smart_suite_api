@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Exams;
 use App\Models\Marks;
+use App\Models\Student;
+use Illuminate\Http\JsonResponse;
+use App\Models\LetterGrade;
 use Illuminate\Http\Request;
 
 class examsController extends Controller
@@ -19,8 +22,8 @@ class examsController extends Controller
       'level_id' => 'string|required',
       'weighted_mark' => 'required',
       'semester_id' => 'required|string',
-      'grade_points' => 'required|numeric',
-      'grade_status' => 'string'
+      'school_year' => 'required|string',
+      'specialty_id' => 'required|string'
     ]);
 
     $new_examdata_instance = new Exams();
@@ -31,8 +34,8 @@ class examsController extends Controller
     $new_examdata_instance->exam_type_id = $request->exam_type_id;
     $new_examdata_instance->weighted_mark = $request->weighted_mark;
     $new_examdata_instance->semester_id = $request->semester_id;
-    $new_examdata_instance->grade_points = floatval($request->grade_points);
-    $new_examdata_instance->grade_status = $request->grade_status;
+    $new_examdata_instance->school_year = $request->school_year;
+    $new_examdata_instance->specialty_id = $request->specialty_id;
     $new_examdata_instance->save();
 
     return response()->json([
@@ -94,12 +97,6 @@ class examsController extends Controller
     $exam_data = Exams::where('school_branch_id', $currentSchool->id)
       ->with(['examtype', 'semester', 'specialty.level'])
       ->get();
-    if ($exam_data->isEmpty()) {
-      return response()->json([
-        'status' => 'ok',
-        'message' => 'No exam records found',
-      ], 400);
-    }
     return response()->json([
       'status' => 'ok',
       'message' => 'Exam data fetched sucessfully',
@@ -127,5 +124,75 @@ class examsController extends Controller
          "message" => "Exam details fetched succefully",
          "exam_details" => $exam_details
       ], 201);
+  }
+
+  public function associateWeightedMarkWithLetterGrades(string $exam_id): JsonResponse
+  {
+
+      $exam = Exams::where("id", $exam_id)->with(["examtype"])->first();
+
+
+      if (!$exam) {
+          return response()->json([
+              'status' => 'error',
+              'message' => 'Exam not found'
+          ], 404);
+      }
+
+
+      $weighted_mark = $exam->weighted_mark;
+      $exam_name = $exam->examtype->name;
+      $letterGrades = LetterGrade::all();
+      $results = [];
+
+
+      foreach ($letterGrades as $letterGrade) {
+          $results[] = [
+              'letter_grade_id' => $letterGrade->id,
+              'exam_id' => $exam_id,
+              'exam_name' => $exam->examtype->exam_name,
+              'letter_grade' => $letterGrade->letter_grade,
+              'maximum_score' => $weighted_mark
+          ];
+      }
+
+      return response()->json([
+          'status' => 'ok',
+          'message' => 'Data fetched successfully',
+          'exam_letter_grades' => $results,
+      ]);
+  }
+
+  public function get_accessed_exams(Request $request){
+    $currentSchool = $request->attributes->get('currentSchool');
+    $student_id = $request->route("student_id");
+    $find_student = Student::find($student_id);
+    if(!$find_student){
+         return response()->json([
+             'status' => 'ok',
+             "message" => "student not found"
+         ], 200);
+    }
+
+    $exam_data = Exams::where("school_branch_id", $currentSchool->id)
+                        ->where("specialty_id", $find_student->specialty_id)
+                         ->where("level_id", $find_student->level_id)
+                         ->with(["examtype"])
+                          ->get();
+
+    $results = [];
+     foreach ($exam_data as $exams) {
+        $results[] = [
+            "id" => $exams->id,
+            "exam_name" => $exams->examtype->exam_name
+        ];
+     }
+
+     return response()->json([
+          'status' => "ok",
+          "message" => "data fetched successfuly",
+          "exam_data" => $results
+     ], 200);
+
   }
 }

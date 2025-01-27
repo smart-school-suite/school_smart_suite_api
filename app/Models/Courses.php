@@ -51,8 +51,8 @@ class Courses extends Model
         return $this->belongsTo(Schoolbranches::class);
     }
 
-    public function examtimetable(): BelongsTo {
-        return $this->belongsTo(Examtimetable::class);
+    public function examtimetable(): HasMany {
+        return $this->hasMany(Examtimetable::class);
     }
 
     public function specialty(): BelongsTo {
@@ -80,11 +80,11 @@ class Courses extends Model
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 }

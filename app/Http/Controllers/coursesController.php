@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Courses;
+use App\Models\Specialty;
 use Illuminate\Http\Request;
 
 class coursesController extends Controller
@@ -121,5 +122,53 @@ class coursesController extends Controller
                "message" => "Course Details fetched succefully",
                "course_details" => $course_details
             ], 200);
+       }
+
+       public function get_specialty_level_semester_courses(Request $request)
+       {
+
+           $currentSchool = $request->attributes->get("currentSchool");
+           $specialtyId = $request->route("specialty_id");
+           $semesterId = $request->route("semester_id");
+
+           if (!$currentSchool || !$specialtyId || !$semesterId) {
+               return response()->json([
+                   'status' => 'error',
+                   'message' => 'Invalid input parameters',
+               ], 400);
+           }
+
+
+           $specialty = Specialty::find($specialtyId);
+           if (!$specialty) {
+               return response()->json([
+                   'status' => 'error',
+                   'message' => 'Specialty not found',
+               ], 404);
+           }
+
+
+           $levelId = $specialty->level->id;
+
+           $coursesData = Courses::where("school_branch_id", $currentSchool->id)
+               ->where("semester_id", $semesterId)
+               ->where("specialty_id", $specialtyId)
+               ->where("level_id", $levelId)
+               ->get();
+
+
+           if (!$coursesData->count()) {
+               return response()->json([
+                   'status' => 'error',
+                   'message' => 'No courses data found',
+               ], 404);
+           }
+
+
+           return response()->json([
+               'status' => 'ok',
+               'message' => 'Courses data fetched successfully',
+               'courses_data' => $coursesData,
+           ], 200);
        }
 }

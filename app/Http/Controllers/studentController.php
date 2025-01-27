@@ -74,7 +74,8 @@ class studentController extends Controller
         if($student_data_scoped->isEmpty()){
             return response()->json([
                 'status' => 'error',
-                'message' => 'No student records found'
+                'message' => 'No student records found',
+                'student_data' => $student_data_scoped
             ], 409);
         }
         return response()->json([
@@ -87,7 +88,7 @@ class studentController extends Controller
     public function student_details(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $student_id  = $request->route('student_id');
-         
+
         $find_student = Student::find($student_id);
         if(!$find_student){
              return response()->json([
@@ -98,7 +99,7 @@ class studentController extends Controller
         $student_details = Student::where("school_branch_id", $currentSchool->id)
                             ->where("id", $student_id)
                             ->with(['guardianOne','guardianTwo', 'specialty', 'level', 'studentBatch', 'department'])->get();
-        
+
         return response()->json([
             "status" => "ok",
             "message" => "Student Details fetched succefully",

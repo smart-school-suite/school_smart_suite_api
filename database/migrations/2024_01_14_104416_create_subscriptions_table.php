@@ -46,7 +46,7 @@ return new class extends Migration
         });
 
         Schema::create('payments', function (Blueprint $table) {
-            $table->string('string')->primary();
+            $table->string('id')->primary();
             $table->timestamp('payment_date');
             $table->decimal('amount', 10, 2);
             $table->string('payment_method');

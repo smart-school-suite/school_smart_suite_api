@@ -11,12 +11,14 @@ class Studentbatchcontroller extends Controller
     public function create_student_batch(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-             'name' => 'required|string'
+             'name' => 'required|string',
+             'graduation_date' => 'required|date'
         ]);
 
         $new_student_batch_instance = new Studentbatch();
 
         $new_student_batch_instance->name = $request->name;
+        $new_student_batch_instance->graduation_date = $request->graduation_date;
         $new_student_batch_instance->school_branch_id = $currentSchool->id;
 
         $new_student_batch_instance->save();
@@ -31,7 +33,7 @@ class Studentbatchcontroller extends Controller
     public function update_student_batch(Request $request){
         $batch_id = $request->route('batch_id');
         $currentSchool = $request->attributes->get('currentSchool');
-        
+
         $find_student_batch = Studentbatch::where('school_branch_id',  $currentSchool->id)->find($batch_id);
 
         if(!$find_student_batch){
@@ -56,7 +58,7 @@ class Studentbatchcontroller extends Controller
     public function delete_student_batch(Request $request){
         $batch_id = $request->route('batch_id');
         $currentSchool = $request->attributes->get('currentSchool');
-        
+
         $find_student_batch = Studentbatch::where('school_branch_id',  $currentSchool->id)->find($batch_id);
 
         if(!$find_student_batch){
@@ -78,12 +80,6 @@ class Studentbatchcontroller extends Controller
     public function get_all_student_batches(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $student_batches_data = Studentbatch::where('school_branch_id', $currentSchool->id)->get();
-        if($student_batches_data->isEmpty()){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No student batch has been created'
-            ], 400);
-        }
         return response()->json([
             'status' => 'ok',
             'message' => 'student batches fetched succefully',

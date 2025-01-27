@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Marks;
 use App\Models\Grades;
 use App\Models\Exams;
+use App\Models\Examtimetable;
 use App\Models\Resitablecourses;
 use App\Models\Student;
 use App\Models\Studentresit;
@@ -15,167 +16,184 @@ class marksController extends Controller
     public function add_student_mark(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
+
+        // Validate request data
         $request->validate([
-            'student_id' => 'required|string',
-            'courses_id' => 'required|string',
-            'exam_id' => 'required|string',
-            'level_id' => 'required|string',
-            'specialty_id' => 'required|string',
-            'score' => 'required'
+            'student_scores' => 'required|array',
+            'student_scores.*.student_id' => 'required|string',
+            'student_scores.*.courses_id' => 'required|string',
+            'student_scores.*.exam_id' => 'required|string',
+            'student_scores.*.level_id' => 'required|string',
+            'student_scores.*.specialty_id' => 'required|string',
+            'student_scores.*.score' => 'required|numeric'
         ]);
 
-        //checking if student with this mark already exist
+        foreach ($request->student_scores as $scoreData) {
+            $student = Student::where('school_branch_id', $currentSchool->id)->find($scoreData['student_id']);
 
-        $find_student = Student::where('school_branch_id', $currentSchool->id)->find($request->student_id);
-        if (!$find_student) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'student not found'
-            ], 404);
-        }
-
-        $check_if_duplicate_records = Marks::Where('school_branch_id', $currentSchool->id)
-            ->Where('courses_id', $request->courses_id)
-            ->Where('exam_id', $request->exam_id)
-            ->Where('level_id', $request->level_id)
-            ->Where('specialty_id', $request->specialty_id)
-            ->Where('student_id', $request->student_id)
-            ->exists();
-
-        if ($check_if_duplicate_records) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'No student can have dublicated data entries',
-            ], 409);
-        }
-
-
-        $exam = Exams::Where('school_branch_id', $currentSchool->id)
-            ->findOrFail($request->exam_id);
-
-        $exam_configuration = $this->exam_config($request->exam_id, $currentSchool);
-        if (empty($exam_configuration['related_ca'])) {
-            if ($request->score > $exam->weighted_mark) {
+            if (!$student) {
                 return response()->json([
-                    'status' => 'ok',
-                    'message' => 'Score cannot be greater than the exam mark.',
+                    'status' => 'error',
+                    'message' => 'Student not found',
+                ], 404);
+            }
+
+            $isDuplicate = Marks::where('school_branch_id', $currentSchool->id)
+                ->where('courses_id', $scoreData['courses_id'])
+                ->where('exam_id', $scoreData['exam_id'])
+                ->where('level_id', $scoreData['level_id'])
+                ->where('specialty_id', $scoreData['specialty_id'])
+                ->where('student_id', $scoreData['student_id'])
+                ->exists();
+
+            if ($isDuplicate) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Duplicate data entry for this student',
                 ], 409);
             }
 
-            // Determine the grade using the custom grading logic
-            $grade = $this->determine_letter_grade_of_ca($request->score, $currentSchool->id, $request->exam_id);
-            Marks::create([
-                'student_id' => $request->student_id,
-                'exam_id' => $exam->id,
-                'score' => $request->score,
-                'grade' => $grade,
-                'student_batch_id' => $find_student->student_batch_id,
-                'level_id' => $request->level_id,
-                'courses_id' => $request->courses_id, // Assuming this is being provided in the request
-                'school_branch_id' => $currentSchool->id,
-                'specialty_id' => $request->specialty_id
-            ]);
+            $exam = Exams::where('school_branch_id', $currentSchool->id)->find($scoreData['exam_id']);
 
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Marks added successfully!',
-                'grade' =>   $grade
-            ], 201);
-        } else {
-            $get_ca_score = Marks::where('school_branch_id', $currentSchool->id)
-                 //->where('exam_id', $exam_configuration['related_ca']->id)
-                ->where('student_id', $find_student->id)
-                ->where('courses_id', $request->courses_id)
-                ->first();
-            if($get_ca_score === null){
+            if (!$exam) {
                 return response()->json([
-                    'status' => 'ok',
-                    'message' => 'This student does not have a CA mark for this course'
-                ], 400);
+                    'status' => 'error',
+                    'message' => 'Exam not found',
+                ], 404);
             }
-           // if ($request->score + $get_ca_score->score > $exam_configuration['related_ca']->weighted_mark + $exam->weighted_mark) {
-               // return response()->json([
-                  //  'message' => 'student mark exam score plus student marks for ca is grater than the weighted mark for this exam',
-                 //   'ca_score' =>  $get_ca_score->score,
-                 //   'exam_score' => $request->score,
-                 //   'total_score' => $request->score + $get_ca_score->score,
-                  //  'max_exam_score' => $exam_configuration['related_ca']->weighted_mark + $exam->weighted_mark
-               // ]);
-        //    }
-            $grade = $this->determine_letter_grade_of_exam(
-                $request->score,
-                $get_ca_score->score,
-                $currentSchool->id,
-                $request->exam_id
-            );
 
-            $this->create_resitable_courses(
-                $grade,
-                $request->courses_id,
-                $request->exam_id,
-                $request->specialty_id,
-                $currentSchool,
-                $request->level_id,
-                $request->student_id
-            );
+            $examConfig = $this->exam_config($scoreData['exam_id'], $currentSchool);
 
-            Marks::create([
-                'student_id' => $request->student_id,
-                'exam_id' => $exam->id,
-                'score' => $request->score  + $get_ca_score->score,
-                'grade' => $grade,
-                'student_batch_id' => $find_student->student_batch_id,
-                'level_id' => $request->level_id,
-                'courses_id' => $request->courses_id, // Assuming this is being provided in the request
-                'school_branch_id' => $currentSchool->id,
-                'specialty_id' => $request->specialty_id
-            ]);
+            if (empty($examConfig['related_ca'])) {
+                if ($scoreData['score'] > $exam->weighted_mark) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Score exceeds maximum exam mark.',
+                    ], 400);
+                }
 
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Marks added successfully!',
-                'ca_score' => $get_ca_score->score,
-                'exam_score' => $request->score,
-                'total_score' => $request->score + $get_ca_score->score,
-                'grade' =>   $grade
-            ], 201);
+                $grade = $this->determine_letter_grade($scoreData['score'], $currentSchool->id, $scoreData['exam_id']);
+
+                Marks::create([
+                    'student_id' => $scoreData['student_id'],
+                    'exam_id' => $exam->id,
+                    'score' => $scoreData['score'],
+                    'grade' => $grade,
+                    'student_batch_id' => $student->student_batch_id,
+                    'level_id' => $scoreData['level_id'],
+                    'courses_id' => $scoreData['courses_id'],
+                    'school_branch_id' => $currentSchool->id,
+                    'specialty_id' => $scoreData['specialty_id'],
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Marks added successfully!',
+                    'grade' => $grade,
+                ], 201);
+            } else {
+                $caScore = Marks::where('school_branch_id', $currentSchool->id)
+                    ->where('exam_id', $examConfig['related_ca']->id)
+                    ->where('student_id', $student->id)
+                    ->where('courses_id', $scoreData['courses_id'])
+                    ->first();
+
+                if (!$caScore) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'CA mark not found for this course',
+                    ], 400);
+                }
+
+                $totalScore = $scoreData['score'] + $caScore->score;
+                $maxScore = $examConfig['related_ca']->weighted_mark + $exam->weighted_mark;
+
+                if ($totalScore > $maxScore) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Total score exceeds maximum allowed score.',
+                        'ca_score' => $caScore->score,
+                        'exam_score' => $scoreData['score'],
+                        'total_score' => $totalScore,
+                        'max_score' => $maxScore,
+                    ], 400);
+                }
+
+                $grade = $this->determine_letter_grade($totalScore, $currentSchool->id, $scoreData['exam_id']);
+
+                Marks::create([
+                    'student_id' => $scoreData['student_id'],
+                    'exam_id' => $exam->id,
+                    'score' => $totalScore,
+                    'grade' => $grade,
+                    'student_batch_id' => $student->student_batch_id,
+                    'level_id' => $scoreData['level_id'],
+                    'courses_id' => $scoreData['courses_id'],
+                    'school_branch_id' => $currentSchool->id,
+                    'specialty_id' => $scoreData['specialty_id'],
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Marks added successfully!',
+                    'ca_score' => $caScore->score,
+                    'exam_score' => $scoreData['score'],
+                    'total_score' => $totalScore,
+                    'grade' => $grade,
+                ], 201);
+            }
         }
-
-        // Create Marks entry
-
     }
 
-    private function determine_letter_grade_of_ca($score, $schoolId, $exam_id)
+    private function determine_letter_grade($score, $schoolId, $examId)
     {
-
-        $grades = Grades::with('lettergrade') // Eager loading the lettergrade relationship
+        $grades = Grades::with('lettergrade')
             ->where('school_branch_id', $schoolId)
-            ->where('exam_id', $exam_id)
+            ->where('exam_id', $examId)
             ->orderBy('minimum_score', 'desc')
             ->get();
+
         foreach ($grades as $grade) {
             if ($score >= $grade->minimum_score) {
-                return $grade->lettergrade->letter_grade; // Accessing the letter grade via the relationship
+                return $grade->lettergrade->letter_grade;
             }
         }
 
-        return 'F';  // Default if no grade matches
+        return 'F';
     }
 
-    private function determine_letter_grade_of_exam($score, $ca_score, $schoolId,  $exam_id)
+    private function exam_config($examId, $currentSchool)
     {
-        $grades = Grades::with('lettergrade') // Eager loading the lettergrade relationship
-            ->where('school_branch_id', $schoolId)
-            ->where('exam_id', $exam_id)
-            ->orderBy('minimum_score', 'desc')
-            ->get();
+        $exam = Exams::with('examtype')->where('school_branch_id', $currentSchool->id)->find($examId);
 
-        foreach ($grades as $grade) {
-            if ($score + $ca_score >= $grade->minimum_score) {
-                return $grade->lettergrade->letter_grade; // Accessing the letter grade via the relationship
-            }
+        if (!$exam) {
+            return null;
         }
-        return 'F';  // Default if no grade matches
+
+        $programName = $exam->examtype->program_name;
+        $relatedExams = [
+            'first_semester_exam' => 'first_semester_ca',
+            'second_semester_exam' => 'second_semester_ca',
+            'third_semester_exam' => 'third_semester_ca',
+            'fourth_semester_exam' => 'fourth_semester_ca',
+            'fifth_semester_exam' => 'fifth_semester_ca',
+        ];
+
+        if (strpos($programName, '_ca') !== false) {
+            return ['exam' => $exam, 'related_ca' => null];
+        }
+
+        if (array_key_exists($programName, $relatedExams)) {
+            $relatedProgramName = $relatedExams[$programName];
+            $relatedExamType = Exams::with('examtype')->where('examtype.program_name', $relatedProgramName)->first();
+
+            return [
+                'exam' => $exam,
+                'related_ca' => $relatedExamType,
+            ];
+        }
+
+        return ['exam' => $exam, 'related_ca' => null];
     }
 
     public function delete_mark_of_student_scoped(Request $request, $mark_id)
@@ -252,63 +270,27 @@ class marksController extends Controller
         ], 201);
     }
 
-    private function exam_config($exam_id, $currentSchool)
-    {
-        $exam = Exams::with('examtype')->where('school_branch_id', $currentSchool->id)->find($exam_id);
-        if (!$exam) {
-            return null;
-        }
-        $programName = $exam->examtype->program_name;
-        $related_exams = [
-            'first_semester_exam' => 'first_semester_ca',
-            'second_semester_exam' => 'second_semester_ca',
-            'third_semester_exam' => 'third_semester_ca',
-            'fourth_semester_exam' => 'fourth_semester_ca',
-            'fifth_semester_exam' => 'fifth_semester_ca'
-        ];
-        if (strpos($programName, '_ca') !== false) { // If it contains '_ca' (for CAs)
-            return ['exam' => $exam->load('examtype'), 'related_ca' => null]; // Return exam data with exam type as-is.
-        } elseif (array_key_exists($programName, $related_exams)) {
-            // If it maps to an exam type, get related CA.
-            $related_ca_program_name = $related_exams[$programName];
 
-            // Fetch the exam type for the related CA program name.
-            $relatedExamType = \App\Models\Examtype::where('program_name', $related_ca_program_name)->first();
-
-            if ($relatedExamType) {
-                // Now retrieve the CA exam based on the related exam type ID.
-                $caExam = \App\Models\Exams::with('examtype')->where('exam_type_id', $relatedExamType->id)->first();
-
-                // Return both exam and related CA exam details.
-                return [
-                    'exam' => $exam->load('examtype'),
-                    'related_ca' => $caExam ? $caExam->load('examtype') : null,
-                ];
-            }
-        }
-        return [
-            'exam' => $exam->load('examtype'),
-            'related_ca' => null
-        ];
-    }
 
     private function create_resitable_courses($letter_grade, $courses_id, $exam_id, $specialty_id, $currentSchool, $level_id, $student_id)
     {
         $check_if_resit_course_already_exist = Resitablecourses::where('school_branch_id', $currentSchool->id)
-        ->where('specialty_id', $specialty_id)
-        ->where('courses_id', $courses_id)
-        ->where('level_id', $level_id)
-        ->exists();
+            ->where('specialty_id', $specialty_id)
+            ->where('courses_id', $courses_id)
+            ->where('level_id', $level_id)
+            ->exists();
         $grades = Grades::with('lettergrade')
-        ->where('school_branch_id', $currentSchool->id)
-        ->where('exam_id', $exam_id)
-        ->orderBy('minimum_score', 'desc')
-        ->get();
+            ->where('school_branch_id', $currentSchool->id)
+            ->where('exam_id', $exam_id)
+            ->orderBy('minimum_score', 'desc')
+            ->get();
 
         if ($check_if_resit_course_already_exist) {
             foreach ($grades as $grade_data) {
-                if ($grade_data->lettergrade->letter_grade === $letter_grade &&
-                $grade_data->grade_status === 'resit') {
+                if (
+                    $grade_data->lettergrade->letter_grade === $letter_grade &&
+                    $grade_data->grade_status === 'resit'
+                ) {
                     Studentresit::create([
                         'school_branch_id' => $currentSchool->id,
                         'student_id' => $student_id,
@@ -320,35 +302,32 @@ class marksController extends Controller
                     break;
                 }
             }
-
         } else {
 
             foreach ($grades as $grade_data) {
-                if ($grade_data->lettergrade->letter_grade === $letter_grade &&
-                $grade_data->grade_status === 'resit') {
+                if (
+                    $grade_data->lettergrade->letter_grade === $letter_grade &&
+                    $grade_data->grade_status === 'resit'
+                ) {
 
-                   Resitablecourses::create([
-                     'school_branch_id' => $currentSchool->id,
-                     'specialty_id' => $specialty_id,
-                     'courses_id' => $courses_id,
-                     'exam_id' => $exam_id,
-                     'level_id' => $level_id,
-                   ]);
+                    Resitablecourses::create([
+                        'school_branch_id' => $currentSchool->id,
+                        'specialty_id' => $specialty_id,
+                        'courses_id' => $courses_id,
+                        'exam_id' => $exam_id,
+                        'level_id' => $level_id,
+                    ]);
                     break;
                 }
             }
         }
     }
 
-    public function get_all_student_scores(Request $request){
+    public function get_all_student_scores(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        $student_scores = Marks::where("school_branch_id", $currentSchool->id)->with(['course','student', 'exams.examtype', 'level', 'specialty'])->get();
-        if($student_scores->isEmpty()){
-            return response()->json([
-                "status" => 'error',
-                "message" => 'Looks like an empty set',
-            ], 400);
-        }
+        $student_scores = Marks::where("school_branch_id", $currentSchool->id)->with(['course', 'student', 'exams.examtype', 'level', 'specialty'])->get();
+
 
         return response()->json([
             "status" => "ok",
@@ -357,21 +336,22 @@ class marksController extends Controller
         ], 201);
     }
 
-    public function get_exam_score_details(Request $request){
+    public function get_exam_score_details(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $mark_id = $request->route("mark_id");
         $find_exam_score = Marks::find($mark_id);
-        if(!$find_exam_score){
-             return response()->json([
-                 "status" => "error",
-                 "message" => "Exam score not found"
-             ], 400);
+        if (!$find_exam_score) {
+            return response()->json([
+                "status" => "error",
+                "message" => "Exam score not found"
+            ], 400);
         }
 
         $marks_details = Marks::where("school_branch_id", $currentSchool->id)
-                               ->where("id", $mark_id)
-                                ->with(['student','course','exams', 'specialty', 'level'])
-                                ->get();
+            ->where("id", $mark_id)
+            ->with(['student', 'course', 'exams', 'specialty', 'level'])
+            ->get();
         return response()->json([
             "status" => "ok",
             "message" => "score details fetched succefully",
@@ -379,4 +359,71 @@ class marksController extends Controller
         ], 200);
     }
 
+    public function get_exam_score_associated_data(Request $request)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $exam_id = $request->route("exam_id");
+        $student_id = $request->route("student_id");
+
+        $find_student = Student::find($student_id);
+        $find_exam = Exams::find($exam_id);
+        if (!$find_student) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Student not found'
+            ], 400);
+        }
+
+        if (!$find_exam) {
+            return response()->json([
+                "status" => "error",
+                "message" => "exam not found"
+            ], 400);
+        }
+
+        $specailty_id = $find_student->specialty_id;
+        $level_id = $find_student->level_id;
+        $get_exam_courses = Examtimetable::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $exam_id)
+            ->where("specialty_id", $specailty_id)
+            ->with(["course"])
+            ->get();
+
+        $results = [];
+        foreach ($get_exam_courses as $course) {
+
+            $results[] = [
+                "level_id" => $level_id,
+                "course_id" => $course->id,
+                "course_name" => $course->course->course_title,
+                "exam_id" => $exam_id,
+                "specailty_id" => $course->specialty_id,
+                "weighted_mark" => $find_exam->weighted_mark,
+                "student_id" => $student_id
+            ];
+        }
+
+        $results_two = [];
+        $grades_calculator_data = Grades::where("school_branch_id", $currentSchool->id)
+                                          ->where("exam_id", $exam_id)
+                                          ->with(["lettergrade"])
+                                          ->get();
+
+          foreach ($grades_calculator_data as $grade) {
+
+              $results_two[] = [
+                  "id" => $grade->id,
+                  "letter_grade" => $grade->lettergrade->letter_grade,
+                  "grade_points" => $grade->grade_points,
+                  "minimum_score" => $grade->minimum_score
+              ];
+           }
+
+        return response()->json([
+            "status" => "ok",
+            "message" => "Data fetched successfully",
+            "accessed_courses" => $results,
+            "grades_determinant" => $results_two
+        ], 200);
+    }
 }

@@ -13,9 +13,10 @@ class createparentController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'required|email',
             'address' => 'required|string|max:255',
-            'phone_one' => 'string',
-            'phone_two' => 'string',
+            'phone_one' => 'required|string',
+            'relationship_to_student' => 'required|string',
             'language_preference' => 'required|string|max:10',
             'password' => 'required|string|min:8',
         ]);
@@ -23,11 +24,12 @@ class createparentController extends Controller
         Parents::create([
             'name' => $validatedData['name'],
             'address' => $validatedData['address'],
+            'email' => $validatedData['email'],
             'phone_one' => $validatedData['phone_one'],
-            'phone_two' => $validatedData['phone_two'],
+            'relationship_to_student' => $validatedData['relationship_to_student'],
             'language_preference' => $validatedData['language_preference'],
             'school_branch_id' => $currentSchool->id,
-            'password' => Hash::make($validatedData['password']), // Hash the password
+            'password' => Hash::make($validatedData['password']),
         ]);
 
         return response()->json([

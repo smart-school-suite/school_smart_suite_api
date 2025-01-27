@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Database\Seeder;
+use Faker\Factory as Faker;
 use Illuminate\Support\Facades\Hash;
-
 
 class ExamtimetableSeeder extends Seeder
 {
@@ -20,45 +20,48 @@ class ExamtimetableSeeder extends Seeder
     {
         $timestamp = now();
         $filePath = public_path('data/examtimetable.csv');
+        $faker = Faker::create(); // Initialize Faker
+
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-    
+
             // Fetch all relevant IDs
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
-            $exam_timetable = []; 
-    
+            $schoolBranchId = "d6150672-7255-4b1a-9224-cb8861762548";
+            $exam_timetable = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data);                
-                $schoolBranchId = Arr::random($school_branches);
+                Log::info('Current Row Data: ', $data);
                 $exam_id = DB::table('exams')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
                 if (!$exam_id) {
                     Log::warning('No exams found for this school: ' . $schoolBranchId);
-                    continue; 
+                    continue;
                 }
                 $course_id = DB::table('courses')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
-                if(!$course_id){
+                if (!$course_id) {
                     Log::warning('No courses found for school branch id' . $schoolBranchId);
                 }
                 $specialty = DB::table('specialty')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
-                if(!$specialty){
-                    Log::warning('No scpecailty found for school branch id' . $schoolBranchId);
+                if (!$specialty) {
+                    Log::warning('No specialty found for school branch id' . $schoolBranchId);
                 }
                 $randomExamid = Arr::random($exam_id);
                 $randomcourseID = Arr::random($course_id);
                 $randomSpecialtyId = Arr::random($specialty);
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 25);
-                
+
+                // Use Faker to generate a random date for the "day" field
+                $randomDay = $faker->dateTimeBetween('-1 year', '+1 year')->format('Y-m-d');
+
                 if (count($data) >= 2) {
                     $exam_timetable[] = [
-                        'id' => $id, 
-                        'school_branch_id' => $schoolBranchId, 
-                        'day' => $data[1], 
-                        'start_time' => $data[2],  
-                        'end_time' => $data[3],  
-                        'duration' => $data[4],  
-                        'school_year' => $data[5],  
+                        'id' => $id,
+                        'school_branch_id' => $schoolBranchId,
+                        'day' => $randomDay, // Use Faker-generated date
+                        'start_time' => $data[2],
+                        'end_time' => $data[3],
+                        'duration' => $data[4],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'exam_id' => $randomExamid,
@@ -67,10 +70,10 @@ class ExamtimetableSeeder extends Seeder
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
-            Log::info('Exam timetable  Array: ', $exam_timetable);
+
+            Log::info('Exam timetable Array: ', $exam_timetable);
             if (!empty($exam_timetable)) {
                 DB::table('examtimetable')->insert($exam_timetable);
                 Log::info('Inserted Examtimetable: ' . count($exam_timetable) . ' entries.');

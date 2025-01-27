@@ -184,6 +184,7 @@ Route::middleware([IdentifyTenant::class])->prefix('course')->group(function () 
     Route::middleware(['auth:sanctum'])->put('/update-course/{course_id}', [coursesController::class, 'update_course']);
     Route::middleware(['auth:sanctum'])->get('/my-courses', [coursesController::class, 'get_all_courses_with_no_relation']);
     Route::middleware(['auth:sanctum'])->get('/course-details/{course_id}', [coursesController::class, 'courses_details']);
+    Route::middleware(['auth:sanctum'])->get('/my-courses/{specialty_id}/{semester_id}', [coursesController::class, 'get_specialty_level_semester_courses']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('specialty')->group(function (){
@@ -201,6 +202,7 @@ Route::middleware([IdentifyTenant::class])->prefix('marks')->group( function (){
     Route::middleware(['auth:sanctum'])->get('/scores-exam/{student_id}/{exam_id}', [marksController::class, 'get_all_student_marks']);
     Route::middleware(['auth:sanctum'])->get("/scores-exam/student", [marksController::class, 'get_all_student_scores']);
     Route::middleware(['auth:sanctum'])->get("/score-details/{mark_id}", [marksController::class, 'get_exam_score_details']);
+    Route::middleware(['auth:sanctum'])->get("/accessed-courses/{exam_id}/{student_id}", [marksController::class,"get_exam_score_associated_data"]);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('teacher-avialability')->group( function (){
@@ -219,7 +221,7 @@ Route::prefix('levels')->group( function (){
 
 
 Route::middleware([IdentifyTenant::class])->prefix('grades')->group( function () {
-     Route::middleware(['auth:sanctum'])->post('/create-grade', [gradesController::class, 'make_grade_for_exam_scoped']);
+     Route::middleware(['auth:sanctum'])->post('/create-grade', [gradesController::class, 'makeGradeForExamScoped']);
      Route::middleware(['auth:sanctum'])->get('/grades-for-exams', [gradesController::class, 'get_all_grades_scoped']);
      Route::middleware(['auth:sanctum'])->put('/update-grade/{grade_id}', [gradesController::class, 'update_grades_scoped']);
      Route::middleware(['auth:sanctum'])->delete('/delete-grade/{grade_id}', [gradesController::class, 'delete_grades_scoped']);
@@ -232,6 +234,8 @@ Route::middleware([IdentifyTenant::class])->prefix('exams')->group( function () 
     Route::middleware(['auth:sanctum'])->get('/getexams', [examsController::class, 'get_all_exams']);
     Route::middleware(['auth:sanctum'])->get('/exam-details/{exam_id}', [examsController::class, 'get_exam_details']);
     Route::middleware(['auth:sanctum'])->delete('/delete-exams/{exam_id}', [examsController::class, 'delete_school_exam']);
+    Route::middleware(['auth:sanctum'])->get('/letter-grades/{exam_id}', [examsController::class,'associateWeightedMarkWithLetterGrades']);
+    Route::middleware(['auth:sanctum'])->get("/accessed_exams/{student_id}", [examsController::class,"get_accessed_exams"]);
 });
 
 
@@ -240,6 +244,7 @@ Route::middleware([IdentifyTenant::class])->prefix('exam-timetable')->group( fun
     Route::middleware(['auth:sanctum'])->put('/update-exam-time-table/{examtimetable_id}', [examtimetableController::class, 'update_exam_time_table_scoped']);
     Route::middleware(['auth:sanctum'])->get('/generate-timetable/{level_id}/{specialty_id}', [examtimetableController::class, 'generate_time_table_for_specialty']);
     Route::middleware(['auth:sanctum'])->delete('/delete/exam-time-table/{examtimetable_id}', [examtimetableController::class, 'delete_exam_time_table_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/course-data/{exam_id}', [examtimetableController::class,'prepareExamTimeTableData']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('time-table')->group( function (){
@@ -248,6 +253,7 @@ Route::middleware([IdentifyTenant::class])->prefix('time-table')->group( functio
     Route::middleware(['auth:sanctum'])->delete('/delete-timetable/{timetable_id}', [timetableController::class, 'delete_timetable_scoped']);
     Route::middleware(['auth:sanctum'])->get('/generate-timetable/{level_id}/{specailty_id}', [timetableController::class, 'generate_time_table_scoped']);
     Route::middleware(['auth:sanctum'])->get('/timetable-details/{entry_id}', [timetableController::class, 'get_timetable_details']);
+    Route::middleware(['auth:sanctum'])->get('/instructor-availability/{semester_id}/{specialty_id}', [timetableController::class, 'get_instructor_availability']);
 });
 
 Route::prefix('semester')->group( function() {

@@ -20,7 +20,9 @@ class Exams extends Model
         'level_id',
         'department_id',
         'weighted_mark',
-        'semester_id'
+        'semester_id',
+        'school_year',
+        'specialty_id'
     ];
 
     public $keyType = 'string';

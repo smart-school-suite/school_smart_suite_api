@@ -27,7 +27,7 @@ class Schoolexpensescategorycontroller extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $find_category_expense = Schoolexpensescategory::where('school_branch_id', $currentSchool->id)
                                   ->find($category_expense_id);
-             
+
         if(!$find_category_expense){
             return response()->json(['message' => 'Category not found'], 404);
         }
@@ -45,7 +45,7 @@ class Schoolexpensescategorycontroller extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $find_category_expense = Schoolexpensescategory::where('school_branch_id', $currentSchool->id)
                                   ->find($category_expense_id);
-             
+
         if(!$find_category_expense){
             return response()->json(['message' => 'Category not found'], 404);
         }
@@ -59,7 +59,6 @@ class Schoolexpensescategorycontroller extends Controller
     public function get_all_category_expenses(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $category_expense_data = Schoolexpensescategory::where('school_branch_id', $currentSchool->id)
-                                                        ->with(['schoolexpensescategory'])
                                                        ->get();
         return response()->json(['category_expense_data' => $category_expense_data], 200);
     }

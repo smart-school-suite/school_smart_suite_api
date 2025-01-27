@@ -12,15 +12,17 @@ class SchoolexpensesController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
             'expenses_category_id' => 'required|string',
-            'date' => 'required',
-            'amount' => 'required'
+            'date' => 'required|date',
+            'amount' => 'required',
+            'description' => 'sometimes|string'
         ]);
 
         $new_expenses_instance = new SchoolExpenses();
-        
+
         $new_expenses_instance->expenses_category_id = $request->expenses_category_id;
         $new_expenses_instance->date = $request->date;
         $new_expenses_instance->amount = $request->amount;
+        $new_expenses_instance->description = $request->description;
         $new_expenses_instance->school_branch_id = $currentSchool->id;
 
         $new_expenses_instance->save();
@@ -41,7 +43,7 @@ class SchoolexpensesController extends Controller
                 'message' => 'expenses not found'
             ], 409);
          }
-        
+
         $find_expenses->delete();
 
         return response()->json([
@@ -77,12 +79,7 @@ class SchoolexpensesController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
          $expenses_data = SchoolExpenses::where('school_branch_id', $currentSchool->id)->with(['schoolexpensescategory'])
                                           ->get();
-         if($expenses_data->isEmpty()){
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Expenses records is empty'
-            ], 409);
-         }
+
          return response()->json([
             'status' => 'ok',
             'expenses_data' => $expenses_data
