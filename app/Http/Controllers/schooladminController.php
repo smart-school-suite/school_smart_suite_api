@@ -120,7 +120,7 @@ class schooladminController extends Controller
         $new_school_admin_instance->school_branch_id = $request->school_branch_id;
 
         $new_school_admin_instance->save();
-
+        $new_school_admin_instance->assignRole('schoolSuperAdmin');
         return response()->json([
             'status' => "ok",
             'message' => 'School admin created succefully',

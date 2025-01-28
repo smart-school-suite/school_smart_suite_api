@@ -38,6 +38,7 @@ class createschooladmincontroller extends Controller
 
         $new_school_admin_instance->save();
 
+        $new_school_admin_instance->assignRole('schoolAdmin');
         return response()->json([
             'status' => 'ok',
             'message' => 'School admin created succesfully',

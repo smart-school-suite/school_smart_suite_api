@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class Schooladmin extends Model
 {
-    use HasFactory, HasApiTokens;
+    use HasFactory, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.

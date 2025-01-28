@@ -21,7 +21,7 @@ class createparentController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        Parents::create([
+     $parent =  Parents::create([
             'name' => $validatedData['name'],
             'address' => $validatedData['address'],
             'email' => $validatedData['email'],
@@ -31,6 +31,8 @@ class createparentController extends Controller
             'school_branch_id' => $currentSchool->id,
             'password' => Hash::make($validatedData['password']),
         ]);
+
+        $parent->assignRole('parent');
 
         return response()->json([
             'status' => 'ok',
