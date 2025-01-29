@@ -19,7 +19,6 @@ class School extends Model
        'address',
        'city',
        'state',
-       'MAX_GPA',
        'type',
        'school_logo',
        'motor',

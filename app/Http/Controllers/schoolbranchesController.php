@@ -21,6 +21,8 @@ class schoolbranchesController extends Controller
             'phone_one' => 'required|string',
             'phone_two' => 'required|string',
             'email' => 'required|email|string',
+            'max_gpa' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'semester_count' => 'required|integer'
          ]);
 
          $new_school_branch_instance = new Schoolbranches();
@@ -36,7 +38,8 @@ class schoolbranchesController extends Controller
          $new_school_branch_instance->phone_one = $request->phone_one;
          $new_school_branch_instance->website = $request->website;
          $new_school_branch_instance->email = $request->email;
-
+         $new_school_branch_instance->semester_count = $request->semester_count;
+         $new_school_branch_instance->max_gpa = $request->max_gpa;
          $new_school_branch_instance->save();
 
          return response()->json([

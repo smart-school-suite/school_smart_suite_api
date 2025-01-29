@@ -18,6 +18,8 @@ class Grades extends Model
         'exam_id',
         'minimum_score',
         'grade_status',
+        'maximum_score',
+        'determinant'
     ];
 
     public $keyType = 'string';

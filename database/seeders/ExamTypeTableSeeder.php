@@ -22,17 +22,17 @@ class ExamTypeTableSeeder extends Seeder
         if (!file_exists($filePath) || !is_readable($filePath)) {
             throw new \Exception("CSV file not found or not readable!");
         }
-    
+
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle); // Read the header
             Log::info('CSV Header: ', $header); // Log the header for debugging
-    
+
             $exam_type = []; // Initialize an empty array for countries
-    
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data); // Log current row data for debugging
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 15); 
+                $id = substr(md5($uuid), 0, 15);
                 $semester = DB::table('semesters')->pluck('id')->toArray();
                 $randomSemesterID = Arr::random($semester);
                 // Ensure the row has at least two columns
@@ -47,11 +47,11 @@ class ExamTypeTableSeeder extends Seeder
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Exam Type Array: ', $exam_type); // Log the countries array after completion
-    
+
             // Insert the countries into the database
             if (!empty($exam_type)) {
                 DB::table('exam_type')->insert($exam_type);

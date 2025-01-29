@@ -11,12 +11,14 @@ class semesterController extends Controller
     public function create_semester(Request $request){
         $request->validate([
             'name' => 'string|required',
-            'program_name' => 'string|required'
+            'program_name' => 'string|required',
+            'count' =>  'required|integer'
         ]);
 
         $new_semster_instance = new Semester();
         $new_semster_instance->name = $request->name;
         $new_semster_instance->program_name = $request->program_name;
+        $new_semster_instance->count = $request->count;
         $new_semster_instance->save();
 
         return response()->json([
@@ -66,18 +68,34 @@ class semesterController extends Controller
         ], 200);
     }
 
-    public function get_all_semesters(Request $request){
+    public function get_all_semesters(Request $request) {
+
         $semester_data = Semester::all();
-        if($semester_data->isEmpty()){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $num_semesters = $currentSchool->semester_count;
+
+        if ($semester_data->isEmpty()) {
             return response()->json([
                 'status' => 'ok',
-                'message' => 'records seem to be empty'
+                'message' => 'Records seem to be empty'
             ], 409);
         }
+
+
+        $filtered_semesters = Semester::whereBetween('count', [1, $num_semesters])->get();
+
+
+        if ($filtered_semesters->isEmpty()) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No semesters found within the specified count range.'
+            ], 404);
+        }
+
         return response()->json([
             'status' => 'ok',
-            'message' => 'Records fetched sucessfully',
-            'semester_data' => $semester_data
+            'message' => 'Records fetched successfully',
+            'semester_data' => $filtered_semesters
         ], 200);
     }
 }

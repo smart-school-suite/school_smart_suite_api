@@ -21,34 +21,34 @@ class SemesterTableSeeder extends Seeder
         if (!file_exists($filePath) || !is_readable($filePath)) {
             throw new \Exception("CSV file not found or not readable!");
         }
-    
+
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
-            Log::info('CSV Header: ', $header); 
-    
-            $semesters = []; 
-    
+            Log::info('CSV Header: ', $header);
+
+            $semesters = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data); 
+                Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 10); 
+                $id = substr(md5($uuid), 0, 10);
 
                 if (count($data) >= 2) {
                     $semesters[] = [
-                        'id' => $id, 
-                        'name' => $data[1], 
-                        'program_name' => $data[2], 
+                        'id' => $id,
+                        'name' => $data[1],
+                        'program_name' => $data[2],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Semester Array: ', $semesters);
-    
-  
+
+
             if (!empty($semesters)) {
                 DB::table('semesters')->insert($semesters);
                 Log::info('Inserted semesters: ' . count($semesters) . ' entries.');

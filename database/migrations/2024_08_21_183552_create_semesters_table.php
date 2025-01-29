@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('semesters', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name')->unique();
+            $table->integer('count');
             $table->string('program_name');
             $table->timestamps();
         });

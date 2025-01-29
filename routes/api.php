@@ -273,7 +273,7 @@ Route::middleware([IdentifyTenant::class])->prefix('time-table')->group( functio
 Route::prefix('semester')->group( function() {
      Route::middleware(['auth:sanctum'])->post('/create-semester', [semesterController::class, 'create_semester']);
      Route::middleware(['auth:sanctum'])->delete('/delete-semester/{semester_id}', [semesterController::class, 'delete_semester']);
-     Route::middleware(['auth:sanctum'])->get('/semesters', [semesterController::class, 'get_all_semesters']);
+     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/semesters', [semesterController::class, 'get_all_semesters']);
      Route::middleware(['auth:sanctum'])->put('/update-semester/{semester_id}', [semesterController::class, 'update_semester']);
 });
 

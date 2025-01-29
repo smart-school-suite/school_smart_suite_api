@@ -18,7 +18,6 @@ class schoolsController extends Controller
         'address' => 'required|string',
         'city' => 'required|string',
         'state' => 'required|string',
-        'MAX_GPA' => 'required',
         'motor' => 'required',
         'type' => 'required|string',
         'established_year' => 'nullable|string',
@@ -36,7 +35,6 @@ class schoolsController extends Controller
     $new_school_instance->address = $request->address;
     $new_school_instance->city = $request->city;
     $new_school_instance->state = $request->state;
-    $new_school_instance->MAX_GPA = $request->MAX_GPA;
     $new_school_instance->motor = $request->motor;
     $new_school_instance->type = $request->type;
     $new_school_instance->established_year = $request->established_year;

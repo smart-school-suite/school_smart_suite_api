@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('exam_type', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('exam_name');
-            $table->string('program_name');
+            $table->string('semester'); // first , second, third, fourth, fifth
+            $table->enum('type', ['exam', 'ca', 'resit']); // ex
+            $table->string('program_name'); //EX, CA, RESS
             $table->timestamps();
         });
     }

@@ -69,19 +69,29 @@ class Examtypecontroller extends Controller
         ], 200);
     }
 
-    public function get_all_exam_type(Request $request){
-        $exam_type_data = Examtype::with('semesters')->get();
-        if($exam_type_data->isEmpty()){
+    public function get_all_exam_type(Request $request) {
+
+        $currentSchool = $request->attributes->get('currentSchool');
+
+        $num_semesters = $currentSchool->semester_count;
+
+        $exam_type_data = Examtype::with('semesters')
+            ->whereHas('semesters', function ($query) use ($num_semesters) {
+                $query->whereBetween('count', [1, $num_semesters]);
+            })->get();
+
+        if ($exam_type_data->isEmpty()) {
             return response()->json([
                 'status' => 'ok',
-                'message' => 'No records found'
-            ], 400);
+                'message' => 'No exam types found within the specified semester count range.'
+            ], 404);
         }
+
         return response()->json([
             'status' => 'ok',
-            'message' => 'Exam records fetched succefully',
+            'message' => 'Exam records fetched successfully',
             'exam_data' => $exam_type_data
         ], 200);
     }
-    
+
 }

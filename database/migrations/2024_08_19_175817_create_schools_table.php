@@ -22,7 +22,6 @@ return new class extends Migration
             $table->date('established_year')->nullable();
             $table->string('school_logo')->nullable();
             $table->string('director_name')->nullable();
-            $table->decimal('MAX_GPA', 4, 2);
             $table->text('motor');
             $table->timestamps();
         });

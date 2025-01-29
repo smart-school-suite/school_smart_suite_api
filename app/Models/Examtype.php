@@ -15,6 +15,8 @@ class Examtype extends Model
     protected $fillable = [
       'semester_id',
       'exam_name',
+      'semester',
+      'type',
       'program_name'
     ];
 
@@ -26,14 +28,14 @@ class Examtype extends Model
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
-     
+
    public function semesters(): BelongsTo {
       return $this->belongsTo(Semester::class, 'semester_id');
    }

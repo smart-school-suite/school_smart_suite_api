@@ -12,10 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('grades', function (Blueprint $table) {
-            $table->string('id')->primary();          
+            $table->string('id')->primary();
             $table->integer('grade_points');
             $table->string('grade_status')->default('resit');
             $table->decimal('minimum_score', 3, 1);
+            $table->decimal('maximum_score', 3, 2);
+            $table->string("determinant");
             $table->timestamps();
         });
     }
