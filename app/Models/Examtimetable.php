@@ -19,6 +19,7 @@ class Examtimetable extends Model
       'specialty_id',
       'day',
       'start_time',
+      'level_id',
       'end_time',
       'duration'
     ];

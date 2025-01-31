@@ -22,7 +22,7 @@ class ParentsTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $schoolBranchId = "d6150672-7255-4b1a-9224-cb8861762548";
+            $schoolBranchId = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
             $parents = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {

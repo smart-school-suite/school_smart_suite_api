@@ -13,12 +13,26 @@ class Events extends Model
     use HasFactory;
 
     protected $fillable = [
-        'shool_branches_id',
-        'event_name',
+        'title',
         'event_date',
+        'start_date',
+        'end_date',
         'location',
+        'description',
         'attendance',
-        'school_branch_id'
+        'school_branch_id',
+        'notes',
+        'organizer',
+        'status',
+        'category',
+        'urgency',
+        'tags',
+        'color',
+        'duration',
+        'url',
+        'feedback_link',
+        'attachments',
+        'background_image'
     ];
 
     public $incrementing = 'false';
@@ -32,7 +46,7 @@ class Events extends Model
     public function school(): HasMany {
         return $this->hasMany(School::class);
     }
-    
+
     public function schoolbranches(): HasMany {
         return $this->hasMany(Schoolbranches::class);
     }
@@ -40,15 +54,15 @@ class Events extends Model
     public function specialties(): HasMany {
         return $this->hasMany(Specialty::class);
     }
-   
+
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 }

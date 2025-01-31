@@ -41,6 +41,9 @@ class ExamTypeTableSeeder extends Seeder
                         'id' => $id, // Assign id from 1st column
                         'exam_name' => $data[1], // Assign name from 2nd column
                         "program_name" => $data[2],
+                        "semester" => $data[3],
+                        "type" => $data[4],
+                        "count" => $data[5],
                         'semester_id' => $randomSemesterID,
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp

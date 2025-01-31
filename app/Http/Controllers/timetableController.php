@@ -19,11 +19,11 @@ class timetableController extends Controller
         'specailty_timetable.*.teacher_id' => 'required|string',
         'specailty_timetable.*.course_id' => 'required|exists:courses,id',
         'specailty_timetable.*.day_of_week' => 'required|string',
-        'specailty_timetable.*.start_time' => 'required|date_format:H:i',
+        'specailty_timetable.*.start_time' => 'required|date_format:H:i:s',
         'specailty_timetable.*.specialty_id' => 'required|string',
         'specailty_timetable.*.level_id' => 'required|string',
         'specailty_timetable.*.semester_id' => 'required|string',
-        'specailty_timetable.*.end_time' => 'required|date_format:H:i|after:start_time',
+        'specailty_timetable.*.end_time' => 'required|date_format:H:i:sc|after:start_time',
     ]);
 
 

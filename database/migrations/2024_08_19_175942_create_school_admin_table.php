@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('school_admin', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('email');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('profile_picture')->nullable();
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('position'); // E.g., Manager, Developer, Coordinator
             $table->string('highest_qualification')->nullable(); // e.g., Bachelor's, Master's
             $table->string('field_of_study')->nullable(); // e.g., Computer Science, Business Administration
-            $table->timestamp('last_login_at')->nullable();
+            $table->date('last_login_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('leave')->default(false);
             $table->boolean('holiday')->default(false);

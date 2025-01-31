@@ -21,35 +21,34 @@ class CourseTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
+            $schoolBranchId = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
             $education_level = DB::table('education_levels')->pluck('id')->toArray();
             $semester = DB::table('semesters')->pluck('id')->toArray();
-            $courses = []; 
-    
+            $courses = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 25); 
-                $code = substr(md5($uuid), 0, 5); 
-                $randomSchoolBranchesId = Arr::random($school_branches);
+                $id = substr(md5($uuid), 0, 25);
+                $code = substr(md5($uuid), 0, 5);
                 $randomEducationLevelsId = Arr::random($education_level);
                 $randomSemesterId = Arr::random($semester);
-                $department = DB::table('department')->where('school_branch_id', $randomSchoolBranchesId)->pluck('id')->toArray();
+                $department = DB::table('department')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
                 if (!$department) {
-                    Log::warning('No department found for school_branch_id: ' . $randomSchoolBranchesId);
-                    continue; 
+                    Log::warning('No department found for school_branch_id: ' . $schoolBranchId);
+                    continue;
                 }
-                $specialty = DB::table('specialty')->where('school_branch_id', $randomSchoolBranchesId)->pluck('id')->toArray();
+                $specialty = DB::table('specialty')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
                 if(!$specialty){
-                    Log::warning(("No specialty found for the school branch id" . $randomSchoolBranchesId));
+                    Log::warning(("No specialty found for the school branch id" . $schoolBranchId));
                 }
                 if (count($data) >= 2) {
                     $courses[] = [
-                        'id' => $id, 
-                        'school_branch_id' => $randomSchoolBranchesId, 
-                        'course_code' => $code, 
-                        'course_title' => $data[1], 
-                        'credit' => $data[2], 
+                        'id' => $id,
+                        'school_branch_id' => $schoolBranchId,
+                        'course_code' => $code,
+                        'course_title' => $data[1],
+                        'credit' => $data[2],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'specialty_id' =>  Arr::random($specialty),
@@ -59,11 +58,11 @@ class CourseTableSeeder extends Seeder
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Courses  Array: ', $courses);
-    
+
             if (!empty($courses)) {
                 DB::table('courses')->insert($courses);
                 Log::info('Inserted Courses: ' . count($courses) . ' entries.');

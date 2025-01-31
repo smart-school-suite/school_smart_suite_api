@@ -38,6 +38,7 @@ class SemesterTableSeeder extends Seeder
                         'id' => $id,
                         'name' => $data[1],
                         'program_name' => $data[2],
+                        'count' => $data[3],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];

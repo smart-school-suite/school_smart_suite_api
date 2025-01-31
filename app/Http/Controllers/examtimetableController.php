@@ -12,8 +12,6 @@ use Illuminate\Http\Request;
 
 class examtimetableController extends Controller
 {
-    //
-
 
 public function create_exam_timetable(Request $request)
 {

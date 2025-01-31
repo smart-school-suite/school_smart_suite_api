@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('profile_pricture')->nullable();
             $table->string('phone_one');
             $table->string('phone_two')->nullable();
-            $table->string('email')->unique();
+            $table->string('email');
             $table->timestamp('email_verified_at')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('address')->nullable();
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->date('last_performance_review')->nullable();
             $table->string('highest_qualification'); // e.g., Bachelor's, Master's
             $table->string('field_of_study'); // e.g., Computer Science, Business Administration
-            $table->timestamp('last_login_at')->nullable();
+            $table->date('last_login_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('leave')->default(false);
             $table->boolean('holiday')->default(false);

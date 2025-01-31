@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
+use App\Models\Permission;
 use Illuminate\Support\Str;
 
 class permissionSeeder extends Seeder
@@ -14,187 +14,184 @@ class permissionSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::create(['id' => Str::uuid(), 'name' => "assign-permissions", "guard" => "api"]);
-        Permission::create(["id" => Str::uuid(), 'name' => "revoke-permissions", "guard" => "api"]);
-        Permission::create(["id" => Str::uuid(), 'name' => "revoke-all-permissions", "guard" => "api"]);
-        Permission::create(["id" => Str::uuid(), "name"=> "view-roles", "guard" => "api"]);
-        Permission::create(["id" => Str::uuid(), "name"=> "view-permissions", "guard" => "api"]);
-        Permission::create(["id"=> Str::uuid(), "name"=> "view-admin-permissions", "guard" => "api"]);
-        Permission::create(["id"=> Str::uuid(), "name"=> "assign-super-admin", "guard" => "api"]);
+        Permission::create([ 'name' => "assign-permissions", "guard_name" => "api"]);
+        Permission::create([ 'name' => "revoke-permissions", "guard_name" => "api"]);
+        Permission::create([ 'name' => "revoke-all-permissions", "guard_name" => "api"]);
+        Permission::create([ "name"=> "view-roles", "guard_name" => "api"]);
+        Permission::create([ "name"=> "view-permissions", "guard_name" => "api"]);
+        Permission::create([ "name"=> "view-admin-permissions", "guard_name" => "api"]);
+        Permission::create([ "name"=> "assign-super-admin", "guard_name" => "api"]);
          // Student permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-student', 'guard' => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-student', 'guard' => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-student', 'guard' => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-student', 'guard' => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'generate-report-card', 'guard' => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'promote-student', 'guard' => "api"]);
+         Permission::create([ 'name' => 'create-student', 'guard_name' => "api"]);
+         Permission::create([ 'name' => 'edit-student', 'guard_name' => "api"]);
+         Permission::create([ 'name' => 'view-student', 'guard_name' => "api"]);
+         Permission::create([ 'name' => 'delete-student', 'guard_name' => "api"]);
+         Permission::create([ 'name' => 'generate-report-card', 'guard_name' => "api"]);
+         Permission::create([ 'name' => 'promote-student', 'guard_name' => "api"]);
 
 
          // Admin permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-admin', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-admin', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-admin', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-admin', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-admin', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-admin', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-admin', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-admin', "guard_name" => "api"]);
 
          // Course permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-course', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-course', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-course', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-course', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-course', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-course', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-course', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-course', "guard_name" => "api"]);
 
          // Parent permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-parent', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-parent', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-parent', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-parent', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-parent', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-parent', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-parent', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-parent', "guard_name" => "api"]);
 
          // Teacher permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-teacher', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-teacher', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-teacher', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-teacher', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-teacher', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-teacher', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-teacher', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-teacher', "guard_name" => "api"]);
 
          // Department permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-department', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-department', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-department', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-department', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-department', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-department', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-department', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-department', "guard_name" => "api"]);
 
          // Education level permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-level', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-level', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-level', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-level', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-level', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-level', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-level', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-level', "guard_name" => "api"]);
 
          // App administration permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-app-admin', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-app-admin', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-app-admin', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-app-admin', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-app-admin', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-app-admin', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-app-admin', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-app-admin', "guard_name" => "api"]);
 
          // Event permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-event', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-event', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-event', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-event', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-event', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-event', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-event', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-event', "guard_name" => "api"]);
 
          // Exam permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-exam', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-exam', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-exam', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-exam', "guard" => "api"]);
-         Permission::create(["id" => Str::uuid(),   "name" => "view-letter-grades", "guard" => "api"]);
-         Permission::create(['id' => Str::uuid(), 'name' => 'view-accessed-exam', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-exam', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-exam', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-exam', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-exam', "guard_name" => "api"]);
+         Permission::create([   "name" => "view-letter-grades", "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-accessed-exam', "guard_name" => "api"]);
 
          // Exam timetable permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-exam-courses', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-exam-courses', "guard_name" => "api"]);
 
          // Exam type permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-exam-type', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-exam-type', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-exam-type', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-exam-type', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-exam-type', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-exam-type', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-exam-type', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-exam-type', "guard_name" => "api"]);
 
          // Fee payment permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-fee-payment', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-fee-payment', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-fee-payment', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-fee-payment', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-fee-payment', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-fee-payment', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-fee-payment', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-fee-payment', "guard_name" => "api"]);
 
          // Grade permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-grade', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-grade', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-grade', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-grade', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-grade', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-grade', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-grade', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-grade', "guard_name" => "api"]);
 
          // Report card permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-report-card', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-report-card', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-report-card', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-report-card', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-report-card', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-report-card', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-report-card', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-report-card', "guard_name" => "api"]);
 
          // Resit courses permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-resit-course', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-resit-course', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-resit-course', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-resit-course', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-resit-course', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-resit-course', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-resit-course', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-resit-course', "guard_name" => "api"]);
 
          // Resit exam timetable permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-resit-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-resit-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-resit-exam-timetable', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-resit-exam-timetable', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-resit-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-resit-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-resit-exam-timetable', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-resit-exam-timetable', "guard_name" => "api"]);
 
          // School permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-school', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-school', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-school', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-school', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-school', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-school', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-school', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-school', "guard_name" => "api"]);
 
          // School branch permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-school-branch', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-school-branch', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-school-branch', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-school-branch', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-school-branch', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-school-branch', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-school-branch', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-school-branch', "guard_name" => "api"]);
 
          // School expenses permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-school-expense', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-school-expense', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-school-expense', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-school-expense', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-school-expense', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-school-expense', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-school-expense', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-school-expense', "guard_name" => "api"]);
 
          // Semester permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-semester', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-semester', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-semester', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-semester', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-semester', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-semester', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-semester', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-semester', "guard_name" => "api"]);
 
          // Specialty permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-specialty', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-specialty', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-specialty', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-specialty', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-specialty', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-specialty', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-specialty', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-specialty', "guard_name" => "api"]);
 
          // Student batch permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-student-batch', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-student-batch', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-student-batch', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-student-batch', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-student-batch', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-student-batch', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-student-batch', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-student-batch', "guard_name" => "api"]);
 
          // Specialty time-table permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-specialty-time-table', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-specialty-time-table', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-specialty-time-table', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-specialty-time-table', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-specialty-time-table', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-specialty-time-table', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-specialty-time-table', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-specialty-time-table', "guard_name" => "api"]);
 
          // Student resit permissions
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'create-student-resit', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'edit-student-resit', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'view-student-resit', "guard" => "api"]);
-         Permission::create(['id' =>  Str::uuid(),  'name' => 'delete-student-resit', "guard" => "api"]);
+         Permission::create([ 'name' => 'create-student-resit', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'edit-student-resit', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'view-student-resit', "guard_name" => "api"]);
+         Permission::create([ 'name' => 'delete-student-resit', "guard_name" => "api"]);
 
-         Permission::create(["id" => Str::uuid(), "name"=> "create-department", "guard" => "api"]);
-         Permission::create(["id" => Str::uuid(), "name"=> "update-department", "guard" => "api"]);
-         Permission::create(["id" => Str::uuid(), "name"=> "delete-department", "guard" => "api"]);
-         Permission::create(["id" => Str::uuid(), "name"=> "view-department", "guard" => "api"]);
 
-         Permission::create(["id"=> Str::uuid(), "name"=> "fill-scores", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "edit-scores", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "delete-scores", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "view-scores", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "view-accessed-courses", "guard" => "api"]);
+
+         Permission::create([ "name"=> "fill-scores", "guard_name" => "api"]);
+         Permission::create([ "name"=> "edit-scores", "guard_name" => "api"]);
+         Permission::create([ "name"=> "delete-scores", "guard_name" => "api"]);
+         Permission::create([ "name"=> "view-scores", "guard_name" => "api"]);
+         Permission::create([ "name"=> "view-accessed-courses", "guard_name" => "api"]);
 
 
 
 
-         Permission::create(["id"=> Str::uuid(), "name"=> "create-avaliability", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "delete-avaliability", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "edit-avaliability", "guard" => "api"]);
-         Permission::create(["id"=> Str::uuid(), "name"=> "view-avaliability", "guard" => "api"]);
+         Permission::create([ "name"=> "create-avaliability", "guard_name" => "api"]);
+         Permission::create([ "name"=> "delete-avaliability", "guard_name" => "api"]);
+         Permission::create([ "name"=> "edit-avaliability", "guard_name" => "api"]);
+         Permission::create([ "name"=> "view-avaliability", "guard_name" => "api"]);
 
 
 

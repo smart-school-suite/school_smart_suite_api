@@ -21,31 +21,30 @@ class DepartmentTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
-            $departments = []; 
-            
+            $school_branches = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
+            $departments = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 25); 
-                $randomSchoolBranchesId = Arr::random($school_branches);
+                $id = substr(md5($uuid), 0, 25);
                 if (count($data) >= 2) {
                     $departments[] = [
-                        'id' => $id, 
-                        'school_branch_id' => $randomSchoolBranchesId, 
-                        'department_name' => $data[1], 
-                        'HOD' => $data[2], 
+                        'id' => $id,
+                        'school_branch_id' => $school_branches,
+                        'department_name' => $data[1],
+                        'HOD' => $data[2],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
-                        
+
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Departments Array: ', $departments);
-    
+
             if (!empty($departments)) {
                 DB::table('department')->insert($departments);
                 Log::info('Inserted Departments: ' . count($departments) . ' entries.');

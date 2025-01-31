@@ -97,8 +97,8 @@ class gradesController extends Controller
             $grade->exam_id = $gradeData['exam_id'];
             $grade->determinant = $gradeData['determinant'];
             $grade->grade_status = $gradeData['grade_status'];
-            $grade->minimum_score = $gradeData['minimum_score'];
-            $grade->maximum_score = $gradeData['maximum_score'];
+            $grade->minimum_score = floatval($gradeData['minimum_score']);
+            $grade->maximum_score = floatval($gradeData['maximum_score']);
             $grade->save();
 
 

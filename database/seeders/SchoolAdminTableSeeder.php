@@ -22,49 +22,48 @@ class SchoolAdminTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
-            $school_admin = []; 
-            
+            $schoolBranchId = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
+            $school_admin = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 25);
-                $randomSchoolBranchesId = Arr::random($school_branches);
                 if (count($data) >= 2) {
                     $school_admin[] = [
-                        'id' => $id, 
-                        'school_branch_id' => $randomSchoolBranchesId, 
-                        'name' => $data[1], 
-                        'email' => $data[2], 
-                        'password' => Hash::make($data[3]), 
-                        'role' => $data[4], 
-                        'date_of_birth' => $data[5], 
-                        'address' => $data[6], 
-                        'employment_status' => $data[7], 
-                        'hire_date' => $data[8], 
-                        'emergency_contact_name' => $data[9], 
-                        'emergency_contact_phone' => $data[10], 
-                        'last_performance_review' => $data[11], 
-                        'work_location' => $data[12], 
-                        'position' => $data[13], 
-                        'highest_qualification' => $data[14], 
-                        'field_of_study' => $data[15],  
-                        'last_login_at' => $data[16],  
-                        'cultural_background' => $data[17],  
-                        'religion' => $data[18],  
-                        'years_experience' => $data[19],  
-                        'salary' => $data[20],  
-                        'city' => $data[21],  
+                        'id' => $id,
+                        'school_branch_id' => $schoolBranchId,
+                        'name' => $data[1],
+                        'email' => $data[2],
+                        'password' => Hash::make($data[3]),
+                        'role' => $data[4],
+                        'date_of_birth' => $data[5],
+                        'address' => $data[6],
+                        'employment_status' => $data[7],
+                        'hire_date' => $data[8],
+                        'emergency_contact_name' => $data[9],
+                        'emergency_contact_phone' => $data[10],
+                        'last_performance_review' => $data[11],
+                        'work_location' => $data[12],
+                        'position' => $data[13],
+                        'highest_qualification' => $data[14],
+                        'field_of_study' => $data[15],
+                        'last_login_at' => $data[16],
+                        'cultural_background' => $data[17],
+                        'religion' => $data[18],
+                        'years_experience' => $data[19],
+                        'salary' => $data[20],
+                        'city' => $data[21],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('School admin  Array: ', $school_admin);
-    
+
             if (!empty($school_admin)) {
                 DB::table('school_admin')->insert($school_admin);
                 Log::info('Inserted School Admin: ' . count($school_admin) . ' entries.');

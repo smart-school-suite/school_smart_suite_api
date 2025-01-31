@@ -14,21 +14,19 @@ return new class extends Migration
         Schema::create('events', function (Blueprint $table) {
             $table->string("id");
             $table->string('title');
-            $table->timestamp('start')->useCurrent();
-            $table->timestamp('end')->useCurrent();
+            $table->date('start_date');
+            $table->end('end_date');
             $table->string('location');
             $table->text('description');
-            $table->json('attendees');
+            $table->json('attendees')->nullable();
             $table->text('notes')->nullable();
             $table->string('organizer');
-            $table->string('status');
+            $table->string('status')->nullable();
             $table->string('category');
-            $table->string('urgency');
+            $table->string('urgency')->nullable();
             $table->json('tags')->nullable();
-            $table->string('color');
             $table->string('duration');
             $table->string('url')->nullable();
-            $table->string('audience')->nullable();
             $table->string('feedback_link')->nullable();
             $table->json('attachments')->nullable();
             $table->string('background_image')->nullable();

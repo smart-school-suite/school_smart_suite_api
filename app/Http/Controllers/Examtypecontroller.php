@@ -77,7 +77,7 @@ class Examtypecontroller extends Controller
 
         $exam_type_data = Examtype::with('semesters')
             ->whereHas('semesters', function ($query) use ($num_semesters) {
-                $query->whereBetween('count', [1, $num_semesters]);
+                $query->whereBetween('count', [1, $num_semesters + 1]);
             })->get();
 
         if ($exam_type_data->isEmpty()) {

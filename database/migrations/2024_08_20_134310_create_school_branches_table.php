@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('phone_two')->nullable();
             $table->string('email')->nullable();
             $table->string('website')->nullable();
+            $table->integer('semester_count')->default(2);
             $table->decimal('max_gpa', 4, 2);
             $table->decimal('resit_fee', 8, 2)->default(3000.00);
             $table->timestamps();

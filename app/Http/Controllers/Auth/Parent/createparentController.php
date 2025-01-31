@@ -32,7 +32,6 @@ class createparentController extends Controller
             'password' => Hash::make($validatedData['password']),
         ]);
 
-        $parent->assignRole('parent');
 
         return response()->json([
             'status' => 'ok',

@@ -23,7 +23,7 @@ class Schoolbranches extends Model
         'postal_code',
         'phone_one',
         'phone_two',
-        'emester_count',
+        'semester_count',
         'email',
         'max_gpa'
     ];

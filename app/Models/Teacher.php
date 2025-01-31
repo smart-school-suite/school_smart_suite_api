@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    use HasFactory, HasApiTokens, HasRoles ;
+    use HasFactory, HasApiTokens;
     /**
      * The attributes that are mass assignable.
      *

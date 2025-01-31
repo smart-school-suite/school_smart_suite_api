@@ -419,7 +419,7 @@ class marksController extends Controller
 
             $results[] = [
                 "level_id" => $level_id,
-                "course_id" => $course->id,
+                "course_id" => $course->course->id,
                 "course_name" => $course->course->course_title,
                 "exam_id" => $exam_id,
                 "specailty_id" => $course->specialty_id,

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('address');
             $table->string('city');
             $table->string('state');
-            $table->integer('semester')->default(2);
             $table->string('type'); // e.g., public, private
             $table->date('established_year')->nullable();
             $table->string('school_logo')->nullable();

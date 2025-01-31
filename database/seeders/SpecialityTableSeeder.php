@@ -21,25 +21,24 @@ class SpecialityTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
+            $school_branches = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
             $department = DB::table('department')->pluck('id')->toArray();
             $education_level = DB::table('education_levels')->pluck('id')->toArray();
-            $specialties = []; 
-    
+            $specialties = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 25); 
-                $randomSchoolBranchesId = Arr::random($school_branches);
+                $id = substr(md5($uuid), 0, 25);
                 $randomDepartmentsId = Arr::random($department);
                 $randomEducationLevelsId = Arr::random($education_level);
                 if (count($data) >= 2) {
                     $specialties[] = [
-                        'id' => $id, 
-                        'school_branch_id' => $randomSchoolBranchesId, 
-                        'specialty_name' => $data[1], 
-                        'registration_fee' => $data[2], 
-                        'school_fee' => $data[3], 
+                        'id' => $id,
+                        'school_branch_id' => $school_branches,
+                        'specialty_name' => $data[1],
+                        'registration_fee' => $data[2],
+                        'school_fee' => $data[3],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'department_id' => $randomDepartmentsId,
@@ -47,11 +46,11 @@ class SpecialityTableSeeder extends Seeder
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Specialty Array: ', $specialties);
-    
+
             if (!empty($specialties)) {
                 DB::table('specialty')->insert($specialties);
                 Log::info('Inserted Specailties: ' . count($specialties) . ' entries.');
