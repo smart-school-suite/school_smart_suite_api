@@ -302,6 +302,61 @@ return new class extends Migration
             $table->string('school_id');
             $table->foreign('school_id')->references('id')->on('schools');
         });
+
+
+        Schema::table('election_application', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('election_role_id');
+            $table->foreign('election_role_id')->references('id')->on('election_role');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+        });
+
+        Schema::table('elections', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('election_roles', function(Blueprint $table) {
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('election_votes', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('candidate_id');
+            $table->foreign('candidate_id')->references('id')->on('election_candidates');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+            $table->string('position_id');
+            $table->foreign('position')->references('id')->on('election_roles');
+        });
+
+        Schema::table('elections_results', function(Blueprint $table) {
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('position_id');
+            $table->foreign('position_id')->references('id')->on('election_roles');
+            $table->string('candidate_id');
+            $table->foreign('candidate_id')->references('id')->on('election_candidates');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('election_candidates', function(Blueprint $table) {
+            $table->string('application_id');
+            $table->foreign('application_id')->references('id')->on('election_application');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
     }
 
     /**

@@ -69,12 +69,23 @@ class coursesController extends Controller
       public function get_all_courses_with_no_relation(Request $request)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $course = Courses::where('school_branch_id', $currentSchool->id)->with(['specialty', 'level', 'semester'])->get();
-
+            $courses = Courses::where('school_branch_id', $currentSchool->id)->with(['specialty', 'level', 'semester'])->get();
+            $result = [];
+            foreach ($courses as $course) {
+                $result[] = [
+                    'id'=> $course->id,
+                    'course_title' => $course->course_title,
+                    'course_code' => $course->course_code,
+                    'course_credit' => $course->credit,
+                    'specialty_name' => $course->specialty->specialty_name,
+                    'level_name' => $course->level->name,
+                    'semester_name' => $course->semester->name,
+                ];
+            }
             return response()->json([
                   'status' => 'ok',
                   'message' => 'fetch succesfull',
-                  'courses' => $course
+                  'courses' => $result
             ], 200);
       }
 

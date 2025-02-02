@@ -86,6 +86,15 @@ class Student extends Model
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+    public function electionVotes(): HasMany {
+         return $this->hasMany(ElectionVotes::class);
+    }
+    public function electionCandidate(): HasMany {
+         return $this->hasMany(ElectionCandidates::class);
+    }
+    public function electionApplication(): HasMany {
+         return $this->hasMany(ElectionApplication::class,'student_id');
+    }
     public function courses(): HasMany {
         return $this->hasMany(Courses::class);
     }

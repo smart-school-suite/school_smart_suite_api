@@ -109,9 +109,22 @@ class specialtyController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $specialty_data = Specialty::Where('school_branch_id', $currentSchool->id)->with('level')->get();
+        $result = [];
+        foreach ($specialty_data as $specialty) {
+             $result[] = [
+                'id' => $specialty->id,
+                'level_name' => $specialty->level->name,
+                'level_number' => $specialty->level->level,
+                'specialty_name' => $specialty->specialty_name,
+                'registration_fee' => $specialty->registration_fee,
+                'school_fee' => $specialty->school_fee
+             ];
+        }
         return response()->json(['status' => 'ok',
             'message' => 'specialties fetched succesfully',
-            'specialty' => $specialty_data], 200);
+            'specialty' => $result
+
+        ], 200);
     }
 
     public function specialty_details(Request $request){

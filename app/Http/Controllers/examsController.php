@@ -97,10 +97,25 @@ class examsController extends Controller
     $exam_data = Exams::where('school_branch_id', $currentSchool->id)
       ->with(['examtype', 'semester', 'specialty.level'])
       ->get();
+
+      $result = [];
+      foreach ($exam_data as $exam) {
+          $result[] = [
+            'id'=> $exam->id,
+            'exam_name' => $exam->examtype->exam_name,
+            'semester_name' => $exam->semester->name,
+            'specailty_name' => $exam->specialty->specialty_name,
+            'level_name' => $exam->specialty->level->name,
+            'start_date' => $exam->start_date,
+            'end_date' => $exam->end_date,
+            'school_year' => $exam->school_year,
+            'weighted_mark' => $exam->weighted_mark
+          ];
+      }
     return response()->json([
       'status' => 'ok',
       'message' => 'Exam data fetched sucessfully',
-      'exam_data' => $exam_data
+      'exam_data' => $result
     ], 201);
   }
 
