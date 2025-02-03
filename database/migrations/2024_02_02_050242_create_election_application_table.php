@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('elections', function (Blueprint $table) {
+        Schema::create('election_application', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('title');
-            $table->date('election_start_date');
-            $table->date('election_end_date');
-            $table->time('starting_time');
-            $table->time('ending_time');
-            $table->boolean('is_results_published');
+            $table->text('manifesto');
+            $table->text('personal_vision');
+            $table->text('commitment_statement');
+            $table->boolean('isApproved');
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('elections');
+        Schema::dropIfExists('election_application');
     }
 };

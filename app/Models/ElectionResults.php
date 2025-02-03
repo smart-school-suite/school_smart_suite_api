@@ -16,7 +16,8 @@ class ElectionResults extends Model
         'election_id',
         'position_id',
         'candidate_id',
-        'school_branch_id'
+        'school_branch_id',
+        "election_status",
     ];
 
     public $table = "elections_results";

@@ -11,11 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('election_application', function (Blueprint $table) {
+        Schema::create('elections', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
+            $table->string('title')->unique();
+            $table->date('election_start_date');
+            $table->date('election_end_date');
+            $table->time('starting_time');
+            $table->time('ending_time');
             $table->text('description');
-            $table->boolean('isApproved');
+            $table->boolean('is_results_published');
             $table->timestamps();
         });
     }
@@ -25,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('election_application');
+        Schema::dropIfExists('elections');
     }
 };

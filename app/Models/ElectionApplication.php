@@ -5,19 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ElectionApplication extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
         'isApproved',
         'school_branch_id',
         'election_id',
         'election_role_id',
-        'student_id'
+        'student_id',
+        "manifesto",
+        "personal_vision",
+        "commitment_statement",
     ];
 
     public $incrementing = 'false';
@@ -42,4 +44,7 @@ class ElectionApplication extends Model
          return $this->belongsTo(ElectionRoles::class,"election_role_id");
     }
 
+    public function electionCandidate(): HasMany {
+         return $this->hasMany(ElectionCandidates::class);
+    }
 }

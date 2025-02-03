@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('election_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->enum('election_status', ['won', 'lost', 'pending']);
             $table->boolean('isActive')->default(true);
             $table->timestamps();
         });

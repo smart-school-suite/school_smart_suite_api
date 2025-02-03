@@ -19,6 +19,7 @@ class Elections extends Model
         "ending_time",
         "is_results_published",
         "school_branch_id",
+        'description'
     ];
 
     public $table = "elections";

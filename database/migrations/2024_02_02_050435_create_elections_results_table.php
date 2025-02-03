@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('elections_results', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('vote_count')->default(0);
+            $table->enum('election_status', ['won', 'lost', 'pending'])->default('pending');
             $table->timestamps();
         });
     }
