@@ -12,7 +12,9 @@ class Country extends Model
     use HasFactory;
 
     protected $fillable = [
-        'country'
+        'country',
+        'code',
+        'status'
     ];
 
     public $keyType = 'string';
@@ -23,17 +25,17 @@ class Country extends Model
     public function school(): HasMany {
         return $this->hasMany(School::class);
     }
-  
+
 
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
-    
+
 }

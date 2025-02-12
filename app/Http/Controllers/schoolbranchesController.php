@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 use App\Models\Schoolbranches;
-use Illuminate\Support\Str;
 use App\Services\SchoolBranchesService;
+use App\Http\Requests\UpdateSchoolBranchesRequest;
 use App\Http\Requests\CreateSchoolBranchRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class schoolbranchesController extends Controller
          return ApiResponseService::success("School Branch Created Succesfully", $createSchoolBranch, null, 201);
     }
 
-    public function update_school_branch(Request $request, $branch_id){
+    public function update_school_branch(UpdateSchoolBranchesRequest $request, $branch_id){
         $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $branch_id);
         return ApiResponseService::success("School Branch updated Succesfully", $updateSchoolBranch, null, 200);
     }

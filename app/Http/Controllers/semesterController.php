@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Semester;
 use App\Services\SemesterService;
 use App\Http\Requests\SemesterRequest;
+use App\Http\Requests\UpdateSemesterRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
@@ -26,7 +27,7 @@ class semesterController extends Controller
         return ApiResponseService::success("Semester Deleted Succefully", $deleteSemester, null, 200);
     }
 
-    public function update_semester(Request $request, string $semester_id){
+    public function update_semester(UpdateSemesterRequest $request, string $semester_id){
         $updateSemester = $this->semesterService->updateSemester($semester_id, $request->validated());
         return ApiResponseService::success("Semester Updated Sucessfully", $updateSemester, null, 200);
     }

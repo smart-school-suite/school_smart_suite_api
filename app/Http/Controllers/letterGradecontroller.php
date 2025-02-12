@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LetterGrade;
+
 use App\Services\LetterGradeService;
 use App\Http\Requests\LetterGradeRequest;
 use App\Http\Requests\UpdateLetterGradeRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Http\Request;
 
 class letterGradecontroller extends Controller
 {

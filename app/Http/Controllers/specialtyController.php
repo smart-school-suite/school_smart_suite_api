@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
+
 use App\Models\Specialty;
 use App\Http\Requests\SpecailtyRequest;
+use App\Http\Requests\UpdateSpecailtyRequest;
 use App\Services\ApiResponseService;
 use App\Services\SpecailtyService;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class specialtyController extends Controller
         return ApiResponseService::success("Specailty Deleted Sucessfully", $deleteSpecailty, null,200);
     }
 
-    public function update_school_specialty(Request $request, $specialty_id)
+    public function update_school_specialty(UpdateSpecailtyRequest $request, $specialty_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateSpecailty = $this->specailtyService->updateSpecialty( $request->validated(), $currentSchool, $specialty_id, );
@@ -39,7 +40,7 @@ class specialtyController extends Controller
     }
 
 
-    public function get_all_school_specialty(Request $request)
+    public function get_all_school_specialty()
     {
         $specialty_data = Specialty::all();
         if ($specialty_data->isEmpty()) {

@@ -18,7 +18,8 @@ class gradesController extends Controller
 
     protected AddGradesService  $addGradesService;
     protected GradesService $gradesService;
-    public function __construct(AddGradesService $addGradesService, GradesService $gradesService){
+    public function __construct(AddGradesService $addGradesService, GradesService $gradesService)
+    {
         $this->addGradesService = $addGradesService;
         $this->gradesService = $gradesService;
     }
@@ -32,7 +33,6 @@ class gradesController extends Controller
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
         }
-
     }
     public function get_all_grades_scoped(Request $request)
     {

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Services\ApiResponseService;
 use App\Services\SchoolExpensesCategoryService;
+use App\Http\Requests\SchoolCategoryExpensesRequest;
+use App\Http\Requests\UpdateSchoolCategoryExpensesRequest;
 use Illuminate\Http\Request;
 
 class Schoolexpensescategorycontroller extends Controller
@@ -13,13 +15,13 @@ class Schoolexpensescategorycontroller extends Controller
     public function __construct(SchoolExpensesCategoryService $schoolExpensesCategoryService){
         $this->schoolExpensesCategoryService = $schoolExpensesCategoryService;
     }
-    public function create_category_expenses(Request $request){
+    public function create_category_expenses(SchoolCategoryExpensesRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated, $currentSchool);
         return ApiResponseService::success("Category Expenses Created Sucessfully", $createCategoryExpenses, null, 201);
     }
 
-    public function update_category_expenses(Request $request, $category_expense_id){
+    public function update_category_expenses(UpdateSchoolCategoryExpensesRequest $request, $category_expense_id){
         $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated,  $category_expense_id);
         return ApiResponseService::success("Expenses Category Updated Sucessfully", $updateCategoryExpenses, null, 200);
     }

@@ -2,61 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\SubscriptionPayment;
+
+use App\Services\SubscriptionPaymentService;
+use App\Services\ApiResponseService;
 
 class SubscriptionPaymentController extends Controller
 {
     //
-    public function delete_payment(Request $request, $transaction_id)
+    protected SubscriptionPaymentService $subscriptionPaymentService;
+    public function __construct(SubscriptionPaymentService $subscriptionPaymentService)
     {
-        $find_transaction = SubscriptionPayment::find($transaction_id);
-        if (!$find_transaction) {
-            return response()->json([
-                'status' => 'error',
-                "message" => "No records found"
-            ]);
-        }
-
-        $find_transaction->delete();
-        return response()->json([
-            "status" => "success",
-            "message" => "Transaction deleted succefully"
-        ]);
+        $this->subscriptionPaymentService = $subscriptionPaymentService;
+    }
+    public function delete_payment($transaction_id)
+    {
+        $deleteTransaction = $this->subscriptionPaymentService->deletePaymentTransaction($transaction_id);
+        return ApiResponseService::success("Transaction Deleted Sucessfully", $deleteTransaction, null, 200);
     }
 
-
-    public function my_transactions(Request $request, $school_id)
+    public function my_transactions($school_id)
     {
-        $my_transactions = SubscriptionPayment::where("school_id", $school_id)->with(['schoolSubscription'])->get();
-        if ($my_transactions->isEmpty()) {
-            return response()->json([
-                'status' => "ok",
-                "message" => "transactions is empty"
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => "ok",
-            "message" => "transactions fetched sucessfully",
-            "transactions" => $my_transactions
-        ], 200);
+        $myTransactions = $this->subscriptionPaymentService->myTransactions($school_id);
+        return ApiResponseService::success("Transaction Fetched Succefully", $myTransactions, null, 200);
     }
 
-
-    public function get_all_transactions(Request $request)
+    public function get_all_transactions()
     {
-        $transactions = SubscriptionPayment::with('schoolSubscription');
-        if ($transactions->isEmpty()) {
-            return response()->json([
-                'status' => "error",
-                "message" => "Transactions is empty"
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => "ok",
-            "message" => "transactions fetched succefuly"
-        ], 200);
+        $getAllTransactions = $this->subscriptionPaymentService->getAllTransactions();
+        return ApiResponseService::success("Transactions Fetched Successfully", $getAllTransactions, null, 200);
     }
 }

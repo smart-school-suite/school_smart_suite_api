@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Educationlevels;
+
 use App\Http\Requests\EducationLevelRequest;
 use App\Services\EducationLevelService;
 use App\Http\Requests\UpdateEducationLevelRequest;
@@ -30,13 +30,13 @@ class educationlevelsController extends Controller
         return ApiResponseService::success("Education Level Update Sucessfully", $updateEducationLevel, null, 200);
     }
 
-    public function delete_education_levels(Request $request, string $education_level_id)
+    public function delete_education_levels( string $education_level_id)
     {
         $deleteEducationLevel = $this->educationLevelService->deleteEducationLevel($education_level_id);
         return ApiResponseService::success("Education Level Deleted Sucessfully", $deleteEducationLevel, null, 200);
     }
 
-    public function get_all_education_leves(Request $request)
+    public function get_all_education_leves()
     {
         $educationLevel = $this->educationLevelService->getEducationLevels();
         return ApiResponseService::success("Education Levels Fetched Succefully", $educationLevel, null, 200);

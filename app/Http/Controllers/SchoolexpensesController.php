@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SchoolExpenses;
 use App\Http\Requests\SchoolExpensesRequest;
+use App\Http\Requests\UpdateSchoolExpensesRequest;
 use App\Services\ApiResponseService;
 use App\Services\SchoolExpensesService;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class SchoolexpensesController extends Controller
         return ApiResponseService::success('Expenses Deleted Succefully', $deleteSchoolExpenses, null, 200);
     }
 
-    public function update_expense(Request $request, $expense_id)
+    public function update_expense(UpdateSchoolExpensesRequest $request, $expense_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateExpenses = $this->schoolExpensesService->updateExpenses($request->validated(), $currentSchool, $expense_id);

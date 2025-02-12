@@ -56,7 +56,7 @@ class edumanageadminController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'status' => 'Admin updated sucessfully'
+            'message' => 'Admin updated sucessfully'
         ], 200);
     }
 }

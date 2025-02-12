@@ -4,15 +4,15 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateExamTypeRequest extends FormRequest
+class UpdateSchoolExpensesRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-  //  public function authorize(): bool
-   // {
-     //   return false;
-  //  }
+    public function authorize(): bool
+    {
+        return false;
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,9 +22,10 @@ class UpdateExamTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-           'semester_id' => 'sometimes|string',
-           'exam_name' => 'sometimes|string',
-           'program_name' => 'sometimes|string',
+            'expenses_category_id' => 'sometimes|required|string',
+            'date' => 'sometimes|required|date',
+            'amount' => 'sometimes|required',
+            'description' => 'sometimes|string'
         ];
     }
 }

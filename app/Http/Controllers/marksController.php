@@ -26,7 +26,6 @@ class marksController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
-
             $results = $this->addScoreService->addStudentScores($request->student_scores, $currentSchool);
             return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
         } catch (\Exception $e) {

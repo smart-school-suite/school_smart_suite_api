@@ -24,7 +24,7 @@ class eventsController extends Controller
         return ApiResponseService::success("Events Created Succefully", $createElection, null, 201);
     }
 
-    public function update_school_event(Request $request, $event_id)
+    public function update_school_event(UpdateEventRequest $request, $event_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateEvent = $this->eventsService->updateEvent($request->validated(), $currentSchool, $event_id);
