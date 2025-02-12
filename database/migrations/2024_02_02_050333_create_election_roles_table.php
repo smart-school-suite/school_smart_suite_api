@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('election_roles', function (Blueprint $table) {
             $table->string('id');
             $table->string('name');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text('description');
             $table->timestamps();
         });

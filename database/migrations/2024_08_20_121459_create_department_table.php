@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('department', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('department_name');
-            $table->string('HOD')->nullable();
+            $table->text('description')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

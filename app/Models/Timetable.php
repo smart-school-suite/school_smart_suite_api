@@ -21,7 +21,8 @@ class Timetable extends Model
         'day_of_week',
         'start_time',
         'end_time',
-        'semeter_id'
+        'semeter_id',
+        'student_batch_id'
     ];
 
     protected $casts = [
@@ -36,12 +37,12 @@ class Timetable extends Model
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 
     public function specialty(): BelongsTo {
@@ -59,7 +60,7 @@ class Timetable extends Model
     public function level(): BelongsTo {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
- 
+
    public function semester(): HasMany {
         return $this->hasMany(Semester::class, 'semeter_id');
    }

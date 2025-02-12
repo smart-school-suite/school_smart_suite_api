@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dismissed_students', function (Blueprint $table) {
+        Schema::create('teacher_specailty_preference', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->date('dismissal_date');
-            $table->text('reason');
             $table->timestamps();
         });
     }
@@ -24,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dismissed_students');
+        Schema::dropIfExists('teacher_specailty_preference');
     }
 };

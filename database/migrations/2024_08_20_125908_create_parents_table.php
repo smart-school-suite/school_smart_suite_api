@@ -27,7 +27,6 @@ return new class extends Migration
             $table->boolean('receive_notifications')->default(true);
             $table->string('marital_status')->nullable();
             $table->string('preferred_language_of_communication')->nullable();
-            $table->boolean('is_active_in_pta')->default(false);
             $table->string('cultural_background')->nullable();
             $table->string('religion')->nullable();
             $table->string('referral_source')->nullable();

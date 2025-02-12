@@ -17,6 +17,8 @@ class Elections extends Model
         "election_end_date",
         "starting_time",
         "ending_time",
+        'school_year_start',
+        'school_year_end',
         "is_results_published",
         "school_branch_id",
         'description'

@@ -3,25 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Teacher;
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Resitablecourses extends Model
+class TeacherSpecailtyPreference extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'school_branch_id',
-        'courses_id',
-        'specialty_id',
-        'exam_id',
-        'level_id',
-        'student_batch_id'
+        'teacher_id',
+        'specialty_id'
     ];
 
-    public $incrementing = 'false';
-    public $table = 'resitable_courses';
     public $keyType = 'string';
+    public $table = 'teacher_specailty_preference';
+    public $incrementing = 'false';
+
+    public function teacher(): HasMany {
+        return $this->hasMany(Teacher::class, 'teacher_id');
+    }
 
     protected static function boot()
     {
@@ -29,10 +32,8 @@ class Resitablecourses extends Model
 
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
+            $user->id = substr($uuid, 0, 25);
          });
 
     }
-
-
 }

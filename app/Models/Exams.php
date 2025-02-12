@@ -22,7 +22,8 @@ class Exams extends Model
         'weighted_mark',
         'semester_id',
         'school_year',
-        'specialty_id'
+        'specialty_id',
+        'student_batch_id'
     ];
 
     public $keyType = 'string';

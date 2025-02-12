@@ -19,6 +19,9 @@ return new class extends Migration
             $table->time('starting_time');
             $table->time('ending_time');
             $table->text('description');
+            $table->integer("school_year_start");
+            $table->integer('school_year_end');
+            $table->enum('status', ['active', 'inactive', 'finished'])->default('inactive');
             $table->boolean('is_results_published');
             $table->timestamps();
         });

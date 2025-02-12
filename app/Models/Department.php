@@ -16,7 +16,8 @@ class Department extends Model
     protected $fillable = [
       'school_branch_id',
       'department_name',
-      'HOD',
+      'description',
+      'status',
     ];
 
     public $keyType = 'string';

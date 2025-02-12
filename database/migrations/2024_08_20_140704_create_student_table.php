@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('gender');
             $table->string('fee_status')->default('owing');
             $table->decimal('total_fee_debt', 8, 2);
-            $table->string('phone_one');
-            $table->string('phone_two')->nullable();
+            $table->string('phone_one')->unique();
+            $table->string('phone_two')->unique()->nullable();
             $table->string('religion')->nullable();
             $table->string('email');
             $table->string('password');

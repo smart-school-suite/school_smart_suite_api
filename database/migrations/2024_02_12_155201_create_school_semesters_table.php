@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staff_holiday', function (Blueprint $table) {
+        Schema::create('school_semesters', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->text('notes')->nullable();
-            $table->text("reason");
+            $table->date("start_date");
+            $table->date("end_date");
+            $table->integer("school_year_start");
+            $table->integer('school_year_end');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('staff_holiday');
+        Schema::dropIfExists('school_semesters');
     }
 };

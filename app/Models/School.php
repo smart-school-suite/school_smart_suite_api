@@ -13,17 +13,13 @@ class School extends Model
     use HasFactory;
 
     protected $fillable = [
-        'id',
+       'id',
        'country_id',
        'name',
-       'address',
-       'city',
-       'state',
        'type',
        'school_logo',
        'motor',
        'established_year',
-       'director_name',
     ];
 
     public $keyType = 'string';
