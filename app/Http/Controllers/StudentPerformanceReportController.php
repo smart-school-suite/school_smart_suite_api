@@ -6,7 +6,6 @@ use App\Models\Examtimetable;
 use App\Models\Grades;
 use App\Models\Reportcard;
 use App\Models\Student;
-use App\Models\Timetable;
 use Illuminate\Http\Request;
 
 class StudentPerformanceReportController extends Controller
@@ -34,7 +33,7 @@ class StudentPerformanceReportController extends Controller
         $risky_courses = [];
 
         foreach ($student_ca_records as $record) {
-            $exams = $record->exam->pluck('examType.exam_name')->toArray(); 
+            $exams = $record->exam->pluck('examType.exam_name')->toArray();
             if (in_array('second-semester-ca', $exams)) {
                 continue;
             }
@@ -77,7 +76,7 @@ class StudentPerformanceReportController extends Controller
                 'message' => 'student not found'
             ], 404);
         }
-         
+
         $maxGradePoints = Grades::where('school_branch_id', $currentSchool->id)
         ->max('grade_points');
 
@@ -98,7 +97,7 @@ class StudentPerformanceReportController extends Controller
         ->get();
 
         $totalCredits = $get_exam_timetable_data->sum(function ($exam) {
-            return $exam->course->credits; 
+            return $exam->course->credits;
         });
 
         $desiredTotalPoints = $desiredGpa * $totalCredits;
@@ -108,17 +107,17 @@ class StudentPerformanceReportController extends Controller
         foreach ($get_exam_timetable_data as $exam) {
             $course = $exam->course;
             if ($course && $course->credits > 0) {
-                $maxScore = $exam->exam->weighted_mark; 
+                $maxScore = $exam->exam->weighted_mark;
 
                 $neededScore = ($desiredTotalPoints / $totalCredits) * $maxScore;
 
                 if ($neededScore > $maxScore) {
-                    $neededScore = $maxScore; 
+                    $neededScore = $maxScore;
                 }
 
                 $scoresNeeded[] = [
                     'course_name' => $course->name,
-                    'required_score' => round($neededScore, 2) 
+                    'required_score' => round($neededScore, 2)
                 ];
             }
         }

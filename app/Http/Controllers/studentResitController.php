@@ -3,163 +3,60 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Studentresit;
+use App\Services\StudentResitService;
+use App\Services\ApiResponseService;
 
 class studentResitController extends Controller
 {
     //
-    public function update_student_resit(Request $request, $resit_id){
+    protected StudentResitService $studentResitService;
+    public function __construct(StudentResitService $studentResitService)
+    {
+        $this->studentResitService = $studentResitService;
+    }
+    public function update_student_resit(Request $request, $resit_id)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        $resit_id = $request->route('resit_id');
-        $find_student_resit = Studentresit::where('school_branch_id', $currentSchool->id)
-                                            ->find($resit_id);
-       if(!$find_student_resit){
-         return response()->json([
-            'status' => 'error',
-            'message' => 'student resit not found'
-         ], 400);
-       }
-
-       $fillable_data = $request->all();
-       $filtered_data = array_filter($fillable_data);
-       $find_student_resit->fill($filtered_data);
-
-       $find_student_resit->save();
-
-       return response()->json([
-           'status' => 'ok',
-           'message' => 'Resit entry updated succefully',
-           'updated_record' => $find_student_resit,
-       ], 200);
+        $updateStudentResit = $this->studentResitService->updateStudentResit($request->all(), $currentSchool, $resit_id);
+        return ApiResponseService::success("Resit Entry Updated Successfully", $updateStudentResit, null, 200);
     }
 
-    public function pay_for_resit(Request $request, $resit_id){
-        $request->validate([
-            'paid_status' => 'required|string'
-        ]);
+    public function pay_for_resit(Request $request, $resit_id)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        $resit_id = $request->route('resit_id');
-        $find_student_resit = Studentresit::where('school_branch_id', $currentSchool->id)->find($resit_id);
-        if(!$find_student_resit){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'student resit record not found'
-            ], 400);
-        }
-         
-        $find_student_resit->paid_status = $request->paid_status;
-
-        $find_student_resit->save();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'student resit paid succefully',
-            'paid_course' => $find_student_resit,
-        ], 201);
+        $payStudentResit = $this->studentResitService->payResit($currentSchool, $resit_id);
+        return ApiResponseService::success("Student Resit Paid Successfully", $payStudentResit, null, 200);
     }
 
-    public function update_exam_status(Request $request, $resit_id){
-        $request->validate([
-            'exam_status' => 'required|string'
-        ]);
+    public function delete_student_resit_record(Request $request, $resit_id)
+    {
         $resit_id = $request->route('resit_id');
         $currentSchool = $request->attributes->get('currentSchool');
-        $find_student_resit = Studentresit::where('school_branch_id', $currentSchool->id)->find($resit_id);
-        if(!$find_student_resit){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'student resit record not found'
-            ], 400);
-        }
-
-        $find_student_resit->exam_status = $request->exam_status;
-        $find_student_resit->save();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'exam status update succefully',
-            'updated_resit_record' => $find_student_resit,
-        ], 200);
+        $deleteStudentResit = $this->studentResitService->deleteStudentResit($resit_id, $currentSchool);
+        return ApiResponseService::success("Student Resit Record Not Found", $deleteStudentResit, null, 200);
     }
 
-    public function delete_student_resit_record(Request $request, $resit_id){
-        $resit_id = $request->route('resit_id');
-        $currentSchool = $request->attributes->get('currentSchool');
-        $find_student_resit = Studentresit::where('school_branch_id', $currentSchool->id)->find($resit_id);
-        if(!$find_student_resit){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'student resit record not found'
-            ], 400);
-        }
-        $find_student_resit->delete();
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Resit record deleted sucessfully',
-            'deleted_resit_record' => $find_student_resit,
-        ], 200);
-    }
-
-    public function get_my_resits(Request $request, $student_id){
+    public function get_my_resits(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $student_id = $request->route('student_id');
-        $get_resit_data = Studentresit::where('school_branch_id', $currentSchool->id)
-                                       ->where('student_id', $student_id)
-                                        ->get();
-        if($get_resit_data->isEmpty()){
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Congratulations you have no resits'
-            ]);
-        }
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'student records fetched succefully',
-            'resits' => $get_resit_data
-        ], 200);
+        $exam_id = $request->route("exam_id");
+        $getMyResits = $this->studentResitService->getMyResits($currentSchool, $student_id, $exam_id);
+        return ApiResponseService::success("Student Records Fetched Sucessfully", $getMyResits, null, 200);
     }
 
-    public function get_student_resits(Request $request){
+    public function get_student_resits(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        $get_resit_data = Studentresit::where('school_branch_id', $currentSchool->id)
-                                       ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
-                                        ->get();
-        if($get_resit_data->isEmpty()){
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Congratulations you have no resits'
-            ]);
-        }
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Student resit records fetched succesfully',
-            'resits' => $get_resit_data
-        ], 200);
+        $getStudentResits = $this->studentResitService->getStudentResits($currentSchool);
+        return ApiResponseService::success("Student Resit Records Fetched Sucessfully", $getStudentResits, null, 200);
     }
 
-    public function student_resit_details(Request $request){
-         $currentSchool = $request->attributes->get("currentSchool");
-         $resit_id = $request->route("resit_id");
-
-         $find_resit = Studentresit::find($resit_id);
-         if(!$find_resit){
-             return response()->json([
-                "status" => "error",
-                "message" => "Resit not found",
-
-             ], 400);
-         }
-         $get_resit_data = Studentresit::where('school_branch_id', $currentSchool->id)
-          ->where("id", $resit_id)
-         ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
-          ->get();
-        
-        return response()->json([
-             "status" => "ok",
-             "message" => "Resit Data fetched sucessfully",
-             "resit_details" => $get_resit_data
-        ], 200);
-        
+    public function student_resit_details(Request $request)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $resit_id = $request->route("resit_id");
+        $getStudentResitDetails = $this->studentResitService->getStudentResitDetails($currentSchool, $resit_id);
+        return ApiResponseService::success("Student Resit Details Fetched Successfully", $getStudentResitDetails, null, 200);
     }
 }

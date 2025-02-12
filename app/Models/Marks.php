@@ -20,6 +20,8 @@ class Marks extends Model
         'specialty_id',
         'school_branch_id',
         'grade',
+        'grade_status',
+        'gratification',
         'student_batch_id'
     ];
 
@@ -34,7 +36,7 @@ class Marks extends Model
     public function student(): BelongsTo {
         return $this->belongsTo(Student::class, 'student_id');
     }
-    
+
     public function exams(): BelongsTo {
         return $this->belongsTo(Exams::class, 'exam_id');
     }
@@ -42,19 +44,19 @@ class Marks extends Model
     public function level(): BelongsTo {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
-    
+
     public function specialty(): BelongsTo {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 
 }

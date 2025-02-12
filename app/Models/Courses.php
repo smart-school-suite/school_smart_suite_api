@@ -35,8 +35,8 @@ class Courses extends Model
         return $this->hasMany(Exams::class);
     }
 
-    public function department(): HasMany {
-        return $this->hasMany(Department::class);
+    public function department(): BelongsTo {
+        return $this->belongsTo(Department::class);
     }
 
     public function marks(): HasMany {

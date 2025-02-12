@@ -104,7 +104,6 @@ public function create_exam_timetable(Request $request)
         ], 200);
     }
 
-
     public function update_exam_time_table_scoped(Request $request, $examtimetable_id)
     {
 
@@ -169,9 +168,6 @@ public function create_exam_timetable(Request $request)
             'message' => 'Exam timetable updated successfully'
         ], 200);
     }
-
-
-
 
     public function generate_time_table_for_specialty(Request $request, $specialty_id, $level_id)
     {

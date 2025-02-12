@@ -2,100 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ElectionRoles;
-use App\Models\Elections;
+use App\Services\ApiResponseService;
+use App\Services\ElectionRolesService;
+use App\Http\Requests\ElectionRolesRequest;
+use App\Http\Requests\UpdateElectionRolesRequest;
 use Illuminate\Http\Request;
 
 class electionRolesController extends Controller
 {
     //
-
-    public function createElectionRole(Request $request)
+    protected ElectionRolesService $electionRolesService;
+    public function __construct(ElectionRolesService $electionRolesService)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'election_id' => 'required|string',
-            'description' => 'required|string'
-        ]);
-
-        $newElectionRole = ElectionRoles::create($request->only(['name', 'election_id', 'description']));
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Election Role created successfully',
-            'created_election_role' => $newElectionRole
-        ], 201);
+        $this->electionRolesService = $electionRolesService;
+    }
+    public function createElectionRole(ElectionRolesRequest $request)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $createElectionRole = $this->electionRolesService->createElectionRole($request->validated(), $currentSchool);
+        return ApiResponseService::success("Election Role Created Sucessfully", $createElectionRole, null, 201);
     }
 
-    public function updateElectionRole(Request $request, $election_role_id)
+    public function updateElectionRole(UpdateElectionRolesRequest $request, string $election_role_id)
     {
-        $electionRole = ElectionRoles::find($election_role_id);
-        if (!$electionRole) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Election role not found'
-            ], 404);
-        }
-
-        $request->validate([
-            'name' => 'sometimes|string',
-            'description' => 'sometimes|string'
-        ]);
-
-        $electionRole->fill($request->only(['name', 'description']));
-        $electionRole->save();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Election Role updated successfully',
-            'updated_election_role' => $electionRole
-        ], 200);
+        $currentSchool = $request->attributes->get("currentSchool");
+        $updateElectionRole = $this->electionRolesService->updateElectionRole($request->validated(), $currentSchool, $election_role_id);
+        return ApiResponseService::success("Election Role Updated Succefully", $updateElectionRole, null, 200);
     }
 
-    public function deleteElectionRole(Request $request, $election_role_id)
+    public function deleteElectionRole(Request $request, string $election_role_id)
     {
-        $electionRole = ElectionRoles::find($election_role_id);
-        if (!$electionRole) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Election role not found'
-            ], 404);
-        }
-
-        $electionRole->delete();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Election role deleted successfully'
-        ], 200);
+        $currentSchool = $request->attributes->get("currentSchool");
+        $deleteElectionRole = $this->electionRolesService->deleteElectionRole($election_role_id, $currentSchool);
+        return ApiResponseService::success("Election Role Deleted Sucessfully", $deleteElectionRole, null, 200);
     }
 
-    public function getElectionRoles(Request $request, $election_id)
+    public function getElectionRoles(Request $request, string $election_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $election = Elections::find($election_id);
-        if (!$election) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Election not found'
-            ], 404);
-        }
-
-        $electionRoles = ElectionRoles::where('school_branch_id', $currentSchool->id)
-                                      ->where('election_id', $election_id)
-                                      ->get();
-
-        if ($electionRoles->isEmpty()) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'No election roles found'
-            ], 204); // No Content
-        }
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Election Roles fetched successfully',
-            'election_roles' => $electionRoles
-        ], 200);
+        $electionResults = $this->electionRolesService->getElectionRole($currentSchool, $election_id);
+        return ApiResponseService::success('Election Roles Fetched Sucessfully', $electionResults, null, 200);
     }
 }

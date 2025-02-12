@@ -20,28 +20,28 @@ class ResitcontrollerTimetable extends Controller
 
         $find_specialty = Specialty::where('school_branch_id', $currentSchool->id)
                                     ->find($specialty_id);
-                                    
+
         if (!$find_specialty) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Specialty not found'
-            ], 404); 
+            ], 404);
         }
-    
-        $resitable_courses = 
+
+        $resitable_courses =
         Resitablecourses::where('school_branch_id', $currentSchool->id)
                                              ->where('exam_id', $exam_id)
                                              ->where('specialty_id', $specialty_id)
                                              ->with(['courses'])
                                              ->get();
-                                             
+
         if ($resitable_courses->isEmpty()) {
             return response()->json([
                 'status' => 'ok',
                 'message' => 'It appears there are no resits.'
             ], 404);
         }
-    
+
         return response()->json([
             'status' => 'ok',
             'message' => 'Resitable courses fetched successfully.',
@@ -57,10 +57,10 @@ class ResitcontrollerTimetable extends Controller
             'specialty_id' => 'required|exists:specialty,id',
             'start_time' => 'required|date',
             'level_id' => 'required|exists:educationlevels,id',
-            'day' => 'required|string',
+            'date' => 'required|date',
             'end_time' => 'required|date|after:start_time',
         ]);
-       
+
         $find_resitable_courses = Resitablecourses::where('school_branch_id', $currentSchool->id)->find($request->course_id);
 
         if(!$find_resitable_courses){
@@ -133,12 +133,12 @@ class ResitcontrollerTimetable extends Controller
                 $examTimetable[$timetable->day] = [];
             }
             $examTimetable[$timetable->day][] = [
-                'course_title' => $timetable->course->course_title, 
-                'credit' => $timetable->course->credit, 
+                'course_title' => $timetable->course->course_title,
+                'credit' => $timetable->course->credit,
                 'course_code' => $timetable->course->course_code,
-                'start_time' => $timetable->start_time->format('H:i'), 
-                'end_time' => $timetable->end_time->format('H:i'), 
-                'duration' => $timetable->duration, 
+                'start_time' => $timetable->start_time->format('H:i'),
+                'end_time' => $timetable->end_time->format('H:i'),
+                'duration' => $timetable->duration,
             ];
         }
 

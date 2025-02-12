@@ -2,64 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Schoolexpensescategory;
+use App\Services\ApiResponseService;
+use App\Services\SchoolExpensesCategoryService;
 use Illuminate\Http\Request;
 
 class Schoolexpensescategorycontroller extends Controller
 {
-    //
+    //update validatioin, create validation
+    protected SchoolExpensesCategoryService $schoolExpensesCategoryService;
+    public function __construct(SchoolExpensesCategoryService $schoolExpensesCategoryService){
+        $this->schoolExpensesCategoryService = $schoolExpensesCategoryService;
+    }
     public function create_category_expenses(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $request->validate([
-          'name'
-        ]);
-
-        $new_category_instance = new Schoolexpensescategory();
-        $new_category_instance->name = $request->name;
-        $new_category_instance->school_branch_id = $currentSchool->id;
-
-        $new_category_instance->save();
-
-        return response()->json(['message' => 'Category created succefully'], 200);
+        $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated, $currentSchool);
+        return ApiResponseService::success("Category Expenses Created Sucessfully", $createCategoryExpenses, null, 201);
     }
 
     public function update_category_expenses(Request $request, $category_expense_id){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $find_category_expense = Schoolexpensescategory::where('school_branch_id', $currentSchool->id)
-                                  ->find($category_expense_id);
-
-        if(!$find_category_expense){
-            return response()->json(['message' => 'Category not found'], 404);
-        }
-
-        $fillable_data = $request->all();
-        $filtered_data = array_filter($fillable_data);
-        $find_category_expense->fill($filtered_data);
-        $find_category_expense->save();
-
-        return response()->json(['message' => 'Category updated succefully'], 200);
+        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated,  $category_expense_id);
+        return ApiResponseService::success("Expenses Category Updated Sucessfully", $updateCategoryExpenses, null, 200);
     }
 
 
-    public function delete_category_expense(Request $request, $category_expense_id){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $find_category_expense = Schoolexpensescategory::where('school_branch_id', $currentSchool->id)
-                                  ->find($category_expense_id);
-
-        if(!$find_category_expense){
-            return response()->json(['message' => 'Category not found'], 404);
-        }
-
-        $find_category_expense->delete();
-
-        return response()->json(['message' => 'Category expenses deleted succefully'], 200);
+    public function delete_category_expense(string $category_expense_id){
+        $deleteCategoryExpenses = $this->schoolExpensesCategoryService->deleteSchoolExpenseCategory($category_expense_id);
+        return ApiResponseService::success("Expenses Category Deleted Succesfully", $deleteCategoryExpenses, null, 200);
     }
 
 
     public function get_all_category_expenses(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $category_expense_data = Schoolexpensescategory::where('school_branch_id', $currentSchool->id)
-                                                       ->get();
-        return response()->json(['category_expense_data' => $category_expense_data], 200);
+        $getSchoolExpensesCategory = $this->schoolExpensesCategoryService->getSchoolCategoryExpenses($currentSchool);
+        return ApiResponseService::success("Category Expenses Fetched Successfully", $getSchoolExpensesCategory, null, 200);
     }
 }

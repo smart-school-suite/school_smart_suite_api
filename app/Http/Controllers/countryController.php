@@ -3,88 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\Country;
+use App\Services\CountryService;
+use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
 class countryController extends Controller
 {
     //
+
+    protected CountryService $countryService;
+    public function __construct(CountryService $countryService){
+        $this->countryService = $countryService;
+    }
     public function create_country(Request $request){
          $request->validate([
            'country' => 'required|string'
          ]);
 
-         $country = new Country();
+         $country = $this->countryService->createCountry($request->validated());
+         return ApiResponseService::success('Country Created sucessfully', $country, null, 200);
 
-         $country->country = $request->country;
-         
-         $country->save();
-
-         return response()->json([
-            'status' => 'ok',
-            'message' => 'country created sucessfully',
-            'country' => $country
-         ], 200);
     }
 
-    public function update_country(Request $request, $country_id){
-         $country = Country::find($country_id);
-         if(!$country){
-             return response()->json([
-                'status' => 'ok',
-                'message' => 'could not find country'
-             ], 404);
+    public function update_country(Request $request, string $country_id){
+         $updatedCountry = $this->countryService->updateCountry($request->validated(), $country_id);
+         if($updatedCountry == null){
+            return ApiResponseService::error('Country Not found', null, 404);
          }
-
-         $country_data = $request->all();
-         $country_data = array_filter($country_data);
-         $country->fill();
-
-         $country->save();
-
-         return response()->json([
-            'status' => 'ok',
-            'message' => 'country updated succesfully'
-         ], 200);
+         return ApiResponseService::success('Country Updated sucessfully', $updatedCountry, null, 200);
     }
 
-    public function delete_country(Request $request, $country_id){
+    public function delete_country( string $country_id){
         $country = Country::find($country_id);
+        $deleteCountry = $this->countryService->deleteCountry($country_id);
         if(!$country){
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'could not find country'
-            ], 404);
+           return ApiResponseService::error('Country not found', null,404);
         }
+        return ApiResponseService::success('Country Delete succesfully', $deleteCountry, null, 200);
 
-        $country->delete();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'country deleted succesfully'
-        ], 200);
     }
 
     public function get_all_countries(Request $request){
-        $country = Country::all();
+        $country = $this->countryService->getCountries();
         if($country->isEmpty()){
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Could not find any records'
-            ], 409);
+            return ApiResponseService::error('Looks Like Country Collection is empty', null,409);
         }
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'countries fetched succefully',
-            'countries' => $country
-        ], 200);
+
+        return ApiResponseService::success('Countries Fetched Succefully', $country, null, 200);
     }
 
-    public function get_all_countries_with_all_relations(Request $request){
-        $country_data_with_relations = Country::with('school');
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Country with relations fetched succefully',
-            'country_data' => $country_data_with_relations
-        ], 200);
-    }
+
 }

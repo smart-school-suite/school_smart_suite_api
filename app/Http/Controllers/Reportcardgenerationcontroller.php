@@ -9,7 +9,6 @@ use App\Models\Marks;
 use App\Models\Reportcard;
 use App\Models\Student;
 use App\Models\Grades;
-use Exception;
 
 class Reportcardgenerationcontroller extends Controller
 {

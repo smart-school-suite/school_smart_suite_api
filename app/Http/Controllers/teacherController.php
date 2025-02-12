@@ -10,27 +10,12 @@ class teacherController extends Controller
 {
     //
 
-    public function get_all_teachers_Without_relations(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $teachers = Teacher::Where('school_branch_id', $currentSchool->id)->get();
-        if($teachers->isEmpty()){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Teacher records seem to be empty'
-            ]);
-        }
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'teachers fetched succefully',
-            'teachers' => $teachers
-        ], 200);
-    }
 
     public function get_all_teachers_with_relations_scoped(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $teachers = Teacher::where('school_branch_id', $currentSchool->id)
         ->with('courses', 'instructoravailability');
-          
+
         return response()->json(['teacher_data' => $teachers], 201);
     }
 
@@ -43,7 +28,7 @@ class teacherController extends Controller
                 'message' => 'Teacher Not found'
             ], 409);
         }
-        
+
         $teacher_data->delete();
 
         return response()->json([
@@ -62,7 +47,7 @@ class teacherController extends Controller
                 'message' => 'Teacher deleted succefully'
             ], 409);
         }
-        
+
         $teacher_data_request = $request->all();
         $teacher_data_request = array_filter($teacher_data_request);
         $teacher_data->fill();
@@ -78,11 +63,11 @@ class teacherController extends Controller
           $currentSchool = $request->attributes->get('currentSchool');
           $teacher_data = Teacher::where("school_branch_id", $currentSchool->id)
                            ->get();
-          
+
           return response()->json([
             "status" => "ok",
             "message" => "teachers fetched succesfully",
-            'teacher_data' => $teacher_data 
+            'teacher_data' => $teacher_data
           ], 201);
     }
 
@@ -102,7 +87,7 @@ class teacherController extends Controller
                  'message' => 'No records found'
               ], 409);
            }
-        
+
            $time_table = [
             "monday" => [],
             "tuesday" => [],
@@ -131,8 +116,8 @@ class teacherController extends Controller
              'message' => 'Teacher time table fetched succefully',
              'teacher_timetable' => $time_table
         ], 200);
-    } 
-    
+    }
+
    public function get_teacher_details(Request $request){
        $currentSchool = $request->attributes->get('currentSchool');
        $teacher_id = $request->route('teacher_id');
@@ -146,7 +131,7 @@ class teacherController extends Controller
        $teacher_details = Teacher::where("school_branch_id", $currentSchool->id)
                                    ->where("id", $teacher_id)
                                    ->get();
-       
+
         return response()->json([
             "status" => "success",
             "teacher_id" => $teacher_id,

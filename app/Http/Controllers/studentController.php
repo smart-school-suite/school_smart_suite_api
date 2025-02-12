@@ -4,83 +4,38 @@ namespace App\Http\Controllers;
 
 
 use Illuminate\Http\Request;
+use App\Services\StudentService;
 use App\Models\Student;
+use App\Services\ApiResponseService;
 
 class studentController extends Controller
 {
     //
-
+    //create Resource
+    protected StudentService $studentService;
+    public function __construct(StudentService $studentService)
+    {
+        $this->studentService = $studentService;
+    }
     public function get_all_students_in_school(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $students = Student::where('school_branch_id', $currentSchool->id)->
-                                   with(['guardianOne', 'guardianTwo',
-                                    'specialty', 'level', 'studentBatch'])
-                                    ->get();
-        $result = [];
-        foreach ($students as $student) {
-            $result[] = [
-                'id' => $student->id,
-                'student_name' => $student->name,
-                'phone_one' => $student->phone_one,
-                'gender' => $student->gender,
-                'specailty_name' => $student->specialty->specialty_name,
-                'level_name' => $student->level->name,
-                'level_number' => $student->level->level,
-                'guardian_name' => $student->guardianOne->name,
-                'student_batch' => $student->studentBatch->name,
-            ];
-        }
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'student records fetched sucessfully',
-            'students' => $result
-        ], 200);
+        $getStudents = $this->studentService->getStudents($currentSchool);
+        return ApiResponseService::success("Student Fetched Succefully", $getStudents, null, 200);
     }
 
     public function delete_Student_Scoped(Request $request, $student_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $student_data_scoped = Student::where('school_branch_id', $currentSchool->id)
-            ->find($student_id);
-        if (!$student_data_scoped) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'student not found'
-            ], 409);
-        }
-
-        $student_data_scoped->delete();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Student deleted succesfully',
-            'deleted_student' => $student_data_scoped
-        ], 201);
+        $deleteStudent = $this->studentService->deleteStudent($student_id, $currentSchool);
+        return ApiResponseService::success("Student Deleted Successfully", $deleteStudent, null, 200);
     }
 
     public function update_student_scoped(Request $request, $student_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $student_data_scoped = Student::where('school_branch_id', $currentSchool->id)
-            ->find($student_id);
-        if (!$student_data_scoped) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'student not found',
-            ], 409);
-        }
-
-        $student_data = $request->all();
-        $student_data = array_filter($student_data);
-        $student_data_scoped->fill();
-        $student_data_scoped->save();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Student data updated succesfully',
-            'updated_student' => $student_data_scoped
-        ], 200);
+        $updateStudent = $this->studentService->updateStudent($student_id, $currentSchool, $request->all());
+        return ApiResponseService::success('Student Updated Successfully', $updateStudent, null, 200);
     }
 
     public function get_student_with_all_relations(Request $request)
@@ -108,22 +63,7 @@ class studentController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $student_id  = $request->route('student_id');
-
-        $find_student = Student::find($student_id);
-        if (!$find_student) {
-            return response()->json([
-                "status" => "error",
-                "message" => "Student Not Found"
-            ], 400);
-        }
-        $student_details = Student::where("school_branch_id", $currentSchool->id)
-            ->where("id", $student_id)
-            ->with(['guardianOne', 'guardianTwo', 'specialty', 'level', 'studentBatch', 'department'])->get();
-
-        return response()->json([
-            "status" => "ok",
-            "message" => "Student Details fetched succefully",
-            "student_details" => $student_details
-        ], 201);
+        $studentDetails = $this->studentService->studentDetails($student_id, $currentSchool);
+        return ApiResponseService::success("Student Details Fetched Successfully", $studentDetails, null, 200);
     }
 }

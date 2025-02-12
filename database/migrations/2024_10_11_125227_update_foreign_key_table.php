@@ -244,6 +244,8 @@ return new class extends Migration
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
+            $table->string('student_batch_id');
+            $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
 
 
@@ -260,6 +262,8 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
+            $table->string('student_batch_id');
+            $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
 
         Schema::table('staff_holiday', function(Blueprint $table){

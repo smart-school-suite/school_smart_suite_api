@@ -4,182 +4,78 @@ namespace App\Http\Controllers;
 
 use App\Models\Courses;
 use App\Models\Specialty;
+use App\Http\Requests\CreateCourseRequest;
+use App\Http\Requests\UpdateCourseRequest;
+use App\Http\Resources\CourseResource;
+use App\Services\CourseService;
+use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
 class coursesController extends Controller
 {
+       protected CourseService $courseService;
+       public function __construct(CourseService $courseService){
+        $this->courseService = $courseService;
+       }
       //
-      public function create_course(Request $request)
+      public function create_course(CreateCourseRequest $request)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $request->validate([
-                  'course_code' => 'required|string',
-                  'course_title' => 'required|string',
-                  'specialty_id' => 'required|string',
-                  'department_id' => 'required|string',
-                  'credit' => 'required|integer',
-                  'semester_id' => 'required|string',
-                  'level_id' => 'required|string'
-            ]);
-
-            $course = new Courses();
-            $course->course_code = $request->course_code;
-            $course->course_title = $request->course_title;
-            $course->specialty_id = $request->specialty_id;
-            $course->department_id = $request->department_id;
-            $course->credit = $request->credit;
-            $course->school_branch_id = $currentSchool->id;
-            $course->semester_id = $request->semester_id;
-            $course->level_id = $request->level_id;
-
-            $course->save();
-
-            return response()->json([
-                  'status' => 'ok',
-                  'message' => 'course created succesfully',
-                   $course,
-            ], 200);
+            $course = $this->courseService->createCourse($request->validated(), $currentSchool);
+            return ApiResponseService::success('Course Created Succefully', $course, null, 201);
       }
 
-      public function delete_course(Request $request, $course_id)
+      public function delete_course(Request $request, string $course_id)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $course = Courses::Where('school_branch_id', $currentSchool->id)->find($course_id);
-            if (!$course) {
-                  return response()->json([
-                        'status' => 'ok',
-                        'message' => 'course not found'
-                  ], 404);
-            }
-            $course->delete();
-
-            return response()->json([
-                  'status' => 'ok',
-                  'message' => 'course deleted successfully'
-            ], 200);
+            $deleteCourse = $this->courseService->deleteCourse($course_id, $currentSchool);
+            return  ApiResponseService::success('Course Deleted Succefully', $deleteCourse, null, 200);
       }
 
-      public function get_all_courses_with_department_specialty(Request $request)
+      public function update_course(UpdateCourseRequest $request, string $course_id)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $course = Courses::where('school_branch_id', $currentSchool->id)->with(['department', 'specialty']);
-            return response()->json(['courses' => $course], 200);
+            $updateCourse = $this->courseService->
+            updateCourse($course_id, $request->validated(), $currentSchool);
+            return ApiResponseService::success('Course Update Succefully', $updateCourse, null, 200);
       }
-
       public function get_all_courses_with_no_relation(Request $request)
       {
             $currentSchool = $request->attributes->get('currentSchool');
-            $courses = Courses::where('school_branch_id', $currentSchool->id)->with(['specialty', 'level', 'semester'])->get();
-            $result = [];
-            foreach ($courses as $course) {
-                $result[] = [
-                    'id'=> $course->id,
-                    'course_title' => $course->course_title,
-                    'course_code' => $course->course_code,
-                    'course_credit' => $course->credit,
-                    'specialty_name' => $course->specialty->specialty_name,
-                    'level_name' => $course->level->name,
-                    'semester_name' => $course->semester->name,
-                ];
-            }
-            return response()->json([
-                  'status' => 'ok',
-                  'message' => 'fetch succesfull',
-                  'courses' => $result
-            ], 200);
+            $courses = $this->courseService->getCourses($currentSchool);
+            return ApiResponseService::success('Courses fetched succefully', CourseResource::collection($courses), null, 200);
+
       }
-
-      public function update_course(Request $request, $course_id)
-      {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $course = Courses::Where('school_branch_id', $currentSchool->id)->find($course_id);
-            if (!$course) {
-                  return response()->json([
-                        'status' => 'ok',
-                        'message' => 'course not found'
-                  ], 200);
-            }
-
-            $course_data = $request->all();
-            $course_data = array_filter($course_data);
-            $course->fill($course_data);
-
-            $course->save();
-
-            return response()->json([
-                  'status' => 'ok',
-                  'message' => 'Course updated succefully'
-            ], 200);
-      }
-
       public function courses_details(Request $request){
              $currentSchool = $request->attributes->get("currentSchool");
              $course_id = $request->route("course_id");
-             $find_course = Courses::find($course_id);
-             if(!$find_course){
-                  return response()->json([
-                         "status" => "error",
-                         "message" => "Course not found"
-                  ], 200);
-             }
-
-             $course_details = Courses::where("school_branch_id", $currentSchool->id)
-                                       ->with(['level', 'semester', 'specialty'])
-                                       ->where("id", $course_id)
-                                        ->get();
-
-            return response()->json([
-               "status" => "ok",
-               "message" => "Course Details fetched succefully",
-               "course_details" => $course_details
-            ], 200);
+             $courseDetails = $this->courseService->courseDetails($course_id, $currentSchool);
+             return ApiResponseService::success('Course Details fetched succefully', CourseResource::collection($courseDetails), null, 200);
        }
 
        public function get_specialty_level_semester_courses(Request $request)
        {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $specialtyId = $request->route("specialty_id");
+        $semesterId = $request->route("semester_id");
 
-           $currentSchool = $request->attributes->get("currentSchool");
-           $specialtyId = $request->route("specialty_id");
-           $semesterId = $request->route("semester_id");
+        // Validate required input parameters
+        if (!$currentSchool || !$specialtyId || !$semesterId) {
+            return ApiResponseService::error('Invalid input parameters', null, 400);
+        }
 
-           if (!$currentSchool || !$specialtyId || !$semesterId) {
-               return response()->json([
-                   'status' => 'error',
-                   'message' => 'Invalid input parameters',
-               ], 400);
-           }
+        // Fetch courses via the service layer
+        $coursesData = $this->courseService->getCoursesBySpecialtySemesterAndLevel($currentSchool, $specialtyId, $semesterId);
 
+        // If no courses are found, return a standardized error response
+        if (!$coursesData->count()) {
+            return ApiResponseService::error('No courses data found', null, 404);
+        }
 
-           $specialty = Specialty::find($specialtyId);
-           if (!$specialty) {
-               return response()->json([
-                   'status' => 'error',
-                   'message' => 'Specialty not found',
-               ], 404);
-           }
-
-
-           $levelId = $specialty->level->id;
-
-           $coursesData = Courses::where("school_branch_id", $currentSchool->id)
-               ->where("semester_id", $semesterId)
-               ->where("specialty_id", $specialtyId)
-               ->where("level_id", $levelId)
-               ->get();
-
-
-           if (!$coursesData->count()) {
-               return response()->json([
-                   'status' => 'error',
-                   'message' => 'No courses data found',
-               ], 404);
-           }
-
-
-           return response()->json([
-               'status' => 'ok',
-               'message' => 'Courses data fetched successfully',
-               'courses_data' => $coursesData,
-           ], 200);
+        // Return success response with transformed courses data
+        return ApiResponseService::success(
+            'Courses data fetched successfully',
+            $coursesData, null, 200
+        );
        }
 }

@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use App\Models\SubscriptionPayment;
 use App\Models\RatesCard;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class SchoolSubscriptionController extends Controller

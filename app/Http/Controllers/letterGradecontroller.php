@@ -3,84 +3,37 @@
 namespace App\Http\Controllers;
 
 use App\Models\LetterGrade;
+use App\Services\LetterGradeService;
+use App\Http\Requests\LetterGradeRequest;
+use App\Http\Requests\UpdateLetterGradeRequest;
+use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
 class letterGradecontroller extends Controller
 {
     //
-
-    public function create_letter_grade(Request $request){
-        $request->validate([
-            'letter_grade' => 'required|string'
-        ]);
-
-        $new_letter_grade_instance = new LetterGrade();
-        
-        $new_letter_grade_instance->letter_grade = $request->letter_grade;
-
-        $new_letter_grade_instance->save();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Letter grade created succesfully',
-            'created_letter_grade' => $new_letter_grade_instance
-        ], 200);
+     protected LetterGradeService $letterGradeService;
+     public function __construct(LetterGradeService $letterGradeService){
+        $this->letterGradeService = $letterGradeService;
+     }
+    public function create_letter_grade(LetterGradeRequest $request){
+        $createLetterGrade = $this->letterGradeService->createLetterGrade($request->validated());
+        return ApiResponseService::success("Letter grade created Sucessfully", $createLetterGrade, null, 201);
     }
 
-    public function get_all_letter_grades(Request $request){
-        $grades_data = LetterGrade::all();
-         
-        if($grades_data->isEmpty()){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Letter grade created succesfully'
-            ], 400);
-        }
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Letter grade data fetched succefully',
-            'letter_grades' => $grades_data
-        ], 200);
+    public function get_all_letter_grades(){
+        $letterGrade = $this->letterGradeService->getAllLetterGrades();
+        return ApiResponseService::success("Letter grade data fetched sucessfully", $letterGrade, null, 200);
     }
 
-    public function delete_letter_grade(Request $request, $letter_grade_id){
-        $find_letter_grade = LetterGrade::find($letter_grade_id);
-        if(!$find_letter_grade){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Letter grade not found'
-            ], 404);
-        }
-
-        $find_letter_grade->delete();
-
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Letter grade deleted succesfully',
-            'deleted_letter_grade' => $find_letter_grade
-        ], 200);
+    public function delete_letter_grade($letter_grade_id){
+        $deleteLetterGrade = $this->letterGradeService->deleteLetterGrade($letter_grade_id);
+        return ApiResponseService::success("Letter Grade Deleted Succefully", $deleteLetterGrade, null, 200);
     }
 
-    public function update_letter_grade(Request $request, $letter_grade_id){
-        $find_letter_grade = LetterGrade::find($letter_grade_id);
-        if(!$find_letter_grade){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Letter grade not found'
-            ], 404);
-        }
-
-        $fillable_data = $request->all();
-        $filtered_data = array_filter($fillable_data);
-        $find_letter_grade->fill($fillable_data);
-
-        $find_letter_grade->save();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Letter grade updated succefully',
-            'updated_letter_grade' => $find_letter_grade
-        ], 200);
+    public function update_letter_grade(UpdateLetterGradeRequest $request, $letter_grade_id){
+        $updateLetterGrade = $this->letterGradeService->updateLetterGrade($letter_grade_id, $request->validated());
+        return ApiResponseService::success("Letter Grade Updated Sucessfully", $updateLetterGrade, null, 200);
     }
-    
+
 }

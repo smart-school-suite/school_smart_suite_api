@@ -53,9 +53,6 @@ use App\Http\Controllers\studentController;
 use App\Http\Controllers\StudentPerformanceReportController;
 use App\Http\Controllers\teacherController;
 use App\Http\Controllers\timetableController;
-use App\Http\Controllers\transcriptController;
-use App\Http\Controllers\Transferrequestcontroller;
-use App\Http\Controllers\transferstudentController;
 use App\Http\Controllers\feepaymentController;
 use App\Http\Controllers\Auth\Edumanage\changeedumanagepasswordcontroller;
 use App\Http\Controllers\Auth\Edumanage\getauthenticatededumanageadmincontroller;
@@ -71,21 +68,11 @@ use App\Http\Controllers\electionApplicationController;
 use App\Http\Controllers\electionRolesController;
 use App\Http\Controllers\electionResultsController;
 use App\Http\Middleware\IdentifyTenant;
-use App\Http\Middleware\Limitstudents;
-use App\Http\Controllers\roleManagementController;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
 
-Route::prefix("permissions/roles")->group(function () {
-   Route::middleware(["auth:sanctum", IdentifyTenant::class,])->post("/assign-permission/{school_admin_id}", [roleManagementController::class,"assignPermissionsToSchoolAdmin"]);
-   Route::middleware(['auth:sanctum', IdentifyTenant::class,])->get("/get-permissions", [roleManagementController::class,"fetch_permissions"]);
-   Route::middleware(["auth:sanctum", IdentifyTenant::class,])->get("/get-roles", [roleManagementController::class, "fetch_roles"]);
-   Route::middleware(["auth:sanctum", IdentifyTenant::class,])->put("/revoke-permissions/{school_admin_id}", [roleManagementController::class,"revokeSpecificPermissionsOfSchoolAdmin"]);
-   Route::middleware(["auth:sanctum", IdentifyTenant::class,])->delete("/revoke-all-permission/{school_admin_id}", [roleManagementController::class,"revokeAllPermissionsOfSchoolAdmin"]);
-   Route::middleware(["auth:sanctum", IdentifyTenant::class,])->get("/get-admin-permissions/{school_admin_id}", [roleManagementController::class, "getPermissionsOfSchoolAdmin"]);
-   Route::middleware(["auth:sanctum", IdentifyTenant::class, 'permission:assign-super-admin'])->get("/appoint-superadmin/{school_admin_id}", [roleManagementController::class, "assignSuperAdminRole"]);
-});
+
 
 Route::prefix('edumanage-admin')->group( function (){
     Route::post('/create-admin', [createeduadmincontroller::class, 'create_edumanage_admin']);
@@ -165,8 +152,6 @@ Route::prefix('reset-password')->group( function () {
 Route::prefix('school')->group(function () {
     Route::post('/register', [schoolsController::class, 'register_school_to_edumanage']);
     Route::middleware(['auth:sanctum'])->put('/update_school', [schoolsController::class, 'update_school']);
-    Route::middleware(['auth:sanctum'])->get('/registered-schools', [schoolsController::class, 'get_all_schools']);
-    Route::middleware(['auth:sanctum'])->get('/registerd-schools-branches', [schoolsController::class, 'get_schools_with_branches']);
     Route::middleware(['auth:sanctum'])->delete('/delete-school/{school_id}', [schoolsController::class, 'delete_school']);
 });
 
@@ -290,20 +275,7 @@ Route::middleware([IdentifyTenant::class])->prefix('event')->group( function () 
 });
 
 
-Route::middleware([IdentifyTenant::class])->prefix('student-records')->group( function () {
-    Route::middleware(['auth:sanctum'])->get('/generate-transcript/{student_id}', [transcriptController::class, 'generate_student_transcript']);
-    Route::middleware(['auth:sanctum'])->get('/class-ranking/{specialty_id}/{level_id}', [transcriptController::class, 'student_exam_ranking']);
-});
 
-Route::middleware([IdentifyTenant::class])->prefix('student-transfer')->group( function (){
-     Route::middleware(['auth:sanctum'])->post('/transfer-student', [Transferrequestcontroller::class, 'create_student_tranafer_request']);
-     Route::middleware(['auth:sanctum'])->get('/student-records', [Transferrequestcontroller::class, 'request_student_records']);
-     Route::middleware(['auth:sanctum'])->delete('/delete-transfer-request/{transfer_id}', [Transferrequestcontroller::class, 'delete_transfer_request']);
-     Route::middleware(['auth:sanctum'])->get('/my-transfer-request', [Transferrequestcontroller::class, 'get_transfer_request']);
-     Route::middleware(['auth:sanctum'])->get('/get-transfer/{student_id}', [transferstudentController::class, 'get_my_transfers']);
-     Route::middleware(['auth:sanctum'])->get('/get-all/student-transfers', [transferstudentController::class, 'get_student_transfers']);
-     Route::middleware(['auth:sanctum'])->post('/respond/transfer-request/{status}/{transfer_id}', [Transferrequestcontroller::class, 'respond_to_transfer_request']);
-});
 
 Route::prefix('exam-type')->group( function (){
     Route::middleware(['auth:sanctum'])->post('/create-exam-type', [Examtypecontroller::class, 'create_exam_type']);
