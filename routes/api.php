@@ -47,6 +47,7 @@ use App\Http\Controllers\Schoolexpensescategorycontroller;
 use App\Http\Controllers\SchoolexpensesController;
 use App\Http\Controllers\schoolsController;
 use App\Http\Controllers\semesterController;
+use App\Http\Controllers\SchoolSemesterController;
 use App\Http\Controllers\specialtyController;
 use App\Http\Controllers\Studentbatchcontroller;
 use App\Http\Controllers\studentController;
@@ -264,6 +265,13 @@ Route::prefix('semester')->group( function() {
      Route::middleware(['auth:sanctum'])->delete('/delete-semester/{semester_id}', [semesterController::class, 'delete_semester']);
      Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/semesters', [semesterController::class, 'get_all_semesters']);
      Route::middleware(['auth:sanctum'])->put('/update-semester/{semester_id}', [semesterController::class, 'update_semester']);
+});
+
+Route::prefix('school-semesters')->group( function() {
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/create-school-semester', [SchoolSemesterController::class, 'createSchoolSemester']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->put("/update-school-semester/{schoolSemesterId}", [SchoolSemesterController::class, 'updateSchoolSemester']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/school-semeters", [SchoolSemesterController::class, 'getSchoolSemester']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/delete-school-semeter/{schoolSemesterId}", [SchoolSemesterController::class, 'deleteSchoolSemester']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('event')->group( function () {

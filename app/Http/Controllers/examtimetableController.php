@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Courses;
-use App\Models\Exams;
+
 use App\Models\Examtimetable;
 use App\Http\Requests\ExamTimeTableRequest;
 use App\Services\ExamTimeTableService;

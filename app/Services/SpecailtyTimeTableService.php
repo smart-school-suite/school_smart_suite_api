@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Timetable;
 use App\Models\Specialty;
 use App\Models\InstructorAvailability;
+use App\Models\TeacherSpecailtyPreference;
 use Carbon\Carbon;
 
 class SpecailtyTimeTableService
@@ -62,8 +63,10 @@ class SpecailtyTimeTableService
             ->get();
         return $timeTableDetails;
     }
+
     public function getInstructorAvailability($specialtyId, $semesterId, $currentSchool)
     {
+
         $specialty = Specialty::find($specialtyId);
         if (!$specialty) {
             return response()->json([
@@ -71,23 +74,59 @@ class SpecailtyTimeTableService
                 'message' => 'Specialty not found',
             ], 404);
         }
-        $instructorAvailabilityData = InstructorAvailability::where("school_branch_id", $currentSchool->id)
-            ->where("specialty_id", $specialtyId)
+        $teacherIds = TeacherSpecailtyPreference::where("specialty_id", $specialtyId)->pluck("teacher_id");
+        $instructorAvailabilityData = InstructorAvailability::whereIn("teacher_id", $teacherIds)
+            ->where("school_branch_id", $currentSchool->id)
             ->where("semester_id", $semesterId)
             ->with(['teacher'])
             ->get();
+
         $levelId = $specialty->level->id;
-        $results = $instructorAvailabilityData->map(function ($item) use ($semesterId, $levelId) {
-            return [
-                'teacher_id' => $item->teacher_id,
-                'semester_id' => $semesterId,
-                'day' => $item->day_of_week,
-                'start_time' => $item->start_time,
-                'teacher_name' => $item->teacher->name,
-                'end_time' => $item->end_time,
-                'level_id' => $levelId,
-            ];
-        })->toArray();
+        $results = [];
+        $timetables = Timetable::whereIn('teacher_id', $teacherIds)
+            ->where('semeter_id', $semesterId)
+            ->get();
+        $timetableData = $timetables->groupBy('teacher_id');
+        foreach ($instructorAvailabilityData as $item) {
+            $teacherId = $item->teacher_id;
+            $day = $item->day_of_week;
+            $startTime = $item->start_time;
+            $endTime = $item->end_time;
+            $availableStartTime = $startTime;
+            $availableEndTime = $endTime;
+            if (isset($timetableData[$teacherId])) {
+                $timetableEntries = $timetableData[$teacherId]->sortBy('start_time');
+                foreach ($timetableEntries as $timetable) {
+                    if ($timetable->day_of_week === $day) {
+                        if ($timetable->start_time < $availableEndTime && $timetable->end_time > $availableStartTime) {
+                            if ($timetable->start_time >= $availableStartTime && $timetable->start_time < $availableEndTime) {
+                                $availableEndTime = $timetable->start_time;
+                                if ($availableStartTime >= $availableEndTime) {
+                                    break;
+                                }
+                            }
+                            if ($timetable->end_time > $availableStartTime && $timetable->end_time <= $availableEndTime) {
+                                $availableStartTime = $timetable->end_time;
+                                if ($availableStartTime >= $availableEndTime) {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if ($availableStartTime < $availableEndTime) {
+                $results[] = [
+                    'teacher_id' => $teacherId,
+                    'semester_id' => $semesterId,
+                    'day' => $day,
+                    'available_start_time' => $availableStartTime,
+                    'available_end_time' => $availableEndTime,
+                    'teacher_name' => $item->teacher->name,
+                    'level_id' => $levelId,
+                ];
+            }
+        }
 
         return $results;
     }

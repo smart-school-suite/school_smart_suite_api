@@ -43,6 +43,7 @@ class CreateSpecailtyTimeTableService
             'specialty_id' => $timetable['specialty_id'],
             'level_id' => $timetable['level_id'],
             'semester_id' => $timetable['semester_id'],
+            'student_batch_id' => $timetable['student_batch_id'],
             'start_time' => $timetable['start_time'],
             'end_time' => $timetable['end_time'],
         ]);
@@ -66,7 +67,7 @@ class CreateSpecailtyTimeTableService
                             ->where('end_time', '>=', $timetable['end_time']);
                     });
             })
-            ->doesntExist(); // Changed to doesntExist to make it more readable
+            ->doesntExist();
     }
 
     private function isTimeSlotAlreadyAssigned($currentSchool, $timetable)

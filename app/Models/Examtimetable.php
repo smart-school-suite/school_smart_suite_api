@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Examtimetable extends Model
 {
@@ -21,13 +20,13 @@ class Examtimetable extends Model
       'start_time',
       'level_id',
       'end_time',
-      'duration'
+      'duration',
+      'student_batch_id'
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
-        // Update duration to be a string
         'duration' => 'string',
     ];
 

@@ -21,7 +21,6 @@ class teacherController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $teachers = Teacher::where('school_branch_id', $currentSchool->id)
             ->with('courses', 'instructoravailability');
-
         return response()->json(['teacher_data' => $teachers], 201);
     }
 
@@ -57,5 +56,11 @@ class teacherController extends Controller
         $teacher_id = $request->route('teacher_id');
         $teacherDetails = $this->teacherService->getTeacherDetails($teacher_id);
         return ApiResponseService::success("Teacher Details Fetched Succesfully", $teacherDetails, null, 200);
+    }
+
+    public function assignTeacherSpecailtyPreference($request, $teacherId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $assignTeacherSpecailtyPreference = $this->teacherService->addSpecailtyPreference($request->specailties_preference, $currentSchool, $teacherId);
+        return ApiResponseService::success("Teacher Specailty Preference Added Sucessfully", $assignTeacherSpecailtyPreference, null, 200);
     }
 }

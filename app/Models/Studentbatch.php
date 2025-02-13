@@ -14,6 +14,7 @@ class Studentbatch extends Model
 
     protected $fillable = [
         'name',
+        'status',
         'school_branch_id'
     ];
 
@@ -24,12 +25,12 @@ class Studentbatch extends Model
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 
     public function student(): HasMany {
