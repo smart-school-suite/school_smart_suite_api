@@ -22,7 +22,7 @@ class SchoolAdminTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $schoolBranchId = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
+            $schoolBranchId = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
             $school_admin = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
@@ -35,7 +35,7 @@ class SchoolAdminTableSeeder extends Seeder
                         'school_branch_id' => $schoolBranchId,
                         'name' => $data[1],
                         'email' => $data[2],
-                        'password' => Hash::make($data[3]),
+                        'password' => Hash::make("Keron484$"),
                         'role' => $data[4],
                         'date_of_birth' => $data[5],
                         'address' => $data[6],

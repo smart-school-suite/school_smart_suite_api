@@ -75,10 +75,11 @@ class courseService
 
         $levelId = $specialty->level->id;
 
-        return Courses::where("school_branch_id", $currentSchool->id)
+        $coursesData = Courses::where("school_branch_id", $currentSchool->id)
             ->where("semester_id", $semesterId)
             ->where("specialty_id", $specialtyId)
             ->where("level_id", $levelId)
             ->get();
+            return $coursesData;
     }
 }

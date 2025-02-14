@@ -61,6 +61,7 @@ use App\Http\Controllers\Auth\SchoolAdmin\validateOtpController;
 use App\Http\Controllers\studentpromotionController;
 use App\Http\Controllers\studentResitController;
 use App\Http\Controllers\ResitcontrollerTimetable;
+use App\Http\Controllers\TeacherSpecailtyPreferenceController;
 use App\Http\Controllers\SchoolSubscriptionController;
 use App\Http\Controllers\RatesCardController;
 use App\Http\Controllers\SubscriptionPaymentController;
@@ -143,6 +144,8 @@ Route::prefix('teacher')->group(function () {
     Route::middleware([IdentifyTenant::class, 'auth:sanctum', ])->get('/teacher-details/{teacher_id}', [teacherController::class, 'get_teacher_details']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/get-teachers-with-relations', [teacherController::class, 'get_all_teachers_with_relations_scoped']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/get-teacher-timetable/{teacher_id}', [teacherController::class, 'get_my_timetable']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/add-specailty-preference/{teacherId}', [teacherController::class, 'assignTeacherSpecailtyPreference']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get("/teacher-specailty-preference/{teacherId}", [TeacherSpecailtyPreferenceController::class, 'getTeacherSpecailtyPreference']);
 });
 
 Route::prefix('reset-password')->group( function () {
@@ -165,11 +168,8 @@ Route::prefix('school-branch')->group(function () {
 });
 
 Route::prefix('country')->group(function (){
-    //app admin route
     Route::middleware(['auth:sanctum'])->post('/create-country', [countryController::class, 'create_country']);
-    //*
     Route::get('/countries', [countryController::class, 'get_all_countries']);
-    //app admin route
     Route::middleware(['auth:sanctum'])->delete('/delete-country/{country_id}', [countryController::class, 'delete_country']);
     Route::middleware(['auth:sanctum'])->put('/update-country/{country_id}', [countryController::class, 'update_country']);
 });
@@ -213,7 +213,7 @@ Route::middleware([IdentifyTenant::class])->prefix('teacher-avialability')->grou
     Route::middleware(['auth:sanctum'])->post('/create-availability', [instructoravailabilityController::class, 'create_availability']);
     Route::middleware(['auth:sanctum'])->delete('/delete-availability/{availabilty_id}', [instructoravailabilityController::class, 'delete_scoped_teacher_availability']);
     Route::middleware(['auth:sanctum'])->put('/update-availability/{availability_id}', [instructoravailabilityController::class, 'update_teacher_avialability']);
-    Route::middleware(['auth:sanctum'])->get('/teacher-avialability/{school_id/{availability_id}', [instructoravailabilityController::class, 'get_all_avialability_not_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/teacher-avialability/{availability_id}', [instructoravailabilityController::class, 'getteacherAvialability']);
 });
 
 Route::prefix('levels')->group( function (){
@@ -255,7 +255,7 @@ Route::middleware([IdentifyTenant::class])->prefix('time-table')->group( functio
     Route::middleware(['auth:sanctum'])->post('/create-timetable', [timetableController::class, 'create_time_slots_scoped']);
     Route::middleware(['auth:sanctum'])->put('/update-timetable/{timetable_id}', [timetableController::class, 'update_time_table_record_scoped']);
     Route::middleware(['auth:sanctum'])->delete('/delete-timetable/{timetable_id}', [timetableController::class, 'delete_timetable_scoped']);
-    Route::middleware(['auth:sanctum'])->get('/generate-timetable/{level_id}/{specailty_id}', [timetableController::class, 'generate_time_table_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/generate-timetable', [timetableController::class, 'generate_time_table_scoped']);
     Route::middleware(['auth:sanctum'])->get('/timetable-details/{entry_id}', [timetableController::class, 'get_timetable_details']);
     Route::middleware(['auth:sanctum'])->get('/instructor-availability/{semester_id}/{specialty_id}', [timetableController::class, 'get_instructor_availability']);
 });

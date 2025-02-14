@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('election_roles', function (Blueprint $table) {
-            $table->string('id');
+            $table->string('id')->primary();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text('description');

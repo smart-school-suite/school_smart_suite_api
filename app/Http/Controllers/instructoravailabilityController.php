@@ -47,7 +47,7 @@ class instructoravailabilityController extends Controller
         return ApiResponseService::success("teacher availability data fetched successfully", $getAllInstructorAvailability, null, 200);
     }
 
-    public function get_all_avialability_not_scoped(Request $request, $teacher_id)
+    public function getteacherAvialability(Request $request, $teacher_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getMyInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailability($currentSchool, $teacher_id);

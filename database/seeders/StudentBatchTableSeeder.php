@@ -23,7 +23,7 @@ class StudentBatchTableSeeder extends Seeder
          if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
+            $school_branches = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
             $student_batches = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {

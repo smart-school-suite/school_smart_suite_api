@@ -24,7 +24,7 @@ class StudentTableSeeder extends Seeder
             Log::info('CSV Header: ', $header);
 
             // Fetch all relevant IDs
-            $schoolBranchId = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
+            $schoolBranchId = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
             $education_level = DB::table('education_levels')->pluck('id')->toArray();
             $specialty = DB::table('specialty')->pluck('id')->toArray();
             $studentbatch = DB::table('student_batch')->pluck('id')->toArray();

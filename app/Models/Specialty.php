@@ -39,6 +39,9 @@ class Specialty extends Model
        return $this->hasMany(Exams::class);
      }
 
+     public function TeacherSpecailtyPreference(): HasMany {
+        return $this->hasMany(TeacherSpecailtyPreference::class);
+     }
      public function school(): BelongsTo {
        return $this->belongsTo(School::class);
      }

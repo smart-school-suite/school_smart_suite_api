@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string("id");
             $table->string('title');
             $table->date('start_date');
-            $table->end('end_date');
+            $table->date('end_date');
             $table->string('location');
             $table->text('description');
             $table->json('attendees')->nullable();

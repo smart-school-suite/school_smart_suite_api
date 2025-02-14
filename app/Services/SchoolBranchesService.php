@@ -23,6 +23,7 @@ class SchoolBranchesService
         $new_school_branch_instance->email = $data["email"];
         $new_school_branch_instance->semester_count = $data["semester_count"];
         $new_school_branch_instance->max_gpa = $data["max_gpa"];
+        $new_school_branch_instance->abbrevaition = $data["abbrevaition"];
         $new_school_branch_instance->save();
 
         return $random_id;

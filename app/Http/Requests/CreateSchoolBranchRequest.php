@@ -33,7 +33,8 @@ class CreateSchoolBranchRequest extends FormRequest
             'phone_two' => 'required|string',
             'email' => 'required|email|string',
             'max_gpa' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'semester_count' => 'required|integer'
+            'semester_count' => 'required|integer',
+            'abbrevaition' => 'required|string'
         ];
     }
 }

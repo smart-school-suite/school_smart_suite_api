@@ -15,13 +15,9 @@ class SchoolService
         $new_school_instance->id = $random_id;
         $new_school_instance->country_id = $data["country_id"];
         $new_school_instance->name = $data["name"];
-        $new_school_instance->address = $data["address"];
-        $new_school_instance->city = $data["city"];
-        $new_school_instance->state = $data["state"];
         $new_school_instance->motor = $data["motor"];
         $new_school_instance->type = $data["type"];
         $new_school_instance->established_year = $data["established_year"];
-        $new_school_instance->director_name = $data["director_name"];
         $new_school_instance->save();
         return $random_id;
     }

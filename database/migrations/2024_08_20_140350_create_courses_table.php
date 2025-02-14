@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('course_code');
             $table->string('course_title');
-            $table->integer('credit', 4, 2);
+            $table->integer('credit');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text("description")->nullable();
             $table->timestamps();

@@ -20,12 +20,14 @@ class SpecailtyTimeTableService
         $timeTableEntryExists->delete();
         return $timeTableEntryExists;
     }
-    public function generateTimeTable($specailtyId, $levelId, $currentSchool)
+    public function generateTimeTable(array $routeParams, $currentSchool)
     {
 
         $timetables = Timetable::where('school_branch_id', $currentSchool->id)
-            ->where('specialty_id', $specailtyId)
-            ->where('level_id',  $levelId)
+            ->where('specialty_id', $routeParams['specailty_id'])
+            ->where('level_id',  $routeParams['level_id'])
+            ->where('semester_id', $routeParams['semester_id'])
+            ->where("student_batch_id", $routeParams['student_batch_id'])
             ->with(['course', 'teacher'])
             ->get();
 
@@ -64,65 +66,83 @@ class SpecailtyTimeTableService
         return $timeTableDetails;
     }
 
-    public function getInstructorAvailability($specialtyId, $semesterId, $currentSchool)
+    public function getInstructorAvailability(string $specialtyId, string $semesterId, object $currentSchool)
     {
+           $specialty = Specialty::with(['level'])->find($specialtyId);
 
-        $specialty = Specialty::find($specialtyId);
         if (!$specialty) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Specialty not found',
             ], 404);
         }
+
         $teacherIds = TeacherSpecailtyPreference::where("specialty_id", $specialtyId)->pluck("teacher_id");
         $instructorAvailabilityData = InstructorAvailability::whereIn("teacher_id", $teacherIds)
             ->where("school_branch_id", $currentSchool->id)
             ->where("semester_id", $semesterId)
             ->with(['teacher'])
             ->get();
-
         $levelId = $specialty->level->id;
-        $results = [];
         $timetables = Timetable::whereIn('teacher_id', $teacherIds)
-            ->where('semeter_id', $semesterId)
+            ->where('semester_id', $semesterId)
             ->get();
+
         $timetableData = $timetables->groupBy('teacher_id');
-        foreach ($instructorAvailabilityData as $item) {
-            $teacherId = $item->teacher_id;
-            $day = $item->day_of_week;
-            $startTime = $item->start_time;
-            $endTime = $item->end_time;
-            $availableStartTime = $startTime;
-            $availableEndTime = $endTime;
+
+        $results = [];
+
+        foreach ($instructorAvailabilityData as $availability) {
+            $teacherId = $availability->teacher_id;
+            $day = $availability->day_of_week;
+            $startTime = Carbon::parse($availability->start_time); // Use Carbon for easier time manipulation
+            $endTime = Carbon::parse($availability->end_time);
+
+            $availableSlots = [[$startTime, $endTime]]; // Initialize with the full availability
+
             if (isset($timetableData[$teacherId])) {
-                $timetableEntries = $timetableData[$teacherId]->sortBy('start_time');
+                $timetableEntries = $timetableData[$teacherId]->where('day_of_week', $day)->sortBy('start_time');
+
                 foreach ($timetableEntries as $timetable) {
-                    if ($timetable->day_of_week === $day) {
-                        if ($timetable->start_time < $availableEndTime && $timetable->end_time > $availableStartTime) {
-                            if ($timetable->start_time >= $availableStartTime && $timetable->start_time < $availableEndTime) {
-                                $availableEndTime = $timetable->start_time;
-                                if ($availableStartTime >= $availableEndTime) {
-                                    break;
-                                }
-                            }
-                            if ($timetable->end_time > $availableStartTime && $timetable->end_time <= $availableEndTime) {
-                                $availableStartTime = $timetable->end_time;
-                                if ($availableStartTime >= $availableEndTime) {
-                                    break;
-                                }
-                            }
+                    $timetableStartTime = Carbon::parse($timetable->start_time);
+                    $timetableEndTime = Carbon::parse($timetable->end_time);
+
+                    $newSlots = [];
+                    foreach ($availableSlots as [$slotStart, $slotEnd]) {
+                        if ($timetableEndTime <= $slotStart || $timetableStartTime >= $slotEnd) {
+                            $newSlots[] = [$slotStart, $slotEnd];
+                            continue;
                         }
+
+                        if ($timetableStartTime <= $slotStart && $timetableEndTime >= $slotEnd) {
+                            continue;
+                        }
+
+                        if ($timetableStartTime <= $slotStart && $timetableEndTime < $slotEnd) {
+                            $newSlots[] = [$timetableEndTime, $slotEnd];
+                            continue;
+                        }
+
+                        if ($timetableStartTime > $slotStart && $timetableEndTime >= $slotEnd) {
+                            $newSlots[] = [$slotStart, $timetableStartTime];
+                            continue;
+                        }
+
+                        $newSlots[] = [$slotStart, $timetableStartTime];
+                        $newSlots[] = [$timetableEndTime, $slotEnd];
                     }
+                    $availableSlots = $newSlots;
                 }
             }
-            if ($availableStartTime < $availableEndTime) {
+
+            foreach ($availableSlots as [$availableStartTime, $availableEndTime]) {
                 $results[] = [
                     'teacher_id' => $teacherId,
                     'semester_id' => $semesterId,
                     'day' => $day,
-                    'available_start_time' => $availableStartTime,
-                    'available_end_time' => $availableEndTime,
-                    'teacher_name' => $item->teacher->name,
+                    'available_start_time' => $availableStartTime->format('g:i A'),
+                    'available_end_time' => $availableEndTime->format('g:i A'),
+                    'teacher_name' => $availability->teacher->name,
                     'level_id' => $levelId,
                 ];
             }
@@ -130,6 +150,7 @@ class SpecailtyTimeTableService
 
         return $results;
     }
+
     public function updateTimeTable(array $data, $currentSchool, $timeTableId)
     {
         $timeTableRecord = Timetable::where('school_id', $currentSchool->id)->find($timeTableId);

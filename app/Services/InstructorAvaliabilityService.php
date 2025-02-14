@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InstructorAvailability;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Exception;
 
 class InstructorAvaliabilityService

@@ -67,7 +67,7 @@ class CreateSpecailtyTimeTableService
                             ->where('end_time', '>=', $timetable['end_time']);
                     });
             })
-            ->doesntExist();
+            ->exists();
     }
 
     private function isTimeSlotAlreadyAssigned($currentSchool, $timetable)

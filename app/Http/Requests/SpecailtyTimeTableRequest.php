@@ -30,6 +30,7 @@ class SpecailtyTimeTableRequest extends FormRequest
             'specialty_timetable.*.specialty_id' => 'required|string',
             'specialty_timetable.*.level_id' => 'required|string',
             'specialty_timetable.*.semester_id' => 'required|string',
+            'specialty_timetable.*.student_batch_id' => 'required|string',
             'specialty_timetable.*.end_time' => 'required|date_format:H:i:s|after:start_time',
         ];
     }

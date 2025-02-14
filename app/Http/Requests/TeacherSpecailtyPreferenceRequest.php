@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SchoolRequest extends FormRequest
+class TeacherSpecailtyPreferenceRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-   /// public function authorize(): bool
-    //{
-    //    return false;
+    //public function authorize(): bool
+  //  {
+        //return false;
    // }
 
     /**
@@ -22,11 +22,8 @@ class SchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'country_id' => 'required|string',
-            'name' => 'required|string',
-            'motor' => 'required',
-            'type' => 'required|string',
-            'established_year' => 'nullable|string',
+            'specailties_preference' => 'required|array',
+            'specailties_preference.*.specialty_id' => 'required|string|exists:specialty,id'
         ];
     }
 }

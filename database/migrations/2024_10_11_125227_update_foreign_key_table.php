@@ -273,7 +273,7 @@ return new class extends Migration
             $table->string('election_id');
             $table->foreign('election_id')->references('id')->on('elections');
             $table->string('election_role_id');
-            $table->foreign('election_role_id')->references('id')->on('election_role');
+            $table->foreign('election_role_id')->references('id')->on('election_roles');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
         });
@@ -300,7 +300,7 @@ return new class extends Migration
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
             $table->string('position_id');
-            $table->foreign('position')->references('id')->on('election_roles');
+            $table->foreign('position_id')->references('id')->on('election_roles');
         });
 
         Schema::table('elections_results', function(Blueprint $table) {

@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SchoolRequest extends FormRequest
+class GenerateTimeTableRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-   /// public function authorize(): bool
+   // public function authorize(): bool
     //{
-    //    return false;
+      //  return false;
    // }
 
     /**
@@ -22,11 +22,10 @@ class SchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'country_id' => 'required|string',
-            'name' => 'required|string',
-            'motor' => 'required',
-            'type' => 'required|string',
-            'established_year' => 'nullable|string',
+            "specailty_id" => "required|string|exists:specialty,id",
+            "semester_id" => "required|string|exists:school_semesters,id",
+            "level_id" => "required|string|exists:education_levels,id",
+            "student_batch_id" => "required|string|exists:student_batch,id"
         ];
     }
 }

@@ -61,9 +61,6 @@ class coursesController extends Controller
             return ApiResponseService::error('Invalid input parameters', null, 400);
         }
         $coursesData = $this->courseService->getCoursesBySpecialtySemesterAndLevel($currentSchool, $specialtyId, $semesterId);
-        if (!$coursesData->count()) {
-            return ApiResponseService::error('No courses data found', null, 404);
-        }
         return ApiResponseService::success(
             'Courses data fetched successfully',
             $coursesData,

@@ -21,35 +21,34 @@ class EducationLevelsTableSeeder extends Seeder
         if (!file_exists($filePath) || !is_readable($filePath)) {
             throw new \Exception("CSV file not found or not readable!");
         }
-    
+
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
-            Log::info('CSV Header: ', $header); 
-    
-            $education_levels = []; 
-    
+            Log::info('CSV Header: ', $header);
+
+            $education_levels = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data); 
+                Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 10); 
+                $id = substr(md5($uuid), 0, 10);
 
                 if (count($data) >= 2) {
                     $education_levels[] = [
-                        'id' => $id, 
-                        'name' => $data[1], 
-                        'level' => $data[2], 
-                        'program_name' => $data[3], 
+                        'id' => $id,
+                        'name' => $data[1],
+                        'level' => $data[2],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('Education Levels Array: ', $education_levels);
-    
-  
+
+
             if (!empty($education_levels)) {
                 DB::table('education_levels')->insert($education_levels);
                 Log::info('Inserted Education levels: ' . count($education_levels) . ' entries.');

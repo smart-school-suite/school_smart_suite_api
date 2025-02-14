@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\CreateSpecailtyTimeTableService;
 use App\Services\SpecailtyTimeTableService;
+use App\Http\Requests\GenerateTimeTableRequest;
 use App\Http\Requests\SpecailtyTimeTableRequest;
 use App\Services\ApiResponseService;
 
@@ -28,7 +29,7 @@ class timetableController extends Controller
             return ApiResponseService::success('Time Table Created Sucessfully', $createTimeTable, null, 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
+            return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
 
@@ -46,12 +47,10 @@ class timetableController extends Controller
         return ApiResponseService::success('Time Table Updated Succefully', $updateTimeTable, null, 200);
     }
 
-    public function generate_time_table_scoped(Request $request, $specailty_id, $level_id)
+    public function generate_time_table_scoped(GenerateTimeTableRequest $request)
     {
-        $specailty_id = $request->route('specailty_id');
-        $level_id = $request->route('level_id');
         $currentSchool = $request->attributes->get('currentSchool');
-        $generateTimeTable = $this->specailtyTimeTableService->generateTimeTable($specailty_id, $level_id, $currentSchool);
+        $generateTimeTable = $this->specailtyTimeTableService->generateTimeTable($request->validated(), $currentSchool);
         return ApiResponseService::success('Time Table Generated Sucessfully', $generateTimeTable, null, 200);
     }
 
@@ -68,7 +67,7 @@ class timetableController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $specialtyId = $request->route("specialty_id");
         $semesterId = $request->route("semester_id");
-        $getInstructorAvailability = $this->specailtyTimeTableService->getInstructorAvailability($currentSchool, $specialtyId, $semesterId);
+        $getInstructorAvailability = $this->specailtyTimeTableService->getInstructorAvailability( $specialtyId, $semesterId,  $currentSchool,);
         return ApiResponseService::success("Instructor Availability Data Fetched Sucessfully", $getInstructorAvailability, null, 200);
     }
 }

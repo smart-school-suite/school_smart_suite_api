@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Teacher;
 use App\Models\TeacherSpecailtyPreference;
+
 use App\Models\Timetable;
 use Carbon\Carbon;
 
@@ -80,7 +81,7 @@ class TeacherService
         $result = [];
         foreach($specailtyData as $specailty){
             $createdEntry = TeacherSpecailtyPreference::create([
-                 'specailty_id' => $specailty["specailty_id"],
+                 'specialty_id' => $specailty["specialty_id"],
                  'teacher_id' =>  $teacherId,
                  "school_branch_id" => $currentSchool->id
              ]);

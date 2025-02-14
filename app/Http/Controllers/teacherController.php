@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Teacher;
 use App\Services\ApiResponseService;
+use App\Http\Requests\TeacherSpecailtyPreferenceRequest;
 use App\Services\TeacherService;
 use Illuminate\Http\Request;
 
@@ -58,7 +59,7 @@ class teacherController extends Controller
         return ApiResponseService::success("Teacher Details Fetched Succesfully", $teacherDetails, null, 200);
     }
 
-    public function assignTeacherSpecailtyPreference($request, $teacherId){
+    public function assignTeacherSpecailtyPreference(TeacherSpecailtyPreferenceRequest $request, $teacherId){
         $currentSchool = $request->attributes->get('currentSchool');
         $assignTeacherSpecailtyPreference = $this->teacherService->addSpecailtyPreference($request->specailties_preference, $currentSchool, $teacherId);
         return ApiResponseService::success("Teacher Specailty Preference Added Sucessfully", $assignTeacherSpecailtyPreference, null, 200);

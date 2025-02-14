@@ -21,7 +21,7 @@ class SpecialityTableSeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = "c3f466af-a21d-4682-9df0-6d9eff5732cc";
+            $school_branches = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
             $department = DB::table('department')->pluck('id')->toArray();
             $education_level = DB::table('education_levels')->pluck('id')->toArray();
             $specialties = [];

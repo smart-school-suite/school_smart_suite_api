@@ -21,7 +21,7 @@ class Timetable extends Model
         'day_of_week',
         'start_time',
         'end_time',
-        'semeter_id',
+        'semester_id',
         'student_batch_id'
     ];
 

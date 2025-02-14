@@ -4,14 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SchoolSubscription;
-use Illuminate\Support\Facades\DB;
-use App\Models\SubscriptionPayment;
 use App\Http\Requests\SchoolSubscriptionRequest;
 use App\Services\SchoolSubcriptionService;
-use App\Models\RatesCard;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class SchoolSubscriptionController extends Controller
 {

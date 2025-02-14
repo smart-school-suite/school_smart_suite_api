@@ -5,7 +5,7 @@ use App\Http\Requests\SchoolSemesterRequest;
 use App\Http\Requests\UpdateSchoolSemesterRequest;
 use App\Services\ApiResponseService;
 use App\Services\SchoolSemesterService;
-
+use Illuminate\Http\Request;
 
 class SchoolSemesterController extends Controller
 {
@@ -33,7 +33,7 @@ class SchoolSemesterController extends Controller
         return ApiResponseService::success("School Semester Updated Successfully", $updateSchoolSemester, null, 200);
     }
 
-    public function getSchoolSemester($request){
+    public function getSchoolSemester(Request $request){
         $currentSchool = $request->attributes->get("currentSchool");
         $getSchoolSemesters = $this->schoolSemesterService->getSchoolSemesters($currentSchool);
         return ApiResponseService::success("School Semester Fetched Sucessfully", $getSchoolSemesters, null, 200);
