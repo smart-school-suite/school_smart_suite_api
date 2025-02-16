@@ -130,60 +130,7 @@ class permissionSeeder extends Seeder
          Permission::create([ 'name' => 'delete-resit-exam-timetable', "guard_name" => "api"]);
 
          // School permissions
-         Permission::create([ 'name' => 'create-school', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-school', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-school', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-school', "guard_name" => "api"]);
 
-         // School branch permissions
-         Permission::create([ 'name' => 'create-school-branch', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-school-branch', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-school-branch', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-school-branch', "guard_name" => "api"]);
-
-         // School expenses permissions
-         Permission::create([ 'name' => 'create-school-expense', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-school-expense', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-school-expense', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-school-expense', "guard_name" => "api"]);
-
-         // Semester permissions
-         Permission::create([ 'name' => 'create-semester', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-semester', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-semester', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-semester', "guard_name" => "api"]);
-
-         // Specialty permissions
-         Permission::create([ 'name' => 'create-specialty', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-specialty', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-specialty', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-specialty', "guard_name" => "api"]);
-
-         // Student batch permissions
-         Permission::create([ 'name' => 'create-student-batch', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-student-batch', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-student-batch', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-student-batch', "guard_name" => "api"]);
-
-         // Specialty time-table permissions
-         Permission::create([ 'name' => 'create-specialty-time-table', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-specialty-time-table', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-specialty-time-table', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-specialty-time-table', "guard_name" => "api"]);
-
-         // Student resit permissions
-         Permission::create([ 'name' => 'create-student-resit', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'edit-student-resit', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'view-student-resit', "guard_name" => "api"]);
-         Permission::create([ 'name' => 'delete-student-resit', "guard_name" => "api"]);
-
-
-
-         Permission::create([ "name"=> "fill-scores", "guard_name" => "api"]);
-         Permission::create([ "name"=> "edit-scores", "guard_name" => "api"]);
-         Permission::create([ "name"=> "delete-scores", "guard_name" => "api"]);
-         Permission::create([ "name"=> "view-scores", "guard_name" => "api"]);
-         Permission::create([ "name"=> "view-accessed-courses", "guard_name" => "api"]);
 
 
 

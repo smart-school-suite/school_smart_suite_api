@@ -27,7 +27,7 @@ class MakeService extends Command
     {
         //
         $name = $this->argument('name');
-        $path = app_path("Services\{$name}.php");
+        $path = app_path("Services/" . $name . ".php");
 
         if (file_exists($path)) {
             $this->error("Service {$name} already exists!");

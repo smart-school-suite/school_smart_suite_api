@@ -69,6 +69,8 @@ use App\Http\Controllers\electionsController;
 use App\Http\Controllers\electionApplicationController;
 use App\Http\Controllers\electionRolesController;
 use App\Http\Controllers\electionResultsController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -88,6 +90,24 @@ Route::prefix('edumanage-admin')->group( function (){
     Route::put('/update-admin/{edumanage_admin_id}', [edumanageadminController::class, 'update_edumanage_admin']);
 });
 
+Route::prefix('permissions')->group(function(){
+    Route::middleware(['auth:sanctum'])->post('/create-permission', [PermissionController::class, 'createPermission']);
+    Route::middleware(['auth:sanctum'])->get("/get-permissions",  [PermissionController::class, "getPermission"]);
+    Route::middleware(['auth:sanctum'])->delete("/delete-permission/{permissionId}", [PermissionController::class, 'deletePermission']);
+    Route::middleware(['auth:sanctum'])->put('/update-permission/{permissionId}', [PermissionController::class, "updatePermission"]);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/get-schooladmin/permissions/{schoolAdminId}', [PermissionController::class, "getSchoolAdminPermissions"]);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/grant-schoolAdmin-permissions/{schoolAdminId}', [PermissionController::class, 'givePermissionToSchoolAdmin']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/revoke-schoolAdmin-permissions/{schoolAdminId}", [PermissionController::class, 'revokePermission']);
+});
+
+Route::prefix('roles')->group( function() {
+    Route::middleware(['auth:sanctum'])->post('/create-role', [RoleController::class, 'createRole']);
+    Route::middleware(['auth:sanctum'])->get('/get-roles', [RoleController::class, 'getRoles']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-roles/{roleId}', [RoleController::class, 'updateRole']);
+    Route::middleware(['auth:sanctum'])->put('/update-role/{roleId}', [RoleController::class, 'updateRole']);
+    Route::middleware(['auth:sanctum'])->post('/assign-role/{schoolAdminId}', [RoleController::class, 'assignRoleSchoolAdmin']);
+    Route::middleware(['auth:sanctum'])->post('/remove-role/{schoolAdminId}', [RoleController::class, 'removeRoleSchoolAdmin']);
+});
 Route::prefix('parent')->group(function () {
     Route::post('/login', [logincontroller::class, 'login_parent']);
     Route::post('/reset-password', [ParentResetpasswordController::class, 'reset_password']);
@@ -110,7 +130,7 @@ Route::prefix('student')->group(function () {
     Route::middleware('auth:sanctum')->post('/auth-student', [getauthenticatedstudentcontroller::class, 'get_authenticated_student']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/create-student', [createstudentController::class, 'create_student']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/generate-report-card/{student_id}/{level_id}/{exam_id}', [Reportcardgenerationcontroller::class, 'generate_student_report_card']);
-    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-students', [studentController::class, 'get_all_students_in_school']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum', 'role:schoolSuperAdmin', 'permission:view student'])->get('/get-students', [studentController::class, 'get_all_students_in_school']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/student-details/{student_id}', [studentController::class, 'student_details']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-student/{student_id}', [studentController::class, 'update_student_scoped']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-student/{student_id}', [studentController::class, 'delete_Student_Scoped']);

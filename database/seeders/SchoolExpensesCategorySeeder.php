@@ -26,19 +26,19 @@ class SchoolExpensesCategorySeeder extends Seeder
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle); // Read the header
             Log::info('CSV Header: ', $header); // Log the header for debugging
-            $school_branches = DB::table('school_branches')->pluck('id')->toArray();
+            $school_branches = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
             $school_expenses_category = []; // Initialize an empty array for countries
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data); // Log current row data for debugging
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 15);
-                $randomSchoolBranchesId = Arr::random($school_branches);
+
                 // Ensure the row has at least two columns
                 if (count($data) >= 2) {
                     $school_expenses_category[] = [
                         'id' => $id, // Assign id from 1st column
-                        'school_branch_id' => $randomSchoolBranchesId, // Assign name from 2nd column
+                        'school_branch_id' => $school_branches, // Assign name from 2nd column
                         'name' => $data[1], // Assign name from 2nd column
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp

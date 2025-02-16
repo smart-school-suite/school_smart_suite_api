@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Database\Seeder;
+use Faker\Generator as Faker;
 use Illuminate\Support\Facades\Hash;
 
 class StudentTableSeeder extends Seeder
@@ -15,13 +16,12 @@ class StudentTableSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void
+    public function run()
     {
         $timestamp = now();
         $filePath = public_path('data/student.csv');
         if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle);
-            Log::info('CSV Header: ', $header);
+            $faker = \Faker\Factory::create();
 
             // Fetch all relevant IDs
             $schoolBranchId = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
@@ -31,8 +31,6 @@ class StudentTableSeeder extends Seeder
             $students = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data);
-
                 $guardians = DB::table('parents')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
                 if (!$guardians) {
                     Log::warning('No guardians found for school_branch_id: ' . $schoolBranchId);
@@ -55,28 +53,28 @@ class StudentTableSeeder extends Seeder
                 $id = substr(md5($uuid), 0, 25);
 
                 if (count($data) >= 2) {
+                    $dob = $faker->dateTimeBetween('-25 years', '-18 years')->format('Y-m-d');
                     $students[] = [
                         'id' => $id,
                         'school_branch_id' => $schoolBranchId,
                         'name' => $data[1],
                         'first_name' => $data[2],
                         'last_name' => $data[3],
-                        'DOB' => $data[4],
+                        'DOB' => $dob,
                         'gender' => $data[5],
-                        'total_fee_debt' => $schoolFee, // Use the school fee of the selected specialty
+                        'total_fee_debt' => $schoolFee,
                         'phone_one' => $data[6],
                         'phone_two' => $data[7],
                         'religion' => $data[8],
                         'email' => $data[9],
                         'password' => Hash::make($data[10]),
-                        'last_login_at' => $data[11],
+                        'last_login_at' => $faker->dateTimeBetween('-1 month', $timestamp)->format('Y-m-d H:i:s'),
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'specialty_id' => $randomSpecialtyId,
                         'department_id' => Arr::random($department),
                         'level_id' => Arr::random($education_level),
-                        'guadian_one_id' => $randomGuardainId,
-                        'guadian_two_id' => $randomGuardainIdTwo,
+                        'guadian_id' => $randomGuardainId,
                         'student_batch_id' => Arr::random($studentbatch),
                     ];
                 }

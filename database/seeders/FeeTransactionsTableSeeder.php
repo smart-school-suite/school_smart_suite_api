@@ -22,19 +22,19 @@ class FeeTransactionsTableSeeder extends Seeder
         if (!file_exists($filePath) || !is_readable($filePath)) {
             throw new \Exception("CSV file not found or not readable!");
         }
-    
+
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
             $school_branches = DB::table('school_branches')->pluck('id')->toArray();
-            
-            $fee_payment_transactions = []; 
-            
+
+            $fee_payment_transactions = [];
+
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 15); 
-                $randomSchoolBranchesId = Arr::random($school_branches);
+                $id = substr(md5($uuid), 0, 15);
+                $randomSchoolBranchesId = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
                 $student = DB::table('student')->where('school_branch_id', $randomSchoolBranchesId)->pluck('id')->toArray();
                 if(!$student){
                     Log::warning('No student found for school branch id' . $randomSchoolBranchesId);
@@ -43,20 +43,20 @@ class FeeTransactionsTableSeeder extends Seeder
                 if (count($data) >= 2) {
                     $fee_payment_transactions[] = [
                         'id' => $id,
-                        'school_branch_id' => $randomSchoolBranchesId, 
-                        'fee_name' => $data[1], 
-                        'amount' => $data[2], 
+                        'school_branch_id' => $randomSchoolBranchesId,
+                        'fee_name' => $data[1],
+                        'amount' => $data[2],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'student_id' => $randomStudent
                     ];
                 }
             }
-    
+
             fclose($handle);
-            
+
             Log::info('School Fee Payment Transactions: ', $fee_payment_transactions);
-    
+
             if (!empty($fee_payment_transactions)) {
                 DB::table('fee_payment_transactions')->insert($fee_payment_transactions);
                 Log::info('Inserted fee payment transactions: ' . count($fee_payment_transactions) . ' entries.');
