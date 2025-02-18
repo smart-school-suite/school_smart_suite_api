@@ -56,4 +56,10 @@ class electionsController extends Controller
         $castVote = $this->voteService->castVote($request->validated(), $currentSchool);
         return ApiResponseService::success('Voted Casted Succfully', $castVote, null, 200);
     }
+
+    public function getElectionCandidates(Request $request, $electionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getElectionCandidates = $this->electionService->getElectionCandidates($electionId, $currentSchool);
+        return ApiResponseService::success("Election Candidates Retrieved Successfully", $getElectionCandidates, null, 200);
+    }
 }

@@ -7,33 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Feepayment extends Model
+class SchoolFeeSchedule extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'student_id',
-        'fee_name',
-        'school_branch_id',
-        'amount'
+        'specialty_id',
+        'title',
+        'deadline_date',
+        'amount',
+        'school_branch_id'
     ];
 
-    public $keyType = 'string';
-    public $table = 'fee_payment_transactions';
     public $incrementing = 'false';
+    public $keyType = 'string';
+    public $table = 'schoolfee_schedule';
 
-    public function school(): BelongsTo {
-        return $this->belongsTo(School::class);
+    public function specialty(): BelongsTo {
+        return $this->belongsTo(Specialty::class, 'specialty_id');
     }
-
-    public function schoolbranches(): BelongsTo {
-        return $this->belongsTo(Schoolbranches::class);
-    }
-
-    public function student(): BelongsTo {
-        return $this->belongsTo(Student::class);
-    }
-
 
     protected static function boot()
     {
@@ -45,5 +37,4 @@ class Feepayment extends Model
          });
 
     }
-
 }

@@ -340,6 +340,13 @@ return new class extends Migration
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
+
+        Schema::table('schoolfee_schedule', function(Blueprint $table) {
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty');
+        });
     }
 
     /**

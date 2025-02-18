@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ElectionCandidates;
 use App\Models\Elections;
 
 class ElectionService
@@ -17,7 +18,10 @@ class ElectionService
         $election->election_end_date = $data["election_end_date"];
         $election->starting_time = $data["starting_time"];
         $election->ending_time = $data["ending_time"];
+        $election->school_year_start = $data["school_year_start"];
+        $election->school_year_end = $data["school_year_end"];
         $election->school_branch_id = $currentSchool->id;
+        $election->is_results_published = false;
         $election->save();
         return $election;
     }
@@ -47,5 +51,10 @@ class ElectionService
     {
         $elections = Elections::where('school_branch_id', $currentSchool->id)->get();
         return $elections;
+    }
+
+    public function getElectionCandidates(string $electionId, $currentSchool){
+          $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)->where("election_id", $electionId)->get();
+          return $getElectionCandidates;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -46,5 +47,16 @@ class ElectionApplication extends Model
 
     public function electionCandidate(): HasMany {
          return $this->hasMany(ElectionCandidates::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+
     }
 }

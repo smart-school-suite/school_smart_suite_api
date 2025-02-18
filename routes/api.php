@@ -71,6 +71,7 @@ use App\Http\Controllers\electionRolesController;
 use App\Http\Controllers\electionResultsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ReportAnalytics\FinancialreportController;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -389,14 +390,15 @@ Route::middleware([IdentifyTenant::class])->prefix('elections')->group(function 
     Route::middleware(['auth:sanctum'])->get('/update-election/{election_id}', [electionsController::class,'updateElection']);
     Route::middleware(['auth:sanctum'])->post('/cast-vote', [electionsController::class, 'vote']);
     Route::middleware(['auth:sanctum'])->get('/election-results/{election_id}', [electionResultsController::class, 'fetchElectionResults']);
+    Route::middleware(['auth:sanctum'])->get('/election-candidates/{electionId}', [electionsController::class, 'getElectionCandidates']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('election-application')->group(function () {
     Route::middleware(['auth:sanctum'])->post('/apply', [electionApplicationController::class, 'createElectionApplication']);
     Route::middleware(['auth:sanctum'])->get('/applications/{election_id}', [electionApplicationController::class,'getApplications']);
-    Route::middleware(['auth:sanctum'])->put('/updateApplication/{application_id}', [electionApplicationController::class,'updateApplication']);
+    Route::middleware(['auth:sanctum'])->put('/update-application/{application_id}', [electionApplicationController::class,'updateApplication']);
     Route::middleware(['auth:sanctum'])->delete('/delete/{application_id}', [electionApplicationController::class,  'deleteApplication']);
-    Route::middleware(['auth:sanctum'])->put('/update-application/{application_id}', [electionApplicationController::class, 'approveApplication']);
+    Route::middleware(['auth:sanctum'])->put('/approve-application/{application_id}', [electionApplicationController::class, 'approveApplication']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('election-roles')->group( function () {
@@ -404,4 +406,8 @@ Route::middleware([IdentifyTenant::class])->prefix('election-roles')->group( fun
     Route::middleware(['auth:sanctum'])->put('/update-election/{election_role_id}', [electionRolesController::class,'updateElectionRole']);
     Route::middleware(['auth:sanctum'])->delete('/delete-role/{election_role_id}', [electionRolesController::class,'deleteElectionRole']);
     Route::middleware(['auth:sanctum'])->get('/election-roles/{election_id}', [electionRolesController::class, 'getElectionRoles']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('stats')->group( function() {
+   Route::middleware(['auth:sanctum'])->get("/get/financial-stats", [FinancialreportController::class, 'getFinanacialStats']);
 });

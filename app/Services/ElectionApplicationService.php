@@ -28,6 +28,7 @@ class ElectionApplicationService
         $electionApplication->election_role_id = $data["election_role_id"];
         $electionApplication->student_id = $data["student_id"];
         $electionApplication->school_branch_id = $currentSchool->id;
+        $electionApplication->isApproved = false;
         $electionApplication->save();
         return $electionApplication;
     }

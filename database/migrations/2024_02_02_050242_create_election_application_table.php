@@ -16,7 +16,7 @@ return new class extends Migration
             $table->text('manifesto');
             $table->text('personal_vision');
             $table->text('commitment_statement');
-            $table->boolean('isApproved');
+            $table->boolean('isApproved')->default(false);
             $table->timestamps();
         });
     }

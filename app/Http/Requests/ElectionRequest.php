@@ -27,7 +27,9 @@ class ElectionRequest extends FormRequest
             'election_end_date' => 'required|date|after:election_start_date',
             'starting_time' => 'required|date_format:H:i',
             'ending_time' => 'required|date_format:H:i|after:starting_time',
-            'description' => 'required|string'
+            'description' => 'required|string',
+            'school_year_start' => 'required|date',
+            'school_year_end' => 'required|date',
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Elections extends Model
@@ -48,6 +49,17 @@ class Elections extends Model
 
     public function electionVotes(): HasMany {
          return $this->hasMany(ElectionVotes::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+         static::creating(function ($user){
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+         });
+
     }
 
 }
