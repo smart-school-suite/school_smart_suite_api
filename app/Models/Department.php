@@ -24,6 +24,10 @@ class Department extends Model
     public $table = 'department';
     public $incrementing = 'false';
 
+     public function hods()
+    {
+        return $this->hasMany(HOD::class, 'department_id');
+    }
     public function courses(): HasMany {
        return $this->hasMany(Courses::class);
     }

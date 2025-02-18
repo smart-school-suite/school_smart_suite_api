@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('schoolfee_schedule', function (Blueprint $table) {
+        Schema::create('hos', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string("title");
+            $table->nullableMorphs('hosable');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->date("deadline_date");
-            $table->integer("amount");
-            $table->string('school_branch_id')->after('id');
+            $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->timestamps();
         });
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('schoolfee_schedule');
+        Schema::dropIfExists('hos');
     }
 };

@@ -72,6 +72,8 @@ use App\Http\Controllers\electionResultsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ReportAnalytics\FinancialreportController;
+use App\Http\Controllers\HodController;
+use App\Http\Controllers\HosController;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Http\Request;
 
@@ -201,6 +203,10 @@ Route::middleware([IdentifyTenant::class])->prefix('department')->group(function
     Route::middleware(['auth:sanctum'])->get('/department-details/{department_id}', [departmentController::class, 'department_details']);
     Route::middleware(['auth:sanctum'])->put('/update-department', [departmentController::class, 'update_school_department']);
     Route::middleware(['auth:sanctum'])->delete('/delete-department/{department_id}', [departmentController::class, 'delete_school_department']);
+    Route::middleware(['auth:sanctum'])->get('/get-hods', [HodController::class, 'getHods']);
+    Route::middleware(['auth:sanctum'])->delete("/delete-hod/{hodId}", [HodController::class, 'removeHod']);
+    Route::middleware(['auth:sanctum'])->post('/assign-hod', [HodController::class, 'assignHeadOfDepartment']);
+
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('course')->group(function () {
@@ -218,6 +224,9 @@ Route::middleware([IdentifyTenant::class])->prefix('specialty')->group(function 
     Route::middleware(['auth:sanctum'])->put('/update-specialty/{specialty_id}', [specialtyController::class, 'update_school_specialty']);
     Route::middleware(['auth:sanctum'])->get('/my-specialties', [specialtyController::class, 'get_all_tenant_School_specailty_scoped']);
     Route::middleware(['auth:sanctum'])->get('/specialty-details/{specialty_id}', [specialtyController::class, 'specialty_details']);
+    Route::middleware(['auth:sanctum'])->post("/assign-hos", [HosController::class, 'assignHeadOfSpecialty']);
+    Route::middleware(['auth:sanctum'])->get('/get-assigned-hos', [HosController::class, 'getHeadOfSpecialty']);
+    Route::middleware(['auth:sanctum'])->delete("/remove-hos", [HosController::class, 'removeHeadOfSpecialty']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('marks')->group( function (){

@@ -88,6 +88,10 @@ class Teacher extends Model
         return $this->hasMany(InstructorAvailability::class);
     }
 
+    public function hod()
+    {
+        return $this->morphMany(Hod::class, 'hodable');
+    }
     public function timetable(): HasMany {
         return $this->hasMany(Timetable::class);
     }

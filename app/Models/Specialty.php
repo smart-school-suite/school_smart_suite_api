@@ -25,6 +25,10 @@ class Specialty extends Model
     public $table = 'specialty';
     public $incrementing = 'false';
 
+    public function hos()
+    {
+        return $this->hasMany(HOD::class, 'specialty_id');
+    }
     public function department(): BelongsTo {
         return $this->belongsTo(Department::class);
     }

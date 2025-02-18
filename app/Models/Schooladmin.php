@@ -81,6 +81,10 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+    public function hod()
+    {
+        return $this->morphMany(Hod::class, 'hodable');
+    }
     protected static function boot()
     {
         parent::boot();
