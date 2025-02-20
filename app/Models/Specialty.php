@@ -25,64 +25,97 @@ class Specialty extends Model
     public $table = 'specialty';
     public $incrementing = 'false';
 
+    public function feeWaiver(): HasMany
+    {
+        return $this->hasMany(FeeWaiver::class, 'specialty_id');
+    }
+    public function additionalFees(): HasMany
+    {
+        return $this->hasMany(AdditionalFees::class, 'specialty_id');
+    }
+    public function feePaymentSchedule(): HasMany
+    {
+        return $this->hasMany(FeePaymentSchedule::class, 'specialty_id');
+    }
     public function hos()
     {
         return $this->hasMany(HOD::class, 'specialty_id');
     }
-    public function department(): BelongsTo {
+
+    public function registrationFee(): HasMany
+    {
+        return $this->hasMany(RegistrationFee::class, 'specialty_id');
+    }
+    public function tuitionFees(): HasMany
+    {
+        return $this->hasMany(TuitionFees::class, 'student_id');
+    }
+    public function department(): BelongsTo
+    {
         return $this->belongsTo(Department::class);
     }
-   public function level(): BelongsTo {
-      return $this->belongsTo(Educationlevels::class);
-   }
-    public function courses(): HasMany {
+    public function level(): BelongsTo
+    {
+        return $this->belongsTo(Educationlevels::class);
+    }
+    public function courses(): HasMany
+    {
         return $this->hasMany(Courses::class);
-     }
+    }
 
-     public function exams(): HasMany {
-       return $this->hasMany(Exams::class);
-     }
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exams::class);
+    }
 
-     public function TeacherSpecailtyPreference(): HasMany {
+    public function TeacherSpecailtyPreference(): HasMany
+    {
         return $this->hasMany(TeacherSpecailtyPreference::class);
-     }
-     public function school(): BelongsTo {
-       return $this->belongsTo(School::class);
-     }
+    }
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
 
-     public function schoolbranches(): BelongsTo {
-       return $this->belongsTo(Schoolbranches::class);
-     }
+    public function schoolbranches(): BelongsTo
+    {
+        return $this->belongsTo(Schoolbranches::class);
+    }
 
-     public function specialty(): HasMany {
-       return $this->hasMany(Specialty::class);
-     }
+    public function specialty(): HasMany
+    {
+        return $this->hasMany(Specialty::class);
+    }
 
-     public function student(): HasMany {
-       return $this->hasMany(Student::class);
-     }
+    public function student(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
 
-     public function teacher(): HasMany {
-       return $this->hasMany(Teacher::class);
-     }
+    public function teacher(): HasMany
+    {
+        return $this->hasMany(Teacher::class);
+    }
 
-     public function events(): HasMany {
-       return $this->hasMany(Events::class);
-     }
-     public function marks(): HasMany {
-      return $this->hasMany(Marks::class, 'specialty_id');
-     }
-     public function studentresit(): HasMany {
-       return $this->hasMany(Studentresit::class);
-     }
-     protected static function boot()
-     {
-         parent::boot();
+    public function events(): HasMany
+    {
+        return $this->hasMany(Events::class);
+    }
+    public function marks(): HasMany
+    {
+        return $this->hasMany(Marks::class, 'specialty_id');
+    }
+    public function studentresit(): HasMany
+    {
+        return $this->hasMany(Studentresit::class);
+    }
+    protected static function boot()
+    {
+        parent::boot();
 
-          static::creating(function ($user){
-             $uuid = str_replace('-', '', Str::uuid()->toString());
-             $user->id = substr($uuid, 0, 10);
-          });
-
-     }
+        static::creating(function ($user) {
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+        });
+    }
 }

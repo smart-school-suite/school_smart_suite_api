@@ -74,80 +74,115 @@ class Student extends Model
     {
         parent::boot();
 
-         static::creating(function ($user){
+        static::creating(function ($user) {
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
-         });
-
+        });
     }
 
+    public function feeWaiver(): HasMany
+    {
+        return $this->hasMany(FeeWaiver::class, 'student_id');
+    }
+
+    public function additionalFees(): HasMany
+    {
+        return $this->hasMany(AdditionalFees::class, 'student_id');
+    }
+
+    public function registrationFee(): HasMany
+    {
+        return $this->hasMany(RegistrationFee::class, 'student_id');
+    }
+
+    public function tuitionFees(): HasMany
+    {
+        return $this->hasMany(TuitionFees::class, 'student_id');
+    }
     public function otps()
     {
         return $this->morphMany(Otp::class, 'otpable');
     }
 
-    public function electionVotes(): HasMany {
-         return $this->hasMany(ElectionVotes::class);
+    public function electionVotes(): HasMany
+    {
+        return $this->hasMany(ElectionVotes::class);
     }
-    public function electionCandidate(): HasMany {
-         return $this->hasMany(ElectionCandidates::class);
+    public function electionCandidate(): HasMany
+    {
+        return $this->hasMany(ElectionCandidates::class);
     }
-    public function electionApplication(): HasMany {
-         return $this->hasMany(ElectionApplication::class,'student_id');
+    public function electionApplication(): HasMany
+    {
+        return $this->hasMany(ElectionApplication::class, 'student_id');
     }
-    public function courses(): HasMany {
+    public function courses(): HasMany
+    {
         return $this->hasMany(Courses::class);
     }
 
-    public function department(): BelongsTo {
+    public function department(): BelongsTo
+    {
         return $this->belongsTo(Department::class, 'department_id');
     }
 
-    public function exams(): HasMany {
+    public function exams(): HasMany
+    {
         return $this->hasMany(Exams::class);
     }
 
-    public function feepayment(): HasMany {
+    public function feepayment(): HasMany
+    {
         return $this->hasMany(Feepayment::class);
     }
 
-    public function marks(): HasMany {
+    public function marks(): HasMany
+    {
         return $this->hasMany(Marks::class, 'student_id');
     }
 
-    public function guardianOne(): BelongsTo {
+    public function guardianOne(): BelongsTo
+    {
         return $this->belongsTo(Parents::class, 'guadian_one_id');
     }
 
-    public function guardianTwo(): BelongsTo {
-         return $this->belongsTo(Parents::class, 'guadian_two_id');
+    public function guardianTwo(): BelongsTo
+    {
+        return $this->belongsTo(Parents::class, 'guadian_two_id');
     }
 
-    public function school(): BelongsTo {
+    public function school(): BelongsTo
+    {
         return $this->belongsTo(School::class);
     }
 
-    public function schoolbranches(): BelongsTo {
+    public function schoolbranches(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 
-    public function specialty(): BelongsTo {
+    public function specialty(): BelongsTo
+    {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
-    public function level(): BelongsTo {
+    public function level(): BelongsTo
+    {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
 
-    public function transcript(): HasMany {
+    public function transcript(): HasMany
+    {
         return $this->hasMany(Reportcard::class, 'student_id');
     }
 
-    public function studentBatch(): BelongsTo {
+    public function studentBatch(): BelongsTo
+    {
         return $this->belongsTo(studentBatch::class, 'student_batch_id');
     }
 
-    public function studentresit(): HasMany {
-         return $this->hasMany(Studentresit::class);
+    public function studentresit(): HasMany
+    {
+        return $this->hasMany(Studentresit::class);
     }
 }

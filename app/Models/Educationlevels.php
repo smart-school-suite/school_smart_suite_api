@@ -12,9 +12,9 @@ class Educationlevels extends Model
     use HasFactory;
 
     protected $fillable = [
-       'name',
-       'level',
-       'status'
+        'name',
+        'level',
+        'status'
     ];
 
     public $keyType = 'string';
@@ -25,34 +25,59 @@ class Educationlevels extends Model
     {
         parent::boot();
 
-         static::creating(function ($user){
+        static::creating(function ($user) {
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
-         });
-
+        });
     }
 
-    public function specialty() : HasMany {
-       return $this->hasMany(Specialty::class);
+    public function feeWaiver(): HasMany
+    {
+        return $this->hasMany(FeeWaiver::class, 'level_id');
+    }
+    public function additionalFees(): HasMany
+    {
+        return $this->hasMany(AdditionalFees::class, 'level_id');
+    }
+    public function feePaymentSchedule(): HasMany
+    {
+        return $this->hasMany(FeePaymentSchedule::class, 'specialty_id');
+    }
+    public function specialty(): HasMany
+    {
+        return $this->hasMany(Specialty::class);
+    }
+    public function registrationFee(): HasMany
+    {
+        return $this->hasMany(RegistrationFee::class, 'level_id');
+    }
+    public function mark(): HasMany
+    {
+        return $this->hasMany(Marks::class, 'level_id');
     }
 
-    public function mark() : HasMany {
-      return $this->hasMany(Marks::class, 'level_id');
+    public function tuitionFees(): HasMany
+    {
+        return $this->hasMany(TuitionFees::class);
     }
-
-    public function student(): HasMany {
-       return $this->hasMany(Student::class, 'level_id');
+    public function student(): HasMany
+    {
+        return $this->hasMany(Student::class, 'level_id');
     }
-    public function courses(): HasMany {
-       return $this->hasMany(Courses::class);
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Courses::class);
     }
-    public function timetable(): HasMany {
-       return $this->hasMany(Timetable::class);
+    public function timetable(): HasMany
+    {
+        return $this->hasMany(Timetable::class);
     }
-    public function exam(): HasMany {
-       return $this->hasMany(Exams::class);
+    public function exam(): HasMany
+    {
+        return $this->hasMany(Exams::class);
     }
-    public function studentresit(): HasMany {
-       return $this->hasMany(Studentresit::class);
+    public function studentresit(): HasMany
+    {
+        return $this->hasMany(Studentresit::class);
     }
 }
