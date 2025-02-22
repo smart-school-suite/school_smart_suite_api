@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('additional_fees', function (Blueprint $table) {
+        Schema::create('additional_fee_category', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('title');
-            $table->text('reason')->nullable();
-            $table->decimal('amount', 8, 2);
-            $table->enum('status', ['paid', 'up paid']);
             $table->timestamps();
         });
     }
@@ -26,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('additional_fees');
+        Schema::dropIfExists('additional_fee__category');
     }
 };

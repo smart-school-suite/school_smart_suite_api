@@ -8,7 +8,7 @@ use App\Http\Requests\StudentBatchRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class Studentbatchcontroller extends Controller
+class StudentBatchcontroller extends Controller
 {
     //
     protected StudentBatchService $studentBatchService;

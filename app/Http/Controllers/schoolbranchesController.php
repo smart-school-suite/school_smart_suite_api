@@ -8,7 +8,7 @@ use App\Http\Requests\CreateSchoolBranchRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class schoolbranchesController extends Controller
+class SchoolBranchesController extends Controller
 {
     //review update request and add validation when updating
     protected SchoolBranchesService $schoolBranchesService;

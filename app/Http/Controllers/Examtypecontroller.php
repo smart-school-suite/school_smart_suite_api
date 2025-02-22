@@ -8,7 +8,7 @@ use App\Services\ApiResponseService;
 use App\Services\ExamTypeService;
 use Illuminate\Http\Request;
 
-class Examtypecontroller extends Controller
+class ExamTypecontroller extends Controller
 {
     //
     protected ExamTypeService $examtypeService;

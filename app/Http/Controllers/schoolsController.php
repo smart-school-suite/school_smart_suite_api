@@ -8,7 +8,7 @@ use App\Services\ApiResponseService;
 use App\Http\Requests\UpdateSchoolRequest;
 use App\Services\SchoolService;
 
-class schoolsController extends Controller
+class SchoolsController extends Controller
 {
     //
      protected SchoolService $schoolService;

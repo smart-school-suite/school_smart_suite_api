@@ -9,17 +9,17 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 
-class logineduadmincontroller extends Controller
+class LoginAppAdminController extends Controller
 {
-    //
+    //logineduadmincontroller
     public function login_edumanage_admin(Request $request){
         $request->validate([
             'email' => 'required|string',
             'password' => 'required',
         ]);
-        
+
         $user = Edumanageadmin::where('email', $request->email)->first();
-            
+
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => 'The provided credentials are incorrect',
@@ -42,10 +42,10 @@ class logineduadmincontroller extends Controller
                 'otp_code' => $otp
             ], 200);
         }
-        
+
 
     }
-     
+
     public function verify_otp(Request $request){
         $request->validate([
             'otp' => 'required|digits:6',

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegistrationFee extends Model
 {
@@ -24,6 +25,9 @@ class RegistrationFee extends Model
     public $table = 'registration_fees';
     public $keyType = 'string';
 
+    public function registrationFeeTransactions() : HasMany {
+        return $this->hasMany(RegistrationFeeTransactions::class, 'registrationfee_id');
+    }
     public function student()
     {
         return $this->belongsTo(Student::class, 'student_id');

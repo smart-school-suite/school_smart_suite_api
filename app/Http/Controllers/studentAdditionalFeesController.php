@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AddtionalFeesRequest;
 use App\Http\Requests\UpdateAdditionalFees;
 use App\Services\ApiResponseService;
+use App\Http\Requests\PayAdditionalFeesRequest;
 use App\Services\studentAdditionalFeeService;
 use Illuminate\Http\Request;
 
 
-class studentAdditionalFeesController extends Controller
+class StudentAdditionalFeesController extends Controller
 {
     //
     protected studentAdditionalFeeService $studentAdditionalFeeService;
@@ -44,8 +45,19 @@ class studentAdditionalFeesController extends Controller
     public function getAdditionalFees(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $getAdditionalFees = $this->studentAdditionalFeeService->getAdditionalFees($currentSchool);
-        return ApiResponseService::success("Student Additional Fees Fetched Successfully", $getAdditionalFees, null, 201);
+        return ApiResponseService::success("Student Additional Fees Fetched Successfully", $getAdditionalFees, null, 200);
     }
 
+    public function payAdditionalFees(PayAdditionalFeesRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $payAdditionalFees = $this->studentAdditionalFeeService->payAdditionalFees($request->validated(), $currentSchool);
+        return ApiResponseService::success("Student Additional Fees Paid Successfully", $payAdditionalFees, null, 201);
+    }
+
+    public function getAdditionalFeesTransactions(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getAdditionalFeesTransactions = $this->studentAdditionalFeeService->getAdditionalFeesTransactions($currentSchool);
+        return ApiResponseService::success("Student Additional Fees Transactions Fetched Sucessfully", $getAdditionalFeesTransactions, null, 200);
+    }
 
 }

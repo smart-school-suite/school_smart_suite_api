@@ -11,7 +11,7 @@ use App\Services\ExamService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class examsController extends Controller
+class ExamsController extends Controller
 {
     //
     protected ExamService $examService;

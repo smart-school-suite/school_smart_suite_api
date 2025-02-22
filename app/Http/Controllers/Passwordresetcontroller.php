@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 use App\Models\PasswordReset;
 use Illuminate\Http\Request;
 
-class Passwordresetcontroller extends Controller
+class PasswordResetcontroller extends Controller
 {
     //
     public function request_password_reset_otp(Request $request){
@@ -26,7 +26,7 @@ class Passwordresetcontroller extends Controller
             ], 409);
         }
 
-        $otp = Str::random(6); 
+        $otp = Str::random(6);
 
         $expiresAt = now()->addMinutes(10);
 
@@ -73,7 +73,7 @@ class Passwordresetcontroller extends Controller
        }
 
        PasswordReset::where('email', $email)->delete();
-       
+
        return response()->noContent();
     }
 }

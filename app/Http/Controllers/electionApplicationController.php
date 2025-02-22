@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ElectionApplication;
-use App\Models\ElectionCandidates;
 use App\Http\Requests\ElectionApplicationRequest;
 use App\Services\ElectionApplicationService;
 use App\Http\Requests\UpdateElectionApplicationRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class electionApplicationController extends Controller
+class ElectionApplicationController extends Controller
 {
     protected ElectionApplicationService $electionApplicationService;
     public function __construct(ElectionApplicationService $electionApplicationService)

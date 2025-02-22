@@ -11,7 +11,7 @@ use App\Services\VoteService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class electionsController extends Controller
+class ElectionsController extends Controller
 {
     //
     protected ElectionService $electionService;

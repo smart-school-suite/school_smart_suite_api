@@ -8,7 +8,7 @@ use App\Http\Requests\SchoolCategoryExpensesRequest;
 use App\Http\Requests\UpdateSchoolCategoryExpensesRequest;
 use Illuminate\Http\Request;
 
-class Schoolexpensescategorycontroller extends Controller
+class ExpensesCategorycontroller extends Controller
 {
     //update validatioin, create validation
     protected SchoolExpensesCategoryService $schoolExpensesCategoryService;

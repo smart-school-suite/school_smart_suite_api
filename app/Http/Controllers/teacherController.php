@@ -8,7 +8,7 @@ use App\Http\Requests\TeacherSpecailtyPreferenceRequest;
 use App\Services\TeacherService;
 use Illuminate\Http\Request;
 
-class teacherController extends Controller
+class TeacherController extends Controller
 {
     //
     protected TeacherService $teacherService;

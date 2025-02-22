@@ -10,7 +10,7 @@ use App\Http\Requests\CreateSchoolAdminSignUpRequest;
 use Illuminate\Http\Request;
 
 
-class schooladminController extends Controller
+class SchoolAdminController extends Controller
 {
     //
     protected SchoolAdminService $schoolAdminService;

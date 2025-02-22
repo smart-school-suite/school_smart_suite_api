@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Educationlevels;
-use App\Models\Specialty;
 use App\Services\StudentPromotionService;
 use App\Http\Requests\StudentPromotionRequest;
-use App\Models\Student;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class studentpromotionController extends Controller
+class StudentPromotionController extends Controller
 {
     //
 

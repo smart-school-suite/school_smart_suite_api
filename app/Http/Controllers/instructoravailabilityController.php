@@ -10,7 +10,7 @@ use App\Services\InstructorAvaliabilityService;
 use Illuminate\Http\Request;
 use Exception;
 
-class instructoravailabilityController extends Controller
+class InstructorAvailabilityController extends Controller
 {
     //
     protected InstructorAvaliabilityService $instructorAvaliabilityService;

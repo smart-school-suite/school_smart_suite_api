@@ -8,10 +8,9 @@ use App\Models\Schooladmin;
 use App\Models\OTP;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
-class loginschooladmincontroller extends Controller
+class LoginSchoolAdmincontroller extends Controller
 {
     //
     public function login_school_admin(Request $request)

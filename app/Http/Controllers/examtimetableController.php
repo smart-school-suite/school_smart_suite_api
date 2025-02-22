@@ -10,7 +10,7 @@ use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use Exception;
 
-class examtimetableController extends Controller
+class ExamTimeTableController extends Controller
 {
     protected ExamTimeTableService $examTimeTableService;
     public function __construct(ExamTimeTableService $examTimeTableService)

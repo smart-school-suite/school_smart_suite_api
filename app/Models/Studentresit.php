@@ -28,16 +28,20 @@ class Studentresit extends Model
     public $table = 'student_resit';
     public $incrementing = 'false';
 
+    public function studentResitTransactions(): HasMany {
+        return $this->hasMany(ResitFeeTransactions::class, 'resitfee_id');
+    }
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
+
 
     public function courses(): BelongsTo {
         return $this->belongsTo(Courses::class, 'course_id');

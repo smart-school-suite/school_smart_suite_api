@@ -22,9 +22,9 @@ class FeePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-           'fee_name' => 'required|string',
+           'payment_method' => 'required|string',
            'amount' => 'required',
-           'student_id' => 'required|string'
+           'tuition_id' => 'required|string|exists:tuition_fee_transactions,id'
         ];
     }
 }

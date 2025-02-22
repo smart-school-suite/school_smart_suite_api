@@ -9,7 +9,7 @@ use App\Http\Requests\UpdateDepartmentRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class departmentController extends Controller
+class DepartmentController extends Controller
 {
     //
     protected DepartmentService $departmentService;

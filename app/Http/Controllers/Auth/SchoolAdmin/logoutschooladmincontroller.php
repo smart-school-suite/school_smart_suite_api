@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class logoutschooladmincontroller extends Controller
+class LogoutSchoolAdminController extends Controller
 {
     //
     public function logout_school_admin(Request $request){

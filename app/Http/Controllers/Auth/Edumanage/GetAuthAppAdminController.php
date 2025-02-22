@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Auth\Edumanage;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class getauthenticatededumanageadmincontroller extends Controller
+class GetAuthAppAdminController extends Controller
 {
+    //getauthenticatededumanageadmincontroller
     public function get_authenticated_eduamanageadmin(Request $request){
         $eduamanageadmin_authenticated_data = auth()->guard('edumanageadmin')->user();
          return response()->json([

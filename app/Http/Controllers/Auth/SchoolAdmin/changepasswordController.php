@@ -7,7 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
-class changepasswordController extends Controller
+class ChangePasswordController extends Controller
 {
     public function change_schooladmin_password(Request $request){
         $request->validate([
@@ -26,7 +26,7 @@ class changepasswordController extends Controller
             ]);
         }
 
-        
+
 
         if ($this->updatePassword($authenticated_schooladmin, $request->new_password)) {
             return response()->json([
@@ -45,6 +45,6 @@ class changepasswordController extends Controller
     {
 
         $authenticated_schooladmin->password = Hash::make($newPassword);
-        return $authenticated_schooladmin->save(); 
+        return $authenticated_schooladmin->save();
     }
 }

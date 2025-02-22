@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
-class loginteachercontroller extends Controller
+class LoginTeacherController extends Controller
 {
     //
     public function login_teacher(Request $request){
@@ -16,9 +16,9 @@ class loginteachercontroller extends Controller
             'email' => 'required|string',
             'password' => 'required',
         ]);
-        
+
         $user = Teacher::where('email', $request->email)->first();
-            
+
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'status' => 'ok',
@@ -26,12 +26,12 @@ class loginteachercontroller extends Controller
                 'password' => 'Password is invalid'
             ]);
         }
-    
+
         $token = $user->createToken('teacherToken')->plainTextToken;
-    
+
         return response()->json([
             'status' => 'ok',
-            'message' => 'Logged in successfully', 
+            'message' => 'Logged in successfully',
             'token' => $token]);
     }
 }

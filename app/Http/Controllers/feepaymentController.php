@@ -7,10 +7,11 @@ use App\Services\FeePaymentService;
 use App\Http\Requests\FeePaymentRequest;
 use App\Http\Requests\UpdateFeePaymentRequest;
 use App\Http\Resources\FeeDebtorResource;
+use App\Http\Requests\PayRegistrationFeesRequest;
 use App\Http\Resources\PaidFeesResource;
 use Illuminate\Http\Request;
 
-class feepaymentController extends Controller
+class FeePaymentController extends Controller
 {
     //
     protected FeePaymentService $feePaymentService;
@@ -21,6 +22,12 @@ class feepaymentController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $payFees = $this->feePaymentService->payStudentFees($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Fees Paid Sucessfully", $payFees, null, 201);
+    }
+
+    public function payRegistrationFees(PayRegistrationFeesRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $payRegistrationFees = $this->feePaymentService->payRegistrationFees($request->validated(), $currentSchool);
+        return ApiResponseService::success("Registration Fees Paid Sucessfully", $payRegistrationFees, null, 201);
     }
 
     public function get_all_fees_paid(Request $request){

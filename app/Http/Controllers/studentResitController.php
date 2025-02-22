@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\StudentResitService;
 use App\Services\ApiResponseService;
 
-class studentResitController extends Controller
+class StudentResitController extends Controller
 {
     //
     protected StudentResitService $studentResitService;
@@ -58,5 +58,11 @@ class studentResitController extends Controller
         $resit_id = $request->route("resit_id");
         $getStudentResitDetails = $this->studentResitService->getStudentResitDetails($currentSchool, $resit_id);
         return ApiResponseService::success("Student Resit Details Fetched Successfully", $getStudentResitDetails, null, 200);
+    }
+
+    public function getResitPaymentTransactions(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $getResitTransactions = $this->studentResitService->getResitPaymentTransactions($currentSchool);
+        return ApiResponseService::success("Student Resit Payment Transactions Fetched Succefully", $getResitTransactions, null, 200);
     }
 }

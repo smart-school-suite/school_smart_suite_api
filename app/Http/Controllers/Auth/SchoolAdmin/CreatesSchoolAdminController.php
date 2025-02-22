@@ -7,9 +7,10 @@ use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
-class createschooladmincontroller extends Controller
+class CreatesSchoolAdminController extends Controller
 {
-    //
+    //createschooladmincontroller
+
     public function create_school_admin(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([

@@ -32,11 +32,10 @@ class Student extends Model
         'school_branch_id',
         'specialty_id',
         'department_id',
-        'guadian_two_id',
-        'guadian_one_id',
+        'guadian_id',
         'student_batch_id',
         'religion',
-        'total_fee_debt',
+        'payment_format',
         'email',
         'password',
         'profile_picture'

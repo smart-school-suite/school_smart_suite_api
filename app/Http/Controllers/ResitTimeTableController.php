@@ -9,9 +9,10 @@ use App\Models\Resitexamtimetable;
 use App\Models\Specialty;
 use Illuminate\Http\Request;
 
-class ResitcontrollerTimetable extends Controller
+class ResitTimeTableController extends Controller
 {
-    //
+    //ResitTimeTableController
+    //ResitcontrollerTimetable
     public function get_resits_for_specialty(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');

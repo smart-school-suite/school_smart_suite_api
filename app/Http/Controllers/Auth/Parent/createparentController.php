@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class createparentController extends Controller
+class CreateParentController extends Controller
 {
     //
     public function create_parent(Request $request){

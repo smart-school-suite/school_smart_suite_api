@@ -397,17 +397,51 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
         });
 
-        Schema::tabe("additional_fees", function(Blueprint $table) {
+        Schema::table("additional_fees", function(Blueprint $table) {
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
+            $table->string('additionalfee_category_id');
+            $table->foreign('additionalfee_category_id')->references('id')->on('additional_fee_category');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
         });
 
+        Schema::table("additional_fee_category", function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table("tuition_fee_transactions", function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('tuition_id');
+            $table->foreign('tuition_id')->references('id')->on('tuition_fees');
+        });
+
+        Schema::table("additional_fee_transactions", function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('fee_id');
+            $table->foreign('fee_id')->references('id')->on('additional_fees');
+        });
+
+        Schema::table('registration_fee_transactions', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('registrationfee_id');
+            $table->foreign('registrationfee_id')->references('id')->on('registration_fees');
+        });
+
+        Schema::table("resit_fee_transactions", function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('resitfee_id');
+            $table->foreign('resitfee_id')->references('id')->on('student_resit');
+        });
 
     }
 

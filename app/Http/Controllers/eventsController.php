@@ -9,7 +9,7 @@ use App\Services\ApiResponseService;
 use App\Services\EventsService;
 use Illuminate\Http\Request;
 
-class eventsController extends Controller
+class EventsController extends Controller
 {
     //
     protected EventsService $eventsService;

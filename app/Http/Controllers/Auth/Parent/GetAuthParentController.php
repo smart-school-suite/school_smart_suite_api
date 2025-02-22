@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Auth\Parent;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class getauthenticatedparentcontroller extends Controller
+class GetAuthParentController extends Controller
 {
-    //
+    //getauthenticatedparentcontroller
     public function get_authenticated_parent(Request $request){
         $parent_authenticated_data = auth()->guard('parent')->user();
         return response()->json([

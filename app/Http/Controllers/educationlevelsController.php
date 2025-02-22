@@ -9,7 +9,7 @@ use App\Http\Requests\UpdateEducationLevelRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class educationlevelsController extends Controller
+class EducationLevelsController extends Controller
 {
     protected EducationLevelService $educationLevelService;
     public function __construct(EducationLevelService $educationLevelService)

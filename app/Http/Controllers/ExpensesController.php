@@ -9,7 +9,7 @@ use App\Services\ApiResponseService;
 use App\Services\SchoolExpensesService;
 use Illuminate\Http\Request;
 
-class SchoolexpensesController extends Controller
+class ExpensesController extends Controller
 {
     //
     protected SchoolExpensesService $schoolExpensesService;

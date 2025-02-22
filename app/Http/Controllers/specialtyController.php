@@ -10,7 +10,7 @@ use App\Services\ApiResponseService;
 use App\Services\SpecailtyService;
 use Illuminate\Http\Request;
 
-class specialtyController extends Controller
+class SpecialtyController extends Controller
 {
     //
     protected SpecailtyService $specailtyService;

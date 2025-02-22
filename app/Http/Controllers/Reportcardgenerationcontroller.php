@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Exams;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Marks;
-use App\Models\Reportcard;
 use App\Models\Student;
 use App\Models\Grades;
 
-class Reportcardgenerationcontroller extends Controller
+class ReportCardGenerationcontroller extends Controller
 {
     //
     public function generate_student_report_card(Request $request)

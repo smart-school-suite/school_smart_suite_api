@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\ResitFeeTransactions;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use App\Models\Studentresit;
 
 class StudentResitService
@@ -54,15 +57,44 @@ class StudentResitService
         return $getResitData;
     }
 
-    public function payResit($currentSchool, $studentResitId)
+    public function payResit($studentResitData, $currentSchool)
     {
-        $studentResitExists = Studentresit::where("school_branch_id", $currentSchool->id)->find($studentResitId);
-        if (!$studentResitExists) {
-            return ApiResponseService::error("Student Resit Not found", null, 404);
-        }
-        $studentResitExists->paid_status = "Paid";
-        $studentResitExists->save();
+        DB::beginTransaction();
+        try {
+            $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
+                ->find($studentResitData['student_resit_id']);
 
-        return $studentResitExists;
+            if (!$studentResit) {
+                return ApiResponseService::error("Student Resit Not found", null, 404);
+            }
+
+            if ($studentResit->resit_fee < $studentResitData['amount']) {
+                return ApiResponseService::error("The Amount paid is greater than the cost of resit", null, 409);
+            }
+            $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
+
+            ResitFeeTransactions::create([
+                'amount' => $studentResitData['amount'],
+                'payment_method' => $studentResitData['payment_method'],
+                'resitfee_id' => $studentResitData['student_resit_id'],
+                'school_branch_id' => $currentSchool->id,
+                'transaction_id' => $transactionId
+            ]);
+
+            $studentResit->paid_status = "Paid";
+            $studentResit->save();
+            DB::commit();
+
+            return $studentResit;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function getResitPaymentTransactions($currentSchool){
+        $getResitPaymentTransactions = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['studentResit', 'studentResit.student', 'studentResit.specialty'])->get();
+        return $getResitPaymentTransactions;
     }
 }

@@ -11,7 +11,7 @@ use App\Http\Requests\SpecailtyTimeTableRequest;
 use App\Services\ApiResponseService;
 
 
-class timetableController extends Controller
+class TimeTableController extends Controller
 {
     //
     protected CreateSpecailtyTimeTableService $createSpecailtyTimeTableService;

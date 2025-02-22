@@ -13,7 +13,7 @@ use App\Services\MarkService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class marksController extends Controller
+class MarksController extends Controller
 {
     protected AddScoreService $addScoreService;
     protected MarkService $markService;

@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Auth\Teacher;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class getauthenticatedteachercontroller extends Controller
+class GetAuthTeacherController extends Controller
 {
-    //
+    //GetAuthTeacherController
     public function get_authenticated_teacher(Request $request){
         $teacher_authenticated_data = auth()->guard('teacher')->user();
          return response()->json([

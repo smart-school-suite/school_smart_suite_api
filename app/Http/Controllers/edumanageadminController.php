@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Edumanageadmin;
 use Illuminate\Http\Request;
 
-class edumanageadminController extends Controller
+class EdumanageAdminController extends Controller
 {
     //
     public function get_all_eduamage_admins(Request $request){

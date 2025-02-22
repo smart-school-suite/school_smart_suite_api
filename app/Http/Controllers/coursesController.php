@@ -10,7 +10,7 @@ use App\Services\CourseService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class coursesController extends Controller
+class CoursesController extends Controller
 {
     protected CourseService $courseService;
     public function __construct(CourseService $courseService)

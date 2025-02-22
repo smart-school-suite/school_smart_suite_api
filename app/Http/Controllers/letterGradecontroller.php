@@ -8,7 +8,7 @@ use App\Http\Requests\LetterGradeRequest;
 use App\Http\Requests\UpdateLetterGradeRequest;
 use App\Services\ApiResponseService;
 
-class letterGradecontroller extends Controller
+class LetterGradecontroller extends Controller
 {
     //
      protected LetterGradeService $letterGradeService;

@@ -9,7 +9,7 @@ use App\Http\Requests\UpdateSemesterRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
-class semesterController extends Controller
+class SemesterController extends Controller
 {
     //work on the update validation
     protected SemesterService $semesterService;

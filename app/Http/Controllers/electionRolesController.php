@@ -8,7 +8,7 @@ use App\Http\Requests\ElectionRolesRequest;
 use App\Http\Requests\UpdateElectionRolesRequest;
 use Illuminate\Http\Request;
 
-class electionRolesController extends Controller
+class ElectionRolesController extends Controller
 {
     //
     protected ElectionRolesService $electionRolesService;

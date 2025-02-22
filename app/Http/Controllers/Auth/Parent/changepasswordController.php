@@ -7,7 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
-class changepasswordController extends Controller
+class ChangePasswordController extends Controller
 {
     //
     public function change_parent_password(Request $request){
@@ -43,6 +43,6 @@ class changepasswordController extends Controller
     {
 
         $authenticated_parent->password = Hash::make($newPassword);
-        return $authenticated_parent->save(); 
+        return $authenticated_parent->save();
     }
 }

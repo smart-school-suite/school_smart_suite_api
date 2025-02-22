@@ -9,7 +9,7 @@ use App\Services\GradesService;
 use Exception;
 use Illuminate\Http\Request;
 
-class gradesController extends Controller
+class GradesController extends Controller
 {
     //when creating grades for EXAM (FIRST_SEMESTER, SECOND_SEMESTER, THIRD_SEMESTER, NTH_SEMESETER)
     //You need to take into consideration the related weighted mark of the ca

@@ -9,7 +9,7 @@ use App\http\Requests\UpdateCountryRequest;
 use App\Services\ApiResponseService;
 
 
-class countryController extends Controller
+class CountryController extends Controller
 {
     //
 

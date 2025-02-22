@@ -6,7 +6,7 @@ use App\Services\ApiResponseService;
 use App\Services\ElectionResultsService;
 use Illuminate\Http\Request;
 
-class electionResultsController extends Controller
+class ElectionResultsController extends Controller
 {
     //
     protected ElectionResultsService $electionResultsService;
