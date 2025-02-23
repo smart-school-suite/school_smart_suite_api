@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('otp', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('token_header');
-            $table->string('user_id');
+            $table->nullableMorphs('actorable');
             $table->string('otp')->index();
             $table->timestamp('expires_at')->nullable(); // OTP expiration time
             $table->boolean('used')->default(false);

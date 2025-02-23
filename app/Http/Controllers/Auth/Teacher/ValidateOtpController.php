@@ -1,45 +1,54 @@
 <?php
 
-namespace App\Http\Controllers\Auth\SchoolAdmin;
+namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\OTP;
-use App\Models\Schooladmin;
+use App\Models\Teacher;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class validateOtpController extends Controller
+class ValidateOtpController extends Controller
 {
-public function verify_otp(Request $request)
+    //
+    public function verify_otp(Request $request)
     {
 
         $request->validate([
             'otp' => 'required|string',
         ]);
 
+
         $token_header = $request->header('OTP_TOKEN_HEADER');
 
+
         $otpRecord = OTP::where('otp', $request->otp)
-                        ->where('token_header', $token_header)
-                        ->first();
+            ->where('token_header', $token_header)
+            ->first();
+
 
         if (!$otpRecord) {
-            return response()->json(['message' => 'Invalid OTP',
-        ], 400);
+            return response()->json([
+                'message' => 'Invalid OTP',
+            ], 400);
         }
+
 
         if ($otpRecord->isExpired()) {
             return response()->json(['message' => 'Expired OTP'], 400);
         }
 
-        $user = Schooladmin::where('id', $otpRecord->actorable_id)->first();
+        $user = Teacher::where('id', $otpRecord->actorable_id)->first();
 
-        $token = $user->createToken('schoolAdminToken')->plainTextToken;
+
+        $token = $user->createToken('teacherToken')->plainTextToken;
+
 
         $otpRecord->update(['used' => true]);
 
         $otpRecord->delete();
+
 
         return response()->json([
             'status' => 'ok',
@@ -65,10 +74,12 @@ public function verify_otp(Request $request)
             'otp' => $newOtp,
             'expires_at' => $expiresAt,
         ]);
-        return response()->json([
-            'message' => 'New OTP generated successfully',
-            'otp' => $newOtp],
-             200);
+        return response()->json(
+            [
+                'message' => 'New OTP generated successfully',
+                'otp' => $newOtp
+            ],
+            200
+        );
     }
-
 }

@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\TuitionFees;
 use App\Models\RegistrationFee;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\CreateStudentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
@@ -15,59 +16,42 @@ use Illuminate\Database\QueryException;
 class CreateStudentController extends Controller
 {
     //
-    public function create_student(Request $request)
+    public function create_student(CreateStudentRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-
-        $validatedData = $request->validate([
-            'name' => 'required|string',
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'DOB' => 'required|string',
-            'gender' => 'required|string',
-            'phone_one' => 'required|string',
-            'level_id' => 'required|string',
-            'specialty_id' => 'required|string',
-            'department_id' => 'required|string',
-            'email' => 'required|email',
-            'guadian_id' => 'required|string',
-            'password' => 'required|string|min:8',
-            'student_batch_id' => 'required|string'
-        ]);
-
         try {
             DB::beginTransaction();
             $find_specialty = Specialty::where('school_branch_id', $currentSchool->id)
                 ->where('level_id', $request->level_id)
                 ->findOrFail($request->specialty_id);
             $student = Student::create([
-                'name' => $validatedData['name'],
-                'first_name' => $validatedData['first_name'],
-                'last_name' => $validatedData['last_name'],
-                'DOB' => $validatedData['DOB'],
-                'guadian_one_id' => $validatedData['guadian_one_id'],
-                'guadian_two_id' => $validatedData['guadian_two_id'],
-                'gender' => $validatedData['gender'],
-                'phone_one' => $validatedData['phone_one'],
-                'level_id' => $validatedData['level_id'],
-                'specialty_id' => $validatedData['specialty_id'],
-                'department_id' => $validatedData['department_id'],
-                'email' => $validatedData['email'],
-                'student_batch_id' => $validatedData['student_batch_id'],
+                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'DOB' => $request->DOB,
+                'guadian_one_id' => $request->guadian_one_id,
+                'guadian_two_id' => $request->guadian_two_id,
+                'gender' => $request->gender,
+                'phone_one' => $request->phone_one,
+                'level_id' => $request->level_id,
+                'specialty_id' => $request->specialty_id,
+                'department_id' => $request->department_id,
+                'email' => $request->email,
+                'student_batch_id' => $request->student_batch_id,
                 'school_branch_id' => $currentSchool->id,
-                'payment_format' => $validatedData['payment_format'],
-                'password' => Hash::make($validatedData['password']),
+                'payment_format' => $request->payment_format,
+                'password' => Hash::make($request->password),
             ]);
             RegistrationFee::create([
-                'level_id' => $validatedData['level_id'],
-                'specialty_id' => $validatedData['specialty_id'],
+                'level_id' => $request->level_id,
+                'specialty_id' => $request->specialty_id,
                 'school_branch_id' => $currentSchool->id,
                 'amount' => $find_specialty->registration_fee,
                 'student_id' => $student->id,
             ]);
             TuitionFees::create([
-                'level_id' => $validatedData['level_id'],
-                'specialty_id' => $validatedData['specialty_id'],
+                'level_id' => $request->level_id,
+                'specialty_id' => $request->specialty_id,
                 'school_branch_id' => $currentSchool->id,
                 'tution_fee_total' => $find_specialty->school_fee,
                 'student_id' => $student->id,

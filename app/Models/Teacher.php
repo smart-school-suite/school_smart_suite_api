@@ -54,37 +54,37 @@ class Teacher extends Model
         ];
     }
 
-    public function otps()
+    public function otp()
     {
-        return $this->morphMany(Otp::class, 'otpable');
+        return $this->morphMany(Otp::class, 'actorable');
     }
 
-    protected static function boot()
+    public function passwordResetTokens()
     {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
+        return $this->morphMany(PasswordResetToken::class, 'actorable');
     }
-    public function school(): BelongsTo {
+
+    public function school(): BelongsTo
+    {
         return $this->belongsTo(School::class);
     }
 
-    public function schoolbranches(): BelongsTo {
+    public function schoolbranches(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class);
     }
 
-    public function SpecailyPreference(): HasMany {
-         return $this->hasMany(TeacherSpecailtyPreference::class, 'teacher_id');
+    public function SpecailyPreference(): HasMany
+    {
+        return $this->hasMany(TeacherSpecailtyPreference::class, 'teacher_id');
     }
-    public function courses(): HasMany {
+    public function courses(): HasMany
+    {
         return $this->hasMany(Courses::class);
     }
 
-    public function instructoravailability(): HasMany {
+    public function instructoravailability(): HasMany
+    {
         return $this->hasMany(InstructorAvailability::class);
     }
 
@@ -92,8 +92,18 @@ class Teacher extends Model
     {
         return $this->morphMany(Hod::class, 'hodable');
     }
-    public function timetable(): HasMany {
+    public function timetable(): HasMany
+    {
         return $this->hasMany(Timetable::class);
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            $uuid = str_replace('-', '', Str::uuid()->toString());
+            $user->id = substr($uuid, 0, 10);
+        });
+    }
 }

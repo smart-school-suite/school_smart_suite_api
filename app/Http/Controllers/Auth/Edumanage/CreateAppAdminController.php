@@ -5,19 +5,12 @@ namespace App\Http\Controllers\Auth\Edumanage;
 use App\Http\Controllers\Controller;
 use App\Models\Edumanageadmin;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
+use App\Http\Requests\AppAdminRequest;
 
 class CreateAppAdminController extends Controller
 {
     //createeduadmincontroller
-    public function create_edumanage_admin(Request $request){
-        $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
-            'phone_number' => 'required|string'
-        ]);
-
+    public function create_edumanage_admin(AppAdminRequest $request){
         $new_school_admin_instance = new Edumanageadmin();
         $new_school_admin_instance->name = $request->name;
         $new_school_admin_instance->email = $request->email;

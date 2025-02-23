@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Validation\ValidationException;
+use App\Services\ApiResponseService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
@@ -15,34 +15,25 @@ class ChangePasswordController extends Controller
             'new_password' => 'required|string|min:8|confirmed',
         ]);
 
-        $authenticated_teacher = auth()->guard('teacher')->user();
+        $authTeacher = auth()->guard('teacher')->user();
 
-        if (!$this->checkCurrentPassword($authenticated_teacher, $request->current_password)) {
-            throw ValidationException::withMessages([
-                    'status' => 'ok',
-                     'message' => 'Current password is incorrect.'
-            ]);
+        if (!$this->checkCurrentPassword($authTeacher, $request->current_password)) {
+
+            return ApiResponseService::error("Current Password is incorrect it miht have been changed some months ago", null, 409);
         }
-
-
-
-        if ($this->updatePassword($authenticated_teacher, $request->new_password)) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Password changed successfully.'
-            ], 200);
+        if ($this->updatePassword($authTeacher, $request->new_password)) {
+            return ApiResponseService::success("Password Changed Succesfully", null, null, 200);
         }
     }
-
-    protected function checkCurrentPassword($authenticated_teacher, string $currentPassword): bool
+    protected function checkCurrentPassword($authTeacher, string $currentPassword): bool
     {
-        return Hash::check($currentPassword, $authenticated_teacher->password);
+        return Hash::check($currentPassword, $authTeacher->password);
     }
 
-    protected function updatePassword($authenticated_teacher, string $newPassword): bool
+    protected function updatePassword($authTeacher, string $newPassword): bool
     {
 
-        $authenticated_teacher->password = Hash::make($newPassword);
-        return $authenticated_teacher->save();
+        $authTeacher->password = Hash::make($newPassword);
+        return $authTeacher->save();
     }
 }

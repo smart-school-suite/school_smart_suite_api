@@ -79,9 +79,18 @@ class Student extends Model
         });
     }
 
+    public function passwordResetTokens()
+    {
+        return $this->morphMany(PasswordResetToken::class, 'actorable');
+    }
     public function feeWaiver(): HasMany
     {
         return $this->hasMany(FeeWaiver::class, 'student_id');
+    }
+
+    public function otp()
+    {
+        return $this->morphMany(Otp::class, 'actorable');
     }
 
     public function additionalFees(): HasMany

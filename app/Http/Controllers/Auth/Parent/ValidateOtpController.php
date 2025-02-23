@@ -1,17 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Auth\SchoolAdmin;
+namespace App\Http\Controllers\Auth\Parent;
 
 use App\Http\Controllers\Controller;
 use App\Models\OTP;
-use App\Models\Schooladmin;
+use App\Models\Parents;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class validateOtpController extends Controller
+class ValidateOtpController extends Controller
 {
-public function verify_otp(Request $request)
+    //
+
+    public function verify_otp(Request $request)
     {
 
         $request->validate([
@@ -33,9 +35,9 @@ public function verify_otp(Request $request)
             return response()->json(['message' => 'Expired OTP'], 400);
         }
 
-        $user = Schooladmin::where('id', $otpRecord->actorable_id)->first();
+        $user = Parents::where('id', $otpRecord->actorable_id)->first();
 
-        $token = $user->createToken('schoolAdminToken')->plainTextToken;
+        $token = $user->createToken('parentToken')->plainTextToken;
 
         $otpRecord->update(['used' => true]);
 
@@ -52,6 +54,7 @@ public function verify_otp(Request $request)
     public function request_another_code(Request $request)
     {
         $token_header = $request->header('OTP_TOKEN_HEADER');
+
         $otpRecord = OTP::where('token_header', $token_header)->first();
 
         if (!$otpRecord) {
@@ -59,6 +62,7 @@ public function verify_otp(Request $request)
         }
 
         $newOtp = Str::random(6);
+
         $expiresAt = Carbon::now()->addMinutes(5);
 
         $otpRecord->update([
@@ -70,5 +74,4 @@ public function verify_otp(Request $request)
             'otp' => $newOtp],
              200);
     }
-
 }

@@ -1,29 +1,28 @@
 <?php
 
-namespace App\Http\Controllers\Auth\Parent;
+namespace App\Http\Controllers\Auth\Edumanage;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
-use App\Models\Parents;
+use Illuminate\Http\Request;
 use App\Services\ApiResponseService;
-use App\Models\PasswordResetToken;
+use Illuminate\Support\Str;
+use App\Models\Edumanageadmin;
 use Illuminate\Support\Facades\Hash;
+use App\Models\PasswordResetToken;
 use App\Models\OTP;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class PasswordResetController extends Controller
 {
-    //resetpasswordController
     public function reset_password(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
         ]);
 
-        $parentExists = Parents::where('email', $request->email)->first();
+        $appAdminExists = Edumanageadmin::where('email', $request->email)->first();
 
-        if (!$parentExists) {
+        if (!$appAdminExists) {
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
 
@@ -35,8 +34,8 @@ class PasswordResetController extends Controller
 
         OTP::create([
             'token_header' => $otp_header,
-            'actorable_id' =>  $parentExists->id,
-            'actorable_type' => 'App\Models\Parents',
+            'actorable_id' => $appAdminExists->id,
+            'actorable_type' => 'App\Models\Edumanageadmin',
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
@@ -79,9 +78,10 @@ class PasswordResetController extends Controller
         PasswordResetToken::create([
             'token' => $password_reset_token,
             'actorable_id' => $otpRecord->actorable_id,
-            'actorable_type' => 'App\Models\Parents',
+            'actorable_type' => 'App\Models\Edumanageadmin',
             'expires_at' => Carbon::now()->addDay(),
         ]);
+
         $otpRecord->delete();
 
         return response()->json([
@@ -90,7 +90,7 @@ class PasswordResetController extends Controller
             'password_reset_token' => $password_reset_token
         ]);
     }
-    public function ChangeParentPasswordUnAuthenticated(Request $request)
+    public function ChangeAppAdminPasswordUnAuthenticated(Request $request)
     {
         $request->validate([
             'new_password' => 'required|string|min:8|confirmed',
@@ -104,14 +104,14 @@ class PasswordResetController extends Controller
             return ApiResponseService::error("Invalid Password Reset Token", null, 400);
         }
 
-        $parent = Parents::where('id', $passwordResetToken->actorable_id)->first();
+        $appAdmin = Edumanageadmin::where('id', $passwordResetToken->actorable_id)->first();
 
-        if (!$parent) {
+        if (!$appAdmin) {
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
-        $parent->password = Hash::make($request->new_password);
+        $appAdmin->password = Hash::make($request->new_password);
 
-        $parent->save();
+        $appAdmin->save();
 
         $passwordResetToken->delete();
 

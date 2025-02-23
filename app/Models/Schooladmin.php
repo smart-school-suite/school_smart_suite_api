@@ -81,9 +81,16 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+    public function passwordResetTokens()
+    {
+        return $this->morphMany(PasswordResetToken::class, 'actorable');
+    }
     public function hod()
     {
         return $this->morphMany(Hod::class, 'hodable');
+    }
+    public function otp() {
+        return $this->morphMany(Otp::class, 'actorable');
     }
     protected static function boot()
     {

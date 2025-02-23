@@ -1,29 +1,30 @@
 <?php
 
-namespace App\Http\Controllers\Auth\Parent;
+namespace App\Http\Controllers\Auth\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
-use App\Models\Parents;
 use App\Services\ApiResponseService;
-use App\Models\PasswordResetToken;
+use App\Models\Schooladmin;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
-use App\Models\OTP;
 use Carbon\Carbon;
+use App\Models\OTP;
+use App\Models\PasswordResetToken;
 use Illuminate\Http\Request;
 
 class PasswordResetController extends Controller
 {
-    //resetpasswordController
+    //
+
     public function reset_password(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
         ]);
 
-        $parentExists = Parents::where('email', $request->email)->first();
+        $schoolAdminExists = Schooladmin::where('email', $request->email)->first();
 
-        if (!$parentExists) {
+        if (!$schoolAdminExists) {
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
 
@@ -35,8 +36,8 @@ class PasswordResetController extends Controller
 
         OTP::create([
             'token_header' => $otp_header,
-            'actorable_id' =>  $parentExists->id,
-            'actorable_type' => 'App\Models\Parents',
+            'actorable_id' =>  $schoolAdminExists->id,
+            'actorable_type' => 'App\Models\Schooladmin',
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
@@ -79,7 +80,7 @@ class PasswordResetController extends Controller
         PasswordResetToken::create([
             'token' => $password_reset_token,
             'actorable_id' => $otpRecord->actorable_id,
-            'actorable_type' => 'App\Models\Parents',
+            'actorable_type' => 'App\Models\Schooladmin',
             'expires_at' => Carbon::now()->addDay(),
         ]);
         $otpRecord->delete();
@@ -90,7 +91,7 @@ class PasswordResetController extends Controller
             'password_reset_token' => $password_reset_token
         ]);
     }
-    public function ChangeParentPasswordUnAuthenticated(Request $request)
+    public function ChangeShoolAdminPasswordUnAuthenticated(Request $request)
     {
         $request->validate([
             'new_password' => 'required|string|min:8|confirmed',
@@ -104,14 +105,14 @@ class PasswordResetController extends Controller
             return ApiResponseService::error("Invalid Password Reset Token", null, 400);
         }
 
-        $parent = Parents::where('id', $passwordResetToken->actorable_id)->first();
+        $appAdmin = Schooladmin::where('id', $passwordResetToken->actorable_id)->first();
 
-        if (!$parent) {
+        if (!$appAdmin) {
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
-        $parent->password = Hash::make($request->new_password);
+        $appAdmin->password = Hash::make($request->new_password);
 
-        $parent->save();
+        $appAdmin->save();
 
         $passwordResetToken->delete();
 

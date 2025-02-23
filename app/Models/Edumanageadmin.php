@@ -54,16 +54,24 @@ class Edumanageadmin extends Model
             'password' => 'hashed',
         ];
     }
-      
+
+    public function passwordResetTokens()
+    {
+        return $this->morphMany(PasswordResetToken::class, 'actorable');
+    }
+
+    public function otp() {
+        return $this->morphMany(Otp::class, 'actorable');
+    }
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
-  
+
 }
