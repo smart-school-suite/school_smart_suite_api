@@ -5,10 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\SchoolBranchApiKey;
+use App\Models\SchoolSubscription;
 use App\Services\ApiResponseService;
 use Symfony\Component\HttpFoundation\Response;
 
-class IdentifyTenant
+class LimitTeachers
 {
     /**
      * Handle an incoming request.
@@ -22,7 +23,11 @@ class IdentifyTenant
         if(!$schoolBranch){
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
-        $request->attributes->set('currentSchool', $schoolBranch->schoolBranch);
+        $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
+        if($subcriptionDetails->max_number_teacher >= $schoolBranch->max_number_teacher){
+            return ApiResponseService::error("You reached your teacher creation limit you cannot create anymore teachers", null, 400);
+        }
+
         return $next($request);
     }
 }

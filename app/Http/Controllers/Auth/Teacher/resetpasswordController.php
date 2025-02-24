@@ -10,15 +10,14 @@ use App\Services\ApiResponseService;
 use Carbon\Carbon;
 use App\Models\OTP;
 use App\Models\PasswordResetToken;
-use Illuminate\Http\Request;
+use App\Http\Requests\OtpRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\ChangePasswordUnAuthRequest;
 
 class ResetPasswordController extends Controller
 {
-    public function reset_password(Request $request)
+    public function reset_password(ResetPasswordRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
 
         $teacherExists = Teacher::where('email', $request->email)->first();
 
@@ -48,7 +47,7 @@ class ResetPasswordController extends Controller
         ]);
     }
 
-    public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
         $request->validate([
             'otp' => 'required|string',
@@ -90,7 +89,7 @@ class ResetPasswordController extends Controller
             'password_reset_token' => $password_reset_token
         ]);
     }
-    public function ChangeTeacherPasswordUnAuthenticated(Request $request)
+    public function ChangeTeacherPasswordUnAuthenticated(ChangePasswordUnAuthRequest $request)
     {
         $request->validate([
             'new_password' => 'required|string|min:8|confirmed',

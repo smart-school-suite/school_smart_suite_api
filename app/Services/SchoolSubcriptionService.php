@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SchoolSubscription;
 use App\Models\RatesCard;
+use App\Models\SchoolBranchApiKey;
 use App\Models\SubscriptionPayment;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -31,7 +32,7 @@ class SchoolSubcriptionService
             DB::transaction(function () use ($data, $subscriptionStartDate, $subscriptionEndDate, $totalCost, $rateCard) {
 
                 $subscription = SchoolSubscription::create([
-                    'school_id' => $data["school_id"],
+                    'school_branch_id' => $data["school_branch_id"],
                     'rate_card_id' => $data["rates_card_id"],
                     'subscription_start_date' => $subscriptionStartDate,
                     'subscription_end_date' => $subscriptionEndDate,
@@ -44,15 +45,20 @@ class SchoolSubcriptionService
                     'billing_frequency' => $data["billing_frequency"],
                     'status' => 'active',
                 ]);
+
+                SchoolBranchApiKey::create([
+                    'school_branch_id' => $data["school_branch_id"],
+                    'api_key' => Str::uuid(),
+                ]);
                 SubscriptionPayment::create([
                     'school_subscription_id' => $subscription->id,
                     'payment_date' => $subscriptionStartDate,
-                    'school_id' => $data["school_id"],
+                    'school_branch_id' => $data["school_branch_id"],
                     'amount' => $totalCost,
                     'payment_method' => 'card',
                     'payment_status' => 'completed',
                     'transaction_id' => Str::random(25),
-                    'description' => 'Subscription payment for school ID: ' . $data["school_id"]
+                    'description' => 'Subscription payment for school ID: ' . $data["school_branch_id"]
                 ]);
             });
         } catch (\Exception $e) {

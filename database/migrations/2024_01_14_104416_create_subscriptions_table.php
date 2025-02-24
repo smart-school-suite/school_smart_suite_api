@@ -14,9 +14,6 @@ return new class extends Migration
 
         Schema::create('school_subscriptions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->integer('current_num_school_admins')->default(0);
-            $table->integer('current_num_students')->default(0);
-            $table->integer('current_num_parents')->default(0);
             $table->integer('max_number_students');
             $table->integer('max_number_parents');
             $table->integer('max_number_school_admins');
@@ -55,9 +52,6 @@ return new class extends Migration
             $table->string('currency', 3)->default('XAF');
             $table->string('description')->nullable();
             $table->timestamps();
-           //$table->index('school_subscription_id');
-           // $table->index('payment_status');
-           // $table->index('payment_date');
         });
 
     }

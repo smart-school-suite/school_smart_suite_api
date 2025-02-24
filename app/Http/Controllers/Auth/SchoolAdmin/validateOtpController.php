@@ -7,26 +7,24 @@ use App\Models\OTP;
 use App\Models\Schooladmin;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Http\Requests\OtpRequest;
 use Illuminate\Http\Request;
 
 class validateOtpController extends Controller
 {
-public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
-
-        $request->validate([
-            'otp' => 'required|string',
-        ]);
 
         $token_header = $request->header('OTP_TOKEN_HEADER');
 
         $otpRecord = OTP::where('otp', $request->otp)
-                        ->where('token_header', $token_header)
-                        ->first();
+            ->where('token_header', $token_header)
+            ->first();
 
         if (!$otpRecord) {
-            return response()->json(['message' => 'Invalid OTP',
-        ], 400);
+            return response()->json([
+                'message' => 'Invalid OTP',
+            ], 400);
         }
 
         if ($otpRecord->isExpired()) {
@@ -48,7 +46,6 @@ public function verify_otp(Request $request)
         ]);
     }
 
-
     public function request_another_code(Request $request)
     {
         $token_header = $request->header('OTP_TOKEN_HEADER');
@@ -65,10 +62,12 @@ public function verify_otp(Request $request)
             'otp' => $newOtp,
             'expires_at' => $expiresAt,
         ]);
-        return response()->json([
-            'message' => 'New OTP generated successfully',
-            'otp' => $newOtp],
-             200);
+        return response()->json(
+            [
+                'message' => 'New OTP generated successfully',
+                'otp' => $newOtp
+            ],
+            200
+        );
     }
-
 }

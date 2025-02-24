@@ -7,18 +7,15 @@ use App\Models\OTP;
 use App\Models\Parents;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Http\Requests\OtpRequest;
 use Illuminate\Http\Request;
 
 class ValidateOtpController extends Controller
 {
     //
 
-    public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
-
-        $request->validate([
-            'otp' => 'required|string',
-        ]);
 
         $token_header = $request->header('OTP_TOKEN_HEADER');
 

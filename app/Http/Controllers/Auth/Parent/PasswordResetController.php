@@ -10,12 +10,15 @@ use App\Models\PasswordResetToken;
 use Illuminate\Support\Facades\Hash;
 use App\Models\OTP;
 use Carbon\Carbon;
+use App\Http\Requests\OtpRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\ChangePasswordUnAuthRequest;
 use Illuminate\Http\Request;
 
 class PasswordResetController extends Controller
 {
     //resetpasswordController
-    public function reset_password(Request $request)
+    public function reset_password(ResetPasswordRequest $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -49,7 +52,7 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
         $request->validate([
             'otp' => 'required|string',
@@ -90,11 +93,8 @@ class PasswordResetController extends Controller
             'password_reset_token' => $password_reset_token
         ]);
     }
-    public function ChangeParentPasswordUnAuthenticated(Request $request)
+    public function ChangeParentPasswordUnAuthenticated(ChangePasswordUnAuthRequest $request)
     {
-        $request->validate([
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
 
         $password_reset_token = $request->header('PASSWORD_RESET_TOKEN');
 

@@ -38,6 +38,10 @@ class Schoolbranches extends Model
         return $this->belongsTo(Country::class);
     }
 
+    public function schoolBranchApiKey(): BelongsTo {
+        return $this->belongsTo(SchoolBranchApiKey::class, 'school_branch_id');
+    }
+
     public function school(): BelongsTo {
         return $this->belongsTo(School::class);
     }

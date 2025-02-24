@@ -7,6 +7,8 @@ use Carbon\Carbon;
 use App\Models\Examtimetable;
 use App\Models\Resitexamtimetable;
 use App\Models\Specialty;
+use App\Services\ApiResponseService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class ResitTimeTableController extends Controller
@@ -20,7 +22,7 @@ class ResitTimeTableController extends Controller
         $exam_id = $request->route('exam_id');
 
         $find_specialty = Specialty::where('school_branch_id', $currentSchool->id)
-                                    ->find($specialty_id);
+            ->find($specialty_id);
 
         if (!$find_specialty) {
             return response()->json([
@@ -30,11 +32,11 @@ class ResitTimeTableController extends Controller
         }
 
         $resitable_courses =
-        Resitablecourses::where('school_branch_id', $currentSchool->id)
-                                             ->where('exam_id', $exam_id)
-                                             ->where('specialty_id', $specialty_id)
-                                             ->with(['courses'])
-                                             ->get();
+            Resitablecourses::where('school_branch_id', $currentSchool->id)
+            ->where('exam_id', $exam_id)
+            ->where('specialty_id', $specialty_id)
+            ->with(['courses'])
+            ->get();
 
         if ($resitable_courses->isEmpty()) {
             return response()->json([
@@ -50,75 +52,113 @@ class ResitTimeTableController extends Controller
         ], 200); // Use 200 for successful requests
     }
 
-    public function create_resit_timetable_entry(Request $request){
+    public function create_resit_timetable_entry(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
-            'course_id' => 'required|exists:courses,id',
-            'exam_id' => 'required|exists:exams,id',
-            'specialty_id' => 'required|exists:specialty,id',
-            'start_time' => 'required|date',
-            'level_id' => 'required|exists:educationlevels,id',
-            'date' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'resit_timetable' => 'required|array',
+            'resit_timetable.*.course_id' => 'required|exists:courses,id',
+            'resit_timetable.*.exam_id' => 'required|exists:exams,id',
+            'resit_timetable.*.specialty_id' => 'required|exists:specialties,id',
+            'resit_timetable.*.start_time' => 'required|date',
+            'resit_timetable.*.level_id' => 'required|exists:education_levels,id',
+            'resit_timetable.*.date' => 'required|date',
+            'resit_timetable.*.end_time' => 'required|date|after:start_time',
         ]);
 
-        $find_resitable_courses = Resitablecourses::where('school_branch_id', $currentSchool->id)->find($request->course_id);
+        $errors = [];
+        $createdTimetables = [];
 
-        if(!$find_resitable_courses){
+        DB::beginTransaction();
+
+        try {
+            foreach ($request->resit_timetable as $timetableData) {
+                $find_resitable_courses = ResitableCourses::where('school_branch_id', $currentSchool->id)
+                    ->where('course_id', $timetableData['course_id'])
+                    ->exists();
+
+                if (!$find_resitable_courses) {
+                    $errors[] = [
+                        'course_id' => $timetableData['course_id'],
+                        'message' => 'No student has failed this course.'
+                    ];
+                    continue;
+                }
+
+                $startTime = Carbon::parse($timetableData['start_time']);
+                $endTime = Carbon::parse($timetableData['end_time']);
+                $duration = $startTime->diffInMinutes($endTime);
+                $durationString = gmdate("H:i:s", $duration);
+
+                $overlappingTimetables = ExamTimetable::where('school_branch_id', $currentSchool->id)
+                    ->where('course_id', $timetableData['course_id'])
+                    ->where('specialty_id', $timetableData['specialty_id'])
+                    ->where('level_id', $timetableData['level_id'])
+                    ->where('date', $timetableData['date'])
+                    ->where('exam_id', $timetableData['exam_id'])
+                    ->where(function ($query) use ($startTime, $endTime) {
+                        $query->whereBetween('start_time', [$startTime, $endTime])
+                            ->orWhereBetween('end_time', [$startTime, $endTime])
+                            ->orWhere(function ($query) use ($startTime, $endTime) {
+                                $query->where('start_time', '<=', $startTime)
+                                    ->where('end_time', '>=', $endTime);
+                            });
+                    })
+                    ->get();
+
+                if ($overlappingTimetables->isNotEmpty()) {
+                    foreach ($overlappingTimetables as $overlap) {
+                        $errors[] = [
+                            'course_id' => $timetableData['course_id'],
+                            'exam_id' => $timetableData['exam_id'],
+                            'overlap_start' => $overlap->start_time,
+                            'overlap_end' => $overlap->end_time,
+                            'message' => 'The timetable overlaps with an existing entry.'
+                        ];
+                    }
+                    continue;
+                }
+
+                $createdEntry = ResitExamTimetable::create([
+                    'course_id' => $timetableData['course_id'],
+                    'exam_id' => $timetableData['exam_id'],
+                    'level_id' => $timetableData['level_id'],
+                    'school_branch_id' => $currentSchool->id,
+                    'specialty_id' => $timetableData['specialty_id'],
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'duration' => $durationString,
+                ]);
+
+                $createdTimetables[] = $createdEntry;
+            }
+
+            if (!empty($errors)) {
+                DB::rollback();
+                return response()->json([
+                    'status' => 'error',
+                    'errors' => $errors,
+                ], 409);
+            }
+
+            DB::commit(); // Commit the transaction if all entries are created successfully
+
             return response()->json([
                 'status' => 'ok',
-                'message' => 'No student failed this course'
-            ], 409);
-        }
-
-        $startTime = Carbon::parse($request->start_time);
-        $endTime = Carbon::parse($request->end_time);
-        $duration = $startTime->diffInMinutes($endTime);
-        $durationString = gmdate("H:i:s", $duration);
-
-        $overlappingTimetables = ExamTimetable::where('school_branch_id', $currentSchool->id)
-            ->Where('course_id', $request->course_id)
-            ->where('specialty_id', $request->specialty_id)
-            ->where('level_id', $request->level_id)
-            ->where('day', $request->day)
-            ->where('exam_id', $request->exam_id)
-            ->where(function ($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function ($query) use ($startTime, $endTime) {
-                        $query->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
-            })
-            ->exists();
-
-        if ($overlappingTimetables) {
+                'message' => 'Exam timetable entries created successfully!',
+                'created_timetables' => $createdTimetables // Return the created entries
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollback(); // Rollback if an exception occurs
             return response()->json([
-                'status' => 'ok',
-                'message' => 'The timetable overlaps with an existing course. Please choose a different time.'
-            ], 409);
+                'status' => 'error',
+                'message' => 'An error occurred while creating the timetable entries: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Create the exam timetable entry
-        $timetable = Resitexamtimetable::create([
-            'course_id' => $request->course_id,
-            'exam_id' => $request->exam_id,
-            'level_id' => $request->level_id,
-            'school_branch_id' => $currentSchool->id,
-            'specialty_id' => $request->specialty_id,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'duration' => $durationString, // Use the calculated duration
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Exam timetable created successfully!',
-            'timetable' => $timetable
-        ], 201);
     }
 
-    public function generate_resit_timetable(Request $request, $specialty_id, $level_id){
+    public function generate_resit_timetable(Request $request, $specialty_id, $level_id)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $timetables = Resitexamtimetable::Where('school_branch_id', $currentSchool->id)
             ->where('level_id', $level_id)
@@ -151,5 +191,4 @@ class ResitTimeTableController extends Controller
             'resit_timetable' => $examTimetable
         ]);
     }
-
 }

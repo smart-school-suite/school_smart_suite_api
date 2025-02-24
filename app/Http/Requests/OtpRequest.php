@@ -4,15 +4,15 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SchoolSubscriptionRequest extends FormRequest
+class OtpRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
    // public function authorize(): bool
-    //{
-       // return false;
-    //}
+   // {
+      //  return false;
+  //  }
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,10 +22,7 @@ class SchoolSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rates_card_id' => 'required|string|exists:rate_cards,id',
-            'num_students' => 'required|integer',
-            'billing_frequency' => 'required|string',
-            'school_branch_id' => 'required|string|exists:school_branches,id'
+            'otp' => 'required|string|min:6|max:6',
         ];
     }
 }

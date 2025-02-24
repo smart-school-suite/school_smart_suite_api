@@ -4,8 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\School;
-use App\Models\Student;
+use App\Models\SchoolBranchApiKey;
+use App\Models\SchoolSubscription;
+use App\Services\ApiResponseService;
 use Symfony\Component\HttpFoundation\Response;
 
 class Limitstudents
@@ -17,25 +18,16 @@ class Limitstudents
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $schoolId = $request->header('SCHOOL-KEY');
-        
-        // Find the school based on the ID
-        $school = School::with('subcription')->findOrFail($schoolId);
-
-        if(!$school){
-            return  response()->json([
-                'status' => 'error',
-                'message' => 'school branch not found'
-            ], 400);
+        $schoolBranchApiKey = $request->header('API-KEY');
+        $schoolBranch = SchoolBranchApiKey::where("api_key", $schoolBranchApiKey)->with(['schoolBranch'])->first();
+        if(!$schoolBranch){
+            return ApiResponseService::error("school branch not found or api key invalid", null, 404);
+        }
+        $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
+        if($subcriptionDetails->max_number_students >= $schoolBranch->current_num_students){
+            return ApiResponseService::error("You have reached your student creation limit: {$subcriptionDetails->max_number_students}", null, 400);
         }
 
-        $studentsCount = Student::where('school_branch_id', $school->id)->count();
-        if($studentsCount > $school->subcription->max_number_students){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'You have reached your student limit'
-            ], 400);
-        }
         return $next($request);
     }
 }

@@ -9,18 +9,16 @@ use Illuminate\Support\Facades\Hash;
 use App\Services\ApiResponseService;
 use Carbon\Carbon;
 use App\Models\OTP;
+use App\Http\Requests\OtpRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\ChangePasswordUnAuthRequest;
 use App\Models\PasswordResetToken;
-
-use Illuminate\Http\Request;
 
 class ResetPasswordController extends Controller
 {
     //
-    public function reset_password(Request $request)
+    public function reset_password(ResetPasswordRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
 
         $studentExists = Student::where('email', $request->email)->first();
 
@@ -50,11 +48,8 @@ class ResetPasswordController extends Controller
         ]);
     }
 
-    public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
-        $request->validate([
-            'otp' => 'required|string',
-        ]);
 
         $token_header = $request->header('OTP_TOKEN_HEADER');
 
@@ -92,11 +87,8 @@ class ResetPasswordController extends Controller
             'password_reset_token' => $password_reset_token
         ]);
     }
-    public function ChangeAppAdminPasswordUnAuthenticated(Request $request)
+    public function ChangeAppAdminPasswordUnAuthenticated(ChangePasswordUnAuthRequest $request)
     {
-        $request->validate([
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
 
         $password_reset_token = $request->header('PASSWORD_RESET_TOKEN');
 

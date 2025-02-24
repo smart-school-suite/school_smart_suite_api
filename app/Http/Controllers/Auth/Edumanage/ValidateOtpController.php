@@ -6,18 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\OTP;
 use App\Models\Edumanageadmin;
 use Illuminate\Support\Str;
+use App\Http\Requests\OtpRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ValidateOtpController extends Controller
 {
     //
-    public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
-
-        $request->validate([
-            'otp' => 'required|string',
-        ]);
 
         $token_header = $request->header('OTP_TOKEN_HEADER');
 

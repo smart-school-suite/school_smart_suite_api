@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Schoolbranches;
 use App\Services\SchoolBranchesService;
 use App\Http\Requests\UpdateSchoolBranchesRequest;
 use App\Http\Requests\CreateSchoolBranchRequest;
@@ -26,7 +25,6 @@ class SchoolBranchesController extends Controller
     }
 
     public function get_all_schoool_branches(Request $request){
-        $school_branch_data = Schoolbranches::all();
         $getSchoolBranches = $this->schoolBranchesService->getSchoolBranches();
         return ApiResponseService::success("School Branches Fetched Succefully", $getSchoolBranches, null, 200);
     }

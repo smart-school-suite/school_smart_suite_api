@@ -5,10 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\SchoolBranchApiKey;
+use App\Models\SchoolSubscription;
 use App\Services\ApiResponseService;
 use Symfony\Component\HttpFoundation\Response;
 
-class IdentifyTenant
+class LimitParents
 {
     /**
      * Handle an incoming request.
@@ -19,10 +20,13 @@ class IdentifyTenant
     {
         $schoolBranchApiKey = $request->header('API-KEY');
         $schoolBranch = SchoolBranchApiKey::where("api_key", $schoolBranchApiKey)->with(['schoolBranch'])->first();
-        if(!$schoolBranch){
+        if (!$schoolBranch) {
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
-        $request->attributes->set('currentSchool', $schoolBranch->schoolBranch);
+        $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
+        if ($subcriptionDetails->max_number_parents >= $schoolBranch->max_number_parents) {
+            return ApiResponseService::error("You have reached your max mimum parent creation limit : {$subcriptionDetails->max_number_parents}", null, 400);
+        }
         return $next($request);
     }
 }

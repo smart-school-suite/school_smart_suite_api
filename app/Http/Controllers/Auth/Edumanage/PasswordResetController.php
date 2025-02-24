@@ -9,12 +9,15 @@ use Illuminate\Support\Str;
 use App\Models\Edumanageadmin;
 use Illuminate\Support\Facades\Hash;
 use App\Models\PasswordResetToken;
+use App\Http\Requests\OtpRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\ChangePasswordUnAuthRequest;
 use App\Models\OTP;
 use Carbon\Carbon;
 
 class PasswordResetController extends Controller
 {
-    public function reset_password(Request $request)
+    public function reset_password(ResetPasswordRequest $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -48,7 +51,7 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    public function verify_otp(Request $request)
+    public function verify_otp(OtpRequest $request)
     {
         $request->validate([
             'otp' => 'required|string',
@@ -90,7 +93,7 @@ class PasswordResetController extends Controller
             'password_reset_token' => $password_reset_token
         ]);
     }
-    public function ChangeAppAdminPasswordUnAuthenticated(Request $request)
+    public function ChangeAppAdminPasswordUnAuthenticated(ChangePasswordUnAuthRequest $request)
     {
         $request->validate([
             'new_password' => 'required|string|min:8|confirmed',
