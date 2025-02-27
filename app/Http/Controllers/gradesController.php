@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Services\AddGradesService;
 use App\Http\Requests\GradesRequest;
 use App\Services\ApiResponseService;
+use App\Models\Exams;
+use App\Models\Examtype;
 use App\Services\GradesService;
 use Exception;
 use Illuminate\Http\Request;
@@ -23,18 +25,17 @@ class GradesController extends Controller
         $this->addGradesService = $addGradesService;
         $this->gradesService = $gradesService;
     }
-    public function makeGradeForExamScoped(GradesRequest $request)
+    public function createExamGrades(GradesRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-
         try {
             $createGrades = $this->addGradesService->makeGradeForExam($request->grades, $currentSchool);
             return ApiResponseService::success("Exam Grades Created Succefully", $createGrades, null, 201);
         } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
+            return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-    public function get_all_grades_scoped(Request $request)
+    public function getAllGrades(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getGrades = $this->gradesService->getGrades($currentSchool);
@@ -42,10 +43,41 @@ class GradesController extends Controller
     }
 
 
-    public function delete_grades_scoped(Request $request, $grades_id)
+    public function deleteGrades(Request $request, $grades_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteGrades = $this->gradesService->deleteGrades($currentSchool, $grades_id);
         return ApiResponseService::success("Grade Deleted Sucessfully", $deleteGrades, null, 200);
+    }
+
+    public function getRelatedExams(Request $request, $examId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $exam = Exams::where('school_branch_id', $currentSchool->id)
+        ->where('id', $examId)
+        ->with(['specialty', 'level', 'examType', 'schoolSemester'])
+        ->first();
+
+        $examType = $exam->examType;
+        if (!$examType || $examType->type == 'exam') {
+            $semester = $examType->semester;
+            $caExamType = Examtype::where('semester', $semester)
+                ->where('type', 'ca')
+                ->first();
+                if (!$caExamType) {
+                    return ApiResponseService::error("exam type not found", null, 404);
+                }
+            $additionalExams = Exams::where('exam_type_id', $caExamType->id)
+            ->where('specialty_id', $exam->specialty_id)
+            ->where('semester_id', $exam->semester_id)
+            ->where("level_id", $exam->level_id)
+            ->with(['examType', 'level', 'specialty', 'schoolSemester'])
+            ->get();
+            if($additionalExams->isEmpty()){
+                return ApiResponseService::error("No related exams found for {$exam->specialty->specialty_name} {$exam->level->level_name}", null, 404);
+            }
+            return ApiResponseService::success("Related Exams Fetched Sucessfully", [$additionalExams, $exam], null, 200);
+        } else {
+            return ApiResponseService::error("This is not an exam", null, 400);
+        }
     }
 }

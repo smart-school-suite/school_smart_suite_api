@@ -9,8 +9,7 @@ class StudentService
     {
         $students = Student::where('school_branch_id', $currentSchool->id)->
             with([
-                'guardianOne',
-                'guardianTwo',
+                'guardian',
                 'specialty',
                 'level',
                 'studentBatch'
@@ -44,7 +43,12 @@ class StudentService
     public function studentDetails($studentId, $currentSchool)
     {
         $studentDetails = Student::where("school_branch_id", $currentSchool->id)
-            ->with(['guardianOne', 'guardianTwo', 'specialty', 'level', 'studentBatch', 'department'])
+            ->with([
+                'guardian',
+                'specialty',
+                'level',
+                'studentBatch'
+            ])
             ->find($studentId);
         return $studentDetails;
     }

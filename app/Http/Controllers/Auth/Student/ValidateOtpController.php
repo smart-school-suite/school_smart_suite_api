@@ -7,71 +7,29 @@ use App\Models\OTP;
 use App\Models\Student;
 use Illuminate\Support\Str;
 use App\Http\Requests\OtpRequest;
+use App\Services\ApiResponseService;
 use Carbon\Carbon;
+use App\Services\Auth\Student\ValidateOtpService;
 use Illuminate\Http\Request;
 
 class ValidateOtpController extends Controller
 {
     //
-
+    protected ValidateOtpService $validateOtpService;
+    public function __construct(ValidateOtpService $validateOtpService)
+    {
+        $this->validateOtpService = $validateOtpService;
+    }
     public function verify_otp(OtpRequest $request)
     {
-
         $token_header = $request->header('OTP_TOKEN_HEADER');
-
-        $otpRecord = OTP::where('otp', $request->otp)
-            ->where('token_header', $token_header)
-            ->first();
-
-        if (!$otpRecord) {
-            return response()->json([
-                'message' => 'Invalid OTP',
-            ], 400);
-        }
-
-        if ($otpRecord->isExpired()) {
-            return response()->json(['message' => 'Expired OTP'], 400);
-        }
-
-        $user = Student::where('id', $otpRecord->actorable_id)->first();
-
-        $token = $user->createToken('studentToken')->plainTextToken;
-
-        $otpRecord->update(['used' => true]);
-
-        $otpRecord->delete();
-
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'OTP verified successfully',
-            'token' => $token
-        ]);
+        $verifyOtp = $this->validateOtpService->verifyOtp($token_header, $request->otp);
+        return ApiResponseService::success("OTP verified Sucessfully OTP verification complete", $verifyOtp, null, 200);
     }
-
-
     public function request_another_code(Request $request)
     {
         $token_header = $request->header('OTP_TOKEN_HEADER');
-        $otpRecord = OTP::where('token_header', $token_header)->first();
-
-        if (!$otpRecord) {
-            return response()->json(['message' => 'Invalid OTP'], 400);
-        }
-
-        $newOtp = Str::random(6);
-        $expiresAt = Carbon::now()->addMinutes(5);
-
-        $otpRecord->update([
-            'otp' => $newOtp,
-            'expires_at' => $expiresAt,
-        ]);
-        return response()->json(
-            [
-                'message' => 'New OTP generated successfully',
-                'otp' => $newOtp
-            ],
-            200
-        );
+        $requestNewOtp = $this->validateOtpService->requestOtp($token_header);
+        return ApiResponseService::success("OTP token sent successfully", $requestNewOtp, null, 200);
     }
 }

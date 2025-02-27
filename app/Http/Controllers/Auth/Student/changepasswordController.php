@@ -3,46 +3,19 @@
 namespace App\Http\Controllers\Auth\Student;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Hash;
+use App\Services\Auth\Student\ChangeStudentPasswordService;
+use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Http\Request;
 
 class ChangePasswordController extends Controller
 {
-    public function change_student_password(Request $request){
-        $request->validate([
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $authenticated_student = auth()->guard('student')->user();
-
-        if (!$this->checkCurrentPassword($authenticated_student, $request->current_password)) {
-            throw ValidationException::withMessages([
-                'status' => 'ok',
-                'current_password' => 'Current password is incorrect.',
-            ]);
-        }
-
-
-
-        if ($this->updatePassword($authenticated_student, $request->new_password)) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Password changed successfully.'
-            ], 200);
-        }
-    }
-
-    protected function checkCurrentPassword($authenticated_student, string $currentPassword): bool
+    protected ChangeStudentPasswordService $changeStudentPasswordService;
+    public function __construct(ChangeStudentPasswordService $changeStudentPasswordService)
     {
-        return Hash::check($currentPassword, $authenticated_student->password);
+        $this->changeStudentPasswordService = $changeStudentPasswordService;
     }
-
-    protected function updatePassword($authenticated_student, string $newPassword): bool
+    public function changeStudentPassword(ChangePasswordRequest $request)
     {
-
-        $authenticated_student->password = Hash::make($newPassword);
-        return $authenticated_student->save();
+        $this->changeStudentPasswordService->changeSchoolAdminPassword($request->validated());
     }
 }

@@ -18,7 +18,7 @@ class FeePaymentController extends Controller
     public function __construct(FeePaymentService $feePaymentService){
         $this->feePaymentService = $feePaymentService;
     }
-    public function pay_school_fees(FeePaymentRequest $request) {
+    public function payTuitionFees(FeePaymentRequest $request) {
         $currentSchool = $request->attributes->get('currentSchool');
         $payFees = $this->feePaymentService->payStudentFees($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Fees Paid Sucessfully", $payFees, null, 201);
@@ -30,25 +30,25 @@ class FeePaymentController extends Controller
         return ApiResponseService::success("Registration Fees Paid Sucessfully", $payRegistrationFees, null, 201);
     }
 
-    public function get_all_fees_paid(Request $request){
+    public function getFeesPaid(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $feePaid = $this->feePaymentService->getFeesPaid($currentSchool);
         return ApiResponseService::success('fee payment records fetched successfully', PaidFeesResource::collection($feePaid), null, 200);
     }
 
-    public function update_student_fee_payment(UpdateFeePaymentRequest $request, $fee_id){
+    public function updateFeesPaid(UpdateFeePaymentRequest $request, $fee_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $updateFeesPaid = $this->feePaymentService->updateStudentFeesPayment($request->validated(),$fee_id,$currentSchool);
         return ApiResponseService::success("Fee Payment Record Updated Sucessfully", $updateFeesPaid, null, 200);
     }
 
-    public function delete_fee_payment_record(Request $request, $fee_id){
+    public function deleteFeePaid(Request $request, $fee_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteFeePayment = $this->feePaymentService->deleteFeePayment($fee_id, $currentSchool);
         return ApiResponseService::success('Record Deleted Sucessfully', $deleteFeePayment, null, 200);
     }
 
-    public function get_all_student_deptors(Request $requst){
+    public function getFeeDebtors(Request $requst){
         $currentSchool = $requst->attributes->get('currentSchool');
         $feeDebtors = $this->feePaymentService->getFeeDebtors($currentSchool);
         return ApiResponseService::success("Fee Debtors Fetched Succefully", FeeDebtorResource::collection($feeDebtors), null, 200);

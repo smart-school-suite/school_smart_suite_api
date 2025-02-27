@@ -1,8 +1,9 @@
 <?php
 
 namespace App\Http\Requests;
-
+use App\Models\SchoolBranchApiKey;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class GradesRequest extends FormRequest
 {
@@ -12,11 +13,9 @@ class GradesRequest extends FormRequest
     protected $maxGradePoints;
     public function __construct()
     {
-        $this->maxGradePoints = request()->attributes->get('currentSchool')->max_gpa;
-    }
-    public function authorize(): bool
-    {
-        return false;
+        $schoolBranchApiKey = request()->header('API_KEY');
+        $schoolBranch = SchoolBranchApiKey::where("api_key", $schoolBranchApiKey)->with(['schoolBranch'])->first();
+        $this->maxGradePoints = $schoolBranch->schoolBranch->max_gpa;
     }
 
     /**
@@ -29,8 +28,8 @@ class GradesRequest extends FormRequest
         return [
            'grades' => 'required|array',
             'grades.*.letter_grade_id' => 'required|string',
-            'grades.*.minimum_score' => 'required|numeric|min:0|max:100|regex:/^\d+(\.\d{1,2})?$/',
-            'grades.*.maximum_score' => 'required|numeric|min:0|max:100|regex:/^\d+(\.\d{1,2})?$/',
+            'grades.*.minimum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
+            'grades.*.maximum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grades.*.determinant' => 'required|string',
             'grades.*.grade_points' => "required|numeric|min:0|max:{$this->maxGradePoints}|regex:/^\d+(\.\d{1,2})?$/",
             'grades.*.exam_id' => 'required|string',

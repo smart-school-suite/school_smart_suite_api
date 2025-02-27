@@ -3,35 +3,20 @@
 namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\Teacher;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use App\Services\ApiResponseService;
+use App\Services\Auth\Teacher\LoginTeacherService;
+use App\Http\Requests\LoginRequest;
 use Illuminate\Http\Request;
 
 class LoginTeacherController extends Controller
 {
     //
-    public function login_teacher(Request $request){
-        $request->validate([
-            'email' => 'required|string',
-            'password' => 'required',
-        ]);
-
-        $user = Teacher::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'status' => 'ok',
-                'phone_number' => 'The provided credentials are incorrect',
-                'password' => 'Password is invalid'
-            ]);
-        }
-
-        $token = $user->createToken('teacherToken')->plainTextToken;
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Logged in successfully',
-            'token' => $token]);
+    protected LoginTeacherService $loginTeacherService;
+    public function __construct(LoginTeacherService $loginTeacherService){
+        $this->loginTeacherService = $loginTeacherService;
+    }
+    public function loginInstructor(LoginRequest $request){
+        $loginTeacher = $this->loginTeacherService->loginTeacher($request->validated());
+        return ApiResponseService::success("OTP token sent to email sucessfully", $loginTeacher, null, 200);
     }
 }

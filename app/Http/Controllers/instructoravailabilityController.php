@@ -19,7 +19,7 @@ class InstructorAvailabilityController extends Controller
         $this->instructorAvaliabilityService = $instructorAvaliabilityService;
     }
 
-    public function create_availability(InstructorAvialabiltyRequest $request)
+    public function createInstructorAvailability(InstructorAvialabiltyRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -40,21 +40,21 @@ class InstructorAvailabilityController extends Controller
             return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
         }
     }
-    public function get_all_teacher_avialability(Request $request)
+    public function getAllInstructorAvailability(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getAllInstructorAvailability = $this->instructorAvaliabilityService->getAllInstructorAvailabilties($currentSchool);
         return ApiResponseService::success("teacher availability data fetched successfully", $getAllInstructorAvailability, null, 200);
     }
 
-    public function getteacherAvialability(Request $request, $teacher_id)
+    public function getInstructorAvailability(Request $request, $teacher_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getMyInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailability($currentSchool, $teacher_id);
         return ApiResponseService::success('Instructor Availabilty Fetched Sucessfully', $getMyInstructorAvailability, null, 200);
     }
 
-    public function delete_teacher_avialability(Request $request, $availabilty_id)
+    public function deleteInstructorAvailabilty(Request $request, $availabilty_id)
     {
         $availabilty = InstructorAvailability::find($availabilty_id);
         $currentSchool = $request->attributes->get('currentSchool');
@@ -62,7 +62,7 @@ class InstructorAvailabilityController extends Controller
         return ApiResponseService::success('Teachers availability deleted succefully', $deleteInstructorAvailability, null, 200);
     }
 
-    public function update_teacher_avialability(Request $request,  $availabilty_id)
+    public function updateInstructorAvailability(Request $request,  $availabilty_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->instructor_availability, $currentSchool, $availabilty_id);

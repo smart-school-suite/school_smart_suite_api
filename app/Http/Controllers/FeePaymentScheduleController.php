@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\UpdateFeePaymentSchedule;
 use App\Services\FeePaymentScheduleService;
 use App\Http\Requests\FeePaymentScheduleRequest;
+use App\Http\Resources\FeePaymentScheduleResource;
 use App\Services\ApiResponseService;
 
 class FeePaymentScheduleController extends Controller
@@ -37,12 +38,12 @@ class FeePaymentScheduleController extends Controller
     public function getFeePaymentScheduleBySpecialty(Request $request, string $specialtyId){
         $currentSchool = $request->attributes->get('currentSchool');
         $getBySpecialty = $this->feePaymentScheduleService->getFeePaymentScheduleBySpecialty($currentSchool, $specialtyId);
-        return ApiResponseService::success("Fee Payment Schedule Fetched Succefully", $getBySpecialty, null, 200);
+        return ApiResponseService::success("Fee Payment Schedule Fetched Succefully", FeePaymentScheduleResource::collection($getBySpecialty), null, 200);
     }
 
     public function getAllFeePaymentSchedule(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $getAllFeePaymentSchedule = $this->feePaymentScheduleService->getAllFeePaymentSchedule($currentSchool);
-        return ApiResponseService::success("Fee Payment Schedule Fetched Succesfully", $getAllFeePaymentSchedule, null, 200);
+        return ApiResponseService::success("Fee Payment Schedule Fetched Succesfully", FeePaymentScheduleResource::collection($getAllFeePaymentSchedule), null, 200);
     }
 }

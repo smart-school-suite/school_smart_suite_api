@@ -149,15 +149,11 @@ class Student extends Model
         return $this->hasMany(Marks::class, 'student_id');
     }
 
-    public function guardianOne(): BelongsTo
+    public function guardian(): BelongsTo
     {
-        return $this->belongsTo(Parents::class, 'guadian_one_id');
+        return $this->belongsTo(Parents::class, 'guadian_id');
     }
 
-    public function guardianTwo(): BelongsTo
-    {
-        return $this->belongsTo(Parents::class, 'guadian_two_id');
-    }
 
     public function school(): BelongsTo
     {

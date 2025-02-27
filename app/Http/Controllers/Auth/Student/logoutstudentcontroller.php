@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Auth\Student;
 
 use App\Http\Controllers\Controller;
-use App\Services\ApiResponseService;
+use App\Services\Auth\Student\LogoutStudentService;
 use Illuminate\Http\Request;
 
 class LogoutStudentController extends Controller
 {
     //
-    public function logout_student(Request $request){
-        $request->user()->currentAccessToken()->delete();
-        return ApiResponseService::success("Logout Successfull", null, null, 200);
+    protected LogoutStudentService $logoutStudentService;
+    public function __construct(LogoutStudentService $logoutStudentService){
+        $this->logoutStudentService = $logoutStudentService;
+    }
+    public function logoutStudent(Request $request){
+        $this->logoutStudentService->logoutStudent($request);
     }
 }

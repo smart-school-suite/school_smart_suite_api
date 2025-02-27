@@ -15,31 +15,25 @@ class parentsController extends Controller
     }
 
     //review the resource and the update functionality
-    public function get_all_parents_within_a_School_without_relations(Request $request){
+    public function getAllParents(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $parentData = $this->parentService->getAllParentNoRelation($currentSchool);
         return ApiResponseService::success("Parents Data fetched Sucessfully", $parentData, null, 200);
     }
 
-    public function get_all_parents_with_relations_without_scope(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $parentData = $this->parentService->getAllParents($currentSchool);
-        return ApiResponseService::success("Parents Data Fetched Sucessfully", $parentData, null, 200);
-    }
-
-    public function delete_parent_with_scope(Request $request, string $parent_id){
+    public function deleteParent(Request $request, string $parent_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteParent = $this->parentService->deleteParent($parent_id, $currentSchool);
         return ApiResponseService::success("Parent Deleted Successfully", $deleteParent, null,200);
     }
 
-    public function update_parent_with_scope(Request $request, $parent_id){
+    public function updateParent(Request $request, $parent_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $updateParent = $this->parentService->updateParent($request->all(),$parent_id, $currentSchool);
         return ApiResponseService::success('Parent Updated Sucessfully', $updateParent, null,200);
     }
 
-    public function get_parent_details(Request $request){
+    public function getParentDetails(Request $request){
          $currentSchool = $request->attributes->get("currentSchool");
          $parent_id = $request->route("parent_id");
          $parentDetails = $this->parentService->getParentDetails( $parent_id, $currentSchool);

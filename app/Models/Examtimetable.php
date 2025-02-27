@@ -21,6 +21,7 @@ class Examtimetable extends Model
       'level_id',
       'end_time',
       'duration',
+      'school_year',
       'student_batch_id'
     ];
 

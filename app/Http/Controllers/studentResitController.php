@@ -14,21 +14,21 @@ class StudentResitController extends Controller
     {
         $this->studentResitService = $studentResitService;
     }
-    public function update_student_resit(Request $request, $resit_id)
+    public function updateResit(Request $request, $resit_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateStudentResit = $this->studentResitService->updateStudentResit($request->all(), $currentSchool, $resit_id);
         return ApiResponseService::success("Resit Entry Updated Successfully", $updateStudentResit, null, 200);
     }
 
-    public function pay_for_resit(Request $request, $resit_id)
+    public function payResit(Request $request, $resit_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $payStudentResit = $this->studentResitService->payResit($currentSchool, $resit_id);
         return ApiResponseService::success("Student Resit Paid Successfully", $payStudentResit, null, 200);
     }
 
-    public function delete_student_resit_record(Request $request, $resit_id)
+    public function deleteResit(Request $request, $resit_id)
     {
         $resit_id = $request->route('resit_id');
         $currentSchool = $request->attributes->get('currentSchool');
@@ -36,7 +36,7 @@ class StudentResitController extends Controller
         return ApiResponseService::success("Student Resit Record Not Found", $deleteStudentResit, null, 200);
     }
 
-    public function get_my_resits(Request $request)
+    public function getResitByStudent(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $student_id = $request->route('student_id');
@@ -45,14 +45,14 @@ class StudentResitController extends Controller
         return ApiResponseService::success("Student Records Fetched Sucessfully", $getMyResits, null, 200);
     }
 
-    public function get_student_resits(Request $request)
+    public function getAllResits(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getStudentResits = $this->studentResitService->getStudentResits($currentSchool);
         return ApiResponseService::success("Student Resit Records Fetched Sucessfully", $getStudentResits, null, 200);
     }
 
-    public function student_resit_details(Request $request)
+    public function getResitDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $resit_id = $request->route("resit_id");

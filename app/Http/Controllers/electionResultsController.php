@@ -13,7 +13,7 @@ class ElectionResultsController extends Controller
     public function __construct(ElectionResultsService $electionResultsService){
         $this->electionResultsService = $electionResultsService;
     }
-    public function fetchElectionResults(Request $request)
+    public function getElectionResults(Request $request)
     {
         $election_id = $request->route('election_id');
         $currentSchool = $request->attributes->get('currentSchool');

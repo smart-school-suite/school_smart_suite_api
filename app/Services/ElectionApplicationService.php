@@ -77,6 +77,7 @@ class ElectionApplicationService
     {
         $applications = ElectionApplication::where('school_branch_id', $currentSchool->id)
             ->where("election_id", $election_id)
+            ->with(['student', 'election', 'electionRole'])
             ->get();
         return $applications;
     }

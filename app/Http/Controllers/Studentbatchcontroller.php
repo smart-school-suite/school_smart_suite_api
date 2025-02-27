@@ -16,14 +16,14 @@ class StudentBatchcontroller extends Controller
     {
         $this->studentBatchService = $studentBatchService;
     }
-    public function create_student_batch(StudentBatchRequest $request)
+    public function createStudentBatch(StudentBatchRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createStudentBatch = $this->studentBatchService->createStudentBatch($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Batch Created Successfully", $createStudentBatch, null, 201);
     }
 
-    public function update_student_batch(Request $request)
+    public function updateStudentBatch(Request $request)
     {
         $batch_id = $request->route('batch_id');
         $currentSchool = $request->attributes->get('currentSchool');
@@ -31,7 +31,7 @@ class StudentBatchcontroller extends Controller
         return ApiResponseService::success('Student Batch Updated Successfully', $updateStudentBatch, null, 200);
     }
 
-    public function delete_student_batch(Request $request)
+    public function deleteStudentBatch(Request $request)
     {
         $batch_id = $request->route('batch_id');
         $currentSchool = $request->attributes->get('currentSchool');
@@ -39,7 +39,7 @@ class StudentBatchcontroller extends Controller
         return ApiResponseService::success("Student Batch Deleted Successully", $deleteStudentBatches, null, 200);
     }
 
-    public function get_all_student_batches(Request $request)
+    public function getStudentBatch(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getStudentBatches = $this->studentBatchService->getStudentBatches($currentSchool);

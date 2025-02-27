@@ -45,6 +45,7 @@ class ElectionRolesService
     {
         $electionRoles = ElectionRoles::where('school_branch_id', $currentSchool->id)
             ->where('election_id', $election_id)
+            ->with(['election'])
             ->get();
         return $electionRoles;
     }

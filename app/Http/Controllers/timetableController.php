@@ -21,7 +21,7 @@ class TimeTableController extends Controller
         $this->createSpecailtyTimeTableService = $createSpecailtyTimeTableService;
         $this->specailtyTimeTableService = $specailtyTimeTableService;
     }
-    public function create_time_slots_scoped(SpecailtyTimeTableRequest $request)
+    public function createTimetable(SpecailtyTimeTableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -33,28 +33,28 @@ class TimeTableController extends Controller
         }
     }
 
-    public function delete_timetable_scoped(Request $request, $timetable_id)
+    public function deleteTimetable(Request $request, $timetable_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteTimeTableRecord = $this->specailtyTimeTableService->deleteTimeTableEntry($currentSchool, $timetable_id);
         return ApiResponseService::success('Entry deleted sucessfully', $deleteTimeTableRecord, null, 200);
     }
 
-    public function update_time_table_record_scoped(Request $request, $timetable_id)
+    public function updateTimetable(Request $request, $timetable_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateTimeTable = $this->specailtyTimeTableService->updateTimeTable($request->specialty_timetable, $currentSchool, $timetable_id);
         return ApiResponseService::success('Time Table Updated Succefully', $updateTimeTable, null, 200);
     }
 
-    public function generate_time_table_scoped(GenerateTimeTableRequest $request)
+    public function generateTimetable(GenerateTimeTableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $generateTimeTable = $this->specailtyTimeTableService->generateTimeTable($request->validated(), $currentSchool);
         return ApiResponseService::success('Time Table Generated Sucessfully', $generateTimeTable, null, 200);
     }
 
-    public function get_timetable_details(Request $request)
+    public function getTimetableDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $entry_id =  $request->route("entry_id");
@@ -62,7 +62,7 @@ class TimeTableController extends Controller
         return ApiResponseService::success("Time Table Details Fetched Sucessfully", $getTimeTableDetails, null, 200);
     }
 
-    public function get_instructor_availability(Request $request)
+    public function getInstructorAvailabilityBySemesterSpecialty(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $specialtyId = $request->route("specialty_id");

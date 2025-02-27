@@ -19,33 +19,33 @@ class ExamsController extends Controller
     {
         $this->examService = $examService;
     }
-    public function create_exam_scoped(ExamRequest $request)
+    public function createExam(ExamRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createExam = $this->examService->createExam($request->validated(), $currentSchool);
         return ApiResponseService::success("Exam Created Succefully", $createExam, null, 201);
     }
-    public function update_exam_scoped(UpdateExamRequest $request, $exam_id)
+    public function updateExam(UpdateExamRequest $request, $exam_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateExam = $this->examService->updateExam($request->validated(), $currentSchool, $exam_id);
         return ApiResponseService::success("Exam Updated Successfully", $updateExam, null, 200);
     }
-    public function delete_school_exam(Request $request, $exam_id)
+    public function deleteExam(Request $request, $exam_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteExam = $this->examService->deleteExam($exam_id, $currentSchool);
         return ApiResponseService::success('Exam deleted sucessfully', $deleteExam, null, 200);
     }
 
-    public function get_all_exams(Request $request)
+    public function getExams(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getExams = $this->examService->getExams($currentSchool);
         return ApiResponseService::success("Exam Data Fetched Succefully", ExamResource::collection($getExams), null, 200);
     }
 
-    public function get_exam_details(Request $request, string $exam_id)
+    public function getExamDetails(Request $request, string $exam_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $examDetails = $this->examService->examDetails($currentSchool, $exam_id,);
@@ -59,7 +59,7 @@ class ExamsController extends Controller
         return ApiResponseService::success('Data fetched Sucessfully', AssiocaiteWeigtedMarkLetterGrades::collection($examData), null, 200);
     }
 
-    public function get_accessed_exams(Request $request)
+    public function getAccessedExams(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $student_id = $request->route("student_id");

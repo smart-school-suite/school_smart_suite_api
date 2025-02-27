@@ -22,19 +22,18 @@ class SchoolSubscriptionController extends Controller
         try {
             $this->schoolSubcriptionService->subscribe($request->validated());
             return ApiResponseService::success("School Subcription Was Succesfully", null, null, 200);
-
         } catch (\Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function get_all_subscribed_schools(Request $request)
+    public function getSubscribedSchools(Request $request)
     {
         $getAllSubcribedSchools = $this->schoolSubcriptionService->getAllSubcription();
         return ApiResponseService::success("Schoo Subcription Fetched Sucessfully", $getAllSubcribedSchools, null, 200);
     }
 
-    public function subcription_details(Request $request, $subscription_id)
+    public function getSchoolSubscriptonDetails(Request $request, $subscription_id)
     {
         $subscription = SchoolSubscription::find($subscription_id);
         $subscriptionDetails = $this->schoolSubcriptionService->subcriptionPlanDetails($subscription_id);

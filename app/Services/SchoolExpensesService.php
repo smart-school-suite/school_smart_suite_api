@@ -51,7 +51,9 @@ class SchoolExpensesService
 
     public function getExpensesDetails($expensesId, $currentSchool)
     {
-        $expensesExist = SchoolExpenses::where('school_branch_id', $currentSchool->id)->find($expensesId);
+        $expensesExist = SchoolExpenses::where('school_branch_id', $currentSchool->id)
+                                         ->with(['schoolexpensescategory'])
+                                         ->find($expensesId);
         if (!$expensesExist) {
             return ApiResponseService::error("Expenses Deleted Sucessfully", null, 404);
         }

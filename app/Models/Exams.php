@@ -38,8 +38,8 @@ class Exams extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function semester(): BelongsTo {
-        return $this->belongsTo(Semester::class, 'semester_id');
+    public function schoolSemester(): BelongsTo {
+        return $this->belongsTo(SchoolSemester::class, 'semester_id');
     }
 
     public function marks(): HasMany {

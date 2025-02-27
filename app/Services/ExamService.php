@@ -52,7 +52,7 @@ class ExamService
     public function getExams($currentSchool)
     {
         $exams = Exams::where('school_branch_id', $currentSchool->id)
-            ->with(['examtype', 'semester', 'specialty', 'level'])
+            ->with(['examtype', 'schoolSemester.semester', 'specialty', 'level'])
             ->get();
         return $exams;
     }

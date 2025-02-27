@@ -14,22 +14,22 @@ class SchoolBranchesController extends Controller
     public function __construct(SchoolBranchesService $schoolBranchesService){
         $this->schoolBranchesService = $schoolBranchesService;
     }
-    public function create_school_branch(CreateSchoolBranchRequest $request){
+    public function createSchoolBranch(CreateSchoolBranchRequest $request){
          $createSchoolBranch = $this->schoolBranchesService->createSchoolBranch($request->validated());
          return ApiResponseService::success("School Branch Created Succesfully", $createSchoolBranch, null, 201);
     }
 
-    public function update_school_branch(UpdateSchoolBranchesRequest $request, $branch_id){
+    public function updateSchoolBranch(UpdateSchoolBranchesRequest $request, $branch_id){
         $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $branch_id);
         return ApiResponseService::success("School Branch updated Succesfully", $updateSchoolBranch, null, 200);
     }
 
-    public function get_all_schoool_branches(Request $request){
+    public function getAllSchoolBranches(Request $request){
         $getSchoolBranches = $this->schoolBranchesService->getSchoolBranches();
         return ApiResponseService::success("School Branches Fetched Succefully", $getSchoolBranches, null, 200);
     }
 
-    public function delete_school_branch(Request $request, $branch_id){
+    public function deleteSchoolBranch(Request $request, $branch_id){
         $deleteSchoolBranch = $this->schoolBranchesService->deleteSchoolBranch($branch_id);
        return ApiResponseService::success("School Branch Deleted Sucessfully", $deleteSchoolBranch, null, 200);
     }

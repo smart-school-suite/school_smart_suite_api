@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Auth\Student;
 
 use App\Http\Controllers\Controller;
+use App\Services\ApiResponseService;
+use App\Services\Auth\Student\GetAuthStudentService;
 use Illuminate\Http\Request;
 
 class GetAuthStudentController extends Controller
 {
     //getauthenticatedstudentcontroller
-    public function get_authenticated_student(Request $request){
-        $student_authenticated_data = auth()->guard('student')->user();
-         return response()->json([
-            'status' => 'ok',
-            'message' => 'Auth student fetched succefully',
-            'student_user' => $student_authenticated_data
-         ], 200);
+    protected GetAuthStudentService $getAuthStudentService;
+    public function __construct(GetAuthStudentService $getAuthStudentService){
+        $this->getAuthStudentService = $getAuthStudentService;
+    }
+    public function getAuthStudent(Request $request){
+        $getAuthStudent = $this->getAuthStudentService->getAuthStudent();
+        return ApiResponseService::success("Authenticated Student", $getAuthStudent, null, 200);
     }
 }

@@ -8,66 +8,27 @@ use App\Models\Schooladmin;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Http\Requests\OtpRequest;
+use App\Services\ApiResponseService;
+use App\Services\Auth\SchoolAdmin\ValidateOtpService;
 use Illuminate\Http\Request;
 
 class validateOtpController extends Controller
 {
-    public function verify_otp(OtpRequest $request)
+    protected ValidateOtpService $validateOtpService;
+    public function __construct(ValidateOtpService $validateOtpService)
     {
-
-        $token_header = $request->header('OTP_TOKEN_HEADER');
-
-        $otpRecord = OTP::where('otp', $request->otp)
-            ->where('token_header', $token_header)
-            ->first();
-
-        if (!$otpRecord) {
-            return response()->json([
-                'message' => 'Invalid OTP',
-            ], 400);
-        }
-
-        if ($otpRecord->isExpired()) {
-            return response()->json(['message' => 'Expired OTP'], 400);
-        }
-
-        $user = Schooladmin::where('id', $otpRecord->actorable_id)->first();
-
-        $token = $user->createToken('schoolAdminToken')->plainTextToken;
-
-        $otpRecord->update(['used' => true]);
-
-        $otpRecord->delete();
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'OTP verified successfully',
-            'token' => $token
-        ]);
+        $this->validateOtpService = $validateOtpService;
     }
-
-    public function request_another_code(Request $request)
+    public function verifySchoolAdminOtp(OtpRequest $request)
     {
         $token_header = $request->header('OTP_TOKEN_HEADER');
-        $otpRecord = OTP::where('token_header', $token_header)->first();
-
-        if (!$otpRecord) {
-            return response()->json(['message' => 'Invalid OTP'], 400);
-        }
-
-        $newOtp = Str::random(6);
-        $expiresAt = Carbon::now()->addMinutes(5);
-
-        $otpRecord->update([
-            'otp' => $newOtp,
-            'expires_at' => $expiresAt,
-        ]);
-        return response()->json(
-            [
-                'message' => 'New OTP generated successfully',
-                'otp' => $newOtp
-            ],
-            200
-        );
+        $verifyOtp = $this->validateOtpService->verifyOtp($token_header, $request->otp);
+        return ApiResponseService::success("OTP token verified Succesfully", $verifyOtp, null, 200);
+    }
+    public function requestNewCode(Request $request)
+    {
+        $token_header = $request->header('OTP_TOKEN_HEADER');
+        $requestNewOtp = $this->validateOtpService->requestOtp($token_header);
+        return ApiResponseService::success("OTP token sent succesfully to email", $requestNewOtp, null, 200);
     }
 }

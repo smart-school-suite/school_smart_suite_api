@@ -54,7 +54,10 @@ class ElectionService
     }
 
     public function getElectionCandidates(string $electionId, $currentSchool){
-          $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)->where("election_id", $electionId)->get();
+          $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
+                                  ->where("election_id", $electionId)
+                                  ->with(['student', 'electionApplication'])
+                                  ->get();
           return $getElectionCandidates;
     }
 }

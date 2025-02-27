@@ -17,7 +17,7 @@ class ExamTimeTableController extends Controller
     {
         $this->examTimeTableService = $examTimeTableService;
     }
-    public function create_exam_timetable(ExamTimeTableRequest $request)
+    public function createTimtable(ExamTimeTableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -28,7 +28,7 @@ class ExamTimeTableController extends Controller
         }
     }
 
-    public function delete_exam_time_table_scoped(Request $request, $examtimetable_id)
+    public function deletetimetable(Request $request, $examtimetable_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteExamTimeTable = $this->examTimeTableService->deleteTimeTable($examtimetable_id, $currentSchool);
@@ -36,7 +36,7 @@ class ExamTimeTableController extends Controller
     }
 
     //work on the update functionality
-    public function update_exam_time_table_scoped(Request $request, $examtimetable_id)
+    public function updateTimetable(Request $request, $examtimetable_id)
     {
 
         $currentSchool = $request->attributes->get('currentSchool');
@@ -101,7 +101,7 @@ class ExamTimeTableController extends Controller
         ], 200);
     }
 
-    public function generate_time_table_for_specialty(Request $request, $specialty_id, $level_id)
+    public function getTimetableBySpecialty(Request $request, $specialty_id, $level_id)
     {
 
         $currentSchool = $request->attributes->get('currentSchool');

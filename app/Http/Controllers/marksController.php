@@ -22,7 +22,7 @@ class MarksController extends Controller
         $this->addScoreService = $addScoreService;
         $this->markService = $markService;
     }
-    public function add_student_mark(AddStudentScoreRequest $request)
+    public function createMark(AddStudentScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -33,7 +33,7 @@ class MarksController extends Controller
         }
     }
 
-    public function delete_mark_of_student_scoped(Request $request, $mark_id)
+    public function deleteMark(Request $request, $mark_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteScore = $this->markService->deleteMark($mark_id, $currentSchool);
@@ -41,7 +41,7 @@ class MarksController extends Controller
     }
 
     //update student marks review this code
-    public function update_student_mark_scoped(Request $request)
+    public function updateMark(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $mark_id = $request->route('mark_id');
@@ -49,7 +49,7 @@ class MarksController extends Controller
         return ApiResponseService::success('Student Score Updated Successfully', $updateScore, null, 200);
     }
 
-    public function get_all_student_marks(Request $request)
+    public function getMarksByExamStudent(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $exam_id = $request->route('exam_id');
@@ -58,14 +58,14 @@ class MarksController extends Controller
         return ApiResponseService::success('Scores Fetched Sucessfully', $allStudentScores, null, 200);
     }
 
-    public function get_all_student_scores(Request $request)
+    public function getAllMarks(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $studentDetails = $this->markService->getAllStudentsScores($currentSchool);
         return ApiResponseService::success("Student Scores Fetched Succesfully", $studentDetails, null, 200);
     }
 
-    public function get_exam_score_details(Request $request)
+    public function getMarkDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $mark_id = $request->route("mark_id");
@@ -75,7 +75,7 @@ class MarksController extends Controller
 
 
     //revisit this code and update the resources file
-    public function get_exam_score_associated_data(Request $request)
+    public function getAccessedCoursesWithLettergrades(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $exam_id = $request->route("exam_id");

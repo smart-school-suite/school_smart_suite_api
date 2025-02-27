@@ -15,20 +15,20 @@ class SchoolsController extends Controller
      public function __construct(SchoolService $schoolService){
         $this->schoolService = $schoolService;
      }
-    public function register_school_to_edumanage(SchoolRequest $request)
+    public function createSchool(SchoolRequest $request)
     {
         $createSchool = $this->schoolService->createSchool($request->validated());
         return ApiResponseService::success("School Created Sucessfully", $createSchool, null, 201);
     }
 
-    public function update_school(UpdateSchoolRequest $request, $school_id)
+    public function updateSchool(UpdateSchoolRequest $request, $school_id)
     {
         $school = School::find($school_id);
         $updateSchool = $this->schoolService->updateSchool($request->validated(), $school_id);
         return ApiResponseService::success("School Updated Sucessfully", $updateSchool, null, 200);
     }
 
-    public function delete_school( $school_id)
+    public function deleteSchool( $school_id)
     {
         $deleteSchool = $this->schoolService->deleteSchool($school_id);
         return ApiResponseService::success("School Deleted Succefully", $deleteSchool, null, 200);

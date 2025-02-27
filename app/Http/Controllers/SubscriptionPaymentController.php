@@ -14,19 +14,19 @@ class SubscriptionPaymentController extends Controller
     {
         $this->subscriptionPaymentService = $subscriptionPaymentService;
     }
-    public function delete_payment($transaction_id)
+    public function deletePayment($transaction_id)
     {
         $deleteTransaction = $this->subscriptionPaymentService->deletePaymentTransaction($transaction_id);
         return ApiResponseService::success("Transaction Deleted Sucessfully", $deleteTransaction, null, 200);
     }
 
-    public function my_transactions($school_id)
+    public function getTransactionsBySchool($school_id)
     {
         $myTransactions = $this->subscriptionPaymentService->myTransactions($school_id);
         return ApiResponseService::success("Transaction Fetched Succefully", $myTransactions, null, 200);
     }
 
-    public function get_all_transactions()
+    public function getAllTransactions()
     {
         $getAllTransactions = $this->subscriptionPaymentService->getAllTransactions();
         return ApiResponseService::success("Transactions Fetched Successfully", $getAllTransactions, null, 200);

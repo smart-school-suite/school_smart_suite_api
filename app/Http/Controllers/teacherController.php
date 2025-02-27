@@ -17,7 +17,7 @@ class TeacherController extends Controller
         $this->teacherService = $teacherService;
     }
 
-    public function get_all_teachers_with_relations_scoped(Request $request)
+    public function getInstructors(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $teachers = Teacher::where('school_branch_id', $currentSchool->id)
@@ -25,26 +25,19 @@ class TeacherController extends Controller
         return response()->json(['teacher_data' => $teachers], 201);
     }
 
-    public function delete_teacher_scoped(Request $request, $teacher_id)
+    public function deleteInstructor(Request $request, $teacher_id)
     {
         $deleteTeacher = $this->teacherService->deletetTeacher($teacher_id);
         return ApiResponseService::success("Teacher Deleted Sucessfully", $deleteTeacher, null, 200);
     }
 
-    public function update_teacher_data_scoped(Request $request, $teacher_id)
+    public function updateInstructor(Request $request, $teacher_id)
     {
         $updateTeacher = $this->teacherService->updateTeacher($request->all(), $teacher_id);
         return ApiResponseService::success("Teacher Updated Sucessfully", $updateTeacher, null, 200);
     }
-    public function get_all_teachers_not_scoped(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getAllTeachers = $this->teacherService->getAllTeachers($currentSchool);
-        return ApiResponseService::success("Teacher Data Fetched Succesfully", $getAllTeachers, null, 200);
-    }
 
-
-    public function get_my_timetable(Request $request, $teacher_id)
+    public function getTimettableByTeacher(Request $request, $teacher_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $teacher_id = $request->route('teacher_id');
@@ -52,7 +45,7 @@ class TeacherController extends Controller
         return ApiResponseService::success("Teacher Schedule Fetched And Generated Sucessfully", $getTeacherSchedule, null, 200);
     }
 
-    public function get_teacher_details(Request $request)
+    public function getInstructorDetails(Request $request)
     {
         $teacher_id = $request->route('teacher_id');
         $teacherDetails = $this->teacherService->getTeacherDetails($teacher_id);

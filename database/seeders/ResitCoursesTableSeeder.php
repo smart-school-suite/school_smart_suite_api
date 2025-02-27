@@ -24,50 +24,52 @@ class ResitCoursesTableSeeder extends Seeder
         Log::info('CSV Header: ', [$header]);
 
         // Fetch all relevant IDs
-        $school_branches = DB::table('school_branches')->pluck('id')->toArray();
+        $schoolBranchId = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
         $level = DB::table("education_levels")->pluck('id')->toArray();
-        $resit_courses_table = []; 
+        $resit_courses_table = [];
 
         while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-            Log::info('Current Row Data: ', [$data]);                
-            $schoolBranchId = Arr::random($school_branches);
+            Log::info('Current Row Data: ', [$data]);
 
             $exam_id = DB::table('exams')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
             if (empty($exam_id)) {
                 Log::warning('No exams found for school branch: ' . $schoolBranchId);
-                continue; 
+                continue;
             }
 
             $course_id = DB::table('courses')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
             if (empty($course_id)) {
                 Log::warning('No courses found for school branch id: ' . $schoolBranchId);
-                continue; 
+                continue;
             }
 
             $specialty = DB::table('specialty')->where('school_branch_id', $schoolBranchId)->pluck('id')->toArray();
             if (empty($specialty)) {
                 Log::warning('No specialty found for school branch id: ' . $schoolBranchId);
-                continue; 
+                continue;
             }
 
+           $studentBatches = DB::table("student_batch")->where("school_branch_id", $schoolBranchId)->pluck('id')->toArray();
 
             $randomExamId = Arr::random($exam_id);
             $randomCourseID = Arr::random($course_id);
             $randomSpecialtyId = Arr::random($specialty);
             $randomLevelID = Arr::random($level);
+            $randomStudentBatch = Arr::random($studentBatches);
             $uuid = Str::uuid()->toString();
             $id = substr(md5($uuid), 0, 25);
 
             if (count($data) >= 2) {
                 $resit_courses_table[] = [
-                    'id' => $id, 
-                    'school_branch_id' => $schoolBranchId, 
-                    'school_year' => $data[1],  
+                    'id' => $id,
+                    'school_branch_id' => $schoolBranchId,
+                    'school_year' => $data[1],
                     'created_at' => $timestamp,
                     'updated_at' => $timestamp,
                     'specialty_id' => $randomSpecialtyId,
                     'course_id' => $randomCourseID,
                     'exam_id' => $randomExamId,
+                    'student_batch_id' => $randomStudentBatch,
                     'level_id' => $randomLevelID,
                 ];
             }

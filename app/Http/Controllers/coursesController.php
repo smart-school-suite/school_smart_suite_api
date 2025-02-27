@@ -18,33 +18,33 @@ class CoursesController extends Controller
         $this->courseService = $courseService;
     }
     //
-    public function create_course(CreateCourseRequest $request)
+    public function createCourse(CreateCourseRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $course = $this->courseService->createCourse($request->validated(), $currentSchool);
         return ApiResponseService::success('Course Created Succefully', $course, null, 201);
     }
 
-    public function delete_course(Request $request, string $course_id)
+    public function deleteCourse(Request $request, string $course_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteCourse = $this->courseService->deleteCourse($course_id, $currentSchool);
         return  ApiResponseService::success('Course Deleted Succefully', $deleteCourse, null, 200);
     }
 
-    public function update_course(UpdateCourseRequest $request, string $course_id)
+    public function updateCourse(UpdateCourseRequest $request, string $course_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateCourse = $this->courseService->updateCourse($course_id, $request->validated(), $currentSchool);
         return ApiResponseService::success('Course Update Succefully', $updateCourse, null, 200);
     }
-    public function get_all_courses_with_no_relation(Request $request)
+    public function getCourses(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $courses = $this->courseService->getCourses($currentSchool);
         return ApiResponseService::success('Courses fetched succefully', CourseResource::collection($courses), null, 200);
     }
-    public function courses_details(Request $request)
+    public function getCourseDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $course_id = $request->route("course_id");
@@ -52,7 +52,7 @@ class CoursesController extends Controller
         return ApiResponseService::success('Course Details fetched succefully', CourseResource::collection($courseDetails), null, 200);
     }
 
-    public function get_specialty_level_semester_courses(Request $request)
+    public function getBySpecialtyLevelSemester(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $specialtyId = $request->route("specialty_id");

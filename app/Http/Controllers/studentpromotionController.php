@@ -16,7 +16,7 @@ class StudentPromotionController extends Controller
     {
         $this->studentPromotionService = $studentPromotionService;
     }
-    public function promote_student_to_another_class(StudentPromotionRequest $request)
+    public function promoteStudent(StudentPromotionRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $promoteStudent = $this->studentPromotionService->promoteStudent($request->validated(), $currentSchool);

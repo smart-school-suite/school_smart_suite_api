@@ -3,45 +3,19 @@
 namespace App\Http\Controllers\Auth\Parent;
 
 use App\Http\Controllers\Controller;
-use App\Models\Parents;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
-use App\Models\OTP;
-use Illuminate\Http\Request;
+use App\Services\Auth\Guardian\LoginParentService;
+use App\Http\Requests\LoginRequest;
+use App\Services\ApiResponseService;
 
 class logincontroller extends Controller
 {
-    public function login_parent(Request $request)
+    protected LoginParentService $loginParentService;
+    public function __construct(LoginParentService $loginParentService){
+        $this->loginParentService = $loginParentService;
+    }
+    public function loginParent(LoginRequest $request)
     {
-        $user = Parents::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'The provided credentials are incorrect.',
-            ], 400);
-        }
-
-        $otp = Str::random(6);
-
-        $otp_header = Str::random(24);
-
-        $expiresAt = Carbon::now()->addMinutes(5);
-
-        OTP::create([
-            'token_header' => $otp_header,
-            'actorable_id' => $user->id,
-            'actorable_type' => 'App\Models\Parents',
-            'otp' => $otp,
-            'expires_at' => $expiresAt,
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'OTP sent successfully',
-            'OTP' => $otp,
-            'otp_token_header' => $otp_header,
-        ]);
+       $loginParent = $this->loginParentService->loginParent($request->validated());
+       return ApiResponseService::success("Login Parent Success !! OTP token sent sucessfully", $loginParent, null, 200);
     }
 }

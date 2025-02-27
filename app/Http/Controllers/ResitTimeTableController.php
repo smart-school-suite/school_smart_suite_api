@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exams;
 use App\Models\Resitablecourses;
 use Carbon\Carbon;
 use App\Models\Examtimetable;
@@ -15,7 +16,7 @@ class ResitTimeTableController extends Controller
 {
     //ResitTimeTableController
     //ResitcontrollerTimetable
-    public function get_resits_for_specialty(Request $request)
+    public function getResitsBySpecialty(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $specialty_id = $request->route('specialty_id');
@@ -52,7 +53,7 @@ class ResitTimeTableController extends Controller
         ], 200); // Use 200 for successful requests
     }
 
-    public function create_resit_timetable_entry(Request $request)
+    public function createResitTimetable(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $request->validate([
@@ -157,7 +158,7 @@ class ResitTimeTableController extends Controller
         }
     }
 
-    public function generate_resit_timetable(Request $request, $specialty_id, $level_id)
+    public function getResitTimeTable(Request $request, $specialty_id, $level_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $timetables = Resitexamtimetable::Where('school_branch_id', $currentSchool->id)
@@ -190,5 +191,31 @@ class ResitTimeTableController extends Controller
             'message' => 'exam time table generated succefully',
             'resit_timetable' => $examTimetable
         ]);
+    }
+
+    public function createStudentResitScores(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $request->validate([
+            'resit_scores' => 'required|array',
+            'resit_scores.*.score' => 'required|integer',
+            'resit_score.*.course_id' => 'required|string|exists:courses,id',
+            'resit_score.*.student_id' => 'required|string|exists:students,id',
+            'resit_score.*.exam_id' => 'required|string|exists:exams,id',
+        ]);
+
+        foreach($request->resit_scores as $resitScore) {
+            $maxExamScore = Exams::where('school_branch_id', $currentSchool->id)->where("id", $resitScore['exam_id']);
+            if(!$maxExamScore){
+                return ApiResponseService::error("Exam not found");
+            }
+            if( $resitScore['score'] > $maxExamScore->weighted_mark ){
+                return ApiResponseService::error("Exam Resit score: {$resitScore['score']} cannot be greater than the score of the resit {$maxExamScore->weighted_mark}", null, 404);
+            }
+
+        }
+    }
+
+    private function calculateScoreEquivalence(){
+
     }
 }

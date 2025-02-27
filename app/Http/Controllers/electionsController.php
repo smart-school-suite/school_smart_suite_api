@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateElectionRequest;
 use App\Http\Requests\VoteRequest;
 use App\Http\Requests\ElectionRequest;
+use App\Http\Resources\ElectionCandidateResource;
 use App\Services\ElectionService;
 use App\Services\VoteService;
 use App\Services\ApiResponseService;
@@ -60,6 +61,6 @@ class ElectionsController extends Controller
     public function getElectionCandidates(Request $request, $electionId){
         $currentSchool = $request->attributes->get('currentSchool');
         $getElectionCandidates = $this->electionService->getElectionCandidates($electionId, $currentSchool);
-        return ApiResponseService::success("Election Candidates Retrieved Successfully", $getElectionCandidates, null, 200);
+        return ApiResponseService::success("Election Candidates Retrieved Successfully", ElectionCandidateResource::collection($getElectionCandidates), null, 200);
     }
 }

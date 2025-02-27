@@ -17,7 +17,7 @@ class SpecialtyController extends Controller
     public function __construct(SpecailtyService $specailtyService){
             $this->specailtyService = $specailtyService;
     }
-    public function create_school_speciality(SpecailtyRequest $request)
+    public function createSpecialty(SpecailtyRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createSpecailty = $this->specailtyService->createSpecialty($request->validated(), $currentSchool);
@@ -25,14 +25,14 @@ class SpecialtyController extends Controller
     }
 
 
-    public function delete_school_specialty(Request $request, $specialty_id)
+    public function deleteSpecialty(Request $request, $specialty_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteSpecailty = $this->specailtyService->deleteSpecailty($currentSchool, $specialty_id);
         return ApiResponseService::success("Specailty Deleted Sucessfully", $deleteSpecailty, null,200);
     }
 
-    public function update_school_specialty(UpdateSpecailtyRequest $request, $specialty_id)
+    public function updateSpecialty(UpdateSpecailtyRequest $request, $specialty_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateSpecailty = $this->specailtyService->updateSpecialty( $request->validated(), $currentSchool, $specialty_id, );
@@ -75,7 +75,7 @@ class SpecialtyController extends Controller
     }
 
      //define resource
-    public function specialty_details(Request $request)
+    public function getSpecialtyDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $specialty_id = $request->route('specialty_id');

@@ -42,7 +42,9 @@ class DepartmentService
 
     public function getDepartments($currentSchool)
     {
-        $departmentData = Department::where("school_branch_id", $currentSchool->id)->get();
+        $departmentData = Department::where("school_branch_id", $currentSchool->id)
+                          ->with(['hods'])
+                          ->get();
         return $departmentData;
     }
 

@@ -6,11 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\Marks;
 use App\Models\Student;
 use App\Models\Grades;
+use App\Services\ApiResponseService;
 
 class ReportCardGenerationcontroller extends Controller
 {
     //
-    public function generate_student_report_card(Request $request)
+    public function getStudentReportCard(Request $request)
     {
         $student_id = $request->route('student_id');
         $exam_id = $request->route('exam_id');
@@ -104,8 +105,6 @@ class ReportCardGenerationcontroller extends Controller
             'total_score' => $totalScore
         ];
 
-
+        return ApiResponseService::success("Student Report Card Generated Sucessfully", $studentDetails, null, 200);
     }
-
-
 }

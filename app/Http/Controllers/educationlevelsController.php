@@ -16,27 +16,27 @@ class EducationLevelsController extends Controller
     {
         $this->educationLevelService = $educationLevelService;
     }
-    public function create_education_levels(EducationLevelRequest $request)
+    public function createEducationLevel(EducationLevelRequest $request)
     {
 
         $educationLevel = $this->educationLevelService->createEducationLevel($request->validated());
         return ApiResponseService::success("Level Created Succefully", $educationLevel, null, 201);
     }
 
-    public function update_education_levels(UpdateEducationLevelRequest $request, string $education_level_id)
+    public function updateEducationLevel(UpdateEducationLevelRequest $request, string $education_level_id)
     {
 
         $updateEducationLevel = $this->educationLevelService->updateEducationLevel($request->validated(), $education_level_id);
         return ApiResponseService::success("Education Level Update Sucessfully", $updateEducationLevel, null, 200);
     }
 
-    public function delete_education_levels( string $education_level_id)
+    public function deleteEducationLevel( string $education_level_id)
     {
         $deleteEducationLevel = $this->educationLevelService->deleteEducationLevel($education_level_id);
         return ApiResponseService::success("Education Level Deleted Sucessfully", $deleteEducationLevel, null, 200);
     }
 
-    public function get_all_education_leves()
+    public function getEducationLevel()
     {
         $educationLevel = $this->educationLevelService->getEducationLevels();
         return ApiResponseService::success("Education Levels Fetched Succefully", $educationLevel, null, 200);

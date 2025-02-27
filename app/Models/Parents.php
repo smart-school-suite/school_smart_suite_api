@@ -24,7 +24,14 @@ class Parents extends Model
         'address',
         'email',
         'phone_one',
-        'language_preference',
+        'phone_two',
+        'occupation',
+        'cultural_background',
+        'preferred_contact_method',
+        'marital_status',
+        'religion',
+        'referral_source',
+        'preferred_language_of_communication',
         'school_branch_id',
         'relationship_to_student',
         'password',
@@ -68,7 +75,7 @@ class Parents extends Model
     }
 
     public function student(): HasMany {
-        return $this->hasMany(Student::class, 'guadian_one_id');
+        return $this->hasMany(Student::class, 'guadian_id');
     }
     public function otps()
     {

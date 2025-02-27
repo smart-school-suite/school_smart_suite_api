@@ -27,7 +27,7 @@ class ExamtimetableSeeder extends Seeder
             Log::info('CSV Header: ', $header);
 
             // Fetch all relevant IDs
-            $schoolBranchId = "d6150672-7255-4b1a-9224-cb8861762548";
+            $schoolBranchId = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
             $exam_timetable = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
@@ -45,9 +45,15 @@ class ExamtimetableSeeder extends Seeder
                 if (!$specialty) {
                     Log::warning('No specialty found for school branch id' . $schoolBranchId);
                 }
+
+                $educationLevel = DB::table('education_levels')->pluck('id')->toArray();
+                $studentBatch = DB::table('student_batch')->where("school_branch_id", $schoolBranchId)->pluck('id')->toArray();
+
                 $randomExamid = Arr::random($exam_id);
                 $randomcourseID = Arr::random($course_id);
                 $randomSpecialtyId = Arr::random($specialty);
+                $randomEducationLevel = Arr::random($educationLevel);
+                $randomStudentBatch = Arr::random($studentBatch);
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 25);
 
@@ -65,7 +71,9 @@ class ExamtimetableSeeder extends Seeder
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp,
                         'exam_id' => $randomExamid,
+                        'level_id' => $randomEducationLevel,
                         'course_id' => $randomcourseID,
+                        'student_batch_id' => $randomStudentBatch,
                         'specialty_id' => $randomSpecialtyId,
                     ];
                 }

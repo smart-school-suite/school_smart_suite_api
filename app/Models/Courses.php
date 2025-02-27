@@ -29,6 +29,9 @@ class Courses extends Model
     public $table = 'courses';
     public $incrementing = 'false';
 
+    public function resitableCourses(): HasMany {
+        return $this->hasMany(Resitablecourses::class, 'course_id');
+    }
     public function student(): BelongsTo {
          return $this->belongsTo(Student::class);
     }

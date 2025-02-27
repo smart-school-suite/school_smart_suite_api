@@ -18,7 +18,7 @@ class SchoolAdminController extends Controller
     {
         $this->schoolAdminService = $schoolAdminService;
     }
-    public function update_school_admin(Request $request,)
+    public function updateSchoolAdmin(Request $request,)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $school_admin_id = $request->route("school_admin_id");
@@ -26,21 +26,21 @@ class SchoolAdminController extends Controller
         return ApiResponseService::success("Admin Updated Sucessfully", $updateSchoolAdmin, null, 200);
     }
 
-    public function delete_school_admin(Request $request, $school_admin_id)
+    public function deleteSchoolAdmin(Request $request, $school_admin_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteSchoolAdmin = $this->schoolAdminService->deleteSchoolAdmin($school_admin_id, $currentSchool);
         return ApiResponseService::success('School Admin Deleled Sucessfully', $deleteSchoolAdmin, null, 200);
     }
 
-    public function get_all_school_admins_scoped(Request $request)
+    public function getSchoolAdmin(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $schoolAdmins = $this->schoolAdminService->getSchoolAdmins($currentSchool);
         return ApiResponseService::success("School Admin Fetched Successfully", $schoolAdmins, null, 200);
     }
 
-    public function school_admin_details(Request $request)
+    public function getSchoolAdminDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $school_admin_id = $request->route('school_admin_id');
@@ -48,7 +48,7 @@ class SchoolAdminController extends Controller
         return ApiResponseService::success("School Admin Details Fetched Successfully", $schoolAdminDetails, null, 200);
     }
 
-    public function create_School_admin_on_sign_up(CreateSchoolAdminSignUpRequest $request)
+    public function createAdminOnSignup(CreateSchoolAdminSignUpRequest $request)
     {
 
         $createSchoolAdmin = $this->schoolAdminService->createSchoolAdmin($request->validated());
