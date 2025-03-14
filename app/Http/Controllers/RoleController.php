@@ -7,6 +7,7 @@ use App\Http\Requests\RoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Http\Requests\AssignRoleRequest;
 use App\Http\Requests\RemoveRoleRequest;
+use Illuminate\Support\Facades\Log;
 use App\Services\ApiResponseService;
 
 class RoleController extends Controller
@@ -39,6 +40,7 @@ class RoleController extends Controller
 
     public function assignRoleSchoolAdmin(AssignRoleRequest $request, string $schoolAdminId){
        $currentSchool = $request->attributes->get('currentSchool');
+       Log::info($currentSchool);
        $assignRole = $this->roleService->assignRolesSchoolAdmin($request->roles, $schoolAdminId, $currentSchool);
        return ApiResponseService::success("Role Assigned To Admin Successfully", $assignRole, null, 200);
     }

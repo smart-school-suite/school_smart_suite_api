@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\StudentResitService;
+use App\Http\Requests\ResitPaymentRequest;
 use App\Services\ApiResponseService;
 
 class StudentResitController extends Controller
@@ -21,10 +22,10 @@ class StudentResitController extends Controller
         return ApiResponseService::success("Resit Entry Updated Successfully", $updateStudentResit, null, 200);
     }
 
-    public function payResit(Request $request, $resit_id)
+    public function payResit(ResitPaymentRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $payStudentResit = $this->studentResitService->payResit($currentSchool, $resit_id);
+        $payStudentResit = $this->studentResitService->payResit($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Resit Paid Successfully", $payStudentResit, null, 200);
     }
 
@@ -64,5 +65,23 @@ class StudentResitController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $getResitTransactions = $this->studentResitService->getResitPaymentTransactions($currentSchool);
         return ApiResponseService::success("Student Resit Payment Transactions Fetched Succefully", $getResitTransactions, null, 200);
+    }
+
+    public function deleteFeePaymentTransaction(Request $request, $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteTransaction = $this->studentResitService->deleteResitFeeTransaction($currentSchool, $transactionId);
+        return ApiResponseService::success("Transaction Deleted Succesfully", $deleteTransaction, null, 200);
+    }
+
+    public function getTransactionDetails(Request $request, $transactionId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $transactionDetails = $this->studentResitService->getTransactionDetails($currentSchool, $transactionId);
+        return ApiResponseService::success("Transaction Details Fetched Succesfully", $transactionDetails, null, 200);
+    }
+
+    public function reverseTransaction(Request $request, $transactionId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $reverseTransaction = $this->studentResitService->reverseResitTransaction($transactionId, $currentSchool);
+        return ApiResponseService::success("Transaction Reversed Succesfully", $reverseTransaction, null, 200);
     }
 }

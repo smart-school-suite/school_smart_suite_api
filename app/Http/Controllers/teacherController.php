@@ -20,9 +20,8 @@ class TeacherController extends Controller
     public function getInstructors(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $teachers = Teacher::where('school_branch_id', $currentSchool->id)
-            ->with('courses', 'instructoravailability');
-        return response()->json(['teacher_data' => $teachers], 201);
+        $getInstructorsBySchool = $this->teacherService->getAllTeachers($currentSchool);
+        return ApiResponseService::success("Teacher Fetched Successfully", $getInstructorsBySchool, null, 200);
     }
 
     public function deleteInstructor(Request $request, $teacher_id)

@@ -4,12 +4,6 @@ namespace App\Http\Controllers\Auth\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
-use App\Models\Schooladmin;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
-use App\Models\OTP;
-use App\Models\PasswordResetToken;
 use App\Http\Requests\OtpRequest;
 use App\Services\Auth\SchoolAdmin\SchoolAdminPasswordResetService;
 use App\Http\Requests\ResetPasswordRequest;
@@ -39,5 +33,6 @@ class PasswordResetController extends Controller
     {
         $password_reset_token = $request->header('PASSWORD_RESET_TOKEN');
         $this->schoolAdminPasswordResetService->changeSchoolAdminPasswordUnAuthenticated($request->validated(), $password_reset_token);
+        return ApiResponseService::success("Password Changed Successfully", null, null, 200);
     }
 }

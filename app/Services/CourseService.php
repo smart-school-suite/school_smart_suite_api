@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Courses;
 use App\Models\Specialty;
+
 class courseService
 {
     // Implement your logic here
@@ -51,8 +52,8 @@ class courseService
     public function getCourses($currentSchool)
     {
         return Courses::where("school_branch_id", $currentSchool->id)
-                        ->with(['department', 'specialty'])
-                        ->get();
+            ->with(['department', 'specialty'])
+            ->get();
     }
 
     public function courseDetails(string $course_id, $currentSchool)
@@ -70,7 +71,7 @@ class courseService
     {
         $specialty = Specialty::find($specialtyId);
         if (!$specialty) {
-           return ApiResponseService::error("Specailty not found", null, 400);
+            return ApiResponseService::error("Specailty not found", null, 400);
         }
 
         $levelId = $specialty->level->id;
@@ -80,6 +81,6 @@ class courseService
             ->where("specialty_id", $specialtyId)
             ->where("level_id", $levelId)
             ->get();
-            return $coursesData;
+        return $coursesData;
     }
 }

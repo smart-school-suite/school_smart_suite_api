@@ -22,7 +22,9 @@ class PayRegistrationFeesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+           'amount' => 'required|integer',
+           'registration_fee_id' => 'required|string|exists:registration_fees,id',
+           'payment_method' => 'required|string',
         ];
     }
 }

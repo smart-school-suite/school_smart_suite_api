@@ -20,30 +20,19 @@ class FeePaymentService
         DB::beginTransaction();
 
         try {
-            $student = Student::where('school_branch_id', $currentSchool->id)->find($data["student_id"]);
+            $studentTuitionFees = TuitionFees::find($data['tuition_id']);
+            $student = Student::where('school_branch_id', $currentSchool->id)->find($studentTuitionFees->student_id);
             if (!$student) {
                 throw new Exception('Student not found', 404);
             }
-
-            $new_fee_payment_instance = new Feepayment();
-            $new_fee_payment_instance->fee_name = $data["fee_name"];
-            $new_fee_payment_instance->amount = $data["amount"];
-            $new_fee_payment_instance->student_id = $data["student_id"];
-            $new_fee_payment_instance->school_branch_id = $currentSchool->id;
-            $new_fee_payment_instance->save();
-            $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
-                ->where("student_id", $data["student_id"])
-                ->where("level_id", $data['level_id'])
-                ->where("specialty_id", $data['specialty_id'])
-                ->first();
             if (!$studentTuitionFees) {
                 throw new Exception("Tuition fees record not found", 404);
             }
-            if ($data['tution_fee_total'] != $data['amount'] && $student->payment_format === "one time") {
+            if ($studentTuitionFees->tution_fee_total != $data['amount'] && $student->payment_format === "one time") {
                 throw new Exception('Student Payment Stucture requires A one time Payment');
             }
 
-            if ($studentTuitionFees->amount_left < $data['amount']) {
+            if ($data['amount'] > $studentTuitionFees->amount_left) {
                 throw new Exception("The fee debt is less than the amount paid", 409);
             }
 
@@ -56,7 +45,7 @@ class FeePaymentService
             $studentTuitionFees->save();
 
             $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
-            TuitionFeeTransactions::created([
+            TuitionFeeTransactions::create([
                 'transaction_id' => $transactionId,
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
@@ -75,40 +64,40 @@ class FeePaymentService
         }
     }
 
-    public function reverseStudentFeesPayment(string $paymentId, $currentSchool)
+    public function reverseFeePaymentTransaction(string $transactionId, $currentSchool)
     {
         DB::beginTransaction();
         try {
-            $feePayment = Feepayment::where('id', $paymentId)
-                ->where('school_branch_id', $currentSchool->id)
-                ->first();
+            $transaction = TuitionFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->with(['tuition'])
+                ->find($transactionId);
 
-            if (!$feePayment) {
+            if (!$transaction) {
                 throw new Exception("Payment record not found", 404);
             }
             $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
-                ->where("student_id", $feePayment->student_id)
-                ->where("level_id", $feePayment->level_id)
-                ->where("specialty_id", $feePayment->specialty_id)
+                ->where("student_id", $transaction->tuition->student_id)
+                ->where("level_id", $transaction->tuition->level_id)
+                ->where("specialty_id", $transaction->tuition->specialty_id)
                 ->first();
 
             if (!$studentTuitionFees) {
                 throw new Exception("Tuition fees record not found", 404);
             }
-            $studentTuitionFees->amount_paid -= $feePayment->amount;
-            $studentTuitionFees->amount_left += $feePayment->amount;
+            $studentTuitionFees->amount_paid -= $transaction->amount;
+            $studentTuitionFees->amount_left += $transaction->amount;
             if ($studentTuitionFees->amount_left > 0) {
-                $studentTuitionFees->status = "pending";
+                $studentTuitionFees->status = "owing";
             } else {
                 $studentTuitionFees->status = "completed";
             }
 
             $studentTuitionFees->save();
-            $feePayment->delete();
+            $transaction->delete();
 
             DB::commit();
 
-            return ApiResponseService::success('Payment successfully reversed', null);
+            return $transaction;
         } catch (QueryException $e) {
             DB::rollBack();
             throw new Exception('Database error: ' . $e->getMessage(), 500);
@@ -126,7 +115,7 @@ class FeePaymentService
             if (!$studentRegistrationExists) {
                 return ApiResponseService::error("Student Registration Fee Appears To Be Deleted", null, 404);
             }
-            if ($studentRegistrationExists->status = 'completed') {
+            if ($studentRegistrationExists->status === 'paid') {
                 return ApiResponseService::error("Registration Fee Already Completed", null, 409);
             }
 
@@ -140,14 +129,49 @@ class FeePaymentService
                 'transaction_id' => $transactionId,
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
-                'registration_fee_id' => $data['registration_fee_id'],
+                'registrationfee_id' => $data['registration_fee_id'],
                 'school_branch_id' => $currentSchool->id,
             ]);
 
-            $studentRegistrationExists->status = 'completed';
+            $studentRegistrationExists->status = 'paid';
             $studentRegistrationExists->save();
             DB::commit();
             return $transaction;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function reverseRegistrationFeePaymentTransaction(string $transactionId, $currentSchool)
+    {
+        DB::beginTransaction();
+        try {
+            $transaction = RegistrationFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->with(['registrationFee'])
+                ->find($transactionId);
+
+            if (!$transaction) {
+                throw new Exception("Transaction  record not found", 404);
+            }
+            $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $transaction->registrationFee->student_id)
+                ->where("level_id", $transaction->registrationFee->level_id)
+                ->where("specialty_id", $transaction->registrationFee->specialty_id)
+                ->where("id", $transaction->registrationfee_id)
+                ->first();
+
+            if (!$registrationFees) {
+                throw new Exception("Registration fees record not found", 404);
+            }
+            $registrationFees->status = 'unpaid';
+            $registrationFees->save();
+            $transaction->delete();
+            DB::commit();
+            return $transaction;
+        } catch (QueryException $e) {
+            DB::rollBack();
+            throw new Exception('Database error: ' . $e->getMessage(), 500);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -179,6 +203,26 @@ class FeePaymentService
         return $findFeePayment;
     }
 
+    public function deleteTuitionFeeTransaction($transactionId, $currentSchool)
+    {
+        $transaction = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)->find($transactionId);
+        if (!$transaction) {
+            return ApiResponseService::error("Transaction Not found", null, 404);
+        }
+        $transaction->delete();
+        return ApiResponseService::success("Tuition Transaction Deleted Successfully", $transaction, null, 200);
+    }
+
+    public function tuitionFeeTransactionDetails($transactionId, $currentSchool)
+    {
+        $transactionDetail = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
+            ->with(['tuition', 'tuition.specialty', 'tuition.level', 'tuition.level'])
+            ->find($transactionId);
+        if (!$transactionDetail) {
+            return ApiResponseService::error("Transaction Not Found", null, 400);
+        }
+        return $transactionDetail;
+    }
     public function deleteFeePayment($fee_id, $currentSchool)
     {
         $findFeePayment = Feepayment::where('school_branch_id', $currentSchool->id)
@@ -201,7 +245,27 @@ class FeePaymentService
 
     public function getTuitionFeeTransactions($currentSchool)
     {
-        $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['tuition', 'tuition.student', 'tuition.specialty'])->get();
+        $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['tuition', 'tuition.student', 'tuition.specialty', 'tuition.level'])->get();
         return $getTuitionFeeTransactions;
+    }
+
+    public function getTuitionFees($currentSchool)
+    {
+        $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)->with(['student', 'specialty', 'level'])->get();
+        return $tuitionFees;
+    }
+
+    public function getRegistrationFees($currentSchool)
+    {
+        return RegistrationFee::where("school_branch_id", $currentSchool->id)->with(['student', 'specialty', 'level'])->get();
+    }
+
+    public function getRegistrationFeeTransactions($currentSchool)
+    {
+
+        $transactions = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
+            ->with(['registrationFee', 'registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
+            ->get();
+        return $transactions;
     }
 }

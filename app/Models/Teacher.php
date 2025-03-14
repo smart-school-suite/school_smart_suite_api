@@ -74,7 +74,7 @@ class Teacher extends Model
         return $this->belongsTo(Schoolbranches::class);
     }
 
-    public function SpecailyPreference(): HasMany
+    public function specialtyPreference(): HasMany
     {
         return $this->hasMany(TeacherSpecailtyPreference::class, 'teacher_id');
     }

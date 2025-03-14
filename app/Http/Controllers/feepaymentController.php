@@ -30,10 +30,16 @@ class FeePaymentController extends Controller
         return ApiResponseService::success("Registration Fees Paid Sucessfully", $payRegistrationFees, null, 201);
     }
 
+    public function getRegistrationFees(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $registrationFees = $this->feePaymentService->getRegistrationFees($currentSchool);
+        return ApiResponseService::success("Registration Fees Fetched Sucessfully", $registrationFees, null, 200);
+    }
+
     public function getFeesPaid(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $feePaid = $this->feePaymentService->getFeesPaid($currentSchool);
-        return ApiResponseService::success('fee payment records fetched successfully', PaidFeesResource::collection($feePaid), null, 200);
+        return ApiResponseService::success('fee payment records fetched successfully', $feePaid, null, 200);
     }
 
     public function updateFeesPaid(UpdateFeePaymentRequest $request, $fee_id){
@@ -48,9 +54,50 @@ class FeePaymentController extends Controller
         return ApiResponseService::success('Record Deleted Sucessfully', $deleteFeePayment, null, 200);
     }
 
-    public function getFeeDebtors(Request $requst){
-        $currentSchool = $requst->attributes->get('currentSchool');
+    public function getFeeDebtors(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
         $feeDebtors = $this->feePaymentService->getFeeDebtors($currentSchool);
         return ApiResponseService::success("Fee Debtors Fetched Succefully", FeeDebtorResource::collection($feeDebtors), null, 200);
+    }
+
+    public function getTuitionFees(Request $request) {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $tuitionFees = $this->feePaymentService->getTuitionFees($currentSchool);
+        return ApiResponseService::success("Tuition Fees Fetched Successfully", $tuitionFees, null, 200);
+    }
+
+    public function getTuitionFeeTransactions(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $transactions = $this->feePaymentService->getTuitionFeeTransactions($currentSchool);
+        return ApiResponseService::success("Tuition Fee Transactions fetched Successfully", $transactions, null, 200);
+    }
+
+    public function reverseTuitionFeeTransaction(Request $request, $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $reverseTransaction = $this->feePaymentService->reverseFeePaymentTransaction($transactionId, $currentSchool);
+        return ApiResponseService::success("Transaction Reversed Successfully", $reverseTransaction, null, 200);
+    }
+
+    public function deleteTuitionFeeTransaction(Request $request, $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $this->feePaymentService->deleteTuitionFeeTransaction($transactionId, $currentSchool);
+    }
+
+    public function getTuitionTransactionFeeDetails(Request $request, $tranctionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $transactionDetail = $this->feePaymentService->tuitionFeeTransactionDetails($tranctionId, $currentSchool);
+        return ApiResponseService::success("Transaction Details Fetched Succesfully", $transactionDetail, null, 200);
+    }
+
+    public function getRegistrationFeeTransactions(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $registrationFeeTransactions = $this->feePaymentService->getRegistrationFeeTransactions($currentSchool);
+        return ApiResponseService::success("Registration Fee Transactions Fetched Succesfully", $registrationFeeTransactions, null, 200);
+    }
+
+    public function reverseRegistrationFeeTransaction(Request $request, $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $reverseTransaction = $this->feePaymentService->reverseRegistrationFeePaymentTransaction($transactionId, $currentSchool);
+        return ApiResponseService::success("Transaction Reversed Sucessfully", $reverseTransaction, null, 200);
     }
 }

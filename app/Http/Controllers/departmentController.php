@@ -50,6 +50,6 @@ class DepartmentController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $department_id = $request->route("department_id");
         $departmentDetails = $this->departmentService->getDepartmentDetails($currentSchool, $department_id);
-        return ApiResponseService::success("Department Details Fetched Sucessfully", DepartmentResource::collection($departmentDetails), null, 200);
+        return ApiResponseService::success("Department Details Fetched Sucessfully", $departmentDetails, null, 200);
     }
 }

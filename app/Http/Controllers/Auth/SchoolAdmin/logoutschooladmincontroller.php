@@ -18,5 +18,6 @@ class LogoutSchoolAdminController extends Controller
     public function logoutSchoolAdmin(Request $request)
     {
         $this->logoutSchoolAdminService->logoutSchoolAdmin($request);
+        return ApiResponseService::success("Logout Successfull", null, null, 200);
     }
 }

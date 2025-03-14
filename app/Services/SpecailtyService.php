@@ -43,8 +43,8 @@ class SpecailtyService
      }
 
      public function getSpecailtyDetails($currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch", $currentSchool->id)->with(['level', 'department'])->find($specialtyId);
-        if($specailtyExists){
+        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->with(['level', 'department'])->find($specialtyId);
+        if(!$specailtyExists){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
         return $specailtyExists;

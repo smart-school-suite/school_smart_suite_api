@@ -20,8 +20,8 @@ class SchoolSubscriptionController extends Controller
     public function subscribe(SchoolSubscriptionRequest $request)
     {
         try {
-            $this->schoolSubcriptionService->subscribe($request->validated());
-            return ApiResponseService::success("School Subcription Was Succesfully", null, null, 200);
+           $schoolSubcription = $this->schoolSubcriptionService->subscribe($request->validated());
+            return ApiResponseService::success("School Subcription Was Succesfully", $schoolSubcription, null, 200);
         } catch (\Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }

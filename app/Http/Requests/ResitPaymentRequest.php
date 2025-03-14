@@ -4,12 +4,12 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RevokePermissionRequest extends FormRequest
+class ResitPaymentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-   // public function authorize(): bool
+    //public function authorize(): bool
     //{
       //  return false;
    // }
@@ -22,7 +22,9 @@ class RevokePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-           'permissions' => 'required|array'
+            'student_resit_id' => 'required|string|exists:student_resit,id',
+            'payment_method' => 'required|string',
+            'amount' => 'required',
         ];
     }
 }

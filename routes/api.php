@@ -8,7 +8,6 @@ use App\Http\Controllers\Auth\Parent\CreateParentController;
 use App\Http\Controllers\Auth\Parent\GetAuthParentController;
 use App\Http\Controllers\Auth\Parent\LoginController;
 use App\Http\Controllers\Auth\Parent\LogoutController;
-use App\Http\Controllers\Auth\Parent\PasswordResetController as ParentResetPasswordController;
 use App\Http\Controllers\Auth\SchoolAdmin\CreatesSchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\GetAuthSchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\LoginSchoolAdminController;
@@ -18,13 +17,11 @@ use App\Http\Controllers\Auth\Student\CreateStudentController;
 use App\Http\Controllers\Auth\Student\GetAuthStudentController;
 use App\Http\Controllers\Auth\Student\LoginStudentController;
 use App\Http\Controllers\Auth\Student\LogoutStudentController;
-use App\Http\Controllers\Auth\Student\ResetPasswordController;
 use App\Http\Controllers\Auth\Teacher\ChangePasswordController as TeacherChangePasswordController;
 use App\Http\Controllers\Auth\Teacher\CreateTeacherController;
 use App\Http\Controllers\Auth\Teacher\GetAuthTeacherController;
 use App\Http\Controllers\Auth\Teacher\LoginTeacherController;
 use App\Http\Controllers\Auth\Teacher\LogoutTeacherController;
-use App\Http\Controllers\Auth\Teacher\ResetPasswordController as TeacherResetPasswordController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CoursesController;
 use App\Http\Controllers\DepartmentController;
@@ -70,7 +67,6 @@ use App\Http\Controllers\ElectionRolesController;
 use App\Http\Controllers\ElectionResultsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\ReportAnalytics\FinancialreportController;
 use App\Http\Controllers\StudentAdditionalFeesController;
 use App\Http\Controllers\FeePaymentScheduleController;
 use App\Http\Controllers\AdditionalFeeCategoryController;
@@ -91,6 +87,9 @@ use App\Http\Controllers\Auth\Parent\PasswordResetController as ResetParentPassw
 use App\Http\Controllers\Auth\Parent\ValidateOtpController as ParentValidateOtpController;
 use App\Http\Controllers\Auth\Teacher\ValidateOtpController as TeacherValidateOtpController;
 use App\Http\Controllers\Auth\Student\ValidateOtpController as StudentValidateOtpController;
+use App\Http\Controllers\Auth\SchoolAdmin\ChangePasswordController as ChangeSchoolAdminPasswordController;
+use App\Http\Controllers\AccessedStudentController;
+use App\Http\Controllers\Stats\FinancialStatsController;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -151,19 +150,23 @@ Route::prefix('api/v1/student')->group(function () {
 
 Route::prefix('api/v1/school-admin')->group(function () {
     Route::post('/login', [LoginSchoolAdminController::class, 'loginShoolAdmin']);
-    Route::post('/verify-otp', [validateOtpController::class, 'requestNewCode']);
-    Route::post("/request-otp", [validateOtpController::class, "verifySchoolAdminOtp"]);
+    Route::post('/verify-otp', [validateOtpController::class, 'verifySchoolAdminOtp']);
+    Route::post("/request-otp", [validateOtpController::class, "requestNewCode"]);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/change-password", [ChangeSchoolAdminPasswordController::class, 'changeSchoolAdminPassword']);
     Route::post('/register/super-admin', [SchoolAdminController::class, 'createAdminOnSignup']);
     Route::middleware('auth:sanctum')->post('/logout', [LogoutSchoolAdminController::class, 'logoutSchoolAdmin']);
     Route::middleware('auth:sanctum')->get('/auth-school-admin', [GetAuthSchoolAdminController::class, 'getAuthSchoolAdmin']);
     Route::middleware([IdentifyTenant::class, LimitSchoolAdmin::class, 'auth:sanctum',])->post('/create-school-admin', [CreatesSchoolAdminController::class, 'createSchoolAdmin']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->put('/update-school-admin/{school_admin_id}', [SchoolAdminController::class, 'updateSchoolAdmin']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->delete('/delete-school-admin/{school_admin_id}', [SchoolAdminController::class, 'deleteSchoolAdmin']);
-    Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/get-all-school-admins', [SchoolAdminController::class, 'getSchoolAdmin']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum', 'permission:view-admin'])->get('/get-all-school-admins', [SchoolAdminController::class, 'getSchoolAdmin']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/school-admin/details/{school_admin_id}', [SchoolAdminController::class, 'getSchoolAdminDetails']);
     Route::post('/resetPassword', [ResetSchoolAdminPasswordController::class, 'resetSchoolAdminPassword']);
     Route::post('/validatePasswordResetOtp', [ResetSchoolAdminPasswordController::class, 'verifySchoolAdminOtp']);
     Route::post('/updatePassword', [ResetSchoolAdminPasswordController::class, 'changeShoolAdminPasswordUnAuthenticated']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post("/uploadProfilePic", [SchoolAdminController::class, 'uploadProfilePicture']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete("/deleteProfilePic", [SchoolAdminController::class, 'deleteProfilePicture']);
+
 });
 
 Route::prefix('api/v1/teacher')->group(function () {
@@ -175,7 +178,7 @@ Route::prefix('api/v1/teacher')->group(function () {
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->delete('/delete-teacher/{teacher_id}', [TeacherController::class, 'deleteInstructor']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->put('/update-teacher/{teacher_id}', [TeacherController::class, 'updateInstructor']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/teacher-details/{teacher_id}', [TeacherController::class, 'getInstructorDetails']);
-    Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/get-teachers-with-relations', [TeacherController::class, 'getInstructors']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/getallInstructors', [TeacherController::class, 'getInstructors']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum',])->get('/get-teacher-timetable/{teacher_id}', [TeacherController::class, 'getTimettableByTeacher']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/add-specailty-preference/{teacherId}', [TeacherController::class, 'assignTeacherSpecailtyPreference']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get("/teacher-specailty-preference/{teacherId}", [TeacherSpecailtyPreferenceController::class, 'getTeacherSpecailtyPreference']);
@@ -201,7 +204,7 @@ Route::prefix('api/v1/roles')->group(function () {
     Route::middleware(['auth:sanctum'])->get('/get-roles', [RoleController::class, 'getRoles']);
     Route::middleware(['auth:sanctum'])->delete('/delete-roles/{roleId}', [RoleController::class, 'updateRole']);
     Route::middleware(['auth:sanctum'])->put('/update-role/{roleId}', [RoleController::class, 'updateRole']);
-    Route::middleware(['auth:sanctum'])->post('/assign-role/{schoolAdminId}', [RoleController::class, 'assignRoleSchoolAdmin']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/assign-role/{schoolAdminId}', [RoleController::class, 'assignRoleSchoolAdmin']);
     Route::middleware(['auth:sanctum'])->post('/remove-role/{schoolAdminId}', [RoleController::class, 'removeRoleSchoolAdmin']);
 });
 
@@ -231,7 +234,7 @@ Route::prefix('api/v1/country')->group(function () {
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/department')->group(function () {
     Route::middleware(['auth:sanctum'])->post('/create-department', [DepartmentController::class, 'createDepartment']);
-    Route::middleware(['auth:sanctum'])->get('/my-departments', [DepartmentController::class, ' getDepartments']);
+    Route::middleware(['auth:sanctum'])->get('/my-departments', [DepartmentController::class, 'getDepartments']);
     Route::middleware(['auth:sanctum'])->get('/department-details/{department_id}', [DepartmentController::class, 'getDepartmentDetails']);
     Route::middleware(['auth:sanctum'])->put('/update-department', [DepartmentController::class, 'updateDepartment']);
     Route::middleware(['auth:sanctum'])->delete('/delete-department/{department_id}', [DepartmentController::class, 'deleteDepartment']);
@@ -254,7 +257,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(fu
     Route::middleware(['auth:sanctum'])->delete('/delete-specialty/{specialty_id}', [SpecialtyController::class, 'deleteSpecialty']);
     Route::middleware(['auth:sanctum'])->put('/update-specialty/{specialty_id}', [SpecialtyController::class, 'updateSpecialty']);
     Route::middleware(['auth:sanctum'])->get('/my-specialties', [SpecialtyController::class, 'get_all_tenant_School_specailty_scoped']);
-    Route::middleware(['auth:sanctum'])->get('/specialty-details/{specialty_id}', [SpecialtyController::class, 'getSpecialtyDetailss']);
+    Route::middleware(['auth:sanctum'])->get('/specialty-details/{specialty_id}', [SpecialtyController::class, 'getSpecialtyDetails']);
     Route::middleware(['auth:sanctum'])->post("/assign-hos", [HosController::class, 'assignHeadOfSpecialty']);
     Route::middleware(['auth:sanctum'])->get('/get-assigned-hos', [HosController::class, 'getHeadOfSpecialty']);
     Route::middleware(['auth:sanctum'])->delete("/remove-hos", [HosController::class, 'removeHeadOfSpecialty']);
@@ -408,13 +411,20 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/fee-payment')->group(
     Route::middleware(['auth:sanctum'])->put('/update-payment/{fee_id}', [FeePaymentController::class, 'updateFeesPaid']);
     Route::middleware(['auth:sanctum'])->delete('/delete-payment-record/{fee_id}', [FeePaymentController::class, 'deleteFeePaid']);
     Route::middleware(['auth:sanctum'])->get('/indebted-students', [FeePaymentController::class, 'getFeeDebtors']);
-    Route::middleware(['aut:sanctum'])->post('/payRegistrationFee', [FeePaymentController::class, 'payRegistrationFees']);
+    Route::middleware(['auth:sanctum'])->post('/payRegistrationFee', [FeePaymentController::class, 'payRegistrationFees']);
+    Route::middleware(['auth:sanctum'])->get('/getTuitionFees', [FeePaymentController::class, 'getTuitionFees']);
+    Route::middleware(['auth:sanctum'])->get("/getRegistrationFees", [FeePaymentController::class, 'getRegistrationFees']);
     Route::middleware(['auth:sanctum'])->get("/getTransactions", [FeePaymentController::class, 'getTuitionFeeTransactions']);
+    Route::middleware(['auth:sanctum'])->delete('/reverseTuitionFeeTransaction/{transactionId}', [FeePaymentController::class, 'reverseTuitionFeeTransaction']);
+    Route::middleware(['auth:sanctum'])->delete('/deleteTransaction/{transactionId}', [FeePaymentController::class, 'deleteTuitionFeeTransaction']);
+    Route::middleware(['auth:sanctum'])->get("/getTuitionFeeTransactionDetails/{transactionId}", [FeePaymentController::class, 'getTuitionTransactionFeeDetails']);
+    Route::middleware(['auth:sanctum'])->get('/getRegistrationFeeTransactions', [FeePaymentController::class, 'getRegistrationFeeTransactions']);
+    Route::middleware(['auth:sanctum'])->delete('/reverseRegistrationFeeTransaction/{transactionId}', [FeePaymentController::class, 'reverseRegistrationFeeTransaction']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->group(function () {
     Route::middleware(['auth:sanctum'])->get('/get-student-resits/{student_id}', [StudentResitController::class, 'getResitByStudent']);
-    Route::middleware(['auth:sanctum'])->put('/pay-for-resit/{resit_id}', [StudentResitController::class, 'payResit']);
+    Route::middleware(['auth:sanctum'])->post('/pay-for-resit', [StudentResitController::class, 'payResit']);
     Route::middleware(['auth:sanctum'])->put('/update-resit-status/{resit_id}', [StudentResitController::class, 'update_exam_status']);
     Route::middleware(['auth:sanctum'])->put('/update-resit/{resit_id}', [StudentResitController::class, 'updateResit']);
     Route::middleware(['auth:sanctum'])->delete('/delete-resit/{resit_id}', [StudentResitController::class, 'deleteResit']);
@@ -423,7 +433,11 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->grou
     Route::middleware(['auth:sanctum'])->get('/get-specialty-resit/{specialty_id}/{exam_id}', [ResitTimeTableController::class, 'getResitsBySpecialty']);
     Route::middleware(['auth:sanctum'])->get('/generate-resit-timetable/{exam_id}', [ResitTimeTableController::class, '']);
     Route::middleware(['auth:sanctum'])->get("/details/{resit_id}", [StudentResitController::class, 'getResitDetails']);
-    Route::middleware(['auth:sanctum'])->get("/getTransactions", [StudentController::class, 'getResitPaymentTransactions']);
+    Route::middleware(['auth:sanctum'])->get("/getTransactions", [StudentResitController::class, 'getResitPaymentTransactions']);
+    Route::middleware(['auth:sanctum'])->delete('/deleteTransaction/{transactionId}', [StudentResitController::class, 'deleteFeePaymentTransaction']);
+    Route::middleware(['auth:sanctum'])->get('/transactionDetails/{transactionId}', [StudentResitController::class, 'getTransactionDetails']);
+    Route::middleware(['auth:sanctum'])->delete('/reverseTransaction/{transactionId}', [StudentResitController::class, 'reverseTransaction']);
+
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/elections')->group(function () {
@@ -458,7 +472,10 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/addit
     Route::get('/getbyStudent/{studentId}', [StudentAdditionalFeesController::class, 'getStudentAdditionalFees']);
     Route::get('/getAll', [StudentAdditionalFeesController::class, 'getAdditionalFees']);
     Route::post('/payFee', [StudentAdditionalFeesController::class, 'payAdditionalFees']);
-    Route::post('/getTransactions', [StudentAdditionalFeesController::class, 'getAdditionalFeesTransactions']);
+    Route::get('/getTransactions', [StudentAdditionalFeesController::class, 'getAdditionalFeesTransactions']);
+    Route::delete('/deleteTransaction/{transactionId}', [StudentAdditionalFeesController::class, 'deleteTransaction']);
+    Route::delete('/reverseTransaction/{transactionId}', [StudentAdditionalFeesController::class, 'reverseAdditionalFeesTransaction']);
+    Route::get("/getTransactionDetails/{transactionId}", [StudentAdditionalFeesController::class, 'getTransactionDetails']);
 });
 
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/feepayment-schedule')->group(function () {
@@ -477,6 +494,11 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/fee-w
     Route::get('/getAllFeeWaivers', [FeeWaiverController::class, 'getAllFeeWaiver']);
 });
 
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/accessed-student')->group( function () {
+   Route::get('/getAccessedStudent', [AccessedStudentController::class, 'getAccessedStudent']);
+   Route::delete('/deleteAccessedStudent/{accessedStudentId}', [AccessedStudentController::class, 'deleteAccessedStudent']);
+});
+
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/additional-fee-category')->group(function () {
     Route::post('/createCategory', [AdditionalFeeCategoryController::class, 'createAddtionalFeeCategory']);
     Route::get('/getCategory', [AdditionalFeeCategoryController::class, 'getAdditionalFeeCategory']);
@@ -486,5 +508,5 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/addit
 
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/stats')->group(function () {
-    Route::middleware(['auth:sanctum'])->get("/get/financial-stats", [FinancialreportController::class, 'getFinanacialStats']);
+    Route::middleware(['auth:sanctum'])->get("/get/financial-stats", [FinancialStatsController::class, 'getFinanacialStats']);
 });

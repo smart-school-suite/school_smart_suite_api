@@ -32,7 +32,7 @@ class StudentAdditionalFeesController extends Controller
 
     public function deleteStudentAdditionalFees(Request $request, string $feeId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteAdditionalFees = $this->studentAdditionalFeeService->deleteStudentAdditionalFees($currentSchool, $feeId);
+        $deleteAdditionalFees = $this->studentAdditionalFeeService->deleteStudentAdditionalFees( $feeId,$currentSchool);
         return ApiResponseService::success("Student Additional Fee Deleted Sucessfully", $deleteAdditionalFees, null, 200);
     }
 
@@ -60,4 +60,21 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Student Additional Fees Transactions Fetched Sucessfully", $getAdditionalFeesTransactions, null, 200);
     }
 
+    public function reverseAdditionalFeesTransaction(Request $request, string $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $reverseTransaction = $this->studentAdditionalFeeService->reverseTransaction($transactionId, $currentSchool);
+        return ApiResponseService::success("Transaction Reversed Successfully", $reverseTransaction, null, 200);
+    }
+
+    public function deleteTransaction(Request $request, string $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteTransaction = $this->studentAdditionalFeeService->deleteTransaction($transactionId, $currentSchool);
+        return ApiResponseService::success("Transaction Deleted Successfully", $deleteTransaction, null, 200);
+    }
+
+    public function getTransactionDetails(Request $request, string $transactionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $transactionDetails = $this->studentAdditionalFeeService->getTransactionDetail($transactionId, $currentSchool);
+        return ApiResponseService::success("Transaction Details Fetched Succesfully", $transactionDetails, null, 200);
+    }
 }

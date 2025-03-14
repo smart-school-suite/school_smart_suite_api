@@ -72,9 +72,10 @@ class TeacherService
     }
 
     public function getAllTeachers($currentSchool){
-        $teacher_data = Teacher::where("school_branch_id", $currentSchool->id)
+        $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
+                           ->with(['specialtyPreference'])
                            ->get();
-        return $teacher_data;
+        return $getInstructors;
     }
 
     public function addSpecailtyPreference(array $specailtyData, $currentSchool, $teacherId){

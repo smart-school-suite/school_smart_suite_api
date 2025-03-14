@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Department;
-use Spatie\FlareClient\Api;
 
 class DepartmentService
 {

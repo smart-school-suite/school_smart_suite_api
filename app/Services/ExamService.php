@@ -60,7 +60,7 @@ class ExamService
     public function examDetails($currentSchool, string $exam_id)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)
-            ->with(['specialty', 'examtype', 'semester', 'level',])
+            ->with(['specialty', 'examtype', 'schoolSemester', 'level',])
             ->find($exam_id);
         if (!$exam) {
             return ApiResponseService::error("Exam not found", null, 404);

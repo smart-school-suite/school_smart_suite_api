@@ -57,7 +57,7 @@ class SchoolAdminPasswordResetService
         PasswordResetToken::create([
             'token' => $password_reset_token,
             'actorable_id' => $otpRecord->actorable_id,
-            'actorable_type' => 'App\Models\Parents',
+            'actorable_type' => 'App\Models\Schooladmin',
             'expires_at' => Carbon::now()->addDay(),
         ]);
         $otpRecord->delete();
@@ -84,6 +84,6 @@ class SchoolAdminPasswordResetService
 
         $passwordResetToken->delete();
 
-        return ApiResponseService::success("Password Changed Successfully", null, null, 200);
+
     }
 }

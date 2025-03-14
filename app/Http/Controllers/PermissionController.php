@@ -52,7 +52,7 @@ class PermissionController extends Controller
 
     public function revokePermission(RevokePermissionRequest $request, string $schoolAdminId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $revokePermission = $this->permissionService->revokePermission($request->permission, $schoolAdminId, $currentSchool);
+        $revokePermission = $this->permissionService->revokePermission($request->permissions, $schoolAdminId, $currentSchool);
         return ApiResponseService::success("School Admin Permission Revoked Succesfully", $revokePermission, null, 200);
     }
 

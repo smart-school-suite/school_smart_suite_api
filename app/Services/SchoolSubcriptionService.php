@@ -16,8 +16,6 @@ class SchoolSubcriptionService
     public function subscribe(array $data)
     {
         try {
-
-
             $rateCard = RatesCard::findOrFail($data["rates_card_id"]);
             $totalCost = ($data["billing_frequency"] === 'monthly')
                 ? $rateCard->monthly_rate_per_student * $data["num_students"]
@@ -28,8 +26,8 @@ class SchoolSubcriptionService
                 ? $subscriptionStartDate->copy()->addMonth()
                 : $subscriptionStartDate->copy()->addYear();
 
-
-            DB::transaction(function () use ($data, $subscriptionStartDate, $subscriptionEndDate, $totalCost, $rateCard) {
+                $apiKey = Str::uuid();
+            DB::transaction(function () use ($data, $apiKey, $subscriptionStartDate, $subscriptionEndDate, $totalCost, $rateCard) {
 
                 $subscription = SchoolSubscription::create([
                     'school_branch_id' => $data["school_branch_id"],
@@ -48,7 +46,7 @@ class SchoolSubcriptionService
 
                 SchoolBranchApiKey::create([
                     'school_branch_id' => $data["school_branch_id"],
-                    'api_key' => Str::uuid(),
+                    'api_key' => $apiKey,
                 ]);
                 SubscriptionPayment::create([
                     'school_subscription_id' => $subscription->id,
@@ -61,6 +59,7 @@ class SchoolSubcriptionService
                     'description' => 'Subscription payment for school ID: ' . $data["school_branch_id"]
                 ]);
             });
+            return $apiKey;
         } catch (\Exception $e) {
             throw $e;
         }

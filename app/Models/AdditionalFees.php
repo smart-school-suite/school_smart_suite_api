@@ -27,7 +27,7 @@ class AdditionalFees extends Model
 
     public $table = 'additional_fees';
 
-    public function additionalFeeTranction() : HasMany {
+    public function additionalFeeTranctions() : HasMany {
          return $this->hasMany(AdditionalFeeTransactions::class, 'fee_id');
     }
     public function feeCategory() : BelongsTo {

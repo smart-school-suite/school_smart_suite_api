@@ -57,7 +57,7 @@ class PermissionService
         return $givePermission;
     }
 
-    public function revokePermission(string $permissions,  string $userId, $currentSchool){
+    public function revokePermission(array $permissions,  string $userId, $currentSchool){
         $schoolAdminExist = Schooladmin::where("school_branch_id", $currentSchool->id)->find($userId);
         if(!$schoolAdminExist){
             return ApiResponseService::error("School Admin Not Found", null, 404);

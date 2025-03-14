@@ -15,6 +15,7 @@ class DepartmentResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'department_name' => $this->department_name,
             'description' => $this->description,
             'updated_at' => $this->updated_at,

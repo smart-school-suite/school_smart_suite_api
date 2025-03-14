@@ -35,7 +35,7 @@ class StudentResitService
     {
         $getStudentResits = Studentresit::where('school_branch_id', $currentSchool->id)
             ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
-            ->get();
+            ->paginate(100);
         return $getStudentResits;
     }
 
@@ -86,15 +86,69 @@ class StudentResitService
             DB::commit();
 
             return $studentResit;
-
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
 
-    public function getResitPaymentTransactions($currentSchool){
-        $getResitPaymentTransactions = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['studentResit', 'studentResit.student', 'studentResit.specialty'])->get();
+    public function getResitPaymentTransactions($currentSchool)
+    {
+        $getResitPaymentTransactions = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level'])->get();
         return $getResitPaymentTransactions;
+    }
+
+    public function deleteResitFeeTransaction($currentSchool, string $transactionId)
+    {
+        $resitTransaction = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->find($transactionId);
+        if (!$resitTransaction) {
+            return ApiResponseService::error("Resit Transaction Not Found", null, 200);
+        }
+        $resitTransaction->delete();
+        return $resitTransaction;
+    }
+
+    public function getTransactionDetails($currentSchool, string $transactionId)
+    {
+        return ResitFeeTransactions::where("school_branch_id", $currentSchool->id)
+            ->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level'])
+            ->find($transactionId);
+    }
+
+    public function reverseResitTransaction($transactionId, $currentSchool)
+    {
+        DB::beginTransaction();
+        try {
+
+            $transaction = ResitFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->find($transactionId);
+
+            if (!$transaction) {
+                return ApiResponseService::error("Transaction Not found", null, 404);
+            }
+
+            $studentResit = Studentresit::where('school_branch_id', $currentSchool->id)
+                ->find($transaction->resitfee_id);
+
+            if (!$studentResit) {
+                return ApiResponseService::error("Student Resit Not found", null, 404);
+            }
+
+            if ($studentResit->paid_status !== "Paid") {
+                return ApiResponseService::error("The resit fee is not currently marked as paid", null, 409);
+            }
+
+            $transaction->delete();
+
+            $studentResit->paid_status = "unpaid";
+            $studentResit->save();
+
+            DB::commit();
+
+            return $transaction;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

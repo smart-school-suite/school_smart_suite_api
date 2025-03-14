@@ -79,6 +79,9 @@ class Student extends Model
         });
     }
 
+    public function accessedStudent(): HasMany {
+         return $this->hasMany(AccessedStudent::class);
+    }
     public function passwordResetTokens()
     {
         return $this->morphMany(PasswordResetToken::class, 'actorable');

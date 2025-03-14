@@ -12,7 +12,7 @@ class RegistrationFeeTransactions extends Model
     use HasFactory;
 
     protected $fillable = [
-        'registration_fee_id',
+        'registrationfee_id',
         'school_branch_id',
         'amount',
         'payment_method',

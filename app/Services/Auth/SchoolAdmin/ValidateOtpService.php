@@ -5,6 +5,7 @@ use App\Models\OTP;
 use App\Services\ApiResponseService;
 use Carbon\Carbon;
 use App\Models\Schooladmin;
+use App\Models\SchoolBranchApiKey;
 use Illuminate\Support\Str;
 class ValidateOtpService
 {
@@ -27,12 +28,13 @@ class ValidateOtpService
         $user = Schooladmin::where('id', $otpRecord->actorable_id)->first();
 
         $token = $user->createToken('schoolAdminToken')->plainTextToken;
+        $apiKey = SchoolBranchApiKey::where("school_branch_id", $user->school_branch_id)->first();
 
         $otpRecord->update(['used' => true]);
 
         $otpRecord->delete();
 
-        return $token;
+        return ['authToken' =>  $token, 'apiKey' => $apiKey->api_key];
     }
 
 
@@ -42,7 +44,7 @@ class ValidateOtpService
         $otpRecord = OTP::where('token_header', $otpTokenHeader)->first();
 
         if (!$otpRecord) {
-            return response()->json(['message' => 'Invalid OTP'], 400);
+            return ApiResponseService::error("Expired Otp token", null, 400);
         }
 
         $newOtp = Str::random(6);

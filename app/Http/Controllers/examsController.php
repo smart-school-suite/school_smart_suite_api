@@ -49,7 +49,7 @@ class ExamsController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $examDetails = $this->examService->examDetails($currentSchool, $exam_id,);
-        return ApiResponseService::success('Exam Details Fetched Sucessfully', ExamResource::collection($examDetails), null, 200);
+        return ApiResponseService::success('Exam Details Fetched Sucessfully', $examDetails, null, 200);
     }
 
     public function associateWeightedMarkWithLetterGrades(Request $request, string $exam_id)

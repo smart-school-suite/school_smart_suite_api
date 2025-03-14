@@ -43,7 +43,7 @@ class ExpensesController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $expensesData = $this->schoolExpensesService->getExpenses($currentSchool);
-        return ApiResponseService::success('Expenses data fetched Succefully', ExpensesResource::collection($expensesData), null, 200);
+        return ApiResponseService::success('Expenses data fetched Succefully', $expensesData, null, 200);
     }
 
     public function getExpensesDetails(Request $request)
@@ -51,6 +51,6 @@ class ExpensesController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $expense_id = $request->route("expense_id");
         $expensesDetails = $this->schoolExpensesService->getExpensesDetails($expense_id, $currentSchool);
-        return ApiResponseService::success("Expenses details fetched sucessfully", ExpensesResource::collection($expensesDetails), null, 200);
+        return ApiResponseService::success("Expenses details fetched sucessfully", $expensesDetails, null, 200);
     }
 }
