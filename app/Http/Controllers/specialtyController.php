@@ -8,6 +8,7 @@ use App\Http\Requests\SpecailtyRequest;
 use App\Http\Requests\UpdateSpecailtyRequest;
 use App\Services\ApiResponseService;
 use App\Services\SpecailtyService;
+use App\Http\Resources\SpecialtyResource;
 use Illuminate\Http\Request;
 
 class SpecialtyController extends Controller
@@ -35,42 +36,17 @@ class SpecialtyController extends Controller
     public function updateSpecialty(UpdateSpecailtyRequest $request, $specialty_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateSpecailty = $this->specailtyService->updateSpecialty( $request->validated(), $currentSchool, $specialty_id, );
+        $updateSpecailty = $this->specailtyService->updateSpecialty( $request->validated(), $currentSchool, $specialty_id);
         return ApiResponseService::success("Specailty Updated Sucessfully", $updateSpecailty, null,200);
     }
 
 
-    public function get_all_school_specialty()
-    {
-        $specialty_data = Specialty::all();
-        if ($specialty_data->isEmpty()) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'No records found'
-            ], 409);
-        }
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'specialties fetched succesfully',
-            'specialty' => $specialty_data
-        ], 200);
-    }
     //define resoource
-    public function get_all_tenant_School_specailty_scoped(Request $request)
+    public function getSpecialtiesBySchoolBranch(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getSpecailty = $this->specailtyService->getSpecailties($currentSchool);
-      //  foreach ($specialty_data as $specialty) {
-           // $result[] = [
-             //   'id' => $specialty->id,
-               // 'level_name' => $specialty->level->name,
-              //  'level_number' => $specialty->level->level,
-              //  'specialty_name' => $specialty->specialty_name,
-                //'registration_fee' => $specialty->registration_fee,
-                //'school_fee' => $specialty->school_fee
-           // ];
-       // }
-       return ApiResponseService::success("Specailties Fetched Succefully", $getSpecailty, null,200);
+        $getSpecialties = $this->specailtyService->getSpecailties($currentSchool);
+        return ApiResponseService::success("Specialty Data Fetched Successfully",  SpecialtyResource::collection($getSpecialties), null, 200);
 
     }
 
@@ -81,5 +57,15 @@ class SpecialtyController extends Controller
         $specialty_id = $request->route('specialty_id');
         $specailtyDetails = $this->specailtyService->getSpecailtyDetails($currentSchool, $specialty_id);
         return ApiResponseService::success("specialty detials fetched succefully", $specailtyDetails, null,200);
+    }
+
+    public function activateSpecialty($specialtyId){
+        $activateSpecialty = $this->specailtyService->activateSpecialty($specialtyId);
+        return ApiResponseService::success("Specialty Activated Successfully", $activateSpecialty, null, 200);
+    }
+
+    public function deactivateSpecialty($specialtyId){
+        $deactivateSpecialty = $this->specailtyService->deactivateSpecialty($specialtyId);
+        return ApiResponseService::success("Specialty Deactivated Successfully", $deactivateSpecialty, null, 200);
     }
 }

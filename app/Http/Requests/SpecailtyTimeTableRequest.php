@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\TimetableRule;
 
 class SpecailtyTimeTableRequest extends FormRequest
 {
@@ -22,16 +23,16 @@ class SpecailtyTimeTableRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'specialty_timetable' => 'required|array',
-            'specialty_timetable.*.teacher_id' => 'required|string',
-            'specialty_timetable.*.course_id' => 'required|exists:courses,id',
-            'specialty_timetable.*.day_of_week' => 'required|string',
-            'specialty_timetable.*.start_time' => 'required|date_format:H:i:s',
-            'specialty_timetable.*.specialty_id' => 'required|string',
-            'specialty_timetable.*.level_id' => 'required|string',
-            'specialty_timetable.*.semester_id' => 'required|string',
-            'specialty_timetable.*.student_batch_id' => 'required|string',
-            'specialty_timetable.*.end_time' => 'required|date_format:H:i:s|after:start_time',
+            'scheduleEntries' => ['required', 'array', new TimetableRule($this->scheduleEntries)],
+            'scheduleEntries.*.teacher_id' => 'required|string',
+            'scheduleEntries.*.course_id' => 'required|exists:courses,id',
+            'scheduleEntries.*.day_of_week' => 'required|string',
+            'scheduleEntries.*.start_time' => 'required|date_format:H:i',
+            'scheduleEntries.*.specialty_id' => 'required|string',
+            'scheduleEntries.*.level_id' => 'required|string',
+            'scheduleEntries.*.semester_id' => 'required|string',
+            'scheduleEntries.*.student_batch_id' => 'required|string',
+            'scheduleEntries.*.end_time' => 'required|date_format:H:i|after:start_time',
         ];
     }
 }

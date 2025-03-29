@@ -22,6 +22,7 @@ class ExamService
         $new_examdata_instance->semester_id = $data["semester_id"];
         $new_examdata_instance->school_year = $data["school_year"];
         $new_examdata_instance->specialty_id = $data["specialty_id"];
+        $new_examdata_instance->student_batch_id = $data["student_batch_id"];
         $new_examdata_instance->save();
         return $new_examdata_instance;
     }
@@ -52,7 +53,7 @@ class ExamService
     public function getExams($currentSchool)
     {
         $exams = Exams::where('school_branch_id', $currentSchool->id)
-            ->with(['examtype', 'schoolSemester.semester', 'specialty', 'level'])
+            ->with(['examtype', 'semester', 'specialty', 'level', 'studentBatch'])
             ->get();
         return $exams;
     }
@@ -60,7 +61,7 @@ class ExamService
     public function examDetails($currentSchool, string $exam_id)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)
-            ->with(['specialty', 'examtype', 'schoolSemester', 'level',])
+            ->with(['examtype', 'semester', 'specialty', 'level', 'studentBatch'])
             ->find($exam_id);
         if (!$exam) {
             return ApiResponseService::error("Exam not found", null, 404);

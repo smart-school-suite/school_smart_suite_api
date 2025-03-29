@@ -17,7 +17,9 @@ class ExamResource extends JsonResource
         return [
             'id'=> $this->id,
             'exam_name' => $this->examtype->exam_name,
-            'semester_name' => $this->schoolSemester->semester->name ?? null,
+            'exam_type' => $this->examtype->type,
+            'semester_name' => $this->semester->name ?? null,
+            "batch_title" => $this->studentBatch->name ?? null,
             'specailty_name' => $this->specialty->specialty_name ?? null,
             'level_name' => $this->level->name ?? null,
             'start_date' => $this->start_date,

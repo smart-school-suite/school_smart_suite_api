@@ -27,7 +27,7 @@ class courseService
 
     public function deleteCourse(string $course_id, $currentSchool)
     {
-        $course = Courses::where("school_branch_id", $currentSchool)->find($course_id);
+        $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
         if (!$course) {
             return ApiResponseService::error('Course Not found', null, 404);
         }
@@ -37,7 +37,7 @@ class courseService
 
     public function updateCourse(string $course_id, array $data, $currentSchool)
     {
-        $course = Courses::where("school_branch_id", $currentSchool)->find($course_id);
+        $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
         if (!$course) {
             return ApiResponseService::error('Course Not found', null, 404);
         }
@@ -52,18 +52,18 @@ class courseService
     public function getCourses($currentSchool)
     {
         return Courses::where("school_branch_id", $currentSchool->id)
-            ->with(['department', 'specialty'])
+            ->with(['department', 'specialty', 'semester', 'level'])
             ->get();
     }
 
     public function courseDetails(string $course_id, $currentSchool)
     {
-        $course = Courses::where('school_branch_id', $currentSchool)->find($course_id);
-
-        if (!$course) {
-            return ApiResponseService::error("Course Not found", null, 404);
+        $course = Courses::where('school_branch_id', $currentSchool->id)
+        ->with(['department', 'specialty', 'semester', 'level'])
+        ->find($course_id);
+        if(!$course){
+            return ApiResponseService::error("Course not found please try again", null, 404);
         }
-
         return $course;
     }
 
@@ -82,5 +82,25 @@ class courseService
             ->where("level_id", $levelId)
             ->get();
         return $coursesData;
+    }
+
+    public function deactivateCourse($currentSchool, string $courseId){
+        $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
+        if(!$course){
+            return ApiResponseService::success("Course not found", null, null, 400);
+        }
+        $course->status = "inactive";
+        $course->save();
+        return $course;
+    }
+
+    public function activateCouse($currentSchool, string $courseId){
+        $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
+        if(!$course){
+            return ApiResponseService::success("Course not found", null, null, 400);
+        }
+        $course->status = "active";
+        $course->save();
+        return $course;
     }
 }

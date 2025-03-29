@@ -18,7 +18,10 @@ class SchoolSemester extends Model
         'school_year_end',
         'semester_id',
         'specialty_id',
-        'school_branch_id'
+        'status',
+        'timetable_published',
+        'school_branch_id',
+        'student_batch_id'
     ];
 
     public $incrementing = 'false';
@@ -31,6 +34,10 @@ class SchoolSemester extends Model
 
     public function semester(): BelongsTo {
         return $this->belongsTo(Semester::class, 'semester_id');
+    }
+
+    public function studentBatch(): BelongsTo {
+         return $this->belongsTo(Studentbatch::class, 'student_batch_id');
     }
 
     public function schoolBranch(): BelongsTo {

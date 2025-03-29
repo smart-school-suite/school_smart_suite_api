@@ -39,4 +39,10 @@ class SchoolSemesterController extends Controller
         return ApiResponseService::success("School Semester Fetched Sucessfully", $getSchoolSemesters, null, 200);
     }
 
+    public function getSchoolSemesterDetails(Request $request, $schoolSemesterId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $getSchoolSemesterDetails = $this->schoolSemesterService->getSchoolSemesterDetail($currentSchool, $schoolSemesterId);
+        return ApiResponseService::success("School Semester Details Fetched Successfully", $getSchoolSemesterDetails, null, 200);
+    }
+
 }

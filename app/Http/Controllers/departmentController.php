@@ -52,4 +52,14 @@ class DepartmentController extends Controller
         $departmentDetails = $this->departmentService->getDepartmentDetails($currentSchool, $department_id);
         return ApiResponseService::success("Department Details Fetched Sucessfully", $departmentDetails, null, 200);
     }
+
+    public function deactivateDepartment($departmentId){
+        $deactivateDepartment = $this->departmentService->deactivateDepartment($departmentId);
+        return ApiResponseService::success("Department Deactivated Sucessfully", $deactivateDepartment, null, 200);
+    }
+
+    public function activateDepartment($departmentId){
+        $activateDepartment = $this->departmentService->activateDepartment($departmentId);
+        return ApiResponseService::success("Department Activated Sucessfully", $activateDepartment, null, 200);
+    }
 }

@@ -52,4 +52,14 @@ class HodService
         $getHods = HOD::where("school_branch_id", $currentSchool->id)->with(['hodable', 'department'])->get();
         return $getHods;
     }
+
+    public function getAllHod($currentSchool){
+        $getHods = HOD::where("school_branch_id", $currentSchool->id)->with(['hodable', 'department'])->get();
+        return $getHods;
+    }
+
+    public function getHodDetails($hodId){
+        $getHodDetails = HOD::with(['hodable', 'department'])->find($hodId);
+        return $getHodDetails;
+    }
 }

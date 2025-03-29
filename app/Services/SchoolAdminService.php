@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class SchoolAdminService
 {
@@ -16,7 +15,7 @@ class SchoolAdminService
     public function updateSchoolAdmin(array $data, $schoolAdminId, $currentSchool)
     {
         $SchoolAdminExists = Schooladmin::where("school_branch_id", $currentSchool->id)->find($schoolAdminId);
-        if ($SchoolAdminExists) {
+        if (!$SchoolAdminExists) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $filterData = array_filter($data);
@@ -109,5 +108,19 @@ class SchoolAdminService
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    public function deactivateAccount(string $schoolAdminId){
+        $schoolAdmin = Schooladmin::findOrFail($schoolAdminId);
+        $schoolAdmin->status = 'inactive';
+        $schoolAdmin->save();
+        return ApiResponseService::success("Account successfully suspended", $schoolAdmin, null, 200);
+    }
+
+    public function activateAccount(string $schoolAdminId){
+        $schoolAdmin = Schooladmin::findOrFail($schoolAdminId);
+        $schoolAdmin->status = "inactive";
+        $schoolAdmin->save();
+        return ApiResponseService::success("Account successfully activated", $schoolAdmin, null, 200);
     }
 }

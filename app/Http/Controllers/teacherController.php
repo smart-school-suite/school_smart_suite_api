@@ -6,6 +6,7 @@ use App\Models\Teacher;
 use App\Services\ApiResponseService;
 use App\Http\Requests\TeacherSpecailtyPreferenceRequest;
 use App\Services\TeacherService;
+use App\Http\Requests\UpdateTeacherRequest;
 use Illuminate\Http\Request;
 
 class TeacherController extends Controller
@@ -30,7 +31,7 @@ class TeacherController extends Controller
         return ApiResponseService::success("Teacher Deleted Sucessfully", $deleteTeacher, null, 200);
     }
 
-    public function updateInstructor(Request $request, $teacher_id)
+    public function updateInstructor(UpdateTeacherRequest $request, $teacher_id)
     {
         $updateTeacher = $this->teacherService->updateTeacher($request->all(), $teacher_id);
         return ApiResponseService::success("Teacher Updated Sucessfully", $updateTeacher, null, 200);
@@ -55,5 +56,15 @@ class TeacherController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $assignTeacherSpecailtyPreference = $this->teacherService->addSpecailtyPreference($request->specailties_preference, $currentSchool, $teacherId);
         return ApiResponseService::success("Teacher Specailty Preference Added Sucessfully", $assignTeacherSpecailtyPreference, null, 200);
+    }
+
+    public function deactivateTeacher($teacherId){
+        $deactivateTeacher = $this->teacherService->deactivateTeacher($teacherId);
+        return ApiResponseService::success("Teacher Account Deactivated Successfully", $deactivateTeacher, null, 200);
+    }
+
+    public function activateTeacher($teacherId){
+        $activateTeacher = $this->teacherService->activateTeacher($teacherId);
+        return ApiResponseService::success("Teacher Account Activated Successfully", $activateTeacher, null, 200);
     }
 }

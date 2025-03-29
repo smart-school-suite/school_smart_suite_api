@@ -90,4 +90,18 @@ class TeacherService
          }
          return $result;
     }
+
+    public function deactivateTeacher($teacherId){
+        $teacher = Teacher::findOrFail($teacherId);
+        $teacher->status = "inactive";
+        $teacher->save();
+        return $teacher;
+    }
+
+    public function activateTeacher($teacherId){
+        $teacher = Teacher::findOrFail($teacherId);
+        $teacher->status = "active";
+        $teacher->save();
+        return $teacher;
+    }
 }

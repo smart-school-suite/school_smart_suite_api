@@ -27,7 +27,6 @@ return new class extends Migration
             $table->string('emergency_contact_phone')->nullable();
             $table->date('last_performance_review')->nullable();
             $table->string('work_location'); // E.g., Home, Main Office, Branch Location
-            $table->string('position'); // E.g., Manager, Developer, Coordinator
             $table->string('highest_qualification')->nullable(); // e.g., Bachelor's, Master's
             $table->string('field_of_study')->nullable(); // e.g., Computer Science, Business Administration
             $table->date('last_login_at')->nullable();
@@ -35,10 +34,13 @@ return new class extends Migration
             $table->boolean('leave')->default(false);
             $table->boolean('holiday')->default(false);
             $table->string('cultural_background')->nullable();
+            $table->enum('status', ['active', 'inactive']);
             $table->string('religion')->nullable();
             $table->integer('years_experience')->nullable();
             $table->decimal('salary', 8, 2);
             $table->string('city')->nullable();
+            $table->string('first_name');
+            $table->string('last_name');
             $table->rememberToken();
             $table->timestamps();
         });

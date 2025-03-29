@@ -18,9 +18,10 @@ class DepartmentResource extends JsonResource
             'id' => $this->id,
             'department_name' => $this->department_name,
             'description' => $this->description,
+            'status' => $this->status,
             'updated_at' => $this->updated_at,
             'created_at' => $this->created_at,
-            'hod' => $this->hods,
+            'hod_name' => $this->hods->isNotEmpty() ? $this->hods->first()->hodable->name : null,
         ];
     }
 }

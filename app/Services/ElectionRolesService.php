@@ -49,4 +49,11 @@ class ElectionRolesService
             ->get();
         return $electionRoles;
     }
+
+    public function getAllElectionRoles($currentSchool){
+        $electionRoles = ElectionRoles::where("school_branch_id", $currentSchool->id)
+                         ->with(['election'])
+                         ->get();
+        return $electionRoles;
+    }
 }

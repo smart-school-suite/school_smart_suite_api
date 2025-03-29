@@ -33,6 +33,13 @@ class Studentbatch extends Model
 
     }
 
+    public function schoolSemester(): HasMany {
+         return $this->hasMany(SchoolSemester::class);
+    }
+
+    public function exams() :  HasMany {
+         return $this->hasMany(Exams::class);
+    }
     public function student(): HasMany {
         return $this->hasMany(Student::class, 'student_batch_id');
     }

@@ -68,7 +68,7 @@ return new class extends Migration
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
             $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('school_semesters');
+            $table->foreign('semester_id')->references('id')->on('semesters');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('student_batch_id');
@@ -102,7 +102,7 @@ return new class extends Migration
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
             $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('school_semesters');
+            $table->foreign('semester_id')->references('id')->on('semesters');
         });
 
         Schema::table('student', function(Blueprint $table){
@@ -339,6 +339,8 @@ return new class extends Migration
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('student_batch_id');
+            $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
 
         Schema::table('hod', function(Blueprint $table) {

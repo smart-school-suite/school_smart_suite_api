@@ -166,6 +166,8 @@ Route::prefix('api/v1/school-admin')->group(function () {
     Route::post('/updatePassword', [ResetSchoolAdminPasswordController::class, 'changeShoolAdminPasswordUnAuthenticated']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post("/uploadProfilePic", [SchoolAdminController::class, 'uploadProfilePicture']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete("/deleteProfilePic", [SchoolAdminController::class, 'deleteProfilePicture']);
+    Route::middleware('auth:sanctum')->post('/deactivateAccount/{schoolAdminId}', [SchoolAdminController::class, 'deactivateAccount']);
+    Route::middleware('auth:sanctum')->post("/activateAccount/{schoolAdminId}", [SchoolAdminController::class, 'activateAccount']);
 
 });
 
@@ -187,6 +189,8 @@ Route::prefix('api/v1/teacher')->group(function () {
     Route::post('/updatePassword', [ResetTeacherPasswordController::class, 'ChangeInstructorPasswordUnAuthenticated']);
     Route::post('/validateLoginOtp', [TeacherValidateOtpController::class, 'verifyInstructorLoginOtp']);
     Route::post('/requestNewOtp', [TeacherValidateOtpController::class, 'requestNewOtp']);
+    Route::post("/deactivateAccount/{teacherId}", [TeacherController::class, 'deactivateTeacher']);
+    Route::post("/activateAccount/{teacherId}", [TeacherController::class, 'activateTeacher']);
 });
 
 Route::prefix('api/v1/permissions')->group(function () {
@@ -236,11 +240,15 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/department')->group(f
     Route::middleware(['auth:sanctum'])->post('/create-department', [DepartmentController::class, 'createDepartment']);
     Route::middleware(['auth:sanctum'])->get('/my-departments', [DepartmentController::class, 'getDepartments']);
     Route::middleware(['auth:sanctum'])->get('/department-details/{department_id}', [DepartmentController::class, 'getDepartmentDetails']);
-    Route::middleware(['auth:sanctum'])->put('/update-department', [DepartmentController::class, 'updateDepartment']);
+    Route::middleware(['auth:sanctum'])->put('/update-department/{department_id}', [DepartmentController::class, 'updateDepartment']);
     Route::middleware(['auth:sanctum'])->delete('/delete-department/{department_id}', [DepartmentController::class, 'deleteDepartment']);
     Route::middleware(['auth:sanctum'])->get('/get-hods', [HodController::class, 'getHods']);
     Route::middleware(['auth:sanctum'])->delete("/delete-hod/{hodId}", [HodController::class, 'removeHod']);
     Route::middleware(['auth:sanctum'])->post('/assign-hod', [HodController::class, 'assignHeadOfDepartment']);
+    Route::middleware(['auth:sanctum'])->get("/getAllHods", [HodController::class, "getAllHods"]);
+    Route::middleware(['auth:sanctum'])->post("/deactivateDepartment/{departmentId}", [DepartmentController::class, "deactivateDepartment"]);
+    Route::middleware(['auth:sanctum'])->post("/activateDepartment/{departmentId}", [DepartmentController::class, "activateDepartment"]);
+    Route::middleware(['auth:sanctum'])->get("/getHodDetails/{hodId}", [HodController::class, "getHodDetails"]);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/course')->group(function () {
@@ -250,17 +258,23 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/course')->group(funct
     Route::middleware(['auth:sanctum'])->get('/my-courses', [CoursesController::class, 'getCourses']);
     Route::middleware(['auth:sanctum'])->get('/course-details/{course_id}', [CoursesController::class, 'getCourseDetails']);
     Route::middleware(['auth:sanctum'])->get('/my-courses/{specialty_id}/{semester_id}', [CoursesController::class, 'getBySpecialtyLevelSemester']);
+    Route::middleware(['auth:sanctum'])->post('/deactivateCourse/{courseId}', [CoursesController::class, 'deactivateCourse']);
+    Route::middleware(['auth:sanctum'])->post("/activateCourse/{courseId}", [CoursesController::class, 'activateCourse']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(function () {
     Route::middleware(['auth:sanctum'])->post('/create-specialty', [SpecialtyController::class, 'createSpecialty']);
     Route::middleware(['auth:sanctum'])->delete('/delete-specialty/{specialty_id}', [SpecialtyController::class, 'deleteSpecialty']);
     Route::middleware(['auth:sanctum'])->put('/update-specialty/{specialty_id}', [SpecialtyController::class, 'updateSpecialty']);
-    Route::middleware(['auth:sanctum'])->get('/my-specialties', [SpecialtyController::class, 'get_all_tenant_School_specailty_scoped']);
+    Route::middleware(['auth:sanctum'])->get('/my-specialties', [SpecialtyController::class, 'getSpecialtiesBySchoolBranch']);
     Route::middleware(['auth:sanctum'])->get('/specialty-details/{specialty_id}', [SpecialtyController::class, 'getSpecialtyDetails']);
     Route::middleware(['auth:sanctum'])->post("/assign-hos", [HosController::class, 'assignHeadOfSpecialty']);
     Route::middleware(['auth:sanctum'])->get('/get-assigned-hos', [HosController::class, 'getHeadOfSpecialty']);
-    Route::middleware(['auth:sanctum'])->delete("/remove-hos", [HosController::class, 'removeHeadOfSpecialty']);
+    Route::middleware(['auth:sanctum'])->delete("/remove-hos/{hosId}", [HosController::class, 'removeHeadOfSpecialty']);
+    Route::middleware(['auth:sanctum'])->get("/getAllHos", [HosController::class, "getAllHos"]);
+    Route::middleware(['auth:sanctum'])->post("/deactivateSpecialty/{specialtyId}", [SpecialtyController::class, "deactivateSpecialty"]);
+    Route::middleware(['auth:sanctum'])->post("/activateSpecialty/{specialtyId}", [SpecialtyController::class, "activateSpecialty"]);
+    Route::middleware(['auth:sanctum'])->get("/getHosDetails/{hosId}", [HosController::class, "getHosDetails"]);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/marks')->group(function () {
@@ -292,8 +306,10 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/grades')->group(funct
     Route::middleware(['auth:sanctum'])->post('/create-grade', [GradesController::class, 'createExamGrades']);
     Route::middleware(['auth:sanctum'])->get('/grades-for-exams', [GradesController::class, 'getAllGrades']);
     Route::middleware(['auth:sanctum'])->put('/update-grade/{grade_id}', [GradesController::class, 'update_grades_scoped']);
-    Route::middleware(['auth:sanctum'])->delete('/delete-grade/{grade_id}', [GradesController::class, 'deleteGrades']);
+    Route::middleware(['auth:sanctum'])->delete('/delete-grade/{examId}', [GradesController::class, 'deleteGrades']);
     Route::middleware(['auth:sanctum'])->get('/getRelatedExams/{examId}', [GradesController::class, 'getRelatedExams']);
+    Route::middleware(['auth:sanctum'])->get('/getGradesByExam/{examId}', [GradesController::class, 'getGradesConfigByExam']);
+    Route::middleware(['auth:sanctum'])->get('/getExamConfigData/{examId}', [GradesController::class, 'getExamConfigData']);
 });
 
 
@@ -317,7 +333,8 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/exam-timetable')->gro
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/time-table')->group(function () {
-    Route::middleware(['auth:sanctum'])->post('/create-timetable', [TimeTableController::class, 'createTimetable']);
+    Route::middleware(['auth:sanctum'])->post('/createTimetableByAvailability/{semesterId}', [TimeTableController::class, 'createTimetableByAvailability']);
+    Route::middleware(['auth:sanctum'])->post('/createTimetable/{semesterId}', [TimeTableController::class, 'createTimetable']);
     Route::middleware(['auth:sanctum'])->put('/update-timetable/{timetable_id}', [TimeTableController::class, 'updateTimetable']);
     Route::middleware(['auth:sanctum'])->delete('/delete-timetable/{timetable_id}', [TimeTableController::class, 'deleteTimetable']);
     Route::middleware(['auth:sanctum'])->get('/generate-timetable', [TimeTableController::class, 'generateTimetable']);
@@ -337,6 +354,7 @@ Route::prefix('api/v1/school-semesters')->group(function () {
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->put("/update-school-semester/{schoolSemesterId}", [SchoolSemesterController::class, 'updateSchoolSemester']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/school-semeters", [SchoolSemesterController::class, 'getSchoolSemester']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/delete-school-semeter/{schoolSemesterId}", [SchoolSemesterController::class, 'deleteSchoolSemester']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/schoolSemesterDetails/{schoolSemesterId}", [SchoolSemesterController::class, 'getSchoolSemesterDetails']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/event')->group(function () {
@@ -456,6 +474,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/election-application'
     Route::middleware(['auth:sanctum'])->put('/update-application/{application_id}', [ElectionApplicationController::class, 'updateApplication']);
     Route::middleware(['auth:sanctum'])->delete('/delete/{application_id}', [ElectionApplicationController::class, 'deleteApplication']);
     Route::middleware(['auth:sanctum'])->put('/approve-application/{application_id}', [ElectionApplicationController::class, 'approveApplication']);
+    Route::middleware(['auth:sanctum'])->get('/getAllApplications', [ElectionApplicationController::class, 'getAllElectionApplication']);
 });
 
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election-roles')->group(function () {
@@ -463,6 +482,7 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/elect
     Route::middleware(['auth:sanctum'])->put('/update-election/{election_role_id}', [ElectionRolesController::class, 'updateElectionRole']);
     Route::middleware(['auth:sanctum'])->delete('/delete-role/{election_role_id}', [ElectionRolesController::class, 'deleteElectionRole']);
     Route::middleware(['auth:sanctum'])->get('/election-roles/{election_id}', [ElectionRolesController::class, 'getElectionRoles']);
+    Route::middleware(['auth:sanctum'])->get("/getAllRoles", [ElectionRolesController::class, 'getAllElectionRoles']);
 });
 
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/additional-fees')->group(function () {

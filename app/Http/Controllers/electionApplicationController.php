@@ -52,4 +52,10 @@ class ElectionApplicationController extends Controller
         $updateElectionApplication = $this->electionApplicationService->updateApplication($request->validated(), $applicationId);
         return ApiResponseService::success('Election Application Updated Successfully', $updateElectionApplication, null, 200);
     }
+
+    public function getAllElectionApplication(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $electionApplication = $this->electionApplicationService->getAllApplications($currentSchool);
+        return ApiResponseService::success('Election Application Fetched Succesfully', $electionApplication, null, 200);
+    }
 }

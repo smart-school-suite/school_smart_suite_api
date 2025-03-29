@@ -28,6 +28,7 @@ class SchoolSemesterRequest extends FormRequest
             'school_year_end' => 'required|integer',
             'semester_id' => 'required|string|exists:semesters,id',
             'specialty_id' => 'required|string|exists:specialty,id',
+            'student_batch_id' => 'required|string|exists:student_batch,id'
         ];
     }
 }

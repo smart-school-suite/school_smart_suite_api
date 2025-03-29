@@ -13,14 +13,15 @@ class SpecailtyService
         $specialty->specialty_name = $data["specialty_name"];
         $specialty->registration_fee = $data["registration_fee"];
         $specialty->school_fee = $data["school_fee"];
+        $specialty->description = $data["description"];
         $specialty->level_id = $data["level_id"];
         $specialty->save();
         return $specialty;
     }
 
     public function updateSpecialty(array $data, $currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch", $currentSchool->id)->find($specialtyId);
-        if($specailtyExists){
+        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->find($specialtyId);
+        if(!$specailtyExists){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
         $filterData = array_filter($data);
@@ -29,7 +30,7 @@ class SpecailtyService
      }
 
      public function deleteSpecailty($currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch", $currentSchool->id)->find($specialtyId);
+        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->find($specialtyId);
         if($specailtyExists){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
@@ -38,16 +39,30 @@ class SpecailtyService
      }
 
      public function getSpecailties($currentSchool){
-        $specailtyData = Specialty::where("school_branch_id", $currentSchool->id)->with('level')->get();
+        $specailtyData = Specialty::where("school_branch_id", $currentSchool->id)->with(['level', 'hos.hosable'])->get();
         return $specailtyData;
      }
 
      public function getSpecailtyDetails($currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->with(['level', 'department'])->find($specialtyId);
+        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->with(['level', 'department', 'hos.hosable'])->find($specialtyId);
         if(!$specailtyExists){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
         return $specailtyExists;
+     }
+
+     public function deactivateSpecialty($specialtyId){
+        $specialty = Specialty::findOrFail($specialtyId);
+        $specialty->status = "inactive";
+        $specialty->save();
+        return $specialty;
+     }
+
+     public function activateSpecialty($specialtyId){
+        $specialty = Specialty::findOrFail($specialtyId);
+        $specialty->status = "active";
+        $specialty->save();
+        return $specialty;
      }
 }
 

@@ -49,7 +49,7 @@ class CoursesController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $course_id = $request->route("course_id");
         $courseDetails = $this->courseService->courseDetails($course_id, $currentSchool);
-        return ApiResponseService::success('Course Details fetched succefully', CourseResource::collection($courseDetails), null, 200);
+        return ApiResponseService::success('Course Details fetched succefully', $courseDetails, null, 200);
     }
 
     public function getBySpecialtyLevelSemester(Request $request)
@@ -67,5 +67,17 @@ class CoursesController extends Controller
             null,
             200
         );
+    }
+
+    public function activateCourse(Request $request, string $courseId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $activateCourse = $this->courseService->activateCouse($currentSchool, $courseId);
+        return ApiResponseService::success("Course Activated Succesfully", $activateCourse, null, 200);
+    }
+
+    public function deactivateCourse(Request $request, string $courseId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $deactivateCourse = $this->courseService->deactivateCourse($currentSchool, $courseId);
+        return ApiResponseService::success("Course Deactivated Succesfully", $deactivateCourse, null, 200);
     }
 }

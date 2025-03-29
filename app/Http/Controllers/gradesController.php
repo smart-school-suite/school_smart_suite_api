@@ -7,7 +7,11 @@ use App\Http\Requests\GradesRequest;
 use App\Services\ApiResponseService;
 use App\Models\Exams;
 use App\Models\Examtype;
+use App\Models\Timetable;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\SpecailtyTimeTableRequest;
 use App\Services\GradesService;
+use App\Rules\TimetableRule;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -43,13 +47,25 @@ class GradesController extends Controller
     }
 
 
-    public function deleteGrades(Request $request, $grades_id)
+    public function deleteGrades(Request $request, $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteGrades = $this->gradesService->deleteGrades($currentSchool, $grades_id);
+        $deleteGrades = $this->gradesService->deleteGrades($currentSchool, $examId);
         return ApiResponseService::success("Grade Deleted Sucessfully", $deleteGrades, null, 200);
     }
 
+    public function getGradesConfigByExam(Request $request, string $examId){
+        $currentSchool = $request->attributes->get('currentSchool');
+
+        $gradesByExam = $this->gradesService->getExamGradesConfiguration($currentSchool, $examId);
+        return ApiResponseService::success("Grades By Exam Configuration Fetched Successfully", $gradesByExam, null, 200);
+    }
+
+    public function getExamConfigData(Request $request, string $examId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getExamConfig = $this->gradesService->getExamConfigData($currentSchool, $examId);
+        return ApiResponseService::success("Exam Grades Configuration Fetched Succesfully", $getExamConfig, null, 200);
+    }
     public function getRelatedExams(Request $request, $examId){
         $currentSchool = $request->attributes->get('currentSchool');
         $exam = Exams::where('school_branch_id', $currentSchool->id)
@@ -80,4 +96,6 @@ class GradesController extends Controller
             return ApiResponseService::error("This is not an exam", null, 400);
         }
     }
+
+
 }

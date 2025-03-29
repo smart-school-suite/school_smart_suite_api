@@ -22,14 +22,15 @@ class ExamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_date' => 'required',
-            'end_date' => 'required',
-            'exam_type_id' => 'required|string',
-            'level_id' => 'string|required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'exam_type_id' => 'required|string|exists:exam_type,id',
+            'level_id' => 'string|required|exists:education_levels,id',
             'weighted_mark' => 'required',
-            'semester_id' => 'required|string',
+            'semester_id' => 'required|string|exists:semesters,id',
             'school_year' => 'required|string',
-            'specialty_id' => 'required|string'
+            'specialty_id' => 'required|string|exists:specialty,id',
+            'student_batch_id' => 'required|string|exists:student_batch,id'
         ];
     }
 }

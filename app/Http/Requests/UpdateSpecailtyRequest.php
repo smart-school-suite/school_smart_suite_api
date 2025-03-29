@@ -22,11 +22,11 @@ class UpdateSpecailtyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'specialty_name' => 'sometimes|required|string',
-            'department_id' => 'sometimes|required|string',
-            'registration_fee' => 'sometimes|required|decimal:0, 2',
-            'school_fee' => 'sometimes|required|decimal:0, 2',
-            'level_id' => 'sometimes|required|string'
+            'specialty_name' => 'sometimes|nullable|string',
+            'department_id' => 'sometimes|nullable|string',
+            'registration_fee' => 'sometimes|nullable|decimal:0, 2',
+            'school_fee' => 'sometimes|nullable|decimal:0, 2',
+            'level_id' => 'sometimes|nullable|string|exists:education_levels,id'
         ];
     }
 }

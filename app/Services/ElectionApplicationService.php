@@ -81,4 +81,11 @@ class ElectionApplicationService
             ->get();
         return $applications;
     }
+
+    public function getAllApplications($currentSchool){
+        $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
+         ->with(['student.level', 'election', 'electionRole'])
+         ->get();
+         return $application;
+    }
 }

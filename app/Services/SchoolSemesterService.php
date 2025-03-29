@@ -16,6 +16,7 @@ class SchoolSemesterService
         $schoolSemester->school_year_end = $semesterData["school_year_end"];
         $schoolSemester->semester_id = $semesterData["semester_id"];
         $schoolSemester->specialty_id = $semesterData["specialty_id"];
+        $schoolSemester->student_batch_id = $semesterData["student_batch_id"];
         $schoolSemester->school_branch_id = $currentSchool->id;
         $schoolSemester->save();
         return $schoolSemester;
@@ -42,7 +43,12 @@ class SchoolSemesterService
     }
 
     public function getSchoolSemesters($currentSchool){
-        $schoolSemesters = SchoolSemester::with(['specailty', 'semester'])->where("school_branch_id", $currentSchool->id)->get();
+        $schoolSemesters = SchoolSemester::with(['specailty', 'specailty.level','semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->get();
         return $schoolSemesters;
+    }
+
+    public function getSchoolSemesterDetail($currentSchool, $semesterId){
+        $schoolSemesterDetails = SchoolSemester::with(['specailty', 'specailty.level','semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->find($semesterId);
+        return $schoolSemesterDetails;
     }
 }

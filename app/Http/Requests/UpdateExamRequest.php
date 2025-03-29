@@ -22,14 +22,14 @@ class UpdateExamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date',
-            'exam_type_id' => 'sometimes|string',
-            'level_id' => 'sometimes|string',
+            'start_date' => 'sometimes|nullable|date',
+            'end_date' => 'sometimes|nullable|date',
+            'exam_type_id' => 'sometimes|nullable|string|exists:exam_type,id',
+            'level_id' => 'sometimes|nullable|string|exists:education_levels,id',
             'weighted_mark' => 'sometimes',
-            'semester_id' => 'sometimes|string',
-            'school_year' => 'sometimes|string',
-            'specialty_id' => 'sometimes|string'
+            'semester_id' => 'sometimes|nullable|string|exists:semesters,id',
+            'school_year' => 'sometimes|nullable|string',
+            'specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
         ];
     }
 }

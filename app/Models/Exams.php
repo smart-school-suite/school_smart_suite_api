@@ -34,6 +34,9 @@ class Exams extends Model
         return $this->belongsTo(Exams::class);
     }
 
+    public function studentBatch() : BelongsTo {
+         return $this->belongsTo(Studentbatch::class, 'student_batch_id');
+    }
     public function accessedStudent(): HasMany {
          return $this->hasMany(AccessedStudent::class);
     }
@@ -42,8 +45,8 @@ class Exams extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function schoolSemester(): BelongsTo {
-        return $this->belongsTo(SchoolSemester::class, 'semester_id');
+    public function semester(): BelongsTo {
+        return $this->belongsTo(Semester::class, 'semester_id');
     }
 
     public function marks(): HasMany {

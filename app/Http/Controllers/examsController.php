@@ -28,7 +28,7 @@ class ExamsController extends Controller
     public function updateExam(UpdateExamRequest $request, $exam_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateExam = $this->examService->updateExam($request->validated(), $currentSchool, $exam_id);
+        $updateExam = $this->examService->updateExam($exam_id, $currentSchool,  $request->validated());
         return ApiResponseService::success("Exam Updated Successfully", $updateExam, null, 200);
     }
     public function deleteExam(Request $request, $exam_id)

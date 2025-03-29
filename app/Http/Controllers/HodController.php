@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\HodRequest;
 use App\Services\ApiResponseService;
 use App\Services\HodService;
+use App\Http\Resources\HodResource;
 use Illuminate\Http\Request;
 
 class HodController extends Controller
@@ -30,5 +31,11 @@ class HodController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $removeHod = $this->hodService->removeHod($hodId, $currentSchool);
         return ApiResponseService::success("Head of department Removed Successfully", $removeHod, null, 200);
+    }
+
+    public function getAllHods(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $getHods = $this->hodService->getAllHod($currentSchool);
+        return ApiResponseService::success("Head of department Fetched Sucessfully",  HodResource::collection($getHods), null, 200);
     }
 }

@@ -18,6 +18,8 @@ class Specialty extends Model
         'registration_fee',
         'school_fee',
         'level_id',
+        'status',
+        'description',
         'school_branch_id',
     ];
 
@@ -39,7 +41,7 @@ class Specialty extends Model
     }
     public function hos()
     {
-        return $this->hasMany(HOD::class, 'specialty_id');
+        return $this->hasMany(HOS::class, 'specialty_id');
     }
 
     public function registrationFee(): HasMany

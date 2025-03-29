@@ -23,7 +23,26 @@ class Teacher extends Model
         'phone_number',
         'email',
         'name',
+        'first_name',
+        'last_name',
         'profile_picture',
+        'date_of_birth',
+        'address',
+        'employment_status',
+        'hire_date',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'last_performance_review',
+        'highest_qualification',
+        'field_of_study',
+        'leave',
+        'holiday',
+        'city',
+        'status',
+        'cultural_background',
+        'religion',
+        'years_experience',
+        'salary'
     ];
 
     /**

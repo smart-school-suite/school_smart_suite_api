@@ -23,7 +23,7 @@ class HosRequest extends FormRequest
     {
         return [
             'specialty_id' => 'required|string|exists:specialty,id',
-            'hodable_id' => 'required|string',
+            'hosable_id' => 'required|string',
         ];
     }
 }

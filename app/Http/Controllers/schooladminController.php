@@ -6,8 +6,10 @@ namespace App\Http\Controllers;
 use App\Services\ApiResponseService;
 use App\Services\SchoolAdminService;
 use App\Models\SchoolBranchApiKey;
+use Illuminate\Support\Facades\Log;
 use App\Http\Requests\CreateSchoolAdminSignUpRequest;
 use App\Http\Requests\UpdateProfilePictureRequest;
+use App\Http\Requests\UpdateSchoolAdminRequest;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -20,11 +22,11 @@ class SchoolAdminController extends Controller
     {
         $this->schoolAdminService = $schoolAdminService;
     }
-    public function updateSchoolAdmin(Request $request,)
+    public function updateSchoolAdmin(UpdateSchoolAdminRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $school_admin_id = $request->route("school_admin_id");
-        $updateSchoolAdmin = $this->schoolAdminService->updateSchoolAdmin($request->validated, $school_admin_id, $currentSchool);
+        $updateSchoolAdmin = $this->schoolAdminService->updateSchoolAdmin($request->validated(), $school_admin_id, $currentSchool);
         return ApiResponseService::success("Admin Updated Sucessfully", $updateSchoolAdmin, null, 200);
     }
 
@@ -83,5 +85,13 @@ class SchoolAdminController extends Controller
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
+    }
+
+    public function deactivateAccount(string $schoolAdminId) {
+         $this->schoolAdminService->deactivateAccount($schoolAdminId);
+    }
+
+    public function activateAccount(string $schoolAdminId){
+        $this->schoolAdminService->activateAccount($schoolAdminId);
     }
 }

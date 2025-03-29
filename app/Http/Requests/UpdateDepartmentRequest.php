@@ -22,8 +22,8 @@ class UpdateDepartmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_name' => 'sometimes|string',
-            'HOD' => 'sometimes|string'
+            'department_name' => 'sometimes|nullable|string',
+            'description' => 'sometimes|nullable|string'
         ];
     }
 }

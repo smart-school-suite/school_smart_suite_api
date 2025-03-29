@@ -21,7 +21,7 @@ class HOS extends Model
     public $table = 'hos';
     public $keyType = 'string';
 
-    public function hodable()
+    public function hosable()
     {
         return $this->morphTo();
     }

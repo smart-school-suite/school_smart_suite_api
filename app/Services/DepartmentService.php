@@ -10,8 +10,8 @@ class DepartmentService
     public function createDepartment(array $data, $currentSchool)
     {
         $department = new Department();
-        $department->name = $data["department_name"];
-        $department->HOD = $data["HOD"];
+        $department->department_name = $data["department_name"];
+        $department->description = $data["description"];
         $department->school_branch_id = $currentSchool->id;
         $department->save();
         return $department;
@@ -42,17 +42,33 @@ class DepartmentService
     public function getDepartments($currentSchool)
     {
         $departmentData = Department::where("school_branch_id", $currentSchool->id)
-                          ->with(['hods'])
-                          ->get();
+            ->with(['hods.hodable'])
+            ->get();
         return $departmentData;
     }
 
     public function getDepartmentDetails($currentSchool, $department_id)
     {
-        $findDeparment = Department::where("school_branch_id", $currentSchool->id)->find($department_id);
+        $findDeparment = Department::where("school_branch_id", $currentSchool->id)
+            ->with(['hods.hodable'])
+            ->find($department_id);
         if (!$findDeparment) {
             return ApiResponseService::error("Department not found", null, 404);
         }
         return $findDeparment;
+    }
+
+    public function deactivateDepartment(string $departmentId){
+        $department = Department::findOrFail($departmentId);
+        $department->status = 'inactive';
+        $department->save();
+        return $department;
+    }
+
+    public function activateDepartment(string $departmentId){
+        $department = Department::findOrFail($departmentId);
+        $department->status = "inactive";
+        $department->save();
+        return $department;
     }
 }

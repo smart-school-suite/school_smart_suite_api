@@ -21,16 +21,26 @@ class TimeTableController extends Controller
         $this->createSpecailtyTimeTableService = $createSpecailtyTimeTableService;
         $this->specailtyTimeTableService = $specailtyTimeTableService;
     }
-    public function createTimetable(SpecailtyTimeTableRequest $request)
+    public function createTimetableByAvailability(SpecailtyTimeTableRequest $request,  $semesterId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $createTimeTable = $this->createSpecailtyTimeTableService->createTimeTable($request->specialty_timetable, $currentSchool);
-            return ApiResponseService::success('Time Table Created Sucessfully', $createTimeTable, null, 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return ApiResponseService::error($e->getMessage(), null, 500);
+        $result = $this->createSpecailtyTimeTableService->createTimetableByAvailability($request->scheduleEntries, $currentSchool, $semesterId);
+        if ($result['error']) {
+            return ApiResponseService::error("Conflicts detected with existing schedules", $result['conflicts'], 409);
         }
+        return ApiResponseService::success("Timetable entries successfully created.", $result['data']);
+    }
+
+    public function createTimetable(SpecailtyTimeTableRequest $request, $semesterId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $this->createSpecailtyTimeTableService->createTimetable($request->scheduleEntries, $currentSchool, $semesterId);
+
+        if ($result['error']) {
+            return ApiResponseService::error("Conflicts detected with existing schedules", $result['conflicts'], 409);
+        }
+
+        return ApiResponseService::success("Timetable entries successfully created.", $result['data']);
     }
 
     public function deleteTimetable(Request $request, $timetable_id)
@@ -67,7 +77,7 @@ class TimeTableController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $specialtyId = $request->route("specialty_id");
         $semesterId = $request->route("semester_id");
-        $getInstructorAvailability = $this->specailtyTimeTableService->getInstructorAvailability( $specialtyId, $semesterId,  $currentSchool,);
+        $getInstructorAvailability = $this->specailtyTimeTableService->getInstructorAvailability($specialtyId, $semesterId,  $currentSchool,);
         return ApiResponseService::success("Instructor Availability Data Fetched Sucessfully", $getInstructorAvailability, null, 200);
     }
 }

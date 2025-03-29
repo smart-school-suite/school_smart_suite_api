@@ -23,7 +23,7 @@ class DepartmentRequest extends FormRequest
     {
         return [
             'department_name' => 'required|string',
-            'HOD' => 'sometimes|string'
+            'description' => 'required|string'
         ];
     }
 }

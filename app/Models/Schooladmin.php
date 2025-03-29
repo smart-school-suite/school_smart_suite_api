@@ -21,6 +21,8 @@ class Schooladmin extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'role',
         'email',
         'password',
@@ -33,7 +35,6 @@ class Schooladmin extends Authenticatable
         'emergency_contact_phone',
         'last_performance_review',
         'work_location',
-        'position',
         'highest_qualification',
         'field_of_study',
         'cultural_background',
@@ -42,6 +43,7 @@ class Schooladmin extends Authenticatable
         'salary',
         'city',
         'school_branch_id',
+        'status'
     ];
 
     /**

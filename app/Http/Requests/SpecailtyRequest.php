@@ -26,7 +26,8 @@ class SpecailtyRequest extends FormRequest
             'department_id' => 'required|string',
             'registration_fee' => 'required|decimal:0, 2',
             'school_fee' => 'required|decimal:0, 2',
-            'level_id' => 'required|string'
+            'level_id' => 'required|string',
+            'description' => 'sometimes|nullable|string',
         ];
     }
 }

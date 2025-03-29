@@ -3,6 +3,7 @@
 namespace App\Services;
 use App\Models\HOS;
 use App\Models\Schooladmin;
+use Illuminate\Support\Facades\Log;
 use App\Models\Teacher;
 class HosService
 {
@@ -20,7 +21,7 @@ class HosService
                 $hosableType = 'App\\Models\\SchoolAdmin';
             }
         }
-
+        Log::info($hosableType);
         if (!$hosableType) {
             return ApiResponseService::error("The provided Credentials Are Incorrect", null, 404);
         }
@@ -31,7 +32,7 @@ class HosService
             'specialty_id' => $hodData["specialty_id"],
             'hosable_id' => $hodData["hosable_id"],
             'school_branch_id' => $currentSchool->id,
-            'hodable_type' => $hosableType,
+            'hosable_type' => $hosableType,
         ]);
 
         return $assigedHod;
@@ -50,4 +51,15 @@ class HosService
         $getHods = HOS::where("school_branch_id", $currentSchool->id)->with(['hosable', 'specialty'])->get();
         return $getHods;
     }
+
+    public function getAllHOS($currentSchool) {
+         $getAllHos = HOS::where("school_branch_id", $currentSchool->id)->with(['hosable', 'specialty', 'specialty.level'])->get();
+         return $getAllHos;
+    }
+
+    public function getHosDetails($hosId){
+        $hosDetails = HOS::with(['hosable', 'specialty', 'specialty.level'])->findOrFail($hosId);
+        return $hosDetails;
+    }
+
 }
