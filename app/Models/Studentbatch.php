@@ -36,6 +36,9 @@ class Studentbatch extends Model
     public function schoolSemester(): HasMany {
          return $this->hasMany(SchoolSemester::class);
     }
+    public function studentResults(): HasMany {
+         return $this->hasMany(StudentResults::class);
+    }
 
     public function exams() :  HasMany {
          return $this->hasMany(Exams::class);

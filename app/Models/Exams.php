@@ -22,6 +22,8 @@ class Exams extends Model
         'weighted_mark',
         'semester_id',
         'school_year',
+        'status',
+        'timetable_published',
         'specialty_id',
         'student_batch_id'
     ];
@@ -34,6 +36,9 @@ class Exams extends Model
         return $this->belongsTo(Exams::class);
     }
 
+    public function studentResults(): HasMany {
+        return $this->hasMany(StudentResults::class);
+    }
     public function studentBatch() : BelongsTo {
          return $this->belongsTo(Studentbatch::class, 'student_batch_id');
     }

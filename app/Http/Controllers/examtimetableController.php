@@ -7,6 +7,7 @@ use App\Models\Examtimetable;
 use App\Http\Requests\ExamTimeTableRequest;
 use App\Services\ExamTimeTableService;
 use App\Services\ApiResponseService;
+use InvalidArgumentException;
 use Illuminate\Http\Request;
 use Exception;
 
@@ -17,22 +18,38 @@ class ExamTimeTableController extends Controller
     {
         $this->examTimeTableService = $examTimeTableService;
     }
-    public function createTimtable(ExamTimeTableRequest $request)
+    public function createTimtable(ExamTimeTableRequest $request, $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
-            $createExamTimeTable = $this->examTimeTableService->createExamTimeTable($request->exam_courses, $currentSchool);
+            $createExamTimeTable = $this->examTimeTableService->createExamTimeTable($request->entries, $currentSchool, $examId);
             return ApiResponseService::success("Time Table Created Sucessfully", $createExamTimeTable, null, 201);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+
         } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while creating the exam timetable.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
-    public function deletetimetable(Request $request, $examtimetable_id)
+    public function deleteTimetableEntry(Request $request, $examtimetable_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteExamTimeTable = $this->examTimeTableService->deleteTimeTable($examtimetable_id, $currentSchool);
+        $deleteExamTimeTable = $this->examTimeTableService->deleteTimetableEntry($examtimetable_id, $currentSchool);
         return ApiResponseService::success("Exam Time Table Entry Deleted Sucessfully", $deleteExamTimeTable, null, 200);
+    }
+
+    public function deleteTimetable(Request $request, $examId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteTimetable = $this->examTimeTableService->deleteTimetable($examId, $currentSchool);
+        return ApiResponseService::success("Exam Timetable Deleted Successfully", $deleteTimetable, null, 200);
     }
 
     //work on the update functionality
@@ -116,4 +133,5 @@ class ExamTimeTableController extends Controller
         $prepareExamTimeTableData = $this->examTimeTableService->prepareExamTimeTableData($exam_id, $currentSchool);
         return ApiResponseService::success("Exam Time Table Data Fetched Successfully", $prepareExamTimeTableData, null, 200);
     }
+
 }

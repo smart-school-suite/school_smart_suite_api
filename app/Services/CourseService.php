@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Courses;
+use App\Models\SchoolSemester;
 use App\Models\Specialty;
 
 class courseService
@@ -102,5 +103,13 @@ class courseService
         $course->status = "active";
         $course->save();
         return $course;
+    }
+
+    public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId){
+        $schoolSemester = SchoolSemester::findOrFail($semesterId);
+        $specialty = Specialty::findOrFail($specialtyId);
+        $courses = Courses::where("school_branch_id", $currentSchool->id)->where("semester_id", $schoolSemester->semester_id)
+                            ->where("specialty_id", $specialty->id)->get();
+        return $courses;
     }
 }

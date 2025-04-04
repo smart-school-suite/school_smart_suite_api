@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Exams;
 use App\Models\LetterGrade;
+use App\Models\Resitablecourses;
+use App\Models\SchoolGradesConfig;
 use App\Models\Student;
 
 class ExamService
@@ -92,4 +94,29 @@ class ExamService
         $letterGrades = LetterGrade::all();
         return $letterGrades && $exam;
     }
+
+    public function addExamGrading(string $examId, $currentSchool, $gradesConfigId){
+        $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($gradesConfigId);
+        if(!$gradesConfig){
+            return ApiResponseService::error("Exam Grades Configuration Not Found", null, 404);
+        }
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
+        if(!$exam){
+            return ApiResponseService::error("Exam Not Found", null, 404);
+        }
+        $exam->grades_category_id = $gradesConfig->grades_category_id;
+        $exam->grading_added = true;
+        $exam->save();
+        return $exam;
+    }
+
+    public function getResitExams($currentSchool){
+        $exams = Exams::where("school_branch_id", $currentSchool->id)
+            ->whereHas('examType', function($query) {
+            $query->where('type', 'resit');
+        })->with(['examtype', 'semester', 'specialty', 'level', 'studentBatch'])->get();
+        return $exams;
+    }
+
+
 }

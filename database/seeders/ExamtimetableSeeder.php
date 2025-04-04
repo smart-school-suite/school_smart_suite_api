@@ -64,7 +64,7 @@ class ExamtimetableSeeder extends Seeder
                     $exam_timetable[] = [
                         'id' => $id,
                         'school_branch_id' => $schoolBranchId,
-                        'day' => $randomDay, // Use Faker-generated date
+                        'date' => $randomDay, // Use Faker-generated date
                         'start_time' => $data[2],
                         'end_time' => $data[3],
                         'duration' => $data[4],
@@ -73,6 +73,7 @@ class ExamtimetableSeeder extends Seeder
                         'exam_id' => $randomExamid,
                         'level_id' => $randomEducationLevel,
                         'course_id' => $randomcourseID,
+                        'school_year' => '2025-2026',
                         'student_batch_id' => $randomStudentBatch,
                         'specialty_id' => $randomSpecialtyId,
                     ];

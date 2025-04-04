@@ -24,8 +24,11 @@ class ExamResource extends JsonResource
             'level_name' => $this->level->name ?? null,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
+            'status' => $this->status,
+            'timetable_published' => $this->timetable_published,
             'school_year' => $this->school_year,
-            'weighted_mark' => $this->weighted_mark
+            'weighted_mark' => $this->weighted_mark,
+            'grading_added' => $this->grading_added
         ];
     }
 }

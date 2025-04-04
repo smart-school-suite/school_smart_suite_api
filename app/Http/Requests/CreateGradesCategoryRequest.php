@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AddStudentScoreRequest extends FormRequest
+class CreateGradesCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -18,13 +18,7 @@ class AddStudentScoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'scores_entries' => 'required|array',
-            'scores_entries.*.student_id' => 'required|string|exists:student,id',
-            'scores_entries.*.score' => [
-                'required',
-                'regex:/^\d+(\.\d{1,2})?$/',
-            ],
-            'scores_entries.*.exam_id' => 'required|string|exists:exams,id'
+            'title' => 'required|string|max:255',
         ];
     }
 }

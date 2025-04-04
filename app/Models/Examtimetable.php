@@ -12,11 +12,12 @@ class Examtimetable extends Model
     use HasFactory;
 
     protected $fillable = [
+      'id',
       'school_branch_id',
       'exam_id',
       'course_id',
       'specialty_id',
-      'day',
+      'date',
       'start_time',
       'level_id',
       'end_time',

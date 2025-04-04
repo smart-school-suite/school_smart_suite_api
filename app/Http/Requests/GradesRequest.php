@@ -27,12 +27,13 @@ class GradesRequest extends FormRequest
     {
         return [
            'grades' => 'required|array',
-            'grades.*.letter_grade_id' => 'required|string',
+            'grades.*.letter_grade_id' => 'required|string|exists:letter_grade,id',
             'grades.*.minimum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grades.*.maximum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
+            'grades.*.max_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grades.*.determinant' => 'required|string',
             'grades.*.grade_points' => "required|numeric|min:0|max:{$this->maxGradePoints}|regex:/^\d+(\.\d{1,2})?$/",
-            'grades.*.exam_id' => 'required|string',
+            'grades.*.grades_category_id' => 'required|string|exists:grades_category,id',
             'grades.*.grade_status' => 'required|string',
         ];
     }

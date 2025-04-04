@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\InstructorAvailability;
 use App\Models\SchoolSemester;
 use App\Models\Timetable;
+use Illuminate\Support\Str;
 
 class CreateSpecailtyTimeTableService
 {
@@ -21,10 +22,13 @@ class CreateSpecailtyTimeTableService
             $schedulesToCheck[] = [
                 'teacher_id' => $entry['teacher_id'],
                 'day_of_week' => $entry['day_of_week'],
-                'starting_time' => $entry['starting_time'],
-                'ending_time' => $entry['ending_time']
+                'start_time' => $entry['start_time'],
+                'end_time' => $entry['end_time'],
+                'semester_id' => $entry['semester_id']
             ];
+            $uniqueId = Str::random(30);
             $entriesToInsert[] = [
+                'id' => $uniqueId,
                 'school_branch_id' => $currentSchool->id,
                 'course_id' => $entry['course_id'],
                 'teacher_id' => $entry['teacher_id'],
@@ -33,8 +37,8 @@ class CreateSpecailtyTimeTableService
                 'level_id' => $entry['level_id'],
                 'semester_id' => $entry['semester_id'],
                 'student_batch_id' => $entry['student_batch_id'],
-                'start_time' => $entry['starting_time'],
-                'end_time' => $entry['ending_time'],
+                'start_time' => $entry['start_time'],
+                'end_time' => $entry['end_time'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -55,12 +59,12 @@ class CreateSpecailtyTimeTableService
                             'day' => $schedule['day_of_week'],
                             'conflict_between' => [
                                 'new_appointment' => [
-                                    'starting_time' => $schedule['starting_time'],
-                                    'ending_time' => $schedule['ending_time'],
+                                    'start_time' => $schedule['start_time'],
+                                    'end_time' => $schedule['end_time'],
                                 ],
                                 'existing_appointment' => [
-                                    'starting_time' => $existing->start_time,
-                                    'ending_time' => $existing->end_time,
+                                    'start_time' => $existing->start_time,
+                                    'end_time' => $existing->end_time,
                                 ]
                             ],
                             'conflict_type' => 'overlap'
@@ -69,17 +73,16 @@ class CreateSpecailtyTimeTableService
                 }
             }
 
-
             $isUnavailable = InstructorAvailability::where('school_branch_id', $currentSchool->id)
                 ->where('teacher_id', $schedule['teacher_id'])
                 ->where('semester_id', $schedule['semester_id'])
                 ->where('day_of_week', $schedule['day_of_week'])
                 ->where(function ($query) use ($schedule) {
-                    $query->whereBetween('start_time', [$schedule['starting_time'], $schedule['ending_time']])
-                        ->orWhereBetween('end_time', [$schedule['starting_time'], $schedule['ending_time']])
+                    $query->whereBetween('start_time', [$schedule['start_time'], $schedule['end_time']])
+                        ->orWhereBetween('end_time', [$schedule['start_time'], $schedule['end_time']])
                         ->orWhere(function ($query) use ($schedule) {
-                            $query->where('start_time', '<=', $schedule['starting_time'])
-                                ->where('end_time', '>=', $schedule['ending_time']);
+                            $query->where('start_time', '<=', $schedule['start_time'])
+                                ->where('end_time', '>=', $schedule['end_time']);
                         });
                 })
                 ->doesntExist();
@@ -90,8 +93,8 @@ class CreateSpecailtyTimeTableService
                     'day' => $schedule['day_of_week'],
                     'conflict_between' => [
                         'new_appointment' => [
-                            'starting_time' => $schedule['starting_time'],
-                            'ending_time' => $schedule['ending_time'],
+                            'start_time' => $schedule['start_time'],
+                            'end_time' => $schedule['end_time'],
                         ]
                     ],
                     'conflict_type' => 'unavailability',
@@ -127,8 +130,8 @@ class CreateSpecailtyTimeTableService
             $schedulesToCheck[] = [
                 'teacher_id' => $entry['teacher_id'],
                 'day_of_week' => $entry['day_of_week'],
-                'starting_time' => $entry['starting_time'],
-                'ending_time' => $entry['ending_time']
+                'start_time' => $entry['start_time'],
+                'end_time' => $entry['end_time']
             ];
             $entriesToInsert[] = [
                 'school_branch_id' => $currentSchool->id,
@@ -139,8 +142,8 @@ class CreateSpecailtyTimeTableService
                 'level_id' => $entry['level_id'],
                 'semester_id' => $entry['semester_id'],
                 'student_batch_id' => $entry['student_batch_id'],
-                'start_time' => $entry['starting_time'],
-                'end_time' => $entry['ending_time'],
+                'start_time' => $entry['start_time'],
+                'end_time' => $entry['end_time'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -161,12 +164,12 @@ class CreateSpecailtyTimeTableService
                             'day' => $schedule['day_of_week'],
                             'conflict_between' => [
                                 'new_appointment' => [
-                                    'starting_time' => $schedule['starting_time'],
-                                    'ending_time' => $schedule['ending_time'],
+                                    'start_time' => $schedule['start_time'],
+                                    'end_time' => $schedule['end_time'],
                                 ],
                                 'existing_appointment' => [
-                                    'starting_time' => $existing->start_time,
-                                    'ending_time' => $existing->end_time,
+                                    'start_time' => $existing->start_time,
+                                    'end_time' => $existing->end_time,
                                 ]
                             ]
                         ];
@@ -195,6 +198,6 @@ class CreateSpecailtyTimeTableService
     }
     protected function isOverlapping($existing, $newSchedule)
     {
-        return ($newSchedule['starting_time'] < $existing->end_time && $newSchedule['ending_time'] > $existing->start_time);
+        return ($newSchedule['start_time'] < $existing->end_time && $newSchedule['end_time'] > $existing->start_time);
     }
 }

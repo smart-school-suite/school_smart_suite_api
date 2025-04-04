@@ -80,4 +80,10 @@ class CoursesController extends Controller
         $deactivateCourse = $this->courseService->deactivateCourse($currentSchool, $courseId);
         return ApiResponseService::success("Course Deactivated Succesfully", $deactivateCourse, null, 200);
     }
+
+    public function getCoursesBySchoolSemester(Request $request, string $semesterId, string $specialtyId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $courses = $this->courseService->getCoursesBySchoolSemester($currentSchool, $semesterId, $specialtyId);
+        return ApiResponseService::success("Course By School Semester Fetched Succesfully", $courses, null, 200);
+    }
 }

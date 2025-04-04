@@ -78,6 +78,8 @@ use App\Http\Middleware\Limitstudents;
 use App\Http\Middleware\LimitSchoolAdmin;
 use App\Http\Middleware\LimitParents;
 use App\Http\Middleware\LimitTeachers;
+use App\Http\Controllers\GradesCategoryController;
+use App\Http\Controllers\SchoolGradeConfigController;
 use App\Http\Controllers\Auth\Edumanage\PasswordResetController as AppAdminPasswordResetController;
 use App\Http\Controllers\Auth\Edumanage\ValidateOtpController as VaidateAppAdminOtpController;
 use App\Http\Controllers\Auth\SchoolAdmin\PasswordResetController as ResetSchoolAdminPasswordController;
@@ -89,6 +91,7 @@ use App\Http\Controllers\Auth\Teacher\ValidateOtpController as TeacherValidateOt
 use App\Http\Controllers\Auth\Student\ValidateOtpController as StudentValidateOtpController;
 use App\Http\Controllers\Auth\SchoolAdmin\ChangePasswordController as ChangeSchoolAdminPasswordController;
 use App\Http\Controllers\AccessedStudentController;
+use App\Http\Controllers\StudentResultController;
 use App\Http\Controllers\Stats\FinancialStatsController;
 use Illuminate\Http\Request;
 
@@ -260,6 +263,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/course')->group(funct
     Route::middleware(['auth:sanctum'])->get('/my-courses/{specialty_id}/{semester_id}', [CoursesController::class, 'getBySpecialtyLevelSemester']);
     Route::middleware(['auth:sanctum'])->post('/deactivateCourse/{courseId}', [CoursesController::class, 'deactivateCourse']);
     Route::middleware(['auth:sanctum'])->post("/activateCourse/{courseId}", [CoursesController::class, 'activateCourse']);
+    Route::middleware(['auth:sanctum'])->get('/getCoursesBySchoolSemester/{semesterId}/{specialtyId}', [CoursesController::class, 'getCoursesBySchoolSemester']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(function () {
@@ -284,7 +288,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/marks')->group(functi
     Route::middleware(['auth:sanctum'])->get('/scores-exam/{student_id}/{exam_id}', [MarksController::class, 'getMarksByExamStudent']);
     Route::middleware(['auth:sanctum'])->get("/scores-exam/student", [MarksController::class, 'getMarkDetails']);
     Route::middleware(['auth:sanctum'])->get("/score-details/{mark_id}", [MarksController::class, 'getMarkDetails']);
-    Route::middleware(['auth:sanctum'])->get("/accessed-courses/{exam_id}/{student_id}", [MarksController::class, "getAccessedCoursesWithLettergrades"]);
+    Route::middleware(['auth:sanctum'])->get("/accessed-courses/{examId}", [MarksController::class, "getAccessedCoursesWithLettergrades"]);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/teacher-avialability')->group(function () {
@@ -310,8 +314,16 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/grades')->group(funct
     Route::middleware(['auth:sanctum'])->get('/getRelatedExams/{examId}', [GradesController::class, 'getRelatedExams']);
     Route::middleware(['auth:sanctum'])->get('/getGradesByExam/{examId}', [GradesController::class, 'getGradesConfigByExam']);
     Route::middleware(['auth:sanctum'])->get('/getExamConfigData/{examId}', [GradesController::class, 'getExamConfigData']);
+    Route::middleware(['auth:sanctum'])->get('/getSchoolGradesConfig', [SchoolGradeConfigController::class, 'getSchoolGradesConfig']);
+    Route::middleware(['auth:sanctum'])->post('/createGradeByOtherConfig/{configId}/{targetConfigId}', [GradesController::class, 'createGradesByOtherGrades']);
 });
 
+Route::middleware(['auth:sanctum'])->prefix('api/v1/grades-category')->group( function () {
+    Route::post('/createGradeCategory', [GradesCategoryController::class, 'createCategory']);
+    Route::delete('/deleteGradeCategory/{categoryId}', [GradesCategoryController::class, 'deleteCategory']);
+    Route::put('/updateGradeCategory/{categoryId}', [GradesCategoryController::class, 'updateCategory']);
+    Route::get('/getGradeCategories', [GradesCategoryController::class, 'getGradesCategory']);
+});
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/exams')->group(function () {
     Route::middleware(['auth:sanctum'])->post('/create-exam', [ExamsController::class, 'createExam']);
@@ -321,15 +333,19 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/exams')->group(functi
     Route::middleware(['auth:sanctum'])->delete('/delete-exams/{exam_id}', [ExamsController::class, 'deleteExam']);
     Route::middleware(['auth:sanctum'])->get('/letter-grades/{exam_id}', [ExamsController::class, 'associateWeightedMarkWithLetterGrades']);
     Route::middleware(['auth:sanctum'])->get("/accessed_exams/{student_id}", [ExamsController::class, "getAccessedExams"]);
+    Route::middleware(['auth:sanctum'])->post('/addExamGrading/{examId}/{gradesConfigId}', [ExamsController::class, 'addExamGrading']);
+    Route::middleware(['auth:sanctum'])->get('/getAllResitExams', [ExamsController::class, 'getResitExams']);
+
 });
 
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/exam-timetable')->group(function () {
-    Route::middleware(['auth:sanctum'])->post('/create-timetable', [ExamTimeTableController::class, 'createTimtable']);
+    Route::middleware(['auth:sanctum'])->post('/create-timetable/{examId}', [ExamTimeTableController::class, 'createTimtable']);
     Route::middleware(['auth:sanctum'])->put('/update-exam-time-table/{examtimetable_id}', [ExamTimeTableController::class, 'updateTimetable']);
     Route::middleware(['auth:sanctum'])->get('/generate-timetable/{level_id}/{specialty_id}', [ExamTimeTableController::class, 'getTimetableBySpecialty']);
-    Route::middleware(['auth:sanctum'])->delete('/delete/exam-time-table/{examtimetable_id}', [ExamTimeTableController::class, 'deletetimetable']);
     Route::middleware(['auth:sanctum'])->get('/course-data/{exam_id}', [ExamTimeTableController::class, 'prepareExamTimeTableData']);
+    Route::middleware(['auth:sanctum'])->delete('/deleteTimetableEntry/{timetableEntryId}', [ExamTimeTableController::class, 'deleteTimetableEntry']);
+    Route::middleware(['auth:sanctum'])->delete('/deleteTimeTable/{examId}', [ExamTimetableController::class, 'deleteTimetable']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/time-table')->group(function () {
@@ -340,6 +356,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/time-table')->group(f
     Route::middleware(['auth:sanctum'])->get('/generate-timetable', [TimeTableController::class, 'generateTimetable']);
     Route::middleware(['auth:sanctum'])->get('/timetable-details/{entry_id}', [TimeTableController::class, 'getTimetableDetails']);
     Route::middleware(['auth:sanctum'])->get('/instructor-availability/{semester_id}/{specialty_id}', [TimetableController::class, 'getInstructorAvailabilityBySemesterSpecialty']);
+
 });
 
 Route::prefix('api/v1/semester')->group(function () {
@@ -449,7 +466,9 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->grou
     Route::middleware(['auth:sanctum'])->post('/resit-timetable', [StudentResitController::class, 'create_resit_timetable_entry']);
     Route::middleware(['auth:sanctum'])->get('/student_resits', [StudentResitController::class, 'getAllResits']);
     Route::middleware(['auth:sanctum'])->get('/get-specialty-resit/{specialty_id}/{exam_id}', [ResitTimeTableController::class, 'getResitsBySpecialty']);
-    Route::middleware(['auth:sanctum'])->get('/generate-resit-timetable/{exam_id}', [ResitTimeTableController::class, '']);
+    Route::middleware(['auth:sanctum'])->post('/createResitTimetable/{examId}', [ResitTimeTableController::class, 'createResitTimetable']);
+    Route::middleware(['auth:sanctum'])->get('/getResitCoursesByExam/{examId}', [ResitTimeTableController::class, 'getResitCoursesByExam']);
+    Route::middleware(['auth:sanctum'])->delete('/deleteResitTimetable/{examId}', [ResitTimetableController::class, 'deleteResitTimetable']);
     Route::middleware(['auth:sanctum'])->get("/details/{resit_id}", [StudentResitController::class, 'getResitDetails']);
     Route::middleware(['auth:sanctum'])->get("/getTransactions", [StudentResitController::class, 'getResitPaymentTransactions']);
     Route::middleware(['auth:sanctum'])->delete('/deleteTransaction/{transactionId}', [StudentResitController::class, 'deleteFeePaymentTransaction']);
@@ -529,4 +548,8 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/addit
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/stats')->group(function () {
     Route::middleware(['auth:sanctum'])->get("/get/financial-stats", [FinancialStatsController::class, 'getFinanacialStats']);
+});
+
+Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-results')->group( function() {
+    Route::middleware(['auth:sanctum'])->get('/getAllStudentResults', [StudentResultController::class, 'getAllStudentResults']);
 });

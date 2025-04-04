@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('examtimetable', function (Blueprint $table) {
-            $table->string('id');
-            $table->date('day');
+            $table->string('id')->primary();
+            $table->date('date');
             $table->time('start_time');
             $table->time('end_time');
             $table->string('duration');

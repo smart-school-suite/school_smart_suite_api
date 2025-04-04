@@ -3,87 +3,71 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use App\Models\Examtimetable;
 use App\Models\Exams;
-
+use InvalidArgumentException; // Import the InvalidArgumentException
 use App\Models\Courses;
+use Illuminate\Support\Str;
 use Exception;
 
 class ExamTimeTableService
 {
     // Implement your logic here
 
-    public function createExamTimeTable($examTimeTableData, $currentSchool)
+    public function createExamTimeTable($examTimetableEntries, $currentSchool, $examId)
     {
-        $createdTimetables = [];
+
         DB::beginTransaction();
 
         try {
-            $overlappingTimetables = ExamTimetable::where('school_branch_id', $currentSchool->id)
-                ->where(function ($query) use ($examTimeTableData) {
-                    foreach ($examTimeTableData as $examCourse) {
-                        $startTime = Carbon::parse($examCourse['start_time']);
-                        $endTime = Carbon::parse($examCourse['end_time']);
-                        $query->orWhere(function ($subQuery) use ($startTime, $endTime, $examCourse) {
-                            $subQuery->where('course_id', $examCourse['course_id'])
-                                ->where('specialty_id', $examCourse['specialty_id'])
-                                ->where('level_id', $examCourse['level_id'])
-                                ->where('day', $examCourse['day'])
-                                ->where("exam_id", $examCourse['exam_id'])
-                                ->where('student_batch_id', $examCourse['student_batch_id'])
-                                ->where(function ($q) use ($startTime, $endTime) {
-                                    $q->whereBetween('start_time', [$startTime, $endTime])
-                                        ->orWhereBetween('end_time', [$startTime, $endTime])
-                                        ->orWhere(function ($q) use ($startTime, $endTime) {
-                                            $q->where('start_time', '<=', $startTime)
-                                                ->where('end_time', '>=', $endTime);
-                                        });
-                                });
-                        });
-                    }
-                })
-                ->get();
 
-            if ($overlappingTimetables->isNotEmpty()) {
-                return ApiResponseService::error("The timetable overlaps with existing courses. Please choose a different time", null, 409);
+            if (!isset($examTimetableEntries) || !is_array($examTimetableEntries)) {
+                throw new InvalidArgumentException('Invalid exam timetable data.');
             }
 
-            $timetablesData = [];
+            $createdTimetables = [];
+            $uniqueId = Str::random(30);
 
-            foreach ($examTimeTableData as $examCourse) {
-                $startTime = Carbon::parse($examCourse['start_time']);
-                $endTime = Carbon::parse($examCourse['end_time']);
-                $duration = $startTime->diffInMinutes($endTime);
-                $durationString = gmdate("H:i:s", $duration);
-
-                $timetablesData[] = [
-                    'course_id' => $examCourse['course_id'],
-                    'exam_id' => $examCourse['exam_id'],
-                    'level_id' => $examCourse['level_id'],
-                    'day' => $examCourse['day'],
-                    'student_batch_id' => $examCourse['student_batch_id'],
+            foreach ($examTimetableEntries as $entry) {
+                $createdTimetableId = DB::table('examtimetable')->insertGetId([
+                    'id' => $uniqueId,
+                    'course_id' => $entry['course_id'],
+                    'exam_id' => $entry['exam_id'],
+                    'student_batch_id' => $entry['student_batch_id'],
+                    'specialty_id' => $entry['specialty_id'],
+                    'level_id' => $entry['level_id'],
+                    'date' => $entry['date'],
+                    'start_time' => $entry['start_time'],
+                    'duration' => $entry['duration'],
+                    'end_time' => $entry['end_time'],
+                    'school_year' => $entry['school_year'],
                     'school_branch_id' => $currentSchool->id,
-                    'specialty_id' => $examCourse['specialty_id'],
-                    'start_time' => $startTime,
-                    'end_time' => $endTime,
-                    'duration' => $durationString,
-                ];
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $createdTimetables[] = $createdTimetableId;
             }
 
-            ExamTimetable::insert($timetablesData);
-            $createdTimetables = ExamTimetable::whereIn('start_time', array_column($timetablesData, 'start_time'))
-                ->get();
+            $exam = Exams::findOrFail($examId);
+            $exam->timetable_published = true;
+            $exam->save();
 
             DB::commit();
+
             return $createdTimetables;
-        } catch (Exception $e) {
+
+        } catch (InvalidArgumentException $e) {
+
             DB::rollBack();
             throw $e;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('An error occurred while creating the exam timetable: ' . $e->getMessage());
         }
     }
 
-    public function deleteTimeTable($timeTableId, $currentSchool)
+    public function deleteTimetableEntry($timeTableId, $currentSchool)
     {
         $examTimeTableEntry = Examtimetable::Where('school_branch_id', $currentSchool->id)->find($timeTableId);
         if (!$examTimeTableEntry) {
@@ -93,20 +77,31 @@ class ExamTimeTableService
         return $examTimeTableEntry;
     }
 
+    public function deleteTimetable(string $examId, $currentSchool){
+        $timetableEntries = Examtimetable::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)->get();
+        foreach($timetableEntries as $entry){
+           $entry->delete();
+        }
+        $exam = Exams::findOrFail($examId);
+        $exam->timetable_published = false;
+        $exam->save();
+        return $timetableEntries;
+    }
+
     public function generateExamTimeTable($levelId, $specailtyId, $currentSchool)
     {
         $timetables = ExamTimetable::Where('school_branch_id', $currentSchool->id)
             ->where('level_id', $levelId)
             ->where('specialty_id', $specailtyId)
             ->with('course')
-            ->orderBy('day')
+            ->orderBy('date')
             ->get();
         $examTimetable = [];
         foreach ($timetables as $timetable) {
-            if (!isset($examTimetable[$timetable->day])) {
-                $examTimetable[$timetable->day] = [];
+            if (!isset($examTimetable[$timetable->date])) {
+                $examTimetable[$timetable->date] = [];
             }
-            $examTimetable[$timetable->day][] = [
+            $examTimetable[$timetable->date][] = [
                 'course_title' => $timetable->course->course_title,
                 'credit' => $timetable->course->credit,
                 'course_code' => $timetable->course->course_code,
@@ -121,21 +116,22 @@ class ExamTimeTableService
 
     public function prepareExamTimeTableData($examId, $currentSchool)
     {
-        $find_exam_id = Exams::with(["semester", "specialty", "level"])
+        $exam = Exams::with(["semester", "specialty", "level"])
             ->where("id", $examId)
             ->first();
 
-        if (!$find_exam_id) {
+        if (!$exam) {
             return ApiResponseService::error("Exam Not Found", null, 404);
         }
 
         $coursesData = Courses::where("school_branch_id", $currentSchool->id)
-            ->where("specialty_id", $find_exam_id->specialty->id)
+            ->where("specialty_id", $exam->specialty->id)
+            ->where('semester_id', $exam->semester_id)
             ->get();
 
         $results = [];
-        $level_id = $find_exam_id->level->id;
-        $specialty_id = $find_exam_id->specialty->id;
+        $level_id = $exam->level->id;
+        $specialty_id = $exam->specialty->id;
 
         foreach ($coursesData as $course) {
             $results[] = [
@@ -149,6 +145,7 @@ class ExamTimeTableService
 
         return $results;
     }
+
 
 
 }

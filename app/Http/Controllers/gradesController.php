@@ -17,10 +17,6 @@ use Illuminate\Http\Request;
 
 class GradesController extends Controller
 {
-    //when creating grades for EXAM (FIRST_SEMESTER, SECOND_SEMESTER, THIRD_SEMESTER, NTH_SEMESETER)
-    //You need to take into consideration the related weighted mark of the ca
-    // eg if weighted mark for ca = 30 and weighted_exam_mark = 70 then means your grades of the exam will be based on
-    // 30 + 70 = 100 which is 100
 
     protected AddGradesService  $addGradesService;
     protected GradesService $gradesService;
@@ -35,6 +31,18 @@ class GradesController extends Controller
         try {
             $createGrades = $this->addGradesService->makeGradeForExam($request->grades, $currentSchool);
             return ApiResponseService::success("Exam Grades Created Succefully", $createGrades, null, 201);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 500);
+        }
+    }
+
+    public function createGradesByOtherGrades(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $configId = $request->route('configId');
+        $targetConfigId = $request->route('targetConfigId');
+        try {
+            $createGrades = $this->addGradesService->configureByOtherGrades($configId, $currentSchool, $targetConfigId);
+            return ApiResponseService::success("Exam Grades Added Successfully", $createGrades, null, 201);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 500);
         }

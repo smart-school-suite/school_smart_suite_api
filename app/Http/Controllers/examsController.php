@@ -66,4 +66,18 @@ class ExamsController extends Controller
         $AccessedExams = $this->examService->getAccessExams($student_id, $currentSchool);
         return ApiResponseService::success("Accessed Exams Fetched Sucessfully", AccessedExamResource::collection($AccessedExams), null, 200);
     }
+
+    public function addExamGrading(Request $request, string $gradesConfigId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $examId = $request->route("examId");
+        $gradesConfigId = $request->route("gradesConfigId");
+        $addGradesConfig = $this->examService->addExamGrading($examId, $currentSchool, $gradesConfigId);
+        return ApiResponseService::success("Exam Grading Added Successfully", $addGradesConfig, null, 201);
+    }
+
+    public function getResitExams(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $examTypeResit = $this->examService->getResitExams($currentSchool);
+        return ApiResponseService::success("Exam Type Resit Fetched Successfully", ExamResource::collection($examTypeResit), null, 200);
+    }
 }

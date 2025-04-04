@@ -26,10 +26,10 @@ class MarksController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
-            $results = $this->addScoreService->addStudentScores($request->student_scores, $currentSchool);
+            $results = $this->addScoreService->addStudentScores($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
         } catch (\Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
+            return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
 
@@ -78,68 +78,50 @@ class MarksController extends Controller
     public function getAccessedCoursesWithLettergrades(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $exam_id = $request->route("exam_id");
-        $student_id = $request->route("student_id");
-
-        $find_student = Student::find($student_id);
-        $find_exam = Exams::find($exam_id);
-        if (!$find_student) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Student not found'
-            ], 400);
-        }
-
-        if (!$find_exam) {
-            return response()->json([
-                "status" => "error",
-                "message" => "exam not found"
-            ], 400);
-        }
-
-        $specailty_id = $find_student->specialty_id;
-        $level_id = $find_student->level_id;
-        $get_exam_courses = Examtimetable::where("school_branch_id", $currentSchool->id)
-            ->where("exam_id", $exam_id)
-            ->where("specialty_id", $specailty_id)
+        $examId = $request->route("examId");
+        $exam = Exams::findOrFail($examId);
+        $accessedCourses = Examtimetable::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $examId)
             ->with(["course"])
             ->get();
 
-        $results = [];
-        foreach ($get_exam_courses as $course) {
+        $resultsOne = [];
+        foreach ($accessedCourses as $course) {
 
-            $results[] = [
-                "level_id" => $level_id,
+            $resultsOne[] = [
                 "course_id" => $course->course->id,
                 "course_name" => $course->course->course_title,
-                "exam_id" => $exam_id,
-                "specailty_id" => $course->specialty_id,
-                "weighted_mark" => $find_exam->weighted_mark,
-                "student_id" => $student_id
+                "course_credit" => $course->course->credit,
+                "exam_id" => $examId,
+                "weighted_mark" => $exam->weighted_mark,
             ];
         }
 
-        $results_two = [];
-        $grades_calculator_data = Grades::where("school_branch_id", $currentSchool->id)
-            ->where("exam_id", $exam_id)
+        $resultsTwo = [];
+        $examGrades = Grades::where("school_branch_id", $currentSchool->id)
+            ->where("grades_category_id", $exam->grades_category_id)
             ->with(["lettergrade"])
             ->get();
 
-        foreach ($grades_calculator_data as $grade) {
+        foreach ($examGrades as $grade) {
 
-            $results_two[] = [
+            $resultsTwo[] = [
                 "id" => $grade->id,
                 "letter_grade" => $grade->lettergrade->letter_grade,
                 "grade_points" => $grade->grade_points,
-                "minimum_score" => $grade->minimum_score
+                "minimum_score" => $grade->minimum_score,
+                "maximum_score" => $grade->maximum_score,
+                "grade_status" => $grade->grade_status,
+                "determinant" => $grade->determinant,
+
             ];
         }
 
         return response()->json([
             "status" => "ok",
             "message" => "Data fetched successfully",
-            "accessed_courses" => $results,
-            "grades_determinant" => $results_two
+            "accessed_courses" => $resultsOne,
+            "grades_determinant" => $resultsTwo
         ], 200);
     }
 }

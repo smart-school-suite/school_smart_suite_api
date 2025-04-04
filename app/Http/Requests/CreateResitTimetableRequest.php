@@ -1,18 +1,18 @@
 <?php
 
 namespace App\Http\Requests;
-use App\Rules\ExamTimetableRule;
+use App\Rules\ResitExamTimetableRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ExamTimeTableRequest extends FormRequest
+class CreateResitTimetableRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     //public function authorize(): bool
-    // {
-    // return false;
-    //  }
+   // {
+      //  return false;
+   // }
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,7 +22,7 @@ class ExamTimeTableRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'entries' => ['required', 'array', new ExamTimetableRule($this->entries)],
+            'entries' => ['required', 'array', new ResitExamTimetableRule($this->entries)],
             'entries.*.course_id' => 'required|exists:courses,id',
             'entries.*.exam_id' => 'required|exists:exams,id',
             'entries.*.student_batch_id' => 'required|exists:student_batch,id',

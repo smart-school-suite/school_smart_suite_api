@@ -31,6 +31,11 @@ class Specialty extends Model
     {
         return $this->hasMany(FeeWaiver::class, 'specialty_id');
     }
+
+    public function studentResults(): HasMany
+    {
+        return $this->hasMany(StudentResults::class, 'specialty_id');
+    }
     public function additionalFees(): HasMany
     {
         return $this->hasMany(AdditionalFees::class, 'specialty_id');

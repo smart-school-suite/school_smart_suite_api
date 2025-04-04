@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AccessedStudent;
 use App\Models\Exams;
 use App\Models\Marks;
 use App\Models\Grades;
@@ -11,6 +12,7 @@ use App\Models\Examtype;
 use App\Models\Resitablecourses;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AddScoreService
 {
@@ -19,16 +21,15 @@ class AddScoreService
     {
         $results = [];
         DB::beginTransaction();
+
         try {
             foreach ($studentScores as $scoreData) {
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
                 $exam = Exams::find($scoreData['exam_id']);
 
-                if (!$student || !$exam) {
-                    throw new Exception('Student or Exam not found', 404);
-                }
+                $this->validateStudentAndExam($student, $exam);
 
-                if ($this->isDuplicateEntry($currentSchool->id, $scoreData)) {
+                if ($this->isDuplicateEntry($currentSchool->id, $scoreData, $student)) {
                     throw new Exception('Duplicate data entry for this student', 409);
                 }
 
@@ -37,12 +38,18 @@ class AddScoreService
                     throw new Exception('Exam type not found', 400);
                 }
 
-                $grade = null;
-                $scoreData['score'] = $this->handleExamTypes($scoreData, $determinedExam, $exam, $student, $currentSchool->id);
+                $scoreData['score'] = $this->handleExamTypes(
+                    $scoreData,
+                    $determinedExam,
+                    $exam,
+                    $student,
+                    $currentSchool->id
+                );
 
-                $marks = Marks::create($this->prepareMarksData($scoreData, $grade, $currentSchool->id, $student));
+                $marks = $this->createMarks($scoreData, $student, $currentSchool->id, $exam);
                 $results[] = $marks;
             }
+
             DB::commit();
             return $results;
         } catch (Exception $e) {
@@ -51,31 +58,61 @@ class AddScoreService
         }
     }
 
-    private function handleExamTypes(array $scoreData, array $determinedExam, $exam, $student, $schoolId)
+    private function validateStudentAndExam($student, $exam)
+    {
+        if (!$student || !$exam) {
+            throw new Exception('Student or Exam not found', 404);
+        }
+    }
+
+    private function handleExamTypes(array $scoreData, $determinedExam, $exam, $student, $schoolId)
     {
         if ($determinedExam['ca']) {
             $this->validateCaMark($exam, $scoreData['score']);
             return $this->determineLetterGrade($scoreData['score'], $schoolId, $scoreData['exam_id']);
-        } elseif ($determinedExam['exam']) {
-            $totalScore = $this->calculateTotalScore($schoolId, $student, $scoreData, $exam);
-            if ($totalScore === false) {
-                throw new Exception('CA mark not found for this course', 400);
-            }
-            return $this->determineExamLetterGrade($totalScore, $schoolId, $student, $scoreData['exam_id'], $scoreData['courses_id']);
-        } else {
-            throw new Exception('Exam type not found', 400);
         }
+
+        if ($determinedExam['exam']) {
+            $totalScore = $this->calculateTotalScore($schoolId, $student, $scoreData, $exam);
+            return $this->determineExamLetterGrade($totalScore, $schoolId, $student, $scoreData['exam_id'], $scoreData['course_id']);
+        }
+
+        throw new Exception('Exam type not found', 400);
     }
 
-    private function prepareMarksData(array $scoreData, $grade, $schoolId, $student)
+    private function createMarks(array $scoreData, $student, $schoolId, $exam)
     {
-        return array_merge($scoreData, [
+        $gradeData = $this->prepareGradeData($scoreData, $schoolId);
+        $accessedStudent = AccessedStudent::findOrFail($scoreData['accessment_id']);
+        if($accessedStudent->grades_submitted === false || $accessedStudent->student_accessed === 'pending'){
+            $accessedStudent->grades_submitted = true;
+            $accessedStudent->student_accessed = 'accessed';
+            $accessedStudent->save();
+        }
+        return Marks::create([
+            'student_batch_id' => $student->student_batch_id,
+            'course_id' => $scoreData['course_id'],
+            'student_id' => $student->id,
+            'exam_id' => $exam->id,
+            'level_id' => $student->level_id,
+            'score' => $gradeData['score']['score'],
+            'specialty_id' => $student->specialty_id,
+            'school_branch_id' => $schoolId,
+            'grade' => $gradeData['grade'],
+            'grade_status' => $gradeData['grade_status'],
+            'gratification' => $gradeData['gratification'],
+        ]);
+    }
+
+    private function prepareGradeData(array $scoreData, $schoolId)
+    {
+        $grade = $this->determineLetterGrade($scoreData['score'], $schoolId, $scoreData['exam_id']);
+        return [
             'grade' => $grade['letterGrade'] ?? null,
             'grade_status' => $grade['gradeStatus'] ?? null,
             'gratification' => $grade['gratification'] ?? null,
-            'student_batch_id' => $student->student_batch_id,
-            'school_branch_id' => $schoolId,
-        ]);
+            'score' => $scoreData['score']
+        ];
     }
 
     private function getStudent($schoolId, $studentId)
@@ -83,14 +120,14 @@ class AddScoreService
         return Student::where('school_branch_id', $schoolId)->find($studentId);
     }
 
-    private function isDuplicateEntry($schoolId, $scoreData)
+    private function isDuplicateEntry($schoolId, $scoreData, $student)
     {
         return Marks::where('school_branch_id', $schoolId)
-            ->where('courses_id', $scoreData['courses_id'])
+            ->where('course_id', $scoreData['course_id'])
             ->where('exam_id', $scoreData['exam_id'])
-            ->where('level_id', $scoreData['level_id'])
-            ->where('specialty_id', $scoreData['specialty_id'])
-            ->where('student_id', $scoreData['student_id'])
+            ->where('level_id', $student->level_id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('student_id', $student->id)
             ->exists();
     }
 
@@ -103,33 +140,42 @@ class AddScoreService
 
     private function calculateTotalScore($schoolId, $student, $scoreData, $exam)
     {
-        $additionalExams = $this->findExamsBasedOnCriteria($scoreData['exam_id']);
-        $ca_score = Marks::where('school_branch_id', $schoolId)
-            ->where('exam_id', $additionalExams->id)
-            ->where('student_id', $student->id)
-            ->where('courses_id', $scoreData['courses_id'])
-            ->first();
+        $additionalExam = $this->findExamsBasedOnCriteria($scoreData['exam_id']);
+        $caScore = $this->retrieveCaScore($schoolId, $student->id, $scoreData['course_id'], $additionalExam->id);
 
-        if (!$ca_score) return false;
+        $totalScore = $scoreData['score'] + $caScore->score;
 
-        $totalScore = $scoreData['score'] + $ca_score->score;
-        $maxScore = $additionalExams->weighted_mark + $exam->weighted_mark;
-
-        if ($totalScore > $maxScore) {
+        if ($totalScore > ($additionalExam->weighted_mark + $exam->weighted_mark)) {
             throw new Exception('Total score exceeds maximum allowed score.', 400);
         }
 
         return $totalScore;
     }
 
+    private function retrieveCaScore($schoolId, $studentId, $courseId, $examId)
+    {
+        $caScore = Marks::where('school_branch_id', $schoolId)
+            ->where('exam_id', $examId)
+            ->where('student_id', $studentId)
+            ->where('course_id', $courseId)
+            ->first();
+
+        if (!$caScore) {
+            throw new Exception('CA mark not found for this course', 400);
+        }
+
+        return $caScore;
+    }
+
     private function determineLetterGrade($score, $schoolId, $examId)
     {
+        $exam = Exams::findOrFail($examId);
         $grades = Grades::with('lettergrade')
             ->where('school_branch_id', $schoolId)
-            ->where('exam_id', $examId)
+            ->where('grades_category_id', $exam->grades_category_id)
             ->orderBy('minimum_score', 'asc')
             ->get();
-
+        Log::info("grades data", $grades->toArray());
         if ($grades->isEmpty()) {
             throw new Exception("No grades found for school ID: {$schoolId} and exam ID: {$examId}");
         }
@@ -139,47 +185,38 @@ class AddScoreService
                 return [
                     'letterGrade' => $grade->lettergrade->letter_grade ?? 'N/A',
                     'gradeStatus' => $grade->grade_status,
-                    'gratification' => $grade->gratifaction
+                    'gratification' => $grade->determinant,
+                    'score' => $score
                 ];
             }
         }
-        return ['letterGrade' => 'F', 'gradeStatus' => 'fail', 'gratification' => null];
+
+        return ['letterGrade' => 'F', 'gradeStatus' => 'fail', 'gratification' => 'poor', 'score' => $score];
     }
 
-    private function determineExamType(string $exam_id)
+    private function determineExamType(string $examId)
     {
-        $exam = Exams::with('examType')->find($exam_id);
+        $exam = Exams::with('examType')->find($examId);
         if (!$exam) return false;
 
         $examType = $exam->examType;
         if (!$examType) return false;
 
-        $result = [
-            'exam' => false,
-            'ca' => false,
-            'resit' => false,
+        return [
+            'exam' => $examType->type === 'exam',
+            'ca' => $examType->type === 'ca',
+            'resit' => $examType->type === 'resit',
         ];
-
-        $supportedTypes = ['exam', 'ca', 'resit'];
-        $result[$examType->type] = in_array($examType->type, $supportedTypes);
-
-        return $result[$examType->type] ? $result : false;
     }
 
     public function findExamsBasedOnCriteria(string $examId)
     {
-        $exam = Exams::with('examType')->find($examId);
-        if (!$exam) {
-            throw new Exception('Exam not found');
-        }
-
-        $examType = $exam->examType;
-        if (!$examType || $examType->type !== 'exam') {
+        $exam = Exams::with('examType')->findOrFail($examId);
+        if ($exam->examType->type !== 'exam') {
             throw new Exception('Exam type is not valid or not found');
         }
 
-        $semester = $examType->semester;
-        $caExamType = ExamType::where('semester', $semester)
+        $caExamType = ExamType::where('semester', $exam->examType->semester)
             ->where('type', 'ca')
             ->first();
 
@@ -202,62 +239,64 @@ class AddScoreService
         return $additionalExam;
     }
 
-    private function determineExamLetterGrade($score, $schooId, $student, $examId, $courseId)
+    private function determineExamLetterGrade($score, $schoolId, $student, $examId, $courseId)
     {
+        $exam = Exams::findOrFail($examId);
         $grades = Grades::with('lettergrade')
-            ->where('school_branch_id', $schooId)
-            ->where('exam_id', $examId)
+            ->where('school_branch_id', $schoolId)
+            ->where('grades_category_id', $exam->grades_category_id)
             ->orderBy('minimum_score', 'asc')
             ->get();
 
         if ($grades->isEmpty()) {
-            throw new Exception("No grades found for school ID: {$schooId} and exam ID: {$examId}");
+            throw new Exception("No grades found for school ID: {$schoolId} and exam ID: {$examId}");
         }
 
         foreach ($grades as $grade) {
             if ($score >= $grade->minimum_score && $score <= $grade->maximum_score) {
-                $gradeStatus = $grade->grade_status;
-                $gratification = $grade->gratifaction;
-                $letterGrade = $grade->lettergrade->letter_grade;
-                if ($gradeStatus == 'resit') {
-                    $this->createResitableCourse($courseId, $examId, $student, $schooId);
+                if ($grade->grade_status === 'resit') {
+                    $this->createResitableCourse($courseId, $examId, $student, $schoolId);
                 }
-                return $letterGrade ?? 'N/A' && $gradeStatus && $gratification;
+
+                return [
+                    'letterGrade' => $grade->lettergrade->letter_grade,
+                    'gradeStatus' => $grade->grade_status,
+                    'gratification' => $grade->determinant
+                ];
             }
         }
-        return 'F';
+
+        return ['letterGrade' => 'F', 'gradeStatus' => 'fail', 'gratification' => 'poor'];
     }
 
-    private function createResitableCourse($courseId, $examId, $student, $schoolId)
+    public function createResitableCourse($courseId, $examId, $student, $schoolId)
     {
-        $resitCourseExists = Resitablecourses::where('school_branch_id', $schoolId)
-            ->where('specialty_id', $student->specialty_id)
-            ->where('courses_id', $courseId)
-            ->where('level_id', $student->level_id)
-            ->where('student_batch_id', $student->student_batch_id)
+        $resitCourse = Resitablecourses::where("school_branch_id", $schoolId)
+            ->where("specialty_id", $student->specialty_id)
+            ->where("course_id", $courseId)
+            ->where("student_batch_id", $student->student_batch_id)
             ->exists();
-        if (!$resitCourseExists) {
+        if (!$resitCourse) {
             Resitablecourses::create([
                 'school_branch_id' => $schoolId,
                 'specialty_id' => $student->specialty_id,
-                'courses_id' => $courseId,
+                'course_id' => $courseId,
+                'exam_id' => $examId,
+                'student_batch_id' => $student->student_batch_id,
+                'level_id' => $student->level_id
+            ]);
+            Studentresit::create([
+                'school_branch_id' => $schoolId,
+                'student_id' => $student->id,
+                'course_id' => $courseId,
                 'exam_id' => $examId,
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
             ]);
-            Studentresit::create([
-                'school_branch_id' => $schoolId,
-                'student_id' => $student->specialty_id,
-                'course_id' => $courseId,
-                'exam_id' => $examId,
-                'student_batch_id' => $student->student_batch_id,
-                'specialty_id' => $student->specialty_id,
-                'level_id' => $student->level_id
-            ]);
         } else {
             Studentresit::create([
                 'school_branch_id' => $schoolId,
-                'student_id' => $student->specialty_id,
+                'student_id' => $student->id,
                 'course_id' => $courseId,
                 'exam_id' => $examId,
                 'specialty_id' => $student->specialty_id,

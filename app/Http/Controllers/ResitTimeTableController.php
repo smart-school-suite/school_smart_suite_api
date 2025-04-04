@@ -2,220 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Exams;
-use App\Models\Resitablecourses;
-use Carbon\Carbon;
-use App\Models\Examtimetable;
-use App\Models\Resitexamtimetable;
-use App\Models\Specialty;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Facades\DB;
+use App\Services\ResitTimeTableService;
+use App\Http\Resources\ResitCourseByExamResource;
+use App\Http\Requests\CreateResitTimetableRequest;
+use InvalidArgumentException;
+use Exception;
 use Illuminate\Http\Request;
 
 class ResitTimeTableController extends Controller
 {
     //ResitTimeTableController
     //ResitcontrollerTimetable
-    public function getResitsBySpecialty(Request $request)
+
+    protected $resitTimeTableService;
+    public function __construct(ResitTimeTableService $resitTimeTableService)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $specialty_id = $request->route('specialty_id');
-        $exam_id = $request->route('exam_id');
-
-        $find_specialty = Specialty::where('school_branch_id', $currentSchool->id)
-            ->find($specialty_id);
-
-        if (!$find_specialty) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Specialty not found'
-            ], 404);
-        }
-
-        $resitable_courses =
-            Resitablecourses::where('school_branch_id', $currentSchool->id)
-            ->where('exam_id', $exam_id)
-            ->where('specialty_id', $specialty_id)
-            ->with(['courses'])
-            ->get();
-
-        if ($resitable_courses->isEmpty()) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'It appears there are no resits.'
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Resitable courses fetched successfully.',
-            'courses' => $resitable_courses
-        ], 200); // Use 200 for successful requests
+        $this->resitTimeTableService = $resitTimeTableService;
     }
 
-    public function createResitTimetable(Request $request)
-    {
+    public function getResitCoursesByExam(Request $request, $examId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $request->validate([
-            'resit_timetable' => 'required|array',
-            'resit_timetable.*.course_id' => 'required|exists:courses,id',
-            'resit_timetable.*.exam_id' => 'required|exists:exams,id',
-            'resit_timetable.*.specialty_id' => 'required|exists:specialties,id',
-            'resit_timetable.*.start_time' => 'required|date',
-            'resit_timetable.*.level_id' => 'required|exists:education_levels,id',
-            'resit_timetable.*.date' => 'required|date',
-            'resit_timetable.*.end_time' => 'required|date|after:start_time',
-        ]);
+        $resitableCourses = $this->resitTimeTableService->getResitableCoursesByExam($currentSchool, $examId);
+        return ApiResponseService::success("Resit Courses Fetched Successfully", ResitCourseByExamResource::collection($resitableCourses), null, 200);
+     }
 
-        $errors = [];
-        $createdTimetables = [];
-
-        DB::beginTransaction();
-
+    public function createResitTimetable(CreateResitTimetableRequest $request, $examId){
+        $currentSchool = $request->attributes->get('currentSchool');
         try {
-            foreach ($request->resit_timetable as $timetableData) {
-                $find_resitable_courses = ResitableCourses::where('school_branch_id', $currentSchool->id)
-                    ->where('course_id', $timetableData['course_id'])
-                    ->exists();
+            $createExamTimeTable = $this->resitTimeTableService->createResitTimetable($request->entries, $currentSchool, $examId);
+            return ApiResponseService::success("Time Table Created Sucessfully", $createExamTimeTable, null, 201);
+        } catch (InvalidArgumentException $e) {
+            ApiResponseService::error($e->getMessage(), null, 422);
 
-                if (!$find_resitable_courses) {
-                    $errors[] = [
-                        'course_id' => $timetableData['course_id'],
-                        'message' => 'No student has failed this course.'
-                    ];
-                    continue;
-                }
-
-                $startTime = Carbon::parse($timetableData['start_time']);
-                $endTime = Carbon::parse($timetableData['end_time']);
-                $duration = $startTime->diffInMinutes($endTime);
-                $durationString = gmdate("H:i:s", $duration);
-
-                $overlappingTimetables = ExamTimetable::where('school_branch_id', $currentSchool->id)
-                    ->where('course_id', $timetableData['course_id'])
-                    ->where('specialty_id', $timetableData['specialty_id'])
-                    ->where('level_id', $timetableData['level_id'])
-                    ->where('date', $timetableData['date'])
-                    ->where('exam_id', $timetableData['exam_id'])
-                    ->where(function ($query) use ($startTime, $endTime) {
-                        $query->whereBetween('start_time', [$startTime, $endTime])
-                            ->orWhereBetween('end_time', [$startTime, $endTime])
-                            ->orWhere(function ($query) use ($startTime, $endTime) {
-                                $query->where('start_time', '<=', $startTime)
-                                    ->where('end_time', '>=', $endTime);
-                            });
-                    })
-                    ->get();
-
-                if ($overlappingTimetables->isNotEmpty()) {
-                    foreach ($overlappingTimetables as $overlap) {
-                        $errors[] = [
-                            'course_id' => $timetableData['course_id'],
-                            'exam_id' => $timetableData['exam_id'],
-                            'overlap_start' => $overlap->start_time,
-                            'overlap_end' => $overlap->end_time,
-                            'message' => 'The timetable overlaps with an existing entry.'
-                        ];
-                    }
-                    continue;
-                }
-
-                $createdEntry = ResitExamTimetable::create([
-                    'course_id' => $timetableData['course_id'],
-                    'exam_id' => $timetableData['exam_id'],
-                    'level_id' => $timetableData['level_id'],
-                    'school_branch_id' => $currentSchool->id,
-                    'specialty_id' => $timetableData['specialty_id'],
-                    'start_time' => $startTime,
-                    'end_time' => $endTime,
-                    'duration' => $durationString,
-                ]);
-
-                $createdTimetables[] = $createdEntry;
-            }
-
-            if (!empty($errors)) {
-                DB::rollback();
-                return response()->json([
-                    'status' => 'error',
-                    'errors' => $errors,
-                ], 409);
-            }
-
-            DB::commit(); // Commit the transaction if all entries are created successfully
-
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Exam timetable entries created successfully!',
-                'created_timetables' => $createdTimetables // Return the created entries
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollback(); // Rollback if an exception occurs
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while creating the timetable entries: ' . $e->getMessage(),
-            ], 500);
+        } catch (Exception $e) {
+            ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
 
-    public function getResitTimeTable(Request $request, $specialty_id, $level_id)
-    {
+    public function deleteResitTimetable(Request $request, $examId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $timetables = Resitexamtimetable::Where('school_branch_id', $currentSchool->id)
-            ->where('level_id', $level_id)
-            ->where('specialty_id', $specialty_id)
-            ->with('course')
-            ->orderBy('day')
-            ->get();
-
-        $examTimetable = [];
-
-        foreach ($timetables as $timetable) {
-            if (!isset($examTimetable[$timetable->day])) {
-                $examTimetable[$timetable->day] = [];
-            }
-            $examTimetable[$timetable->day][] = [
-                'course_title' => $timetable->course->course_title,
-                'credit' => $timetable->course->credit,
-                'course_code' => $timetable->course->course_code,
-                'start_time' => $timetable->start_time->format('H:i'),
-                'end_time' => $timetable->end_time->format('H:i'),
-                'duration' => $timetable->duration,
-            ];
-        }
-
-        $examTimetable = array_change_key_case($examTimetable, CASE_LOWER);
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'exam time table generated succefully',
-            'resit_timetable' => $examTimetable
-        ]);
+        $deleteResitTimetable = $this->resitTimeTableService->deleteResitTimetable($examId, $currentSchool);
+        return ApiResponseService::success("Resit Time table deleted Successfully", $deleteResitTimetable, null, 200);
     }
 
-    public function createStudentResitScores(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $request->validate([
-            'resit_scores' => 'required|array',
-            'resit_scores.*.score' => 'required|integer',
-            'resit_score.*.course_id' => 'required|string|exists:courses,id',
-            'resit_score.*.student_id' => 'required|string|exists:students,id',
-            'resit_score.*.exam_id' => 'required|string|exists:exams,id',
-        ]);
-
-        foreach($request->resit_scores as $resitScore) {
-            $maxExamScore = Exams::where('school_branch_id', $currentSchool->id)->where("id", $resitScore['exam_id']);
-            if(!$maxExamScore){
-                return ApiResponseService::error("Exam not found");
-            }
-            if( $resitScore['score'] > $maxExamScore->weighted_mark ){
-                return ApiResponseService::error("Exam Resit score: {$resitScore['score']} cannot be greater than the score of the resit {$maxExamScore->weighted_mark}", null, 404);
-            }
-
-        }
-    }
-
-    private function calculateScoreEquivalence(){
-
-    }
 }

@@ -7,25 +7,24 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Grades extends Model
+class SchoolGradesConfig extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'school_branch_id',
-        'letter_grade_id',
-        'grade_points',
-        'minimum_score',
-        'grade_status',
-        'maximum_score',
-        'determinant',
+        'isgrades_configured',
+        'max_score',
         'grades_category_id'
     ];
 
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'grades';
+    public $table = 'school_grades_config';
 
+    public function gradesCategory(): BelongsTo {
+         return $this->belongsTo(GradesCategory::class, 'grades_category_id');
+    }
     protected static function boot()
     {
         parent::boot();
@@ -37,11 +36,4 @@ class Grades extends Model
 
     }
 
-    public function exam() : BelongsTo {
-        return $this->belongsTo(Exams::class, 'exam_id');
-    }
-
-    public function lettergrade(): BelongsTo {
-        return $this->belongsTo(LetterGrade::class, 'letter_grade_id');
-    }
 }

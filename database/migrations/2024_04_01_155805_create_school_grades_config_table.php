@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('resit_examtimetable', function (Blueprint $table) {
+        Schema::create('school_grades_config', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->string('duration');
-            $table->string('school_year');
+            $table->boolean('isgrades_configured')->default(false);
+            $table->integer('max_score')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('resit_examtimetable');
+        Schema::dropIfExists('school_grades_config');
     }
 };

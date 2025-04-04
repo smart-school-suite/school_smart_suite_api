@@ -73,6 +73,9 @@ return new class extends Migration
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
+            $table->string('grades_category_id')->nullable();
+            $table->foreign('grades_category_id')->references('id')->on('grades_category');
+            $table->boolean("grading_added")->default(false);
         });
 
         Schema::table('fee_payment_transactions', function (Blueprint $table){
@@ -160,8 +163,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('letter_grade_id');
             $table->foreign('letter_grade_id')->references('id')->on('letter_grade');
-            $table->string('exam_id');
-            $table->foreign('exam_id')->references('id')->on('exams')->onDelete('cascade');
+            $table->string("grades_category_id");
+            $table->foreign('grades_category_id')->references('id')->on('grades_category');
         });
 
         Schema::table('examtimetable', function (Blueprint $table){
@@ -448,6 +451,43 @@ return new class extends Migration
         Schema::table('schoolbranch_apikey', function(Blueprint $table) {
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('school_grades_config', function( Blueprint $table) {
+            $table->string("grades_category_id");
+            $table->foreign('grades_category_id')->references('id')->on('grades_category');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('student_results', function( Blueprint $table) {
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty');
+            $table->string('student_batch_id');
+            $table->foreign('student_batch_id')->references('id')->on('student_batch');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
+            $table->string('exam_id');
+            $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('resit_examtimetable', function ($table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('exam_id');
+            $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('course_id');
+            $table->foreign('course_id')->references('id')->on('courses');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty');
+            $table->string('student_batch_id');
+            $table->foreign('student_batch_id')->references('id')->on('student_batch');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
         });
 
     }

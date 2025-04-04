@@ -2,130 +2,104 @@
 
 namespace App\Services;
 use App\Models\Grades;
-use App\Models\Exams;
-use App\Models\Examtype;
+use App\Models\SchoolGradesConfig;
 use Illuminate\Support\Facades\DB;
 use Exception;
 class AddGradesService
 {
-    // Implement your logic here
-
-    //when its an exam it will get the exam type and check if its a exam then it will get the corresponding ca and sum the scores
-    //when its a ca it will just validate and create the data
     public function makeGradeForExam(array $grades, $currentSchool)
     {
         try {
             DB::beginTransaction();
-            $createdGrades = [];
-            $errors = [];
 
-            foreach ($grades as $gradeData) {
-                $this->validateExistingGrade($gradeData, $currentSchool->id, $errors);
-                $this->validateMinimumMaximumScore($gradeData, $currentSchool->id, $errors);
-                $this->saveGrade($gradeData, $currentSchool->id);
-                $createdGrades[] = $gradeData;
+            $insertedGrades = [];
+
+            foreach ($grades as $grade) {
+                $newGrade = Grades::create([
+                    'school_branch_id' => $currentSchool->id,
+                    'letter_grade_id' => $grade['letter_grade_id'],
+                    'grade_points' => $grade['grade_points'],
+                    'minimum_score' => $grade['minimum_score'],
+                    'maximum_score' => $grade['maximum_score'],
+                    'grade_status' => $grade['grade_status'],
+                    'determinant' => $grade['determinant'],
+                    'grades_category_id' => $grade['grades_category_id'],
+                ]);
+
+                $insertedGrades[] = $newGrade;
+            }
+            $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
+                ->where("grades_category_id", $grades[0]['grades_category_id']) // Corrected
+                ->first();
+
+            if ($schoolGradesConfig) {
+                $schoolGradesConfig->isgrades_configured = true;
+                $schoolGradesConfig->max_score = $grades[0]['max_score'];
+                $schoolGradesConfig->save();
             }
             DB::commit();
-            return $createdGrades;
+
+            return $insertedGrades;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
-
-        }
-    }
-    protected function validateExistingGrade($gradeData, $currentSchoolId, &$errors)
-    {
-        if (Grades::where('school_branch_id', $currentSchoolId)
-            ->where('exam_id', $gradeData['exam_id'])
-            ->where('minimum_score', $gradeData['minimum_score'])
-            ->where('maximum_score', $gradeData['maximum_score'])
-            ->where('letter_grade_id', $gradeData['letter_grade_id'])
-            ->exists()
-        ) {
-            $errors[] = [
-                'exam_id' => $gradeData['exam_id'],
-                'minimum_score' => $gradeData['minimum_score'],
-                'maximum_score' => $gradeData['maximum_score'],
-                'message' => 'Grade already exists',
-            ];
         }
     }
 
-    protected function validateMinimumMaximumScore($gradeData, $currentSchoolId, &$errors)
-    {
-        $exam = Exams::where('school_branch_id', $currentSchoolId)
-            ->where('id', $gradeData['exam_id'])
-            ->first();
+    public function configureByOtherGrades($configId, $currentSchool, $targetConfigId)
+{
+    $insertedGrades = [];
+    //targetConfigId is the grades to be configured
+    //configId is the grades to be used
+    // Begin a database transaction
+    DB::beginTransaction();
 
-        if (!$exam) {
-            $errors[] = [
-                'exam_id' => $gradeData['exam_id'],
-                'message' => 'Exam not found',
-            ];
+    try {
+        // Fetching the source and target grade configurations
+        $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
+        $targetGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($targetConfigId);
+
+        // Check if the source config exists and the target config does not
+        if (!$schoolGradesConfig || !$targetGradesConfig) {
+            return ApiResponseService::error("School Grades Configurations not found", null, 404);
         }
 
-        $examType = $exam->examType;
-        if (!$examType || $examType->type == 'exam') {
-            $semester = $examType->semester;
-            $caExamType = Examtype::where('semester', $semester)
-                ->where('type', 'ca')
-                ->first();
-            if (!$caExamType) {
-                throw new Exception('Corresponding CA exam type not found');
-            }
+        // Fetching grades from the source configuration
+        $grades = Grades::where("school_branch_id", $currentSchool->id)
+                        ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
+                        ->get();
 
-            $additionalExams = Exams::
-                 where('exam_type_id', $caExamType->id)
-                ->where('specialty_id', $exam->specialty_id)
-                ->where('level_id', $exam->level_id)
-                ->where('semester_id', $exam->semester_id)
-                ->get();
-            $isExamWithCA = $exam->exam_type_id === $caExamType->id;
-            if ($gradeData['minimum_score'] > $gradeData['maximum_score']) {
-                $errors[] = [
-                    'exam_id' => $gradeData['exam_id'],
-                    'minimum_score' => $gradeData['minimum_score'],
-                    'maximum_score' => $gradeData['maximum_score'],
-                    'message' => 'Minimum score cannot be greater than maximum score',
-                ];
-            } elseif ($isExamWithCA) {
-                if ($gradeData['minimum_score'] > $exam->weighted_mark + $additionalExams->first()->weighted_mark || $gradeData['maximum_score'] > $exam->weighted_mark + $additionalExams->first()->weighted_mark) {
-                    $errors[] = [
-                        'exam_id' => $gradeData['exam_id'],
-                        'minimum_score' => $gradeData['minimum_score'],
-                        'maximum_score' => $gradeData['maximum_score'],
-                        'message' => 'Scores cannot be greater than exam max score',
-                        'exam_max_score' => $exam->weighted_mark,
-                    ];
-                }
-            } else {
-                if ($gradeData['minimum_score'] > $exam->weighted_mark || $gradeData['maximum_score'] > $exam->weighted_mark) {
-                    $errors[] = [
-                        'exam_id' => $gradeData['exam_id'],
-                        'minimum_score' => $gradeData['minimum_score'],
-                        'maximum_score' => $gradeData['maximum_score'],
-                        'message' => 'Scores cannot be greater than exam max score',
-                        'exam_max_score' => $exam->weighted_mark,
-                    ];
-                }
-            }
+        // Creating new grades based on the fetched grades
+        foreach ($grades as $grade) {
+            $newGrade = Grades::create([
+                'school_branch_id' => $currentSchool->id,
+                'letter_grade_id' => $grade->letter_grade_id,
+                'grade_points' => $grade->grade_points,
+                'minimum_score' => $grade->minimum_score,
+                'maximum_score' => $grade->maximum_score,
+                'grade_status' => $grade->grade_status,
+                'determinant' => $grade->determinant,
+                'grades_category_id' => $targetGradesConfig->grades_category_id,
+            ]);
+
+            $insertedGrades[] = $newGrade;
         }
 
-    }
+        // Updating the target configuration after successful insertion
+        $targetGradesConfig->isgrades_configured = true;
+        $targetGradesConfig->max_score = $schoolGradesConfig->max_score;
+        $targetGradesConfig->save();
 
-    protected function saveGrade($gradeData, $currentSchoolId)
-    {
-        $grade = new Grades();
-        $grade->school_branch_id = $currentSchoolId;
-        $grade->letter_grade_id = $gradeData['letter_grade_id'];
-        $grade->grade_points = $gradeData['grade_points'];
-        $grade->exam_id = $gradeData['exam_id'];
-        $grade->determinant = $gradeData['determinant'];
-        $grade->grade_status = $gradeData['grade_status'];
-        $grade->minimum_score = floatval($gradeData['minimum_score']);
-        $grade->maximum_score = floatval($gradeData['maximum_score']);
-        $grade->save();
+        // Commit the transaction
+        DB::commit();
 
-        return $grade;
+        // Return the newly created grades
+        return $insertedGrades;
+
+    } catch (Exception $e) {
+        // Rollback the transaction if any error occurs
+        DB::rollBack();
+        throw $e;
     }
+}
 }

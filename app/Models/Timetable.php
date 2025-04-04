@@ -13,6 +13,7 @@ class Timetable extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'school_branch_id',
         'specialty_id',
         'level_id',

@@ -12,42 +12,45 @@ class Resitexamtimetable extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'id',
         'school_branch_id',
         'exam_id',
         'course_id',
         'specialty_id',
-        'day',
+        'date',
         'start_time',
         'end_time',
-        'duration'
+        'duration',
+        'level_id',
+        'student_batch_id'
       ];
-  
+
       protected $casts = [
           'start_time' => 'datetime',
           'end_time' => 'datetime',
           'duration' => 'string',
       ];
-  
+
       public $keyType = 'string';
       public $incrementing = 'false';
-      public $table = 'examtimetable';
-      
-  
+      public $table = 'resit_examtimetable';
+
+
       protected static function boot()
       {
           parent::boot();
-         
+
            static::creating(function ($user){
               $uuid = str_replace('-', '', Str::uuid()->toString());
               $user->id = substr($uuid, 0, 10);
            });
-        
+
       }
-  
+
       public function course(): HasMany {
           return $this->hasMany(Courses::class, 'course_id');
       }
-  
+
       public function exam(): BelongsTo {
           return $this->belongsTo(Exams::class, 'exam_id');
       }
