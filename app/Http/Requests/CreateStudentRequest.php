@@ -25,16 +25,13 @@ class CreateStudentRequest extends FormRequest
              'name' => 'required|string',
             'first_name' => 'required|string',
             'last_name' => 'required|string',
-            'DOB' => 'required|string',
-            'gender' => 'required|string',
-            'phone_one' => 'required|string',
             'level_id' => 'required|string',
             'specialty_id' => 'required|string',
             'department_id' => 'required|string',
             'email' => 'required|email',
             'guadian_id' => 'required|string',
-            'password' => 'required|string|min:8',
-            'student_batch_id' => 'required|string'
+            'student_batch_id' => 'required|string',
+            'payment_format' => 'required|string',
         ];
     }
 }

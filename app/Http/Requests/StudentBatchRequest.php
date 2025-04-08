@@ -23,7 +23,7 @@ class StudentBatchRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-             'graduation_date' => 'required|date'
+             'description' => 'nullable|string'
         ];
     }
 }

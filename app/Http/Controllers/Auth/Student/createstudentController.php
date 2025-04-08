@@ -3,18 +3,10 @@
 namespace App\Http\Controllers\Auth\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\Specialty;
-use App\Models\Student;
-use App\Models\TuitionFees;
-use App\Models\RegistrationFee;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\CreateStudentRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Http\Request;
 use App\Services\Auth\Student\CreateStudentService;
-use GuzzleHttp\Promise\Create;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\QueryException;
+
 
 class CreateStudentController extends Controller
 {

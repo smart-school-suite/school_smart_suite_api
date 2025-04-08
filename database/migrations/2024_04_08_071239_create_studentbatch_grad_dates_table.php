@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_batch', function (Blueprint $table) {
+        Schema::create('studentbatch_grad_dates', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
-            $table->enum('status', ['active', 'inactive'])->default('inactive');
-            $table->date('graduation_date');
+            $table->date("graduation_date");
             $table->timestamps();
         });
     }
@@ -25,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_batch');
+        Schema::dropIfExists('studentbatch_grad_dates');
     }
 };

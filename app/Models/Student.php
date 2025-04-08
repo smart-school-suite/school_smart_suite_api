@@ -7,7 +7,6 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 
@@ -21,6 +20,7 @@ class Student extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
         'name',
         'first_name',
         'last_name',
@@ -35,6 +35,7 @@ class Student extends Model
         'guadian_id',
         'student_batch_id',
         'religion',
+        'account_status',
         'payment_format',
         'email',
         'password',
@@ -69,20 +70,20 @@ class Student extends Model
         ];
     }
 
-    protected static function boot()
+    public function studentDropout(): HasMany
     {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
+        return $this->hasMany(StudentDropout::class, 'student_id');
     }
-
+    public function resitmarks(): HasMany {
+        return $this->hasMany(ResitMarks::class, 'student_id');
+    }
     public function accessedStudent(): HasMany {
          return $this->hasMany(AccessedStudent::class);
     }
 
+    public function resitAccessedStudent(): HasMany {
+         return $this->hasMany(AccessedResitStudent::class);
+    }
     public function studentResults(): HasMany
     {
         return $this->hasMany(StudentResults::class);

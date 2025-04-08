@@ -27,11 +27,22 @@ class Specialty extends Model
     public $table = 'specialty';
     public $incrementing = 'false';
 
+    public function studentGradDates() : HasMany {
+        return $this->hasMany(StudentBatchGradeDates::class);
+   }
+    public function studentDropout(): HasMany
+    {
+        return $this->hasMany(StudentDropout::class, 'specialty_id');
+    }
     public function feeWaiver(): HasMany
     {
         return $this->hasMany(FeeWaiver::class, 'specialty_id');
     }
 
+    public function resitmarks(): HasMany
+    {
+        return $this->hasMany(ResitMarks::class, 'specialty_id');
+    }
     public function studentResults(): HasMany
     {
         return $this->hasMany(StudentResults::class, 'specialty_id');

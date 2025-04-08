@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('first_name');
             $table->string('last_name');
-            $table->date('DOB');
-            $table->string('gender');
+            $table->date('DOB')->nullable();
+            $table->string('gender')->nullable();
             $table->string('fee_status')->default('owing');
             $table->decimal('total_fee_debt', 8, 2);
             $table->string('phone_one')->unique();

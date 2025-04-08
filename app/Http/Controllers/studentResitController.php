@@ -4,16 +4,30 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\StudentResitService;
+use App\Services\ResitScoresService;
 use App\Http\Requests\ResitPaymentRequest;
+use App\Http\Requests\resitScoreRequest;
 use App\Services\ApiResponseService;
 
 class StudentResitController extends Controller
 {
     //
     protected StudentResitService $studentResitService;
-    public function __construct(StudentResitService $studentResitService)
+
+    protected ResitScoresService $resitScoresService;
+
+    public function __construct(StudentResitService $studentResitService, ResitScoresService $resitScoresService)
     {
+        $this->resitScoresService = $resitScoresService;
         $this->studentResitService = $studentResitService;
+    }
+
+    public function submitResitScores(resitScoreRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $candidateId = $request->route('candidateId');
+        $resitScores = $this->resitScoresService->submitStudentResitScores($request->entries, $currentSchool, $candidateId);
+        return ApiResponseService::success("Resit Scores Submitted Successfully", $resitScores, null, 200);
     }
     public function updateResit(Request $request, $resit_id)
     {
@@ -83,5 +97,13 @@ class StudentResitController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $reverseTransaction = $this->studentResitService->reverseResitTransaction($transactionId, $currentSchool);
         return ApiResponseService::success("Transaction Reversed Succesfully", $reverseTransaction, null, 200);
+    }
+
+    public function prepareResitData(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $examId = $request->route('examId');
+        $studentId = $request->route('studentId');
+        $prepareResitData = $this->studentResitService->prepareResitScoresData($currentSchool, $examId, $studentId);
+        return ApiResponseService::success("Student Resit Info fetched Succesfully", $prepareResitData, null, 200);
     }
 }

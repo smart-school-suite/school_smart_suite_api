@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Studentbatch;
+
 use App\Services\StudentBatchService;
 use App\Http\Requests\StudentBatchRequest;
+use App\Http\Requests\CreateGradDateByStudentBatch;
+use App\Http\Resources\GraduationBatchDateResource;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
@@ -44,5 +46,29 @@ class StudentBatchcontroller extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $getStudentBatches = $this->studentBatchService->getStudentBatches($currentSchool);
         return ApiResponseService::success('Student Batch Fetched Succefully', $getStudentBatches,  null, 200);
+    }
+
+    public function activateStudentBatch(Request $request, $batchId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activateStudentBatch = $this->studentBatchService->activateBatch($currentSchool, $batchId);
+        return ApiResponseService::success("Student Batch Activated Succesfully", $activateStudentBatch, null, 200);
+    }
+
+    public function deactivateStudentBatch(Request $request, $batchId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $DeactivateStudentBatch = $this->studentBatchService->deactivateBatch($currentSchool, $batchId);
+        return ApiResponseService::success("Student Batch Deactivated Succesfully", $DeactivateStudentBatch, null, 200);
+    }
+
+    public function assignGradDatesBySpecialty(CreateGradDateByStudentBatch $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $assignGraduationDates = $this->studentBatchService->assignGradDatesBySpecialty($currentSchool, $request->graduation_dates);
+        return ApiResponseService::success("Graduation Dates for student batches set successfully", $assignGraduationDates, null, 200);
+    }
+
+    public function getGraduationDatesByBatch(Request $request, $batchId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getGraduationDatesByBatch = $this->studentBatchService->getGradeDateListByBatch($currentSchool, $batchId);
+        return ApiResponseService::success("Graduation Dates Fetched Successfully",  GraduationBatchDateResource::collection($getGraduationDatesByBatch), null, 200);
     }
 }

@@ -22,6 +22,8 @@ class Studentresit extends Model
         'exam_status',
         'paid_status',
         'resit_fee',
+        'attempt_number',
+        'iscarry_over'
     ];
 
     public $keyType = 'string';

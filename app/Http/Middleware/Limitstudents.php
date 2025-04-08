@@ -24,7 +24,7 @@ class Limitstudents
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
         $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
-        if($subcriptionDetails->max_number_students >= $schoolBranch->current_num_students){
+        if($schoolBranch->current_num_students > $subcriptionDetails->max_number_student ){
             return ApiResponseService::error("You have reached your student creation limit: {$subcriptionDetails->max_number_students}", null, 400);
         }
 

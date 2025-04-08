@@ -21,6 +21,7 @@ class SpecialtyResource extends JsonResource
             'tuition_fee' =>  $this->school_fee,
             'total' => $this->school_fee + $this->registration_fee,
             'level_name' => $this->level->name ?? null,
+            'level_id' => $this->level->id,
             'level' => $this->level->level ?? null,
             'status' => $this->status,
             'description' => $this->description,

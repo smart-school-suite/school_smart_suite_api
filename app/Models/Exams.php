@@ -32,10 +32,16 @@ class Exams extends Model
     public $incrementing = 'false';
     public $table = 'exams';
 
+    public function resitmarks(): HasMany {
+        return $this->hasMany(ResitMarks::class, 'exam_id');
+    }
     public function courses(): BelongsTo {
         return $this->belongsTo(Exams::class);
     }
 
+    public function resitAccessedStudents(): HasMany {
+        return $this->hasMany(AccessedResitStudent::class);
+    }
     public function studentResults(): HasMany {
         return $this->hasMany(StudentResults::class);
     }

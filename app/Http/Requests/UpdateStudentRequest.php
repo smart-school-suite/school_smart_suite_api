@@ -9,11 +9,6 @@ class UpdateStudentRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
-    {
-        return false;
-    }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -22,19 +17,17 @@ class UpdateStudentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string',
-            'first_name' => 'sometimes|string',
-            'last_name' => 'sometimes|string',
-            'DOB' => 'sometimes|string',
-            'gender' => 'sometimes|string',
-            'phone_one' => 'sometimes|string',
-            'level_id' => 'sometimes|string',
-            'specialty_id' => 'sometimes|string',
-            'department_id' => 'sometimes|string',
-            'email' => 'sometimes|email',
-            'guadian_id' => 'sometimes|string',
-            'password' => 'sometimes|string|min:8',
-            'student_batch_id' => 'sometimes|string'
+            'name' => 'sometimes|nullable|string',
+            'first_name' => 'sometimes|nullable|string',
+            'last_name' => 'sometimes|nullable|string',
+            'gender' => 'sometimes|nullable|string',
+            'phone_one' => 'sometimes|nullable|string',
+            'level_id' => 'sometimes|nullable|string',
+            'specialty_id' => 'sometimes|nullable|string',
+            'department_id' => 'sometimes|nullable|string',
+            'email' => 'sometimes|nullable|email',
+            'guadian_id' => 'sometimes|nullable|string',
+            'student_batch_id' => 'sometimes|nullable|string'
         ];
     }
 }

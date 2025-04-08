@@ -15,6 +15,7 @@ class Studentbatch extends Model
     protected $fillable = [
         'name',
         'status',
+        'description',
         'school_branch_id'
     ];
 
@@ -33,6 +34,15 @@ class Studentbatch extends Model
 
     }
 
+    public function studentGradDates() : HasMany {
+        return $this->hasMany(StudentBatchGradeDates::class);
+   }
+    public function studentDropout(): HasMany {
+         return $this->hasMany(StudentDropout::class);
+    }
+    public function schoolBranch(): HasMany {
+         return $this->hasMany(Schoolbranches::class);
+    }
     public function schoolSemester(): HasMany {
          return $this->hasMany(SchoolSemester::class);
     }

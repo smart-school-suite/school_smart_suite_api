@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Marks;
+use App\Models\Resitexamtimetable;
 use App\Models\ResitFeeTransactions;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -150,5 +152,41 @@ class StudentResitService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function prepareResitScoresData($currentSchool, $examId, $studentId)
+    {
+        $results = [];
+        $resitCoursesIds = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $examId)
+            ->plunk();
+
+        foreach ($resitCoursesIds as $resitCourseId) {
+            $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
+                ->where("course_id", $resitCourseId)
+                ->where("student_id", $studentId)
+                ->with(['courses', 'level', 'specialty', 'student'])
+                ->where("exam_status", "pending")
+                ->first();
+            if ($studentResit) {
+                $studentScore = Marks::where("school_branch_id", $currentSchool->id)
+                    ->where("student_id", $studentResit->student_id)
+                    ->where("exam_id", $studentResit->exam_id)
+                    ->where("specialty_id", $studentResit->specialty_id)
+                    ->first();
+                $results[] = [
+                    'student_id' => $studentScore->student_id,
+                    'student_name' => $studentResit->student->name,
+                    'exam_id' => $studentScore->exam_id,
+                    'course_id' => $studentScore->course_id,
+                    'course_title' => $studentResit->title,
+                    'score' => $studentScore->score,
+                    'grade' => $studentScore->grade,
+                    'grade_status' => $studentScore->grade_status
+                ];
+            }
+        }
+
+        return $results;
     }
 }

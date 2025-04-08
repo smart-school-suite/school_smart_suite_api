@@ -34,6 +34,9 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = 'false';
 
+    public function studentGradDates() : HasMany {
+        return $this->hasMany(StudentBatchGradeDates::class);
+   }
     public function country(): BelongsTo {
         return $this->belongsTo(Country::class);
     }

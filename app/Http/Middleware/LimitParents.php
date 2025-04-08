@@ -24,7 +24,7 @@ class LimitParents
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
         $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
-        if ($subcriptionDetails->max_number_parents >= $schoolBranch->max_number_parents) {
+        if ($schoolBranch->max_number_parents > $subcriptionDetails->max_number_parents) {
             return ApiResponseService::error("You have reached your max mimum parent creation limit : {$subcriptionDetails->max_number_parents}", null, 400);
         }
         return $next($request);

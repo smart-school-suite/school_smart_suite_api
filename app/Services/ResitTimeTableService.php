@@ -22,19 +22,19 @@ class ResitTimeTableService
         return $resitableCourses;
     }
 
-    public function createResitTimetable($resitTimetableEntries, $currentSchool, $examId){
+    public function createResitTimetable($resitTimetableEntries, $currentSchool, $examId)
+    {
         DB::beginTransaction();
 
         try {
-
             if (!isset($resitTimetableEntries) || !is_array($resitTimetableEntries)) {
                 throw new InvalidArgumentException('Invalid exam timetable data.');
             }
 
             $createdTimetables = [];
-            $uniqueId = Str::random(30);
 
             foreach ($resitTimetableEntries as $entry) {
+                $uniqueId = Str::random(30);
                 $createdTimetableId = DB::table('resit_examtimetable')->insertGetId([
                     'id' => $uniqueId,
                     'course_id' => $entry['course_id'],
@@ -55,6 +55,7 @@ class ResitTimeTableService
                 $createdTimetables[] = $createdTimetableId;
             }
 
+
             $exam = Exams::findOrFail($examId);
             $exam->timetable_published = true;
             $exam->save();
@@ -64,7 +65,6 @@ class ResitTimeTableService
             return $createdTimetables;
 
         } catch (InvalidArgumentException $e) {
-
             DB::rollBack();
             throw $e;
         } catch (Exception $e) {

@@ -7,10 +7,6 @@ use App\Models\Parents;
 class ParentService
 {
     // Implement your logic here
-    public function getAllParentNoRelation($currentSchool){
-        $parents = Parents::where("school_branch_id", $currentSchool->id)->get();
-        return $parents;
-    }
     public function getAllParents($currentSchool) {
         $parents = Parents::Where('school_branch_id', $currentSchool->id)->with('student')->get();
         return $parents;
@@ -25,7 +21,7 @@ class ParentService
     }
 
     public function updateParent(array $data, $parentId, $currentSchool){
-        $parentExist = Parents::where("school_branch_id")->find($parentId);
+        $parentExist = Parents::where("school_branch_id", $currentSchool->id)->find($parentId);
         if(!$parentExist){
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
@@ -36,6 +32,7 @@ class ParentService
 
     public function getParentDetails($parentId, $currentSchool){
         $parentDetails = Parents::where("school_branch_id", $currentSchool->id)
+        ->where("id", $parentId)
          ->with(['student.specialty', 'student.level'])
          ->get();
         if(!$parentDetails){

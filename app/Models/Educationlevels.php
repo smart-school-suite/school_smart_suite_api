@@ -31,6 +31,18 @@ class Educationlevels extends Model
         });
     }
 
+    public function studentGradDates() : HasMany {
+         return $this->hasMany(StudentBatchGradeDates::class);
+    }
+    public function studentDropout(): HasMany
+    {
+        return $this->hasMany(StudentDropout::class, 'level_id');
+    }
+
+    public function resitmarks(): HasMany
+    {
+        return $this->hasMany(ResitMarks::class, 'level_id');
+    }
     public function feeWaiver(): HasMany
     {
         return $this->hasMany(FeeWaiver::class, 'level_id');

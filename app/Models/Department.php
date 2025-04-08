@@ -24,6 +24,9 @@ class Department extends Model
     public $table = 'department';
     public $incrementing = 'false';
 
+    public function studentDropout(): HasMany {
+        return $this->hasMany(StudentDropout::class, 'department_id');
+    }
      public function hods()
     {
         return $this->hasMany(HOD::class, 'department_id');

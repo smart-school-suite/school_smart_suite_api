@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Parents;
 use App\Services\ApiResponseService;
+use App\Http\Resources\ParentResource;
 use App\Services\ParentService;
 use Illuminate\Http\Request;
 
@@ -17,8 +17,8 @@ class parentsController extends Controller
     //review the resource and the update functionality
     public function getAllParents(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $parentData = $this->parentService->getAllParentNoRelation($currentSchool);
-        return ApiResponseService::success("Parents Data fetched Sucessfully", $parentData, null, 200);
+        $parentData = $this->parentService->getAllParents($currentSchool);
+        return ApiResponseService::success("Parents Data fetched Sucessfully",  ParentResource::collection($parentData), null, 200);
     }
 
     public function deleteParent(Request $request, string $parent_id){

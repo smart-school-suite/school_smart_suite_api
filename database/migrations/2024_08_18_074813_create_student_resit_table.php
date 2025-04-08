@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('exam_status')->default('pending');
             $table->string('paid_status')->default('unpaid');
             $table->decimal('resit_fee', 8, 2)->default(3000.00);
+            $table->unsignedInteger('attempt_number')->default(0);
             $table->timestamps();
         });
     }
