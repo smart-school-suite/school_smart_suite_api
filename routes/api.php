@@ -451,6 +451,8 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/school-expenses')->gr
     Route::middleware(['auth:sanctum'])->get('/my-expenses', [ExpensesController::class, 'getExpenses']);
     Route::middleware(['auth:sanctum'])->get('/expenses-details/{expense_id}', [ExpensesController::class, 'getExpensesDetails']);
     Route::middleware(['auth:sanctum'])->put('/update-expenses/{expense_id}', [ExpensesController::class, 'updateExpense']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteSchoolExpenses/{schoolExpensesIds}', [ExpensesController::class, 'bulkDeleteSchoolExpenses']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateSchoolExpenses', [ExpensesController::class, 'bulkUpdateSchoolExpenses']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/school-expenses-category')->group(function () {

@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Models\SchoolExpenses;
-
+use Illuminate\Support\Facades\DB;
+use Exception;
 class SchoolExpensesService
 {
     // Implement your logic here
@@ -58,5 +59,54 @@ class SchoolExpensesService
             return ApiResponseService::error("Expenses Deleted Sucessfully", null, 404);
         }
         return $expensesExist;
+    }
+
+    public function bulkDeleteSchoolExpenses($expensesIds){
+          $result = [];
+           try{
+             DB::beginTransaction();
+             foreach($expensesIds as $expensesId){
+               $schoolExpense = SchoolExpenses::findOrFail($expensesId['id']);
+               $schoolExpense->delete();
+               $result[] = [
+                   $schoolExpense
+                ];
+             }
+             DB::commit();
+             return $result;
+           }
+           catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+           }
+    }
+
+    public function bulkUpdateExpenses($expensesDataList){
+         $result = [];
+         try{
+             DB::beginTransaction();
+             foreach($expensesDataList as $expensesData){
+                $schoolExpense = SchoolExpenses::findOrFail($expensesData['id']);
+                if ($schoolExpense) {
+                    $cleanedData = array_filter($expensesData, function ($value) {
+                        return $value !== null && $value !== '';
+                    });
+
+                    if (!empty($cleanedData)) {
+                        $schoolExpense->update($cleanedData);
+                    }
+                }
+                $result[] = [
+                   $schoolExpense
+              ];
+             }
+             DB::commit();
+             return $result;
+         }
+
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
     }
 }

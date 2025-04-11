@@ -22,9 +22,9 @@ class UpdateSchoolExpensesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'expenses_category_id' => 'sometimes|required|string',
-            'date' => 'sometimes|required|date',
-            'amount' => 'sometimes|required',
+            'expenses_category_id' => 'sometimes|nullable|string|exists:school_expenses_category,id',
+            'date' => 'sometimes|nullable|date',
+            'amount' => 'sometimes|nullable',
             'description' => 'sometimes|string'
         ];
     }
