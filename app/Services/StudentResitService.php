@@ -7,6 +7,7 @@ use App\Models\Resitexamtimetable;
 use App\Models\ResitFeeTransactions;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Exception;
 use App\Models\Studentresit;
 
 class StudentResitService
@@ -88,7 +89,7 @@ class StudentResitService
             DB::commit();
 
             return $studentResit;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
@@ -148,7 +149,7 @@ class StudentResitService
             DB::commit();
 
             return $transaction;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
@@ -188,5 +189,153 @@ class StudentResitService
         }
 
         return $results;
+    }
+
+    public function bulkDeleteStudentResit($studentResitIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($studentResitIds as $studentResitId) {
+                $studentResit = Studentresit::findOrFail($studentResitId);
+                $studentResit->delete();
+                $result[] = [
+                    $studentResit
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkUpdateStudentResit($updateStudentResitList)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($updateStudentResitList as $updateStudentResit) {
+                $studentResit = StudentResit::findOrFail($updateStudentResit->id);
+                if ($studentResit) {
+                    $cleanedData = array_filter($updateStudentResit, function ($value) {
+                        return $value !== null && $value !== '';
+                    });
+
+                    if (!empty($cleanedData)) {
+                        $studentResit->update($cleanedData);
+                    }
+                }
+                $result[] = [
+                    $studentResit
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkPayStudentResit($paymentData, $studentResitIds, $currentSchool)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($studentResitIds as $studentResitId) {
+                $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
+                    ->find($studentResitId);
+
+                if (!$studentResit) {
+                    return ApiResponseService::error("Student Resit Not found", null, 404);
+                }
+
+                if ($studentResit->resit_fee < $paymentData['amount']) {
+                    return ApiResponseService::error("The Amount paid is greater than the cost of resit", null, 409);
+                }
+                $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
+
+                ResitFeeTransactions::create([
+                    'amount' => $paymentData['amount'],
+                    'payment_method' => $paymentData['payment_method'],
+                    'resitfee_id' => $studentResitId,
+                    'school_branch_id' => $currentSchool->id,
+                    'transaction_id' => $transactionId
+                ]);
+
+                $studentResit->paid_status = "Paid";
+                $studentResit->save();
+                $result[] = [
+                    $studentResit
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkDeleteTransaction($transactionIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($transactionIds as $transactionId) {
+                $transaction = ResitFeeTransactions::findOrFail($transactionId['id']);
+                $transaction->delete();
+                $result[] = [
+                    $transaction
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkReverseResitTransaction($transactionIds, $currentSchool)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($transactionIds as $transactionId) {
+                $transaction = ResitFeeTransactions::where('school_branch_id', $currentSchool->id)
+                    ->find($transactionId);
+
+                if (!$transaction) {
+                    return ApiResponseService::error("Transaction Not found", null, 404);
+                }
+
+                $studentResit = Studentresit::where('school_branch_id', $currentSchool->id)
+                    ->find($transaction->resitfee_id);
+
+                if (!$studentResit) {
+                    return ApiResponseService::error("Student Resit Not found", null, 404);
+                }
+
+                if ($studentResit->paid_status !== "Paid") {
+                    return ApiResponseService::error("The resit fee is not currently marked as paid", null, 409);
+                }
+
+                $transaction->delete();
+
+                $studentResit->paid_status = "unpaid";
+                $studentResit->save();
+                $result[] = [
+                     $studentResit
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

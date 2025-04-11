@@ -511,7 +511,11 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->grou
     Route::middleware(['auth:sanctum'])->delete('/reverseTransaction/{transactionId}', [StudentResitController::class, 'reverseTransaction']);
     Route::middleware(['auth:sanctum'])->post('/submitResitResults', [StudentResitController::class, 'submitResitScores']);
     Route::middleware(['auth:sanctum'])->get("/getStudentResitData/{examId}/{studentId}", [StudentResitController::class, 'prepareResitData']);
-
+    Route::middleware(['auth:sanctum'])->post('/bulkPayStudentResit/{studentResitIds}', [StudentResitController::class, 'bulkPayStudentResit']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteStudentResit/{studentResitIds}', [StudentResitController::class, 'bulkDeleteStudentResit']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteResitTransactions/{studentResitIds}', [StudentResitController::class, 'bulkDeleteStudentResitTransactions']);
+    Route::middleware(['auth:santum'])->post('/bulkReverseResitTransactions/{transactionIds}', [StudentResitController::class, 'bulkReverseTransaction']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateStudentResit/{studentResitIds}', [StudentResitController::class, 'bulkUpdateStudentResit']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/elections')->group(function () {

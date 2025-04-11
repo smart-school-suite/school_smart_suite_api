@@ -86,7 +86,7 @@ class SchoolExpensesService
          try{
              DB::beginTransaction();
              foreach($expensesDataList as $expensesData){
-                $schoolExpense = SchoolExpenses::findOrFail($expensesData['id']);
+                $schoolExpense = SchoolExpenses::findOrFail($expensesData->id);
                 if ($schoolExpense) {
                     $cleanedData = array_filter($expensesData, function ($value) {
                         return $value !== null && $value !== '';
