@@ -206,6 +206,11 @@ Route::prefix('api/v1/teacher')->group(function () {
     Route::post('/requestNewOtp', [TeacherValidateOtpController::class, 'requestNewOtp']);
     Route::post("/deactivateAccount/{teacherId}", [TeacherController::class, 'deactivateTeacher']);
     Route::post("/activateAccount/{teacherId}", [TeacherController::class, 'activateTeacher']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/bulkUpdateTeacher', [TeacherController::class, 'bulkUpdateTeacher']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/bulkActivateTeacher/{teacherIds}', [TeacherController::class, 'bulkActivateTeacher']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/bulkDeactivateTeacher/{teacherIds}', [TeacherController::class, 'bulkDeactivateTeacher']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/bulkDeleteTeacher/{teacherIds}', [TeacherController::class, 'bulkDeleteTeacher']);
+    Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/bulkAddTeacherSpecialtyPreference/{teacherIds}', [TeacherController::class, 'bulkAddSpecialtyPreference']);
 });
 
 Route::prefix('api/v1/permissions')->group(function () {
@@ -295,6 +300,10 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(fu
     Route::middleware(['auth:sanctum'])->post("/deactivateSpecialty/{specialtyId}", [SpecialtyController::class, "deactivateSpecialty"]);
     Route::middleware(['auth:sanctum'])->post("/activateSpecialty/{specialtyId}", [SpecialtyController::class, "activateSpecialty"]);
     Route::middleware(['auth:sanctum'])->get("/getHosDetails/{hosId}", [HosController::class, "getHosDetails"]);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteSpecialty/{specialtyIds}', [SpecialtyController::class, 'bulkDeleteSpecialty']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateSpecialty/{specialtyIds}', [SpecialtyController::class, 'bulkUdateSpecialty']);
+    Route::middleware(['auth:sanctum'])->post('/bulkDeactivateSpecialty/{specialtyIds}', [SpecialtyController::class, 'bulkDeactivateSpecialty']);
+    Route::middleware(['auth:sanctum'])->post('/bulkActivateSpecialty/{specialtyIds}', [SpecialtyController::class, 'bulkActivateSpecialty']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/marks')->group(function () {

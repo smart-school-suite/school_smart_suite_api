@@ -6,7 +6,10 @@ use App\Models\Teacher;
 use App\Services\ApiResponseService;
 use App\Http\Requests\TeacherSpecailtyPreferenceRequest;
 use App\Services\TeacherService;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\BulkUpdateTeacherRequest;
 use App\Http\Requests\UpdateTeacherRequest;
+use Exception;
 use Illuminate\Http\Request;
 
 class TeacherController extends Controller
@@ -66,5 +69,109 @@ class TeacherController extends Controller
     public function activateTeacher($teacherId){
         $activateTeacher = $this->teacherService->activateTeacher($teacherId);
         return ApiResponseService::success("Teacher Account Activated Successfully", $activateTeacher, null, 200);
+    }
+
+    public function bulkUpdateTeacher(BulkUpdateTeacherRequest $request){
+        try{
+           $bulkUpdateTeacher = $this->teacherService->bulkUpdateTeacher($request->teachers);
+           return ApiResponseService::success("Teacher Updated Succesfully", $bulkUpdateTeacher, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeactivateTeacher($teacherIds){
+        $idsArray = explode(',', $teacherIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:teacher,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+         try{
+             $bulkDeactivateTeacher = $this->teacherService->bulkDeactivateTeacher($idsArray);
+             return ApiResponseService::success("Teacher Deactivated Successfully", $bulkDeactivateTeacher, null, 200);
+         }
+         catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+         }
+    }
+
+    public function bulkActivateTeacher($teacherIds){
+        $idsArray = explode(',', $teacherIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:teacher,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+            $bulkActivateTeacher = $this->teacherService->bulkActivateTeacher($idsArray);
+            return ApiResponseService::success("Teacher Activated Successfully", $bulkActivateTeacher, null, 200);
+        }
+        catch(Exception $e){
+           return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeleteTeacher($teacherIds){
+        $idsArray = explode(',', $teacherIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:teacher,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+            $bulkDeleteTeacher = $this->teacherService->bulkDeleteTeacher($idsArray);
+            return ApiResponseService::success("Teachers Deleted Successfully", $bulkDeleteTeacher, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkAddSpecialtyPreference(TeacherSpecailtyPreferenceRequest $request, $teacherIds){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $idsArray = explode(',', $teacherIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:teacher,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+            $addSpecialtyPreference = $this->teacherService->bulkAddTeacherSpecialtyPreference($currentSchool, $request->specailties_preference, $idsArray);
+            return ApiResponseService::success("Teacher Preferrence Added Successfully", $addSpecialtyPreference, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+
     }
 }

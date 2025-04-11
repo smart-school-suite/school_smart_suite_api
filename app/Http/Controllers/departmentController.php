@@ -78,7 +78,7 @@ class DepartmentController extends Controller
         }
         $validator = Validator::make(['ids' => $idsArray], [
             'ids' => 'required|array',
-            'ids.*' => 'string|exists:school_admin,id',
+            'ids.*' => 'string|exists:department,id',
         ]);
         if ($validator->fails()) {
             return ApiResponseService::error($validator->errors(), null, 422);
@@ -101,7 +101,7 @@ class DepartmentController extends Controller
         }
         $validator = Validator::make(['ids' => $idsArray], [
             'ids' => 'required|array',
-            'ids.*' => 'string|exists:school_admin,id',
+            'ids.*' => 'string|exists:department,id',
         ]);
         if ($validator->fails()) {
             return ApiResponseService::error($validator->errors(), null, 422);
@@ -124,7 +124,7 @@ class DepartmentController extends Controller
         }
         $validator = Validator::make(['ids' => $idsArray], [
             'ids' => 'required|array',
-            'ids.*' => 'string|exists:school_admin,id',
+            'ids.*' => 'string|exists:department,id',
         ]);
         if ($validator->fails()) {
             return ApiResponseService::error($validator->errors(), null, 422);
