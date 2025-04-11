@@ -73,7 +73,6 @@ class TeacherService
 
     public function getAllTeachers($currentSchool){
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
-                           ->with(['specialtyPreference'])
                            ->get();
         return $getInstructors;
     }

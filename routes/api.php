@@ -179,6 +179,10 @@ Route::prefix('api/v1/school-admin')->group(function () {
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete("/deleteProfilePic", [SchoolAdminController::class, 'deleteProfilePicture']);
     Route::middleware('auth:sanctum')->post('/deactivateAccount/{schoolAdminId}', [SchoolAdminController::class, 'deactivateAccount']);
     Route::middleware('auth:sanctum')->post("/activateAccount/{schoolAdminId}", [SchoolAdminController::class, 'activateAccount']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete('/bulkDeleteSchoolAdmin/{schoolAdminIds}',  [SchoolAdminController::class, 'bulkDeleteSchoolAdmin']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->put('/bulkUpdateSchoolAdmin', [SchoolAdminController::class, 'bulkUpdateSchoolAdmin']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/bulkDeactivateSchoolAdmin/{schoolAdminIds}', [SchoolAdminController::class, 'bulkDeactivateSchoolAdmin']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/bulkActivateSchoolAdmin/{schoolAdminIds}', [SchoolAdminController::class, 'bulkActivateSchoolAdmin']);
 
 });
 
@@ -260,6 +264,10 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/department')->group(f
     Route::middleware(['auth:sanctum'])->post("/deactivateDepartment/{departmentId}", [DepartmentController::class, "deactivateDepartment"]);
     Route::middleware(['auth:sanctum'])->post("/activateDepartment/{departmentId}", [DepartmentController::class, "activateDepartment"]);
     Route::middleware(['auth:sanctum'])->get("/getHodDetails/{hodId}", [HodController::class, "getHodDetails"]);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateDepartment', [DepartmentController::class, 'bulkUpdateDepartment']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteDepartment/{departmentIds}', [DepartmentController::class, 'bulkDeleteDepartment']);
+    Route::middleware(['auth:sanctum'])->post('/bulkDeactivateDepartment/{departmentIds}', [DepartmentController::class, 'bulkDeactivateDepartment']);
+    Route::middleware(['auth:sanctum'])->post('/bulkActivateDepartment/{departmentIds}', [DepartmentController::class, 'bulkActivateDepartment']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/course')->group(function () {

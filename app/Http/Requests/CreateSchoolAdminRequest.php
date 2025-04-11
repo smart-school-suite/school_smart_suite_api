@@ -19,13 +19,8 @@ class CreateSchoolAdminRequest extends FormRequest
         return [
             'name' => "required|string",
             'email' => 'required|email',
-            'password' => 'required|string',
-            'role' => 'required|string',
-            'employment_status' => 'required|string',
-            'work_location' => 'required|string',
-            'position' => 'required|string',
-            'hire_date' => 'required|date',
-            'salary' => 'required',
+            'first_name' => 'required|string',
+            'last_name' => 'required|string'
         ];
     }
 }

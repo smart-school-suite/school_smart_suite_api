@@ -18,23 +18,23 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('profile_picture')->nullable();
-            $table->string('role');
+            $table->string('role')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('address')->nullable();
-            $table->string('employment_status'); // E.g., Full-time, Part-time, Contractor
-            $table->date('hire_date');
+            $table->string('employment_status');
+            $table->date('hire_date')->nullable();
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone')->nullable();
             $table->date('last_performance_review')->nullable();
-            $table->string('work_location'); // E.g., Home, Main Office, Branch Location
-            $table->string('highest_qualification')->nullable(); // e.g., Bachelor's, Master's
-            $table->string('field_of_study')->nullable(); // e.g., Computer Science, Business Administration
+            $table->string('work_location')->nullable();
+            $table->string('highest_qualification')->nullable();
+            $table->string('field_of_study')->nullable();
             $table->date('last_login_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('leave')->default(false);
             $table->boolean('holiday')->default(false);
             $table->string('cultural_background')->nullable();
-            $table->enum('status', ['active', 'inactive']);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('religion')->nullable();
             $table->integer('years_experience')->nullable();
             $table->decimal('salary', 8, 2);

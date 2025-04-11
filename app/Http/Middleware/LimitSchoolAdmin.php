@@ -24,7 +24,7 @@ class LimitSchoolAdmin
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
         $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
-        if($subcriptionDetails->max_number_school_admins >= $schoolBranch->max_number_school_admins){
+        if($schoolBranch->max_number_school_admins > $subcriptionDetails->max_number_school_admins ){
             return ApiResponseService::error("You've reched School admin Creation limit: {$subcriptionDetails->max_number_school_admins}", null, 400);
         }
         return $next($request);

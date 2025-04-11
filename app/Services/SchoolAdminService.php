@@ -49,19 +49,15 @@ class SchoolAdminService
 
     public function createSchoolAdmin(array $data, $schoolBranchId)
     {
-        $new_school_admin_instance = new Schooladmin();
-        $new_school_admin_instance->name = $data["name"];
-        $new_school_admin_instance->email = $data["email"];
-        $new_school_admin_instance->password = Hash::make($data["password"]);
-        $new_school_admin_instance->role = $data["role"];
-        $new_school_admin_instance->employment_status = $data["employment_status"];
-        $new_school_admin_instance->hire_date = $data["hire_date"];
-        $new_school_admin_instance->work_location = $data["work_location"];
-        $new_school_admin_instance->position = $data["position"];
-        $new_school_admin_instance->salary = $data["salary"];
-        $new_school_admin_instance->school_branch_id = $schoolBranchId;
-        $new_school_admin_instance->save();
-        return $new_school_admin_instance;
+        $schoolAdmin = new Schooladmin();
+        $schoolAdmin->name = $data["name"];
+        $schoolAdmin->email = $data["email"];
+        $schoolAdmin->password = Hash::make($data["password"]);
+        $schoolAdmin->first_name = $data["first_name"];
+        $schoolAdmin->last_name = $data["last_name"];
+        $schoolAdmin->school_branch_id = $schoolBranchId;
+        $schoolAdmin->save();
+        return $schoolAdmin;
     }
 
     public function uploadProfilePicture($request, $authSchoolAdmin){
@@ -122,5 +118,103 @@ class SchoolAdminService
         $schoolAdmin->status = "inactive";
         $schoolAdmin->save();
         return ApiResponseService::success("Account successfully activated", $schoolAdmin, null, 200);
+    }
+
+    public function bulkUpdateSchoolAdmin(array $schoolAdminList){
+        try {
+            DB::beginTransaction();
+            $updateSchoolAdmin = [];
+            foreach ($schoolAdminList as $schoolAdmin) {
+                $admin = SchoolAdmin::find($schoolAdmin['id']);
+                if ($admin) {
+                    $updateData = array_filter($schoolAdmin, function ($value) {
+                        return $value !== null && $value !== '';
+                    });
+
+                    if (!empty($updateData)) {
+                        $admin->update($updateData);
+                    }
+                }
+               $updateSchoolAdmin[] = [
+                     "admin_name" => $admin->name,
+                     "admin_email" => $admin->email,
+               ];
+            }
+
+            DB::commit();
+
+            return $updateSchoolAdmin;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkDeleteSchoolAdmin(array $deleteAdminList)
+    {
+        $deletedSchoolAdmin = [];
+
+        try {
+            DB::beginTransaction();
+            foreach($deleteAdminList as $adminData){
+                $schoolAdmin = SchoolAdmin::find($adminData);
+                $schoolAdmin->delete();
+                $deletedSchoolAdmin[] = [
+                   "school_admin_name" => $schoolAdmin->name,
+                   'school_amdin_email' => $schoolAdmin->email
+                ];
+            }
+
+            DB::commit();
+
+            return $deletedSchoolAdmin;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkDeactivateSchoolAdmin(array $schoolAdminList){
+        $result = [];
+        try{
+            DB::beginTransaction();
+           foreach($schoolAdminList as $schoolAdminData){
+              $schoolAdmin = SchoolAdmin::find($schoolAdminData);
+              $schoolAdmin->status = "inactive";
+              $schoolAdmin->save();
+              $result[] = [
+                 "school_admin_name" => $schoolAdmin->name,
+                 "school_admin_email" => $schoolAdmin->email
+              ];
+           }
+           DB::commit();
+          return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkActivateSchoolAdmin(array $schoolAdminList) {
+         $result = [];
+         try{
+            DB::beginTransaction();
+            foreach($schoolAdminList as $schoolAdminData){
+                $schoolAdmin = SchoolAdmin::find($schoolAdminData);
+                $schoolAdmin->status = "active";
+                $schoolAdmin->save();
+                $result[] = [
+                   "school_admin_name" => $schoolAdmin->name,
+                   "school_admin_email" => $schoolAdmin->email
+                ];
+            }
+            DB::commit();
+            return $result;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
     }
 }

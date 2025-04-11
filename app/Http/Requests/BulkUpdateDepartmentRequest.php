@@ -4,16 +4,11 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSchoolAdminSignUpRequest extends FormRequest
+class BulkUpdateDepartmentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-   /// public function authorize(): bool
-    //{
-      //  return false;
-   // }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -22,10 +17,10 @@ class CreateSchoolAdminSignUpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => "required|string",
-            'email' => 'required|email',
-            'first_name' => 'required|string',
-            'last_name' => 'required|string'
+            'departments' => 'required|array',
+            'departments.*.id' => 'required|string|exists:department,id',
+            'departments.*.department_name' => 'sometimes|nullable|string',
+            'departments.*.description' => 'sometimes|nullable|string'
         ];
     }
 }

@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Services;
-
+use Exception;
+use illuminate\Support\Facades\DB;
 use App\Models\Department;
 
 class DepartmentService
@@ -67,8 +68,83 @@ class DepartmentService
 
     public function activateDepartment(string $departmentId){
         $department = Department::findOrFail($departmentId);
-        $department->status = "inactive";
+        $department->status = "active";
         $department->save();
         return $department;
     }
+
+    public function bulkDeactivateDepartment(array $departmentIds){
+        $result = [];
+        foreach($departmentIds as $departmentId){
+             $department = Department::findOrFail($departmentId['id']);
+             $department->status = 'inactive';
+             $department->save();
+             $result[] = [
+                 'department_name' => $department->department_name
+             ];
+        }
+        return $result;
+    }
+
+    public function bulkActivateDepartment(array $departmentIds){
+        $result = [];
+        foreach($departmentIds as $departmentId){
+             $department = Department::findOrFail($departmentId['id']);
+             $department->status = 'active';
+             $department->save();
+             $result[] = [
+                 'department_name' => $department->department_name
+             ];
+        }
+        return $result;
+    }
+
+    public function bulkUpdateDepartment(array $updateDataList){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($updateDataList as $updateData){
+                $department = Department::findOrFail($updateData['id']);
+                if ($department) {
+                    $cleanedData = array_filter($updateData, function ($value) {
+                        return $value !== null && $value !== '';
+                    });
+
+                    if (!empty($cleanedData)) {
+                        $department->update($cleanedData);
+                    }
+                }
+                $result[] = [
+                   $department
+              ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+             DB::rollBack();
+             throw $e;
+        }
+    }
+
+    public function bulkDeleteDepartment(array $departmentIds){
+         $result = [];
+         DB::beginTransaction();
+          try{
+            foreach($departmentIds as $departmentId){
+                $department = Department::findOrFail($departmentId);
+                $department->delete();
+                $result[] = [
+                    $department
+                ];
+            }
+            DB::commit();
+            return $result;
+          }
+          catch(Exception $e){
+             DB::rollBack();
+             throw $e;
+          }
+    }
+
 }

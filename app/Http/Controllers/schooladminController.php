@@ -6,10 +6,11 @@ namespace App\Http\Controllers;
 use App\Services\ApiResponseService;
 use App\Services\SchoolAdminService;
 use App\Models\SchoolBranchApiKey;
-use Illuminate\Support\Facades\Log;
 use App\Http\Requests\CreateSchoolAdminSignUpRequest;
 use App\Http\Requests\UpdateProfilePictureRequest;
 use App\Http\Requests\UpdateSchoolAdminRequest;
+use App\Http\Requests\BulkUpdateSchoolAdminRequest;
+use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -76,22 +77,103 @@ class SchoolAdminController extends Controller
         }
     }
 
-    public function deleteProfilePicture() {
+    public function deleteProfilePicture()
+    {
         $authSchoolAdmin = auth()->guard('schooladmin')->user();
-        try{
+        try {
             $deleteProfilePicture = $this->schoolAdminService->deleteProfilePicture($authSchoolAdmin);
             return ApiResponseService::success("School Admin Profile Picture Deleted Succesfully", $deleteProfilePicture, null, 200);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function deactivateAccount(string $schoolAdminId) {
-         $this->schoolAdminService->deactivateAccount($schoolAdminId);
+    public function deactivateAccount(string $schoolAdminId)
+    {
+        $this->schoolAdminService->deactivateAccount($schoolAdminId);
     }
 
-    public function activateAccount(string $schoolAdminId){
+    public function activateAccount(string $schoolAdminId)
+    {
         $this->schoolAdminService->activateAccount($schoolAdminId);
+    }
+
+    public function bulkUpdateSchoolAdmin(BulkUpdateSchoolAdminRequest $request)
+    {
+        try {
+            $bulkUpdateSchoolAdmin = $this->schoolAdminService->bulkUpdateSchoolAdmin($request->school_admins);
+            return ApiResponseService::success("School Admin Updated Succesfully", $bulkUpdateSchoolAdmin, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeleteSchoolAdmin($schoolAdminIds)
+    {
+        $idsArray = explode(',', $schoolAdminIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:school_admin,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try {
+            $bulkDeleteSchoolAdmin = $this->schoolAdminService->bulkDeleteSchoolAdmin($idsArray);
+            return ApiResponseService::success("School Admin Deleted Succesfully", $bulkDeleteSchoolAdmin, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeactivateSchoolAdmin($schoolAdminIds)
+    {
+        $idsArray = explode(',', $schoolAdminIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:school_admin,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try {
+            $bulkDeactivateSchoolAdmin = $this->schoolAdminService->bulkDeactivateSchoolAdmin($idsArray);
+            return ApiResponseService::success("School Admin Deactivated Succesfully", $bulkDeactivateSchoolAdmin, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkActivateSchoolAdmin($schoolAdminIds)
+    {
+        $idsArray = explode(',', $schoolAdminIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+           return ApiResponseService::error("No IDs provided", null, 422);
+       }
+       $validator = Validator::make(['ids' => $idsArray], [
+           'ids' => 'required|array',
+           'ids.*' => 'string|exists:school_admin,id',
+       ]);
+       if ($validator->fails()) {
+           return ApiResponseService::error($validator->errors(), null, 422);
+       }
+        try {
+            $bulkActivateSchoolAdmin = $this->schoolAdminService->bulkActivateSchoolAdmin($idsArray);
+            return ApiResponseService::success("School Admin Activated Succesfully", $bulkActivateSchoolAdmin, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }
