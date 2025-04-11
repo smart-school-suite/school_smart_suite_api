@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Services\HosService;
 use App\Http\Requests\HosRequest;
 use App\Services\ApiResponseService;
+use Exception;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\HosResource;
 use Illuminate\Http\Request;
 
@@ -42,5 +44,29 @@ class HosController extends Controller
     public function getHosDetails(Request $request, string $hosId){
         $getHosDetails = $this->hosService->getHosDetails($hosId);
         return ApiResponseService::success("Head of Specialty Details fetched Succesfully", $getHosDetails, null, 200);
+    }
+
+    public function bulkRemoveHos($hosIds){
+        $idsArray = explode(',', $hosIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:hos,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+
+        try{
+            $bulkRemoveHos = $this->hosService->bulkRemoveHos($idsArray);
+            return ApiResponseService::success("HOD Removed Succesfully", $bulkRemoveHos, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }

@@ -3,7 +3,8 @@
 namespace App\Services;
 use App\Models\HOS;
 use App\Models\Schooladmin;
-use Illuminate\Support\Facades\Log;
+use Exception;
+use Illuminate\Support\Facades\DB;
 use App\Models\Teacher;
 class HosService
 {
@@ -21,7 +22,6 @@ class HosService
                 $hosableType = 'App\\Models\\SchoolAdmin';
             }
         }
-        Log::info($hosableType);
         if (!$hosableType) {
             return ApiResponseService::error("The provided Credentials Are Incorrect", null, 404);
         }
@@ -60,6 +60,26 @@ class HosService
     public function getHosDetails($hosId){
         $hosDetails = HOS::with(['hosable', 'specialty', 'specialty.level'])->findOrFail($hosId);
         return $hosDetails;
+    }
+
+    public function bulkRemoveHos($hosIds){
+        $result = [];
+        try{
+           DB::beginTransaction();
+           foreach($hosIds as $hosId){
+              $hos = HOS::findOrFail($hosId['id']);
+              $hos->delete();
+              $result[] = [
+                 $hos
+              ];
+           }
+           DB::commit();
+           return $result;
+        }
+        catch(Exception $e){
+           DB::rollBack();
+           throw $e;
+        }
     }
 
 }

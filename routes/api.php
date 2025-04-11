@@ -269,6 +269,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/department')->group(f
     Route::middleware(['auth:sanctum'])->post("/deactivateDepartment/{departmentId}", [DepartmentController::class, "deactivateDepartment"]);
     Route::middleware(['auth:sanctum'])->post("/activateDepartment/{departmentId}", [DepartmentController::class, "activateDepartment"]);
     Route::middleware(['auth:sanctum'])->get("/getHodDetails/{hodId}", [HodController::class, "getHodDetails"]);
+    Route::middleware(['auth:sanctum'])->delete('/bulkRemoveHods/{hodIds}', [HodController::class, 'bulkRemoveHod']);
     Route::middleware(['auth:sanctum'])->put('/bulkUpdateDepartment', [DepartmentController::class, 'bulkUpdateDepartment']);
     Route::middleware(['auth:sanctum'])->delete('/bulkDeleteDepartment/{departmentIds}', [DepartmentController::class, 'bulkDeleteDepartment']);
     Route::middleware(['auth:sanctum'])->post('/bulkDeactivateDepartment/{departmentIds}', [DepartmentController::class, 'bulkDeactivateDepartment']);
@@ -296,6 +297,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(fu
     Route::middleware(['auth:sanctum'])->post("/assign-hos", [HosController::class, 'assignHeadOfSpecialty']);
     Route::middleware(['auth:sanctum'])->get('/get-assigned-hos', [HosController::class, 'getHeadOfSpecialty']);
     Route::middleware(['auth:sanctum'])->delete("/remove-hos/{hosId}", [HosController::class, 'removeHeadOfSpecialty']);
+    Route::middleware(['auth:sanctum'])->delete("/bulkRemoveHos/{hosId}", [HosController::class, 'bulkRemoveHos']);
     Route::middleware(['auth:sanctum'])->get("/getAllHos", [HosController::class, "getAllHos"]);
     Route::middleware(['auth:sanctum'])->post("/deactivateSpecialty/{specialtyId}", [SpecialtyController::class, "deactivateSpecialty"]);
     Route::middleware(['auth:sanctum'])->post("/activateSpecialty/{specialtyId}", [SpecialtyController::class, "activateSpecialty"]);

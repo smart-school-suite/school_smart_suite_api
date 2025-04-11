@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\HOD;
 use App\Models\Teacher;
 use App\Models\Schooladmin;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class HodService
 {
@@ -61,5 +63,25 @@ class HodService
     public function getHodDetails($hodId){
         $getHodDetails = HOD::with(['hodable', 'department'])->find($hodId);
         return $getHodDetails;
+    }
+
+    public function bulkRemoveHod($hodIds){
+        $result = [];
+        try{
+           DB::beginTransaction();
+           foreach($hodIds as $hodId){
+              $hod  = HOD::findOrFail($hodId['id']);
+              $hod->delete();
+              $result[] = [
+                 $hod
+              ];
+           }
+           DB::commit();
+           return $result;
+        }
+        catch(Exception $e){
+           DB::rollBack();
+           throw $e;
+        }
     }
 }
