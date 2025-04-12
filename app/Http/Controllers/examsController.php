@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkAddExamGradingRequest;
+use App\Http\Requests\BulkUpdateExamRequest;
 use App\Http\Resources\AssiocaiteWeigtedMarkLetterGrades;
 use App\Http\Requests\ExamRequest;
 use App\Http\Requests\UpdateExamRequest;
 use App\Http\Resources\AccessedExamResource;
 use App\Http\Resources\ExamResource;
 use App\Services\ExamService;
+use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
+use Illuminate\Support\Facades\DB;
+use Exception;
 use Illuminate\Http\Request;
 
 class ExamsController extends Controller
@@ -79,5 +84,49 @@ class ExamsController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $examTypeResit = $this->examService->getResitExams($currentSchool);
         return ApiResponseService::success("Exam Type Resit Fetched Successfully", ExamResource::collection($examTypeResit), null, 200);
+    }
+
+    public function bulkDeleteExam($examIds){
+        $idsArray = explode(',', $examIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:exams,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+           $deleteExam = $this->examService->bulkDeleteExam($idsArray);
+           return ApiResponseService::success("Exam Deleted Succesfully", $deleteExam, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkAddExamGrading(BulkAddExamGradingRequest $request) {
+       try{
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkAddExamGrading = $this->examService->bulkAddExamGrading($request->exam_grading, $currentSchool);
+        return ApiResponseService::success("Exam Grading Added Successfully", $bulkAddExamGrading, null, 200);
+       }
+       catch(Exception $e){
+        return ApiResponseService::error($e->getMessage(), null, 400);
+       }
+    }
+
+    public function bulkUpdateExam(BulkUpdateExamRequest $request){
+        try{
+            $bulkUpdateExam = $this->examService->bulkUpdateExam($request->exams);
+            return ApiResponseService::success("Exam Updated Successfully", $bulkUpdateExam, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }

@@ -7,6 +7,8 @@ use App\Models\LetterGrade;
 use App\Models\Resitablecourses;
 use App\Models\SchoolGradesConfig;
 use App\Models\Student;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class ExamService
 {
@@ -40,6 +42,26 @@ class ExamService
         return $exam;
     }
 
+    public function bulkDeleteExam($examIds){
+         $result = [];
+         try{
+            DB::beginTransaction();
+           foreach($examIds as $examId){
+              $exam = Exams::find($examId);
+              $exam->delete();
+              $result[] = [
+                 $result
+              ];
+           }
+           DB::commit();
+           return $result;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
+    }
+
     public function updateExam(string $exam_id, $currentSchool, array $data)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->find($exam_id);
@@ -50,6 +72,26 @@ class ExamService
         $filterData = array_filter($data);
         $exam->update($filterData);
         return $exam;
+    }
+    public function bulkUpdateExam($examUpdateList){
+        $result = [];
+        try{
+           DB::beginTransaction();
+           foreach($examUpdateList as $examUpdate){
+                $exam = Exams::findOrFail($examUpdate['exam_id']);
+                $filterData = array_filter($examUpdate);
+                $exam->update($filterData);
+                $result[] = [
+                     $exam
+                ];
+           }
+           DB::commit();
+           return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function getExams($currentSchool)
@@ -108,6 +150,36 @@ class ExamService
         $exam->grading_added = true;
         $exam->save();
         return $exam;
+    }
+
+    public function bulkAddExamGrading($examGradingList, $currentSchool){
+         $result = [];
+         try{
+            DB::beginTransaction();
+            foreach($examGradingList as $examGrading){
+                $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($examGradingList['grades_config_Id']);
+                if(!$gradesConfig){
+                    return ApiResponseService::error("Exam Grades Configuration Not Found", null, 404);
+                }
+                $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examGrading['exam_id']);
+                if(!$exam){
+                    return ApiResponseService::error("Exam Not Found", null, 404);
+                }
+                $exam->grades_category_id = $gradesConfig->grades_category_id;
+                $exam->grading_added = true;
+                $exam->save();
+                $result[] = [
+                     $gradesConfig,
+                     $exam,
+                ];
+             }
+            DB::commit();
+            return $result;
+         }
+         catch(Exception $e){
+             DB::rollBack();
+             throw $e;
+         }
     }
 
     public function getResitExams($currentSchool){

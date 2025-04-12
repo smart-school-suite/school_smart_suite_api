@@ -371,7 +371,9 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/exams')->group(functi
     Route::middleware(['auth:sanctum'])->get("/accessed_exams/{student_id}", [ExamsController::class, "getAccessedExams"]);
     Route::middleware(['auth:sanctum'])->post('/addExamGrading/{examId}/{gradesConfigId}', [ExamsController::class, 'addExamGrading']);
     Route::middleware(['auth:sanctum'])->get('/getAllResitExams', [ExamsController::class, 'getResitExams']);
-
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteExam/{examIds}', [ExamsController::class, 'bulkDeleteExam']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateExam', [ExamsController::class, 'bulkUpdateExam']);
+    Route::middleware(['auth:sanctum'])->post('/bulkAddExamGrading', [ExamsController::class, 'bulkAddExamGrading']);
 });
 
 
