@@ -157,6 +157,13 @@ Route::prefix('api/v1/student')->group(function () {
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/getStudentDropoutDetails/{studentDropoutId}', [StudentController::class, 'getStudentDropoutDetails']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete('/deleteStudentDropout/{studentDropoutId}', [StudentController::class, 'deleteStudentDropout']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/reinstateDropoutStudent/{studentDropoutId}', [StudentController::class, 'reinstateDropedOutStudent']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteStudent/{studentIds}", [StudentController::class, 'bulkDeleteStudent']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteStudentDropout/{dropOutIds}", [StudentController::class, 'bulkDeleteStudentDropout']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkActivateStudent/{studentIds}", [StudentController::class, 'bulkActivateStudent']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkDeActivateStudent/{studentIds}", [StudentController::class, 'bulkDeactivateStudent']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkMarkStudentAsDropout", [StudentController::class, 'bulkMarkStudentAsDropout']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->put("/bulkUpdateStudent", [StudentController::class, 'bulkUpdateStudent']);
+
 });
 
 Route::prefix('api/v1/school-admin')->group(function () {

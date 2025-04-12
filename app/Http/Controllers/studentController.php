@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\StudentResource;
+use Exception;
 use Illuminate\Http\Request;
 use App\Services\StudentService;
 use App\Http\Requests\UpdateStudentRequest;
+use App\Http\Requests\BulkMarkStudentAsDropOutRequest;
+use App\Http\Requests\BulkUpdateStudentRequest;
 use App\Http\Resources\StudentDropOutResource;
+use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 
 class studentController extends Controller
@@ -89,5 +93,139 @@ class studentController extends Controller
         return ApiResponseService::success("Student Reinstated Successfully", $reinstateDropedOutStudent, null, 200);
     }
 
+    public function bulkMarkStudentAsDropout(BulkMarkStudentAsDropOutRequest $request){
+         try{
+            $currentSchool = $request->attributes->get('currentSchool');
+            $bulkMarkStudentAsDropout = $this->studentService->bulkMarkStudentAsDropOut($request->dropout_list, $currentSchool);
+            return ApiResponseService::success("Student Marked As Dropout Succesfully", $bulkMarkStudentAsDropout, null, 200);
+         }
+         catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+         }
+    }
 
+    public function bulkDeleteStudent($studentIds){
+        $idsArray = explode(',', $studentIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+           $bulkDeleteStudent = $this->studentService->bulkDeleteStudent($idsArray);
+          return ApiResponseService::success("Student Deleted Successfully", $bulkDeleteStudent, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkUpdateStudent(BulkUpdateStudentRequest $request){
+        try{
+           $bulkUpdateStudent = $this->studentService->bulkUpdateStudent($request->students);
+           ApiResponseService::success("Students Updated Succesfully", $bulkUpdateStudent, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkActivateStudent($studentIds){
+        $idsArray = explode(',', $studentIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+           $bulkActivateStudent = $this->studentService->bulkActivateStudent($idsArray);
+           return ApiResponseService::success("Student Activated Succesfully", $bulkActivateStudent, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeactivateStudent($studentIds){
+        $idsArray = explode(',', $studentIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+          $bulkDeactivateStudent = $this->studentService->bulkDeactivateStudent($idsArray);
+          return ApiResponseService::success("Student Deactivated Successfully", $bulkDeactivateStudent, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeleteStudentDropout($dropOutIds){
+        $idsArray = explode(',', $dropOutIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student_dropout,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+             $bulkDeleteStudentDropout = $this->studentService->bulkDeleteDropoutStudent($dropOutIds);
+             return ApiResponseService::success("Dropped Out Student Deleted Successfully", $bulkDeleteStudentDropout, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkReinstateStudentDropout($dropOutIds){
+        $idsArray = explode(',', $dropOutIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student_dropout,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+          $bulkReinstateStudent = $this->studentService->bulkReinstateStudent($dropOutIds);
+          return ApiResponseService::success("Student Reinstated Succesfully", $bulkReinstateStudent, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
 }
