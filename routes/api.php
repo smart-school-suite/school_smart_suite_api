@@ -131,6 +131,8 @@ Route::prefix('api/v1/parent')->group(function () {
     Route::post('/updatePassword', [ResetParentPasswordController::class, 'changeParentPasswordUnAuthenticated(']);
     Route::post('/validateLoginOtp', [ParentValidateOtpController::class, 'verifyParentOtp']);
     Route::post('/requestNewOtp', [ParentValidateOtpController::class, 'requestNewOtp']);
+    Route::delete('/bulkDeleteParent/{parentIds}', [ParentsController::class, 'bulkDeleteParents']);
+    Route::put('/bulkUpdateParent', [ParentsController::class, 'BulkUpdateParents']);
 });
 
 Route::prefix('api/v1/student')->group(function () {

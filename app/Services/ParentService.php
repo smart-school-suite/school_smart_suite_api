@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Parents;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class ParentService
 {
@@ -20,6 +22,26 @@ class ParentService
         $parentExist->delete();
     }
 
+    public function bulkDeleteParent($parentIds){
+        $result = [];
+        try{
+           DB::beginTransaction();
+           foreach($parentIds as $parentId){
+              $parent = Parents::findOrFail($parentId);
+              $parent->delete();
+              $result[] = [
+                 $parent
+              ];
+           }
+           DB::commit();
+           return $result;
+        }
+        catch(Exception $e){
+          DB::rollBack();
+          throw $e;
+        }
+    }
+
     public function updateParent(array $data, $parentId, $currentSchool){
         $parentExist = Parents::where("school_branch_id", $currentSchool->id)->find($parentId);
         if(!$parentExist){
@@ -28,6 +50,27 @@ class ParentService
         $filterData = array_filter($data);
         $parentExist->update($filterData);
         return $parentExist;
+    }
+
+    public function bulkUpdateParent(array $updateDataArray){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($updateDataArray as $updateData){
+                $parent = Parents::findOrFail($updateData['student_id']);
+                $filterData = array_filter($updateData);
+                $parent->update($filterData);
+                $result[] = [
+                     $parent
+                ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function getParentDetails($parentId, $currentSchool){
