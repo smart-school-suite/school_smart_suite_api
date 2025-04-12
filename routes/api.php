@@ -478,6 +478,12 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-batches')->gr
     Route::middleware(['auth:sanctum'])->post('/deactivateStudentBatch/{batchId}', [StudentBatchController::class, 'deactivateStudentBatch']);
     Route::middleware(['auth:sanctum'])->post('/assignGraduationDatesByBatch', [StudentBatchController::class, 'assignGradDatesBySpecialty']);
     Route::middleware(['auth:sanctum'])->get('/getStudentGraduationDatesByBatch/{batchId}', [StudentBatchController::class, 'getGraduationDatesByBatch']);
+    Route::middleware(['auth:sanctum'])->delete("/bulkDeleteStudentBatch/{batchIds}", [StudentBatchController::class, 'bulkDeleteStudentBatch']);
+    Route::middleware(['auth:sanctum'])->post("/bulkActivateStudentBatch/{batchIds}", [StudentBatchController::class, 'bulkActivateStudentBatch']);
+    Route::middleware(['auth:sanctum'])->post("/bulkDeactivateStudentBatch/{batchIds}", [StudentBatchController::class, 'bulkDeactivateStudentBatch']);
+    Route::middleware(['auth:sanctum'])->put("/bulkUpdateStudentBatch", [StudentBatchController::class, 'bulkUpdateStudentBatch']);
+    Route::middleware(['auth:sanctum'])->post("/bulkAssignGradDatesBySpecialty", [StudentBatchController::class, 'bulkAssignGradDateBySpecialty']);
+
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/fee-payment')->group(function () {

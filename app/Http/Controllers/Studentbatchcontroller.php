@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Requests\BulkAssignGradeDatesRequest;
 use App\Services\StudentBatchService;
 use App\Http\Requests\StudentBatchRequest;
 use App\Http\Requests\CreateGradDateByStudentBatch;
 use App\Http\Resources\GraduationBatchDateResource;
+use App\Http\Requests\BulkUpdateBatchRequest;
+use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
+use Exception;
 use Illuminate\Http\Request;
 
 class StudentBatchcontroller extends Controller
@@ -70,5 +74,95 @@ class StudentBatchcontroller extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $getGraduationDatesByBatch = $this->studentBatchService->getGradeDateListByBatch($currentSchool, $batchId);
         return ApiResponseService::success("Graduation Dates Fetched Successfully",  GraduationBatchDateResource::collection($getGraduationDatesByBatch), null, 200);
+    }
+
+    public function bulkDeleteStudentBatch($batchIds){
+        $idsArray = explode(',', $batchIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student_batch,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+         try{
+           $bulkDeleteBatch = $this->studentBatchService->bulkDeleteStudentBatch($idsArray);
+           return ApiResponseService::success("Student Batch Deleted Successfully", $bulkDeleteBatch, null, 200);
+         }
+         catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+         }
+    }
+
+    public function bulkActivateStudentBatch($batchIds){
+        $idsArray = explode(',', $batchIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student_batch,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+          $bulkActivateBatch = $this->studentBatchService->bulkActivateBatch($idsArray);
+          return ApiResponseService::success("Student Batch Activated Successfully", $bulkActivateBatch, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeactivateStudentBatch($batchIds){
+        $idsArray = explode(',', $batchIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:student_batch,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+           $bulkDeactivateBatch = $this->studentBatchService->bulkDeactivateBatch($idsArray);
+           return ApiResponseService::success("Student Batch Deactivated Succesfully", $bulkDeactivateBatch, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkUpdateStudentBatch(BulkUpdateBatchRequest $request){
+        try{
+            $bulkUpdateBatch = $this->studentBatchService->bulkUpdateStudentBatch($request->student_batches);
+            return ApiResponseService::success("Student Batch Updated Successfully", $bulkUpdateBatch, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkAssignGradDateBySpecialty(BulkAssignGradeDatesRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        try{
+           $assignGradDates = $this->studentBatchService->bulkAssignGradeDatesBySpecailty($request->grad_dates, $currentSchool);
+           return ApiResponseService::success("Student Graduation Dates Set Succesfully", $assignGradDates, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }

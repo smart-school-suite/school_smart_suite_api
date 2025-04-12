@@ -4,15 +4,12 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateStudentBatchRequest extends FormRequest
+class BulkAssignGradeDatesRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
-    {
-        return false;
-    }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,8 +19,11 @@ class UpdateStudentBatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-             'name' => 'sometimes|nullable|string',
-             'description' => 'sometimes|nullable|string'
+            'grad_dates' => 'required|array',
+            'grad_dates.*.graduation_date' => 'required|date',
+            'grad_dates.*.specialty_id' => 'required|string|exists:specialty,id',
+            'grad_dates.*.level_id' => 'required|string|exists:education_levels,id',
+            'grad_dates.*.student_batch_id' => 'required|string|exists:student_batch,id'
         ];
     }
 }
