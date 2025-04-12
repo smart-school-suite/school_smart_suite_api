@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendOtpMail;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendOtpJob implements ShouldQueue
 {
@@ -32,6 +33,7 @@ class SendOtpJob implements ShouldQueue
     public function handle(): void
     {
         //
+
         Mail::to($this->email)->send(new SendOtpMail($this->otp));
     }
 }

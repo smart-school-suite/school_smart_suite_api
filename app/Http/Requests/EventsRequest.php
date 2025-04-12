@@ -9,11 +9,6 @@ class EventsRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
-    {
-        return false;
-    }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -30,7 +25,8 @@ class EventsRequest extends FormRequest
                 'description' => 'required|string',
                 'organizer' => 'required|string|max:255',
                 'category' => 'required|string|max:255',
-                'duration' => 'required|string' // Assuming duration should be a positive integer (e.g., in hours)
+                'duration' => 'required|string',
+                'recipients' => 'required|string'
             ], [
                 'title.required' => 'The event title is required.',
                 'start_date.required' => 'The start date is required.',

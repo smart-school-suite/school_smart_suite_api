@@ -147,11 +147,155 @@ class studentAdditionalFeeService
             return ApiResponseService::error("An error occurred while deleting the transaction: " . $e->getMessage(), null, 500);
         }
     }
-
     public function getTransactionDetail($transationId, $currentSchool){
         $transactionDetials = AdditionalFeeTransactions::where("school_branch_id", $currentSchool->id)
                                 ->with(['additionFee', 'additionFee.feeCategory', 'additionFee.student', 'additionFee.specialty', 'additionFee.level'])
                                 ->findOrFail($transationId);
         return $transactionDetials;
+    }
+
+    public function bulkBillStudents(array $studentList, $currentSchool){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($studentList as $student){
+                $studentAdditionFees = new AdditionalFees();
+                $studentAdditionFees->reason = $student['reason'];
+                $studentAdditionFees->amount = $student['amount'];
+                $studentAdditionFees->additional_fee_category = $student['additional_fee_category'];
+                $studentAdditionFees->school_branch_id = $currentSchool->id;
+                $studentAdditionFees->specialty_id = $student['specialty_id'];
+                $studentAdditionFees->level_id = $student['level_id'];
+                $studentAdditionFees->student_id = $student['student_id'];
+                $studentAdditionFees->save();
+                $result[] = [
+                     $studentAdditionFees
+                ];
+            }
+           DB::commit();
+           return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkDeleteStudentAdditionalFees($additionalFeeIds){
+         $result = [];
+         try{
+            DB::beginTransaction();
+            foreach($additionalFeeIds as $additionalFeeId){
+              $studentAdditionalFee = AdditionalFees::findOrFail($additionalFeeId);
+              $studentAdditionalFee->delete();
+              $result[] = [
+                 $studentAdditionalFee
+              ];
+            }
+            DB::commit();
+           return $result;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
+    }
+
+    public function bulkDeleteTransaction($transactionIds){
+         $result = [];
+         try{
+             DB::beginTransaction();
+             foreach($transactionIds as $transactionId){
+                 $transaction = AdditionalFeeTransactions::findOrFail($transactionId);
+                 $transaction->delete();
+                 $result[] = [
+                     $transaction
+                 ];
+             }
+             DB::commit();
+             return $result;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
+    }
+
+    public function bulkReverseTransaction($transactionIds, $currentSchool){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($transactionIds as $transactionId){
+                $transaction = AdditionalFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->find($transactionId);
+
+            if (!$transaction) {
+                return ApiResponseService::error("Transaction Not Found", null, 404);
+            }
+
+            $additionalFees = AdditionalFees::where('id', $transaction->additional_fee_id)
+                ->where('school_branch_id', $currentSchool->id)
+                ->first();
+
+            if (!$additionalFees) {
+                return ApiResponseService::error("Associated Additional Fees Not Found", null, 404);
+            }
+            $additionalFees->status = 'unpaid';
+            $additionalFees->save();
+
+            $transaction->delete();
+
+            $result[] = [
+                 $additionalFees,
+                 $transaction,
+            ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkPayAdditionalFee($feeDataList, $currentSchool){
+        $result = [];
+        try{
+            DB::beginTransaction();
+           foreach($feeDataList as $feeData){
+            $studentAdditionFeesExist = AdditionalFees::where("school_branch_id", $currentSchool->id)->find($feeData['fee_id']);
+            if (!$studentAdditionFeesExist) {
+                return ApiResponseService::error("Student Additional Fees Appears To Be Deleted", null, 404);
+            }
+
+            if (round($studentAdditionFeesExist->amount, 2) < round($feeData['amount'], 2)) {
+                return ApiResponseService::error("Amount Paid Exceeds The Amount Owed", null, 400);
+            }
+
+            $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
+            $transaction = AdditionalFeeTransactions::create([
+                'transaction_id' => $transactionId,
+                'amount' => $feeData['amount'],
+                'payment_method' => $feeData['payment_method'],
+                'fee_id' => $feeData['fee_id'],
+                'school_branch_id' => $currentSchool->id,
+                'additional_fee_id' => $feeData['fee_id'],
+            ]);
+            $studentAdditionFeesExist->status =  'paid';
+            $studentAdditionFeesExist->save();
+
+            $result[] = [
+                 $transaction,
+                 $studentAdditionFeesExist
+            ];
+           }
+           DB::commit();
+           return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

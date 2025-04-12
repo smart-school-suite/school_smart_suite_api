@@ -2,7 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\SendEventEmail;
+use App\Models\Schooladmin;
 use App\Models\Events;
+use App\Models\Student;
+use App\Models\Teacher;
+use Illuminate\Support\Facades\Log;
 
 class EventsService
 {
@@ -19,8 +24,13 @@ class EventsService
         $event->organizer = $data["organizer"];
         $event->category = $data["category"];
         $event->duration = $data["duration"];
+        $event->recipients = $data['recipients'];
         $event->save();
+
+        $recipients = $this->getEmailRecipients($currentSchool, $data['recipients']);
+        SendEventEmail::dispatch($recipients, $data["description"],  );
         return $event;
+
     }
 
     public function updateEvent(array $data, $currentSchool, $event_id)
@@ -59,5 +69,21 @@ class EventsService
             return ApiResponseService::error("Event not found", null, 404);
         }
         return $eventExist;
+    }
+
+    private function getEmailRecipients($currentSchool, $recipients)
+    {
+        if($recipients == 'schooladmins'){
+            $schoolAdminEmails = SchoolAdmin::where("school_branch_id", $currentSchool->id)->pluck('email')->toArray();
+            return $schoolAdminEmails;
+        }
+        if($recipients == 'teachers'){
+            $teacherEmails = Teacher::where('school_branch_id', $currentSchool->id)->pluck('email')->toArray();
+            return $teacherEmails;
+        }
+        if($recipients == 'students'){
+            $studentEmails = Student::where("school_branch_id", $currentSchool->id)->pluck('email')->toArray();
+            return $studentEmails;
+        }
     }
 }

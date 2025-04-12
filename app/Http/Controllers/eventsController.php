@@ -20,7 +20,7 @@ class EventsController extends Controller
     public function createEvent(EventsRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $createElection = $this->eventsService->createEvent($request->validated(), $currentSchool);
+        $createElection = $this->eventsService->createEvent($request->all(), $currentSchool);
         return ApiResponseService::success("Events Created Succefully", $createElection, null, 201);
     }
 

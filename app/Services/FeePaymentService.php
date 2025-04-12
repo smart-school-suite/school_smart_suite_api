@@ -268,4 +268,169 @@ class FeePaymentService
             ->get();
         return $transactions;
     }
+
+    public function bulkReverseRegistrationFeeTransaction($transactionIds, $currentSchool){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($transactionIds as $transactionId){
+                $transaction = RegistrationFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->with(['registrationFee'])
+                ->find($transactionId);
+
+            if (!$transaction) {
+                throw new Exception("Transaction  record not found", 404);
+            }
+            $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $transaction->registrationFee->student_id)
+                ->where("level_id", $transaction->registrationFee->level_id)
+                ->where("specialty_id", $transaction->registrationFee->specialty_id)
+                ->where("id", $transaction->registrationfee_id)
+                ->first();
+
+            if (!$registrationFees) {
+                throw new Exception("Registration fees record not found", 404);
+            }
+            $registrationFees->status = 'unpaid';
+            $registrationFees->save();
+            $transaction->delete();
+            $result[] = [
+                 $transaction
+            ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+
+    }
+
+    public function bulkReverseTuitionFeeTransaction($transactionIds, $currentSchool){
+       $results = [];
+         try{
+            foreach($transactionIds as $transactionId){
+                $transaction = TuitionFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->with(['tuition'])
+                ->find($transactionId['id']);
+
+            if (!$transaction) {
+                throw new Exception("Payment record not found", 404);
+            }
+            $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $transaction->tuition->student_id)
+                ->where("level_id", $transaction->tuition->level_id)
+                ->where("specialty_id", $transaction->tuition->specialty_id)
+                ->first();
+
+            if (!$studentTuitionFees) {
+                throw new Exception("Tuition fees record not found", 404);
+            }
+            $studentTuitionFees->amount_paid -= $transaction->amount;
+            $studentTuitionFees->amount_left += $transaction->amount;
+            if ($studentTuitionFees->amount_left > 0) {
+                $studentTuitionFees->status = "owing";
+            } else {
+                $studentTuitionFees->status = "completed";
+            }
+
+            $studentTuitionFees->save();
+            $transaction->delete();
+              $results[] = [
+                 $transaction
+              ];
+            }
+            DB::commit();
+            return $results;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
+    }
+
+    public function bulkPayRegistrationFee(array $FeeDataArray, $currentSchool){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($FeeDataArray as $FeeData){
+                $studentRegistrationExists = RegistrationFee::where("school_branch_id", $currentSchool->id)->find($FeeData['registration_fee_id']);
+                if (!$studentRegistrationExists) {
+                    return ApiResponseService::error("Student Registration Fee Appears To Be Deleted", null, 404);
+                }
+                if ($studentRegistrationExists->status === 'paid') {
+                    return ApiResponseService::error("Registration Fee Already Completed", null, 409);
+                }
+
+                if ($studentRegistrationExists->amount < $FeeData['amount']) {
+                    return ApiResponseService::error("Amount Paid : {$FeeData['amount']} is Greater than the registration fee: {$studentRegistrationExists->amount}.");
+                }
+
+                $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
+
+                $transaction = RegistrationFeeTransactions::create([
+                    'transaction_id' => $transactionId,
+                    'amount' => $FeeData['amount'],
+                    'payment_method' => $FeeData['payment_method'],
+                    'registrationfee_id' => $FeeData['registration_fee_id'],
+                    'school_branch_id' => $currentSchool->id,
+                ]);
+
+                $studentRegistrationExists->status = 'paid';
+                $studentRegistrationExists->save();
+                $result[] = [
+                    $transaction,
+                    $studentRegistrationExists,
+                ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+           DB::rollBack();
+           throw $e;
+        }
+    }
+
+    public function bulkDeleteTuitionFeeTransaction($transactionIds){
+         $result = [];
+         try{
+            DB::beginTransaction();
+           foreach($transactionIds as $transactionId){
+            $transactions = TuitionFeeTransactions::findOrFail($transactionId);
+            $transactions->delete();
+            $result[] = [
+                 $transactions
+            ];
+           }
+           DB::commit();
+           return $result;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
+    }
+
+    public function bulkDeleteRegistrationFeeTransactions($transactionIds){
+         $result = [];
+         try{
+            DB::beginTransaction();
+            foreach($transactionIds as $transactionId){
+               $transaction = RegistrationFeeTransactions::findOrFail($transactionId);
+               $transaction->delete();
+               $result[] = [
+                 $transaction
+               ];
+            }
+            DB::commit();
+            return $result;
+         }
+         catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+         }
+    }
 }

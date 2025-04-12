@@ -8,7 +8,10 @@ use App\Http\Requests\FeePaymentRequest;
 use App\Http\Requests\UpdateFeePaymentRequest;
 use App\Http\Resources\FeeDebtorResource;
 use App\Http\Requests\PayRegistrationFeesRequest;
+use App\Http\Requests\BulkPayRegistrationFeeRequest;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\PaidFeesResource;
+use Exception;
 use Illuminate\Http\Request;
 
 class FeePaymentController extends Controller
@@ -99,5 +102,111 @@ class FeePaymentController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $reverseTransaction = $this->feePaymentService->reverseRegistrationFeePaymentTransaction($transactionId, $currentSchool);
         return ApiResponseService::success("Transaction Reversed Sucessfully", $reverseTransaction, null, 200);
+    }
+
+    public function bulkReverseRegistrationFeeTransaction(Request $request, $transactionIds){
+        $idsArray = explode(',', $transactionIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+           return ApiResponseService::error("No IDs provided", null, 422);
+       }
+       $validator = Validator::make(['ids' => $idsArray], [
+           'ids' => 'required|array',
+           'ids.*' => 'string|exists:registration_fee_transactions,id',
+       ]);
+       if ($validator->fails()) {
+           return ApiResponseService::error($validator->errors(), null, 422);
+       }
+        $currentSchool = $request->attributes->get('currentSchool');
+        try{
+            $bulkReverseTransaction = $this->feePaymentService->bulkReverseRegistrationFeeTransaction($idsArray, $currentSchool);
+            return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkReverseTuitionFeeTransaction(Request $request, $transactionIds){
+        $idsArray = explode(',', $transactionIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+           return ApiResponseService::error("No IDs provided", null, 422);
+       }
+       $validator = Validator::make(['ids' => $idsArray], [
+           'ids' => 'required|array',
+           'ids.*' => 'string|exists:tuition_fee_transactions,id',
+       ]);
+       if ($validator->fails()) {
+           return ApiResponseService::error($validator->errors(), null, 422);
+       }
+        $currentSchool = $request->attributes->get('currentSchool');
+        try{
+           $bulkReverseTransaction = $this->feePaymentService->bulkReverseTuitionFeeTransaction($idsArray, $currentSchool);
+           return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
+
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkPayRegistrationFee(BulkPayRegistrationFeeRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        try{
+            $bulkPayRegistrationFee = $this->feePaymentService->bulkPayRegistrationFee($request->registration_fee, $currentSchool);
+            return ApiResponseService::success("Fee Paid Succesfully", $bulkPayRegistrationFee, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeleteTuitionFeeTransactions($transactionIds){
+        $idsArray = explode(',', $transactionIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+           return ApiResponseService::error("No IDs provided", null, 422);
+       }
+       $validator = Validator::make(['ids' => $idsArray], [
+           'ids' => 'required|array',
+           'ids.*' => 'string|exists:tuition_fee_transactions,id',
+       ]);
+       if ($validator->fails()) {
+           return ApiResponseService::error($validator->errors(), null, 422);
+       }
+       try{
+          $bulkDelete = $this->feePaymentService->bulkDeleteTuitionFeeTransaction($idsArray);
+          return ApiResponseService::success("Tuition Fee Transactions Deleted Successfully", $bulkDelete, null, 200);
+       }
+       catch(Exception $e){
+        return ApiResponseService::error($e->getMessage(), null, 400);
+       }
+    }
+
+    public function bulkDeleteRegistrationFeeTransactions($transactionIds){
+        $idsArray = explode(',', $transactionIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+           return ApiResponseService::error("No IDs provided", null, 422);
+       }
+       $validator = Validator::make(['ids' => $idsArray], [
+           'ids' => 'required|array',
+           'ids.*' => 'string|exists:tuition_fee_transactions,id',
+       ]);
+       if ($validator->fails()) {
+           return ApiResponseService::error($validator->errors(), null, 422);
+       }
+       try{
+          $bulkDelete = $this->feePaymentService->bulkDeleteTuitionFeeTransaction($idsArray);
+          return ApiResponseService::success("Transactions Deleted Succesfully", $bulkDelete, null, 200);
+       }
+       catch(Exception $e){
+        return ApiResponseService::error($e->getMessage(), null, 400);
+       }
     }
 }

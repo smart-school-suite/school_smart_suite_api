@@ -488,6 +488,11 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/fee-payment')->group(
     Route::middleware(['auth:sanctum'])->get("/getTuitionFeeTransactionDetails/{transactionId}", [FeePaymentController::class, 'getTuitionTransactionFeeDetails']);
     Route::middleware(['auth:sanctum'])->get('/getRegistrationFeeTransactions', [FeePaymentController::class, 'getRegistrationFeeTransactions']);
     Route::middleware(['auth:sanctum'])->delete('/reverseRegistrationFeeTransaction/{transactionId}', [FeePaymentController::class, 'reverseRegistrationFeeTransaction']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteTuitionFeeTransactions/{transactionIds}', [FeePaymentController::class, 'bulkDeleteTuitionFeeTransactions']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteRegistrationFeeTransactions/{transactionIds}', [FeePaymentController::class, 'bulkDeleteRegistrationFeeTransactions']);
+    Route::middleware(['auth:sanctum'])->post('/bulkReverseFeeTuitionFeeTransactions/{transactionIds}', [FeePaymentController::class, 'bulkReverseTuitionFeeTransaction']);
+    Route::middleware(['auth:sanctum'])->post('/bulkReverseRegistrationFeeTransactions/{transactionIds}', [FeePaymentController::class, 'bulkReverseRegistrationFeeTransaction']);
+    Route::middleware(['auth:sanctum'])->post('/bulkPayRegistrationFee', [FeePaymentController::class, 'bulkPayRegistrationFee']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->group(function () {
@@ -556,6 +561,11 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/addit
     Route::delete('/deleteTransaction/{transactionId}', [StudentAdditionalFeesController::class, 'deleteTransaction']);
     Route::delete('/reverseTransaction/{transactionId}', [StudentAdditionalFeesController::class, 'reverseAdditionalFeesTransaction']);
     Route::get("/getTransactionDetails/{transactionId}", [StudentAdditionalFeesController::class, 'getTransactionDetails']);
+    Route::delete("/bulkDeleteAdditionalFees/{additionalFeeIds}", [StudentAdditionalFeesController::class, 'bulkDeleteStudentAdditionalFees']);
+    Route::delete("/bulkDeleteTransaction/{transactionIds}", [StudentAdditionalFeesController::class, 'bulkDeleteTransaction']);
+    Route::post("/bulkBillStudent", [StudentAdditionalFeesController::class, 'bulkBillStudents']);
+    Route::post("/bulkReverseTransaction/{transactionIds}", [StudentAdditionalFeesController::class, 'bulkReverseTransaction']);
+    Route::post('/bulkPayFee', [StudentAdditionalFeesController::class, 'bulkPayFees']);
 });
 
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/feepayment-schedule')->group(function () {
