@@ -263,6 +263,8 @@ Route::prefix('api/v1/country')->group(function () {
     Route::get('/countries', [CountryController::class, 'getCountries']);
     Route::middleware(['auth:sanctum'])->delete('/delete-country/{country_id}', [CountryController::class, 'deleteCountry']);
     Route::middleware(['auth:sanctum'])->put('/update-country/{country_id}', [CountryController::class, 'updateCountry']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteCountry/{countryIds}', [CountryController::class, 'bulkDeleteCountry']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateCountry', [CountryController::class, 'bulkUpdateCountry']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/department')->group(function () {

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Country;
+use Illuminate\Support\Facades\DB;
+use Exception;
 
 class countryService
 {
@@ -29,6 +31,27 @@ class countryService
         return $country;
     }
 
+    public function bulkUpdateCountry(array $updateCountryList){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($updateCountryList as $updateCountry){
+               $country = Country::findOrFail($updateCountry['country_id']);
+               $filteredData = array_filter($updateCountry);
+               $country->update($filteredData);
+               $result[] = [
+                 $country
+               ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
     public function deleteCountry(string $country_id)
     {
         $country = Country::find($country_id);
@@ -37,6 +60,26 @@ class countryService
         }
         $country->delete();
         return $country;
+    }
+
+    public function bulkDeleteCountry($countryIds){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($countryIds as $countryId){
+                $country = Country::findOrFail($countryId);
+                $country->delete();
+                $result[] = [
+                     $country
+                ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function getCountries()

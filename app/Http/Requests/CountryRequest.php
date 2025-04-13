@@ -24,7 +24,8 @@ class CountryRequest extends FormRequest
         return [
             'country' => 'required|string|unique',
             'code' => 'required|string',
-            'status' => 'required|boolean'
+            'currency' => 'required|string',
+            'officail_language' => 'required|string'
         ];
     }
 }
