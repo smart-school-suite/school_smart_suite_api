@@ -295,6 +295,11 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/course')->group(funct
     Route::middleware(['auth:sanctum'])->post('/deactivateCourse/{courseId}', [CoursesController::class, 'deactivateCourse']);
     Route::middleware(['auth:sanctum'])->post("/activateCourse/{courseId}", [CoursesController::class, 'activateCourse']);
     Route::middleware(['auth:sanctum'])->get('/getCoursesBySchoolSemester/{semesterId}/{specialtyId}', [CoursesController::class, 'getCoursesBySchoolSemester']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteCourses/{courseIds}', [CoursesController::class, 'bulkDeleteCourse']);
+    Route::middleware(['auth:sanctum'])->get('/getActiveCourses', [CoursesController::class, 'getActiveCourses']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateCourse', [CoursesController::class, 'bulkUpdateCourse']);
+    Route::middleware(['auth:sanctum'])->post('/bulkActivateCourse/{courseIds}', [CoursesController::class, 'bulkActivateCourse']);
+    Route::middleware(['auth:sanctum'])->post('/bulkDeactivateCourse/{courseIds}', [CoursesController::class, 'bulkDeactivateCourse']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(function () {

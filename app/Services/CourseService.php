@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Courses;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class courseService
 {
@@ -36,6 +38,26 @@ class courseService
         return $course;
     }
 
+    public function bulkDeleteCourse($coursesIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($coursesIds as $courseId) {
+                $course = Courses::findOrFail($courseId);
+                $course->delete();
+                $resuls[] = [
+                    $course
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
     public function updateCourse(string $course_id, array $data, $currentSchool)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
@@ -50,24 +72,42 @@ class courseService
         return $course;
     }
 
+    public function bulkUpdateCourse($updateCourseList)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($updateCourseList as $updateCourse) {
+                $course = Courses::findOrFail($updateCourse['course_id']);
+                $filteredData = array_filter($updateCourse);
+                $course->update($filteredData);
+                $result[] = [
+                    $course
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
     public function getCourses($currentSchool)
     {
         return Courses::where("school_branch_id", $currentSchool->id)
             ->with(['department', 'specialty', 'semester', 'level'])
             ->get();
     }
-
     public function courseDetails(string $course_id, $currentSchool)
     {
         $course = Courses::where('school_branch_id', $currentSchool->id)
-        ->with(['department', 'specialty', 'semester', 'level'])
-        ->find($course_id);
-        if(!$course){
+            ->with(['department', 'specialty', 'semester', 'level'])
+            ->find($course_id);
+        if (!$course) {
             return ApiResponseService::error("Course not found please try again", null, 404);
         }
         return $course;
     }
-
     public function getCoursesBySpecialtySemesterAndLevel($currentSchool, string $specialtyId,  string $semesterId)
     {
         $specialty = Specialty::find($specialtyId);
@@ -84,32 +124,82 @@ class courseService
             ->get();
         return $coursesData;
     }
-
-    public function deactivateCourse($currentSchool, string $courseId){
+    public function deactivateCourse($currentSchool, string $courseId)
+    {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
-        if(!$course){
+        if (!$course) {
             return ApiResponseService::success("Course not found", null, null, 400);
         }
         $course->status = "inactive";
         $course->save();
         return $course;
     }
-
-    public function activateCouse($currentSchool, string $courseId){
+    public function bulkDeactivateCourse($coursesIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($coursesIds as $courseId) {
+                $course = Courses::findOrFail($courseId);
+                $course->status = 'inactive';
+                $course->save();
+                $result[] = [
+                    $course
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function activateCourse($currentSchool, string $courseId)
+    {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
-        if(!$course){
+        if (!$course) {
             return ApiResponseService::success("Course not found", null, null, 400);
         }
         $course->status = "active";
         $course->save();
         return $course;
     }
-
-    public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId){
+    public function bulkActivateCourse($courseIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($courseIds as $courseId) {
+                $course = Courses::findOrFail($courseId);
+                $course->status = 'active';
+                $course->save();
+                $result[] = [
+                    $course
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function getActiveCourses($currentSchool)
+    {
+        $courses = Courses::where("school_branch_id", $currentSchool->id)
+            ->where("status", "active")
+            ->with(['department', 'specialty', 'semester', 'level'])
+            ->get();
+        return $courses;
+    }
+    public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
+    {
         $schoolSemester = SchoolSemester::findOrFail($semesterId);
         $specialty = Specialty::findOrFail($specialtyId);
         $courses = Courses::where("school_branch_id", $currentSchool->id)->where("semester_id", $schoolSemester->semester_id)
-                            ->where("specialty_id", $specialty->id)->get();
+            ->where("specialty_id", $specialty->id)
+            ->where("status", "active")
+            ->get();
         return $courses;
     }
 }
