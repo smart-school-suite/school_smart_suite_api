@@ -356,6 +356,7 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/grades')->group(funct
     Route::middleware(['auth:sanctum'])->get('/getGradesByExam/{examId}', [GradesController::class, 'getGradesConfigByExam']);
     Route::middleware(['auth:sanctum'])->get('/getExamConfigData/{examId}', [GradesController::class, 'getExamConfigData']);
     Route::middleware(['auth:sanctum'])->get('/getSchoolGradesConfig', [SchoolGradeConfigController::class, 'getSchoolGradesConfig']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteGrades/{examIds}', [GradesController::class, 'bulkDeleteGrades']);
     Route::middleware(['auth:sanctum'])->post('/createGradeByOtherConfig/{configId}/{targetConfigId}', [GradesController::class, 'createGradesByOtherGrades']);
 });
 

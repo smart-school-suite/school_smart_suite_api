@@ -5,6 +5,8 @@ use App\Models\Grades;
 use App\Models\Examtype;
 use App\Models\LetterGrade;
 use App\Models\Exams;
+use Illuminate\Support\Facades\DB;
+use Exception;
 class GradesService
 {
     // Implement your logic here
@@ -20,6 +22,27 @@ class GradesService
             $grades->delete();
         }
         return $gradesByExam;
+    }
+
+    public function bulkDeleteGrades($examIds, $currentSchool){
+        $results = [];
+        try{
+            DB::beginTransaction();
+            foreach($examIds as $examId){
+                $gradesByExam = Grades::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)->get();
+                foreach($gradesByExam as $grades){
+                    $grades->delete();
+                    $results[] = [
+                        $grades
+                    ];
+                }
+            }
+            DB::commit();
+            return $results;
+        }
+        catch(Exception $e){
+
+        }
     }
 
     public function getExamGradesConfiguration($currentSchool, string $examId){

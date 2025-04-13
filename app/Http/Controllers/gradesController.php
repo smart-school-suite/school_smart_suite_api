@@ -62,6 +62,30 @@ class GradesController extends Controller
         return ApiResponseService::success("Grade Deleted Sucessfully", $deleteGrades, null, 200);
     }
 
+    public function bulkDeleteGrades(Request $request, $examIds){
+        $idsArray = explode(',', $examIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:exams,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+            $currentSchool = $request->attributes->get('currentSchool');
+            $bulkDeleteGrades = $this->gradesService->bulkDeleteGrades($examIds, $currentSchool);
+           return ApiResponseService::success("Grades Deleted Successfully", $bulkDeleteGrades, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
     public function getGradesConfigByExam(Request $request, string $examId){
         $currentSchool = $request->attributes->get('currentSchool');
 
@@ -104,6 +128,4 @@ class GradesController extends Controller
             return ApiResponseService::error("This is not an exam", null, 400);
         }
     }
-
-
 }

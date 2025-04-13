@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Exams;
 use App\Models\LetterGrade;
-use App\Models\Resitablecourses;
 use App\Models\SchoolGradesConfig;
 use App\Models\Student;
 use Exception;
