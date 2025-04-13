@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\SchoolSemester;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class SchoolSemesterService
 {
@@ -33,6 +35,26 @@ class SchoolSemesterService
         return $schoolSemester;
     }
 
+    public function bulkUpdateSchoolSemester(array $updateSemesterList){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($updateSemesterList as $updateSemester){
+                $schoolSemester = SchoolSemester::findOrFail($updateSemester['semester_id']);
+                $filteredData = array_filter($updateSemester);
+                $schoolSemester->update($filteredData);
+                $result[] = [
+                    $schoolSemester
+                ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+    }
     public function deleteSchoolSemester($schoolSemesterId, $currentSchool){
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->find($schoolSemesterId);
         if(!$schoolSemester){
@@ -42,8 +64,36 @@ class SchoolSemesterService
         return $schoolSemesterId;
     }
 
+    public function bulkDeleteSchoolSemester($schoolSemesterIds){
+        $result = [];
+        try{
+            DB::beginTransaction();
+            foreach($schoolSemesterIds as $schoolSemesterId){
+              $schoolSemester = SchoolSemester::findOrFail($schoolSemesterId);
+              $schoolSemester->delete();
+              $result[] = [
+                $schoolSemester
+              ];
+            }
+            DB::commit();
+            return $result;
+        }
+        catch(Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
     public function getSchoolSemesters($currentSchool){
         $schoolSemesters = SchoolSemester::with(['specailty', 'specailty.level','semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->get();
+        return $schoolSemesters;
+    }
+
+    public function getActiveSchoolSemesters($currentSchool){
+        $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
+                                           ->with(['specailty', 'specailty.level','semester', 'studentBatch'])
+                                           ->where("status", "active")
+                                           ->get();
         return $schoolSemesters;
     }
 
