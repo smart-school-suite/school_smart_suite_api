@@ -13,16 +13,17 @@ return new class extends Migration
     {
         Schema::create('elections', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('title')->unique();
-            $table->date('election_start_date');
-            $table->date('election_end_date');
-            $table->time('starting_time');
-            $table->time('ending_time');
-            $table->text('description');
-            $table->integer("school_year_start");
-            $table->integer('school_year_end');
-            $table->enum('status', ['active', 'inactive', 'finished'])->default('inactive');
-            $table->boolean('is_results_published');
+            $table->string('election_type_id');
+            $table->foreign('election_type_id')->references('id')->on('election_type');
+            $table->dateTime('application_start')->nullable();
+            $table->dateTime('application_end')->nullable();
+            $table->dateTime('voting_start')->nullable();
+            $table->dateTime('voting_end')->nullable();
+            $table->enum('voting_status', ['ongoing', 'ended', 'pending'])->default('pending');
+            $table->enum('application_status', ['ongoing', 'ended', 'pending'])->default('pending');
+            $table->string('school_year')->nullable();
+            $table->enum('status', ['pending', 'ongoing', 'finished'])->default('pending');
+            $table->boolean('is_results_published')->default(false);
             $table->timestamps();
         });
     }

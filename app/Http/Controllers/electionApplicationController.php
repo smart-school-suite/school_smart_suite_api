@@ -7,6 +7,8 @@ use App\Services\ElectionApplicationService;
 use App\Http\Requests\UpdateElectionApplicationRequest;
 use App\Http\Resources\ElectionApplicationResource;
 use App\Services\ApiResponseService;
+use Exception;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 
 class ElectionApplicationController extends Controller
@@ -57,5 +59,52 @@ class ElectionApplicationController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $electionApplication = $this->electionApplicationService->getAllApplications($currentSchool);
         return ApiResponseService::success('Election Application Fetched Succesfully', $electionApplication, null, 200);
+    }
+
+    public function bulkDeleteApplication($applicationIds){
+        $idsArray = explode(',', $applicationIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:election_application,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+          $bulkDeleteApplication = $this->electionApplicationService->bulkDeleteApplication($idsArray);
+          return ApiResponseService::success("Application Deleted Successfully", $bulkDeleteApplication, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkApproveApplication(Request $request, $applicationIds){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $idsArray = explode(',', $applicationIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:election_application,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+          $bulkApproveApplication = $this->electionApplicationService->bulkApproveApplication($idsArray, $currentSchool);
+          return ApiResponseService::success("Applications Approved Successfully", $bulkApproveApplication, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }

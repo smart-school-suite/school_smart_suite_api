@@ -13,16 +13,17 @@ class Elections extends Model
     use HasFactory;
 
     protected $fillable = [
-        "title",
-        "election_start_date",
-        "election_end_date",
-        "starting_time",
-        "ending_time",
-        'school_year_start',
-        'school_year_end',
+        "election_type_id",
+        "application_start",
+        "application_end",
+        "voting_start",
+        "voting_end",
+        'voting_status',
+        'application_status',
+        'school_year',
         "is_results_published",
         "school_branch_id",
-        'description'
+        'status'
     ];
 
     public $table = "elections";
@@ -31,6 +32,15 @@ class Elections extends Model
 
     public $keyType = "string";
 
+    public function electionType(): BelongsTo {
+        return $this->belongsTo(ElectionType::class, 'election_type_id');
+    }
+    public function pastElectionWinners(): HasMany {
+        return $this->hasMany(PastElectionWinners::class);
+    }
+    public function currentElectionWinners() : BelongsTo {
+        return $this->belongsTo(CurrentElectionWinners::class);
+    }
     public function schoolbranches(): BelongsTo {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }

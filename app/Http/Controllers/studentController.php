@@ -13,7 +13,7 @@ use App\Http\Resources\StudentDropOutResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 
-class studentController extends Controller
+class StudentController extends Controller
 {
     //
     //create Resource

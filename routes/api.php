@@ -239,6 +239,7 @@ Route::prefix('api/v1/roles')->group(function () {
     Route::middleware(['auth:sanctum'])->put('/update-role/{roleId}', [RoleController::class, 'updateRole']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/assign-role/{schoolAdminId}', [RoleController::class, 'assignRoleSchoolAdmin']);
     Route::middleware(['auth:sanctum'])->post('/remove-role/{schoolAdminId}', [RoleController::class, 'removeRoleSchoolAdmin']);
+
 });
 
 
@@ -418,6 +419,9 @@ Route::prefix('api/v1/school-semesters')->group(function () {
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/school-semeters", [SchoolSemesterController::class, 'getSchoolSemester']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/delete-school-semeter/{schoolSemesterId}", [SchoolSemesterController::class, 'deleteSchoolSemester']);
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/schoolSemesterDetails/{schoolSemesterId}", [SchoolSemesterController::class, 'getSchoolSemesterDetails']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteSchoolSemesters/{schoolSemesterIds}", [SchoolSemesterController::class, 'bulkDeleteSchoolSemester']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->put("/bulkUpdateSchoolSemesters", [SchoolSemesterController::class, 'bulkUpdateSchoolSemester']);
+    Route::middleware(['auth:sanctum', IdentifyTenant::class])->get("/getActiveSemesters", [SchoolSemesterController::class, 'getActiveSchoolSemesters']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/event')->group(function () {
@@ -556,6 +560,21 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/elections')->group(fu
     Route::middleware(['auth:sanctum'])->post('/cast-vote', [ElectionsController::class, 'vote']);
     Route::middleware(['auth:sanctum'])->get('/election-results/{election_id}', [ElectionResultsController::class, 'getElectionResults']);
     Route::middleware(['auth:sanctum'])->get('/election-candidates/{electionId}', [ElectionsController::class, 'getElectionCandidates']);
+    Route::middleware(['auth:sanctum'])->post('/createElectionType', [ElectionsController::class, 'createElectionType']);
+    Route::middleware(['auth:sanctum'])->put('/updateElectionType/{electionTypeId}', [ElectionsController::class, 'updateElectionType']);
+    Route::middleware(['auth:sanctum'])->delete("/deleteElectionType/{electionTypeId}", [ElectionsController::class, 'deleteElectionType']);
+    Route::middleware(['auth:sanctum'])->get('/electionType', [ElectionsController::class, 'deleteElectionType']);
+    Route::middleware(['auth:sanctum'])->post('/activateElectionType/{electionTypeId}', [ElectionsController::class, 'activateElectionType']);
+    Route::middleware(['auth:sanctum'])->post('/deactivateElectionType/{electionTypeId}', [ElectionsController::class, 'deactivateElectionType']);
+    Route::middleware(['auth:sanctum'])->get('/activeElectionTypes', [ElectionsController::class, 'getActiveElectionTypes']);
+    Route::middleware(['auth:sanctum'])->get('/getElectionResults/{electionId}', [ElectionsController::class, '']);
+    Route::middleware(['auth:sanctum'])->get('/getPastElectionWinners', [ElectionsController::class, 'getPastElectionWinners']);
+    Route::middleware(['auth:sanctum'])->get('/getCurrentElectionWinners', [ElectionsController::class, 'getCurrentElectionWinners']);
+    Route::middleware(['auth:sanctum'])->post('/addAllowedParticipantsByOtherElection/{targetElectionId}/{electionId}', [ElectionsController::class, 'addAllowedParticipantsByOtherElection']);
+    Route::middleware(['auth:sanctum'])->get('/getAllowedParticipants/{electionId}', [ElectionsController::class, 'getAllowedParticipants']);
+    Route::middleware(['auth:sanctum'])->post('/addAllowedParticipants', [ElectionsController::class, 'addAllowedParticipants']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteElection/{electionIds}', [ElectionsController::class, 'bulkDeleteElection']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateElection', [ElectionsController::class, 'bulkUpdateElection']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/election-application')->group(function () {
@@ -565,6 +584,8 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/election-application'
     Route::middleware(['auth:sanctum'])->delete('/delete/{application_id}', [ElectionApplicationController::class, 'deleteApplication']);
     Route::middleware(['auth:sanctum'])->put('/approve-application/{application_id}', [ElectionApplicationController::class, 'approveApplication']);
     Route::middleware(['auth:sanctum'])->get('/getAllApplications', [ElectionApplicationController::class, 'getAllElectionApplication']);
+    Route::middleware(['auth:sanctum'])->post('/bulkApproveApplications/{applicationIds}', [ElectionApplicationController::class, 'bulkApproveApplication']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteApplication/{applicationIds}', [ElectionApplicationController::class, 'bulkDeleteApplication']);
 });
 
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election-roles')->group(function () {
@@ -573,6 +594,13 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/elect
     Route::middleware(['auth:sanctum'])->delete('/delete-role/{election_role_id}', [ElectionRolesController::class, 'deleteElectionRole']);
     Route::middleware(['auth:sanctum'])->get('/election-roles/{election_id}', [ElectionRolesController::class, 'getElectionRoles']);
     Route::middleware(['auth:sanctum'])->get("/getAllRoles", [ElectionRolesController::class, 'getAllElectionRoles']);
+    Route::middleware(['auth:sanctum'])->delete('/bulkDeleteRoles/{electionRoleIds}', [ElectionRolesController::class, 'bulkDeleteRole']);
+    Route::middleware(['auth:sanctum'])->put('/bulkUpdateRoles', [ElectionRolesController::class, 'bulkUpdateElectionRole']);
+    Route::middleware(['auth:sanctum'])->post('/activateRole/{electionRoleId}', [ElectionRolesController::class, 'activateRole']);
+    Route::middleware(['auth:sanctum'])->post('/deactivateRole/{electionRoleId}', [ElectionRolesController::class, 'deactivateRole']);
+    Route::middleware(['auth:sanctum'])->post('/bulkActivateRole/{electionRoleIds}', [ElectionRolesController::class, 'bulkActivateRole']);
+    Route::middleware(['auth:sanctum'])->post('/bulkDeactivateRole/{electionRoleIds}', [ElectionRolesController::class, 'bulkDeactivateRole']);
+    Route::middleware(['auth:sanctum'])->get('/getActiveRoles/{electionId}', [ElectionRolesController::class, 'getActiveRoles']);
 });
 
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/additional-fees')->group(function () {

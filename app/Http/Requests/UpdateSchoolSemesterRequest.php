@@ -28,7 +28,6 @@ class UpdateSchoolSemesterRequest extends FormRequest
             'school_year_end' => 'sometimes|required|integer',
             'semester_id' => 'sometimes|required|integer|exists:semesters,id',
             'specialty_id' => 'sometimes|required|integer|exists:specialties,id',
-            'school_branch_id' => 'sometimes|required|integer|exists:school_branches,id',
         ];
     }
 }

@@ -31,6 +31,10 @@ class Educationlevels extends Model
         });
     }
 
+    public function electionParticipants(): HasMany {
+        return $this->hasMany(ElectionParticipants::class);
+    }
+
     public function studentGradDates() : HasMany {
          return $this->hasMany(StudentBatchGradeDates::class);
     }

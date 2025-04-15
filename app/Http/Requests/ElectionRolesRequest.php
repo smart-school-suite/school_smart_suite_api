@@ -23,7 +23,7 @@ class ElectionRolesRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'election_id' => 'required|string',
+            'election_type_id' => 'required|string|required|string|exists:election_type,id',
             'description' => 'required|string'
         ];
     }

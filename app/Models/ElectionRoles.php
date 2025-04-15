@@ -15,7 +15,8 @@ class ElectionRoles extends Model
     protected $fillable = [
         "name",
         "description",
-        "election_id",
+        "election_type_id",
+        'status',
         "school_branch_id"
     ];
 
@@ -24,6 +25,12 @@ class ElectionRoles extends Model
 
     public $table = "election_roles";
 
+    public function pastElectionWinners(): HasMany {
+        return $this->hasMany(PastElectionWinners::class);
+    }
+    public function currentElectionWinners(): BelongsTo {
+         return $this->belongsTo(CurrentElectionWinners::class);
+    }
     public function electionApplication(): HasMany {
          return $this->hasMany(ElectionApplication::class);
     }
@@ -32,8 +39,8 @@ class ElectionRoles extends Model
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 
-    public function election(): BelongsTo {
-         return $this->belongsTo(Elections::class, "election_id");
+    public function electionType(): BelongsTo {
+         return $this->belongsTo(ElectionType::class, "election_type_id");
     }
 
     public function electionResults(): HasMany {

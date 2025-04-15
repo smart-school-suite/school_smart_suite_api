@@ -284,6 +284,8 @@ return new class extends Migration
         Schema::table('elections', function(Blueprint $table) {
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('election_type_id');
+            $table->foreign('election_type_id')->references('id')->on('election_type');
         });
 
         Schema::table('election_roles', function(Blueprint $table) {
@@ -304,6 +306,44 @@ return new class extends Migration
             $table->foreign('student_id')->references('id')->on('student');
             $table->string('position_id');
             $table->foreign('position_id')->references('id')->on('election_roles');
+        });
+
+        Schema::table('past_election_winners', function(Blueprint $table) {
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('election_role_id');
+            $table->foreign('election_role_id')->references('id')->on('election_roles');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('current_election_winners', function(Blueprint $table) {
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('election_role_id');
+            $table->foreign('election_role_id')->references('id')->on('election_roles');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('election_participants', function(Blueprint $table) {
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('election_type', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
         Schema::table('elections_results', function(Blueprint $table) {

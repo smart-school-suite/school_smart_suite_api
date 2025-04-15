@@ -39,7 +39,6 @@ class CreateStudentService
             $student->password = Hash::make($password);
             $student->save();
 
-            Log::info($randomId);
             RegistrationFee::create([
                 'level_id' => $studentData["level_id"],
                 'specialty_id' => $studentData["specialty_id"],

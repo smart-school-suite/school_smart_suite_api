@@ -11,10 +11,8 @@ class StudentResultService
     {
         // Logic to get all student results
         $studentResults = StudentResults::where('school_branch_id', $currentSchool->id)
-                                         ->with(['student', 'specialty', 'level', 'exam.ex', 'studentBatch'])
-                                         ->get();
+            ->with(['student', 'specialty', 'level', 'exam.ex', 'studentBatch'])
+            ->get();
         return $studentResults;
     }
-
-
 }

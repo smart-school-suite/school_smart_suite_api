@@ -22,14 +22,12 @@ class ElectionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string',
-            'election_start_date' => 'required|date',
-            'election_end_date' => 'required|date|after:election_start_date',
-            'starting_time' => 'required|date_format:H:i',
-            'ending_time' => 'required|date_format:H:i|after:starting_time',
-            'description' => 'required|string',
-            'school_year_start' => 'required|date',
-            'school_year_end' => 'required|date',
+            'election_type_id' => 'required|string|exists:election_types,id',
+            'application_start' => 'required|date_format:Y-m-d H:i:s|after_or_equal:now',
+            'application_end' => 'required|date_format:Y-m-d H:i:s|after:application_start',
+            'voting_start' => 'required|date_format:Y-m-d H:i:s|after_or_equal:application_end',
+            'voting_end' => 'required|date_format:Y-m-d H:i:s|after:voting_start',
+            'school_year' => 'required|string|regex:/^\d{4}-\d{4}$/',
         ];
     }
 }

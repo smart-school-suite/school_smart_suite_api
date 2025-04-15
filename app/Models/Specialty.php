@@ -29,7 +29,11 @@ class Specialty extends Model
 
     public function studentGradDates() : HasMany {
         return $this->hasMany(StudentBatchGradeDates::class);
-   }
+    }
+
+    public function electionParticipants(): HasMany {
+        return $this->hasMany(ElectionParticipants::class);
+    }
     public function studentDropout(): HasMany
     {
         return $this->hasMany(StudentDropout::class, 'specialty_id');

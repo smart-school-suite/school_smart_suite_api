@@ -70,6 +70,12 @@ class Student extends Model
         ];
     }
 
+    public function pastElectionWinners(): HasMany {
+        return $this->hasMany(PastElectionWinners::class);
+    }
+    public function currentElectionWinners(): BelongsTo {
+        return $this->belongsTo(CurrentElectionWinners::class);
+    }
     public function studentDropout(): HasMany
     {
         return $this->hasMany(StudentDropout::class, 'student_id');

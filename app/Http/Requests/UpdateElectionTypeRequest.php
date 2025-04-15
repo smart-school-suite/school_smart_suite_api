@@ -4,16 +4,11 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateElectionRolesRequest extends FormRequest
+class UpdateElectionTypeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-   // public function authorize(): bool
- //  / {
-      //  return false;
-  //  }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -22,9 +17,8 @@ class UpdateElectionRolesRequest extends FormRequest
     public function rules(): array
     {
         return [
-             'name' => 'sometimes|nullable|string',
-             'election_type_id' => 'required|string|exists:election_type,id',
-             'description' => 'sometimes|string'
+            'election_title' => 'sometimes|nullable|string',
+            'description' => 'sometimes|nullable|string'
         ];
     }
 }

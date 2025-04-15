@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkUpdateElectionRolesRequest;
 use App\Services\ApiResponseService;
 use App\Services\ElectionRolesService;
 use App\Http\Requests\ElectionRolesRequest;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\UpdateElectionRolesRequest;
+use Exception;
 use Illuminate\Http\Request;
 
 class ElectionRolesController extends Controller
@@ -48,5 +51,100 @@ class ElectionRolesController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $electionRoles = $this->electionRolesService->getAllElectionRoles($currentSchool);
         return ApiResponseService::success('Election Roles Fetched Succesfully', $electionRoles, null, 200);
+    }
+
+    public function bulkDeleteRole($electionRoleIds){
+        $idsArray = explode(',', $electionRoleIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:election_roles,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+           $bulkDeleteRole = $this->electionRolesService->bulkDeleteElectionRole($idsArray);
+           return ApiResponseService::success("Election Roles Deleted Successfully", $bulkDeleteRole, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkUpdateElectionRole(BulkUpdateElectionRolesRequest $request){
+          try{
+             $bulkUpdateElectionRole = $this->electionRolesService->bulkUpdateElectionRole($request->election_roles);
+             return ApiResponseService::success("Election Roles Updated Successfully", $bulkUpdateElectionRole, null, 200);
+          }
+          catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+          }
+    }
+
+    public function activateRole($electionRoleId){
+        $activateRole = $this->electionRolesService->activateRole($electionRoleId);
+        return ApiResponseService::success("Election Role Activated Successfully", $activateRole, null, 200);
+    }
+
+    public function bulkActivateRole($electionRoleIds){
+        $idsArray = explode(',', $electionRoleIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:election_roles,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+        try{
+           $bulkActivate = $this->electionRolesService->bulkActivateElectionRole($idsArray);
+           return ApiResponseService::success("Election Roles Activated Successfully", $bulkActivate, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function deactivateRole($electionRoleId){
+        $deactivateRole = $this->electionRolesService->deactivateRole($electionRoleId);
+        return ApiResponseService::success("Election Roles Deactivated Successfully", $deactivateRole, null, 200);
+    }
+
+    public function bulkDeactivateRole($electionRoleIds){
+        $idsArray = explode(',', $electionRoleIds);
+
+        $idsArray = array_map('trim', $idsArray);
+        if (empty($idsArray)) {
+            return ApiResponseService::error("No IDs provided", null, 422);
+        }
+        $validator = Validator::make(['ids' => $idsArray], [
+            'ids' => 'required|array',
+            'ids.*' => 'string|exists:election_roles,id',
+        ]);
+        if ($validator->fails()) {
+            return ApiResponseService::error($validator->errors(), null, 422);
+        }
+
+        try{
+            $bulkActivate = $this->electionRolesService->bulkDeactivateRole($idsArray);
+            return ApiResponseService::success("Election Roles Deactivated Successfully", $bulkActivate, null, 200);
+         }
+         catch(Exception $e){
+             return ApiResponseService::error($e->getMessage(), null, 400);
+         }
+    }
+    public function getActiveRoles(Request $request, $electionId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $getActiveRole = $this->electionRolesService->getActiveRoles($currentSchool, $electionId);
+        return ApiResponseService::success("Active Roles Fetch Successfully", $getActiveRole, null, 200);
     }
 }
