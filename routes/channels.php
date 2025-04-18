@@ -7,8 +7,20 @@
 //});
 
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
 
 Broadcast::channel('election.results.{schoolBranchId}.{electionId}', function ($user, $schoolBranchId, $electionId) {
     return (string) $user->school_branch_id === (string) $schoolBranchId;
 }, ['guards' => ['student', 'teacher', 'schoolAdmin']]);
 
+Broadcast::channel('App.Models.Teacher.{id}', function ($user, $id) {
+    return $user->id == $id;
+}, ['guards' => ['teacher']]);
+
+Broadcast::channel('App.Models.Student.{id}', function ($user, $id) {
+    return $user->id == $id;
+}, ['guards' => ['student']]);
+
+Broadcast::channel('App.Models.Schooladmin.{id}', function ($user, $id) {
+    return $user->id == $id;
+}, ['guards' => ['schooladmin']]);

@@ -8,11 +8,12 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
 class Schooladmin extends Authenticatable
 {
-    use HasFactory, HasApiTokens, HasRoles, HasPermissions;
+    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -73,7 +74,9 @@ class Schooladmin extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
+    public function devices() {
+        return $this->morphMany(UserDevices::class, 'devicesable');
+    }
     public function school(): BelongsTo {
         return $this->belongsTo(School::class, 'school_branch_id');
     }

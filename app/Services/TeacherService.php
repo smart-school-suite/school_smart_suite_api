@@ -72,107 +72,111 @@ class TeacherService
         return $time_table;
     }
 
-    public function getAllTeachers($currentSchool){
+    public function getAllTeachers($currentSchool)
+    {
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
-                           ->get();
+            ->get();
         return $getInstructors;
     }
 
-    public function addSpecailtyPreference(array $specailtyData, $currentSchool, $teacherId){
+    public function addSpecailtyPreference(array $specailtyData, $currentSchool, $teacherId)
+    {
         $result = [];
-        foreach($specailtyData as $specailty){
+        foreach ($specailtyData as $specailty) {
             $createdEntry = TeacherSpecailtyPreference::create([
-                 'specialty_id' => $specailty["specialty_id"],
-                 'teacher_id' =>  $teacherId,
-                 "school_branch_id" => $currentSchool->id
-             ]);
-             $result[] = $createdEntry;
-         }
-         return $result;
+                'specialty_id' => $specailty["specialty_id"],
+                'teacher_id' =>  $teacherId,
+                "school_branch_id" => $currentSchool->id
+            ]);
+            $result[] = $createdEntry;
+        }
+        return $result;
     }
 
-    public function deactivateTeacher($teacherId){
+    public function deactivateTeacher($teacherId)
+    {
         $teacher = Teacher::findOrFail($teacherId);
         $teacher->status = "inactive";
         $teacher->save();
         return $teacher;
     }
 
-    public function activateTeacher($teacherId){
+    public function activateTeacher($teacherId)
+    {
         $teacher = Teacher::findOrFail($teacherId);
         $teacher->status = "active";
         $teacher->save();
         return $teacher;
     }
 
-    public function bulkDeactivateTeacher($teacherIds){
-          $result = [];
-          try{
+    public function bulkDeactivateTeacher($teacherIds)
+    {
+        $result = [];
+        try {
             DB::beginTransaction();
-             foreach($teacherIds as $teacherId){
-                  $teacher = Teacher::findOrFail($teacherId['id']);
-                  $teacher->status = "inactive";
-                  $teacher->save();
-                  $result[] = [
-                      $teacher
-                  ];
-             }
-             DB::commit();
-             return $result;
-          }
-          catch(Exception $e){
-              DB::rollBack();
-             throw $e;
-          }
+            foreach ($teacherIds as $teacherId) {
+                $teacher = Teacher::findOrFail($teacherId['id']);
+                $teacher->status = "inactive";
+                $teacher->save();
+                $result[] = [
+                    $teacher
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
-    public function bulkActivateTeacher($teacherIds){
+    public function bulkActivateTeacher($teacherIds)
+    {
         $result = [];
-          try{
+        try {
             DB::beginTransaction();
-             foreach($teacherIds as $teacherId){
-                  $teacher = Teacher::findOrFail($teacherId['id']);
-                  $teacher->status = "active";
-                  $teacher->save();
-                  $result[] = [
-                      $teacher
-                  ];
-             }
-             DB::commit();
-             return $result;
-          }
-          catch(Exception $e){
-              DB::rollBack();
-             throw $e;
-          }
+            foreach ($teacherIds as $teacherId) {
+                $teacher = Teacher::findOrFail($teacherId['id']);
+                $teacher->status = "active";
+                $teacher->save();
+                $result[] = [
+                    $teacher
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
-
-    public function bulkDeleteTeacher($teacherIds){
+    public function bulkDeleteTeacher($teacherIds)
+    {
         $result = [];
-        try{
-             DB::beginTransaction();
-             foreach($teacherIds as $teacherId){
+        try {
+            DB::beginTransaction();
+            foreach ($teacherIds as $teacherId) {
                 $teacher = Teacher::findOrFail($teacherId['id']);
                 $teacher->delete();
                 $result[] = [
                     $teacher
                 ];
-             }
-             DB::commit();
-             return $result;
-        }
-        catch(Exception $e){
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
             DB::rollBack();
-           throw $e;
+            throw $e;
         }
     }
 
-    public function bulkUpdateTeacher($updateDataList){
-          $result = [];
-          try{
-              DB::beginTransaction();
-              foreach($updateDataList as $updateData){
+    public function bulkUpdateTeacher($updateDataList)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($updateDataList as $updateData) {
                 $teacher = Teacher::findOrFail($updateData['id']);
                 if ($teacher) {
                     $cleanedData = array_filter($updateData, function ($value) {
@@ -184,39 +188,37 @@ class TeacherService
                     }
                 }
                 $result[] = [
-                   $teacher
-              ];
-              }
-              DB::commit();
-              return $result;
-          }
-          catch(Exception $e){
+                    $teacher
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
-          }
+        }
     }
 
-    public function bulkAddTeacherSpecialtyPreference($currentSchool, $preferenceDataList, $teacherIds){
+    public function bulkAddTeacherSpecialtyPreference($currentSchool, $preferenceDataList, $teacherIds)
+    {
         $result = [];
-        try{
-           DB::beginTransaction();
-           foreach($teacherIds as $teacherId){
-              foreach($preferenceDataList as $preferenceData){
-                $createdEntry = TeacherSpecailtyPreference::create([
-                    'specialty_id' => $preferenceData["specialty_id"],
-                    'teacher_id' =>  $teacherId['id'],
-                    "school_branch_id" => $currentSchool->id
-                ]);
-                $result[] = $createdEntry;
-              }
-           }
-           DB::commit();
-           return $result;
-         }
-         catch(Exception $e){
+        try {
+            DB::beginTransaction();
+            foreach ($teacherIds as $teacherId) {
+                foreach ($preferenceDataList as $preferenceData) {
+                    $createdEntry = TeacherSpecailtyPreference::create([
+                        'specialty_id' => $preferenceData["specialty_id"],
+                        'teacher_id' =>  $teacherId['id'],
+                        "school_branch_id" => $currentSchool->id
+                    ]);
+                    $result[] = $createdEntry;
+                }
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
-         }
+        }
     }
-
 }

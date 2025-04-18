@@ -173,9 +173,8 @@ class AddScoreService
         $grades = Grades::with('lettergrade')
             ->where('school_branch_id', $schoolId)
             ->where('grades_category_id', $exam->grades_category_id)
-            ->orderBy('minimum_score', 'asc')
+            ->orderBy('minimum_score', 'desc')
             ->get();
-        Log::info("grades data", $grades->toArray());
         if ($grades->isEmpty()) {
             throw new Exception("No grades found for school ID: {$schoolId} and exam ID: {$examId}");
         }
@@ -304,5 +303,13 @@ class AddScoreService
                 'level_id' => $student->level_id
             ]);
         }
+    }
+
+    public function determindStudentGpa(){
+
+    }
+
+    public function addStudentResults() {
+
     }
 }

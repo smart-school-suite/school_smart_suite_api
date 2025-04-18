@@ -94,6 +94,7 @@ use App\Http\Controllers\AccessedStudentController;
 use App\Http\Controllers\StudentResultController;
 use App\Http\Controllers\AccessedResitStudentController;
 use App\Http\Controllers\Stats\FinancialStatsController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -656,4 +657,11 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/stats')->group(functi
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-results')->group( function() {
     Route::middleware(['auth:sanctum'])->get('/getAllStudentResults', [StudentResultController::class, 'getAllStudentResults']);
+});
+
+Route::middleware(['auth:sanctum'])->prefix('api/v1/notification')->group( function(){
+   Route::get('/getMyNotifications', [NotificationController::class, 'getNotifications']);
+   Route::post('/readAllNotifications', [NotificationController::class, 'readAllNofications']);
+   Route::post('/registerDevice/{actorId}', [NotificationController::class, 'registerDevice']);
+   Route::post('/test-notification/{actorId}', [NotificationController::class, 'testNotification']);
 });

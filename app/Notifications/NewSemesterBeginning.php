@@ -7,19 +7,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class Examresultsreleased extends Notification
+class NewSemesterBeginning extends Notification
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    protected $exam_id, $student;
-    public function __construct($exam_id, $student)
+    public function __construct()
     {
         //
-       $this->$exam_id;
-       $this->$student;
     }
 
     /**

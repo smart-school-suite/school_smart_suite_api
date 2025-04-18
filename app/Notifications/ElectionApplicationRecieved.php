@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class Examtimetablenotification extends Notification
+class ElectionApplicationRecieved extends Notification
 {
     use Queueable;
 

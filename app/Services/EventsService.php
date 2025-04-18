@@ -7,7 +7,6 @@ use App\Models\Schooladmin;
 use App\Models\Events;
 use App\Models\Student;
 use App\Models\Teacher;
-use Illuminate\Support\Facades\Log;
 
 class EventsService
 {

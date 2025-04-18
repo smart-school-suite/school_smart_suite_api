@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    use HasFactory, HasApiTokens;
+    use HasFactory, HasApiTokens, Notifiable;
     /**
      * The attributes that are mass assignable.
      *
@@ -78,6 +78,9 @@ class Teacher extends Model
         return $this->morphMany(Otp::class, 'actorable');
     }
 
+    public function devices() {
+        return $this->morphMany(UserDevices::class, 'devicesable');
+    }
     public function passwordResetTokens()
     {
         return $this->morphMany(PasswordResetToken::class, 'actorable');

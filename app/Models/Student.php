@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use Illuminate\Notifications\Notifiable;
 
 class Student extends Model
 {
-    use HasFactory,  HasApiTokens;
+    use HasFactory,  HasApiTokens, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -69,7 +69,9 @@ class Student extends Model
             'password' => 'hashed',
         ];
     }
-
+    public function devices() {
+        return $this->morphMany(UserDevices::class, 'devicesable');
+    }
     public function pastElectionWinners(): HasMany {
         return $this->hasMany(PastElectionWinners::class);
     }
