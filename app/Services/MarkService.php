@@ -20,18 +20,6 @@ class MarkService
         $markExists->delete();
         return $markExists;
     }
-
-    public function updateMark(array $data, string $mark_id, $currentSchool)
-    {
-        $markExists = Marks::Where('school_branch_id', $currentSchool->id)->find($mark_id);
-        if (!$markExists) {
-            return ApiResponseService::error('Student Mark Not found', null, 404);
-        }
-        $filteredData = array_filter($data);
-        $markExists->update($filteredData);
-        return $markExists;
-    }
-
     public function getStudentScores(string $studentId, $currentSchool, string $examId)
     {
         $findStudent = Student::where('school_branch_id', $currentSchool->id)->find($studentId);
@@ -47,7 +35,6 @@ class MarkService
 
         return $scoresData;
     }
-
     public function getScoreDetails(string $markId, $currentSchool)
     {
         $findScore = Marks::where("school_branch_id", $currentSchool->id)
@@ -58,7 +45,6 @@ class MarkService
         }
         return $findScore;
     }
-
     public function getAcessedCourses(string $examId, string $studentId, $currentSchool)
     {
         $findStudent = Student::find($studentId);
@@ -79,4 +65,5 @@ class MarkService
         $studentScores = Marks::where("school_branch_id", $currentSchool->id)->with(['course', 'student', 'exams.examtype', 'level', 'specialty'])->get();
         return $studentScores;
     }
+
 }

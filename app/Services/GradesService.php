@@ -15,7 +15,6 @@ class GradesService
             ->with(['exam.examtype.semesters', 'lettergrade'])->get();
             return $gradesData;
     }
-
     public function deleteGrades($currentSchool, $examId){
         $gradesByExam = Grades::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)->get();
         foreach($gradesByExam as $grades){
@@ -23,7 +22,6 @@ class GradesService
         }
         return $gradesByExam;
     }
-
     public function bulkDeleteGrades($examIds, $currentSchool){
         $results = [];
         try{
@@ -44,7 +42,6 @@ class GradesService
 
         }
     }
-
     public function getExamGradesConfiguration($currentSchool, string $examId){
         $grades = Grades::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)
           ->with(['lettergrade'])

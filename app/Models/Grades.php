@@ -17,6 +17,7 @@ class Grades extends Model
         'grade_points',
         'minimum_score',
         'grade_status',
+        'resit_status',
         'maximum_score',
         'determinant',
         'grades_category_id'

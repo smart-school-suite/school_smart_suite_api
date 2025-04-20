@@ -22,6 +22,7 @@ class AddGradesService
                     'minimum_score' => $grade['minimum_score'],
                     'maximum_score' => $grade['maximum_score'],
                     'grade_status' => $grade['grade_status'],
+                    'resit_status' => $grade['resit_status'],
                     'determinant' => $grade['determinant'],
                     'grades_category_id' => $grade['grades_category_id'],
                 ]);

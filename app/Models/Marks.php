@@ -17,9 +17,11 @@ class Marks extends Model
         'exam_id',
         'level_id',
         'score',
+        'grade_points',
         'specialty_id',
         'school_branch_id',
         'grade',
+        'resit_status',
         'grade_status',
         'gratification',
         'student_batch_id'

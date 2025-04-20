@@ -17,6 +17,8 @@ class StudentResults extends Model
         'level_id',
         'exam_id',
         'student_batch_id',
+        'score_details',
+        'total_score',
         'scores'
     ];
 

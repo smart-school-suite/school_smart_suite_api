@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('grades', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('grade_points');
-            $table->enum('grade_status', ['resit', 'passed', 'failed', 'potential resit'])->default('resit');
+            $table->enum('grade_status', ['passed', 'failed'])->default('resit');
+            $table->enum('resit_status', ['resit', 'no_resit', 'high_resit_potential', 'low_resit_potential']);
             $table->decimal('minimum_score', 3, 1);
             $table->decimal('maximum_score', 3, 2);
             $table->string("determinant");

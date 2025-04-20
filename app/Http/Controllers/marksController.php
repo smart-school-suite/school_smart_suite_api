@@ -2,32 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Marks;
+
 use App\Models\Grades;
 use App\Models\Exams;
 use App\Models\Examtimetable;
-use App\Models\Student;
-use App\Services\AddScoreService;
 use App\Http\Requests\AddStudentScoreRequest;
+use App\Http\Requests\UpdateScoreRequest;
+use App\Services\AddExamScoresService;
+use App\Services\AddCaScoresService;
+use App\Services\UpdateExamScoreService;
+use App\Services\UpdateCaScoreService;
 use App\Services\MarkService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
 class MarksController extends Controller
 {
-    protected AddScoreService $addScoreService;
     protected MarkService $markService;
-    public function __construct(AddScoreService $addScoreService, MarkService $markService)
-    {
-        $this->addScoreService = $addScoreService;
+    protected AddExamScoresService $addExamScoresService;
+    protected AddCaScoresService $addCaScoresService;
+    protected UpdateCaScoreService $updateCaScoresService;
+    protected UpdateExamScoreService $updateExamScoreService;
+    public function __construct(
+        MarkService $markService,
+        AddExamScoresService $addExamScoresService,
+        AddCaScoresService $addCaScoresService,
+        UpdateCaScoreService $updateCaScoreService,
+        UpdateExamScoreService $updateExamScoreService
+    ) {
+        $this->addExamScoresService = $addExamScoresService;
+        $this->addCaScoresService = $addCaScoresService;
+        $this->updateCaScoresService = $updateCaScoreService;
+        $this->updateExamScoreService = $updateExamScoreService;
         $this->markService = $markService;
     }
-    public function createMark(AddStudentScoreRequest $request)
+    public function createCaMark(AddStudentScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
-            $results = $this->addScoreService->addStudentScores($request->scores_entries, $currentSchool);
+            $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
+        } catch (\Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 500);
+        }
+    }
+    public function createExamMark(AddStudentScoreRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        try {
+            $results = $this->addExamScoresService->addExamScores($request->scores_entries, $currentSchool);
+            return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
+        } catch (\Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 500);
+        }
+    }
+
+    public function updateExamMark(UpdateScoreRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        try {
+            $results = $this->updateExamScoreService->updateExamScore($request->scores_entries, $currentSchool);
+            return ApiResponseService::success("MarkS Updated Sucessfully", $results, null, 201);
+        } catch (\Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 500);
+        }
+    }
+
+    public function updateCaMark(UpdateScoreRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        try {
+            $results = $this->updateCaScoresService->updateCaScore($request->scores_entries, $currentSchool);
+            return ApiResponseService::success("MarkS Updated Sucessfully", $results, null, 201);
         } catch (\Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
@@ -38,15 +84,6 @@ class MarksController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteScore = $this->markService->deleteMark($mark_id, $currentSchool);
         return ApiResponseService::success('Student Mark Deleted Sucessfully', $deleteScore, null, 200);
-    }
-
-    //update student marks review this code
-    public function updateMark(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $mark_id = $request->route('mark_id');
-        $updateScore = $this->markService->updateMark($request->validated(), $mark_id, $currentSchool);
-        return ApiResponseService::success('Student Score Updated Successfully', $updateScore, null, 200);
     }
 
     public function getMarksByExamStudent(Request $request)
@@ -72,7 +109,6 @@ class MarksController extends Controller
         $markDetails = $this->markService->getScoreDetails($currentSchool, $mark_id);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $markDetails, null, 200);
     }
-
 
     //revisit this code and update the resources file
     public function getAccessedCoursesWithLettergrades(Request $request)

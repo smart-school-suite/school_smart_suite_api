@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('marks', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->decimal('score', 4, 2);
-            $table->enum('grade_status', ['resit', 'passed', 'failed', 'potential resit'])->default('resit');
+            $table->enum('grade_status', ['passed', 'failed'])->default('passed');
             $table->string('gratification');
+            $table->enum('resit_status', ['resit', 'no_resit', 'high_resit_potential', 'low_resit_potential']);
             $table->string('grade');
             $table->timestamps();
         });

@@ -7,12 +7,26 @@ use App\Models\StudentResults;
 class StudentResultService
 {
     // Implement your logic heres
-    public function getAllStudentResults($currentSchool)
+
+    public function getMyResults($currentSchool, $examId, $studentId)
     {
-        // Logic to get all student results
-        $studentResults = StudentResults::where('school_branch_id', $currentSchool->id)
-            ->with(['student', 'specialty', 'level', 'exam.ex', 'studentBatch'])
+        $examResults = StudentResults::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $examId)
+            ->where("student_id", $studentId)
+            ->with(['student', 'specialty', 'level', 'exam'])
             ->get();
-        return $studentResults;
+        return $examResults;
     }
+
+    public function getExamStandings($examId, $currentSchool)
+    {
+        $examResults = StudentResults::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $examId)
+            ->orderBy('gpa', 'desc')
+            ->with(['student', 'specialty', 'level'])
+            ->get();
+        return $examResults;
+    }
+
+    //generate pdf of student results and exam standings
 }

@@ -327,8 +327,10 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/specialty')->group(fu
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/marks')->group(function () {
-    Route::middleware(['auth:sanctum'])->post('/add-student-mark', [MarksController::class, 'createMark']);
-    Route::middleware(['auth:sanctum'])->put('/update-student-mark/{mark_id}', [MarksController::class, 'updateMark']);
+    Route::middleware(['auth:sanctum'])->post('/add-ca-scores', [MarksController::class, 'createCaMark']);
+    Route::middleware(['auth:sanctum'])->post('/add-exam-scores', [MarksController::class, 'createExamMark']);
+    Route::middleware(['auth:sanctum'])->put("/update-ca-score", [MarksController::class, 'updateCaMark']);
+    Route::middleware(['auth:sanctum'])->put("/update-exam-score", [MarksController::class, 'updateExamMark']);
     Route::middleware(['auth:sanctum'])->delete('/delete-student-mark/{mark_id}', [MarksController::class, 'deleteMark']);
     Route::middleware(['auth:sanctum'])->get('/scores-exam/{student_id}/{exam_id}', [MarksController::class, 'getMarksByExamStudent']);
     Route::middleware(['auth:sanctum'])->get("/scores-exam/student", [MarksController::class, 'getMarkDetails']);
