@@ -56,7 +56,6 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-
     public function updateExamMark(UpdateScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -67,7 +66,6 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-
     public function updateCaMark(UpdateScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
