@@ -336,6 +336,9 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/marks')->group(functi
     Route::middleware(['auth:sanctum'])->get("/scores-exam/student", [MarksController::class, 'getMarkDetails']);
     Route::middleware(['auth:sanctum'])->get("/score-details/{mark_id}", [MarksController::class, 'getMarkDetails']);
     Route::middleware(['auth:sanctum'])->get("/accessed-courses/{examId}", [MarksController::class, "getAccessedCoursesWithLettergrades"]);
+    Route::middleware(['auth:sanctum'])->get("/prepareCaResultsByExam/{examId}/{studentId}", [MarksController::class, 'prepareCaResultsByExam']);
+    Route::middleware(['auth:sanctum'])->get("/prepareCaData/{examId}/{studentId}", [MarksController::class, 'prepareCaData']);
+    Route::middleware(['auth:sanctum'])->get("/prepareExamData/{examId}/{studentId}", [MarksController::class, 'prepareExamData']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/teacher-avialability')->group(function () {

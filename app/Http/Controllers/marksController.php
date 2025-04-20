@@ -76,14 +76,12 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-
     public function deleteMark(Request $request, $mark_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteScore = $this->markService->deleteMark($mark_id, $currentSchool);
         return ApiResponseService::success('Student Mark Deleted Sucessfully', $deleteScore, null, 200);
     }
-
     public function getMarksByExamStudent(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -92,20 +90,39 @@ class MarksController extends Controller
         $allStudentScores = $this->markService->getStudentScores($student_id, $currentSchool, $exam_id);
         return ApiResponseService::success('Scores Fetched Sucessfully', $allStudentScores, null, 200);
     }
-
     public function getAllMarks(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $studentDetails = $this->markService->getAllStudentsScores($currentSchool);
         return ApiResponseService::success("Student Scores Fetched Succesfully", $studentDetails, null, 200);
     }
-
     public function getMarkDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $mark_id = $request->route("mark_id");
         $markDetails = $this->markService->getScoreDetails($currentSchool, $mark_id);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $markDetails, null, 200);
+    }
+    public function prepareCaResultsByExam(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $examId = $request->route("examId");
+        $studentId = $request->route("studentId");
+        $prepareCaResults = $this->markService->prepareCaDataByExam($currentSchool, $studentId, $examId);
+        return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareCaResults, null, 200);
+    }
+    public function prepareCaData(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $examId = $request->route("examId");
+        $studentId = $request->route("studentId");
+        $prepareCaResults = $this->markService->prepareCaData($currentSchool, $studentId, $examId);
+        return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareCaResults, null, 200);
+    }
+    public function prepareExamData(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $examId = $request->route("examId");
+        $studentId = $request->route("studentId");
+        $prepareExamResults = $this->markService->prepareExamData($currentSchool, $studentId, $examId);
+        return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareExamResults, null, 200);
     }
 
     //revisit this code and update the resources file

@@ -119,7 +119,6 @@ class CreateSpecailtyTimeTableService
             ->whereIn('end_time', array_column($entriesToInsert, 'end_time'))
             ->get()];
     }
-
     public function createTimetable(array $scheduleEntries, $currentSchool, $semesterId)
     {
         $conflicts = [];

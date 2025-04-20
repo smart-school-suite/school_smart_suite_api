@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Models\Marks;
+use App\Models\Examtype;
+use Exception;
 use App\Models\Student;
 use App\Models\Examtimetable;
 use App\Models\Exams;
+use App\Models\StudentResults;
 
 class MarkService
 {
@@ -65,5 +68,107 @@ class MarkService
         $studentScores = Marks::where("school_branch_id", $currentSchool->id)->with(['course', 'student', 'exams.examtype', 'level', 'specialty'])->get();
         return $studentScores;
     }
+    public function prepareCaDataByExam($currentSchool, $studentId, $examId): array
+    {
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->findOrFail($examId);
+        $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
+        $caExam = $this->findExamsBasedOnCriteria($exam->id);
+        $caScores = Marks::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $caExam->id)
+            ->with(['course'])
+            ->get();
+        $caResult = StudentResults::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $caExam->id)
+            ->get();
+        return [
+            'exam' => $exam,
+            'student' => $student,
+            'caExam' => $caExam,
+            'caScores' => $caScores,
+            'caResult' => $caResult,
+        ];
+    }
+    public function prepareCaData($currentSchool, $examId, $studentId): array
+    {
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->findOrFail($examId);
+        $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
+        $caScores = Marks::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $exam->id)
+            ->with(['course'])
+            ->get();
+        $caResult = StudentResults::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $exam->id)
+            ->get();
+        return [
+            'exam' => $exam,
+            'student' => $student,
+            'ca_scores' => $caScores,
+            'ca_result' => $caResult
+        ];
+    }
+    public function prepareExamData($currentSchool, $examId, $studentId)
+    {
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->findOrFail($examId);
+        $caExam = $this->findExamsBasedOnCriteria($exam->id);
+        $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
+        $examScores = Marks::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $exam->id)
+            ->with(['course'])
+            ->get();
+        $examResult = StudentResults::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $exam->id)
+            ->get();
+        $caScores = Marks::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $caExam->id)
+            ->with(['course'])
+            ->get();
+        $caResult = StudentResults::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("exam_id", $caExam->id)
+            ->get();
+        return [
+            'exam' => $exam,
+            'student' => $student,
+            'exam_scores' => $examScores,
+            'exam_result' => $examResult,
+            'ca_scores' => $caScores,
+            'ca_result' => $caResult
+        ];
+    }
+    private function findExamsBasedOnCriteria(string $examId)
+    {
+        $exam = Exams::with('examType')->findOrFail($examId);
+        if ($exam->examType->type !== 'exam') {
+            throw new Exception('Exam type is not valid or not found');
+        }
 
+        $caExamType = ExamType::where('semester', $exam->examType->semester)
+            ->where('type', 'ca')
+            ->first();
+
+        if (!$caExamType) {
+            throw new Exception('Corresponding CA exam type not found');
+        }
+
+        $additionalExam = Exams::where('school_year', $exam->school_year)
+            ->where('exam_type_id', $caExamType->id)
+            ->where('specialty_id', $exam->specialty_id)
+            ->where('level_id', $exam->level_id)
+            ->where('semester_id', $exam->semester_id)
+            ->where('department_id', $exam->department_id)
+            ->first();
+
+        if (!$additionalExam) {
+            throw new Exception('No additional exam found');
+        }
+
+        return $additionalExam;
+    }
 }
