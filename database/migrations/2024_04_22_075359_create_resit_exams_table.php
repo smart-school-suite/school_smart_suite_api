@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('exams', function (Blueprint $table) {
+        Schema::create('resit_exams', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->date('start_date');
             $table->date('end_date');
             $table->decimal('weighted_mark', 4, 2);
-            $table->string('school_year');
             $table->boolean('timetable_published')->default(false);
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
+            $table->boolean("grading_added")->default(false);
             $table->integer('expected_candidate_number')->default(0);
             $table->integer('evaluated_candidate_number')->default(0);
             $table->timestamps();
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('exams');
+        Schema::dropIfExists('resit_exams');
     }
 };

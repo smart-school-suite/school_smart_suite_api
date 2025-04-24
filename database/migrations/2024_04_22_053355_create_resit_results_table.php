@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_resit', function (Blueprint $table) {
+        Schema::create('resit_results', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('paid_status')->default('unpaid');
-            $table->decimal('resit_fee', 8, 2)->default(3000.00);
-            $table->unsignedInteger('attempt_number')->default(0);
-            $table->unsignedInteger('iscarry_over')->default(false);
+            $table->decimal('former_ca_gpa', 4, 2);
+            $table->decimal('new_ca_gpa', 4, 2);
+            $table->decimal('former_exam_gpa', 4, 2);
+            $table->decimal('new_exam_gpa', 4, 2);
+            $table->json('score_details');
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_resit');
+        Schema::dropIfExists('resit_results');
     }
 };

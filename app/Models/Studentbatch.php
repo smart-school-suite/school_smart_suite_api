@@ -27,33 +27,43 @@ class Studentbatch extends Model
     {
         parent::boot();
 
-         static::creating(function ($user){
+        static::creating(function ($user) {
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
-         });
+        });
 
     }
-
-    public function studentGradDates() : HasMany {
+    public function resitResults(): HasMany
+    {
+        return $this->hasMany(ResitResults::class);
+    }
+    public function studentGradDates(): HasMany
+    {
         return $this->hasMany(StudentBatchGradeDates::class);
-   }
-    public function studentDropout(): HasMany {
-         return $this->hasMany(StudentDropout::class);
     }
-    public function schoolBranch(): HasMany {
-         return $this->hasMany(Schoolbranches::class);
+    public function studentDropout(): HasMany
+    {
+        return $this->hasMany(StudentDropout::class);
     }
-    public function schoolSemester(): HasMany {
-         return $this->hasMany(SchoolSemester::class);
+    public function schoolBranch(): HasMany
+    {
+        return $this->hasMany(Schoolbranches::class);
     }
-    public function studentResults(): HasMany {
-         return $this->hasMany(StudentResults::class);
+    public function schoolSemester(): HasMany
+    {
+        return $this->hasMany(SchoolSemester::class);
+    }
+    public function studentResults(): HasMany
+    {
+        return $this->hasMany(StudentResults::class);
     }
 
-    public function exams() :  HasMany {
-         return $this->hasMany(Exams::class);
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exams::class);
     }
-    public function student(): HasMany {
+    public function student(): HasMany
+    {
         return $this->hasMany(Student::class, 'student_batch_id');
     }
 }

@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Exams;
+use Illuminate\Support\Str;
 use App\Models\LetterGrade;
 use App\Models\SchoolGradesConfig;
+use App\Jobs\CreateExamCandidatesJob;
 use App\Models\Student;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -15,21 +17,24 @@ class ExamService
 
     public function createExam(array $data, $currentSchool)
     {
-        $new_examdata_instance = new Exams();
-        $new_examdata_instance->school_branch_id = $currentSchool->id;
-        $new_examdata_instance->start_date = $data["start_date"];
-        $new_examdata_instance->end_date = $data["end_date"];
-        $new_examdata_instance->level_id = $data["level_id"];
-        $new_examdata_instance->exam_type_id = $data["exam_type_id"];
-        $new_examdata_instance->weighted_mark = $data["weighted_mark"];
-        $new_examdata_instance->semester_id = $data["semester_id"];
-        $new_examdata_instance->school_year = $data["school_year"];
-        $new_examdata_instance->specialty_id = $data["specialty_id"];
-        $new_examdata_instance->student_batch_id = $data["student_batch_id"];
-        $new_examdata_instance->save();
-        return $new_examdata_instance;
-    }
+        $examId = Str::uuid();
+        $exam = new Exams();
+        $exam->id = $examId;
+        $exam->school_branch_id = $currentSchool->id;
+        $exam->start_date = $data["start_date"];
+        $exam->end_date = $data["end_date"];
+        $exam->level_id = $data["level_id"];
+        $exam->exam_type_id = $data["exam_type_id"];
+        $exam->weighted_mark = $data["weighted_mark"];
+        $exam->semester_id = $data["semester_id"];
+        $exam->school_year = $data["school_year"];
+        $exam->specialty_id = $data["specialty_id"];
+        $exam->student_batch_id = $data["student_batch_id"];
+        $exam->save();
+        CreateExamCandidatesJob::dispatch($data['specialty_id'], $data['level_id'], $data['student_batch_id'], $examId);
+        return $exam;
 
+    }
     public function deleteExam(string $exam_id, $currentSchool)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->find($exam_id);
@@ -40,7 +45,6 @@ class ExamService
         $exam->delete();
         return $exam;
     }
-
     public function bulkDeleteExam($examIds){
          $result = [];
          try{
@@ -60,7 +64,6 @@ class ExamService
             throw $e;
          }
     }
-
     public function updateExam(string $exam_id, $currentSchool, array $data)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->find($exam_id);
@@ -92,7 +95,6 @@ class ExamService
             throw $e;
         }
     }
-
     public function getExams($currentSchool)
     {
         $exams = Exams::where('school_branch_id', $currentSchool->id)
@@ -100,7 +102,6 @@ class ExamService
             ->get();
         return $exams;
     }
-
     public function examDetails($currentSchool, string $exam_id)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)
@@ -111,7 +112,6 @@ class ExamService
         }
         return $exam;
     }
-
     public function getAccessExams(string $student_id, $currentSchool)
     {
         $findStudent = Student::where("school_branch_id", $currentSchool->id)->find($student_id);
@@ -125,7 +125,6 @@ class ExamService
             ->get();
         return $examData;
     }
-
     public function getAssociateWeightedMarkLetterGrades(string $exam_id, $currentSchool)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->with(["examtype"])->find($exam_id);
@@ -135,7 +134,6 @@ class ExamService
         $letterGrades = LetterGrade::all();
         return $letterGrades && $exam;
     }
-
     public function addExamGrading(string $examId, $currentSchool, $gradesConfigId){
         $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($gradesConfigId);
         if(!$gradesConfig){
@@ -150,7 +148,6 @@ class ExamService
         $exam->save();
         return $exam;
     }
-
     public function bulkAddExamGrading($examGradingList, $currentSchool){
          $result = [];
          try{
@@ -180,7 +177,6 @@ class ExamService
              throw $e;
          }
     }
-
     public function getResitExams($currentSchool){
         $exams = Exams::where("school_branch_id", $currentSchool->id)
             ->whereHas('examType', function($query) {

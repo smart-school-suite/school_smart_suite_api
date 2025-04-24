@@ -34,68 +34,84 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = 'false';
 
-    public function studentGradDates() : HasMany {
+    public function studentGradDates(): HasMany
+    {
         return $this->hasMany(StudentBatchGradeDates::class);
-   }
-    public function country(): BelongsTo {
+    }
+    public function country(): BelongsTo
+    {
         return $this->belongsTo(Country::class);
     }
 
-    public function schoolBranchApiKey(): BelongsTo {
+    public function examResit(): HasMany {
+        return $this->hasMany(ResitExam::class);
+    }
+    public function schoolBranchApiKey(): BelongsTo
+    {
         return $this->belongsTo(SchoolBranchApiKey::class, 'school_branch_id');
     }
 
-    public function school(): BelongsTo {
+    public function school(): BelongsTo
+    {
         return $this->belongsTo(School::class);
     }
-    public function courses(): HasMany {
+    public function courses(): HasMany
+    {
         return $this->hasMany(Courses::class);
     }
 
-    public function department(): HasMany {
+    public function department(): HasMany
+    {
         return $this->hasMany(Department::class);
     }
 
-    public function events(): HasMany {
+    public function events(): HasMany
+    {
         return $this->hasMany(Events::class);
     }
 
-    public function exams(): HasMany {
+    public function exams(): HasMany
+    {
         return $this->hasMany(Exams::class);
     }
 
-    public function feepayment(): HasMany {
+    public function feepayment(): HasMany
+    {
         return $this->hasMany(Feepayment::class);
     }
 
-    public function marks(): HasMany {
+    public function marks(): HasMany
+    {
         return $this->hasMany(Marks::class);
     }
 
-    public function parents(): HasMany {
+    public function parents(): HasMany
+    {
         return $this->hasMany(Parents::class);
     }
 
-    public function schooladmin() : HasMany {
+    public function schooladmin(): HasMany
+    {
         return $this->hasMany(Schooladmin::class);
     }
 
-    public function schoolbranches(): HasMany {
+    public function schoolbranches(): HasMany
+    {
         return $this->hasMany(Schoolbranches::class);
     }
 
-    public function specialty(): HasMany {
+    public function specialty(): HasMany
+    {
         return $this->hasMany(Specialty::class);
     }
 
-    public function student() : HasMany {
+    public function student(): HasMany
+    {
         return $this->hasMany(Student::class);
     }
 
-    public function teacher() : HasMany {
+    public function teacher(): HasMany
+    {
         return $this->hasMany(Teacher::class);
     }
-
-
-
 }

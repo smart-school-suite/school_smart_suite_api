@@ -66,7 +66,6 @@ class ExamTimeTableService
             throw new Exception('An error occurred while creating the exam timetable: ' . $e->getMessage());
         }
     }
-
     public function deleteTimetableEntry($timeTableId, $currentSchool)
     {
         $examTimeTableEntry = Examtimetable::Where('school_branch_id', $currentSchool->id)->find($timeTableId);

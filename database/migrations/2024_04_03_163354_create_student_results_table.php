@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('student_results', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->decimal('gpa', 4, 2);
-            $table->json('scores');
+            $table->enum('exam_status', ['passed', 'failed']);
+            $table->json('score_details');
             $table->timestamps();
         });
     }

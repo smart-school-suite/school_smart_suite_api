@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('accessed_resit_student', function (Blueprint $table) {
+        Schema::create('resit_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('exam_id');
-            $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('resit_exam_id');
+            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->boolean('grades_submitted')->default(false);
-            $table->enum('student_accessed', ['pending', 'accessed']);
+            $table->boolean('student_accessed')->default(false);
             $table->timestamps();
         });
     }
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('accessed_resit_student');
+        Schema::dropIfExists('resit_candidates');
     }
 };

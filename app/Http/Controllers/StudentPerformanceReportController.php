@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Examtimetable;
 use App\Models\Grades;
-use App\Models\Reportcard;
+use App\Models\StudentResults;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
@@ -21,7 +21,7 @@ class StudentPerformanceReportController extends Controller
             ], 404);
         }
 
-        $student_ca_records = Reportcard::with(['exam.examType' => function($query) {
+        $student_ca_records = StudentResults::with(['exam.examType' => function($query) {
             $query->whereIn('exam_name', ['first_semester_ca', 'second_semester_ca']);
         }])
         ->where('school_branch_id', $currentSchool->id)

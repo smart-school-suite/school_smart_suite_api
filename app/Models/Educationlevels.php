@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Educationlevels extends Model
 {
@@ -31,12 +32,20 @@ class Educationlevels extends Model
         });
     }
 
-    public function electionParticipants(): HasMany {
+    public function electionParticipants(): HasMany
+    {
         return $this->hasMany(ElectionParticipants::class);
     }
-
-    public function studentGradDates() : HasMany {
-         return $this->hasMany(StudentBatchGradeDates::class);
+    public function examResit(): HasMany {
+        return $this->hasMany(ResitExam::class);
+    }
+    public function resitResults(): HasMany
+    {
+        return $this->hasMany(ResitResults::class);
+    }
+    public function studentGradDates(): HasMany
+    {
+        return $this->hasMany(StudentBatchGradeDates::class);
     }
     public function studentDropout(): HasMany
     {

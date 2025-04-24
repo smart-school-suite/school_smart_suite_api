@@ -13,6 +13,7 @@ use App\Models\Marks;
 use App\Models\Examtype;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
+use App\Jobs\CreateResitExamJob;
 use App\Models\Studentresit;
 
 class AddExamScoresService
@@ -26,13 +27,12 @@ class AddExamScoresService
             DB::beginTransaction();
             foreach ($studentScores as $scoreData) {
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
-                $exam = Exams::find($scoreData['exam_id']);
+                $exam = Exams::with(['examtype'])->find($scoreData['exam_id']);
                 $examDetails = $exam;
                 $this->validateStudentAndExam($student, $exam);
                 if ($this->isDuplicateEntry($currentSchool->id, $scoreData, $student)) {
                     throw new Exception('Duplicate data entry for this student', 409);
                 }
-                //calculate total score
                 $totalScore = $this->calculateTotalScore($currentSchool->id, $student, $scoreData, $exam);
                 $determineGrade = $this->determineExamLetterGrade(
                     $totalScore,
@@ -55,6 +55,7 @@ class AddExamScoresService
             }
             $totalScoreAndGpa = $this->calculateGpaAndTotalScore($result);
             $this->addStudentResultRecords($student, $currentSchool, $totalScoreAndGpa, $examDetails, $result);
+            $this->updateEvaluatedStudentCount($examDetails);
             DB::commit();
             return $result;
         } catch (Exception $e) {
@@ -92,6 +93,13 @@ class AddExamScoresService
             'resit_status' => $gradeData['resitStatus'],
             'course_credit' => $course->credit
         ];
+    }
+    private function updateEvaluatedStudentCount($exam){
+        $exam->increment('evaluated_candidate_number');
+        $exam->refresh();
+        if($exam->evaluated_candidate_number == $exam->expected_candidate_number){
+            dispatch(new CreateResitExamJob($exam));
+        }
     }
     private function getStudent($schoolId, $studentId)
     {

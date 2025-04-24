@@ -29,8 +29,8 @@ class StudentResitController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $candidateId = $request->route('candidateId');
-        $resitScores = $this->resitScoresService->submitStudentResitScores($request->entries, $currentSchool, $candidateId);
-        return ApiResponseService::success("Resit Scores Submitted Successfully", $resitScores, null, 200);
+       $this->resitScoresService->submitStudentResitScores($request->entries, $currentSchool, $candidateId);
+        return ApiResponseService::success("Resit Scores Submitted Successfully", null, null, 200);
     }
     public function updateResit(Request $request, $resit_id)
     {

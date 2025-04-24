@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
+
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exams extends Model
@@ -13,6 +13,7 @@ class Exams extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'school_branch_id',
         'exam_type_id',
         'start_date',
@@ -25,6 +26,8 @@ class Exams extends Model
         'status',
         'timetable_published',
         'specialty_id',
+        'expected_candidate_number',
+        'evaluated_candidate_number',
         'student_batch_id'
     ];
 
@@ -32,80 +35,91 @@ class Exams extends Model
     public $incrementing = 'false';
     public $table = 'exams';
 
-    public function resitmarks(): HasMany {
+    public function resitmarks(): HasMany
+    {
         return $this->hasMany(ResitMarks::class, 'exam_id');
     }
-    public function courses(): BelongsTo {
+
+    public function examResit(): HasMany {
+        return $this->hasMany(ResitExam::class);
+    }
+    public function courses(): BelongsTo
+    {
         return $this->belongsTo(Exams::class);
     }
-
-    public function resitAccessedStudents(): HasMany {
-        return $this->hasMany(AccessedResitStudent::class);
+    public function resitResults(): HasMany
+    {
+        return $this->hasMany(ResitResults::class);
     }
-    public function studentResults(): HasMany {
+    public function studentResults(): HasMany
+    {
         return $this->hasMany(StudentResults::class);
     }
-    public function studentBatch() : BelongsTo {
-         return $this->belongsTo(Studentbatch::class, 'student_batch_id');
+    public function studentBatch(): BelongsTo
+    {
+        return $this->belongsTo(Studentbatch::class, 'student_batch_id');
     }
-    public function accessedStudent(): HasMany {
-         return $this->hasMany(AccessedStudent::class);
+    public function accessedStudent(): HasMany
+    {
+        return $this->hasMany(AccessedStudent::class);
     }
 
-    public function department(): BelongsTo {
+    public function department(): BelongsTo
+    {
         return $this->belongsTo(Department::class);
     }
 
-    public function semester(): BelongsTo {
+    public function semester(): BelongsTo
+    {
         return $this->belongsTo(Semester::class, 'semester_id');
     }
 
-    public function marks(): HasMany {
+    public function marks(): HasMany
+    {
         return $this->hasMany(Marks::class, 'exam_id');
     }
 
-    public function school(): BelongsTo {
+    public function school(): BelongsTo
+    {
         return $this->belongsTo(School::class);
     }
 
-    public function schoolbranches(): BelongsTo {
+    public function schoolbranches(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class);
     }
 
-    public function specialty(): BelongsTo {
+    public function specialty(): BelongsTo
+    {
         return $this->belongsTo(Specialty::class);
     }
 
-    public function student(): BelongsTo {
+    public function student(): BelongsTo
+    {
         return $this->belongsTo(Student::class);
     }
 
-    public function grade(): HasMany {
+    public function grade(): HasMany
+    {
         return $this->hasMany(Grades::class);
     }
 
-    public function examtype(): BelongsTo {
+    public function examtype(): BelongsTo
+    {
         return $this->belongsTo(Examtype::class, 'exam_type_id');
     }
 
-    public function examtimetable(): HasMany {
+    public function examtimetable(): HasMany
+    {
         return $this->hasMany(Examtimetable::class, 'exam_id');
     }
 
-    public function studentresit(): HasMany {
-         return $this->hasMany(Studentresit::class);
-    }
-    public function level(): BelongsTo {
-        return $this->belongsTo(Educationlevels::class);
-     }
-    protected static function boot()
+    public function studentresit(): HasMany
     {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
+        return $this->hasMany(Studentresit::class);
+    }
+    public function level(): BelongsTo
+    {
+        return $this->belongsTo(Educationlevels::class);
     }
 }

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 class courseService
 {
     // Implement your logic here
-
     public function createCourse(array $data, $currentSchool): Courses
     {
         $course = new Courses();
@@ -27,7 +26,6 @@ class courseService
 
         return $course;
     }
-
     public function deleteCourse(string $course_id, $currentSchool)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
@@ -37,7 +35,6 @@ class courseService
         $course->delete();
         return $course;
     }
-
     public function bulkDeleteCourse($coursesIds)
     {
         $result = [];
@@ -57,7 +54,6 @@ class courseService
             throw $e;
         }
     }
-
     public function updateCourse(string $course_id, array $data, $currentSchool)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
@@ -71,7 +67,6 @@ class courseService
 
         return $course;
     }
-
     public function bulkUpdateCourse($updateCourseList)
     {
         $result = [];

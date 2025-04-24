@@ -23,6 +23,9 @@ class GradesCategory extends Model
     public function schoolGradesConfig() : HasMany {
          return $this->hasMany(SchoolGradesConfig::class);
     }
+    public function examResit(): HasMany {
+        return $this->hasMany(ResitExam::class);
+    }
     protected static function boot()
     {
         parent::boot();

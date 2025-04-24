@@ -35,7 +35,9 @@ class Examtype extends Model
          });
 
     }
-
+    public function examResit(): HasMany {
+        return $this->hasMany(ResitExam::class);
+    }
    public function semesters(): BelongsTo {
       return $this->belongsTo(Semester::class, 'semester_id');
    }

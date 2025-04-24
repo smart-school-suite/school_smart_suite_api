@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\CreateResitCandidates;
 use App\Models\Marks;
+use App\Models\ResitCandidates;
+use App\Models\ResitExam;
 use App\Models\Resitexamtimetable;
 use App\Models\ResitFeeTransactions;
 use Illuminate\Support\Str;
@@ -23,7 +26,6 @@ class StudentResitService
         $studentResitExists->update($filteredData);
         return $studentResitExists;
     }
-
     public function deleteStudentResit($studentResitId, $currentSchool)
     {
         $studentResitExists = Studentresit::where("school_branch_id", $currentSchool->id)->find($studentResitId);
@@ -33,7 +35,6 @@ class StudentResitService
         $studentResitExists->delete();
         return $studentResitExists;
     }
-
     public function getStudentResits($currentSchool)
     {
         $getStudentResits = Studentresit::where('school_branch_id', $currentSchool->id)
@@ -41,7 +42,6 @@ class StudentResitService
             ->paginate(100);
         return $getStudentResits;
     }
-
     public function getStudentResitDetails($currentSchool, $studentResitId)
     {
         $getResitData = Studentresit::where('school_branch_id', $currentSchool->id)
@@ -49,7 +49,6 @@ class StudentResitService
             ->find($studentResitId);
         return $getResitData;
     }
-
     public function getMyResits($currentSchool, $examId, $studentId)
     {
         $getResitData = Studentresit::where('school_branch_id', $currentSchool->id)
@@ -59,7 +58,6 @@ class StudentResitService
             ->get();
         return $getResitData;
     }
-
     public function payResit($studentResitData, $currentSchool)
     {
         DB::beginTransaction();
@@ -94,13 +92,11 @@ class StudentResitService
             throw $e;
         }
     }
-
     public function getResitPaymentTransactions($currentSchool)
     {
         $getResitPaymentTransactions = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level'])->get();
         return $getResitPaymentTransactions;
     }
-
     public function deleteResitFeeTransaction($currentSchool, string $transactionId)
     {
         $resitTransaction = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->find($transactionId);
@@ -110,14 +106,12 @@ class StudentResitService
         $resitTransaction->delete();
         return $resitTransaction;
     }
-
     public function getTransactionDetails($currentSchool, string $transactionId)
     {
         return ResitFeeTransactions::where("school_branch_id", $currentSchool->id)
             ->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level'])
             ->find($transactionId);
     }
-
     public function reverseResitTransaction($transactionId, $currentSchool)
     {
         DB::beginTransaction();
@@ -154,7 +148,6 @@ class StudentResitService
             throw $e;
         }
     }
-
     public function prepareResitScoresData($currentSchool, $examId, $studentId)
     {
         $results = [];
@@ -190,7 +183,6 @@ class StudentResitService
 
         return $results;
     }
-
     public function bulkDeleteStudentResit($studentResitIds)
     {
         $result = [];
@@ -210,7 +202,6 @@ class StudentResitService
             throw $e;
         }
     }
-
     public function bulkUpdateStudentResit($updateStudentResitList)
     {
         $result = [];
@@ -238,7 +229,6 @@ class StudentResitService
             throw $e;
         }
     }
-
     public function bulkPayStudentResit($paymentData, $studentResitIds, $currentSchool)
     {
         $result = [];
@@ -278,7 +268,6 @@ class StudentResitService
             throw $e;
         }
     }
-
     public function bulkDeleteTransaction($transactionIds)
     {
         $result = [];
@@ -298,7 +287,6 @@ class StudentResitService
             throw $e;
         }
     }
-
     public function bulkReverseResitTransaction($transactionIds, $currentSchool)
     {
         $result = [];
@@ -328,7 +316,7 @@ class StudentResitService
                 $studentResit->paid_status = "unpaid";
                 $studentResit->save();
                 $result[] = [
-                     $studentResit
+                    $studentResit
                 ];
             }
             DB::commit();
@@ -337,5 +325,62 @@ class StudentResitService
             DB::rollBack();
             throw $e;
         }
+    }
+    public function setResitDates($resitDates, $currentSchool, $resitId)
+    {
+        DB::beginTransaction();
+        try {
+            $resit = ResitExam::where("school_branch_id", $currentSchool->id)
+                ->find($resitId);
+
+            if (!$resit) {
+                return ApiResponseService::error("Resit Not found", null, 404);
+            }
+
+            $resit->update($resitDates);
+            dispatch(new CreateResitCandidates($resit));
+            DB::commit();
+            return $resit;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function prepareEvaluationData($resitCandidateId, $resitId, $currentSchool)
+    {
+        $resitCandidate = ResitCandidates::findOrFail($resitCandidateId);
+        $results = [];
+        $resitExam = ResitExam::findOrFail($resitId);
+        $studentResits = Studentresit::where('school_branch_id', $currentSchool->id)
+            ->where('student_id', $resitCandidate->student_id)
+            ->where('course_id', $resitExam->level_id)
+            ->where('specialty_id', $resitExam->specialty_id)
+            ->with(['courses', 'exam' => function ($query) use ($resitExam) {  // Use the 'use' statement to pass the variable
+                $query->where('semester_id', $resitExam->semester_id);
+            }])
+            ->get();
+        $resitTimetable = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $resitExam->id)
+            ->with(['course'])
+            ->get();
+        foreach ($resitTimetable as $resitTimetableEntries) {
+            foreach ($studentResits as $studentResitEntries) {
+                if ($resitTimetableEntries->course_id == $studentResitEntries->course_id) {
+                    $marks = Marks::where("school_branch_id", $currentSchool->id)
+                        ->where("student_id", $resitCandidate->student_id)
+                        ->where("course_id", $resitTimetableEntries->course_id)
+                        ->where("level_id", $studentResitEntries->level_id)
+                        ->where("specialty_id", $resitExam->specialty_id)
+                        ->with(['exam' => function($query) use ($resitExam) {
+                            $query->where('semester_id', $resitExam->semester_id);
+                        }, 'exam.examtype', 'course'])
+                        ->first();
+                    $results[] = [
+                        'score' => $marks,
+                    ];
+                }
+            }
+        }
+        return $results;
     }
 }

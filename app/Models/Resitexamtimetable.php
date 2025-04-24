@@ -14,7 +14,7 @@ class Resitexamtimetable extends Model
     protected $fillable = [
         'id',
         'school_branch_id',
-        'exam_id',
+        'resit_exam_id',
         'course_id',
         'specialty_id',
         'date',
@@ -35,7 +35,10 @@ class Resitexamtimetable extends Model
       public $incrementing = 'false';
       public $table = 'resit_examtimetable';
 
-
+      public function resitExam()
+      {
+          return $this->belongsTo(ResitExam::class, 'resit_exam_id');
+      }
       protected static function boot()
       {
           parent::boot();

@@ -69,29 +69,34 @@ class Student extends Model
             'password' => 'hashed',
         ];
     }
-    public function devices() {
+    public function resitCandidates(): HasMany {
+        return $this->hasMany(ResitCandidates::class, 'resit_id');
+    }
+    public function devices()
+    {
         return $this->morphMany(UserDevices::class, 'devicesable');
     }
-    public function pastElectionWinners(): HasMany {
+    public function pastElectionWinners(): HasMany
+    {
         return $this->hasMany(PastElectionWinners::class);
     }
-    public function currentElectionWinners(): BelongsTo {
+    public function currentElectionWinners(): BelongsTo
+    {
         return $this->belongsTo(CurrentElectionWinners::class);
     }
     public function studentDropout(): HasMany
     {
         return $this->hasMany(StudentDropout::class, 'student_id');
     }
-    public function resitmarks(): HasMany {
+    public function resitmarks(): HasMany
+    {
         return $this->hasMany(ResitMarks::class, 'student_id');
     }
-    public function accessedStudent(): HasMany {
-         return $this->hasMany(AccessedStudent::class);
+    public function accessedStudent(): HasMany
+    {
+        return $this->hasMany(AccessedStudent::class);
     }
 
-    public function resitAccessedStudent(): HasMany {
-         return $this->hasMany(AccessedResitStudent::class);
-    }
     public function studentResults(): HasMany
     {
         return $this->hasMany(StudentResults::class);
@@ -192,11 +197,10 @@ class Student extends Model
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
 
-    public function transcript(): HasMany
+    public function resitResults(): HasMany
     {
-        return $this->hasMany(Reportcard::class, 'student_id');
+        return $this->hasMany(ResitResults::class);
     }
-
     public function studentBatch(): BelongsTo
     {
         return $this->belongsTo(studentBatch::class, 'student_batch_id');
