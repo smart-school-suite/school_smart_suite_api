@@ -22,7 +22,6 @@ class Resitexamtimetable extends Model
         'end_time',
         'duration',
         'level_id',
-        'student_batch_id'
       ];
 
       protected $casts = [

@@ -42,7 +42,7 @@ class CreateResitCandidates implements ShouldQueue
         foreach ($resitCandidates as $candidate) {
             ResitCandidates::create([
                 'student_id' => $candidate->student_id,
-                'resit_id' => $this->resit->id,
+                'resit_exam_id' => $this->resit->id,
                 'school_branch_id' => $this->resit->school_branch_id,
                 'created_at' => now(),
                 'updated_at' => now(),

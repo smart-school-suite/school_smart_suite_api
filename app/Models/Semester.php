@@ -26,6 +26,9 @@ class Semester extends Model
         return $this->hasMany(Exams::class);
     }
 
+    public function resitExam(): HasMany {
+        return $this->hasMany(ResitExam::class);
+    }
     public function examtype(): HasMany {
         return $this->hasMany(Examtype::class);
     }

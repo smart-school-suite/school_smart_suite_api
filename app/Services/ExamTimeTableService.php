@@ -40,7 +40,6 @@ class ExamTimeTableService
                     'start_time' => $entry['start_time'],
                     'duration' => $entry['duration'],
                     'end_time' => $entry['end_time'],
-                    'school_year' => $entry['school_year'],
                     'school_branch_id' => $currentSchool->id,
                     'created_at' => now(),
                     'updated_at' => now(),

@@ -539,9 +539,10 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->grou
     Route::middleware(['auth:sanctum'])->post('/resit-timetable', [StudentResitController::class, 'create_resit_timetable_entry']);
     Route::middleware(['auth:sanctum'])->get('/student_resits', [StudentResitController::class, 'getAllResits']);
     Route::middleware(['auth:sanctum'])->get('/get-specialty-resit/{specialty_id}/{exam_id}', [ResitTimeTableController::class, 'getResitsBySpecialty']);
-    Route::middleware(['auth:sanctum'])->post('/createResitTimetable/{examId}', [ResitTimeTableController::class, 'createResitTimetable']);
-    Route::middleware(['auth:sanctum'])->get('/getResitCoursesByExam/{examId}', [ResitTimeTableController::class, 'getResitCoursesByExam']);
-    Route::middleware(['auth:sanctum'])->delete('/deleteResitTimetable/{examId}', [ResitTimetableController::class, 'deleteResitTimetable']);
+    Route::middleware(['auth:sanctum'])->post('/createResitTimetable/{resitExamId}', [ResitTimeTableController::class, 'createResitTimetable']);
+    Route::middleware(['auth:sanctum'])->get('/getResitCoursesByExam/{resitExamId}', [ResitTimeTableController::class, 'getResitCoursesByExam']);
+    Route::middleware(['auth:sanctum'])->delete('/deleteResitTimetable/{resitExamId}', [ResitTimetableController::class, 'deleteResitTimetable']);
+    Route::middleware(['auth:sanctum'])->put('/updateResitTimetable/{resitExamId}', [ResitTimetableController::class, 'updateResitTimetable']);
     Route::middleware(['auth:sanctum'])->get('/accessedResitStudents', [AccessedResitStudentController::class, 'getResitExamCandidates']);
     Route::middleware(['auth:sanctum'])->delete('/deleteAccessedStudent/{candidateId}', [AccessedResitStudentController::class, 'deleteAccessedResitStudent']);
     Route::middleware(['auth:sanctum'])->get("/details/{resit_id}", [StudentResitController::class, 'getResitDetails']);
@@ -556,6 +557,11 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->grou
     Route::middleware(['auth:sanctum'])->delete('/bulkDeleteResitTransactions/{studentResitIds}', [StudentResitController::class, 'bulkDeleteStudentResitTransactions']);
     Route::middleware(['auth:santum'])->post('/bulkReverseResitTransactions/{transactionIds}', [StudentResitController::class, 'bulkReverseTransaction']);
     Route::middleware(['auth:sanctum'])->put('/bulkUpdateStudentResit/{studentResitIds}', [StudentResitController::class, 'bulkUpdateStudentResit']);
+    Route::middleware(['auth:sanctum'])->put('/updateResitExams/{resitExamId}', [StudentResitController::class, 'updateResitExams']);
+    Route::middleware(['auth:sanctum'])->get('/getPreparedResitEvaluationData/{resitExamId}/{candidateId}', [StudentResitController::class, 'getPreparedResitEvaluationData']);
+    Route::middleware(['auth:sanctum'])->get('/getAllResitExams', [StudentResitController::class, 'getAllResitExams']);
+    Route::middleware(['auth:sanctum'])->get('/getEligableStudentsByExam/{resitExamId}', [StudentResitController::class, 'getAllEligableStudentByExam']);
+    Route::middleware(['auth:sanctum'])->get('/getResitExamsByStudent/{studentId}', [StudentResitController::class, 'getEligableResitExamByStudent']);
 });
 
 Route::middleware([IdentifyTenant::class])->prefix('api/v1/elections')->group(function () {

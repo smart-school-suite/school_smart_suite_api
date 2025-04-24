@@ -54,18 +54,20 @@ class ResitExam extends Model
     public function examType(): BelongsTo {
         return $this->belongsTo(Examtype::class, 'exam_type_id');
     }
-
     public function level(): BelongsTo {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
-
     public function specialty(): BelongsTo {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
-
     public function gradesCategory(): BelongsTo {
         return $this->belongsTo(GradesCategory::class, 'grades_category_id');
     }
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class, 'semester_id');
+    }
+
     protected static function boot()
     {
         parent::boot();

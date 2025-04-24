@@ -93,7 +93,7 @@ class ResitScoresService
             $this->updateStudentResults($caResults, $caExam, $resitCandidate, $currentSchool, $newCaGpa);
             $newExamGpa = $this->calculateGpaAndTotalScore($examResults);
             $this->updateStudentResults($examResults, $exam, $resitCandidate, $currentSchool, $newExamGpa);
-            $this->storeResitResult($caGpaAndExamGpa, $allResults, $currentSchool, $newCaGpa, $newExamGpa);
+            $this->storeResitResult($caGpaAndExamGpa, $allResults, $currentSchool, $newCaGpa, $newExamGpa, $resitCandidate);
             $this->updateAccessmentStatus($resitCandidate->id);
 
             return $results;
@@ -152,7 +152,7 @@ class ResitScoresService
      * @param array $newCaGpa An array containing the new CA GPA and total score.
      * @param array $newExamGpa An array containing the new exam GPA and total score.
      */
-    private function storeResitResult(array $gpaDetails, array $results, object $currentSchool, array $newCaGpa, array $newExamGpa): void
+    private function storeResitResult(array $gpaDetails, array $results, object $currentSchool, array $newCaGpa, array $newExamGpa, $resitCandidate): void
     {
         ResitResults::create([
             'former_exam_gpa' => $gpaDetails['exam_results']->gpa ?? null,
@@ -163,7 +163,7 @@ class ResitScoresService
             'school_branch_id' => $currentSchool->id,
             'specialty_id' => $gpaDetails['ca_results']->specialty_id ?? null,
             'level_id' => $gpaDetails['ca_results']->level_id ?? null,
-            'exam_id' => $gpaDetails['exam_results']->id ?? null,
+            'resit_exam_id' => $resitCandidate->resit_exam_id ?? null,
             'student_batch_id' => $gpaDetails['ca_results']->student_batch_id ?? null,
             'score_details' => json_encode($results),
         ]);
