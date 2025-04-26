@@ -600,6 +600,102 @@ return new class extends Migration
             $table->string('resit_exam_id');
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
         });
+
+        Schema::table('school_operational_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('stat_type_id');
+            $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('stat_category_id');
+            $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
+        Schema::table('school_academic_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('stat_type_id');
+            $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('stat_category_id');
+            $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
+        Schema::table('school_financial_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('stat_type_id');
+            $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('stat_category_id');
+            $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
+        Schema::table('student_academic_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+            $table->string('stat_type_id');
+            $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('stat_category_id');
+            $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
+        Schema::table('student_financial_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+            $table->string('stat_type_id');
+            $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('stat_category_id');
+            $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
+        Schema::table('school_exam_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('exam_id');
+            $table->foreign('exam_id')->references('id')->on('exams');
+        });
+
+        Schema::table('school_resit_exam_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('resit_exam_id');
+            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
+        });
+
+        Schema::table('student_exam_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('exam_id');
+            $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+        });
+
+        Schema::table('student_resit_exam_stats', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('resit_exam_id');
+            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+        });
+
+        Schema::table('student_exam_summary', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
+            $table->string('exam_id');
+            $table->foreign('exam_id')->references('id')->on('exams');
+        });
+
+        Schema::table('stat_types', function(Blueprint $table){
+            $table->string('stat_category_id');
+            $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
     }
 
     /**

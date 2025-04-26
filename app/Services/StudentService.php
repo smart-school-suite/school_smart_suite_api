@@ -21,7 +21,6 @@ class StudentService
             ->get();
         return $students;
     }
-
     public function deleteStudent($studentId, $currentSchool)
     {
         $studentExists = Student::Where("school_branch_id", $currentSchool->id)->find($studentId);
@@ -31,7 +30,6 @@ class StudentService
         $studentExists->delete();
         return $studentExists;
     }
-
     public function updateStudent($studentId, $currentSchool, array $data)
     {
         $studentExists = Student::Where("school_branch_id", $currentSchool->id)->find($studentId);
@@ -43,7 +41,6 @@ class StudentService
         $studentExists->update($filteredData);
         return $studentExists;
     }
-
     public function studentDetails($studentId, $currentSchool)
     {
         $studentDetails = Student::where("school_branch_id", $currentSchool->id)
@@ -56,24 +53,22 @@ class StudentService
             ->find($studentId);
         return $studentDetails;
     }
-
     public function deactivateStudentAccount($studentId, $currentSchool){
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
         $student->account_status = 'inactive';
         $student->save();
         return $student;
     }
-
     public function activateStudentAccount($studentId, $currentSchool){
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
         $student->account_status = 'active';
         $student->save();
         return $student;
     }
-
     public function markStudentAsDropout($studentId, $currentSchool, $reason)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
+
         $studentDropout = StudentDropout::where('student_id', $student->id)->first();
         if ($studentDropout) {
             return ApiResponseService::error("Student already marked as dropout", null, 400);
@@ -90,7 +85,6 @@ class StudentService
 
         return $student;
     }
-
     public function getAllDropoutStudents($currentSchool)
     {
         $dropoutStudents = StudentDropout::where('school_branch_id', $currentSchool->id)
@@ -134,7 +128,6 @@ class StudentService
         $dropoutStudent->delete();
         return $dropoutStudent;
     }
-
     public function bulkMarkStudentAsDropOut($studentDropdoutList, $currentSchool){
         $result = [];
         try{
@@ -169,7 +162,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function bulkDeleteStudent($studentIds){
         $result = [];
         try{
@@ -189,7 +181,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function bulkUpdateStudent($updateData){
        $result = [];
         try{
@@ -210,7 +201,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function bulkActivateStudent($studentIds){
         $result = [];
         try{
@@ -231,7 +221,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function bulkDeactivateStudent($studentIds){
         $result = [];
         try{
@@ -252,7 +241,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function bulkDeleteDropoutStudent($dropOutIds){
         $result = [];
         try{
@@ -272,7 +260,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function bulkReinstateStudent($dropOutIds){
         $result = [];
         try{

@@ -14,6 +14,7 @@ use App\Models\Examtype;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
 use App\Jobs\CreateResitExamJob;
+use App\Models\Schoolbranches;
 use App\Models\Studentresit;
 
 class AddExamScoresService
@@ -94,10 +95,11 @@ class AddExamScoresService
             'course_credit' => $course->credit
         ];
     }
-    private function updateEvaluatedStudentCount($exam){
+    private function updateEvaluatedStudentCount($exam)
+    {
         $exam->increment('evaluated_candidate_number');
         $exam->refresh();
-        if($exam->evaluated_candidate_number == $exam->expected_candidate_number){
+        if ($exam->evaluated_candidate_number == $exam->expected_candidate_number) {
             dispatch(new CreateResitExamJob($exam));
         }
     }
@@ -221,20 +223,12 @@ class AddExamScoresService
     }
     public function createResitableCourse($courseId, $examId, $student, $schoolId)
     {
-        $resitCourse = Resitablecourses::where("school_branch_id", $schoolId)
+        $studentResit = Studentresit::where("student_id", $student->id)
+            ->where("level_id", $student->level_id)
             ->where("specialty_id", $student->specialty_id)
             ->where("course_id", $courseId)
-            ->where("student_batch_id", $student->student_batch_id)
             ->exists();
-        if (!$resitCourse) {
-            Resitablecourses::create([
-                'school_branch_id' => $schoolId,
-                'specialty_id' => $student->specialty_id,
-                'course_id' => $courseId,
-                'exam_id' => $examId,
-                'student_batch_id' => $student->student_batch_id,
-                'level_id' => $student->level_id
-            ]);
+        if (!$studentResit) {
             Studentresit::create([
                 'school_branch_id' => $schoolId,
                 'student_id' => $student->id,
@@ -242,16 +236,7 @@ class AddExamScoresService
                 'exam_id' => $examId,
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
-            ]);
-        } else {
-            Studentresit::create([
-                'school_branch_id' => $schoolId,
-                'student_id' => $student->id,
-                'course_id' => $courseId,
-                'exam_id' => $examId,
-                'specialty_id' => $student->specialty_id,
-                'student_batch_id' => $student->student_batch_id,
-                'level_id' => $student->level_id
+
             ]);
         }
     }
