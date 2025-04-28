@@ -2,15 +2,15 @@
 
 namespace App\Jobs\StatisticalJobs;
 
-use App\Models\Marks;
-use App\Models\StudentResults;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Models\StudentResults;
+use App\Models\Marks;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class CalculateExamStatsJob implements ShouldQueue
+class CalculateCaStatsJob implements ShouldQueue
 {
     use Queueable;
 
@@ -37,8 +37,7 @@ class CalculateExamStatsJob implements ShouldQueue
             }])->get();
     }
 
-    public function accessmentStats($examResults)
-    {
+    public function accessmentStats($examResults){
         $totalStudents = count($examResults);
         $passedStudents = array_filter($examResults, function ($result) {
             return $result['exam_status'] === 'pass';
@@ -47,7 +46,7 @@ class CalculateExamStatsJob implements ShouldQueue
             return $result['exam_status'] === 'fail';
         });
         return [
-            'total_students' => $totalStudents,
+           'total_students' => $totalStudents,
             'passed_students' => count($passedStudents),
             'failed_students' => count($failedStudents),
         ];
@@ -88,8 +87,7 @@ class CalculateExamStatsJob implements ShouldQueue
         $totalStudents > 0 ? $averageGpa = $totalGpa / $totalStudents : $averageGpa = 0;
         return max(0.00, round($averageGpa, 2));
     }
-    public function calculateHistoricalPerformanceKpis($currentExamResults, $examResultsHistory)
-    {
+    public function calculateHistoricalPerformanceKpis($currentExamResults, $examResultsHistory) {
         $currentPassRate = $this->examPassRate($currentExamResults);
         $currentFailRate = $this->examFailRate($currentExamResults);
         $currentAverageScore = $this->averageTotalScore($currentExamResults);
@@ -111,7 +109,7 @@ class CalculateExamStatsJob implements ShouldQueue
     }
     public function analyzeGpaDistribution($currentExamResults)
     {
-        $gpas = array_map(function ($result) {
+        $gpas = array_map(function($result) {
             return $result['gpa'];
         }, $currentExamResults);
         sort($gpas);
@@ -163,7 +161,7 @@ class CalculateExamStatsJob implements ShouldQueue
     }
     private function calculateStandardDeviation($gpas, $mean)
     {
-        $sumOfSquares = array_reduce($gpas, function ($carry, $gpa) use ($mean) {
+        $sumOfSquares = array_reduce($gpas, function($carry, $gpa) use ($mean) {
             return $carry + pow($gpa - $mean, 2);
         }, 0);
         return sqrt($sumOfSquares / count($gpas));
@@ -221,33 +219,30 @@ class CalculateExamStatsJob implements ShouldQueue
 
         return array_values($courseScores);
     }
-    public function totalNumberOfResits($studentMarks)
-    {
-        return $studentMarks->where('resit_status', 'resit')->count();
+    public function totalNumberOfPotResits($studentMarks){
+        return $studentMarks->where('resit_status', 'high_resit_potential')->count();
     }
-    public function courseWithNumberOfResits($studentMarks)
-    {
-        $resitsPerCourse = [];
+    public function courseWithNumberOfPotResits($studentMarks){
+        $potResitsPerCourse = [];
 
         foreach ($studentMarks as $mark) {
-            if ($mark->resit_status === 'resit') {
+            if ($mark->resit_status === 'high_resit_potential') {
                 $courseId = $mark->course_id;
                 $courseName = $mark->courses->name;
-                if (!isset($resitsPerCourse[$courseId])) {
-                    $resitsPerCourse[] = [
+                if (!isset($potResitsPerCourse[$courseId])) {
+                    $potResitsPerCourse[] = [
                         'course_name' => $courseName,
                         'resit_count' => 1,
                     ];
                 } else {
-                    $resitsPerCourse[$courseId]['resit_count']++;
+                    $potResitsPerCourse[$courseId]['resit_count']++;
                 }
             }
         }
 
-        return array_values($resitsPerCourse);
+        return array_values($potResitsPerCourse);
     }
-    public function coursePassRates($studentMarks)
-    {
+    public function coursePassRates($studentMarks){
         $courseData = [];
         foreach ($studentMarks as $mark) {
             $courseId = $mark->course_id;
@@ -276,9 +271,8 @@ class CalculateExamStatsJob implements ShouldQueue
         }
 
         return $passRates;
-
     }
-    public function courseFailRates($studentMarks) {
+    public function courseFailRates($studentMarks){
         $courseData = [];
         foreach ($studentMarks as $mark) {
             $courseId = $mark->course_id;

@@ -2,29 +2,25 @@
 
 namespace App\Jobs\StatisticalJobs;
 
-use App\Models\Exams;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\Exams;
+use App\Models\Student;
+use App\Models\StudentResults;
+use App\Models\Marks;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Models\Marks;
-use App\Models\Student;
-use App\Models\StudentResults;
 use Illuminate\Queue\SerializesModels;
 
-class StudentExamStatsJob implements ShouldQueue
+class StudentCaStatsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    protected $exam;
-    protected $student; // Add student ID
+    use Queueable;
 
     /**
      * Create a new job instance.
-     *
-     * @param  $exam The ID of the exam for which scores were submitted.
-     * @param  $student The ID of the student.
      */
+    protected $exam;
+    protected $student;
     public function __construct(Exams $exam, Student $student)
     {
         $this->exam = $exam;
@@ -33,33 +29,29 @@ class StudentExamStatsJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
-    public function handle()
+    public function handle(): void
     {
         $currentExamResults = StudentResults::where('student_id', $this->student->Id)
-            ->where('exam_id', $this->exam->Id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
-            ->first();
+        ->where('exam_id', $this->exam->Id)
+        ->with(['exam', 'exam.semester', 'exam.examType'])
+        ->first();
 
-        $previousExamResults = StudentResults::where('student_id', $this->student->Id)
-            ->where('exam_id', '<>', $this->exam->Id)
-            ->where("exam_type_id", $currentExamResults->exam_type_id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
-            ->get();
-        $classExamResults = StudentResults::where('specialty_id', $this->student->specialty_id)
-            ->where("level_id", $this->student->level_id)
-            ->where("student_batch_id", $this->student->student_batch_id)
-            ->where('exam_id', $this->exam->Id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
-            ->get();
-        $marks = Marks::where('student_id', $this->student->id)
-            ->where('exam_id', $this->exam->id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
-            ->get();
-
-        $this->increaseInPerformanceByExamType($currentExamResults, $previousExamResults);
+    $previousExamResults = StudentResults::where('student_id', $this->student->Id)
+        ->where('exam_id', '<>', $this->exam->Id)
+        ->where("exam_type_id", $currentExamResults->exam_type_id)
+        ->with(['exam', 'exam.semester', 'exam.examType'])
+        ->get();
+    $classExamResults = StudentResults::where('specialty_id', $this->student->specialty_id)
+        ->where("level_id", $this->student->level_id)
+        ->where("student_batch_id", $this->student->student_batch_id)
+        ->where('exam_id', $this->exam->Id)
+        ->with(['exam', 'exam.semester', 'exam.examType'])
+        ->get();
+    $marks = Marks::where('student_id', $this->student->id)
+        ->where('exam_id', $this->exam->id)
+        ->with(['exam', 'exam.semester', 'exam.examType', 'courses'])
+        ->get();
     }
 
     public function increaseInPerformanceByExamType($currentExamResult, $previousExamResults)
@@ -188,7 +180,6 @@ class StudentExamStatsJob implements ShouldQueue
         }
         return $gpaBySemesterAndType;
     }
-
     public function groupStudentTotalScoreByExamTypeAndSemester($currentExamResult, $previousExamResults)
     {
         $gpaBySemesterAndType = [];
@@ -310,5 +301,28 @@ class StudentExamStatsJob implements ShouldQueue
             'fail_count' => $failCount,
             'course_averages' => $courseAverages
         ];
+    }
+    public function totalNumberOfPotResits($marks){
+        return $marks->where('resit_status', 'high_resit_potential')->count();
+    }
+    public function courseWithNumberOfPotResits($marks){
+        $potResitsPerCourse = [];
+
+        foreach ($marks as $mark) {
+            if ($mark->resit_status === 'high_resit_potential') {
+                $courseId = $mark->course_id;
+                $courseName = $mark->courses->name;
+                if (!isset($potResitsPerCourse[$courseId])) {
+                    $potResitsPerCourse[] = [
+                        'course_name' => $courseName,
+                        'resit_count' => 1,
+                    ];
+                } else {
+                    $potResitsPerCourse[$courseId]['resit_count']++;
+                }
+            }
+        }
+
+        return array_values($potResitsPerCourse);
     }
 }
