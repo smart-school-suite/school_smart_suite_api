@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateResitDatesRequest;
 use Exception;
 use Illuminate\Http\Request;
 use App\Services\StudentResitService;

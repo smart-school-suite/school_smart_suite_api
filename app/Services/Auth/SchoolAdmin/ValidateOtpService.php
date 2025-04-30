@@ -30,8 +30,6 @@ class ValidateOtpService
         $token = $user->createToken('schoolAdminToken')->plainTextToken;
         $apiKey = SchoolBranchApiKey::where("school_branch_id", $user->school_branch_id)->first();
 
-        $otpRecord->update(['used' => true]);
-
         $otpRecord->delete();
 
         return ['authToken' =>  $token, 'apiKey' => $apiKey->api_key];

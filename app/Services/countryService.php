@@ -6,7 +6,7 @@ use App\Models\Country;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
-class countryService
+class CountryService
 {
     // Implement your logic here
 

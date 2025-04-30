@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services\Auth\Teacher;
+
+use App\Jobs\SendOtpJob;
 use App\Models\OTP;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -28,12 +30,12 @@ class ResetTeacherPasswordService
         OTP::create([
             'token_header' => $otp_header,
             'actorable_id' =>  $teacherExists->id,
-            'actorable_type' => 'App\Models\Teacher',
+            'actorable_type' => Teacher::class,
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-
-        return ['otp_header' => $otp_header, 'otp' => $otp];
+        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+        return ['otp_header' => $otp_header];
     }
     public function verifyOtp($otp, $tokenHeader)
     {
@@ -57,7 +59,7 @@ class ResetTeacherPasswordService
         PasswordResetToken::create([
             'token' => $password_reset_token,
             'actorable_id' => $otpRecord->actorable_id,
-            'actorable_type' => 'App\Models\Teacher',
+            'actorable_type' => Teacher::class,
             'expires_at' => Carbon::now()->addDay(),
         ]);
         $otpRecord->delete();

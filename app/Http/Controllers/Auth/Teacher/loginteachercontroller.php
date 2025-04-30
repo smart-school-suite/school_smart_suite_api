@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
 use App\Services\Auth\Teacher\LoginTeacherService;
 use App\Http\Requests\LoginRequest;
-use Illuminate\Http\Request;
 
 class LoginTeacherController extends Controller
 {

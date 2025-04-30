@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\Specialty;
+
 use App\Http\Requests\SpecailtyRequest;
 use App\Http\Requests\UpdateSpecailtyRequest;
 use App\Services\ApiResponseService;

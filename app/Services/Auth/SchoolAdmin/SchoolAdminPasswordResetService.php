@@ -28,7 +28,7 @@ class SchoolAdminPasswordResetService
         OTP::create([
             'token_header' => $otp_header,
             'actorable_id' =>  $schoolAdminExists->id,
-            'actorable_type' => 'App\Models\Schooladmin',
+            'actorable_type' => Schooladmin::class,
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
@@ -57,7 +57,7 @@ class SchoolAdminPasswordResetService
         PasswordResetToken::create([
             'token' => $password_reset_token,
             'actorable_id' => $otpRecord->actorable_id,
-            'actorable_type' => 'App\Models\Schooladmin',
+            'actorable_type' => Schooladmin::class,
             'expires_at' => Carbon::now()->addDay(),
         ]);
         $otpRecord->delete();

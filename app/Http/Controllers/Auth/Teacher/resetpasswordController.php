@@ -3,13 +3,7 @@
 namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
-use App\Models\Teacher;
-use Illuminate\Support\Str;
 use App\Services\ApiResponseService;
-use Carbon\Carbon;
-use App\Models\OTP;
-use App\Models\PasswordResetToken;
 use App\Http\Requests\OtpRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Services\Auth\Teacher\ResetTeacherPasswordService;

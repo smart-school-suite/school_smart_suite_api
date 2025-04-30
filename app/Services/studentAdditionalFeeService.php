@@ -9,7 +9,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class studentAdditionalFeeService
+class StudentAdditionalFeeService
 {
     // Implement your logic here
 

@@ -5,7 +5,6 @@ namespace App\Services;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentResults;
-use App\Models\Resitablecourses;
 use App\Models\Exams;
 use App\Models\Grades;
 use App\Models\Student;
@@ -14,7 +13,6 @@ use App\Models\Examtype;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
 use App\Jobs\CreateResitExamJob;
-use App\Models\Schoolbranches;
 use App\Models\Studentresit;
 
 class AddExamScoresService

@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services\Auth\SchoolAdmin;
+
+use App\Jobs\SendPasswordMailJob;
 use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
 class CreateSchoolAdminService
@@ -17,6 +19,7 @@ class CreateSchoolAdminService
         $schoolAdmin->school_branch_id = $currentSchool->id;
         $schoolAdmin->save();
         $schoolAdmin->assignRole('schoolAdmin');
+        SendPasswordMailJob::dispatch($schoolAdminData['email'], $password);
         return $schoolAdmin;
     }
 

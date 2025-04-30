@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Events;
 use App\Http\Requests\EventsRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Services\ApiResponseService;

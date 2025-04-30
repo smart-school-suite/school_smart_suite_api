@@ -3,11 +3,6 @@
 use App\Http\Controllers\Auth\Edumanage\CreateAppAdminController;
 use App\Http\Controllers\Auth\Edumanage\LoginAppAdminController;
 use App\Http\Controllers\Auth\Edumanage\LogoutAppAdminController;
-use App\Http\Controllers\Auth\Parent\ChangePasswordController;
-use App\Http\Controllers\Auth\Parent\CreateParentController;
-use App\Http\Controllers\Auth\Parent\GetAuthParentController;
-use App\Http\Controllers\Auth\Parent\LoginController;
-use App\Http\Controllers\Auth\Parent\LogoutController;
 use App\Http\Controllers\Auth\SchoolAdmin\CreatesSchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\GetAuthSchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\LoginSchoolAdminController;
@@ -76,7 +71,6 @@ use App\Http\Controllers\HosController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\Limitstudents;
 use App\Http\Middleware\LimitSchoolAdmin;
-use App\Http\Middleware\LimitParents;
 use App\Http\Middleware\LimitTeachers;
 use App\Http\Controllers\GradesCategoryController;
 use App\Http\Controllers\SchoolGradeConfigController;
@@ -85,14 +79,11 @@ use App\Http\Controllers\Auth\Edumanage\ValidateOtpController as VaidateAppAdmin
 use App\Http\Controllers\Auth\SchoolAdmin\PasswordResetController as ResetSchoolAdminPasswordController;
 use App\Http\Controllers\Auth\Student\ResetPasswordController as ResetStudentPasswordController;
 use App\Http\Controllers\Auth\Teacher\ResetPasswordController as ResetTeacherPasswordController;
-use App\Http\Controllers\Auth\Parent\PasswordResetController as ResetParentPasswordController;
-use App\Http\Controllers\Auth\Parent\ValidateOtpController as ParentValidateOtpController;
 use App\Http\Controllers\Auth\Teacher\ValidateOtpController as TeacherValidateOtpController;
 use App\Http\Controllers\Auth\Student\ValidateOtpController as StudentValidateOtpController;
 use App\Http\Controllers\Auth\SchoolAdmin\ChangePasswordController as ChangeSchoolAdminPasswordController;
 use App\Http\Controllers\AccessedStudentController;
 use App\Http\Controllers\StudentResultController;
-use App\Http\Controllers\AccessedResitStudentController;
 use App\Http\Controllers\Stats\FinancialStatsController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Http\Request;
@@ -118,20 +109,10 @@ Route::prefix('api/v1/app-admin')->group(function () {
 });
 
 Route::prefix('api/v1/parent')->group(function () {
-    Route::post('/login', [LoginController::class, 'loginParent']);
-    Route::middleware('auth:sanctum')->post('/change-password', [ChangePasswordController::class, 'changeParentPassword']);
-    Route::middleware('auth:sanctum')->post('/logout', [LogoutController::class, 'logoutParent']);
-    Route::middleware('auth:sanctum')->post('/auth-parent', [GetAuthParentController::class, 'getAuthParent']);
-    Route::middleware([IdentifyTenant::class, LimitParents::class,  'auth:sanctum'])->post('/create-parent', [CreateParentController::class, 'createParent']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-parent/{parent_id}', [ParentsController::class, 'deleteParent']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-parent/{parent_id}', [ParentsController::class, 'updateParent']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-parents', [ParentsController::class, 'getAllParents']);
     Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/parent-details/{parent_id}', [ParentsController::class, 'getParentDetails']);
-    Route::post('/resetPassword', [ResetParentPasswordController::class, 'reset_password']);
-    Route::post('/validatePasswordResetOtp', [ResetParentPasswordController::class, 'verifyParentOtp']);
-    Route::post('/updatePassword', [ResetParentPasswordController::class, 'changeParentPasswordUnAuthenticated(']);
-    Route::post('/validateLoginOtp', [ParentValidateOtpController::class, 'verifyParentOtp']);
-    Route::post('/requestNewOtp', [ParentValidateOtpController::class, 'requestNewOtp']);
     Route::delete('/bulkDeleteParent/{parentIds}', [ParentsController::class, 'bulkDeleteParents']);
     Route::put('/bulkUpdateParent', [ParentsController::class, 'BulkUpdateParents']);
 });
@@ -543,8 +524,6 @@ Route::middleware([IdentifyTenant::class])->prefix('api/v1/student-resit')->grou
     Route::middleware(['auth:sanctum'])->get('/getResitCoursesByExam/{resitExamId}', [ResitTimeTableController::class, 'getResitCoursesByExam']);
     Route::middleware(['auth:sanctum'])->delete('/deleteResitTimetable/{resitExamId}', [ResitTimetableController::class, 'deleteResitTimetable']);
     Route::middleware(['auth:sanctum'])->put('/updateResitTimetable/{resitExamId}', [ResitTimetableController::class, 'updateResitTimetable']);
-    Route::middleware(['auth:sanctum'])->get('/accessedResitStudents', [AccessedResitStudentController::class, 'getResitExamCandidates']);
-    Route::middleware(['auth:sanctum'])->delete('/deleteAccessedStudent/{candidateId}', [AccessedResitStudentController::class, 'deleteAccessedResitStudent']);
     Route::middleware(['auth:sanctum'])->get("/details/{resit_id}", [StudentResitController::class, 'getResitDetails']);
     Route::middleware(['auth:sanctum'])->get("/getTransactions", [StudentResitController::class, 'getResitPaymentTransactions']);
     Route::middleware(['auth:sanctum'])->delete('/deleteTransaction/{transactionId}', [StudentResitController::class, 'deleteFeePaymentTransaction']);

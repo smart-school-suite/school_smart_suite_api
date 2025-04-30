@@ -7,11 +7,8 @@ use App\Http\Requests\GradesRequest;
 use App\Services\ApiResponseService;
 use App\Models\Exams;
 use App\Models\Examtype;
-use App\Models\Timetable;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\SpecailtyTimeTableRequest;
 use App\Services\GradesService;
-use App\Rules\TimetableRule;
 use Exception;
 use Illuminate\Http\Request;
 

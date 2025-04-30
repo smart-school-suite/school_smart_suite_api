@@ -7,7 +7,6 @@ use App\Http\Requests\EducationLevelRequest;
 use App\Services\EducationLevelService;
 use App\Http\Requests\UpdateEducationLevelRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Http\Request;
 
 class EducationLevelsController extends Controller
 {

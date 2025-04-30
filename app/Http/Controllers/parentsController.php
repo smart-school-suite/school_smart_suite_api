@@ -10,7 +10,7 @@ use App\Services\ParentService;
 use Exception;
 use Illuminate\Http\Request;
 
-class parentsController extends Controller
+class ParentsController extends Controller
 {
     protected ParentService $parentService;
     public function __construct(ParentService $parentService){

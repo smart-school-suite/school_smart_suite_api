@@ -2,12 +2,12 @@
 
 namespace App\Services\Auth\Student;
 
+use App\Jobs\SendPasswordMailJob;
 use App\Models\Specialty;
 use App\Models\Student;
 use App\Models\TuitionFees;
 use App\Models\RegistrationFee;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
@@ -54,7 +54,7 @@ class CreateStudentService
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,
             ]);
-
+             SendPasswordMailJob::dispatch($studentData["email"], $password);
             return [
                 'student_id' => $student->id,
                 'generated_password' => $password

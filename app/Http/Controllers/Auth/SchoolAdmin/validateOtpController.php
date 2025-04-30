@@ -3,16 +3,12 @@
 namespace App\Http\Controllers\Auth\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\OTP;
-use App\Models\Schooladmin;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 use App\Http\Requests\OtpRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\SchoolAdmin\ValidateOtpService;
 use Illuminate\Http\Request;
 
-class validateOtpController extends Controller
+class ValidateOtpController extends Controller
 {
     protected ValidateOtpService $validateOtpService;
     public function __construct(ValidateOtpService $validateOtpService)

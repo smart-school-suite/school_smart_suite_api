@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services\Auth\Student;
+
+use App\Jobs\SendOtpJob;
 use App\Models\Student;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -27,11 +29,13 @@ class LoginStudentService
         OTP::create([
             'token_header' => $otp_header,
             'actorable_id' => $user->id,
-            'actorable_type' => 'App\Models\Student',
+            'actorable_type' => Student::class,
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
 
-        return ['opt'=>$otp,'otp_token_header'=>$otp_header];
+        SendOtpJob::dispatch($loginData['email'], $otp);
+
+        return ['otp_token_header' => $otp_header];
     }
 }

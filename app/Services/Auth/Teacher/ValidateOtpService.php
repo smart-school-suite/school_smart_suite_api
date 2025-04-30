@@ -29,8 +29,6 @@ class ValidateOtpService
 
         $token = $user->createToken('instructorToken')->plainTextToken;
 
-        $otpRecord->update(['used' => true]);
-
         $otpRecord->delete();
 
         return $token;

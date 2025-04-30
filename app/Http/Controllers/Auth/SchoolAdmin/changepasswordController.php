@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\SchoolAdmin\ChangeSchoolAdminPasswordService;
 use App\Http\Requests\ChangePasswordRequest;
-use Illuminate\Http\Request;
 
 class ChangePasswordController extends Controller
 {

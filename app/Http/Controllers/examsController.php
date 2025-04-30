@@ -12,7 +12,6 @@ use App\Http\Resources\ExamResource;
 use App\Services\ExamService;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Http\Request;
 

@@ -8,7 +8,7 @@ use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
-class courseService
+class CourseService
 {
     // Implement your logic here
     public function createCourse(array $data, $currentSchool): Courses
