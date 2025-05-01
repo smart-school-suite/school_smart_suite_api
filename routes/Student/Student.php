@@ -1,0 +1,21 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\IdentifyTenant;
+use App\Http\Controllers\StudentController;
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/deactivateAccount/{studentId}', [StudentController::class, 'deactivateAccount']);
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/activateAccount/{studentId}', [StudentController::class, 'activateAccount']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/markStudentAsDropout/{studentId}', [StudentController::class, 'markStudentAsDropout']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/getAllStudentDropout', [StudentController::class, 'getStudentDropoutList']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/getStudentDropoutDetails/{studentDropoutId}', [StudentController::class, 'getStudentDropoutDetails']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete('/deleteStudentDropout/{studentDropoutId}', [StudentController::class, 'deleteStudentDropout']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/reinstateDropoutStudent/{studentDropoutId}', [StudentController::class, 'reinstateDropedOutStudent']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteStudent/{studentIds}", [StudentController::class, 'bulkDeleteStudent']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteStudentDropout/{dropOutIds}", [StudentController::class, 'bulkDeleteStudentDropout']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkActivateStudent/{studentIds}", [StudentController::class, 'bulkActivateStudent']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkDeActivateStudent/{studentIds}", [StudentController::class, 'bulkDeactivateStudent']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkMarkStudentAsDropout", [StudentController::class, 'bulkMarkStudentAsDropout']);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->put("/bulkUpdateStudent", [StudentController::class, 'bulkUpdateStudent']);
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/get-students', [StudentController::class, 'getStudents']);
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/student-details/{student_id}', [StudentController::class, 'getStudentDetails']);
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->put('/update-student/{student_id}', [StudentController::class, 'updateStudent']);
+Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->delete('/delete-student/{student_id}', [StudentController::class, 'deleteStudent']);

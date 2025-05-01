@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services\Auth\AppAdmin;
+
+use App\Jobs\SendOtpJob;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Edumanageadmin;
 use Illuminate\Support\Str;
@@ -12,9 +14,9 @@ class LoginAppAdminService
 {
     // Implement your logic here
     public function loginAppAdmin($loginData){
-        $user = Edumanageadmin::where('email', $loginData['email'])->first();
+        $appAdmin = Edumanageadmin::where('email', $loginData['email'])->first();
 
-        if (!$user || !Hash::check($loginData["password"], $user->password)) {
+        if (!$appAdmin || !Hash::check($loginData["password"], $appAdmin->password)) {
             return ApiResponseService::error("The provided Credentials Incorrect", null, 400);
         }
 
@@ -26,12 +28,12 @@ class LoginAppAdminService
 
         OTP::create([
             'token_header' => $otp_header,
-            'actorable_id' => $user->id,
-            'actorable_type' => 'App\Models\Edumanageadmin',
+            'actorable_id' => $appAdmin->id,
+            'actorable_type' => Edumanageadmin::class,
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-
-        return ['opt'=>$otp,'otp_token_header'=>$otp_header];
+        SendOtpJob::dispatch($loginData['email'], $otp);
+        return ['otp_token_header'=>$otp_header];
     }
 }

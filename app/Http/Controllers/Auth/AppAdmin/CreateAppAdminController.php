@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth\Edumanage;
+namespace App\Http\Controllers\Auth\AppAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\Auth\AppAdmin\CreateAppAdminService;

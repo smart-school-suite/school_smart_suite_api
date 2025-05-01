@@ -10,28 +10,28 @@ class ChangeAppAdminPasswordService
 
     public function changeAppAdminPassword($passwordData){
 
-        $authenticated_edumanageadmin = auth()->guard('edumanageadmin')->user();
+        $authAppAdmin = auth()->guard('edumanageadmin')->user();
 
-        if (!$this->checkCurrentPassword($authenticated_edumanageadmin, $passwordData["current_password"])) {
+        if (!$this->checkCurrentPassword($authAppAdmin, $passwordData["current_password"])) {
             return ApiResponseService::error("Current Password is incorrect", null, 404);
         }
 
 
 
-        if ($this->updatePassword($authenticated_edumanageadmin, $passwordData["new_password"])) {
+        if ($this->updatePassword($authAppAdmin, $passwordData["new_password"])) {
             return ApiResponseService::success("Password changed successfully", null, null, 200);
         }
     }
 
-    protected function checkCurrentPassword($authenticated_edumanageadmin, string $currentPassword): bool
+    protected function checkCurrentPassword($authAppAdmin, string $currentPassword): bool
     {
-        return Hash::check($currentPassword, $authenticated_edumanageadmin->password);
+        return Hash::check($currentPassword, $authAppAdmin->password);
     }
 
-    protected function updatePassword($authenticated_edumanageadmin, string $newPassword): bool
+    protected function updatePassword($authAppAdmin, string $newPassword): bool
     {
 
-        $authenticated_edumanageadmin->password = Hash::make($newPassword);
-        return $authenticated_edumanageadmin->save();
+        $authAppAdmin->password = Hash::make($newPassword);
+        return $authAppAdmin->save();
     }
 }

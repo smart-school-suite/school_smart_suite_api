@@ -1,0 +1,23 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\IdentifyTenant;
+use App\Http\Middleware\LimitSchoolAdmin;
+use App\Http\Controllers\Auth\SchoolAdmin\ChangePasswordController;
+use App\Http\Controllers\Auth\SchoolAdmin\LoginSchoolAdminController;
+use App\Http\Controllers\Auth\SchoolAdmin\LogoutSchoolAdminController;
+use App\Http\Controllers\Auth\SchoolAdmin\CreatesSchoolAdminController;
+use App\Http\Controllers\Auth\SchoolAdmin\GetAuthSchoolAdminController;
+use App\Http\Controllers\Auth\SchoolAdmin\ValidateOtpController;
+use App\Http\Controllers\Auth\SchoolAdmin\PasswordResetController;
+use App\Http\Controllers\SchoolAdminController;
+Route::post('/login', [LoginSchoolAdminController::class, 'loginShoolAdmin']);
+Route::post('/verify-otp', [validateOtpController::class, 'verifySchoolAdminOtp']);
+Route::post("/request-otp", [validateOtpController::class, "requestNewCode"]);
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/change-password", [ChangePasswordController::class, 'changeSchoolAdminPassword']);
+Route::post('/register/super-admin', [SchoolAdminController::class, 'createAdminOnSignup']);
+Route::middleware('auth:sanctum')->post('/logout', [LogoutSchoolAdminController::class, 'logoutSchoolAdmin']);
+Route::middleware('auth:sanctum')->get('/auth-school-admin', [GetAuthSchoolAdminController::class, 'getAuthSchoolAdmin']);
+Route::middleware([IdentifyTenant::class, LimitSchoolAdmin::class, 'auth:sanctum',])->post('/create-school-admin', [CreatesSchoolAdminController::class, 'createSchoolAdmin']);
+Route::post('/resetPassword', [PasswordResetController::class, 'resetSchoolAdminPassword']);
+Route::post('/validatePasswordResetOtp', [PasswordResetController::class, 'verifySchoolAdminOtp']);
+Route::post('/updatePassword', [PasswordResetController::class, 'changeShoolAdminPasswordUnAuthenticated']);

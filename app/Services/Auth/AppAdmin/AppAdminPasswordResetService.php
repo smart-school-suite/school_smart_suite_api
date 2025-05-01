@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth\AppAdmin;
 
+use App\Jobs\SendOtpJob;
 use App\Services\ApiResponseService;
 use App\Models\Edumanageadmin;
 use App\Models\OTP;
@@ -30,12 +31,12 @@ class AppAdminPasswordResetService
         OTP::create([
             'token_header' => $otp_header,
             'actorable_id' => $appAdminExists->id,
-            'actorable_type' => 'App\Models\Edumanageadmin',
+            'actorable_type' => Edumanageadmin::class,
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-
-        return ['otp_header' => $otp_header, 'otp' => $otp];
+        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+        return ['otp_header' => $otp_header];
     }
 
     public function verifyOtp($otp, $otpTokenHeader)
@@ -53,14 +54,12 @@ class AppAdminPasswordResetService
             return ApiResponseService::error("Expired Otp token", null, 400);
         }
 
-        $otpRecord->update(['used' => true]);
-
         $password_reset_token = Str::random(35);
 
         PasswordResetToken::create([
             'token' => $password_reset_token,
             'actorable_id' => $otpRecord->actorable_id,
-            'actorable_type' => 'App\Models\Edumanageadmin',
+            'actorable_type' => Edumanageadmin::class,
             'expires_at' => Carbon::now()->addDay(),
         ]);
 
