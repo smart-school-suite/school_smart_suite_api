@@ -22,8 +22,6 @@ class Edumanageadmin extends Model
         'phone_number',
         'profile_picture',
         'password',
-        'otp',
-        'otp_expires_at',
     ];
 
     /**
@@ -34,7 +32,6 @@ class Edumanageadmin extends Model
     protected $hidden = [
         'password',
         'remember_token',
-        'otp_expires_at',
     ];
 
     public $keyType = 'string';

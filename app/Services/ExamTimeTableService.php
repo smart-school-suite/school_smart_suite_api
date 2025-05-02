@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use App\Models\Examtimetable;
 use App\Models\Exams;
-use InvalidArgumentException; // Import the InvalidArgumentException
+use InvalidArgumentException;
 use App\Models\Courses;
 use Illuminate\Support\Str;
 use Exception;

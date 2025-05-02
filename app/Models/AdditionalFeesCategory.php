@@ -15,6 +15,7 @@ class AdditionalFeesCategory extends Model
 
     protected $fillable = [
         'title',
+        'status',
         'school_branch_id',
      ];
 

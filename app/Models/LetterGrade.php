@@ -12,7 +12,8 @@ class LetterGrade extends Model
     use HasFactory;
 
     protected $fillable = [
-        'letter_grade'
+        'letter_grade',
+        'status'
     ];
 
     public $incrementing = 'false';
@@ -22,12 +23,12 @@ class LetterGrade extends Model
     protected static function boot()
     {
         parent::boot();
-       
+
          static::creating(function ($user){
             $uuid = str_replace('-', '', Str::uuid()->toString());
             $user->id = substr($uuid, 0, 10);
          });
-      
+
     }
 
     public function exams(): HasMany {

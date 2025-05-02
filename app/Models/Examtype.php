@@ -16,6 +16,7 @@ class Examtype extends Model
       'semester_id',
       'exam_name',
       'semester',
+      'status',
       'type',
       'program_name'
     ];
