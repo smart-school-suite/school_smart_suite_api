@@ -6,10 +6,10 @@ use Exception;
 use Illuminate\Http\Request;
 use App\Services\StudentResitService;
 use App\Services\ResitScoresService;
-use App\Http\Requests\ResitPaymentRequest;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\resitScoreRequest;
-use App\Http\Requests\BulkUpdateStudentResitRequest;
+use App\Http\Requests\StudentResit\BulkUpdateStudentResitRequest;
+use App\Http\Requests\ResitExamScore\CreateResitExamScore;
+use App\Http\Requests\StudentResit\PayResitFeeRequest;
 use App\Http\Requests\UpdateResitExamRequest;
 use App\Services\ApiResponseService;
 
@@ -25,7 +25,7 @@ class StudentResitController extends Controller
         $this->resitScoresService = $resitScoresService;
         $this->studentResitService = $studentResitService;
     }
-    public function submitResitScores(resitScoreRequest $request)
+    public function submitResitScores(CreateResitExamScore $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $candidateId = $request->route('candidateId');
@@ -38,7 +38,7 @@ class StudentResitController extends Controller
         $updateStudentResit = $this->studentResitService->updateStudentResit($request->all(), $currentSchool, $resit_id);
         return ApiResponseService::success("Resit Entry Updated Successfully", $updateStudentResit, null, 200);
     }
-    public function payResit(ResitPaymentRequest $request)
+    public function payResit(PayResitFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $payStudentResit = $this->studentResitService->payResit($request->validated(), $currentSchool);
@@ -120,7 +120,7 @@ class StudentResitController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkPayStudentResit(ResitPaymentRequest $request, $studentResitIds){
+    public function bulkPayStudentResit(Request $request, $studentResitIds){
         $currentSchool = $request->attributes->get("currentSchool");
         $idsArray = explode(',', $studentResitIds);
         $idsArray = array_map('trim', $idsArray);

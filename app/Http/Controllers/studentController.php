@@ -6,9 +6,9 @@ use App\Http\Resources\StudentResource;
 use Exception;
 use Illuminate\Http\Request;
 use App\Services\StudentService;
-use App\Http\Requests\UpdateStudentRequest;
-use App\Http\Requests\BulkMarkStudentAsDropOutRequest;
-use App\Http\Requests\BulkUpdateStudentRequest;
+use App\Http\Requests\Student\UpdateStudentRequest;
+use App\Http\Requests\Student\BulkAddStudentDropoutRequest;
+use App\Http\Requests\Student\BulkUpdateStudentRequest;
 use App\Http\Resources\StudentDropOutResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
@@ -93,7 +93,7 @@ class StudentController extends Controller
         return ApiResponseService::success("Student Reinstated Successfully", $reinstateDropedOutStudent, null, 200);
     }
 
-    public function bulkMarkStudentAsDropout(BulkMarkStudentAsDropOutRequest $request){
+    public function bulkMarkStudentAsDropout(BulkAddStudentDropoutRequest $request){
          try{
             $currentSchool = $request->attributes->get('currentSchool');
             $bulkMarkStudentAsDropout = $this->studentService->bulkMarkStudentAsDropOut($request->dropout_list, $currentSchool);

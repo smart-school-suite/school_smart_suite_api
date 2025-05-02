@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Role;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,10 +11,6 @@ class CreateRoleRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -24,8 +20,7 @@ class CreateRoleRequest extends FormRequest
     public function rules()
     {
         return [
-            // Define your validation rules here
-            // 'field_name' => 'required|string|max:255',
+            'name' => 'required|string',
         ];
     }
 }

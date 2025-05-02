@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth\AppAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\OtpRequest;
+use App\Http\Requests\Auth\OtpRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\AppAdmin\ValidateOtpService;
 use Illuminate\Http\Request;

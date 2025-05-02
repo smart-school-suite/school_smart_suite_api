@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\UpdateFeePaymentSchedule;
 use App\Services\FeePaymentScheduleService;
-use App\Http\Requests\FeePaymentScheduleRequest;
+use App\Http\Requests\TuitionFee\CreateTuitionFeeScheduleRequest;
+use App\Http\Requests\TuitionFee\UpdateTuitionFeeScheduleRequest;
 use App\Http\Resources\FeePaymentScheduleResource;
 use App\Services\ApiResponseService;
 
@@ -17,13 +17,13 @@ class FeePaymentScheduleController extends Controller
         $this->feePaymentScheduleService = $feePaymentScheduleService;
     }
 
-    public function createFeePaymentSchedule(FeePaymentScheduleRequest $request){
+    public function createFeePaymentSchedule(CreateTuitionFeeScheduleRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $createFeePaymentSchedule = $this->feePaymentScheduleService->createFeePaymentSchedule($request->validated(), $currentSchool);
         return ApiResponseService::success("Fee Payment Schedule Created Succesfully", $createFeePaymentSchedule, null, 201);
     }
 
-    public function updateFeePaymentSchedule(UpdateFeePaymentSchedule $request, string $scheduleId){
+    public function updateFeePaymentSchedule(UpdateTuitionFeeScheduleRequest $request, string $scheduleId){
         $currentSchool = $request->attributes->get('currentSchool');
         $updateFeePaymentService = $this->feePaymentScheduleService->updateFeePaymentSchedule($request->validated(), $currentSchool, $scheduleId);
         return ApiResponseService::success("Fee Payment Schedule Updated Succesfully", $updateFeePaymentService, null, 200);

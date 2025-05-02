@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkAssignGradeDatesRequest;
 use App\Services\StudentBatchService;
-use App\Http\Requests\StudentBatchRequest;
-use App\Http\Requests\CreateGradDateByStudentBatch;
 use App\Http\Resources\GraduationBatchDateResource;
-use App\Http\Requests\BulkUpdateBatchRequest;
+use App\Http\Requests\StudentBatch\CreateStudentBatchRequest;
+use App\Http\Requests\StudentBatch\UpdateStudentBatchRequest;
+use App\Http\Requests\StudentBatch\AddGraduationDateRequest;
+use App\Http\Requests\StudentBatch\BulkUpdateStudentBatchRequest;
+use App\Http\Requests\StudentBatch\BulkAddGraduationDateRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 use Exception;
@@ -22,14 +24,14 @@ class StudentBatchcontroller extends Controller
     {
         $this->studentBatchService = $studentBatchService;
     }
-    public function createStudentBatch(StudentBatchRequest $request)
+    public function createStudentBatch(CreateStudentBatchRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createStudentBatch = $this->studentBatchService->createStudentBatch($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Batch Created Successfully", $createStudentBatch, null, 201);
     }
 
-    public function updateStudentBatch(Request $request)
+    public function updateStudentBatch(UpdateStudentBatchRequest $request)
     {
         $batch_id = $request->route('batch_id');
         $currentSchool = $request->attributes->get('currentSchool');
@@ -64,7 +66,7 @@ class StudentBatchcontroller extends Controller
         return ApiResponseService::success("Student Batch Deactivated Succesfully", $DeactivateStudentBatch, null, 200);
     }
 
-    public function assignGradDatesBySpecialty(CreateGradDateByStudentBatch $request){
+    public function assignGradDatesBySpecialty(AddGraduationDateRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $assignGraduationDates = $this->studentBatchService->assignGradDatesBySpecialty($currentSchool, $request->graduation_dates);
         return ApiResponseService::success("Graduation Dates for student batches set successfully", $assignGraduationDates, null, 200);
@@ -145,7 +147,7 @@ class StudentBatchcontroller extends Controller
         }
     }
 
-    public function bulkUpdateStudentBatch(BulkUpdateBatchRequest $request){
+    public function bulkUpdateStudentBatch(BulkUpdateStudentBatchRequest $request){
         try{
             $bulkUpdateBatch = $this->studentBatchService->bulkUpdateStudentBatch($request->student_batches);
             return ApiResponseService::success("Student Batch Updated Successfully", $bulkUpdateBatch, null, 200);
@@ -155,7 +157,7 @@ class StudentBatchcontroller extends Controller
         }
     }
 
-    public function bulkAssignGradDateBySpecialty(BulkAssignGradeDatesRequest $request){
+    public function bulkAssignGradDateBySpecialty(BulkAddGraduationDateRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         try{
            $assignGradDates = $this->studentBatchService->bulkAssignGradeDatesBySpecailty($request->grad_dates, $currentSchool);

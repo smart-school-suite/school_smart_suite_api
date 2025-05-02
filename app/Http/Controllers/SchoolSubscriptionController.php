@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SchoolSubscription;
-use App\Http\Requests\SchoolSubscriptionRequest;
+use App\Http\Requests\Subscription\SchoolSubscriptionRequest;
 use App\Services\SchoolSubcriptionService;
 use App\Services\ApiResponseService;
 

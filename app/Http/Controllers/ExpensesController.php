@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SchoolExpensesRequest;
-use App\Http\Requests\UpdateSchoolExpensesRequest;
-use App\Http\Requests\BulkUpdateSchoolExpenseRequest;
+use App\Http\Requests\SchoolExpenses\BulkUpdateSchoolExpensesRequest;
+use App\Http\Requests\SchoolExpenses\CreateSchoolExpensesRequest;
+use App\Http\Requests\SchoolExpenses\UpdateSchoolExpensesRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 use App\Services\SchoolExpensesService;
@@ -19,7 +19,7 @@ class ExpensesController extends Controller
     {
         $this->schoolExpensesService = $schoolExpensesService;
     }
-    public function createExpense(SchoolExpensesRequest $request)
+    public function createExpense(CreateSchoolExpensesRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createExpenses = $this->schoolExpensesService->createExpenses($request->validated(), $currentSchool);
@@ -78,7 +78,7 @@ class ExpensesController extends Controller
         }
     }
 
-    public function bulkUpdateSchoolExpenses(BulkUpdateSchoolExpenseRequest $request){
+    public function bulkUpdateSchoolExpenses(BulkUpdateSchoolExpensesRequest $request){
          try{
             $bulkUpdateSchoolExpenses = $this->schoolExpensesService->bulkUpdateExpenses($request->school_expenses);
             return ApiResponseService::success("School Expenses Updated Succesfully", $bulkUpdateSchoolExpenses, null, 200);

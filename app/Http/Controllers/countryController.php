@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkUpdateCountryRequest;
 use App\Models\Country;
 use App\Services\CountryService;
-use App\http\Requests\CountryRequest;
-use App\http\Requests\UpdateCountryRequest;
+use App\http\Requests\Country\CreateCountryRequest;
+use App\http\Requests\Country\UpdateCountryRequest;
+use App\http\Requests\Country\BulkUpdateCountryRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 use Exception;
@@ -21,7 +21,7 @@ class CountryController extends Controller
     {
         $this->countryService = $countryService;
     }
-    public function createCountry(CountryRequest $request)
+    public function createCountry(CreateCountryRequest $request)
     {
 
         $country = $this->countryService->createCountry($request->validated());

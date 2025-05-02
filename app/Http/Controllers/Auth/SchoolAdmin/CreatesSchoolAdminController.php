@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CreateSchoolAdminRequest;
+use App\Http\Requests\SchoolAdmin\CreateSchoolAdminRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\SchoolAdmin\CreateSchoolAdminService;
 

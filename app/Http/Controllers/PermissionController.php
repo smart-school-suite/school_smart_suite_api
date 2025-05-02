@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\HttP\Requests\PermissionRequest;
-use App\Http\Requests\UpdatePermissionRequest;
 use App\Http\Requests\AssignPermissionRequest;
-use App\Http\Requests\RevokePermissionRequest;
+use APP\Http\Requests\Permission\CreatePermissionRequest;
+use APP\Http\Requests\Permission\UpdatePermissionRequest;
+use APP\Http\Requests\Permission\AddUserPermissionRequest;
+use APP\Http\Requests\Permission\RevokePermissionRequest;
 use App\Services\ApiResponseService;
 use App\Services\PermissionService;
 
@@ -18,7 +20,7 @@ class PermissionController extends Controller
         $this->permissionService = $permissionService;
     }
 
-    public function createPermission(PermissionRequest $request){
+    public function createPermission(CreatePermissionRequest $request){
         $createPermission = $this->permissionService->createPermission($request->validated());
         return ApiResponseService::success("Permission Created Successfully", $createPermission, null, 201);
     }
@@ -44,7 +46,7 @@ class PermissionController extends Controller
         return ApiResponseService::success("School Admin Permissions Fetched Sucessfully", $getSchoolAdminPermissions, null, 200);
     }
 
-    public function givePermissionToSchoolAdmin(AssignPermissionRequest $request, string $schoolAdminId){
+    public function givePermissionToSchoolAdmin(AddUserPermissionRequest $request, string $schoolAdminId){
         $currentSchool = $request->attributes->get('currentSchool');
         $grantSchoolAdminPermissions = $this->permissionService->givePermissionToAdmin($request->permissions, $schoolAdminId, $currentSchool);
         return ApiResponseService::success("School Admin Permission Granted Successfully", $grantSchoolAdminPermissions, null, 200);

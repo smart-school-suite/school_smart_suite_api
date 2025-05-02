@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkUpdateParentRequest;
+
 use App\Services\ApiResponseService;
 use App\Http\Resources\ParentResource;
+use App\Http\Requests\Parent\UpdateParentRequest;
+use App\Http\Requests\Parent\CreateParentRequest;
+use App\Http\Requests\Parent\BulkUpdateParentRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ParentService;
 use Exception;
@@ -30,7 +33,7 @@ class ParentsController extends Controller
         return ApiResponseService::success("Parent Deleted Successfully", $deleteParent, null,200);
     }
 
-    public function updateParent(Request $request, $parent_id){
+    public function updateParent(UpdateParentRequest $request, $parent_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $updateParent = $this->parentService->updateParent($request->all(),$parent_id, $currentSchool);
         return ApiResponseService::success('Parent Updated Sucessfully', $updateParent, null,200);

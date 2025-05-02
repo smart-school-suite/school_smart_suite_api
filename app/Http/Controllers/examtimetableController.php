@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Examtimetable;
-use App\Http\Requests\ExamTimeTableRequest;
 use App\Services\ExamTimeTableService;
 use App\Services\ApiResponseService;
+use App\Http\Requests\ExamTimetable\CreateExamTimetableRequest;
+use App\Http\Requests\ExamTimetable\UpdateExamTimetableRequest;
 use InvalidArgumentException;
 use Illuminate\Http\Request;
 use Exception;
@@ -18,7 +19,7 @@ class ExamTimeTableController extends Controller
     {
         $this->examTimeTableService = $examTimeTableService;
     }
-    public function createTimtable(ExamTimeTableRequest $request, $examId)
+    public function createTimtable(CreateExamTimetableRequest $request, $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -52,8 +53,7 @@ class ExamTimeTableController extends Controller
         return ApiResponseService::success("Exam Timetable Deleted Successfully", $deleteTimetable, null, 200);
     }
 
-    //work on the update functionality
-    public function updateTimetable(Request $request, $examtimetable_id)
+    public function updateTimetable(UpdateExamTimetableRequest $request, $examtimetable_id)
     {
 
         $currentSchool = $request->attributes->get('currentSchool');

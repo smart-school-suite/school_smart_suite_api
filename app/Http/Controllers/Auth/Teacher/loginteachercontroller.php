@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth\Teacher;
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
 use App\Services\Auth\Teacher\LoginTeacherService;
-use App\Http\Requests\LoginRequest;
+use App\Http\Requests\Auth\LoginTeacherRequest;
 
 class LoginTeacherController extends Controller
 {
@@ -14,7 +14,7 @@ class LoginTeacherController extends Controller
     public function __construct(LoginTeacherService $loginTeacherService){
         $this->loginTeacherService = $loginTeacherService;
     }
-    public function loginInstructor(LoginRequest $request){
+    public function loginInstructor(LoginTeacherRequest $request){
         $loginTeacher = $this->loginTeacherService->loginTeacher($request->validated());
         return ApiResponseService::success("OTP token sent to email sucessfully", $loginTeacher, null, 200);
     }

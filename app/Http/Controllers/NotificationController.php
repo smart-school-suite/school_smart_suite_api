@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\RegisterDeviceRequest;
 use App\Models\Schooladmin;
 use App\Notifications\testNotification;
 use App\Services\ApiResponseService;
 use App\Services\NotificationService;
+use App\Http\Requests\Auth\RegisterDeviceRequest;
 use Exception;
 use Illuminate\Http\Request;
 

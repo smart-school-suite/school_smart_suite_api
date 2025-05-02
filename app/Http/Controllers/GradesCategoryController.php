@@ -1,8 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Http\Requests\CreateGradesCategoryRequest;
-use App\Http\Requests\UpdateGradesCategoryRequest;
+use App\Http\Requests\GradesCategory\CreateGradesCategoryRequest;
+use App\Http\Requests\GradesCategory\UpdateGradesCategoryRequest;
+use App\Http\Requests\GradesCategory\BulkUpdateGradesCategoryRequest;
 use App\Services\ApiResponseService;
 use App\Services\GradesCategoryService;
 use Illuminate\Http\JsonResponse;

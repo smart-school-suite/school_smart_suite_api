@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Semester;
 use App\Services\SemesterService;
 use App\Http\Requests\SemesterRequest;
-use App\Http\Requests\UpdateSemesterRequest;
+use App\Http\Requests\Semester\CreateSemesterRequest;
+use App\Http\Requests\Semester\UpdateSemesterRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
@@ -16,7 +16,7 @@ class SemesterController extends Controller
     public function __construct(SemesterService $semesterService){
             $this->semesterService = $semesterService;
     }
-    public function createSemester(SemesterRequest $request){
+    public function createSemester(CreateSemesterRequest $request){
 
         $createSemester =  $this->semesterService->createSemester($request->validated());
         return ApiResponseService::success("Semester Created Sucessfully", $createSemester, null, 201);

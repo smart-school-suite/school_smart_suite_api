@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Role;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,10 +11,6 @@ class UpdateRoleRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -24,9 +20,7 @@ class UpdateRoleRequest extends FormRequest
     public function rules()
     {
         return [
-            // Define your update validation rules here
-            // 'id' => 'required|integer|exists:your_table,id',
-            // 'field_name' => 'sometimes|string|max:255',
+            'name' => 'nullable|string'
         ];
     }
 }

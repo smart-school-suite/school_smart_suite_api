@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\InstructorAvailability;
-use App\Http\Requests\InstructorAvialabiltyRequest;
-use App\Http\Requests\UpdateInstructorAvailability;
+use App\Http\Requests\Teacher\UpdateTeacherAvailabilityRequest;
+use App\Http\Requests\Teacher\AddTeacherAvailabilityRequest;
 use App\Services\ApiResponseService;
 use App\Services\InstructorAvaliabilityService;
 use Illuminate\Http\Request;
@@ -19,7 +19,7 @@ class InstructorAvailabilityController extends Controller
         $this->instructorAvaliabilityService = $instructorAvaliabilityService;
     }
 
-    public function createInstructorAvailability(InstructorAvialabiltyRequest $request)
+    public function createInstructorAvailability(AddTeacherAvailabilityRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -30,7 +30,7 @@ class InstructorAvailabilityController extends Controller
         }
     }
 
-    public function bulkUpdateInstructorAvialabililty(UpdateInstructorAvailability $request)
+    public function bulkUpdateInstructorAvialabililty(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -62,7 +62,7 @@ class InstructorAvailabilityController extends Controller
         return ApiResponseService::success('Teachers availability deleted succefully', $deleteInstructorAvailability, null, 200);
     }
 
-    public function updateInstructorAvailability(Request $request,  $availabilty_id)
+    public function updateInstructorAvailability(UpdateTeacherAvailabilityRequest $request,  $availabilty_id)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->instructor_availability, $currentSchool, $availabilty_id);

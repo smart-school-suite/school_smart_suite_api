@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Services\ApiResponseService;
 use App\Services\ResitTimeTableService;
-use App\Http\Requests\CreateResitTimetableRequest;
-use App\Http\Requests\UpdateResitTimetableRequest;
+use App\Http\Requests\ResitExamTimetable\UpdateResitExamTimetableRequest;
+use App\Http\Requests\ResitExamTimetable\CreateResitTimetableRequest;
 use InvalidArgumentException;
 use Exception;
 use Illuminate\Http\Request;
@@ -43,7 +43,7 @@ class ResitTimeTableController extends Controller
         $deleteResitTimetable = $this->resitTimeTableService->deleteResitTimetable($resitExamId, $currentSchool);
         return ApiResponseService::success("Resit Time table deleted Successfully", $deleteResitTimetable, null, 200);
     }
-    public function updateResitTimetable(UpdateResitTimetableRequest $request, $resitExamId){
+    public function updateResitTimetable(UpdateResitExamTimetableRequest $request, $resitExamId){
         $currentSchool = $request->attributes->get('currentSchool');
         $updateResitTimetable = $this->resitTimeTableService->updateResitTimetable($request->entries, $currentSchool, $resitExamId);
         return ApiResponseService::success("Resit Timetable Updated Successfully", $updateResitTimetable, null, 200);

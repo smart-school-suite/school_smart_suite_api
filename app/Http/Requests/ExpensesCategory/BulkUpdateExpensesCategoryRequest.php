@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ExpensesCategory;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -20,10 +20,9 @@ class BulkUpdateExpensesCategoryRequest extends FormRequest
     public function rules()
     {
         return [
-            // Define your bulk update validation rules here
-            'data' => 'required|array',
-            'data.*.id' => 'required|integer|exists:your_table,id',
-            // 'data.*.field_name' => 'sometimes|string|max:255',
+             'category_expenses' => 'required|array',
+             'category_expenses.*.category_id' => 'required|string|exists:table,column',
+             "category_expenses.*.status" => 'sometimes|nullable|in:active,inactive'
         ];
     }
 }

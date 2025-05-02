@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\EventsRequest;
-use App\Http\Requests\UpdateEventRequest;
 use App\Services\ApiResponseService;
+use App\Http\Requests\Events\CreateEventRequest;
+use App\Http\Requests\Events\BulkUpdateEventRequest;
+use App\Http\Requests\Events\UpdateEventRequest;
 use App\Services\EventsService;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class EventsController extends Controller
     {
         $this->eventsService = $eventsService;
     }
-    public function createEvent(EventsRequest $request)
+    public function createEvent(CreateEventRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createElection = $this->eventsService->createEvent($request->all(), $currentSchool);

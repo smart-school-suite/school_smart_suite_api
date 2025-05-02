@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\RateCardRequest;
+
 use App\Services\ApiResponseService;
-use App\Http\Requests\UpdateRateCardRequest;
+use App\Http\Requests\SubscriptionRate\BulkUpdateSubscriptionRateRequest;
+use App\Http\Requests\SubscriptionRate\CreateSubscriptionRateRequest;
+use App\Http\Requests\SubscriptionRate\UpdateSubscriptionRateRequest;
 use App\Services\RateCardService;
 use Illuminate\Http\Request;
 
@@ -14,13 +16,13 @@ class RatesCardController extends Controller
      public function __construct(RateCardService $ratesCardService){
         $this->ratesCardService = $ratesCardService;
      }
-    public function createRates(RateCardRequest $request)
+    public function createRates(CreateSubscriptionRateRequest $request)
     {
         $createRateCard = $this->ratesCardService->createRate($request->validated());
         return ApiResponseService::success("Rate Card Created Succesfully", $createRateCard, null, 201);
     }
 
-    public function updatRates(UpdateRateCardRequest $request,  $rates_id){
+    public function updatRates(UpdateSubscriptionRateRequest $request,  $rates_id){
          $updateRateCard = $this->ratesCardService->updateRate($rates_id, $request->validated());
          return ApiResponseService::success("Rate Card Updated Sucessfully", $updateRateCard, null, 200);
     }

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Services\RoleService;
-use App\Http\Requests\RoleRequest;
-use App\Http\Requests\UpdateRoleRequest;
-use App\Http\Requests\AssignRoleRequest;
-use App\Http\Requests\RemoveRoleRequest;
+use App\Http\Requests\Role\AddUserRoleRequest;
+use App\Http\Requests\Role\UpdateRoleRequest;
+use App\Http\Requests\Role\RemoveRoleRequest;
+use App\Http\Requests\Role\CreateRoleRequest;
 use Illuminate\Support\Facades\Log;
 use App\Services\ApiResponseService;
 
@@ -28,7 +28,7 @@ class RoleController extends Controller
         return ApiResponseService::success("Roles Fetched Sucessfully", $getRoles, null, 200);
     }
 
-    public function createRole(RoleRequest $request){
+    public function createRole(CreateRoleRequest $request){
         $createRole = $this->roleService->createRole($request->validated());
         return ApiResponseService::success("Role Created Sucessfully", $createRole, null, 201);
     }
@@ -38,7 +38,7 @@ class RoleController extends Controller
         return ApiResponseService::success("Role Deleted Succesfully", $deleteRole, null, 200);
     }
 
-    public function assignRoleSchoolAdmin(AssignRoleRequest $request, string $schoolAdminId){
+    public function assignRoleSchoolAdmin(AddUserRoleRequest $request, string $schoolAdminId){
        $currentSchool = $request->attributes->get('currentSchool');
        Log::info($currentSchool);
        $assignRole = $this->roleService->assignRolesSchoolAdmin($request->roles, $schoolAdminId, $currentSchool);

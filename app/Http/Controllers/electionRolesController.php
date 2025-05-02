@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkUpdateElectionRolesRequest;
 use App\Services\ApiResponseService;
 use App\Services\ElectionRolesService;
-use App\Http\Requests\ElectionRolesRequest;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\UpdateElectionRolesRequest;
+use App\Http\Requests\ElectionRole\CreateElectionRoleRequest;
+use App\Http\Requests\ElectionRole\UpdateElectionRoleRequest;
+use App\Http\Requests\ElectionRole\BulkUpdateElectionRoleRequest;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -19,14 +19,14 @@ class ElectionRolesController extends Controller
     {
         $this->electionRolesService = $electionRolesService;
     }
-    public function createElectionRole(ElectionRolesRequest $request)
+    public function createElectionRole(CreateElectionRoleRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $createElectionRole = $this->electionRolesService->createElectionRole($request->validated(), $currentSchool);
         return ApiResponseService::success("Election Role Created Sucessfully", $createElectionRole, null, 201);
     }
 
-    public function updateElectionRole(UpdateElectionRolesRequest $request, string $election_role_id)
+    public function updateElectionRole(UpdateElectionRoleRequest $request, string $election_role_id)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $updateElectionRole = $this->electionRolesService->updateElectionRole($request->validated(), $currentSchool, $election_role_id);
@@ -76,7 +76,7 @@ class ElectionRolesController extends Controller
         }
     }
 
-    public function bulkUpdateElectionRole(BulkUpdateElectionRolesRequest $request){
+    public function bulkUpdateElectionRole(BulkUpdateElectionRoleRequest $request){
           try{
              $bulkUpdateElectionRole = $this->electionRolesService->bulkUpdateElectionRole($request->election_roles);
              return ApiResponseService::success("Election Roles Updated Successfully", $bulkUpdateElectionRole, null, 200);

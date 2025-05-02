@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkUpdateCourseRequest;
-use App\Http\Requests\CreateCourseRequest;
-use App\Http\Requests\UpdateCourseRequest;
+use App\Http\Requests\Course\CreateCourseRequest;
+use App\Http\Requests\Course\UpdateCourseRequest;
+use App\Http\Requests\Course\BulkUpdateCourseRequest;
 use App\Http\Resources\CourseResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\CourseService;

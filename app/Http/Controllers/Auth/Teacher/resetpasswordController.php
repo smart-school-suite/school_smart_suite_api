@@ -4,18 +4,17 @@ namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
-use App\Http\Requests\OtpRequest;
-use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\Auth\ChangePasswordUnAuthenticatedRequest;
 use App\Services\Auth\Teacher\ResetTeacherPasswordService;
-use App\Http\Requests\ChangePasswordUnAuthRequest;
-
+use App\Http\Requests\Auth\PasswordResetRequest;
+use App\Http\Requests\Auth\OtpRequest;
 class ResetPasswordController extends Controller
 {
     protected ResetTeacherPasswordService $resetTeacherPasswordService;
     public function __construct(ResetTeacherPasswordService $resetTeacherPasswordService){
         $this->resetTeacherPasswordService = $resetTeacherPasswordService;
     }
-    public function resetInstructorPassword(ResetPasswordRequest $request)
+    public function resetInstructorPassword(PasswordResetRequest $request)
     {
         $resetPassword = $this->resetTeacherPasswordService->resetPassword($request->validated());
         return ApiResponseService::success("OTP sent successfully", $resetPassword, null, 200);
@@ -27,7 +26,7 @@ class ResetPasswordController extends Controller
         $verifyOtp = $this->resetTeacherPasswordService->verifyOtp($request->otp, $token_header);
         return ApiResponseService::success("OTP verified Sucessfully", $verifyOtp, null, 200);
     }
-    public function ChangeInstructorPasswordUnAuthenticated(ChangePasswordUnAuthRequest $request)
+    public function ChangeInstructorPasswordUnAuthenticated(ChangePasswordUnAuthenticatedRequest $request)
     {
         $request->validate([
             'new_password' => 'required|string|min:8|confirmed',

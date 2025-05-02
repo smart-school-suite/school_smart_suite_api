@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ElectionApplicationRequest;
 use App\Services\ElectionApplicationService;
-use App\Http\Requests\UpdateElectionApplicationRequest;
 use App\Http\Resources\ElectionApplicationResource;
+use App\Http\Requests\ElectionApplication\CreateApplicationRequest;
+use App\Http\Requests\ElectionApplication\UpdateElectionApplicationRequest;
 use App\Services\ApiResponseService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
@@ -18,7 +18,7 @@ class ElectionApplicationController extends Controller
     {
         $this->electionApplicationService = $electionApplicationService;
     }
-    public function createElectionApplication(ElectionApplicationRequest $request)
+    public function createElectionApplication(CreateApplicationRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $electionApplication = $this->electionApplicationService->createApplication($request->validated(), $currentSchool);

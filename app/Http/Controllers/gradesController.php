@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Services\AddGradesService;
-use App\Http\Requests\GradesRequest;
 use App\Services\ApiResponseService;
 use App\Models\Exams;
 use App\Models\Examtype;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\Grade\CreateGradeRequest;
 use App\Services\GradesService;
 use Exception;
 use Illuminate\Http\Request;
@@ -22,7 +22,7 @@ class GradesController extends Controller
         $this->addGradesService = $addGradesService;
         $this->gradesService = $gradesService;
     }
-    public function createExamGrades(GradesRequest $request)
+    public function createExamGrades(CreateGradeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -50,7 +50,6 @@ class GradesController extends Controller
         $getGrades = $this->gradesService->getGrades($currentSchool);
         return ApiResponseService::success("Exam Grades Fetched Sucessfully", $getGrades, null, 200);
     }
-
 
     public function deleteGrades(Request $request, $examId)
     {

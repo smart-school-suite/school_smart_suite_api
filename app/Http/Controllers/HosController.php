@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Services\HosService;
-use App\Http\Requests\HosRequest;
+use App\Http\Requests\Hos\CreateHosRequest;
 use App\Services\ApiResponseService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
@@ -17,7 +17,7 @@ class HosController extends Controller
         $this->hosService = $hosService;
     }
 
-    public function assignHeadOfSpecialty(HosRequest $request){
+    public function assignHeadOfSpecialty(CreateHosRequest $request){
         $currentSchool = $request->attributes->get("currentSchool");
         $assignHos = $this->hosService->assignHeadOfSpecialty($request->validated(), $currentSchool);
         return ApiResponseService::success("Hos Assigned Succesfully", $assignHos, null, 201);

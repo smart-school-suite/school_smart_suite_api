@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddAllowedParticipantsRequest;
-use App\Http\Requests\BulkUpdateElectionRequest;
 use App\Http\Requests\CreateElectionTypeRequest;
-use App\Http\Requests\UpdateElectionRequest;
 use App\Http\Requests\UpdateElectionTypeRequest;
+use App\Http\Requests\Election\CreateElectionRequest;
+use App\Http\Requests\Election\UpdateElectionRequest;
+use App\Http\Requests\Election\BulkUpdateElectionRequest;
+use App\Http\Requests\Election\AddElectionParticipantsRequest;
+use App\Http\Requests\Election\CreateVoteRequest;
 use App\Http\Requests\VoteRequest;
-use App\Http\Requests\ElectionRequest;
 use App\Http\Resources\ElectionCandidateResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ElectionService;
@@ -28,7 +30,7 @@ class ElectionsController extends Controller
         $this->voteService = $voteService;
     }
 
-    public function createElection(ElectionRequest $request)
+    public function createElection(CreateElectionRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $election = $this->electionService->createElection($request->validated(), $currentSchool);
@@ -56,7 +58,7 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Updated Successfully", $updateElection, null, 200);
     }
 
-    public function vote(VoteRequest $request)
+    public function vote(CreateVoteRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $castVote = $this->voteService->castVote($request->validated(), $currentSchool);
@@ -153,7 +155,7 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Allowed Participants Fetched Successfully", $allowedParticipants, null, 200);
     }
 
-    public function addAllowedParticipants(AddAllowedParticipantsRequest $request){
+    public function addAllowedParticipants(AddElectionParticipantsRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         try{
             $addAllowedParticipants = $this->electionService->addAllowedElectionParticipants($request->election_participants, $currentSchool);

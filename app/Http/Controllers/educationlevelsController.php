@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 
-use App\Http\Requests\EducationLevelRequest;
 use App\Services\EducationLevelService;
-use App\Http\Requests\UpdateEducationLevelRequest;
+use App\Http\Requests\Level\BulkUpdateLevelRequest;
+use App\Http\Requests\Level\UpdateLevelRequest;
+use App\Http\Requests\Level\CreateLevelRequest;
 use App\Services\ApiResponseService;
 
 class EducationLevelsController extends Controller
@@ -15,14 +16,14 @@ class EducationLevelsController extends Controller
     {
         $this->educationLevelService = $educationLevelService;
     }
-    public function createEducationLevel(EducationLevelRequest $request)
+    public function createEducationLevel(CreateLevelRequest $request)
     {
 
         $educationLevel = $this->educationLevelService->createEducationLevel($request->validated());
         return ApiResponseService::success("Level Created Succefully", $educationLevel, null, 201);
     }
 
-    public function updateEducationLevel(UpdateEducationLevelRequest $request, string $education_level_id)
+    public function updateEducationLevel(UpdateLevelRequest $request, string $education_level_id)
     {
 
         $updateEducationLevel = $this->educationLevelService->updateEducationLevel($request->validated(), $education_level_id);

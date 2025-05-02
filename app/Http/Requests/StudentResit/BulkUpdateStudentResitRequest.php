@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\StudentResit;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,10 +11,6 @@ class BulkUpdateStudentResitRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
 
     /**
      * Get the validation rules that apply to the request.

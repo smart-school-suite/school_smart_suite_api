@@ -6,9 +6,9 @@ namespace App\Http\Controllers;
 use App\Models\Grades;
 use App\Models\Exams;
 use App\Models\Examtimetable;
-use App\Http\Requests\AddStudentScoreRequest;
-use App\Http\Requests\UpdateScoreRequest;
 use App\Services\AddExamScoresService;
+use App\Http\Requests\ExamScore\CreateExamScoreRequest;
+use App\Http\Requests\ExamScore\UpdateExamScoreRequest;
 use App\Services\AddCaScoresService;
 use App\Services\UpdateExamScoreService;
 use App\Services\UpdateCaScoreService;
@@ -36,7 +36,7 @@ class MarksController extends Controller
         $this->updateExamScoreService = $updateExamScoreService;
         $this->markService = $markService;
     }
-    public function createCaMark(AddStudentScoreRequest $request)
+    public function createCaMark(CreateExamScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -46,7 +46,7 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-    public function createExamMark(AddStudentScoreRequest $request)
+    public function createExamMark(CreateExamScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -56,7 +56,7 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-    public function updateExamMark(UpdateScoreRequest $request)
+    public function updateExamMark(UpdateExamScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -66,7 +66,7 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-    public function updateCaMark(UpdateScoreRequest $request)
+    public function updateCaMark(UpdateExamScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {

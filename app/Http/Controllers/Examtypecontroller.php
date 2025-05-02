@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateExamTypeRequest;
 use App\Http\Requests\ExamTypeRequest;
+use App\Http\Requests\ExamType\CreateExamTypeRequest;
+use App\Http\Requests\ExamType\BulkUpdateExamTypeRequest;
+use App\Http\Requests\ExamType\UpdateExamTypeRequest;
 use App\Services\ApiResponseService;
 use App\Services\ExamTypeService;
 use Illuminate\Http\Request;
@@ -16,7 +18,7 @@ class ExamTypecontroller extends Controller
     {
         $this->examtypeService = $examtypeService;
     }
-    public function createExamType(ExamTypeRequest $request)
+    public function createExamType(CreateExamTypeRequest $request)
     {
         $createExamType = $this->examtypeService->createExamType($request->validated());
         return ApiResponseService::success("exam type created succefully", $createExamType, null, 201);

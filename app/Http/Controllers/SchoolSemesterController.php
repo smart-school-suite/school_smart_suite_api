@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkUpdateSchooolSemesterRequest;
 use App\Http\Requests\SchoolSemesterRequest;
-use App\Http\Requests\UpdateSchoolSemesterRequest;
+use App\Http\Requests\SchoolSemester\CreateSchoolSemesterRequest;
+use App\Http\Requests\SchoolSemester\UpdateSchoolSemesterRequest;
+use App\Http\Requests\SchoolSemester\BulkUpdateSchoolSemesterRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Support\Facades\Validator;
 use App\Services\SchoolSemesterService;
@@ -19,7 +21,7 @@ class SchoolSemesterController extends Controller
         $this->schoolSemesterService = $schoolSemesterService;
     }
 
-    public function createSchoolSemester(SchoolSemesterRequest $request){
+    public function createSchoolSemester(CreateSchoolSemesterRequest $request){
         $currentSchool = $request->attributes->get("currentSchool");
         $createSchoolSemester = $this->schoolSemesterService->createSchoolSemester($request->validated(), $currentSchool);
         return ApiResponseService::success("School Semester Created Succesfully", $createSchoolSemester, null, 201);
@@ -49,7 +51,7 @@ class SchoolSemesterController extends Controller
         return ApiResponseService::success("School Semester Details Fetched Successfully", $getSchoolSemesterDetails, null, 200);
     }
 
-    public function bulkUpdateSchoolSemester(BulkUpdateSchooolSemesterRequest $request){
+    public function bulkUpdateSchoolSemester(BulkUpdateSchoolSemesterRequest $request){
          try{
             $bulkUpdateSchoolSemester = $this->schoolSemesterService->bulkUpdateSchoolSemester($request->school_semester);
             return ApiResponseService::success("School Semester Updated Successfully", $bulkUpdateSchoolSemester, null, 200);

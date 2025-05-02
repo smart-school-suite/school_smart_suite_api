@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 
 use App\Services\LetterGradeService;
-use App\Http\Requests\LetterGradeRequest;
-use App\Http\Requests\UpdateLetterGradeRequest;
+use App\Http\Requests\LetterGrade\BulkUpdateLetterGradeRequest;
+use App\Http\Requests\LetterGrade\CreateLetterGradeRequest;
+use App\Http\Requests\LetterGrade\UpdateLetterGradeRequest;
 use App\Services\ApiResponseService;
 
 class LetterGradecontroller extends Controller
@@ -15,7 +16,7 @@ class LetterGradecontroller extends Controller
      public function __construct(LetterGradeService $letterGradeService){
         $this->letterGradeService = $letterGradeService;
      }
-    public function createLettGrade(LetterGradeRequest $request){
+    public function createLettGrade(CreateLetterGradeRequest $request){
         $createLetterGrade = $this->letterGradeService->createLetterGrade($request->validated());
         return ApiResponseService::success("Letter grade created Sucessfully", $createLetterGrade, null, 201);
     }

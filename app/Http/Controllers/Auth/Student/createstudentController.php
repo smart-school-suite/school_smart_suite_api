@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth\Student;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CreateStudentRequest;
+use App\Http\Requests\Student\CreateStudentRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\Student\CreateStudentService;
 

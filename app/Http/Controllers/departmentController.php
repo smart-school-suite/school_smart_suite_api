@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 
 use App\Services\DepartmentService;
 use App\Http\Requests\DepartmentRequest;
-use App\Http\Requests\UpdateDepartmentRequest;
 use App\Http\Resources\DepartmentResource;
-use App\Http\Requests\BulkUpdateDepartmentRequest;
+use App\Http\Requests\Department\CreateDepartmentRequest;
+use App\Http\Requests\Department\UpdateDepartmentRequest;
+use App\Http\Requests\Department\BulkUpdateDepartmentRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Support\Facades\Validator;
 use Exception;
@@ -21,7 +22,7 @@ class DepartmentController extends Controller
     {
         $this->departmentService = $departmentService;
     }
-    public function createDepartment(DepartmentRequest $request)
+    public function createDepartment(CreateDepartmentRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $department = $this->departmentService->createDepartment($request->validated(), $currentSchool);

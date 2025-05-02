@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Requests\HodRequest;
+use App\Http\Requests\Hod\CreateHodRequest;
 use App\Services\ApiResponseService;
 use App\Services\HodService;
 use Exception;
@@ -17,7 +18,7 @@ class HodController extends Controller
         $this->hodService = $hodService;
     }
 
-    public function assignHeadOfDepartment(HodRequest $request){
+    public function assignHeadOfDepartment(CreateHodRequest $request){
         $currentSchool = $request->attributes->get("currentSchool");
         $assignHod = $this->hodService->assignHeadOfDepartment($request->validated(), $currentSchool);
         return ApiResponseService::success("Head of Department Assigned Succesfully", $assignHod, null, 201);

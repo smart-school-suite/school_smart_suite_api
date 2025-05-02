@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Services\ApiResponseService;
 use App\Services\FeePaymentService;
-use App\Http\Requests\FeePaymentRequest;
-use App\Http\Requests\UpdateFeePaymentRequest;
 use App\Http\Resources\FeeDebtorResource;
-use App\Http\Requests\PayRegistrationFeesRequest;
-use App\Http\Requests\BulkPayRegistrationFeeRequest;
+use App\Http\Requests\RegistrationFee\BulkPayRegistrationFeeRequest;
+use App\Http\Requests\RegistrationFee\PayRegistrationFeeRequest;
+use App\Http\Requests\TuitionFee\BulkPayTuitionFeeRequest;
+use App\Http\Requests\TuitionFee\PayTuitionFeeRequest;
+use App\Http\Requests\TuitionFee\UpdateTuitionFeePaymentRequest;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Resources\PaidFeesResource;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -21,13 +21,13 @@ class FeePaymentController extends Controller
     public function __construct(FeePaymentService $feePaymentService){
         $this->feePaymentService = $feePaymentService;
     }
-    public function payTuitionFees(FeePaymentRequest $request) {
+    public function payTuitionFees(PayTuitionFeeRequest $request) {
         $currentSchool = $request->attributes->get('currentSchool');
         $payFees = $this->feePaymentService->payStudentFees($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Fees Paid Sucessfully", $payFees, null, 201);
     }
 
-    public function payRegistrationFees(PayRegistrationFeesRequest $request){
+    public function payRegistrationFees(PayRegistrationFeeRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $payRegistrationFees = $this->feePaymentService->payRegistrationFees($request->validated(), $currentSchool);
         return ApiResponseService::success("Registration Fees Paid Sucessfully", $payRegistrationFees, null, 201);
@@ -45,7 +45,7 @@ class FeePaymentController extends Controller
         return ApiResponseService::success('fee payment records fetched successfully', $feePaid, null, 200);
     }
 
-    public function updateFeesPaid(UpdateFeePaymentRequest $request, $fee_id){
+    public function updateFeesPaid(UpdateTuitionFeePaymentRequest $request, $fee_id){
         $currentSchool = $request->attributes->get('currentSchool');
         $updateFeesPaid = $this->feePaymentService->updateStudentFeesPayment($request->validated(),$fee_id,$currentSchool);
         return ApiResponseService::success("Fee Payment Record Updated Sucessfully", $updateFeesPaid, null, 200);

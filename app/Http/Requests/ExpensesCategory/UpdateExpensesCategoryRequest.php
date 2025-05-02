@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ExpensesCategory;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,10 +11,7 @@ class UpdateExpensesCategoryRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -24,7 +21,8 @@ class UpdateExpensesCategoryRequest extends FormRequest
     public function rules()
     {
         return [
-            "name" => "sometimes|required|string"
+            "name" => "sometimes|nullable|string",
+            "status" => 'sometimes|nullable|in:active,inactive'
         ];
     }
 }

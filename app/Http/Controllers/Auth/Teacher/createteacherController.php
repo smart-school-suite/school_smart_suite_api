@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CreateTeacherRequest;
+use App\Http\Requests\Teacher\CreateTeacherRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\Teacher\CreateTeacherService;
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\OtpRequest;
+use App\Http\Requests\Auth\OtpRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\Teacher\ValidateOtpService;
 use Illuminate\Http\Request;

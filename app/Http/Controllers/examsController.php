@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkAddExamGradingRequest;
-use App\Http\Requests\BulkUpdateExamRequest;
+use App\Http\Requests\Exam\CreateExamRequest;
+use App\Http\Requests\Exam\UpdateExamRequest;
+use App\Http\Requests\Exam\BulkUpdateExamRequest;
 use App\Http\Resources\AssiocaiteWeigtedMarkLetterGrades;
 use App\Http\Requests\ExamRequest;
-use App\Http\Requests\UpdateExamRequest;
+use App\Http\Requests\ExamGrading\BulkAddExamGradingRequest;
 use App\Http\Resources\AccessedExamResource;
 use App\Http\Resources\ExamResource;
 use App\Services\ExamService;
@@ -23,7 +24,7 @@ class ExamsController extends Controller
     {
         $this->examService = $examService;
     }
-    public function createExam(ExamRequest $request)
+    public function createExam(CreateExamRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createExam = $this->examService->createExam($request->validated(), $currentSchool);

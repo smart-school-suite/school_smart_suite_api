@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\StudentPromotionService;
-use App\Http\Requests\StudentPromotionRequest;
+use App\Http\Requests\Student\StudentPromotionRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 

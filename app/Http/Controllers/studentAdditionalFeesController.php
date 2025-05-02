@@ -1,12 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Http\Requests\AddtionalFeesRequest;
-use App\Http\Requests\UpdateAdditionalFees;
+use App\Http\Requests\AdditionalFee\BulkPayAdditionalFeeRequest;
+use App\Http\Requests\AdditionalFee\PayAdditionalFeeRequest;
+use App\Http\Requests\AdditionalFee\UpdateAdditionalFeeRequest;
+use App\Http\Requests\AdditionalFee\CreateAdditionalFeeRequest;
 use App\Services\ApiResponseService;
-use App\Http\Requests\BulkBillStudentRequest;
-use App\Http\Requests\PayAdditionalFeesRequest;
 use App\Http\Requests\BulkPayAdditionFeeRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\studentAdditionalFeeService;
@@ -23,14 +22,14 @@ class StudentAdditionalFeesController extends Controller
         $this->studentAdditionalFeeService = $studentAdditionalFeeService;
     }
 
-    public function createStudentAdditionalFees(AddtionalFeesRequest $request)
+    public function createStudentAdditionalFees(CreateAdditionalFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $createAdditionalFees = $this->studentAdditionalFeeService->createStudentAdditionalFees($request->validated(), $currentSchool);
         return ApiResponseService::success("Student Additional Fees Created Sucessfully", $createAdditionalFees, null, 201);
     }
 
-    public function updateStudentAdditionalFees(UpdateAdditionalFees $request, string $feeId)
+    public function updateStudentAdditionalFees(UpdateAdditionalFeeRequest $request, string $feeId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateAdditionalFees = $this->studentAdditionalFeeService->updateStudentAdditionalFees($request->validated(), $feeId, $currentSchool);
@@ -58,7 +57,7 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Student Additional Fees Fetched Successfully", $getAdditionalFees, null, 200);
     }
 
-    public function payAdditionalFees(PayAdditionalFeesRequest $request)
+    public function payAdditionalFees(PayAdditionalFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $payAdditionalFees = $this->studentAdditionalFeeService->payAdditionalFees($request->validated(), $currentSchool);
@@ -93,7 +92,7 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Transaction Details Fetched Succesfully", $transactionDetails, null, 200);
     }
 
-    public function bulkBillStudents(BulkBillStudentRequest $request)
+    public function bulkBillStudents(BulkPayAdditionalFeeRequest $request)
     {
         try {
             $currentSchool = $request->attributes->get('currentSchool');
@@ -175,7 +174,7 @@ class StudentAdditionalFeesController extends Controller
         }
     }
 
-    public function bulkPayFees(BulkPayAdditionFeeRequest $request){
+    public function bulkPayFees(BulkPayAdditionalFeeRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         try{
             $bulkPayFees = $this->studentAdditionalFeeService->bulkPayAdditionalFee($request->additional_fee, $currentSchool);

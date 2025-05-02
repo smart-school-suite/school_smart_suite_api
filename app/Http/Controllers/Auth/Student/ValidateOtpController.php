@@ -3,12 +3,8 @@
 namespace App\Http\Controllers\Auth\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\OTP;
-use App\Models\Student;
-use Illuminate\Support\Str;
-use App\Http\Requests\OtpRequest;
+use App\Http\Requests\Auth\OtpRequest;
 use App\Services\ApiResponseService;
-use Carbon\Carbon;
 use App\Services\Auth\Student\ValidateOtpService;
 use Illuminate\Http\Request;
 
