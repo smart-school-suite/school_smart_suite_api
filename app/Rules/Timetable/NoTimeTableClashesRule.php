@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Rules;
+namespace App\Rules\Timetable;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class TimetableRule implements ValidationRule
+class NoTimeTableClashesRule implements ValidationRule
 {
+    //This rule checks if there are any clashes within the timetable entries
     protected $scheduleEntries; // Store scheduleEntries
 
     public function __construct($scheduleEntries)
@@ -25,15 +26,12 @@ class TimetableRule implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
 
-        $conflicts = []; // Store conflicting appointment details
+        $conflicts = [];
         foreach ($this->scheduleEntries as $i => $entry1) {
             for ($j = $i + 1; $j < count($this->scheduleEntries); $j++) {
                 $entry2 = $this->scheduleEntries[$j];
-
-                // Check for day and teacher_id equality for the same teacher
                 if ($entry1['day_of_week'] === $entry2['day_of_week'] &&
                     $entry1['teacher_id'] === $entry2['teacher_id']) {
-                    // Check if they overlap
                     if ($this->hasOverlap($entry1, $entry2)) {
                         $conflicts[] = [
                             'teacher_id' => $entry1['teacher_id'],
@@ -54,7 +52,6 @@ class TimetableRule implements ValidationRule
             }
         }
 
-        // If conflicts found, build the error message and invoke the fail closure
         if (!empty($conflicts)) {
             $messages = [];
             foreach ($conflicts as $conflict) {
@@ -69,14 +66,12 @@ class TimetableRule implements ValidationRule
                 );
             }
 
-            $fail(implode(' | ', $messages)); // Call fail with the assembled message
+            $fail(implode(' | ', $messages));
         }
     }
 
     private function hasOverlap($appt1, $appt2)
     {
-        return (
-            ($appt1['starting_time'] < $appt2['ending_time'] && $appt1['ending_time'] > $appt2['starting_time'])
-        );
+        return $appt1['starting_time'] < $appt2['ending_time'] && $appt1['ending_time'] > $appt2['starting_time'];
     }
 }

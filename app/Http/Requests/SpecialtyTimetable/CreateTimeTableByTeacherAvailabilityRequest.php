@@ -1,34 +1,31 @@
 <?php
 
 namespace App\Http\Requests\SpecialtyTimetable;
-
-use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\Timetable\TimeSlotAvailableRule;
 use App\Rules\Timetable\NoTimeTableClashesRule;
-class CreateTimetableRequest extends FormRequest
+use App\Rules\Timetable\TeacherAvailableRule;
+use Illuminate\Foundation\Http\FormRequest;
+
+class CreateTimeTableByTeacherAvailabilityRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
+
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'scheduleEntries' => [
                 'required',
                 'array',
                 new NoTimeTableClashesRule($this->scheduleEntries),
+                new TeacherAvailableRule($this->scheduleEntries),
                 new TimeSlotAvailableRule($this->scheduleEntries)
             ],
             'scheduleEntries.*.teacher_id' => 'required|string|exists:teacher,id',

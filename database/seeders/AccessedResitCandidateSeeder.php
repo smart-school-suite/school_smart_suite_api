@@ -23,12 +23,7 @@ class AccessedResitCandidateSeeder extends Seeder
         $students = Student::where("school_branch_id", "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620")
             ->pluck('id')->toArray();
         for( $i = 0; $i < 3000; $i++) {
-            AccessedResitStudent::create([
-                'school_branch_id' => 'd34a2c1c-8b64-46a4-b8ec-65ba77d9d620',
-                'student_id' => Arr::random($students),
-                'exam_id' => Arr::random($exams),
-                'student_accessed' => 'pending',
-            ]);
+
         }
 
     }
