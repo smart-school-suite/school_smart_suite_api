@@ -5,11 +5,9 @@ namespace App\Services;
 use App\Models\Timetable;
 use Exception;
 use illuminate\Support\Facades\DB;
-use illuminate\Support\Facades\Log;
 
 class UpdateTimeTableService
 {
-    // Implement your logic here
 
     public function updateTimetableEntriesByTeacherAvailability(array $scheduleUpdatesEntries, $currentSchool) {
         $updates = collect($scheduleUpdatesEntries)->keyBy('entry_id')->toArray();
