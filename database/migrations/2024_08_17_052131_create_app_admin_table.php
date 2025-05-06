@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('edumanage_admin', function (Blueprint $table) {
+        Schema::create('app_admin', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
             $table->string('email')->unique();
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('edumanage_admin');
+        Schema::dropIfExists('app_admin');
     }
 };

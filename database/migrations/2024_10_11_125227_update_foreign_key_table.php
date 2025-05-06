@@ -181,22 +181,6 @@ return new class extends Migration
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
 
-        Schema::table('report_card', function (Blueprint $table){
-            $table->string('school_branch_id')->after('id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
-            $table->string('exam_id');
-            $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id');
-            $table->foreign('department_id')->references('id')->on('department');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
-        });
-
-
         Schema::table('exam_type', function (Blueprint $table){
             $table->string('semester_id');
             $table->foreign('semester_id')->references('id')->on('semesters');
@@ -508,12 +492,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
-        Schema::table('student_dropout_data', function($table) {
-            $table->string('dropout_id');
-            $table->foreign('dropout_id')->references('id')->on('student_dropout');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-        });
 
         Schema::table('resit_examtimetable', function ($table) {
             $table->string('school_branch_id');
@@ -578,11 +556,6 @@ return new class extends Migration
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('grades_category_id')->nullable();
             $table->foreign('grades_category_id')->references('id')->on('grades_category');
-        });
-
-        Schema::table('resit_candidates', function($table) {
-            $table->string('resit_exam_id');
-            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
         });
 
         Schema::table('school_operational_stats', function(Blueprint $table){
@@ -678,6 +651,24 @@ return new class extends Migration
         Schema::table('stat_types', function(Blueprint $table){
             $table->string('stat_category_id');
             $table->foreign('stat_category_id')->references('id')->on('stat_categories');
+        });
+
+        Schema::table('exam_candidates', function(Blueprint $table){
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('exam_id');
+            $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+        });
+
+        Schema::table('resit_candidates', function(Blueprint $table){
+            $table->string('resit_exam_id');
+            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
+            $table->string('student_id');
+            $table->foreign('student_id')->references('id')->on('student');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
     }

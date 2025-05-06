@@ -13,8 +13,6 @@ return new class extends Migration
     {
         Schema::create('elections', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('election_type_id');
-            $table->foreign('election_type_id')->references('id')->on('election_type');
             $table->dateTime('application_start')->nullable();
             $table->dateTime('application_end')->nullable();
             $table->dateTime('voting_start')->nullable();

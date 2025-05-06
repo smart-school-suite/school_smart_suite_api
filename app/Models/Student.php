@@ -84,10 +84,6 @@ class Student extends Model
     {
         return $this->belongsTo(CurrentElectionWinners::class);
     }
-    public function studentDropout(): HasMany
-    {
-        return $this->hasMany(StudentDropout::class, 'student_id');
-    }
     public function resitmarks(): HasMany
     {
         return $this->hasMany(ResitMarks::class, 'student_id');

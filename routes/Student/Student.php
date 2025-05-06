@@ -6,11 +6,9 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/deactivateAcc
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/activateAccount/{studentId}', [StudentController::class, 'activateAccount']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/markStudentAsDropout/{studentId}', [StudentController::class, 'markStudentAsDropout']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/getAllStudentDropout', [StudentController::class, 'getStudentDropoutList']);
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/getStudentDropoutDetails/{studentDropoutId}', [StudentController::class, 'getStudentDropoutDetails']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete('/deleteStudentDropout/{studentDropoutId}', [StudentController::class, 'deleteStudentDropout']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/reinstateDropoutStudent/{studentDropoutId}', [StudentController::class, 'reinstateDropedOutStudent']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteStudent/{studentIds}", [StudentController::class, 'bulkDeleteStudent']);
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->delete("/bulkDeleteStudentDropout/{dropOutIds}", [StudentController::class, 'bulkDeleteStudentDropout']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkActivateStudent/{studentIds}", [StudentController::class, 'bulkActivateStudent']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkDeActivateStudent/{studentIds}", [StudentController::class, 'bulkDeactivateStudent']);
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/bulkMarkStudentAsDropout", [StudentController::class, 'bulkMarkStudentAsDropout']);

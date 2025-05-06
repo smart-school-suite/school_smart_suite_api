@@ -25,15 +25,11 @@ class Parents extends Model
         'email',
         'phone_one',
         'phone_two',
-        'occupation',
         'cultural_background',
         'preferred_contact_method',
-        'marital_status',
-        'religion',
         'preferred_language',
         'school_branch_id',
         'relationship_to_student',
-        'password',
      ];
 
     /**
@@ -42,7 +38,6 @@ class Parents extends Model
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
         'remember_token',
     ];
 

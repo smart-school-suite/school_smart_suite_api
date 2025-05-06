@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('hod', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->nullableMorphs('hodable');
+            $table->string('hodable_id')->nullable();
+            $table->string('hodable_type')->nullable();
             $table->timestamps();
         });
     }

@@ -11,14 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('accessed_student', function (Blueprint $table) {
+        Schema::create('exam_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('exam_id');
-            $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
             $table->boolean('grades_submitted')->default(false);
             $table->enum('student_accessed', ['pending', 'accessed']);
             $table->timestamps();

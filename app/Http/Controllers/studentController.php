@@ -71,20 +71,10 @@ class StudentController extends Controller
         $markStudentAsDropout = $this->studentService->markStudentAsDropout($studentId, $currentSchool, $request->reason);
         return ApiResponseService::success("Student Marked As Dropout Successfully", $markStudentAsDropout, null, 200);
     }
-    public function getStudentDropoutDetails(Request $request, string $studentDropoutId){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $studentDropoutDetails = $this->studentService->getDropoutStudentDetails( $studentDropoutId, $currentSchool);
-        return ApiResponseService::success("Student Dropout Details Fetched Successfully", $studentDropoutDetails, null, 200);
-    }
     public function getStudentDropoutList(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $studentDropoutList = $this->studentService->getAllDropoutStudents($currentSchool);
         return ApiResponseService::success("Student Dropout List Fetched Successfully", StudentDropOutResource::collection($studentDropoutList), null, 200);
-    }
-    public function deleteStudentDropout(Request $request, string $studentDropoutId){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $deleteStudentDropout = $this->studentService->deleteDropoutStudent( $studentDropoutId, $currentSchool);
-        return ApiResponseService::success("Student Dropout Deleted Successfully", $deleteStudentDropout, null, 200);
     }
 
     public function reinstateDropedOutStudent(Request $request, string $studentDropoutId){
@@ -177,29 +167,6 @@ class StudentController extends Controller
         try{
           $bulkDeactivateStudent = $this->studentService->bulkDeactivateStudent($idsArray);
           return ApiResponseService::success("Student Deactivated Successfully", $bulkDeactivateStudent, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-
-    public function bulkDeleteStudentDropout($dropOutIds){
-        $idsArray = explode(',', $dropOutIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_dropout,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
-        try{
-             $bulkDeleteStudentDropout = $this->studentService->bulkDeleteDropoutStudent($dropOutIds);
-             return ApiResponseService::success("Dropped Out Student Deleted Successfully", $bulkDeleteStudentDropout, null, 200);
         }
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);

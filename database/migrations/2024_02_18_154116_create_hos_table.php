@@ -13,11 +13,8 @@ return new class extends Migration
     {
         Schema::create('hos', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->nullableMorphs('hosable');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('hosable_id')->nullable();
+            $table->string('hosable_type')->nullable();
             $table->timestamps();
         });
     }

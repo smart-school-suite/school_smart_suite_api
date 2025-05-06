@@ -36,10 +36,6 @@ class Specialty extends Model
     {
         return $this->hasMany(ElectionParticipants::class);
     }
-    public function studentDropout(): HasMany
-    {
-        return $this->hasMany(StudentDropout::class, 'specialty_id');
-    }
     public function feeWaiver(): HasMany
     {
         return $this->hasMany(FeeWaiver::class, 'specialty_id');

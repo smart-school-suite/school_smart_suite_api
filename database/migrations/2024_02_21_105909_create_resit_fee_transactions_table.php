@@ -16,10 +16,6 @@ return new class extends Migration
             $table->string('transaction_id');
             $table->decimal('amount', 8, 2);
             $table->enum('payment_method', ['cash', 'cheque', 'credit_card', 'debit_card', 'bank_transfer']);
-            $table->string('resitfee_id');
-            $table->foreign('resitfee_id')->references('id')->on('student_resit');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->timestamps();
         });
     }

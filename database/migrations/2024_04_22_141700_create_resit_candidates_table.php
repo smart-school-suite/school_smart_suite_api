@@ -13,12 +13,6 @@ return new class extends Migration
     {
         Schema::create('resit_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('resit_exam_id');
-            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->boolean('grades_submitted')->default(false);
             $table->boolean('student_accessed')->default(false);
             $table->timestamps();

@@ -13,14 +13,6 @@ return new class extends Migration
     {
         Schema::create('tuition_fees', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
             $table->decimal('amount_paid', 8, 2);
             $table->decimal('amount_left', 8, 2);
             $table->decimal('tution_fee_total', 8, 2);
