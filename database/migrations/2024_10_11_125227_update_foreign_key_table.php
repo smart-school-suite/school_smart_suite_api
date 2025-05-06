@@ -220,22 +220,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
-        Schema::table('resitable_courses', function (Blueprint $table){
-            $table->string('school_branch_id')->after('id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('course_id');
-            $table->foreign('course_id')->references('id')->on('courses');
-            $table->string('exam_id');
-            $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batch');
-        });
-
-
         Schema::table('student_resit', function (Blueprint $table){
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');

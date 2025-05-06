@@ -346,10 +346,10 @@ class StudentResitService
             throw $e;
         }
     }
-    public function prepareEvaluationData($resitCandidateId, $resitId, $currentSchool)
+    public function prepareEvaluationData($resitCandidateId, $resitExamId, $currentSchool)
     {
         $resitCandidate = ResitCandidates::findOrFail($resitCandidateId);
-        $resitExam = ResitExam::findOrFail($resitId);
+        $resitExam = ResitExam::findOrFail($resitExamId);
         $timetableCourseIds = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
             ->where("exam_id", $resitExam->id)
             ->pluck('course_id')
@@ -386,6 +386,7 @@ class StudentResitService
                     'course' => $studentResits[$courseId]->course,
                     'student_resit' => $studentResits[$courseId],
                     'marks' => $marks[$courseId],
+                    'exam_id' => $marks[$courseId]
                 ];
             }
         }

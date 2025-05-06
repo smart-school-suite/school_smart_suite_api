@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('former_exam_gpa', 4, 2);
             $table->decimal('new_exam_gpa', 4, 2);
             $table->json('score_details');
+            $table->enum('exam_status', ['passed', 'failed']);
             $table->timestamps();
         });
     }

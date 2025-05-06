@@ -21,7 +21,8 @@ class ResitResults extends Model
         'resit_exam_id',
         'student_batch_id',
         'score_details',
-        'scores'
+        'scores',
+        'exam_status'
     ];
     public $incrementing = 'false';
     public $keyType = 'string';

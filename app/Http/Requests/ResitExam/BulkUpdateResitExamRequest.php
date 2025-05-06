@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ResitExam;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,10 +11,6 @@ class BulkUpdateResitExamRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -24,10 +20,7 @@ class BulkUpdateResitExamRequest extends FormRequest
     public function rules()
     {
         return [
-            // Define your bulk update validation rules here
-            'data' => 'required|array',
-            'data.*.id' => 'required|integer|exists:your_table,id',
-            // 'data.*.field_name' => 'sometimes|string|max:255',
+
         ];
     }
 }
