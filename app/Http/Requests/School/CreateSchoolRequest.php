@@ -22,7 +22,7 @@ class CreateSchoolRequest extends FormRequest
             'name' => 'required|string',
             'motor' => 'required',
             'type' => 'required|string',
-            'established_year' => 'nullable|string',
+            'established_year' => 'required|date',
         ];
     }
 }

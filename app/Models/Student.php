@@ -32,7 +32,7 @@ class Student extends Model
         'school_branch_id',
         'specialty_id',
         'department_id',
-        'guadian_id',
+        'guardian_id',
         'student_batch_id',
         'religion',
         'account_status',
@@ -169,7 +169,7 @@ class Student extends Model
 
     public function guardian(): BelongsTo
     {
-        return $this->belongsTo(Parents::class, 'guadian_id');
+        return $this->belongsTo(Parents::class, 'guardian_id');
     }
 
 

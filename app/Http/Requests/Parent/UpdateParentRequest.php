@@ -20,9 +20,12 @@ class UpdateParentRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'sometimes|nullable|string',
-            'phone_one' => 'sometimes|nullable|string',
-            'relationship_to_student' => 'sometimes|nullable|string'
+            'name' => 'string|sometimes|nullable',
+            'address' => 'string|sometimes|nullable',
+            'email' => 'sometimes|nullable|email',
+            'phone_one' => 'string|sometimes|nullable',
+            'relationship_to_student' => 'string|sometimes|nullable',
+            'preferred_language' => 'string|sometimes|nullable',
         ];
     }
 }

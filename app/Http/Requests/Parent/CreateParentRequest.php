@@ -19,9 +19,12 @@ class CreateParentRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'sometimes|nullable|string',
-            'phone_one' => 'sometimes|nullable|string',
-            'relationship_to_student' => 'sometimes|nullable|string'
+            'name' => 'string|required',
+            'address' => 'required|string',
+            'email' => 'required|string|email',
+            'phone_one' => 'string|required',
+            'relationship_to_student' => 'required|string',
+            'preferred_language' => 'required|string',
         ];
     }
 }

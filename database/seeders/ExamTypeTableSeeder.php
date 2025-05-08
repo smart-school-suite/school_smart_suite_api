@@ -24,26 +24,25 @@ class ExamTypeTableSeeder extends Seeder
         }
 
         if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle); // Read the header
-            Log::info('CSV Header: ', $header); // Log the header for debugging
+            $header = fgetcsv($handle);
+            Log::info('CSV Header: ', $header);
 
-            $exam_type = []; // Initialize an empty array for countries
+            $exam_type = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data); // Log current row data for debugging
+                Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 15);
                 $semester = DB::table('semesters')->pluck('id')->toArray();
                 $randomSemesterID = Arr::random($semester);
-                // Ensure the row has at least two columns
+
                 if (count($data) >= 2) {
                     $exam_type[] = [
-                        'id' => $id, // Assign id from 1st column
-                        'exam_name' => $data[1], // Assign name from 2nd column
+                        'id' => $id,
+                        'exam_name' => $data[1],
                         "program_name" => $data[2],
                         "semester" => $data[3],
                         "type" => $data[4],
-                        "count" => $data[5],
                         'semester_id' => $randomSemesterID,
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
@@ -53,9 +52,8 @@ class ExamTypeTableSeeder extends Seeder
 
             fclose($handle);
 
-            Log::info('Exam Type Array: ', $exam_type); // Log the countries array after completion
+            Log::info('Exam Type Array: ', $exam_type);
 
-            // Insert the countries into the database
             if (!empty($exam_type)) {
                 DB::table('exam_type')->insert($exam_type);
                 Log::info('Inserted Exam Types: ' . count($exam_type) . ' entries.');

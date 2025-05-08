@@ -23,7 +23,8 @@ class CreateSchoolAdminRequest extends FormRequest
             'name' => "required|string",
             'email' => 'required|email',
             'first_name' => 'required|string',
-            'last_name' => 'required|string'
+            'last_name' => 'required|string',
+            'password' => 'required|min:8'
         ];
     }
 }

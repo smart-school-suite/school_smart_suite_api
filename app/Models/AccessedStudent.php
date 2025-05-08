@@ -19,7 +19,7 @@ class AccessedStudent extends Model
          'student_accessed'
     ];
 
-    public $table = 'accessed_resit_student';
+    public $table = 'exam_candidates';
     public $keyType = 'string';
     public $incrementing = 'false';
 

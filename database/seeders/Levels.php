@@ -6,36 +6,38 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Arr;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
-
-class StudentBatchTableSeeder extends Seeder
+class Levels extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-         $timestamp = now();
-         $filePath = public_path('data/student_batch.csv');
-         if (($handle = fopen($filePath, 'r')) !== false) {
+        Log::info('Education levels seeder has started.');
+        $timestamp = now();
+        $filePath = public_path("data/education_levels.csv");
+        if (!file_exists($filePath) || !is_readable($filePath)) {
+            throw new \Exception("CSV file not found or not readable!");
+        }
+
+        if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
-            $school_branches = "d34a2c1c-8b64-46a4-b8ec-65ba77d9d620";
-            $student_batches = [];
+
+            $education_levels = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 25);
+                $id = substr(md5($uuid), 0, 10);
+
                 if (count($data) >= 2) {
-                    $student_batches[] = [
+                    $education_levels[] = [
                         'id' => $id,
-                        'school_branch_id' => $school_branches,
                         'name' => $data[1],
-                        'graduation_date' => $data[2],
+                        'level' => $data[2],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];
@@ -44,13 +46,14 @@ class StudentBatchTableSeeder extends Seeder
 
             fclose($handle);
 
-            Log::info('Student batches Array: ', $student_batches);
+            Log::info('Education Levels Array: ', $education_levels);
 
-            if (!empty($student_batches)) {
-                DB::table('student_batch')->insert($student_batches);
-                Log::info('Inserted student batches: ' . count($student_batches) . ' entries.');
+
+            if (!empty($education_levels)) {
+                DB::table('education_levels')->insert($education_levels);
+                Log::info('Inserted Education levels: ' . count($education_levels) . ' entries.');
             } else {
-                Log::warning('No Student batches to insert.');
+                Log::warning('No Education levels to insert.');
             }
         }
     }

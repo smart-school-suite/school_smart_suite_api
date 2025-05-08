@@ -28,11 +28,11 @@ class CreateStudentService
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
             $student->last_name = $studentData["last_name"];
-            $student->guadian_id = $studentData["guadian_id"];
-            $student->level_id = $studentData["level_id"];
-            $student->specialty_id = $studentData["specialty_id"];
-            $student->department_id = $studentData["department_id"];
+            $student->guardian_id = $studentData["guardian_id"];
             $student->email = $studentData["email"];
+            $student->level_id = $specialty->level_id;
+            $student->specialty_id = $specialty->id;
+            $student->department_id = $specialty->department_id;
             $student->student_batch_id = $studentData["student_batch_id"];
             $student->school_branch_id = $currentSchool->id;
             $student->payment_format = $studentData["payment_format"];
@@ -40,25 +40,22 @@ class CreateStudentService
             $student->save();
 
             RegistrationFee::create([
-                'level_id' => $studentData["level_id"],
-                'specialty_id' => $studentData["specialty_id"],
+                'level_id' => $specialty->level_id,
+                'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'amount' => $specialty->registration_fee,
                 'student_id' => $randomId,
             ]);
 
             TuitionFees::create([
-                'level_id' => $studentData["level_id"],
-                'specialty_id' => $studentData["specialty_id"],
+                'level_id' => $specialty->level_id,
+                'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,
             ]);
              SendPasswordMailJob::dispatch($studentData["email"], $password);
-            return [
-                'student_id' => $student->id,
-                'generated_password' => $password
-            ];
+            return $student;
         } catch (QueryException $e) {
 
             Log::error($e->getMessage());

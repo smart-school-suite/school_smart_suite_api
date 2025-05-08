@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\SchoolSubscription;
 use App\Http\Requests\Subscription\SchoolSubscriptionRequest;
 use App\Services\SchoolSubcriptionService;
 use App\Services\ApiResponseService;
@@ -35,7 +34,6 @@ class SchoolSubscriptionController extends Controller
 
     public function getSchoolSubscriptonDetails(Request $request, $subscription_id)
     {
-        $subscription = SchoolSubscription::find($subscription_id);
         $subscriptionDetails = $this->schoolSubcriptionService->subcriptionPlanDetails($subscription_id);
         return ApiResponseService::success("Subcription Details Fetched Sucessfully", $subscriptionDetails, null, 200);
     }

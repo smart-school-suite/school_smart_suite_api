@@ -16,8 +16,7 @@ return new class extends Migration
             $table->string('country')->unique();
             $table->string('code');
             $table->string('currency');
-            $table->string('currency_symbol');
-            $table->string('officail_language');
+            $table->string('official_language');
             $table->boolean('status')->default(true);
             $table->timestamps();
         });

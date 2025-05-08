@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('role')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('address')->nullable();
-            $table->string('employment_status');
+            $table->string('employment_status')->nullable();
             $table->date('hire_date')->nullable();
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone')->nullable();
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('religion')->nullable();
             $table->integer('years_experience')->nullable();
-            $table->decimal('salary', 8, 2);
+            $table->decimal('salary', 8, 2)->nullable();
             $table->string('city')->nullable();
             $table->string('first_name');
             $table->string('last_name');

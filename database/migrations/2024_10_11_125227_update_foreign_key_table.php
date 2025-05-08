@@ -116,8 +116,8 @@ return new class extends Migration
             $table->foreign('department_id')->references('id')->on('department')->onDelete('cascade');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
-            $table->string('guadian_id');
-            $table->foreign('guadian_id')->references('id')->on('parents');
+            $table->string('guardian_id');
+            $table->foreign('guardian_id')->references('id')->on('parents');
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });

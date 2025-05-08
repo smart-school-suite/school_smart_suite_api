@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('inactive');
+            $table->string('description');
             $table->date('graduation_date');
             $table->timestamps();
         });

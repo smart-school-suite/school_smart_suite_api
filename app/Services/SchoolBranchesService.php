@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\GradesCategory;
 use App\Models\Schoolbranches;
 use App\Models\SchoolGradesConfig;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -19,35 +20,38 @@ class SchoolBranchesService
      * Expected keys: school_id, branch_name, address, city, state,
      * postal_code, phone_two, phone_one, website,
      * email, semester_count, max_gpa, abbreviation.
-     * @return Schoolbranches The newly created school branch instance.
+     * @return string The newly created school branch Id.
      * @throws \Exception If an error occurs during the creation process.
      */
-    public function createSchoolBranch(array $data): Schoolbranches
+    public function createSchoolBranch(array $data): string
     {
         $branchId = Str::uuid()->toString();
+
+        DB::beginTransaction();
+
         try {
             $schoolBranch = Schoolbranches::create(array_merge($data, ['id' => $branchId]));
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to create school branch: " . $e->getMessage());
-        }
-        try {
-            DB::transaction(function () use ($branchId) {
-                $gradeCategories = GradesCategory::all();
-                $configs = $gradeCategories->map(function ($gradeCategory) use ($branchId) {
-                    return [
-                        'school_branch_id' => $branchId,
-                        'grade_category_id' => $gradeCategory->id,
-                    ];
-                })->toArray();
 
-                SchoolGradesConfig::insert($configs);
-            });
-        } catch (\Exception $e) {
-            $schoolBranch->delete();
-            throw new \Exception("Failed to create school grades configuration: " . $e->getMessage());
-        }
+            $gradeCategories = GradesCategory::all();
+            $configs = $gradeCategories->map(function ($gradeCategory) use ($branchId) {
+                return [
+                    'id' => Str::uuid(),
+                    'school_branch_id' => $branchId,
+                    'grades_category_id' => $gradeCategory->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->toArray();
 
-        return $schoolBranch;
+            SchoolGradesConfig::insert($configs);
+
+            DB::commit();
+
+            return $branchId;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
     /**
      * Updates an existing school branch.
