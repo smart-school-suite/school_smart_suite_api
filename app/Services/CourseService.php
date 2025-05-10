@@ -13,15 +13,16 @@ class CourseService
     // Implement your logic here
     public function createCourse(array $data, $currentSchool): Courses
     {
+        $specialty = Specialty::findOrFail($data['specialty_id']);
         $course = new Courses();
         $course->course_code = $data['course_code'];
         $course->course_title = $data['course_title'];
-        $course->specialty_id = $data['specialty_id'];
-        $course->department_id = $data['department_id'];
+        $course->specialty_id = $specialty->id;
+        $course->department_id = $specialty->department_id;
         $course->credit = $data['credit'];
         $course->school_branch_id = $currentSchool->id;
         $course->semester_id = $data['semester_id'];
-        $course->level_id = $data['level_id'];
+        $course->level_id = $specialty->level_id;
         $course->save();
 
         return $course;

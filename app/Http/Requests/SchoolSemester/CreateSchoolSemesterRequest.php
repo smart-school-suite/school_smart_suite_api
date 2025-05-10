@@ -25,8 +25,9 @@ class CreateSchoolSemesterRequest extends FormRequest
             'end_date' => 'required|date|after:start_date',
             'school_year_start' => 'required|integer',
             'school_year_end' => 'required|integer',
-            'semester_id' => 'required|integer|exists:semesters,id',
-            'specialty_id' => 'required|integer|exists:specialties,id',
+            'semester_id' => 'required|string|exists:semesters,id',
+            'specialty_id' => 'required|string|exists:specialty,id',
+            'student_batch_id' => 'required|string|exists:student_batch,id'
         ];
     }
 }

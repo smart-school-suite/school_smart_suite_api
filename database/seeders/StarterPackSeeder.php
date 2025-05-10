@@ -11,6 +11,7 @@ use App\Models\SchoolBranchApiKey;
 use App\Models\SchoolSubscription;
 use App\Models\SubscriptionPayment;
 use App\Models\GradesCategory;
+use App\Models\Parents;
 use App\Models\SchoolGradesConfig;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,7 @@ class StarterPackSeeder extends Seeder
             $this->createExamType();
             $schoolId = $this->createSchool();
             $schoolBranchId = $this->createSchoolBranch($schoolId);
+            $this->createParents($schoolBranchId);
             $this->subscribeSchool($schoolBranchId);
             $this->createSchoolAdmin($schoolBranchId);
             $this->createGradesConfig($schoolBranchId);
@@ -345,6 +347,21 @@ class StarterPackSeeder extends Seeder
             })->toArray();
 
             SchoolGradesConfig::insert($configs);
+    }
+    private function createParents(string $schoolBranchId){
+        $faker = Faker::create();
+        for($i = 0; $i <= 20; $i++){
+            Parents::create([
+                'school_branch_id' => $schoolBranchId,
+                'name' => $faker->name,
+                'address' => $faker->address,
+                'email' => $faker->email,
+                "phone_one" => $faker->phoneNumber(),
+                "phone_two" => $faker->phoneNumber(),
+                "relationship_to_student" => "mother",
+                "preferred_language" => "english"
+            ]);
+        }
     }
 
 }

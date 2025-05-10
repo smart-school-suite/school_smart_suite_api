@@ -24,7 +24,7 @@ class LimitTeachers
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
         $subcriptionDetails = SchoolSubscription::where('school_branch_id', $schoolBranch->school_branch_id)->first();
-        if($subcriptionDetails->max_number_teacher >= $schoolBranch->max_number_teacher){
+        if($schoolBranch->max_number_teacher  >= $subcriptionDetails->max_number_teacher){
             return ApiResponseService::error("You reached your teacher creation limit you cannot create anymore teachers", null, 400);
         }
 

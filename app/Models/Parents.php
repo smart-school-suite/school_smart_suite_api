@@ -69,7 +69,7 @@ class Parents extends Model
     }
 
     public function student(): HasMany {
-        return $this->hasMany(Student::class, 'guadian_id');
+        return $this->hasMany(Student::class, 'guardian_id');
     }
     public function otps()
     {

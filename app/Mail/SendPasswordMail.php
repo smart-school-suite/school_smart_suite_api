@@ -16,10 +16,9 @@ class SendPasswordMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public $password;
-    public function __construct($password)
+    public function __construct(protected $password)
     {
-        $this->password = $password;
+
     }
 
     /**

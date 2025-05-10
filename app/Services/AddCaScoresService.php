@@ -12,6 +12,8 @@ use App\Models\Marks;
 use App\Models\Grades;
 use App\Models\StudentResults;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+
 class AddCaScoresService
 {
     // Implement your logic here
@@ -92,7 +94,7 @@ class AddCaScoresService
         $course = Courses::findOrFail($scoreData['course_id']);
         Marks::create([
             'student_batch_id' => $student->student_batch_id,
-            'course_id' => $scoreData['course_id'],
+            'courses_id' => $course->id,
             'student_id' => $student->id,
             'exam_id' => $exam->id,
             'level_id' => $student->level_id,
@@ -108,8 +110,8 @@ class AddCaScoresService
 
         return [
             'course_id' => $course->id,
-            'course_name' => $course->name,
-            'course_code' => $course->code,
+            'course_name' => $course->course_title,
+            'course_code' => $course->course_code,
             'score' => $scoreData['score'],
             'grade' => $gradeData['letterGrade'] ?? 'N/A',
             'grade_status' => $gradeData['gradeStatus'] ?? 'N/A',
@@ -217,7 +219,7 @@ class AddCaScoresService
     private function isDuplicateEntry(string $schoolId, array $scoreData, Student $student): bool
     {
         return Marks::where('school_branch_id', $schoolId)
-            ->where('course_id', $scoreData['course_id'])
+            ->where('courses_id', $scoreData['course_id'])
             ->where('exam_id', $scoreData['exam_id'])
             ->where('level_id', $student->level_id)
             ->where('specialty_id', $student->specialty_id)
@@ -305,7 +307,7 @@ class AddCaScoresService
      */
     private function determineExamResultsStatus(Collection $marks): array
     {
-        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'fail');
+        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
 
         if ($failedCourses->isEmpty()) {
             return [

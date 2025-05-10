@@ -23,7 +23,7 @@ class CreateGradeRequest extends FormRequest
             'grades.*.maximum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grades.*.max_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grades.*.determinant' => 'required|string',
-            'grades.*.grade_points' => "required|numeric|min:0|max:{$this->maxGradePoints}|regex:/^\d+(\.\d{1,2})?$/",
+            'grades.*.grade_points' => "required|numeric|min:0|max:4.00|regex:/^\d+(\.\d{1,2})?$/",
             'grades.*.grades_category_id' => 'required|string|exists:grades_category,id',
             'grades.*.grade_status' => 'required|string',
         ];

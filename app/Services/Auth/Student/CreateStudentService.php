@@ -18,7 +18,6 @@ class CreateStudentService
     {
         try {
             $specialty = Specialty::where('school_branch_id', $currentSchool->id)
-                ->where('level_id', $studentData["level_id"])
                 ->findOrFail($studentData["specialty_id"]);
 
             $password = $this->generateRandomPassword();
@@ -27,6 +26,7 @@ class CreateStudentService
             $student->id = $randomId;
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
+            $student->phone_one = $studentData['phone_one'];
             $student->last_name = $studentData["last_name"];
             $student->guardian_id = $studentData["guardian_id"];
             $student->email = $studentData["email"];
@@ -35,7 +35,6 @@ class CreateStudentService
             $student->department_id = $specialty->department_id;
             $student->student_batch_id = $studentData["student_batch_id"];
             $student->school_branch_id = $currentSchool->id;
-            $student->payment_format = $studentData["payment_format"];
             $student->password = Hash::make($password);
             $student->save();
 
@@ -50,6 +49,8 @@ class CreateStudentService
             TuitionFees::create([
                 'level_id' => $specialty->level_id,
                 'specialty_id' => $specialty->id,
+                'amount_paid' => 0.00,
+                'amount_left' => 0.00,
                 'school_branch_id' => $currentSchool->id,
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,

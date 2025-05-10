@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('resit_exams', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->decimal('weighted_mark', 4, 2);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->decimal('weighted_mark', 5, 2)->nullable();
             $table->boolean('timetable_published')->default(false);
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
             $table->boolean("grading_added")->default(false);

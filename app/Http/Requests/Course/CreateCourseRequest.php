@@ -24,10 +24,8 @@ class CreateCourseRequest extends FormRequest
             'course_code' => 'required|string',
             'course_title' => 'required|string',
             'specialty_id' => 'required|string',
-            'department_id' => 'required|string',
             'credit' => 'required|integer',
             'semester_id' => 'required|string',
-            'level_id' => 'required|string'
         ];
     }
 }

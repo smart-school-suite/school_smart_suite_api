@@ -51,8 +51,6 @@ class CreateExamCandidatesJob implements ShouldQueue
                 'level_id' => $student->level_id,
                 'specialty_id' => $student->specialty_id,
                 'student_batch_id' => $student->student_batch_id,
-                'grades_submitted' => false,
-                'student_accessed' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

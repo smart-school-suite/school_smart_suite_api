@@ -122,7 +122,7 @@ class AddExamScoresService
         $course = Courses::findOrFail($courseId);
         Marks::create([
             'student_batch_id' => $student->student_batch_id,
-            'course_id' => $courseId,
+            'courses_id' => $courseId,
             'student_id' => $student->id,
             'exam_id' => $exam->id,
             'level_id' => $student->level_id,
@@ -138,8 +138,8 @@ class AddExamScoresService
 
         return [
             'course_id' => $course->id,
-            'course_name' => $course->name,
-            'course_code' => $course->code,
+            'course_name' => $course->course_title,
+            'course_code' => $course->course_code,
             'score' => $gradeData['score'],
             'grade' => $gradeData['letterGrade'],
             'grade_status' => $gradeData['gradeStatus'],
@@ -201,7 +201,7 @@ class AddExamScoresService
     private function isDuplicateEntry(string $schoolId, array $scoreData, Student $student): bool
     {
         return Marks::where('school_branch_id', $schoolId)
-            ->where('course_id', $scoreData['course_id'])
+            ->where('courses_id', $scoreData['course_id'])
             ->where('exam_id', $scoreData['exam_id'])
             ->where('level_id', $student->level_id)
             ->where('specialty_id', $student->specialty_id)
@@ -224,7 +224,7 @@ class AddExamScoresService
         $caScore = Marks::where('school_branch_id', $schoolId)
             ->where('exam_id', $examId)
             ->where('student_id', $student->id)
-            ->where('course_id', $courseId)
+            ->where('courses_id', $courseId)
             ->where('specialty_id', $student->specialty_id)
             ->where('level_id', $student->level_id)
             ->where('student_batch_id', $student->student_batch_id)
@@ -287,8 +287,8 @@ class AddExamScoresService
             ->where('exam_type_id', $caExamType->id)
             ->where('specialty_id', $exam->specialty_id)
             ->where('level_id', $exam->level_id)
+            ->where('student_batch_id', $exam->student_batch_id)
             ->where('semester_id', $exam->semester_id)
-            ->where('department_id', $exam->department_id)
             ->firstOrFail();
     }
 
@@ -364,6 +364,7 @@ class AddExamScoresService
             Studentresit::create([
                 'school_branch_id' => $schoolId,
                 'student_id' => $student->id,
+                'specialty_id' => $student->specialty_id,
                 'course_id' => $courseId,
                 'exam_id' => $examId,
                 'student_batch_id' => $student->student_batch_id,
@@ -454,7 +455,7 @@ class AddExamScoresService
      */
     private function determineExamResultsStatus(Collection $marks): array
     {
-        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'fail');
+        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
 
         if ($failedCourses->isEmpty()) {
             return [

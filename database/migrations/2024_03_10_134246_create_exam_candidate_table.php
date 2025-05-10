@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('exam_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->boolean('grades_submitted')->default(false);
-            $table->enum('student_accessed', ['pending', 'accessed']);
+            $table->enum('student_accessed', ['pending', 'accessed'])->default('pending');
             $table->timestamps();
         });
     }

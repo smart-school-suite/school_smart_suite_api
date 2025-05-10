@@ -22,6 +22,7 @@ class UpdateExamScoreRequest extends FormRequest
         return [
             'scores_entries' => 'required|array',
             'scores_entries.*.mark_id' => 'required|string|exists:marks,id',
+            'scores_entries.*.course_id' => 'required|string|exists:courses,id',
             'scores_entries.*.score' => [
                 'sometimes',
                 'nullable',

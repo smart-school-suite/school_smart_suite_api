@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('school_grades_config', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->boolean('isgrades_configured')->default(false);
-            $table->integer('max_score')->nullable();
+            $table->decimal('max_score', 5, 2)->nullable();
             $table->timestamps();
         });
     }

@@ -20,6 +20,7 @@ class Studentresit extends Model
         'specialty_id',
         'level_id',
         'paid_status',
+        'student_batch_id',
         'resit_fee',
         'attempt_number',
         'iscarry_over'

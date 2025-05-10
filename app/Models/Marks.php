@@ -13,7 +13,7 @@ class Marks extends Model
 
     protected $fillable = [
         'student_id',
-        'course_id',
+        'courses_id',
         'exam_id',
         'level_id',
         'score',

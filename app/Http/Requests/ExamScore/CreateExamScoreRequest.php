@@ -22,6 +22,8 @@ class CreateExamScoreRequest extends FormRequest
         return [
             'scores_entries' => 'required|array',
             'scores_entries.*.student_id' => 'required|string|exists:student,id',
+            'scores_entries.*.course_id' => 'required|string|exists:courses,id',
+            'scores_entries.*.accessment_id' => 'required|string|exists:exam_candidates,id',
             'scores_entries.*.score' => [
                 'required',
                 'numeric',

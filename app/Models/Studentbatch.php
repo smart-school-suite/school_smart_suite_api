@@ -41,10 +41,6 @@ class Studentbatch extends Model
     {
         return $this->hasMany(StudentBatchGradeDates::class);
     }
-    public function studentDropout(): HasMany
-    {
-        return $this->hasMany(StudentDropout::class);
-    }
     public function schoolBranch(): HasMany
     {
         return $this->hasMany(Schoolbranches::class);

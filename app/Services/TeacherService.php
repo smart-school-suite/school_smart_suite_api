@@ -208,7 +208,7 @@ class TeacherService
                 foreach ($preferenceDataList as $preferenceData) {
                     $createdEntry = TeacherSpecailtyPreference::create([
                         'specialty_id' => $preferenceData["specialty_id"],
-                        'teacher_id' =>  $teacherId['id'],
+                        'teacher_id' =>  $teacherId,
                         "school_branch_id" => $currentSchool->id
                     ]);
                     $result[] = $createdEntry;

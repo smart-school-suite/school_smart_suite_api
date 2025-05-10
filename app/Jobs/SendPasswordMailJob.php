@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 
 class SendPasswordMailJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.

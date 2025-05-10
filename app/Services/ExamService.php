@@ -7,7 +7,9 @@ use Illuminate\Support\Str;
 use App\Models\LetterGrade;
 use App\Models\SchoolGradesConfig;
 use App\Jobs\CreateExamCandidatesJob;
+use App\Models\Examtype;
 use App\Models\Student;
+use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -17,21 +19,23 @@ class ExamService
 
     public function createExam(array $data, $currentSchool)
     {
+        $specialty = Specialty::findOrFail($data['specialty_id']);
+        $examType = Examtype::findOrFail($data['exam_type_id']);
         $examId = Str::uuid();
         $exam = new Exams();
         $exam->id = $examId;
         $exam->school_branch_id = $currentSchool->id;
         $exam->start_date = $data["start_date"];
         $exam->end_date = $data["end_date"];
-        $exam->level_id = $data["level_id"];
-        $exam->exam_type_id = $data["exam_type_id"];
+        $exam->level_id = $specialty->level_id;
+        $exam->exam_type_id = $examType->id;
         $exam->weighted_mark = $data["weighted_mark"];
-        $exam->semester_id = $data["semester_id"];
+        $exam->semester_id = $examType->semester_id;
         $exam->school_year = $data["school_year"];
-        $exam->specialty_id = $data["specialty_id"];
+        $exam->specialty_id = $specialty->id;
         $exam->student_batch_id = $data["student_batch_id"];
         $exam->save();
-        CreateExamCandidatesJob::dispatch($data['specialty_id'], $data['level_id'], $data['student_batch_id'], $examId);
+        CreateExamCandidatesJob::dispatch($data['specialty_id'], $specialty->level_id, $data['student_batch_id'], $examId);
         return $exam;
 
     }

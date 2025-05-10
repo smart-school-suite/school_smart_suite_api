@@ -11,6 +11,7 @@ use App\Models\Exams;
 use App\Models\Student;
 use App\Models\StudentResults;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class UpdateCaScoreService
 {
@@ -57,13 +58,17 @@ class UpdateCaScoreService
             }
 
             // Retrieve all relevant scores for the student in this exam.
-            $allStudentScores = $this->getAllStudentScoresForExam($student, $exam, $currentSchool);
-
+            $this->getAllStudentScoresForExam(
+                $student,
+                $exam,
+                $currentSchool,
+                $results
+            );
             // Recalculate GPA based on all the student's scores for this exam.
-            $totalScoreAndGpa = $this->recalculateGpa($allStudentScores);
+            $totalScoreAndGpa = $this->recalculateGpa($results);
 
             // Determine the overall exam result status based on all the student's scores.
-            $examStatus = $this->determineExamResultStatus($allStudentScores);
+            $examStatus = $this->determineExamResultStatus($results);
 
             // Update the student results record.
             $this->updateStudentResultsRecord(
@@ -71,7 +76,7 @@ class UpdateCaScoreService
                 $currentSchool,
                 $totalScoreAndGpa,
                 $exam,
-                $allStudentScores,
+                $results,
                 $examStatus
             );
 
@@ -89,11 +94,10 @@ class UpdateCaScoreService
      * @param Student $student The student object.
      * @param Exams $exam The exam object.
      * @param object $currentSchool The current school object.
-     * @return Collection A collection of Marks model instances.
      */
-    private function getAllStudentScoresForExam(Student $student, Exams $exam, $currentSchool): Collection
+    private function getAllStudentScoresForExam(Student $student, Exams $exam, $currentSchool, array &$results)
     {
-        return Marks::with('course')
+        $marks = Marks::with('course')
             ->where('school_branch_id', $currentSchool->id)
             ->where('student_id', $student->id)
             ->where('student_batch_id', $student->student_batch_id)
@@ -101,6 +105,32 @@ class UpdateCaScoreService
             ->where('specialty_id', $student->specialty_id)
             ->where('level_id', $student->level_id)
             ->get();
+        foreach ($marks as $mark) {
+            $courseId = $mark->course->id;
+            $courseAlreadyExists = false;
+
+            foreach ($results as $result) {
+                if ($result['course_id'] === $courseId) {
+                    $courseAlreadyExists = true;
+                    break;
+                }
+            }
+
+            if (!$courseAlreadyExists) {
+                $results[] = [
+                    'course_id' => $courseId,
+                    'course_name' => $mark->course->course_title,
+                    'course_code' => $mark->course->course_code,
+                    'score' => $mark->score,
+                    'grade' => $mark->grade,
+                    'grade_status' => $mark->grade_status,
+                    'gratification' => $mark->gratification,
+                    'grade_points' => $mark->grade_points,
+                    'resit_status' => $mark->resit_status,
+                    'course_credit' => $mark->course->credit,
+                ];
+            }
+        }
     }
 
     /**
@@ -168,8 +198,8 @@ class UpdateCaScoreService
 
         return [
             'course_id' => $course->id,
-            'course_name' => $course->name,
-            'course_code' => $course->code,
+            'course_name' => $course->course_title,
+            'course_code' => $course->course_code,
             'score' => $updateScoreData['score'],
             'grade' => $updateScoreData['letterGrade'],
             'grade_status' => $updateScoreData['gradeStatus'],
@@ -183,10 +213,10 @@ class UpdateCaScoreService
     /**
      * Recalculates the Grade Point Average (GPA) from a collection of results.
      *
-     * @param Collection $results A collection of course results with 'course_credit' and 'grade_points'.
+     * @param array $results A collection of course results with 'course_credit' and 'grade_points'.
      * @return array An array containing the 'totalScore' and 'gpa'.
      */
-    private function recalculateGpa(Collection $results): array
+    private function recalculateGpa(array $results): array
     {
         $totalWeightedPoints = 0;
         $totalCredits = 0;
@@ -220,7 +250,7 @@ class UpdateCaScoreService
      * @return StudentResults The updated StudentResults model instance.
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the StudentResults record is not found.
      */
-    private function updateStudentResultsRecord(Student $student, $currentSchool, array $totalScoreAndGpa, Exams $exam, Collection $results, array $examStatus): StudentResults
+    private function updateStudentResultsRecord(Student $student, $currentSchool, array $totalScoreAndGpa, Exams $exam, array $results, array $examStatus): StudentResults
     {
         $studentResult = StudentResults::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $student->id)
@@ -232,8 +262,8 @@ class UpdateCaScoreService
 
         $studentResult->gpa = $totalScoreAndGpa['gpa'];
         $studentResult->total_score = $totalScoreAndGpa['totalScore'];
-        $studentResult->exam_status = $examStatus['passed'] ? 'Passed' : 'Failed';
-        $studentResult->score_details = json_encode($results->toArray());
+        $studentResult->exam_status = $examStatus['passed'] ? 'passed' : 'failed';
+        $studentResult->score_details = json_encode($results);
         $studentResult->save();
 
         return $studentResult;
@@ -242,14 +272,16 @@ class UpdateCaScoreService
     /**
      * Determines the overall exam result status based on a collection of course results.
      *
-     * @param Collection $results A collection of course results with 'grade_status'.
+     * @param array $results A collection of course results with 'grade_status'.
      * @return array An array containing the 'exam_status' and boolean flags for pass/fail.
      */
-    private function determineExamResultStatus(Collection $results): array
+    private function determineExamResultStatus(array $results): array
     {
-        $failedCourses = $results->filter(fn($result) => ($result['grade_status'] ?? '') === 'fail');
+        $failedCourses = array_filter($results, function ($result) {
+            return ($result['grade_status'] ?? '') === 'failed';
+        });
 
-        if ($failedCourses->isEmpty()) {
+        if (empty($failedCourses)) {
             return [
                 'exam_status' => 'Passed',
                 'passed' => true,
