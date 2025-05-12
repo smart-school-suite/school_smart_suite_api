@@ -4,27 +4,24 @@ namespace App\Http\Requests\Exam;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class BulkUpdateExamRequest extends FormRequest
+class BulkUpdateResitExamRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
+
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'exams' => 'required|array',
-            'exams.*.exam_id' => 'required|string|exists:exams,id',
+            'exams.*.resit_exam_id' => 'required|string|exists:resit_exams,id',
             'exams.*.start_date' => 'sometimes|nullable|date',
             'exams.*.end_date' => 'sometimes|nullable|date',
-            'exams.*.exam_type_id' => 'sometimes|nullable|string|exists:exam_type,id',
-            'exams.*.level_id' => 'sometimes|nullable|string|exists:education_levels,id',
             'exams.*.weighted_mark' =>  [
                 'sometimes',
                 'nullable',
@@ -33,9 +30,6 @@ class BulkUpdateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'exams.*.semester_id' => 'sometimes|nullable|string|exists:semesters,id',
-            'exams.*.school_year' => 'sometimes|nullable|string',
-            'exams.*.specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
         ];
     }
 }

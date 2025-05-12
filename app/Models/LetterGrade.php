@@ -31,6 +31,9 @@ class LetterGrade extends Model
 
     }
 
+    public function grades(): HasMany {
+        return $this->hasMany(Grades::class, 'letter_grade_id');
+    }
     public function exams(): HasMany {
         return $this->hasMany(Exams::class, 'letter_grade_id');
     }

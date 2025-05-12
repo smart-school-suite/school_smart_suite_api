@@ -28,7 +28,8 @@ class Exams extends Model
         'specialty_id',
         'expected_candidate_number',
         'evaluated_candidate_number',
-        'student_batch_id'
+        'student_batch_id',
+        'grades_category_id'
     ];
 
     public $keyType = 'string';

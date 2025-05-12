@@ -416,6 +416,8 @@ class UpdateExamScoreService
             ->where("level_id", $student->level_id)
             ->where("specialty_id", $student->specialty_id)
             ->where("course_id", $courseId)
+            ->where("exam_id", $examId)
+            ->where("school_branch_id", $schoolId)
             ->first();
         if ($studentResit) {
             $studentResit->delete();

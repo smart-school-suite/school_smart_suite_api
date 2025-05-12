@@ -537,6 +537,8 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
             $table->string('resit_exam_id');
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
+            $table->string('failed_exam_id');
+            $table->foreign('failed_exam_id')->references('id')->on('exams');
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });

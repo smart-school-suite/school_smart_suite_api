@@ -20,6 +20,7 @@ class ResitResults extends Model
         'level_id',
         'resit_exam_id',
         'student_batch_id',
+        'failed_exam_id',
         'score_details',
         'scores',
         'exam_status'

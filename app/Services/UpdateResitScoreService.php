@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Services;
-
+use Illuminate\Support\Facades\DB;
 use App\Models\Exams;
 use App\Models\Examtype;
 use App\Models\Grades;
@@ -12,14 +12,14 @@ use App\Models\ResitMarks;
 use App\Models\ResitExam;
 use App\Models\StudentResults;
 use App\Models\Studentresit;
+use App\Models\LetterGrade;
 use App\Models\ResitResults;
 use App\Models\ResitCandidates;
+use Illuminate\Support\Facades\Log;
 use Exception;
-use illuminate\Support\Facades\DB;
 
 class UpdateResitScoreService
 {
-    // Implement your logic here
     public function updateResitScores(array $entries, object $currentSchool, string $candidateId, $studentResitResultId){
         DB::beginTransaction();
         try {
@@ -68,8 +68,8 @@ class UpdateResitScoreService
                 );
 
                 $caResults[] = $this->updateCaScore($entry, $newCaScores, $currentSchool, $caExamRecord);
-                $examResults[] = $this->updateExamScore($entry, $newExamScores, $currentSchool);
-                $this->updateStudentResitStatus($entry, $currentSchool, $letterGradeDetails);
+                $examResults[] = $this->updateExamScore($entry, $newExamScores, $currentSchool, $exam);
+                $this->updateStudentResitStatus($entry, $currentSchool, $letterGradeDetails, $exam);
             }
             $this->mergeStudentScores($resitCandidate, $caExam, $exam,  $caResults, $examResults);
             $caGpaAndExamGpa = $this->retriveCaAndExamGpa($exam, $caExam, $currentSchool, $resitCandidate);
@@ -88,7 +88,13 @@ class UpdateResitScoreService
                 $resitCandidate,
                 $studentResitResultId
             );
-            return $results;
+            return [
+                'results' => $results,
+                'resit_exam' => $resitExam,
+                'exam' => $exam,
+                'ca_results' => $caResults,
+                'exam_results' => $examResults
+            ];
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -99,7 +105,7 @@ class UpdateResitScoreService
         $student = Student::findOrFail($entry['student_id']);
         $resitMark = ResitMarks::findOrFail($entry['resit_mark_id']);
         $resitMark->student_id = $candidate->student_id;
-        $resitMark->course_id = $entry['course_id'];
+        $resitMark->courses_id = $entry['course_id'];
         $resitMark->resit_exam_id = $candidate->resit_exam_id;
         $resitMark->level_id = $student->level_id;
         $resitMark->score = $entry['score'];
@@ -108,13 +114,13 @@ class UpdateResitScoreService
         $resitMark->grade = $letterGradeDetails['letter_grade'] ?? null;
         $resitMark->grade_status = $letterGradeDetails['grade_status'] ?? null;
         $resitMark->grade_points = $letterGradeDetails['grade_points'] ?? null;
-        $resitMark->determinant = $letterGradeDetails['gratification'] ?? null;
+        $resitMark->gratification = $letterGradeDetails['gratification'] ?? null;
         $resitMark->save();
 
         return [
             'course_id' => $course->id,
-            'course_name' => $course->name,
-            'course_code' => $course->code,
+            'course_name' => $course->course_title,
+            'course_code' => $course->course_code,
             'score' => $entry['score'],
             'grade' => $letterGradeDetails['letter_grade'] ?? 'N/A',
             'grade_status' => $letterGradeDetails['grade_status'] ?? 'N/A',
@@ -136,7 +142,7 @@ class UpdateResitScoreService
         $resitExams->level_id = $gpaDetails['ca_results']->level_id ?? null;
         $resitExams->resit_exam_id = $resitCandidate->resit_exam_id ?? null;
         $resitExams->student_batch_id = $gpaDetails['ca_results']->student_batch_id ?? null;
-        $resitExams->exam_status = $examStatus['passed'] ? 'Passed' : 'Failed';
+        $resitExams->exam_status = $examStatus['passed'] ? 'passed' : 'failed';
         $resitExams->score_details = json_encode($results);
         $resitExams->save();
     }
@@ -144,9 +150,9 @@ class UpdateResitScoreService
     {
         $mark = Marks::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $entry['student_id'])
-            ->where("course_id", $entry['course_id'])
+            ->where("courses_id", $entry['course_id'])
             ->where("specialty_id", $entry['specialty_id'])
-            ->where("level_id", $entry['level_id'])
+            ->where("level_id", $caExam->level_id)
             ->where("exam_id", $caExam->id)
             ->with(['course'])
             ->firstOrFail();
@@ -156,31 +162,31 @@ class UpdateResitScoreService
             'grade_points' => $updatCaScoreData['new_grade_point'],
             'grade_status' => $updatCaScoreData['new_grade_status'],
             'grade' => $updatCaScoreData['new_letter_grade'],
-            'resit_status' => $updatCaScoreData['new_grade_status'] === 'fail' ? 'high_resit_potential' : 'no_resit',
-            'determinant' => $updatCaScoreData['new_determinant'],
+            'resit_status' => $updatCaScoreData['new_resit_status'] === 'failed' ? 'high_resit_potential' : 'no_resit',
+            'gratification' => $updatCaScoreData['new_gratification'],
         ]);
 
         return [
             'course_id' => $mark->course->id,
-            'course_name' => $mark->course->name,
-            'course_code' => $mark->course->code,
+            'course_name' => $mark->course->course_title,
+            'course_code' => $mark->course->course_code,
             'course_credit' => $mark->course->credit,
-            'score' => $mark->score,
-            'grade_points' => $mark->grade_points,
-            'grade_status' => $mark->grade_status,
-            'grade' => $mark->grade,
-            'resit_status' => $mark->resit_status,
-            'determinant' => $mark->determinant,
+            'score' => (float) $updatCaScoreData['new_score'],
+            'grade_points' => (float) $updatCaScoreData['new_grade_point'],
+            'grade_status' => $updatCaScoreData['new_grade_status'],
+            'grade' => $updatCaScoreData['new_letter_grade'],
+            'resit_status' => $updatCaScoreData['new_resit_status'],
+            'gratification' => $updatCaScoreData['new_gratification'],
         ];
     }
-    public function updateExamScore(array $entry, array $updateExamScoreData, object $currentSchool)
+    public function updateExamScore(array $entry, array $updateExamScoreData, object $currentSchool, object $exam)
     {
         $mark = Marks::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $entry['student_id'])
-            ->where("course_id", $entry['course_id'])
+            ->where("courses_id", $entry['course_id'])
             ->where("specialty_id", $entry['specialty_id'])
-            ->where("level_id", $entry['level_id'])
-            ->where("exam_id", $entry['exam_id'])
+            ->where("level_id", $exam->level_id)
+            ->where("exam_id", $exam->id)
             ->with(['course'])
             ->firstOrFail();
 
@@ -189,32 +195,31 @@ class UpdateResitScoreService
             'grade_points' => $updateExamScoreData['new_grade_point'],
             'grade_status' => $updateExamScoreData['new_grade_status'],
             'grade' => $updateExamScoreData['new_letter_grade'],
-            'resit_status' => $updateExamScoreData['new_grade_status'] === 'fail' ? 'resit' : 'no_resit',
-            'determinant' => $updateExamScoreData['new_determinant'],
+            'resit_status' => $updateExamScoreData['new_resit_status'] === 'failed' ? 'resit' : 'no_resit',
+            'gratification' => $updateExamScoreData['new_gratification'],
         ]);
 
         return [
             'course_id' => $mark->course->id,
-            'course_name' => $mark->course->name,
-            'course_code' => $mark->course->code,
+            'course_name' => $mark->course->course_title,
+            'course_code' => $mark->course->course_code,
             'course_credit' => $mark->course->credit,
-            'score' => $mark->score,
-            'grade_points' => $mark->grade_points,
-            'grade_status' => $mark->grade_status,
-            'grade' => $mark->grade,
-            'resit_status' => $mark->resit_status,
-            'determinant' => $mark->determinant,
+            'score' => (float) $updateExamScoreData['new_score'],
+            'grade_points' => (float) $updateExamScoreData['new_grade_point'],
+            'grade_status' => $updateExamScoreData['new_grade_status'],
+            'grade' => $updateExamScoreData['new_letter_grade'],
+            'resit_status' => $updateExamScoreData['new_resit_status'],
+            'gratification' => $updateExamScoreData['new_gratification']
         ];
     }
     public function determineNewExamScores(object $currentSchool, string $resitLetterGrade, string $failedExamId)
     {
         $failedExam = Exams::findOrFail($failedExamId);
-        $examGrades = Grades::whereHas('lettergrade', function ($query) use ($resitLetterGrade) {
-            $query->where('letter_grade', $resitLetterGrade);
-        })
-            ->where("school_branch_id", $currentSchool->id)
-            ->where("grades_category_id", $failedExam->grades_category_id)
-            ->first();
+        $letterGrade = LetterGrade::where("letter_grade", $resitLetterGrade)->firstOrFail();
+        $examGrades = Grades::where("letter_grade_id", $letterGrade->id)
+        ->where("school_branch_id", $currentSchool->id)
+        ->where("grades_category_id", $failedExam->grades_category_id)
+        ->firstorFail();
 
         if (!$examGrades) {
             throw new Exception("No grades found for school ID: {$currentSchool->id} and grades category ID: {$failedExam->grades_category_id} with letter grade: {$resitLetterGrade}");
@@ -223,34 +228,37 @@ class UpdateResitScoreService
         $newExamScore = mt_rand($examGrades->minimum_score, $examGrades->maximum_score);
 
         return [
-            'new_score' => $newExamScore,
-            'new_grade_points' => $examGrades->grade_points,
+            'new_score' => (float) $newExamScore,
+            'new_grade_point' => (float) $examGrades->grade_points,
             'new_grade_status' => $examGrades->grade_status,
             'new_letter_grade' => $resitLetterGrade,
-            'new_determinant' => $examGrades->determinant,
+            'new_resit_status' => $examGrades->resit_status,
+            'new_gratification' => $examGrades->determinant,
         ];
     }
     public function determineNewCaScores(object $currentSchool, string $resitLetterGrade, string $failedCaId)
     {
         $failedCa = Exams::findOrFail($failedCaId);
-        $caGrades = Grades::whereHas('lettergrade', function ($query) use ($resitLetterGrade) {
-            $query->where('letter_grade', $resitLetterGrade);
-        })
-            ->where('school_branch_id', $currentSchool->id)
-            ->where('grades_category_id', $failedCa->grades_category_id)
-            ->first();
+        $letterGrade = LetterGrade::where("letter_grade", $resitLetterGrade)->firstOrFail();
+        $caGrades = Grades::where("letter_grade_id", $letterGrade->id)
+        ->where("school_branch_id", $currentSchool->id)
+        ->where("grades_category_id", $failedCa->grades_category_id)
+        ->firstorFail();
 
         if (!$caGrades) {
             throw new Exception("No grades found for school ID: {$currentSchool->id} and grades category ID: {$failedCa->grades_category_id} with letter grade: {$resitLetterGrade}");
         }
 
         $newCaScore = mt_rand($caGrades->minimum_score, $caGrades->maximum_score);
+        Log::info("grade_points");
+
         return [
-            'new_score' => $newCaScore,
-            'new_grade_point' => $caGrades->grade_points,
-            'new_grade_status' => $caGrades->grade_status,
+            'new_score' => (float) $newCaScore,
+            'new_grade_point' => (float) $caGrades->grade_points,
+            'new_grade_status' =>  $caGrades->grade_status,
             'new_letter_grade' => $resitLetterGrade,
-            'new_determinant' => $caGrades->determinant,
+            'new_resit_status' => $caGrades->resit_status,
+            'new_gratification' => $caGrades->determinant,
         ];
     }
     public function determineResitLetterGrade(float $score, object $currentSchool, object $candidate)
@@ -273,7 +281,6 @@ class UpdateResitScoreService
                     'grade_status' => $grade->grade_status ?? null,
                     'gratification' => $grade->determinant ?? null,
                     'grade_points' => $grade->grade_points ?? 0,
-                    'determinant' => $grade->determinant ?? null,
                     'score' => $score,
                 ];
             }
@@ -281,10 +288,9 @@ class UpdateResitScoreService
 
         return [
             'letter_grade' => 'F',
-            'grade_status' => 'fail',
+            'grade_status' => 'failed',
             'gratification' => 'poor',
             'grade_points' => 0,
-            'determinant' => 'poor',
             'score' => $score,
         ];
     }
@@ -308,7 +314,6 @@ class UpdateResitScoreService
             ->where('specialty_id', $exam->specialty_id)
             ->where('level_id', $exam->level_id)
             ->where('semester_id', $exam->semester_id)
-            ->where('department_id', $exam->department_id)
             ->firstOrFail();
 
         return $caExam;
@@ -344,7 +349,7 @@ class UpdateResitScoreService
             'student_batch_id' => $resitCandidate->student_batch_id,
         ];
     }
-    private function mergeStudentScores(object $resitCandidate, ?object $caExam, ?object $exam, array $caResults, array $examResults)
+    private function mergeStudentScores(object $resitCandidate, ?object $caExam, ?object $exam, array &$caResults, array &$examResults)
     {
         $existingMarks = Marks::query()
             ->where('school_branch_id', $resitCandidate->school_branch_id)
@@ -373,15 +378,15 @@ class UpdateResitScoreService
                 if (!$existingCaCourseIds->contains($mark->course->id)) {
                     $caResults[] = [
                         'course_id' => $mark->course->id,
-                        'course_name' => $mark->course->name,
-                        'course_code' => $mark->course->code,
+                        'course_name' => $mark->course->course_title,
+                        'course_code' => $mark->course->course_code,
                         'course_credit' => $mark->course->credit,
-                        'score' => $mark->score,
-                        'grade_points' => $mark->grade_points,
+                        'score' => (float) $mark->score,
+                        'grade_points' => (float) $mark->grade_points,
                         'grade_status' => $mark->grade_status,
                         'grade' => $mark->grade,
                         'resit_status' => $mark->resit_status,
-                        'determinant' => $mark->determinant,
+                        'gratification' => $mark->gratification,
                     ];
                 }
             }
@@ -393,38 +398,51 @@ class UpdateResitScoreService
                 if (!$existingExamCourseIds->contains($mark->course->id)) {
                     $examResults[] = [
                         'course_id' => $mark->course->id,
-                        'course_name' => $mark->course->name,
-                        'course_code' => $mark->course->code,
+                        'course_name' => $mark->course->course_title,
+                        'course_code' => $mark->course->course_code,
                         'course_credit' => $mark->course->credit,
-                        'score' => $mark->score,
-                        'grade_points' => $mark->grade_points,
+                        'score' => (float) $mark->score,
+                        'grade_points' => (float) $mark->grade_points,
                         'grade_status' => $mark->grade_status,
                         'grade' => $mark->grade,
                         'resit_status' => $mark->resit_status,
-                        'determinant' => $mark->determinant,
+                        'gratification' => $mark->gratification,
                     ];
                 }
             }
         }
     }
-    private function updateStudentResitStatus(array $entry, object $currentSchool, array $resitLetterGrade): ?object
+    private function updateStudentResitStatus(array $entry, object $currentSchool, array $resitLetterGrade, object $exam): ?object
     {
         $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $entry['student_id'])
             ->where("course_id", $entry['course_id'])
             ->where("specialty_id", $entry['specialty_id'])
             ->first();
-
-        if ($studentResit) {
-            if ($resitLetterGrade['grade_status'] === "fail") {
+        if($resitLetterGrade['grade_status'] === "passed"){
+            $studentResit->delete();
+        }
+        if($resitLetterGrade['grade_status'] === "failed"){
+            if($studentResit){
                 $studentResit->increment('attempt_number');
                 $studentResit->iscarry_over = true;
                 $studentResit->paid_status = 'unpaid';
                 $studentResit->save();
                 return $studentResit;
-            } else {
-                $studentResit->delete();
-                return null;
+            }
+            else{
+                StudentResit::create([
+                   'iscarry_over' => true,
+                   'attempt_number' => 1,
+                   'resit_fee' => $currentSchool->resit_fee,
+                   'school_branch_id' => $currentSchool->id,
+                   'specialty_id' => $entry['specialty_id'],
+                   'course_id' => $entry['course_id'],
+                   'exam_id' => $exam->id,
+                   'level_id' => $exam->level_id,
+                   'student_id' => $entry['student_id'],
+                   'student_batch_id' => $exam->student_batch_id
+                ]);
             }
         }
 
@@ -455,6 +473,9 @@ class UpdateResitScoreService
     }
     public function updateStudentResults(array $results, ?object $examDetails, object $resitCandidate, object $currentSchool, array $gpaAndTotalScores)
     {
+        $failedCourses = collect($results)->filter(function ($mark) {
+            return ($mark['grade_status'] ?? ($mark['grade_status'] ?? '')) === 'failed';
+        });
         if ($examDetails) {
             $updatedResults = StudentResults::where("school_branch_id", $currentSchool->id)
                 ->where("specialty_id", $examDetails->specialty_id)
@@ -464,7 +485,8 @@ class UpdateResitScoreService
 
             if ($updatedResults) {
                 $updatedResults->gpa = $gpaAndTotalScores['gpa'];
-                $updatedResults->total_scores = $gpaAndTotalScores['totalScore'];
+                $updatedResults->exam_status = empty($failedCourses) ? "passed": "failed";
+                $updatedResults->total_score = $gpaAndTotalScores['totalScore'];
                 $updatedResults->score_details = json_encode($results);
                 $updatedResults->save();
             }
@@ -473,7 +495,7 @@ class UpdateResitScoreService
     private function determineExamResultsStatus(array $results): array
     {
         $failedCourses = collect($results)->filter(function ($mark) {
-            return ($mark['grade_status'] ?? ($mark['grade_status'] ?? '')) === 'fail';
+            return ($mark['grade_status'] ?? ($mark['grade_status'] ?? '')) === 'failed';
         });
 
         return [

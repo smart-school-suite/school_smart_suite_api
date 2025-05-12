@@ -6,7 +6,6 @@ use App\Http\Requests\Exam\CreateExamRequest;
 use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Http\Requests\Exam\BulkUpdateExamRequest;
 use App\Http\Resources\AssiocaiteWeigtedMarkLetterGrades;
-use App\Http\Requests\ExamRequest;
 use App\Http\Requests\ExamGrading\BulkAddExamGradingRequest;
 use App\Http\Resources\AccessedExamResource;
 use App\Http\Resources\ExamResource;

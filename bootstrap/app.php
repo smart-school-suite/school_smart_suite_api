@@ -175,6 +175,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
              Route::prefix('api/v1/stats')
              ->group(base_path("routes/Stats/FinancialStats.php"));
+
+             Route::middleware([IdentifyTenant::class])->prefix('api/v1/resit-exam')
+             ->group(base_path("routes/Exam/ResitExam.php"));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

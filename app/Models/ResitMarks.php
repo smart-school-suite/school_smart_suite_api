@@ -13,7 +13,8 @@ class ResitMarks extends Model
 
     protected $fillable = [
         'student_id',
-        'course_id',
+        'courses_id',
+        'student_batch_id',
         'resit_exam_id',
         'level_id',
         'score',

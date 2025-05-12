@@ -13,7 +13,7 @@ Route::middleware(['auth:sanctum'])->get("/getTransactions", [StudentResitContro
 Route::middleware(['auth:sanctum'])->delete('/deleteTransaction/{transactionId}', [StudentResitController::class, 'deleteFeePaymentTransaction']);
 Route::middleware(['auth:sanctum'])->get('/transactionDetails/{transactionId}', [StudentResitController::class, 'getTransactionDetails']);
 Route::middleware(['auth:sanctum'])->delete('/reverseTransaction/{transactionId}', [StudentResitController::class, 'reverseTransaction']);
-Route::middleware(['auth:sanctum'])->post('/submitResitResults', [StudentResitController::class, 'submitResitScores']);
+Route::middleware(['auth:sanctum'])->post('/submitResitResults/{candidateId}', [StudentResitController::class, 'submitResitScores']);
 Route::middleware(['auth:sanctum'])->put('/update-resit-scores/{candidateId}/{studentResitResultId}', [StudentResitController::class, 'updateResitScores']);
 Route::middleware(['auth:sanctum'])->get("/getStudentResitData/{examId}/{studentId}", [StudentResitController::class, 'prepareResitData']);
 Route::middleware(['auth:sanctum'])->post('/bulkPayStudentResit/{studentResitIds}', [StudentResitController::class, 'bulkPayStudentResit']);
@@ -21,8 +21,6 @@ Route::middleware(['auth:sanctum'])->delete('/bulkDeleteStudentResit/{studentRes
 Route::middleware(['auth:sanctum'])->delete('/bulkDeleteResitTransactions/{studentResitIds}', [StudentResitController::class, 'bulkDeleteStudentResitTransactions']);
 Route::middleware(['auth:santum'])->post('/bulkReverseResitTransactions/{transactionIds}', [StudentResitController::class, 'bulkReverseTransaction']);
 Route::middleware(['auth:sanctum'])->put('/bulkUpdateStudentResit/{studentResitIds}', [StudentResitController::class, 'bulkUpdateStudentResit']);
-Route::middleware(['auth:sanctum'])->put('/updateResitExams/{resitExamId}', [StudentResitController::class, 'updateResitExams']);
 Route::middleware(['auth:sanctum'])->get('/getPreparedResitEvaluationData/{resitExamId}/{candidateId}', [StudentResitController::class, 'getPreparedResitEvaluationData']);
-Route::middleware(['auth:sanctum'])->get('/getAllResitExams', [StudentResitController::class, 'getAllResitExams']);
 Route::middleware(['auth:sanctum'])->get('/getEligableStudentsByExam/{resitExamId}', [StudentResitController::class, 'getAllEligableStudentByExam']);
 Route::middleware(['auth:sanctum'])->get('/getResitExamsByStudent/{studentId}', [StudentResitController::class, 'getEligableResitExamByStudent']);

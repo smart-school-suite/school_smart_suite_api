@@ -11,7 +11,7 @@ use App\Http\Requests\StudentResit\BulkUpdateStudentResitRequest;
 use App\Http\Requests\ResitExamScore\CreateResitExamScore;
 use App\Http\Requests\ResitExamScore\UpdateResitExamScore;
 use App\Http\Requests\StudentResit\PayResitFeeRequest;
-use App\Http\Requests\ResitExam\UpdateResitExamRequest;
+
 use App\Services\UpdateResitScoreService;
 use App\Services\ApiResponseService;
 
@@ -37,10 +37,9 @@ class StudentResitController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $candidateId = $request->route('candidateId');
-        $this->resitScoresService->submitStudentResitScores($request->entries, $currentSchool, $candidateId);
-        return ApiResponseService::success("Resit Scores Submitted Successfully", null, null, 200);
+        $resitScores = $this->resitScoresService->submitStudentResitScores($request->entries, $currentSchool, $candidateId);
+        return ApiResponseService::success("Resit Scores Submitted Successfully", $resitScores, null, 200);
     }
-
     public function updateResitScores(UpdateResitExamScore $request)
     {
         try {
@@ -48,7 +47,7 @@ class StudentResitController extends Controller
             $studentResitResultId = $request->route('studentResitResultId');
             $currentSchool = $request->attributes->get('currentSchool');
             $updateResitScores = $this->updateResitScoreService->updateResitScores(
-                $request->validated()->entries,
+                $request->entries,
                 $currentSchool,
                 $candidateId,
                 $studentResitResultId
@@ -81,8 +80,7 @@ class StudentResitController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $student_id = $request->route('student_id');
-        $exam_id = $request->route("exam_id");
-        $getMyResits = $this->studentResitService->getMyResits($currentSchool, $student_id, $exam_id);
+        $getMyResits = $this->studentResitService->getMyResits($currentSchool, $student_id);
         return ApiResponseService::success("Student Records Fetched Sucessfully", $getMyResits, null, 200);
     }
     public function getAllResits(Request $request)
@@ -225,12 +223,6 @@ class StudentResitController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function updateResitExams(UpdateResitExamRequest $request, $resitExamId)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $updateDates = $this->studentResitService->updateResitExam($request->all(), $currentSchool, $resitExamId);
-        return ApiResponseService::success("Resit Exam Dates Set Successfully", $updateDates, null, 200);
-    }
     public function getPreparedResitEvaluationData(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
@@ -238,12 +230,6 @@ class StudentResitController extends Controller
         $candidateId = $request->route('candidateId');
         $resitData = $this->studentResitService->prepareEvaluationData($candidateId, $resitExamId, $currentSchool);
         return ApiResponseService::success("Resit Evaluation Data Fetched Successfully", $resitData, null, 200);
-    }
-    public function getAllResitExams(Request $request)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $resitExams = $this->studentResitService->getAllResitExams($currentSchool);
-        return ApiResponseService::success("Resit Exams Fetched Successfully", $resitExams, null, 200);
     }
     public function getAllEligableStudentByExam(Request $request, $resitExamId)
     {

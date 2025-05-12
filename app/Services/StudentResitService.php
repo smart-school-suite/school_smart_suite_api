@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\CreateResitCandidates;
 use App\Models\Marks;
 use App\Models\ResitCandidates;
 use App\Models\ResitExam;
@@ -49,10 +48,9 @@ class StudentResitService
             ->find($studentResitId);
         return $getResitData;
     }
-    public function getMyResits($currentSchool, $examId, $studentId)
+    public function getMyResits($currentSchool, $studentId)
     {
         $getResitData = Studentresit::where('school_branch_id', $currentSchool->id)
-            ->where("exam_id", $examId)
             ->where("student_id", $studentId)
             ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
             ->get();
@@ -326,26 +324,6 @@ class StudentResitService
             throw $e;
         }
     }
-    public function updateResitExam($updateData, $currentSchool, $resitId)
-    {
-        DB::beginTransaction();
-        try {
-            $resit = ResitExam::where("school_branch_id", $currentSchool->id)
-                ->find($resitId);
-
-            if (!$resit) {
-                return ApiResponseService::error("Resit Not found", null, 404);
-            }
-
-            $resit->update($updateData);
-            dispatch(new CreateResitCandidates($resit));
-            DB::commit();
-            return $resit;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
     public function prepareEvaluationData($resitCandidateId, $resitExamId, $currentSchool)
     {
         $resitCandidate = ResitCandidates::findOrFail($resitCandidateId);
@@ -392,10 +370,6 @@ class StudentResitService
         }
 
         return $results;
-    }
-    public function getAllResitExams($currentSchool)
-    {
-        return ResitExam::with(['semester'])->where("school_branch_id", $currentSchool->id)->get();
     }
     public function getAllEligableStudents($currentSchool, $resitExamId)
     {

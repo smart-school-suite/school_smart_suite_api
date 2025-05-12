@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->decimal('score', 5, 2);
             $table->enum('grade_status', ['passed', 'failed'])->nullable();
+            $table->decimal('grade_points', 5, 2);
             $table->string('gratification');
             $table->string('grade');
             $table->timestamps();
