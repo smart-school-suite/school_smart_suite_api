@@ -33,17 +33,17 @@ class StudentBatchcontroller extends Controller
 
     public function updateStudentBatch(UpdateStudentBatchRequest $request)
     {
-        $batch_id = $request->route('batch_id');
+        $batchId = $request->route('batchId');
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateStudentBatch = $this->studentBatchService->updateStudentBatch($request->validated(), $batch_id, $currentSchool);
+        $updateStudentBatch = $this->studentBatchService->updateStudentBatch($request->validated(), $batchId, $currentSchool);
         return ApiResponseService::success('Student Batch Updated Successfully', $updateStudentBatch, null, 200);
     }
 
     public function deleteStudentBatch(Request $request)
     {
-        $batch_id = $request->route('batch_id');
+        $batchId = $request->route('batchId');
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteStudentBatches = $this->studentBatchService->deleteStudentBatch($batch_id, $currentSchool);
+        $deleteStudentBatches = $this->studentBatchService->deleteStudentBatch($batchId, $currentSchool);
         return ApiResponseService::success("Student Batch Deleted Successully", $deleteStudentBatches, null, 200);
     }
 

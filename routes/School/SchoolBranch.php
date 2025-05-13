@@ -3,7 +3,20 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolBranchesController;
 use App\Http\Middleware\IdentifyTenant;
 
-Route::post('/register', [SchoolBranchesController::class, 'createSchoolBranch']);
-Route::middleware(['auth:sanctum'])->delete('/delete-branch/{branch_id}', [SchoolBranchesController::class, 'deleteSchoolBranch']);
-Route::middleware(['auth:sanctum'])->put('/update-branch/{branch_id}', [SchoolBranchesController::class, 'updateSchoolBranch']);
-Route::middleware([IdentifyTenant::class,])->get('/my-school-branches', [SchoolBranchesController::class, 'getAllSchoolBranches']);
+// Publicly accessible route for school branch registration
+Route::post('/school-branches', [SchoolBranchesController::class, 'createSchoolBranch'])
+    ->name('school-branches.store');
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Delete a specific school branch
+    Route::delete('/school-branches/{branchId}', [SchoolBranchesController::class, 'deleteSchoolBranch'])
+        ->name('school-branches.destroy');
+
+    // Update a specific school branch
+    Route::put('/school-branches/{branchId}', [SchoolBranchesController::class, 'updateSchoolBranch'])
+        ->name('school-branches.update');
+
+    Route::get('/school-branches', [SchoolBranchesController::class, 'getAllSchoolBranches'])
+        ->name('school-branches.index');
+});
+

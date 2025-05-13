@@ -1,9 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Http\Requests\BulkUpdateSchooolSemesterRequest;
-use App\Http\Requests\SchoolSemesterRequest;
 use App\Http\Requests\SchoolSemester\CreateSchoolSemesterRequest;
 use App\Http\Requests\SchoolSemester\UpdateSchoolSemesterRequest;
 use App\Http\Requests\SchoolSemester\BulkUpdateSchoolSemesterRequest;

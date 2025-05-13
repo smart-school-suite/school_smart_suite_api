@@ -22,16 +22,15 @@ class SchoolsController extends Controller
         return ApiResponseService::success("School Created Sucessfully", $createSchool, null, 201);
     }
 
-    public function updateSchool(UpdateSchoolRequest $request, $school_id)
+    public function updateSchool(UpdateSchoolRequest $request, $schoolId)
     {
-        $school = School::find($school_id);
-        $updateSchool = $this->schoolService->updateSchool($request->validated(), $school_id);
+        $updateSchool = $this->schoolService->updateSchool($request->validated(), $schoolId);
         return ApiResponseService::success("School Updated Sucessfully", $updateSchool, null, 200);
     }
 
-    public function deleteSchool( $school_id)
+    public function deleteSchool( $schoolId)
     {
-        $deleteSchool = $this->schoolService->deleteSchool($school_id);
+        $deleteSchool = $this->schoolService->deleteSchool($schoolId);
         return ApiResponseService::success("School Deleted Succefully", $deleteSchool, null, 200);
     }
 

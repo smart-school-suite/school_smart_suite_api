@@ -27,17 +27,17 @@ class CoursesController extends Controller
         return ApiResponseService::success('Course Created Succefully', $course, null, 201);
     }
 
-    public function deleteCourse(Request $request, string $course_id)
+    public function deleteCourse(Request $request, string $courseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteCourse = $this->courseService->deleteCourse($course_id, $currentSchool);
+        $deleteCourse = $this->courseService->deleteCourse($courseId, $currentSchool);
         return  ApiResponseService::success('Course Deleted Succefully', $deleteCourse, null, 200);
     }
 
-    public function updateCourse(UpdateCourseRequest $request, string $course_id)
+    public function updateCourse(UpdateCourseRequest $request, string $courseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateCourse = $this->courseService->updateCourse($course_id, $request->validated(), $currentSchool);
+        $updateCourse = $this->courseService->updateCourse($courseId, $request->validated(), $currentSchool);
         return ApiResponseService::success('Course Update Succefully', $updateCourse, null, 200);
     }
     public function getCourses(Request $request)
@@ -49,11 +49,10 @@ class CoursesController extends Controller
     public function getCourseDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $course_id = $request->route("course_id");
-        $courseDetails = $this->courseService->courseDetails($course_id, $currentSchool);
+        $courseId = $request->route("course_id");
+        $courseDetails = $this->courseService->courseDetails($courseId, $currentSchool);
         return ApiResponseService::success('Course Details fetched succefully', $courseDetails, null, 200);
     }
-
     public function getBySpecialtyLevelSemester(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
@@ -70,25 +69,21 @@ class CoursesController extends Controller
             200
         );
     }
-
     public function activateCourse(Request $request, string $courseId){
         $currentSchool = $request->attributes->get("currentSchool");
         $activateCourse = $this->courseService->activateCourse($currentSchool, $courseId);
         return ApiResponseService::success("Course Activated Succesfully", $activateCourse, null, 200);
     }
-
     public function deactivateCourse(Request $request, string $courseId){
         $currentSchool = $request->attributes->get("currentSchool");
         $deactivateCourse = $this->courseService->deactivateCourse($currentSchool, $courseId);
         return ApiResponseService::success("Course Deactivated Succesfully", $deactivateCourse, null, 200);
     }
-
     public function getCoursesBySchoolSemester(Request $request, string $semesterId, string $specialtyId){
         $currentSchool = $request->attributes->get("currentSchool");
         $courses = $this->courseService->getCoursesBySchoolSemester($currentSchool, $semesterId, $specialtyId);
         return ApiResponseService::success("Course By School Semester Fetched Succesfully", $courses, null, 200);
     }
-
     public function bulkUpdateCourse(BulkUpdateCourseRequest $request){
         try{
            $bulkUpdateCourse = $this->courseService->bulkUpdateCourse($request->courses);
@@ -98,7 +93,6 @@ class CoursesController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
     public function bulkDeleteCourse($courseIds){
         $idsArray = explode(',', $courseIds);
 
@@ -121,7 +115,6 @@ class CoursesController extends Controller
         return ApiResponseService::error($e->getMessage(), null, 400);
        }
     }
-
     public function bulkDeactivateCourse($courseIds){
         $idsArray = explode(',', $courseIds);
 
@@ -145,7 +138,6 @@ class CoursesController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
     public function bulkActivateCourse($courseIds){
         $idsArray = explode(',', $courseIds);
 
@@ -169,7 +161,6 @@ class CoursesController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
     public function getActiveCourses(Request $request){
         $currentSchool = $request->attributes->get("currentSchool");
         $activeCourses =  $this->courseService->getActiveCourses($currentSchool);

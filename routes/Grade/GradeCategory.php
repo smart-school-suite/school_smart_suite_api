@@ -3,7 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GradesCategoryController;
 
-Route::post('/createGradeCategory', [GradesCategoryController::class, 'createCategory']);
-Route::delete('/deleteGradeCategory/{categoryId}', [GradesCategoryController::class, 'deleteCategory']);
-Route::put('/updateGradeCategory/{categoryId}', [GradesCategoryController::class, 'updateCategory']);
-Route::get('/getGradeCategories', [GradesCategoryController::class, 'getGradesCategory']);
+// Create a new grade category
+Route::post('/grade-categories', [GradesCategoryController::class, 'createCategory'])
+    ->name('grade-categories.store');
+
+// Delete a specific grade category
+Route::delete('/grade-categories/{categoryId}', [GradesCategoryController::class, 'deleteCategory'])
+    ->name('grade-categories.destroy');
+
+// Update a specific grade category
+Route::put('/grade-categories/{categoryId}', [GradesCategoryController::class, 'updateCategory'])
+    ->name('grade-categories.update');
+
+// Get all grade categories
+Route::get('/grade-categories', [GradesCategoryController::class, 'getGradesCategory'])
+    ->name('grade-categories.index');

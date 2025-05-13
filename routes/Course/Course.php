@@ -1,18 +1,64 @@
 <?php
+
 use App\Http\Controllers\CoursesController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum'])->post('/create-course', [CoursesController::class, 'createCourse']);
-Route::middleware(['auth:sanctum'])->delete('/delete-course/{course_id}', [CoursesController::class, 'deleteCourse']);
-Route::middleware(['auth:sanctum'])->put('/update-course/{course_id}', [CoursesController::class, 'updateCourse']);
-Route::middleware(['auth:sanctum'])->get('/my-courses', [CoursesController::class, 'getCourses']);
-Route::middleware(['auth:sanctum'])->get('/course-details/{course_id}', [CoursesController::class, 'getCourseDetails']);
-Route::middleware(['auth:sanctum'])->get('/my-courses/{specialty_id}/{semester_id}', [CoursesController::class, 'getBySpecialtyLevelSemester']);
-Route::middleware(['auth:sanctum'])->post('/deactivateCourse/{courseId}', [CoursesController::class, 'deactivateCourse']);
-Route::middleware(['auth:sanctum'])->post("/activateCourse/{courseId}", [CoursesController::class, 'activateCourse']);
-Route::middleware(['auth:sanctum'])->get('/getCoursesBySchoolSemester/{semesterId}/{specialtyId}', [CoursesController::class, 'getCoursesBySchoolSemester']);
-Route::middleware(['auth:sanctum'])->delete('/bulkDeleteCourses/{courseIds}', [CoursesController::class, 'bulkDeleteCourse']);
-Route::middleware(['auth:sanctum'])->get('/getActiveCourses', [CoursesController::class, 'getActiveCourses']);
-Route::middleware(['auth:sanctum'])->put('/bulkUpdateCourse', [CoursesController::class, 'bulkUpdateCourse']);
-Route::middleware(['auth:sanctum'])->post('/bulkActivateCourse/{courseIds}', [CoursesController::class, 'bulkActivateCourse']);
-Route::middleware(['auth:sanctum'])->post('/bulkDeactivateCourse/{courseIds}', [CoursesController::class, 'bulkDeactivateCourse']);
+// Create a new course
+Route::post('/courses', [CoursesController::class, 'createCourse'])
+    ->name('courses.store');
+
+// Get all courses (potentially admin-only)
+Route::get('/courses', [CoursesController::class, 'getCourses'])
+    ->name('courses.index');
+
+// Get active courses
+Route::get('/courses/active', [CoursesController::class, 'getActiveCourses'])
+    ->name('courses.active');
+
+// Get details of a specific course
+Route::get('/courses/{courseId}', [CoursesController::class, 'getCourseDetails'])
+    ->name('courses.show');
+
+// Get courses for the authenticated user
+Route::get('/my/courses', [CoursesController::class, 'getCourses'])
+    ->name('my-courses.index');
+
+// Get courses by specialty, level, and semester (consider renaming level to semester for consistency)
+Route::get('/my/courses/specialties/{specialtyId}/semesters/{semesterId}', [CoursesController::class, 'getBySpecialtyLevelSemester'])
+    ->name('my-courses.by-specialty-semester');
+
+// Get courses by school semester and specialty
+Route::get('/school-semesters/{semesterId}/specialties/{specialtyId}/courses', [CoursesController::class, 'getCoursesBySchoolSemester'])
+    ->name('school-semesters.specialties.courses.index');
+
+// Update a specific course
+Route::put('/courses/{courseId}', [CoursesController::class, 'updateCourse'])
+    ->name('courses.update');
+
+// Activate a specific course
+Route::post('/courses/{courseId}/activate', [CoursesController::class, 'activateCourse'])
+    ->name('courses.activate');
+
+// Deactivate a specific course
+Route::post('/courses/{courseId}/deactivate', [CoursesController::class, 'deactivateCourse'])
+    ->name('courses.deactivate');
+
+// Delete a specific course
+Route::delete('/courses/{courseId}', [CoursesController::class, 'deleteCourse'])
+    ->name('courses.destroy');
+
+// Bulk delete courses
+Route::delete('/courses/bulk-delete/{courseIds}', [CoursesController::class, 'bulkDeleteCourse'])
+    ->name('courses.bulk-delete');
+
+// Bulk update courses
+Route::put('/courses/bulk-update', [CoursesController::class, 'bulkUpdateCourse'])
+    ->name('courses.bulk-update');
+
+// Bulk activate courses
+Route::post('/courses/bulk-activate/{courseIds}', [CoursesController::class, 'bulkActivateCourse'])
+    ->name('courses.bulk-activate');
+
+// Bulk deactivate courses
+Route::post('/courses/bulk-deactivate/{courseIds}', [CoursesController::class, 'bulkDeactivateCourse'])
+    ->name('courses.bulk-deactivate');

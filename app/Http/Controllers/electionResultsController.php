@@ -15,9 +15,9 @@ class ElectionResultsController extends Controller
     }
     public function getElectionResults(Request $request)
     {
-        $election_id = $request->route('election_id');
+        $electionId = $request->route('electionId');
         $currentSchool = $request->attributes->get('currentSchool');
-        $electionResults = $this->electionResultsService->fetchElectionResults($election_id, $currentSchool);
+        $electionResults = $this->electionResultsService->fetchElectionResults($electionId, $currentSchool);
          return ApiResponseService::success("Election Results Fetched Sucessfully", $electionResults, null, 200);
     }
 

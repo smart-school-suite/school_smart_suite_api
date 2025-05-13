@@ -27,22 +27,22 @@ class ParentsController extends Controller
         return ApiResponseService::success("Parents Data fetched Sucessfully",  ParentResource::collection($parentData), null, 200);
     }
 
-    public function deleteParent(Request $request, string $parent_id){
+    public function deleteParent(Request $request, string $parentId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteParent = $this->parentService->deleteParent($parent_id, $currentSchool);
+        $deleteParent = $this->parentService->deleteParent($parentId, $currentSchool);
         return ApiResponseService::success("Parent Deleted Successfully", $deleteParent, null,200);
     }
 
-    public function updateParent(UpdateParentRequest $request, $parent_id){
+    public function updateParent(UpdateParentRequest $request, $parentId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateParent = $this->parentService->updateParent($request->all(),$parent_id, $currentSchool);
+        $updateParent = $this->parentService->updateParent($request->all(),$parentId, $currentSchool);
         return ApiResponseService::success('Parent Updated Sucessfully', $updateParent, null,200);
     }
 
     public function getParentDetails(Request $request){
          $currentSchool = $request->attributes->get("currentSchool");
-         $parent_id = $request->route("parent_id");
-         $parentDetails = $this->parentService->getParentDetails( $parent_id, $currentSchool);
+         $parentId = $request->route("parent_id");
+         $parentDetails = $this->parentService->getParentDetails( $parentId, $currentSchool);
          return ApiResponseService::success("Parent Details Fetched Sucessfully", $parentDetails, null,200);
     }
 

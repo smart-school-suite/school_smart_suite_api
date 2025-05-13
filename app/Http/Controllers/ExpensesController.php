@@ -26,17 +26,17 @@ class ExpensesController extends Controller
         return ApiResponseService::success("Expenses Created Succesfully", $createExpenses, null, 201);
     }
 
-    public function deleteExpense(Request $request, $expense_id)
+    public function deleteExpense(Request $request, $expenseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteSchoolExpenses = $this->schoolExpensesService->deleteExpenses($currentSchool, $expense_id);
+        $deleteSchoolExpenses = $this->schoolExpensesService->deleteExpenses($currentSchool, $expenseId);
         return ApiResponseService::success('Expenses Deleted Succefully', $deleteSchoolExpenses, null, 200);
     }
 
-    public function updateExpense(UpdateSchoolExpensesRequest $request, $expense_id)
+    public function updateExpense(UpdateSchoolExpensesRequest $request, $expenseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateExpenses = $this->schoolExpensesService->updateExpenses($request->validated(), $currentSchool, $expense_id);
+        $updateExpenses = $this->schoolExpensesService->updateExpenses($request->validated(), $currentSchool, $expenseId);
         return ApiResponseService::success("Expenses Updated Succefully", $updateExpenses, null, 200);
     }
 
@@ -50,8 +50,8 @@ class ExpensesController extends Controller
     public function getExpensesDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $expense_id = $request->route("expense_id");
-        $expensesDetails = $this->schoolExpensesService->getExpensesDetails($expense_id, $currentSchool);
+        $expenseId = $request->route("expense_id");
+        $expensesDetails = $this->schoolExpensesService->getExpensesDetails($expenseId, $currentSchool);
         return ApiResponseService::success("Expenses details fetched sucessfully", $expensesDetails, null, 200);
     }
 
@@ -77,7 +77,6 @@ class ExpensesController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
     public function bulkUpdateSchoolExpenses(BulkUpdateSchoolExpensesRequest $request){
          try{
             $bulkUpdateSchoolExpenses = $this->schoolExpensesService->bulkUpdateExpenses($request->school_expenses);

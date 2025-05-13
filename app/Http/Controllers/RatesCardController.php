@@ -22,13 +22,13 @@ class RatesCardController extends Controller
         return ApiResponseService::success("Rate Card Created Succesfully", $createRateCard, null, 201);
     }
 
-    public function updatRates(UpdateSubscriptionRateRequest $request,  $rates_id){
-         $updateRateCard = $this->ratesCardService->updateRate($rates_id, $request->validated());
+    public function updatRates(UpdateSubscriptionRateRequest $request,  $rateId){
+         $updateRateCard = $this->ratesCardService->updateRate($rateId, $request->validated());
          return ApiResponseService::success("Rate Card Updated Sucessfully", $updateRateCard, null, 200);
     }
 
-    public function deleteRates($rate_id){
-        $deleteRateCard = $this->ratesCardService->deleteRate($rate_id);
+    public function deleteRates($rateId){
+        $deleteRateCard = $this->ratesCardService->deleteRate($rateId);
         return ApiResponseService::success("Rate Card Deleted Succefully", $deleteRateCard, null, 200);
     }
 

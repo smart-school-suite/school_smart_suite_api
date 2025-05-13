@@ -45,15 +45,15 @@ class FeePaymentController extends Controller
         return ApiResponseService::success('fee payment records fetched successfully', $feePaid, null, 200);
     }
 
-    public function updateFeesPaid(UpdateTuitionFeePaymentRequest $request, $fee_id){
+    public function updateFeesPaid(UpdateTuitionFeePaymentRequest $request, $feeId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateFeesPaid = $this->feePaymentService->updateStudentFeesPayment($request->validated(),$fee_id,$currentSchool);
+        $updateFeesPaid = $this->feePaymentService->updateStudentFeesPayment($request->validated(),$feeId,$currentSchool);
         return ApiResponseService::success("Fee Payment Record Updated Sucessfully", $updateFeesPaid, null, 200);
     }
 
-    public function deleteFeePaid(Request $request, $fee_id){
+    public function deleteFeePaid(Request $request, $feeId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteFeePayment = $this->feePaymentService->deleteFeePayment($fee_id, $currentSchool);
+        $deleteFeePayment = $this->feePaymentService->deleteFeePayment($feeId, $currentSchool);
         return ApiResponseService::success('Record Deleted Sucessfully', $deleteFeePayment, null, 200);
     }
 

@@ -40,7 +40,6 @@ class RoleController extends Controller
 
     public function assignRoleSchoolAdmin(AddUserRoleRequest $request, string $schoolAdminId){
        $currentSchool = $request->attributes->get('currentSchool');
-       Log::info($currentSchool);
        $assignRole = $this->roleService->assignRolesSchoolAdmin($request->roles, $schoolAdminId, $currentSchool);
        return ApiResponseService::success("Role Assigned To Admin Successfully", $assignRole, null, 200);
     }

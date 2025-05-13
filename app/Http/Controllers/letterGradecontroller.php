@@ -26,13 +26,13 @@ class LetterGradecontroller extends Controller
         return ApiResponseService::success("Letter grade data fetched sucessfully", $letterGrade, null, 200);
     }
 
-    public function deleteLetterGrade($letter_grade_id){
-        $deleteLetterGrade = $this->letterGradeService->deleteLetterGrade($letter_grade_id);
+    public function deleteLetterGrade($letterGradeId){
+        $deleteLetterGrade = $this->letterGradeService->deleteLetterGrade($letterGradeId);
         return ApiResponseService::success("Letter Grade Deleted Succefully", $deleteLetterGrade, null, 200);
     }
 
-    public function updateLetterGrade(UpdateLetterGradeRequest $request, $letter_grade_id){
-        $updateLetterGrade = $this->letterGradeService->updateLetterGrade($letter_grade_id, $request->validated());
+    public function updateLetterGrade(UpdateLetterGradeRequest $request, $letterGradeId){
+        $updateLetterGrade = $this->letterGradeService->updateLetterGrade($letterGradeId, $request->validated());
         return ApiResponseService::success("Letter Grade Updated Sucessfully", $updateLetterGrade, null, 200);
     }
 

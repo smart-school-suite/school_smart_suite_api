@@ -37,10 +37,10 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Created Sucessfully", $election, null, 201);
     }
 
-    public function deleteElection(Request $request, $election_id)
+    public function deleteElection(Request $request, $electionId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $deleteElection = $this->electionService->deleteElection($currentSchool, $election_id);
+        $deleteElection = $this->electionService->deleteElection($currentSchool, $electionId);
         return ApiResponseService::success("Election Results Fetched Sucessfully", $deleteElection, null, 200);
     }
 
@@ -51,10 +51,10 @@ class ElectionsController extends Controller
         return ApiResponseService::success('Election fetched Sucessfully', $elections, null, 200);
     }
 
-    public function updateElection(UpdateElectionRequest $request, $election_id)
+    public function updateElection(UpdateElectionRequest $request, $electionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateElection = $this->electionService->updateElection($request->validated(), $currentSchool, $election_id);
+        $updateElection = $this->electionService->updateElection($request->validated(), $currentSchool, $electionId);
         return ApiResponseService::success("Election Updated Successfully", $updateElection, null, 200);
     }
 

@@ -3,25 +3,54 @@ use App\Http\Controllers\ElectionsController;
 use App\Http\Controllers\ElectionResultsController;
 use illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum'])->post('/create-election', [ElectionsController::class, 'createElection']);
-Route::middleware(['auth:sanctum'])->get('/get-elections', [ElectionsController::class, 'getElections']);
-Route::middleware(['auth:sanctum'])->delete('/delete-election/{election_id}', [ElectionsController::class, 'deleteElection']);
-Route::middleware(['auth:sanctum'])->get('/update-election/{election_id}', [ElectionsController::class, 'updateElection']);
-Route::middleware(['auth:sanctum'])->post('/cast-vote', [ElectionsController::class, 'vote']);
-Route::middleware(['auth:sanctum'])->get('/election-results/{election_id}', [ElectionResultsController::class, 'getElectionResults']);
-Route::middleware(['auth:sanctum'])->get('/election-candidates/{electionId}', [ElectionsController::class, 'getElectionCandidates']);
-Route::middleware(['auth:sanctum'])->post('/createElectionType', [ElectionsController::class, 'createElectionType']);
-Route::middleware(['auth:sanctum'])->put('/updateElectionType/{electionTypeId}', [ElectionsController::class, 'updateElectionType']);
-Route::middleware(['auth:sanctum'])->delete("/deleteElectionType/{electionTypeId}", [ElectionsController::class, 'deleteElectionType']);
-Route::middleware(['auth:sanctum'])->get('/electionType', [ElectionsController::class, 'deleteElectionType']);
-Route::middleware(['auth:sanctum'])->post('/activateElectionType/{electionTypeId}', [ElectionsController::class, 'activateElectionType']);
-Route::middleware(['auth:sanctum'])->post('/deactivateElectionType/{electionTypeId}', [ElectionsController::class, 'deactivateElectionType']);
-Route::middleware(['auth:sanctum'])->get('/activeElectionTypes', [ElectionsController::class, 'getActiveElectionTypes']);
-Route::middleware(['auth:sanctum'])->get('/getElectionResults/{electionId}', [ElectionsController::class, '']);
-Route::middleware(['auth:sanctum'])->get('/getPastElectionWinners', [ElectionsController::class, 'getPastElectionWinners']);
-Route::middleware(['auth:sanctum'])->get('/getCurrentElectionWinners', [ElectionsController::class, 'getCurrentElectionWinners']);
-Route::middleware(['auth:sanctum'])->post('/addAllowedParticipantsByOtherElection/{targetElectionId}/{electionId}', [ElectionsController::class, 'addAllowedParticipantsByOtherElection']);
-Route::middleware(['auth:sanctum'])->get('/getAllowedParticipants/{electionId}', [ElectionsController::class, 'getAllowedParticipants']);
-Route::middleware(['auth:sanctum'])->post('/addAllowedParticipants', [ElectionsController::class, 'addAllowedParticipants']);
-Route::middleware(['auth:sanctum'])->delete('/bulkDeleteElection/{electionIds}', [ElectionsController::class, 'bulkDeleteElection']);
-Route::middleware(['auth:sanctum'])->put('/bulkUpdateElection', [ElectionsController::class, 'bulkUpdateElection']);
+ // Elections Resource
+    Route::post('/elections', [ElectionsController::class, 'createElection'])
+        ->name('elections.store');
+    Route::get('/elections', [ElectionsController::class, 'getElections'])
+        ->name('elections.index');
+    Route::delete('/elections/{electionId}', [ElectionsController::class, 'deleteElection'])
+        ->name('elections.destroy');
+    Route::put('/elections/{electionId}', [ElectionsController::class, 'updateElection'])
+        ->name('elections.update');
+    Route::get('/elections/{electionId}/candidates', [ElectionsController::class, 'getElectionCandidates'])
+        ->name('elections.candidates.index');
+    Route::delete('/elections/bulk-delete/{electionIds}', [ElectionsController::class, 'bulkDeleteElection'])
+        ->name('elections.bulk-delete');
+    Route::put('/elections/bulk-update', [ElectionsController::class, 'bulkUpdateElection'])
+        ->name('elections.bulk-update');
+    Route::get('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'getAllowedParticipants'])
+        ->name('elections.allowed-participants.index');
+    Route::post('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'addAllowedParticipants'])
+        ->name('elections.allowed-participants.store');
+    Route::post('/elections/{electionId}/allowed-participants/from/{targetElectionId}', [ElectionsController::class, 'addAllowedParticipantsByOtherElection'])
+        ->name('elections.allowed-participants.store-from-other');
+
+    // Voting
+    Route::post('/elections/{electionId}/cast-vote', [ElectionsController::class, 'vote'])
+        ->name('elections.vote');
+
+    // Election Results
+    Route::get('/elections/{electionId}/results', [ElectionResultsController::class, 'getElectionResults'])
+        ->name('elections.results.show');
+    Route::get('/past-election-winners', [ElectionsController::class, 'getPastElectionWinners'])
+        ->name('elections.winners.past');
+    Route::get('/current-election-winners', [ElectionsController::class, 'getCurrentElectionWinners'])
+        ->name('elections.winners.current');
+    Route::get('/getElectionResults/{electionId}', [ElectionsController::class, '']) // Empty controller action, needs review
+        ->name('elections.results.get');
+
+    // Election Types Resource
+    Route::post('/election-types', [ElectionsController::class, 'createElectionType'])
+        ->name('election-types.store');
+    Route::get('/election-types', [ElectionsController::class, 'getElectionTypes']) // Inconsistent action, should be getElectionTypes
+        ->name('election-types.index');
+    Route::put('/election-types/{electionTypeId}', [ElectionsController::class, 'updateElectionType'])
+        ->name('election-types.update');
+    Route::delete('/election-types/{electionTypeId}', [ElectionsController::class, 'deleteElectionType'])
+        ->name('election-types.destroy');
+    Route::post('/election-types/{electionTypeId}/activate', [ElectionsController::class, 'activateElectionType'])
+        ->name('election-types.activate');
+    Route::post('/election-types/{electionTypeId}/deactivate', [ElectionsController::class, 'deactivateElectionType'])
+        ->name('election-types.deactivate');
+    Route::get('/active-election-types', [ElectionsController::class, 'getActiveElectionTypes'])
+        ->name('election-types.active');

@@ -3,7 +3,17 @@ use illuminate\Support\Facades\Route;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Controllers\SemesterController;
 
-Route::middleware(['auth:sanctum'])->post('/create-semester', [SemesterController::class, 'createSemester']);
-Route::middleware(['auth:sanctum'])->delete('/delete-semester/{semester_id}', [SemesterController::class, 'deleteSemester']);
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/semesters', [SemesterController::class, 'getSemesters']);
-Route::middleware(['auth:sanctum'])->put('/update-semester/{semester_id}', [SemesterController::class, 'updateSemester']);
+// Create a new semester
+Route::post('/semesters', [SemesterController::class, 'createSemester'])
+->name('semesters.store');
+
+// Delete a specific semester
+Route::delete('/semesters/{semesterId}', [SemesterController::class, 'deleteSemester'])
+->name('semesters.destroy');
+
+// Update a specific semester
+Route::put('/semesters/{semesterId}', [SemesterController::class, 'updateSemester'])
+->name('semesters.update');
+
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/semesters', [SemesterController::class, 'getSemesters'])
+    ->name('semesters.index');

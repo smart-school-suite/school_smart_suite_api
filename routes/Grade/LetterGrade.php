@@ -3,7 +3,18 @@
 use App\Http\Controllers\LetterGradecontroller;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum'])->post('/create-letter-grade', [LetterGradecontroller::class, 'createLettGrade']);
-Route::middleware(['auth:sanctum'])->get('/get-letter-grades', [LetterGradecontroller::class, 'getLetterGrades']);
-Route::middleware(['auth:sanctum'])->delete('/delete-letter-grade/{letter_grade_id}', [LetterGradecontroller::class, 'deleteLetterGrade']);
-Route::middleware(['auth:sanctum'])->put('/update-letter-grate/{letter_grade_id}', [LetterGradecontroller::class, 'updateLetterGrade']);
+// Create a new letter grade
+Route::post('/letter-grades', [LetterGradeController::class, 'createLettGrade'])
+    ->name('letter-grades.store');
+
+// Get all letter grades
+Route::get('/letter-grades', [LetterGradeController::class, 'getLetterGrades'])
+    ->name('letter-grades.index');
+
+// Delete a specific letter grade
+Route::delete('/letter-grades/{letterGradeId}', [LetterGradeController::class, 'deleteLetterGrade'])
+    ->name('letter-grades.destroy');
+
+// Update a specific letter grade
+Route::put('/letter-grades/{letterGradeId}', [LetterGradeController::class, 'updateLetterGrade'])
+    ->name('letter-grades.update');

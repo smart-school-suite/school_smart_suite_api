@@ -2,9 +2,28 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CountryController;
 
-Route::middleware(['auth:sanctum'])->post('/create-country', [CountryController::class, 'createCountry']);
-Route::get('/countries', [CountryController::class, 'getCountries']);
-Route::middleware(['auth:sanctum'])->delete('/delete-country/{country_id}', [CountryController::class, 'deleteCountry']);
-Route::middleware(['auth:sanctum'])->put('/update-country/{country_id}', [CountryController::class, 'updateCountry']);
-Route::middleware(['auth:sanctum'])->delete('/bulkDeleteCountry/{countryIds}', [CountryController::class, 'bulkDeleteCountry']);
-Route::middleware(['auth:sanctum'])->put('/bulkUpdateCountry', [CountryController::class, 'bulkUpdateCountry']);
+// Publicly accessible route
+Route::get('/countries', [CountryController::class, 'getCountries'])
+    ->name('countries.index');
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Create a new country
+    Route::post('/countries', [CountryController::class, 'createCountry'])
+        ->name('countries.store');
+
+    // Update a specific country
+    Route::put('/countries/{countryId}', [CountryController::class, 'updateCountry'])
+        ->name('countries.update');
+
+    // Delete a specific country
+    Route::delete('/countries/{countryId}', [CountryController::class, 'deleteCountry'])
+        ->name('countries.destroy');
+
+    // Bulk delete countries
+    Route::delete('/countries/bulk-delete/{countryIds}', [CountryController::class, 'bulkDeleteCountry'])
+        ->name('countries.bulk-delete');
+
+    // Bulk update countries
+    Route::put('/countries/bulk-update', [CountryController::class, 'bulkUpdateCountry'])
+        ->name('countries.bulk-update');
+});

@@ -1,16 +1,52 @@
 <?php
+
 use illuminate\Support\Facades\Route;
 use App\Http\Controllers\ElectionRolesController;
 
-Route::middleware(['auth:sanctum'])->post('/create-role', [ElectionRolesController::class, 'createElectionRole']);
-Route::middleware(['auth:sanctum'])->put('/update-election/{election_role_id}', [ElectionRolesController::class, 'updateElectionRole']);
-Route::middleware(['auth:sanctum'])->delete('/delete-role/{election_role_id}', [ElectionRolesController::class, 'deleteElectionRole']);
-Route::middleware(['auth:sanctum'])->get('/election-roles/{election_id}', [ElectionRolesController::class, 'getElectionRoles']);
-Route::middleware(['auth:sanctum'])->get("/getAllRoles", [ElectionRolesController::class, 'getAllElectionRoles']);
-Route::middleware(['auth:sanctum'])->delete('/bulkDeleteRoles/{electionRoleIds}', [ElectionRolesController::class, 'bulkDeleteRole']);
-Route::middleware(['auth:sanctum'])->put('/bulkUpdateRoles', [ElectionRolesController::class, 'bulkUpdateElectionRole']);
-Route::middleware(['auth:sanctum'])->post('/activateRole/{electionRoleId}', [ElectionRolesController::class, 'activateRole']);
-Route::middleware(['auth:sanctum'])->post('/deactivateRole/{electionRoleId}', [ElectionRolesController::class, 'deactivateRole']);
-Route::middleware(['auth:sanctum'])->post('/bulkActivateRole/{electionRoleIds}', [ElectionRolesController::class, 'bulkActivateRole']);
-Route::middleware(['auth:sanctum'])->post('/bulkDeactivateRole/{electionRoleIds}', [ElectionRolesController::class, 'bulkDeactivateRole']);
-Route::middleware(['auth:sanctum'])->get('/getActiveRoles/{electionId}', [ElectionRolesController::class, 'getActiveRoles']);
+// Create a new election role
+Route::post('/election-roles', [ElectionRolesController::class, 'createElectionRole'])
+    ->name('election-roles.store');
+
+// Get all election roles (potentially admin-only)
+Route::get('/election-roles', [ElectionRolesController::class, 'getAllElectionRoles'])
+    ->name('election-roles.index');
+
+// Get election roles for a specific election
+Route::get('/elections/{electionId}/roles', [ElectionRolesController::class, 'getElectionRoles'])
+    ->name('elections.roles.index');
+
+// Get active election roles for a specific election
+Route::get('/elections/{electionId}/active-roles', [ElectionRolesController::class, 'getActiveRoles'])
+    ->name('elections.roles.active');
+
+// Update a specific election role
+Route::put('/election-roles/{electionRoleId}', [ElectionRolesController::class, 'updateElectionRole'])
+    ->name('election-roles.update');
+
+// Delete a specific election role
+Route::delete('/election-roles/{electionRoleId}', [ElectionRolesController::class, 'deleteElectionRole'])
+    ->name('election-roles.destroy');
+
+// Bulk delete election roles
+Route::delete('/election-roles/bulk-delete/{electionRoleId}', [ElectionRolesController::class, 'bulkDeleteRole'])
+    ->name('election-roles.bulk-delete');
+
+// Bulk update election roles
+Route::put('/election-roles/bulk-update', [ElectionRolesController::class, 'bulkUpdateElectionRole'])
+    ->name('election-roles.bulk-update');
+
+// Activate a specific election role
+Route::post('/election-roles/{electionRoleId}/activate', [ElectionRolesController::class, 'activateRole'])
+    ->name('election-roles.activate');
+
+// Deactivate a specific election role
+Route::post('/election-roles/{electionRoleId}/deactivate', [ElectionRolesController::class, 'deactivateRole'])
+    ->name('election-roles.deactivate');
+
+// Bulk activate election roles
+Route::post('/election-roles/bulk-activate/{electionRoleId}', [ElectionRolesController::class, 'bulkActivateRole'])
+    ->name('election-roles.bulk-activate');
+
+// Bulk deactivate election roles
+Route::post('/election-roles/bulk-deactivate/{electionRoleId}', [ElectionRolesController::class, 'bulkDeactivateRole'])
+    ->name('election-roles.bulk-deactivate');

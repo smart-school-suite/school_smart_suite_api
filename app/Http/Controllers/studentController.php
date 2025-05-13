@@ -29,25 +29,25 @@ class StudentController extends Controller
         return ApiResponseService::success("Student Fetched Succefully", StudentResource::collection($getStudents), null, 200);
     }
 
-    public function deleteStudent(Request $request, $student_id)
+    public function deleteStudent(Request $request, $studentId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteStudent = $this->studentService->deleteStudent($student_id, $currentSchool);
+        $deleteStudent = $this->studentService->deleteStudent($studentId, $currentSchool);
         return ApiResponseService::success("Student Deleted Successfully", $deleteStudent, null, 200);
     }
 
-    public function updateStudent(UpdateStudentRequest $request, $student_id)
+    public function updateStudent(UpdateStudentRequest $request, $studentId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateStudent = $this->studentService->updateStudent($student_id, $currentSchool, $request->all());
+        $updateStudent = $this->studentService->updateStudent($studentId, $currentSchool, $request->all());
         return ApiResponseService::success('Student Updated Successfully', $updateStudent, null, 200);
     }
 
 
-    public function getStudentDetails(Request $request, string $student_id)
+    public function getStudentDetails(Request $request, string $studentId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $studentDetails = $this->studentService->studentDetails($student_id, $currentSchool);
+        $studentDetails = $this->studentService->studentDetails($studentId, $currentSchool);
         return ApiResponseService::success("Student Details Fetched Successfully", $studentDetails, null, 200);
     }
 

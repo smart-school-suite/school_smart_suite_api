@@ -21,32 +21,23 @@ class CountryController extends Controller
     {
         $this->countryService = $countryService;
     }
-    public function createCountry(CreateCountryRequest $request)
-    {
-
+    public function createCountry(CreateCountryRequest $request){
         $country = $this->countryService->createCountry($request->validated());
         return ApiResponseService::success('Country Created sucessfully', $country, null, 200);
     }
-
-    public function updateCountry(UpdateCountryRequest $request, string $country_id)
-    {
-        $updatedCountry = $this->countryService->updateCountry($request->validated(), $country_id);
+    public function updateCountry(UpdateCountryRequest $request, string $countryId){
+        $updatedCountry = $this->countryService->updateCountry($request->validated(), $countryId);
         return ApiResponseService::success('Country Updated sucessfully', $updatedCountry, null, 200);
     }
-
-    public function deleteCountry(string $country_id)
-    {
-        $country = Country::find($country_id);
-        $deleteCountry = $this->countryService->deleteCountry($country_id);
+    public function deleteCountry(string $countryId){
+        $country = Country::find($countryId);
+        $deleteCountry = $this->countryService->deleteCountry($countryId);
         return ApiResponseService::success('Country Delete succesfully', $deleteCountry, null, 200);
     }
-
-    public function getCountries()
-    {
+    public function getCountries(){
         $country = $this->countryService->getCountries();
         return ApiResponseService::success('Countries Fetched Succefully', $country, null, 200);
     }
-
     public function bulkUpdateCountry(BulkUpdateCountryRequest $request){
         try{
            $bulkUpdateCountry = $this->countryService->bulkUpdateCountry($request->countries);
@@ -56,7 +47,6 @@ class CountryController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
     public function bulkDeleteCountry($countryIds){
         $idsArray = explode(',', $countryIds);
 

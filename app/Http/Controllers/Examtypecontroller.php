@@ -24,15 +24,15 @@ class ExamTypecontroller extends Controller
         return ApiResponseService::success("exam type created succefully", $createExamType, null, 201);
     }
 
-    public function deleteExamType($exam_id)
+    public function deleteExamType($examTypeId)
     {
-        $deleteExamType = $this->examtypeService->deleteExamType($exam_id);
+        $deleteExamType = $this->examtypeService->deleteExamType($examTypeId);
         return ApiResponseService::success("Exam type Deleted Sucessfully", $deleteExamType, null, 200);
     }
 
-    public function updateExamType(UpdateExamTypeRequest $request, $exam_id)
+    public function updateExamType(UpdateExamTypeRequest $request, $examTypeId)
     {
-        $updateExam = $this->examtypeService->updateExamType($request->validated(), $exam_id);
+        $updateExam = $this->examtypeService->updateExamType($request->validated(), $examTypeId);
         return ApiResponseService::success("Exam updated succefully", $updateExam, null, 200);
     }
 

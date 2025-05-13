@@ -22,14 +22,14 @@ class ExpensesCategorycontroller extends Controller
         return ApiResponseService::success("Category Expenses Created Sucessfully", $createCategoryExpenses, null, 201);
     }
 
-    public function updateCategory(UpdateExpensesCategoryRequest $request, $category_expense_id){
-        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated,  $category_expense_id);
+    public function updateCategory(UpdateExpensesCategoryRequest $request, $categoryId){
+        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated,  $categoryId);
         return ApiResponseService::success("Expenses Category Updated Sucessfully", $updateCategoryExpenses, null, 200);
     }
 
 
-    public function deleteCategory(string $category_expense_id){
-        $deleteCategoryExpenses = $this->schoolExpensesCategoryService->deleteSchoolExpenseCategory($category_expense_id);
+    public function deleteCategory(string $categoryId){
+        $deleteCategoryExpenses = $this->schoolExpensesCategoryService->deleteSchoolExpenseCategory($categoryId);
         return ApiResponseService::success("Expenses Category Deleted Succesfully", $deleteCategoryExpenses, null, 200);
     }
 

@@ -11,13 +11,42 @@ use App\Http\Controllers\Auth\Teacher\CreateteacherController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\LimitTeachers;
 
-Route::post('/login', [LoginTeacherController::class, 'loginInstructor']);
-Route::middleware('auth:sanctum')->post('/change-password', [ChangePasswordController::class, 'changeInstructorPassword']);
-Route::middleware('auth:sanctum')->post('/logout', [LogoutTeacherController::class, 'logoutInstructor']);
-Route::middleware('auth:sanctum')->get('/auth-teacher', [GetAuthTeacherController::class, 'getAuthTeacher']);
-Route::middleware([IdentifyTenant::class, LimitTeachers::class,  'auth:sanctum',])->post('/create-teacher', [CreateTeacherController::class, 'createInstructor']);
-Route::post('/resetPassword', [ResetPasswordController::class, 'resetInstructorPassword']);
-Route::post('/validatePasswordResetOtp', [ResetPasswordController::class, 'resetInstructorPassword']);
-Route::post('/updatePassword', [ResetPasswordController::class, 'ChangeInstructorPasswordUnAuthenticated']);
-Route::post('/validateLoginOtp', [ValidateOtpController::class, 'verifyInstructorLoginOtp']);
-Route::post('/requestNewOtp', [ValidateOtpController::class, 'requestNewOtp']);
+// Login
+Route::post('/login', [LoginTeacherController::class, 'loginInstructor'])
+    ->name('teacher.login');
+
+// OTP Verification (for login)
+Route::post('/verify-otp', [ValidateOtpController::class, 'verifyInstructorLoginOtp'])
+    ->name('teacher.otp.verify');
+
+// Request New OTP (for login)
+Route::post('/request-otp', [ValidateOtpController::class, 'requestNewOtp'])
+    ->name('teacher.otp.resend');
+
+// Password Reset
+Route::post('/password/reset', [ResetPasswordController::class, 'resetInstructorPassword'])
+    ->name('teacher.password.email');
+Route::post('/password/reset/verify-otp', [ResetPasswordController::class, 'resetInstructorPassword'])
+    ->name('teacher.password.verify');
+Route::post('/password/reset/update', [ResetPasswordController::class, 'ChangeInstructorPasswordUnAuthenticated'])
+    ->name('teacher.password.update');
+
+// Authenticated routes (requires sanctum and tenant identification)
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
+    // Logout
+    Route::post('/logout', [LogoutTeacherController::class, 'logoutInstructor'])
+        ->name('teacher.logout');
+
+    // Get authenticated teacher details
+    Route::get('/me', [GetAuthTeacherController::class, 'getAuthTeacher'])
+        ->name('teacher.me');
+
+    // Change Password (authenticated)
+    Route::post('/password/change', [ChangePasswordController::class, 'changeInstructorPassword'])
+        ->name('teacher.password.change');
+
+    // Create new teacher (requires tenant identification and teacher limit)
+    Route::post('/register', [CreateteacherController::class, 'createInstructor'])
+        ->middleware(LimitTeachers::class)
+        ->name('teacher.register');
+});

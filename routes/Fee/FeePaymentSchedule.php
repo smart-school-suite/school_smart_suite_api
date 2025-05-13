@@ -1,9 +1,24 @@
 <?php
+
 use App\Http\Controllers\FeePaymentScheduleController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/createSchedule', [FeePaymentScheduleController::class, 'createFeePaymentSchedule']);
-Route::put('/updateSchedule/{scheduleId}', [FeePaymentScheduleController::class, 'updateFeePaymentSchedule']);
-Route::get('/getAllSchedule', [FeePaymentScheduleController::class, 'getAllFeePaymentSchedule']);
-Route::get('/getBySpecialty/{specialtyId}', [FeePaymentScheduleController::class, 'getFeePaymentScheduleBySpecialty']);
-Route::delete('/deleteSpecialty/{scheduleId}', [FeePaymentScheduleController::class, 'deleteFeePaymentSchedule']);
+// Create a new fee payment schedule
+Route::post('/fee-payment-schedules', [FeePaymentScheduleController::class, 'createFeePaymentSchedule'])
+    ->name('fee-payment-schedules.store');
+
+// Get all fee payment schedules
+Route::get('/fee-payment-schedules', [FeePaymentScheduleController::class, 'getAllFeePaymentSchedule'])
+    ->name('fee-payment-schedules.index');
+
+// Get fee payment schedules for a specific specialty
+Route::get('/specialties/{specialtyId}/fee-payment-schedules', [FeePaymentScheduleController::class, 'getFeePaymentScheduleBySpecialty'])
+    ->name('specialties.fee-payment-schedules.index');
+
+// Update a specific fee payment schedule
+Route::put('/fee-payment-schedules/{scheduleId}', [FeePaymentScheduleController::class, 'updateFeePaymentSchedule'])
+    ->name('fee-payment-schedules.update');
+
+// Delete a specific fee payment schedule
+Route::delete('/fee-payment-schedules/{scheduleId}', [FeePaymentScheduleController::class, 'deleteFeePaymentSchedule'])
+    ->name('fee-payment-schedules.destroy');

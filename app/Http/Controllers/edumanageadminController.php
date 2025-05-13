@@ -9,8 +9,8 @@ class EdumanageAdminController extends Controller
 {
     //
     public function getAppAdmins(Request $request){
-        $edu_manage_admin_data = Edumanageadmin::all();
-        if($edu_manage_admin_data->isEmpty()){
+        $appAdmin = Edumanageadmin::all();
+        if($appAdmin->isEmpty()){
             return response()->json([
                 'status' => 'ok',
                 'message' => 'No admin records found'
@@ -19,20 +19,20 @@ class EdumanageAdminController extends Controller
         return response()->json([
             'status' => 'ok',
             'message' => 'admin data fetched sucessfully',
-            'admins' => $edu_manage_admin_data
+            'admins' => $appAdmin
         ], 200);
     }
 
-    public function deleteAppAdmin(Request $request, $edumanage_admin_id){
-        $edu_manage_admin_data = Edumanageadmin::find($edumanage_admin_id);
-        if(!$edu_manage_admin_data){
+    public function deleteAppAdmin($appAdminId){
+        $appAdmin = Edumanageadmin::find($appAdminId);
+        if(!$appAdmin){
             return response()->json([
                 'status' => 'ok',
                 'message' => 'Admin not found'
             ], 409);
         }
 
-        $edu_manage_admin_data->delete();
+        $appAdmin->delete();
 
         return response()->json([
             'status' => 'ok',
@@ -40,9 +40,9 @@ class EdumanageAdminController extends Controller
         ], 200);
     }
 
-    public function updateAppAdmin(Request $request, $edumanage_admin_id){
-        $edu_manage_admin_data = Edumanageadmin::find($edumanage_admin_id);
-        if(!$edu_manage_admin_data){
+    public function updateAppAdmin(Request $request, $appAdminId){
+        $appAdmin = Edumanageadmin::find($appAdminId);
+        if(!$appAdmin){
             return response()->json([
                 'status' => 'ok',
                 'message' => 'Admin not found'
@@ -51,8 +51,8 @@ class EdumanageAdminController extends Controller
 
         $update_data = $request->all();
         $update_data = array_filter($update_data);
-        $edu_manage_admin_data->fill($update_data);
-        $edu_manage_admin_data->save();
+        $appAdmin->fill($update_data);
+        $appAdmin->save();
 
         return response()->json([
             'status' => 'ok',

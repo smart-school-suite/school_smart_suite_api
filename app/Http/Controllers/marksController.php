@@ -76,18 +76,18 @@ class MarksController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
-    public function deleteMark(Request $request, $mark_id)
+    public function deleteMark(Request $request, $markId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteScore = $this->markService->deleteMark($mark_id, $currentSchool);
+        $deleteScore = $this->markService->deleteMark($markId, $currentSchool);
         return ApiResponseService::success('Student Mark Deleted Sucessfully', $deleteScore, null, 200);
     }
     public function getMarksByExamStudent(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $exam_id = $request->route('exam_id');
-        $student_id = $request->route('student_id');
-        $allStudentScores = $this->markService->getStudentScores($student_id, $currentSchool, $exam_id);
+        $examId = $request->route('examId');
+        $studentId = $request->route('studentId');
+        $allStudentScores = $this->markService->getStudentScores($studentId, $currentSchool, $examId);
         return ApiResponseService::success('Scores Fetched Sucessfully', $allStudentScores, null, 200);
     }
     public function getAllMarks(Request $request)
@@ -99,8 +99,8 @@ class MarksController extends Controller
     public function getMarkDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $mark_id = $request->route("mark_id");
-        $markDetails = $this->markService->getScoreDetails($currentSchool, $mark_id);
+        $markId = $request->route("markId");
+        $markDetails = $this->markService->getScoreDetails($currentSchool, $markId);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $markDetails, null, 200);
     }
     public function prepareCaResultsByExam(Request $request){
@@ -132,7 +132,7 @@ class MarksController extends Controller
         $examId = $request->route("examId");
         $exam = Exams::findOrFail($examId);
         $accessedCourses = Examtimetable::where("school_branch_id", $currentSchool->id)
-            ->where("exam_id", $examId)
+            ->where("examId", $examId)
             ->with(["course"])
             ->get();
 
@@ -143,7 +143,7 @@ class MarksController extends Controller
                 "course_id" => $course->course->id,
                 "course_name" => $course->course->course_title,
                 "course_credit" => $course->course->credit,
-                "exam_id" => $examId,
+                "examId" => $examId,
                 "weighted_mark" => $exam->weighted_mark,
             ];
         }

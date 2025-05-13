@@ -1,11 +1,32 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ExpensesController;
 
-Route::middleware(['auth:sanctum'])->post('/create-expenses', [ExpensesController::class, 'createExpense']);
-Route::middleware(['auth:sanctum'])->delete('/delete-expenses/{expense_id}', [ExpensesController::class, 'deleteExpense']);
-Route::middleware(['auth:sanctum'])->get('/my-expenses', [ExpensesController::class, 'getExpenses']);
-Route::middleware(['auth:sanctum'])->get('/expenses-details/{expense_id}', [ExpensesController::class, 'getExpensesDetails']);
-Route::middleware(['auth:sanctum'])->put('/update-expenses/{expense_id}', [ExpensesController::class, 'updateExpense']);
-Route::middleware(['auth:sanctum'])->delete('/bulkDeleteSchoolExpenses/{schoolExpensesIds}', [ExpensesController::class, 'bulkDeleteSchoolExpenses']);
-Route::middleware(['auth:sanctum'])->put('/bulkUpdateSchoolExpenses', [ExpensesController::class, 'bulkUpdateSchoolExpenses']);
+// Create a new expense
+Route::post('/expenses', [ExpensesController::class, 'createExpense'])
+    ->name('expenses.store');
+
+// Get all expenses for the authenticated user
+Route::get('/expenses', [ExpensesController::class, 'getExpenses'])
+    ->name('expenses.index');
+
+// Get details of a specific expense
+Route::get('/expenses/{expenseId}', [ExpensesController::class, 'getExpensesDetails'])
+    ->name('expenses.show');
+
+// Update a specific expense
+Route::put('/expenses/{expenseId}', [ExpensesController::class, 'updateExpense'])
+    ->name('expenses.update');
+
+// Delete a specific expense
+Route::delete('/expenses/{expenseId}', [ExpensesController::class, 'deleteExpense'])
+    ->name('expenses.destroy');
+
+// Bulk delete school expenses
+Route::delete('/expenses/bulk-delete/{expensesIds}', [ExpensesController::class, 'bulkDeleteSchoolExpenses'])
+    ->name('expenses.bulk-delete');
+
+// Bulk update school expenses
+Route::put('/expenses/bulk-update', [ExpensesController::class, 'bulkUpdateSchoolExpenses'])
+    ->name('expenses.bulk-update');

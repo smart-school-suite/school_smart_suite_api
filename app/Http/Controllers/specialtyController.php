@@ -26,16 +26,16 @@ class SpecialtyController extends Controller
         $createSpecailty = $this->specailtyService->createSpecialty($request->validated(), $currentSchool);
         return ApiResponseService::success("specialty created sucessfully", $createSpecailty, null, 200);
     }
-    public function deleteSpecialty(Request $request, $specialty_id)
+    public function deleteSpecialty(Request $request, $specialtyId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteSpecailty = $this->specailtyService->deleteSpecailty($currentSchool, $specialty_id);
+        $deleteSpecailty = $this->specailtyService->deleteSpecailty($currentSchool, $specialtyId);
         return ApiResponseService::success("Specailty Deleted Sucessfully", $deleteSpecailty, null, 200);
     }
-    public function updateSpecialty(UpdateSpecialtyRequest $request, $specialty_id)
+    public function updateSpecialty(UpdateSpecialtyRequest $request, $specialtyId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateSpecailty = $this->specailtyService->updateSpecialty($request->validated(), $currentSchool, $specialty_id);
+        $updateSpecailty = $this->specailtyService->updateSpecialty($request->validated(), $currentSchool, $specialtyId);
         return ApiResponseService::success("Specailty Updated Sucessfully", $updateSpecailty, null, 200);
     }
     public function getSpecialtiesBySchoolBranch(Request $request)
@@ -47,8 +47,8 @@ class SpecialtyController extends Controller
     public function getSpecialtyDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $specialty_id = $request->route('specialty_id');
-        $specailtyDetails = $this->specailtyService->getSpecailtyDetails($currentSchool, $specialty_id);
+        $specialtyId = $request->route('specialtyId');
+        $specailtyDetails = $this->specailtyService->getSpecailtyDetails($currentSchool, $specialtyId);
         return ApiResponseService::success("specialty detials fetched succefully", $specailtyDetails, null, 200);
     }
     public function activateSpecialty($specialtyId)

@@ -22,13 +22,13 @@ class SemesterController extends Controller
         return ApiResponseService::success("Semester Created Sucessfully", $createSemester, null, 201);
     }
 
-    public function deleteSemester(Request $request, $semester_id){
-        $deleteSemester = $this->semesterService->deleteSemester($semester_id);
+    public function deleteSemester(Request $request, $semesterId){
+        $deleteSemester = $this->semesterService->deleteSemester($semesterId);
         return ApiResponseService::success("Semester Deleted Succefully", $deleteSemester, null, 200);
     }
 
-    public function updateSemester(UpdateSemesterRequest $request, string $semester_id){
-        $updateSemester = $this->semesterService->updateSemester($semester_id, $request->validated());
+    public function updateSemester(UpdateSemesterRequest $request, string $semesterId){
+        $updateSemester = $this->semesterService->updateSemester($semesterId, $request->validated());
         return ApiResponseService::success("Semester Updated Sucessfully", $updateSemester, null, 200);
     }
 

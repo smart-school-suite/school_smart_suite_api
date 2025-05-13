@@ -1,9 +1,28 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HodController;
-Route::middleware(['auth:sanctum'])->get("/getHodDetails/{hodId}", [HodController::class, "getHodDetails"]);
-Route::middleware(['auth:sanctum'])->delete('/bulkRemoveHods/{hodIds}', [HodController::class, 'bulkRemoveHod']);
-Route::middleware(['auth:sanctum'])->get('/get-hods', [HodController::class, 'getHods']);
-Route::middleware(['auth:sanctum'])->delete("/delete-hod/{hodId}", [HodController::class, 'removeHod']);
-Route::middleware(['auth:sanctum'])->post('/assign-hod', [HodController::class, 'assignHeadOfDepartment']);
-Route::middleware(['auth:sanctum'])->get("/getAllHods", [HodController::class, "getAllHods"]);
+
+// Assign a Head of Department
+Route::post('/head-of-departments', [HodController::class, 'assignHeadOfDepartment'])
+    ->name('head-of-departments.store');
+
+// Get all assigned Heads of Department
+Route::get('/head-of-departments', [HodController::class, 'getHods'])
+    ->name('head-of-departments.index');
+
+// Get details of a specific Head of Department assignment
+Route::get('/head-of-departments/{hodId}', [HodController::class, 'getHodDetails'])
+    ->name('head-of-departments.show');
+
+// Remove a specific Head of Department assignment
+Route::delete('/head-of-departments/{hodId}', [HodController::class, 'removeHod'])
+    ->name('head-of-departments.destroy');
+
+// Bulk remove Head of Department assignments (consider using DELETE with a request body)
+Route::delete('/head-of-departments/bulk-remove/{hodIds}', [HodController::class, 'bulkRemoveHod'])
+    ->name('head-of-departments.bulk-remove');
+
+// Get all Heads of Department (potentially all users who can be assigned)
+Route::get('/all-hods', [HodController::class, 'getAllHods'])
+    ->name('all-hods.index');

@@ -26,27 +26,27 @@ class TeacherController extends Controller
         $getInstructorsBySchool = $this->teacherService->getAllTeachers($currentSchool);
         return ApiResponseService::success("Teacher Fetched Successfully", $getInstructorsBySchool, null, 200);
     }
-    public function deleteInstructor(Request $request, $teacher_id)
+    public function deleteInstructor(Request $request, $teacherId)
     {
-        $deleteTeacher = $this->teacherService->deletetTeacher($teacher_id);
+        $deleteTeacher = $this->teacherService->deletetTeacher($teacherId);
         return ApiResponseService::success("Teacher Deleted Sucessfully", $deleteTeacher, null, 200);
     }
-    public function updateInstructor(UpdateTeacherRequest $request, $teacher_id)
+    public function updateInstructor(UpdateTeacherRequest $request, $teacherId)
     {
-        $updateTeacher = $this->teacherService->updateTeacher($request->all(), $teacher_id);
+        $updateTeacher = $this->teacherService->updateTeacher($request->all(), $teacherId);
         return ApiResponseService::success("Teacher Updated Sucessfully", $updateTeacher, null, 200);
     }
-    public function getTimettableByTeacher(Request $request, $teacher_id)
+    public function getTimettableByTeacher(Request $request, $teacherId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $teacher_id = $request->route('teacher_id');
-        $getTeacherSchedule = $this->teacherService->getTeacherSchedule($teacher_id, $currentSchool);
+        $teacherId = $request->route('teacherId');
+        $getTeacherSchedule = $this->teacherService->getTeacherSchedule($teacherId, $currentSchool);
         return ApiResponseService::success("Teacher Schedule Fetched And Generated Sucessfully", $getTeacherSchedule, null, 200);
     }
     public function getInstructorDetails(Request $request)
     {
-        $teacher_id = $request->route('teacher_id');
-        $teacherDetails = $this->teacherService->getTeacherDetails($teacher_id);
+        $teacherId = $request->route('teacherId');
+        $teacherDetails = $this->teacherService->getTeacherDetails($teacherId);
         return ApiResponseService::success("Teacher Details Fetched Succesfully", $teacherDetails, null, 200);
     }
     public function assignTeacherSpecailtyPreference(AddSpecialtyPreferenceRequest $request, $teacherId){

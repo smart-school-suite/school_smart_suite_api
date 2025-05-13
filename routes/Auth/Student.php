@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\Student\LoginStudentController;
 use App\Http\Controllers\Auth\Student\LogoutStudentController;
@@ -10,13 +11,42 @@ use App\Http\Controllers\Auth\Student\ValidateOtpController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\Limitstudents;
 
-Route::post('/login', [LoginStudentController::class, 'loginStudent']);
-Route::middleware('auth:sanctum')->post('/logout', [LogoutStudentController::class, 'logoutStudent']);
-Route::middleware('auth:sanctum')->post('/change-password', [ChangePasswordController::class, 'changeStudentPassword']);
-Route::middleware('auth:sanctum')->post('/auth-student', [GetAuthStudentController::class, 'getAuthStudent']);
-Route::middleware([IdentifyTenant::class, Limitstudents::class, 'auth:sanctum'])->post('/create-student', [CreateStudentController::class, 'createStudent']);
-Route::post('/resetPassword', [ResetPasswordController::class, 'resetStudentPassword']);
-Route::post('/validatePasswordResetOtp', [ResetPasswordController::class, 'verifyStudentOtp']);
-Route::post('/updatePassword', [ResetPasswordController::class, 'changeStudentPasswordUnAuthenticated']);
-Route::post('/validateLoginOtp', [ValidateOtpController::class, 'verifyInstructorLoginOtp']);
-Route::post('/requestNewOtp', [ValidateOtpController::class, 'requestNewOtp']);
+// Login
+Route::post('/login', [LoginStudentController::class, 'loginStudent'])
+    ->name('student.login');
+
+// OTP Verification (for login)
+Route::post('/verify-otp', [ValidateOtpController::class, 'verifyInstructorLoginOtp'])
+    ->name('student.otp.verify');
+
+// Request New OTP (for login)
+Route::post('/request-otp', [ValidateOtpController::class, 'requestNewOtp'])
+    ->name('student.otp.resend');
+
+// Password Reset
+Route::post('/password/reset', [ResetPasswordController::class, 'resetStudentPassword'])
+    ->name('student.password.email');
+Route::post('/password/reset/verify-otp', [ResetPasswordController::class, 'verifyStudentOtp'])
+    ->name('student.password.verify');
+Route::post('/password/reset/update', [ResetPasswordController::class, 'changeStudentPasswordUnAuthenticated'])
+    ->name('student.password.update');
+
+// Authenticated routes (requires sanctum and tenant identification)
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
+    // Logout
+    Route::post('/logout', [LogoutStudentController::class, 'logoutStudent'])
+        ->name('student.logout');
+
+    // Get authenticated student details
+    Route::get('/me', [GetAuthStudentController::class, 'getAuthStudent'])
+        ->name('student.me');
+
+    // Change Password (authenticated)
+    Route::post('/password/change', [ChangePasswordController::class, 'changeStudentPassword'])
+        ->name('student.password.change');
+
+    // Create new student (requires tenant identification and student limit)
+    Route::post('/register', [CreateStudentController::class, 'createStudent'])
+        ->middleware(Limitstudents::class)
+        ->name('student.register');
+});

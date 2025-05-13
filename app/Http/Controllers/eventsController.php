@@ -24,16 +24,16 @@ class EventsController extends Controller
         return ApiResponseService::success("Events Created Succefully", $createElection, null, 201);
     }
 
-    public function updateEvent(UpdateEventRequest $request, $event_id)
+    public function updateEvent(UpdateEventRequest $request, $eventId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateEvent = $this->eventsService->updateEvent($request->validated(), $currentSchool, $event_id);
+        $updateEvent = $this->eventsService->updateEvent($request->validated(), $currentSchool, $eventId);
         return ApiResponseService::success('Event updated succefully', $updateEvent, null, 200);
     }
 
-    public function deleteEvent(Request $request, $event_id)
+    public function deleteEvent($eventId)
     {
-        $deleteEvent = $this->eventsService->deleteEvent($event_id);
+        $deleteEvent = $this->eventsService->deleteEvent($eventId);
         return ApiResponseService::success('Event Deleted Successfully', $deleteEvent, null, 200);
     }
     public function getEvents(Request $request)
@@ -43,10 +43,10 @@ class EventsController extends Controller
         return ApiResponseService::success('Events fetched successfully', $getEvents, null, 200);
     }
 
-    public function getEventDetails(Request $request, $event_id)
+    public function getEventDetails(Request $request, $eventId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $eventDetails = $this->eventsService->eventDetails($currentSchool, $event_id);
+        $eventDetails = $this->eventsService->eventDetails($currentSchool, $eventId);
         return ApiResponseService::success('Event Details Fetched Succefully', $eventDetails, null, 200);
     }
 }

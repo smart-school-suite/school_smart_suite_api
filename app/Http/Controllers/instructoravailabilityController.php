@@ -47,25 +47,25 @@ class InstructorAvailabilityController extends Controller
         return ApiResponseService::success("teacher availability data fetched successfully", $getAllInstructorAvailability, null, 200);
     }
 
-    public function getInstructorAvailability(Request $request, $teacher_id)
+    public function getInstructorAvailability(Request $request, $teacherId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getMyInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailability($currentSchool, $teacher_id);
+        $getMyInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailability($currentSchool, $teacherId);
         return ApiResponseService::success('Instructor Availabilty Fetched Sucessfully', $getMyInstructorAvailability, null, 200);
     }
 
-    public function deleteInstructorAvailabilty(Request $request, $availabilty_id)
+    public function deleteInstructorAvailabilty(Request $request, $availabilityId)
     {
-        $availabilty = InstructorAvailability::find($availabilty_id);
+        $availabilty = InstructorAvailability::find($availabilityId);
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteInstructorAvailability = $this->instructorAvaliabilityService->deleteInstructorAvailability($currentSchool, $availabilty);
         return ApiResponseService::success('Teachers availability deleted succefully', $deleteInstructorAvailability, null, 200);
     }
 
-    public function updateInstructorAvailability(UpdateTeacherAvailabilityRequest $request,  $availabilty_id)
+    public function updateInstructorAvailability(UpdateTeacherAvailabilityRequest $request,  $availabilityId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->instructor_availability, $currentSchool, $availabilty_id);
+        $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->instructor_availability, $currentSchool, $availabilityId);
         return ApiResponseService::success("Availability updated succesfully", $updateTeacherAvailability, null, 200);
     }
 }

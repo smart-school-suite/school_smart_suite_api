@@ -26,24 +26,24 @@ class ElectionRolesController extends Controller
         return ApiResponseService::success("Election Role Created Sucessfully", $createElectionRole, null, 201);
     }
 
-    public function updateElectionRole(UpdateElectionRoleRequest $request, string $election_role_id)
+    public function updateElectionRole(UpdateElectionRoleRequest $request, string $electionRoleId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $updateElectionRole = $this->electionRolesService->updateElectionRole($request->validated(), $currentSchool, $election_role_id);
+        $updateElectionRole = $this->electionRolesService->updateElectionRole($request->validated(), $currentSchool, $electionRoleId);
         return ApiResponseService::success("Election Role Updated Succefully", $updateElectionRole, null, 200);
     }
 
-    public function deleteElectionRole(Request $request, string $election_role_id)
+    public function deleteElectionRole(Request $request, string $electionRoleId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $deleteElectionRole = $this->electionRolesService->deleteElectionRole($election_role_id, $currentSchool);
+        $deleteElectionRole = $this->electionRolesService->deleteElectionRole($electionRoleId, $currentSchool);
         return ApiResponseService::success("Election Role Deleted Sucessfully", $deleteElectionRole, null, 200);
     }
 
-    public function getElectionRoles(Request $request, string $election_id)
+    public function getElectionRoles(Request $request, string $electionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $electionResults = $this->electionRolesService->getElectionRole($currentSchool, $election_id);
+        $electionResults = $this->electionRolesService->getElectionRole($currentSchool, $electionId);
         return ApiResponseService::success('Election Roles Fetched Sucessfully', $electionResults, null, 200);
     }
 

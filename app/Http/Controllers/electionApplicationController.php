@@ -27,7 +27,7 @@ class ElectionApplicationController extends Controller
 
     public function approveApplication(Request $request)
     {
-        $applicationId = $request->route('application_id');
+        $applicationId = $request->route('applicationId');
         $currentSchool = $request->attributes->get('currentSchool');
         $approveApplication = $this->electionApplicationService->approveApplication($applicationId, $currentSchool);
         return ApiResponseService::success('Application approval was sucessfull', $approveApplication, null, 200);
@@ -35,7 +35,7 @@ class ElectionApplicationController extends Controller
 
     public function deleteApplication(Request $request)
     {
-        $applicationId = $request->route('application_id');
+        $applicationId = $request->route('applicationId');
         $application = $this->electionApplicationService->deleteApplication($applicationId);
         return ApiResponseService::success('Application Deleted Succefully', $application, null, 200);
     }
@@ -50,7 +50,7 @@ class ElectionApplicationController extends Controller
 
     public function updateApplication(UpdateElectionApplicationRequest $request)
     {
-        $applicationId = $request->route('application_id');
+        $applicationId = $request->route('applicationId');
         $updateElectionApplication = $this->electionApplicationService->updateApplication($request->validated(), $applicationId);
         return ApiResponseService::success('Election Application Updated Successfully', $updateElectionApplication, null, 200);
     }

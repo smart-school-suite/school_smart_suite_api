@@ -20,8 +20,8 @@ class SchoolBranchesController extends Controller
          return ApiResponseService::success("School Branch Created Succesfully", $createSchoolBranch, null, 201);
     }
 
-    public function updateSchoolBranch(UpdateSchoolBranchRequest $request, $branch_id){
-        $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $branch_id);
+    public function updateSchoolBranch(UpdateSchoolBranchRequest $request, $branchId){
+        $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $branchId);
         return ApiResponseService::success("School Branch updated Succesfully", $updateSchoolBranch, null, 200);
     }
 
@@ -30,8 +30,8 @@ class SchoolBranchesController extends Controller
         return ApiResponseService::success("School Branches Fetched Succefully", $getSchoolBranches, null, 200);
     }
 
-    public function deleteSchoolBranch(Request $request, $branch_id){
-        $deleteSchoolBranch = $this->schoolBranchesService->deleteSchoolBranch($branch_id);
+    public function deleteSchoolBranch(Request $request, $branchId){
+        $deleteSchoolBranch = $this->schoolBranchesService->deleteSchoolBranch($branchId);
        return ApiResponseService::success("School Branch Deleted Sucessfully", $deleteSchoolBranch, null, 200);
     }
 

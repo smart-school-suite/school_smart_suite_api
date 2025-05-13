@@ -1,7 +1,21 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolsController;
-Route::post('/register', [SchoolsController::class, 'createSchool']);
-Route::middleware(['auth:sanctum'])->put('/update_school', [SchoolsController::class, 'updateSchool']);
-Route::middleware(['auth:sanctum'])->delete('/delete-school/{school_id}', [SchoolsController::class, 'deleteSchool']);
-Route::middleware(['auth:sanctum'])->get('/schoolDetails', [schoolsController::class, 'getSchoolDetails']);
+
+Route::post('/schools', [SchoolsController::class, 'createSchool'])
+    ->name('schools.store');
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Get details of the authenticated school
+    Route::get('/schools/details/{schoolId}', [SchoolsController::class, 'getSchoolDetails'])
+        ->name('schools.details');
+
+    // Update the authenticated school
+    Route::put('/schools', [SchoolsController::class, 'updateSchool'])
+        ->name('schools.update');
+
+    // Delete a specific school
+    Route::delete('/schools/{schoolId}', [SchoolsController::class, 'deleteSchool'])
+        ->name('schools.destroy');
+});

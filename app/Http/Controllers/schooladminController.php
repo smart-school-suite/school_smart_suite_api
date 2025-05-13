@@ -26,15 +26,15 @@ class SchoolAdminController extends Controller
     public function updateSchoolAdmin(UpdateSchoolAdminRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $school_admin_id = $request->route("school_admin_id");
-        $updateSchoolAdmin = $this->schoolAdminService->updateSchoolAdmin($request->validated(), $school_admin_id, $currentSchool);
+        $schoolAdminId = $request->route("schoolAdminId");
+        $updateSchoolAdmin = $this->schoolAdminService->updateSchoolAdmin($request->validated(), $schoolAdminId, $currentSchool);
         return ApiResponseService::success("Admin Updated Sucessfully", $updateSchoolAdmin, null, 200);
     }
 
-    public function deleteSchoolAdmin(Request $request, $school_admin_id)
+    public function deleteSchoolAdmin(Request $request, $schoolAdminId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteSchoolAdmin = $this->schoolAdminService->deleteSchoolAdmin($school_admin_id, $currentSchool);
+        $deleteSchoolAdmin = $this->schoolAdminService->deleteSchoolAdmin($schoolAdminId, $currentSchool);
         return ApiResponseService::success('School Admin Deleled Sucessfully', $deleteSchoolAdmin, null, 200);
     }
 
@@ -48,7 +48,7 @@ class SchoolAdminController extends Controller
     public function getSchoolAdminDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $schoolAdminId = $request->route('school_admin_id');
+        $schoolAdminId = $request->route('schoolAdminId');
         $schoolAdminDetails = $this->schoolAdminService->getSchoolAdminDetails($currentSchool, $schoolAdminId);
         return ApiResponseService::success("School Admin Details Fetched Successfully", $schoolAdminDetails, null, 200);
     }

@@ -32,9 +32,9 @@ class SchoolSubscriptionController extends Controller
         return ApiResponseService::success("Schoo Subcription Fetched Sucessfully", $getAllSubcribedSchools, null, 200);
     }
 
-    public function getSchoolSubscriptonDetails(Request $request, $subscription_id)
+    public function getSchoolSubscriptonDetails($subscriptionId)
     {
-        $subscriptionDetails = $this->schoolSubcriptionService->subcriptionPlanDetails($subscription_id);
+        $subscriptionDetails = $this->schoolSubcriptionService->subcriptionPlanDetails($subscriptionId);
         return ApiResponseService::success("Subcription Details Fetched Sucessfully", $subscriptionDetails, null, 200);
     }
 }

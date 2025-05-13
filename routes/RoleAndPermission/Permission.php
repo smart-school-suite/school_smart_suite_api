@@ -3,10 +3,31 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PermissionController;
 use App\Http\Middleware\IdentifyTenant;
 
-Route::middleware(['auth:sanctum'])->post('/create-permission', [PermissionController::class, 'createPermission']);
-Route::middleware(['auth:sanctum'])->get("/get-permissions", [PermissionController::class, "getPermission"]);
-Route::middleware(['auth:sanctum'])->delete("/delete-permission/{permissionId}", [PermissionController::class, 'deletePermission']);
-Route::middleware(['auth:sanctum'])->put('/update-permission/{permissionId}', [PermissionController::class, "updatePermission"]);
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->get('/get-schooladmin/permissions/{schoolAdminId}', [PermissionController::class, "getSchoolAdminPermissions"]);
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->post('/grant-schoolAdmin-permissions/{schoolAdminId}', [PermissionController::class, 'givePermissionToSchoolAdmin']);
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->post("/revoke-schoolAdmin-permissions/{schoolAdminId}", [PermissionController::class, 'revokePermission']);
+// Create a new permission
+Route::post('/permissions', [PermissionController::class, 'createPermission'])
+->name('permissions.store');
+
+// Get all permissions
+Route::get('/permissions', [PermissionController::class, 'getPermission'])
+->name('permissions.index');
+
+// Delete a specific permission
+Route::delete('/permissions/{permissionId}', [PermissionController::class, 'deletePermission'])
+->name('permissions.destroy');
+
+// Update a specific permission
+Route::put('/permissions/{permissionId}', [PermissionController::class, 'updatePermission'])
+->name('permissions.update');
+// Get permissions for a specific school administrator
+Route::middleware([IdentifyTenant::class])->get('/school-admins/{schoolAdminId}/permissions', [PermissionController::class, 'getSchoolAdminPermissions'])
+->name('school-admins.permissions.index');
+
+// Grant permissions to a specific school administrator
+Route::middleware([IdentifyTenant::class])->post('/school-admins/{schoolAdminId}/permissions', [PermissionController::class, 'givePermissionToSchoolAdmin'])
+->name('school-admins.permissions.store'); // Using store as it's adding/creating a relationship
+
+// Revoke permissions from a specific school administrator
+Route::middleware([IdentifyTenant::class])->delete('/school-admins/{schoolAdminId}/permissions', [PermissionController::class, 'revokePermission'])
+->name('school-admins.permissions.destroy');
+
+
