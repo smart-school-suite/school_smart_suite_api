@@ -673,6 +673,11 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
+        Schema::table('permissions', function(Blueprint $table){
+           $table->string('permission_category_id');
+           $table->foreign('permission_category_id')->references('id')->on('permission_category');
+        });
+
     }
 
     /**

@@ -4,9 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccessedStudentController;
 
 // Get all exam candidates students
-Route::get('/exam-candidates', [AccessedStudentController::class, 'getAccessedStudent'])
+Route::middleware(['permission:schoolAdmin.exam.candidate.view'])->get('/exam-candidates', [AccessedStudentController::class, 'getAccessedStudent'])
     ->name('exam-candidates.index');
 
 // Delete a specific accessed student record
-Route::delete('/exam-candidates/{accessedStudentId}', [AccessedStudentController::class, 'deleteAccessedStudent'])
+Route::middleware(['permission:schoolAdmin.exam.candidate.delete'])->delete('/exam-candidates/{accessedStudentId}', [AccessedStudentController::class, 'deleteAccessedStudent'])
     ->name('exam-candidates.destroy');

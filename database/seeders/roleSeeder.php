@@ -15,10 +15,10 @@ class roleSeeder extends Seeder
     public function run(): void
     {
         //
-        Role::create(['uuid' =>  Str::uuid(), "name"=> "teacher", "guard_name" => "api"]);
-        Role::create(['uuid' =>  Str::uuid(), "name" => "parent", "guard_name" => "api"]);
-        Role::create(['uuid' =>  Str::uuid(), "name"=> "schoolAdmin", "guard_name" => "api"]);
-        Role::create(['uuid' =>  Str::uuid(),"name" => "student", "guard_name" => "api"]);
-        Role::Create(['uuid' =>  Str::uuid(), "name" => "schoolSuperAdmin", "guard_name" => "api"]);
+        Role::create(['uuid' =>  Str::uuid(), "name"=> "teacher", "guard_name" => "teacher"]);
+        Role::create(['uuid' =>  Str::uuid(), "name"=> "schoolAdmin", "guard_name" => "schooladmin"]);
+        Role::create(['uuid' =>  Str::uuid(),"name" => "student", "guard_name" => "student"]);
+        Role::create(['uuid' => Str::uuid(), "name" => "appSuperAdmin", "guard_name" => "appAdmin"]);
+        Role::Create(['uuid' =>  Str::uuid(), "name" => "schoolSuperAdmin", "guard_name" => "schooladmin"]);
     }
 }

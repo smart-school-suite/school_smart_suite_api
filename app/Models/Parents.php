@@ -75,14 +75,12 @@ class Parents extends Model
     {
         return $this->morphMany(Otp::class, 'otpable');
     }
-    protected static function boot()
-    {
-        parent::boot();
+   protected static function boot()
+   {
+    parent::boot();
 
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
-    }
+    static::creating(function ($user) {
+        $user->id = (string) Str::uuid();
+    });
+  }
 }

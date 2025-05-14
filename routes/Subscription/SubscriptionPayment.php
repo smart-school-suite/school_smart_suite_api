@@ -9,10 +9,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ->name('schools.subscription-transactions.index');
 
     // Get subscription transactions for the authenticated school
-    Route::get('/my-subscription-transactions', [SubscriptionPaymentController::class, 'getTransactionsBySchool'])
+    Route::middleware(['permission:schoolAdmin.subscription.view.transactions.schoolBranch'])->get('/my-subscription-transactions', [SubscriptionPaymentController::class, 'getTransactionsBySchool'])
         ->name('my-subscription-transactions.index');
 
     // Delete a specific subscription payment transaction
-    Route::delete('/subscription-transactions', [SubscriptionPaymentController::class, 'deletePayment'])
+    Route::middleware(['permission:schoolAdmin.subscription.delete.transaction'])->delete('/subscription-transactions', [SubscriptionPaymentController::class, 'deletePayment'])
         ->name('subscription-transactions.destroy');
 });

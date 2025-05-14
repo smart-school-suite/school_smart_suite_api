@@ -21,9 +21,6 @@ class AssignPermissionToAdmin extends Seeder
         $allPermissionNames = Permission::pluck('name')->toArray();
         $schooladmin = Schooladmin::find("4dcf27a33ff77eb03bcc88612");
         $schooladmin->syncPermissions($allPermissionNames);
-        Log::info($schooladmin);
-        Log::info($allPermissionNames);
-
 
     }
 }

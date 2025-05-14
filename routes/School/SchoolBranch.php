@@ -9,14 +9,14 @@ Route::post('/school-branches', [SchoolBranchesController::class, 'createSchoolB
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Delete a specific school branch
-    Route::delete('/school-branches/{branchId}', [SchoolBranchesController::class, 'deleteSchoolBranch'])
+    Route::middleware(['permission:schoolAdmin.schoolBranch.delete'])->delete('/school-branches/{branchId}', [SchoolBranchesController::class, 'deleteSchoolBranch'])
         ->name('school-branches.destroy');
 
     // Update a specific school branch
-    Route::put('/school-branches/{branchId}', [SchoolBranchesController::class, 'updateSchoolBranch'])
+    Route::middleware(['permission:schoolAdmin.schoolBranch.update'])->put('/school-branches/{branchId}', [SchoolBranchesController::class, 'updateSchoolBranch'])
         ->name('school-branches.update');
 
-    Route::get('/school-branches', [SchoolBranchesController::class, 'getAllSchoolBranches'])
+    Route::middleware(['permission:appAdmin.schoolBranch.view'])->get('/school-branches', [SchoolBranchesController::class, 'getAllSchoolBranches'])
         ->name('school-branches.index');
 });
 

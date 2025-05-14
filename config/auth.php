@@ -49,10 +49,10 @@ return [
             'driver' => 'token',
             'provider' => 'users',
         ],
-        'edumanageadmin' => [
+        'appAdmin' => [
             'driver' => 'sanctum',
             'table' => 'personal_access_tokens',
-            'provider' => 'edumanageadmins',
+            'provider' => 'appAdmin',
         ],
         'parent' => [
             'driver' => 'sanctum',
@@ -103,7 +103,7 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
-        'edumanageadmins' => [
+        'appAdmin' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Edumanageadmin::class),
          ],

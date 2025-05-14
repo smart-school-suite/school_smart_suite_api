@@ -4,53 +4,51 @@ use App\Http\Controllers\ElectionResultsController;
 use illuminate\Support\Facades\Route;
 
  // Elections Resource
-    Route::post('/elections', [ElectionsController::class, 'createElection'])
+    Route::middleware(['permission:schoolAdmin.election.create'])->post('/elections', [ElectionsController::class, 'createElection'])
         ->name('elections.store');
-    Route::get('/elections', [ElectionsController::class, 'getElections'])
+    Route::middleware(['permission:schoolAdmin.election.view'])->get('/elections', [ElectionsController::class, 'getElections'])
         ->name('elections.index');
-    Route::delete('/elections/{electionId}', [ElectionsController::class, 'deleteElection'])
+    Route::middleware(['permission:schoolAdmin.election.delete'])->delete('/elections/{electionId}', [ElectionsController::class, 'deleteElection'])
         ->name('elections.destroy');
-    Route::put('/elections/{electionId}', [ElectionsController::class, 'updateElection'])
+    Route::middleware(['permission:schoolAdmin.election.update'])->put('/elections/{electionId}', [ElectionsController::class, 'updateElection'])
         ->name('elections.update');
-    Route::get('/elections/{electionId}/candidates', [ElectionsController::class, 'getElectionCandidates'])
+    Route::middleware(['permission:schoolAdmin.election.view.candidates'])->get('/elections/{electionId}/candidates', [ElectionsController::class, 'getElectionCandidates'])
         ->name('elections.candidates.index');
-    Route::delete('/elections/bulk-delete/{electionIds}', [ElectionsController::class, 'bulkDeleteElection'])
+    Route::middleware(['permission:schoolAdmin.election.delete'])->delete('/elections/bulk-delete/{electionIds}', [ElectionsController::class, 'bulkDeleteElection'])
         ->name('elections.bulk-delete');
-    Route::put('/elections/bulk-update', [ElectionsController::class, 'bulkUpdateElection'])
+    Route::middleware(['permission:schoolAdmin.election.update'])->put('/elections/bulk-update', [ElectionsController::class, 'bulkUpdateElection'])
         ->name('elections.bulk-update');
-    Route::get('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'getAllowedParticipants'])
+    Route::middleware(['permission:schoolAdmin.election.view.participants'])->get('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'getAllowedParticipants'])
         ->name('elections.allowed-participants.index');
-    Route::post('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'addAllowedParticipants'])
+    Route::middleware(['permission:schoolAdmin.election.add.participants'])->post('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'addAllowedParticipants'])
         ->name('elections.allowed-participants.store');
-    Route::post('/elections/{electionId}/allowed-participants/from/{targetElectionId}', [ElectionsController::class, 'addAllowedParticipantsByOtherElection'])
+    Route::middleware(['permission:schoolAdmin.election.add.participants'])->post('/elections/{electionId}/allowed-participants/from/{targetElectionId}', [ElectionsController::class, 'addAllowedParticipantsByOtherElection'])
         ->name('elections.allowed-participants.store-from-other');
 
     // Voting
-    Route::post('/elections/{electionId}/cast-vote', [ElectionsController::class, 'vote'])
+    Route::middleware(['permission:schoolAdmin.election.vote'])->post('/elections/{electionId}/cast-vote', [ElectionsController::class, 'vote'])
         ->name('elections.vote');
 
     // Election Results
-    Route::get('/elections/{electionId}/results', [ElectionResultsController::class, 'getElectionResults'])
+    Route::middleware(['permission:schoolAdmin.election.view.results'])->get('/elections/{electionId}/results', [ElectionResultsController::class, 'getElectionResults'])
         ->name('elections.results.show');
-    Route::get('/past-election-winners', [ElectionsController::class, 'getPastElectionWinners'])
+    Route::middleware(['permission:schoolAdmin.election.view.past.winners'])->get('/past-election-winners', [ElectionsController::class, 'getPastElectionWinners'])
         ->name('elections.winners.past');
-    Route::get('/current-election-winners', [ElectionsController::class, 'getCurrentElectionWinners'])
+    Route::middleware(['permission:schoolAdmin.election.view.winners.current'])->get('/current-election-winners', [ElectionsController::class, 'getCurrentElectionWinners'])
         ->name('elections.winners.current');
-    Route::get('/getElectionResults/{electionId}', [ElectionsController::class, '']) // Empty controller action, needs review
-        ->name('elections.results.get');
 
     // Election Types Resource
-    Route::post('/election-types', [ElectionsController::class, 'createElectionType'])
+    Route::middleware(['permission:schoolAdmin.electionType.create'])->post('/election-types', [ElectionsController::class, 'createElectionType'])
         ->name('election-types.store');
-    Route::get('/election-types', [ElectionsController::class, 'getElectionTypes']) // Inconsistent action, should be getElectionTypes
+    Route::middleware(['permission:schoolAdmin.electionType.view'])->get('/election-types', [ElectionsController::class, 'getElectionTypes']) // Inconsistent action, should be getElectionTypes
         ->name('election-types.index');
-    Route::put('/election-types/{electionTypeId}', [ElectionsController::class, 'updateElectionType'])
+    Route::middleware(['permission:schoolAdmin.electionType.update'])->put('/election-types/{electionTypeId}', [ElectionsController::class, 'updateElectionType'])
         ->name('election-types.update');
-    Route::delete('/election-types/{electionTypeId}', [ElectionsController::class, 'deleteElectionType'])
+    Route::middleware(['permission:schoolAdmin.electionType.delete'])->delete('/election-types/{electionTypeId}', [ElectionsController::class, 'deleteElectionType'])
         ->name('election-types.destroy');
-    Route::post('/election-types/{electionTypeId}/activate', [ElectionsController::class, 'activateElectionType'])
+    Route::middleware(['permission:schoolAdmin.electionType.activate'])->post('/election-types/{electionTypeId}/activate', [ElectionsController::class, 'activateElectionType'])
         ->name('election-types.activate');
-    Route::post('/election-types/{electionTypeId}/deactivate', [ElectionsController::class, 'deactivateElectionType'])
+    Route::middleware(['permission:schoolAdmin.electionType.deactivate'])->post('/election-types/{electionTypeId}/deactivate', [ElectionsController::class, 'deactivateElectionType'])
         ->name('election-types.deactivate');
-    Route::get('/active-election-types', [ElectionsController::class, 'getActiveElectionTypes'])
+    Route::middleware(['permission:schoolAdmin.electionType.view.active'])->get('/active-election-types', [ElectionsController::class, 'getActiveElectionTypes'])
         ->name('election-types.active');

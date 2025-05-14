@@ -10,8 +10,8 @@ use App\Http\Controllers\Auth\AppAdmin\PasswordResetController;
 
 
 // Registration
-Route::post('/register', [CreateAppAdminController::class, 'createAppAdmin'])
-    ->name('admin.register');
+Route::post('/create-app.apdmin', [CreateAppAdminController::class, 'createAppAdmin'])
+    ->name('create.app.admin');
 
 // Login
 Route::post('/login', [LoginAppAdminController::class, 'loginAppAdmin'])

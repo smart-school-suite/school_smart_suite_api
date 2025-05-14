@@ -4,13 +4,15 @@ namespace App\Services;
 
 use App\Models\Schooladmin;
 use Spatie\Permission\Models\Permission;
+use App\Models\Permission as AppPermission;
 
 class PermissionService
 {
     // Implement your logic here
     public function createPermission(array $data){
-        $permission = new Permission();
+        $permission = new AppPermission();
         $permission->name = $data['name'];
+        $permission->permission_category_id = $data['permission_category_id'];
         $permission->guard_name = $data['guard_name'];
         $permission->save();
         return $permission;
@@ -36,7 +38,7 @@ class PermissionService
     }
 
     public function getPermissions(){
-        return Permission::all();
+        return AppPermission::with('permissionCategory')->all();
     }
 
     public function getSchoolAdminPermissions(string $userId,  $currentSchool){

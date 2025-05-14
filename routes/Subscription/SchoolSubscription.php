@@ -7,10 +7,10 @@ Route::post('/school-subscriptions', [SchoolSubscriptionController::class, 'subs
     ->name('school-subscriptions.store');
 Route::middleware(['auth:sanctum'])->group(function () {
     // Get all subscribed schools
-    Route::get('/school-subscriptions', [SchoolSubscriptionController::class, 'getSubscribedSchools'])
+    Route::middleware(['permission:appAdmin.subscription.view.subscribed.schools'])->get('/school-subscriptions', [SchoolSubscriptionController::class, 'getSubscribedSchools'])
         ->name('school-subscriptions.index');
 
     // Get details of a specific school subscription
-    Route::get('/school-subscriptions/{subscriptionId}', [SchoolSubscriptionController::class, 'getSchoolSubscriptonDetails'])
+    Route::middleware(['permission:appAdmin.subscription.show.schoolBranch'])->get('/school-subscriptions/{subscriptionId}', [SchoolSubscriptionController::class, 'getSchoolSubscriptonDetails'])
         ->name('school-subscriptions.show');
 });
