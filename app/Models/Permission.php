@@ -13,6 +13,8 @@ class Permission extends SpatiePermission
     use HasFactory, HasUuids;
 
     protected $fillable  = [
+        'name',
+        'guard_name',
         'permission_category_id'
     ];
 

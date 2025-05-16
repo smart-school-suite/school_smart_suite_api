@@ -20,6 +20,38 @@ class PermissionCategorySeeder extends Seeder
                 "description" => "Handles student enrollment, records, and profile management."
             ],
             [
+                "title" => "Level Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "School Admin Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "Subscription Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "Role Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "Permission Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "Rate Card Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "Event Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
+                "title" => "Registration Fee Manager",
+                "description" => "Handles student enrollment, records, and profile management."
+            ],
+            [
                 "title" => "Parent Manager",
                 "description" => "Manages parent profiles, contact information, and related communications."
             ],
@@ -120,11 +152,11 @@ class PermissionCategorySeeder extends Seeder
                 "description" => "Handles specialized programs, courses, or departments within the school."
             ],
             [
-                "title" => "Student Batch Manager",
-                "description" => "Manages groups of students enrolled in the same term or program."
+                "title" => "Student Results Manager",
+                "description" => "Handles processing, storage, and retrieval of student results."
             ],
             [
-                "title" => "Student Results Manager",
+                "title" => "Department Manager",
                 "description" => "Handles processing, storage, and retrieval of student results."
             ],
             [
@@ -136,7 +168,7 @@ class PermissionCategorySeeder extends Seeder
                 "description" => "Handles teacher profiles, assignments, and schedules."
             ],
         ];
-        foreach($data as $entry){
+        foreach ($data as $entry) {
             PermissionCategory::create([
                 'title' => $entry['title'],
                 'description' => $entry['description']

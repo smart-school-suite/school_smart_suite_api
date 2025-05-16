@@ -20,7 +20,7 @@ class UpdateCountryRequest extends FormRequest
     public function rules()
     {
         return [
-            'country' => 'sometimes|nullable|string|unique',
+            'country' => 'sometimes|nullable|string',
             'code' => 'sometimes|nullable|string',
             'currency' => 'sometimes|nullable|string',
             'official_language' => 'sometimes|nullable|string'

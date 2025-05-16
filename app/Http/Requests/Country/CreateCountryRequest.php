@@ -20,7 +20,7 @@ class CreateCountryRequest extends FormRequest
     public function rules()
     {
         return [
-            'country' => 'required|string|unique',
+            'country' => 'required|string|unique:country,country',
             'code' => 'required|string',
             'currency' => 'required|string',
             'official_language' => 'required|string'

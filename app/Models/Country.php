@@ -14,6 +14,7 @@ class Country extends Model
     protected $fillable = [
         'country',
         'code',
+        'status',
         'currency',
         'official_language'
     ];

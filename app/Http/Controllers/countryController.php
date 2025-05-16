@@ -23,7 +23,7 @@ class CountryController extends Controller
     }
     public function createCountry(CreateCountryRequest $request){
         $country = $this->countryService->createCountry($request->validated());
-        return ApiResponseService::success('Country Created sucessfully', $country, null, 200);
+        return ApiResponseService::success('Country Created sucessfully', $country, null, 201);
     }
     public function updateCountry(UpdateCountryRequest $request, string $countryId){
         $updatedCountry = $this->countryService->updateCountry($request->validated(), $countryId);
@@ -40,7 +40,7 @@ class CountryController extends Controller
     }
     public function bulkUpdateCountry(BulkUpdateCountryRequest $request){
         try{
-           $bulkUpdateCountry = $this->countryService->bulkUpdateCountry($request->countries);
+           $bulkUpdateCountry = $this->countryService->bulkUpdateCountry($request->validated());
            return  ApiResponseService::success("Country Updated Successfully", $bulkUpdateCountry, null, 200);
         }
         catch(Exception $e){

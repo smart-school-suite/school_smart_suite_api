@@ -14,7 +14,8 @@ class CountryService
     {
         $country = new Country();
         $country->country = $data["country"];
-        $country->status = $data["status"];
+        $country->official_language = $data["official_language"];
+        $country->currency = $data["currency"];
         $country->code = $data["code"];
         $country->save();
         return $country;

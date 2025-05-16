@@ -20,12 +20,12 @@ class BulkUpdateCountryRequest extends FormRequest
     public function rules()
     {
         return [
-            'countrys' => 'required|array',
-            'countrys.*.country_id' => 'required|string|exists:country,id',
-            'countrys.*.country' => 'sometimes|nullable|string|unique',
-            'countrys.*.code' => 'sometimes|nullable|string',
-            'countrys.*.currency' => 'sometimes|nullable|string',
-            'countrys.*.official_language' => 'sometimes|nullable|string'
+            'country' => 'required|array',
+            'country.*.country_id' => 'required|string|exists:country,id',
+            'country.*.country' => 'sometimes|nullable|string|unique',
+            'country.*.code' => 'sometimes|nullable|string',
+            'country.*.currency' => 'sometimes|nullable|string',
+            'country.*.official_language' => 'sometimes|nullable|string'
         ];
     }
 }
