@@ -71,7 +71,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher-avialability')
                 ->group(base_path('routes/Teacher/TeacherAvialability.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/level')
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/level')
                 ->group(base_path('routes/Level/Level.php'));
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/grade')

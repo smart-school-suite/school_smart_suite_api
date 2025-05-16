@@ -47,10 +47,6 @@ class Educationlevels extends Model
     {
         return $this->hasMany(StudentBatchGradeDates::class);
     }
-    public function studentDropout(): HasMany
-    {
-        return $this->hasMany(StudentDropout::class, 'level_id');
-    }
 
     public function resitmarks(): HasMany
     {

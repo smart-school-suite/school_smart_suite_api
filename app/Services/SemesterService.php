@@ -20,7 +20,7 @@ class SemesterService
     public function updateSemester($semsterId, array $data){
         $semester = Semester::findOrFail($semsterId);
         $filterData = array_filter($data);
-        $semester->update($semester);
+        $semester->update($filterData );
         return $semester;
     }
 

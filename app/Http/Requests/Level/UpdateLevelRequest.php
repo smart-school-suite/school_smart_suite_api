@@ -20,8 +20,7 @@ class UpdateLevelRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|string',
-            'level' => 'sometimes|string',
-            'program_name' => 'sometimes|string'
+            'level' => 'sometimes|string'
         ];
     }
 }

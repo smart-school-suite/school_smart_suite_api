@@ -13,15 +13,14 @@ class EducationLevelService
         $educationLevel = new Educationlevels();
         $educationLevel->name = $data["name"];
         $educationLevel->level = $data["level"];
-        $educationLevel->program_name = $data["program_name"];
 
         $educationLevel->save();
         return $educationLevel;
     }
 
-    public function updateEducationLevel(array $data, $level_id)
+    public function updateEducationLevel(array $data, $levelId)
     {
-        $educationLevel = Educationlevels::find($level_id);
+        $educationLevel = Educationlevels::find($levelId);
         if (!$educationLevel) {
             return ApiResponseService::error("Education level not found", null, 404);
         }
@@ -32,9 +31,9 @@ class EducationLevelService
         return $educationLevel;
     }
 
-    public function deleteEducationLevel($level_id)
+    public function deleteEducationLevel($levelId)
     {
-        $educationLevel = Educationlevels::find($level_id);
+        $educationLevel = Educationlevels::find($levelId);
         if (!$educationLevel) {
             return ApiResponseService::error("Education Level not found", null, 404);
         }

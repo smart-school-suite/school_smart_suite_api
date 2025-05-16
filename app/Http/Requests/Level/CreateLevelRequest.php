@@ -21,8 +21,7 @@ class CreateLevelRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'level' => 'required|string',
-            'program_name' => 'required|string'
+            'level' => 'required|string'
         ];
     }
 }
