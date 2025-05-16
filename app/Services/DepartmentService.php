@@ -2,8 +2,9 @@
 
 namespace App\Services;
 use Exception;
-use illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\Department;
+
 
 class DepartmentService
 {
@@ -18,9 +19,9 @@ class DepartmentService
         return $department;
     }
 
-    public function updateDepartment(string $department_id, array $data, $currentSchool)
+    public function updateDepartment(string $departmentId, array $data, $currentSchool)
     {
-        $department = Department::find($department_id);
+        $department = Department::where("school_branch_id", $currentSchool->id)->find($departmentId);
         if (!$department) {
             return ApiResponseService::error("Department Not found", null, 404);
         }
@@ -29,9 +30,9 @@ class DepartmentService
         return $department;
     }
 
-    public function deleteDepartment(string $department_id)
+    public function deleteDepartment(string $departmentId)
     {
-        $department = Department::find($department_id);
+        $department = Department::find($departmentId);
         if (!$department) {
             return ApiResponseService::error("Department Not Found", null, 404);
         }
@@ -48,11 +49,11 @@ class DepartmentService
         return $departmentData;
     }
 
-    public function getDepartmentDetails($currentSchool, $department_id)
+    public function getDepartmentDetails($currentSchool, $departmentId)
     {
         $findDeparment = Department::where("school_branch_id", $currentSchool->id)
             ->with(['hods.hodable'])
-            ->find($department_id);
+            ->find($departmentId);
         if (!$findDeparment) {
             return ApiResponseService::error("Department not found", null, 404);
         }
@@ -76,12 +77,10 @@ class DepartmentService
     public function bulkDeactivateDepartment(array $departmentIds){
         $result = [];
         foreach($departmentIds as $departmentId){
-             $department = Department::findOrFail($departmentId['id']);
+             $department = Department::findOrFail($departmentId['department_id']);
              $department->status = 'inactive';
              $department->save();
-             $result[] = [
-                 'department_name' => $department->department_name
-             ];
+             $result[] = $department;
         }
         return $result;
     }
@@ -89,22 +88,21 @@ class DepartmentService
     public function bulkActivateDepartment(array $departmentIds){
         $result = [];
         foreach($departmentIds as $departmentId){
-             $department = Department::findOrFail($departmentId['id']);
+             $department = Department::findOrFail($departmentId['department_id']);
              $department->status = 'active';
              $department->save();
-             $result[] = [
-                 'department_name' => $department->department_name
-             ];
+             $result[] = $department;
         }
         return $result;
     }
 
-    public function bulkUpdateDepartment(array $updateDataList){
+   public function bulkUpdateDepartment(array $updateDataList): array
+    {
         $result = [];
-        try{
+        try {
             DB::beginTransaction();
-            foreach($updateDataList as $updateData){
-                $department = Department::findOrFail($updateData['id']);
+            foreach ($updateDataList as $updateData) {
+                $department = Department::findOrFail($updateData['department_id']);
                 if ($department) {
                     $cleanedData = array_filter($updateData, function ($value) {
                         return $value !== null && $value !== '';
@@ -113,17 +111,14 @@ class DepartmentService
                     if (!empty($cleanedData)) {
                         $department->update($cleanedData);
                     }
+                    $result[] = $department;
                 }
-                $result[] = [
-                   $department
-              ];
             }
             DB::commit();
             return $result;
-        }
-        catch(Exception $e){
-             DB::rollBack();
-             throw $e;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
     }
 
@@ -132,7 +127,7 @@ class DepartmentService
          DB::beginTransaction();
           try{
             foreach($departmentIds as $departmentId){
-                $department = Department::findOrFail($departmentId);
+                $department = Department::findOrFail($departmentId['department_id']);
                 $department->delete();
                 $result[] = [
                     $department

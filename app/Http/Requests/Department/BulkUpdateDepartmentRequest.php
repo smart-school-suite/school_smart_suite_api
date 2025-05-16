@@ -21,7 +21,7 @@ class BulkUpdateDepartmentRequest extends FormRequest
     {
         return [
             'departments' => 'required|array',
-            'departments.*.id' => 'required|string|exists:department,id',
+            'departments.*.department_id' => 'required|string|exists:departments,id',
             'departments.*.department_name' => 'sometimes|nullable|string',
             'departments.*.description' => 'sometimes|nullable|string',
         ];

@@ -38,13 +38,13 @@ use App\Http\Controllers\DepartmentController;
         ->name('departments.bulk-update');
 
     // Bulk delete departments
-    Route::middleware(['permission:schoolAdmin.department.delete'])->delete('/departments/bulk-delete/{departmentIds}', [DepartmentController::class, 'bulkDeleteDepartment'])
+    Route::middleware(['permission:schoolAdmin.department.delete'])->post('/departments/bulk-delete', [DepartmentController::class, 'bulkDeleteDepartment'])
         ->name('departments.bulk-delete');
 
     // Bulk activate departments
-    Route::middleware(['permission:schoolAdmin.department.activate'])->post('/departments/bulk-activate/{departmentIds}', [DepartmentController::class, 'bulkActivateDepartment'])
+    Route::middleware(['permission:schoolAdmin.department.activate'])->post('/departments/bulk-activate', [DepartmentController::class, 'bulkActivateDepartment'])
         ->name('departments.bulk-activate');
 
     // Bulk deactivate departments
-    Route::middleware(['permission:schoolAdmin.department.deactivate'])->post('/departments/bulk-deactivate/{departmentIds}', [DepartmentController::class, 'bulkDeactivateDepartment'])
+    Route::middleware(['permission:schoolAdmin.department.deactivate'])->post('/departments/bulk-deactivate', [DepartmentController::class, 'bulkDeactivateDepartment'])
         ->name('departments.bulk-deactivate');
