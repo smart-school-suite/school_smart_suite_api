@@ -7,10 +7,12 @@ use App\Services\SpecailtyService;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Specialty\CreateSpecialtyRequest;
 use App\Http\Requests\Specialty\UpdateSpecialtyRequest;
+use App\Http\Requests\Specialty\SpecialtyIdRequest;
 use App\Http\Requests\Specialty\BulkUpdateSpecialtyRequest;
 use App\Http\Resources\SpecialtyResource;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SpecialtyController extends Controller
 {
@@ -30,13 +32,13 @@ class SpecialtyController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteSpecailty = $this->specailtyService->deleteSpecailty($currentSchool, $specialtyId);
-        return ApiResponseService::success("Specailty Deleted Sucessfully", $deleteSpecailty, null, 200);
+        return ApiResponseService::success("Specialty Deleted Sucessfully", $deleteSpecailty, null, 200);
     }
     public function updateSpecialty(UpdateSpecialtyRequest $request, $specialtyId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $updateSpecailty = $this->specailtyService->updateSpecialty($request->validated(), $currentSchool, $specialtyId);
-        return ApiResponseService::success("Specailty Updated Sucessfully", $updateSpecailty, null, 200);
+        return ApiResponseService::success("Specialty Updated Sucessfully", $updateSpecailty, null, 200);
     }
     public function getSpecialtiesBySchoolBranch(Request $request)
     {
@@ -49,7 +51,7 @@ class SpecialtyController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $specialtyId = $request->route('specialtyId');
         $specailtyDetails = $this->specailtyService->getSpecailtyDetails($currentSchool, $specialtyId);
-        return ApiResponseService::success("specialty detials fetched succefully", $specailtyDetails, null, 200);
+        return ApiResponseService::success("specialty details fetched succefully", $specailtyDetails, null, 200);
     }
     public function activateSpecialty($specialtyId)
     {
@@ -61,68 +63,28 @@ class SpecialtyController extends Controller
         $deactivateSpecialty = $this->specailtyService->deactivateSpecialty($specialtyId);
         return ApiResponseService::success("Specialty Deactivated Successfully", $deactivateSpecialty, null, 200);
     }
-    public function bulkDeactivateSpecialty($specialtyIds)
+    public function bulkDeactivateSpecialty(SpecialtyIdRequest $request)
     {
-
-        $idsArray = explode(',', $specialtyIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:specialty,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkDeactivateSpecialty = $this->specailtyService->bulkDeactivateSpecialty($idsArray);
+            $bulkDeactivateSpecialty = $this->specailtyService->bulkDeactivateSpecialty($request->specialtyIds);
             return ApiResponseService::success("Specialty Deactived Succesfully", $bulkDeactivateSpecialty, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkActivateSpecialty($specialtyIds)
+    public function bulkActivateSpecialty(SpecialtyIdRequest $request)
     {
-        $idsArray = explode(',', $specialtyIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:specialty,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkActivateSpecialty = $this->specailtyService->bulkActivateSpecialty($idsArray);
-            return ApiResponseService::success("Specialty actived Succesfully", $bulkActivateSpecialty, null, 200);
+            $bulkActivateSpecialty = $this->specailtyService->bulkActivateSpecialty($request->specialtyIds);
+            return ApiResponseService::success("Specialty activated Succesfully", $bulkActivateSpecialty, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkDeleteSpecialty($specialtyIds)
+    public function bulkDeleteSpecialty(SpecialtyIdRequest $request)
     {
-        $idsArray = explode(',', $specialtyIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:specialty,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkDeleteSpecialty = $this->specailtyService->bulkDeleteSpecialty($idsArray);
+            $bulkDeleteSpecialty = $this->specailtyService->bulkDeleteSpecialty($request->specialtyIds);
             return ApiResponseService::success("Specialty Deleted Succesfully", $bulkDeleteSpecialty, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);

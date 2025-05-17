@@ -34,7 +34,7 @@ use App\Http\Controllers\DepartmentController;
         ->name('departments.deactivate');
 
     // Bulk update departments
-    Route::middleware(['permission:schoolAdmin.department.update'])->put('/departments/bulk-update', [DepartmentController::class, 'bulkUpdateDepartment'])
+    Route::middleware(['permission:schoolAdmin.department.update'])->patch('/departments/bulk-update', [DepartmentController::class, 'bulkUpdateDepartment'])
         ->name('departments.bulk-update');
 
     // Bulk delete departments

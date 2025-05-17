@@ -16,29 +16,29 @@ class SpecailtyService
         $specialty->specialty_name = $data["specialty_name"];
         $specialty->registration_fee = $data["registration_fee"];
         $specialty->school_fee = $data["school_fee"];
-        $specialty->description = $data["description"];
+        $specialty->description = $data["description"] ?? null;
         $specialty->level_id = $data["level_id"];
         $specialty->save();
         return $specialty;
     }
 
     public function updateSpecialty(array $data, $currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->find($specialtyId);
-        if(!$specailtyExists){
+        $specailty = Specialty::where("school_branch_id", $currentSchool->id)->find($specialtyId);
+        if(!$specailty){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
         $filterData = array_filter($data);
-        $specailtyExists->update( $filterData );
-        return $specailtyExists;
+        $specailty->update( $filterData );
+        return $specailty;
      }
 
      public function deleteSpecailty($currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->find($specialtyId);
-        if($specailtyExists){
+        $specailty = Specialty::where("school_branch_id", $currentSchool->id)->find($specialtyId);
+        if(!$specailty){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
-        $specailtyExists->delete();
-        return $specailtyExists;
+        $specailty->delete();
+        return $specailty;
      }
 
      public function getSpecailties($currentSchool){
@@ -47,11 +47,11 @@ class SpecailtyService
      }
 
      public function getSpecailtyDetails($currentSchool, $specialtyId){
-        $specailtyExists = Specialty::where("school_branch_id", $currentSchool->id)->with(['level', 'department', 'hos.hosable'])->find($specialtyId);
-        if(!$specailtyExists){
+        $specailty = Specialty::where("school_branch_id", $currentSchool->id)->with(['level', 'department', 'hos.hosable'])->find($specialtyId);
+        if(!$specailty){
             return ApiResponseService::error("Specailty Not Found", null, 404);
         }
-        return $specailtyExists;
+        return $specailty;
      }
 
      public function deactivateSpecialty($specialtyId){
@@ -83,9 +83,7 @@ class SpecailtyService
                         $specialty->update($cleanedData);
                     }
                 }
-                $result[] = [
-                   $specialty
-              ];
+                $result[] = $specialty;
              }
              DB::commit();
             return $result;
@@ -102,7 +100,7 @@ class SpecailtyService
           try{
             DB::beginTransaction();
             foreach($specialtyIds as $specialtyId){
-               $specialty = Specialty::findOrFail($specialtyIds);
+               $specialty = Specialty::findOrFail($specialtyId['specialty_id']);
                $specialty->status = "inactive";
                $specialty->save();
                $result[] = [
@@ -118,12 +116,12 @@ class SpecailtyService
           }
      }
 
-     public function bulkActivateSpecialty($specialtyIds){
+     public function bulkActivateSpecialty(array $specialtyIds){
         $result = [];
         try{
           DB::beginTransaction();
           foreach($specialtyIds as $specialtyId){
-             $specialty = Specialty::findOrFail($specialtyId);
+             $specialty = Specialty::findOrFail($specialtyId['specialty_id']);
              $specialty->status = "active";
              $specialty->save();
              $result[] = [
@@ -144,12 +142,13 @@ class SpecailtyService
         try{
            DB::beginTransaction();
             foreach($specialtyIds as $specialtyId){
-             $specialty = Specialty::findOrFail($specialtyId);
+             $specialty = Specialty::findOrFail($specialtyId['specialty_id']);
              $specialty->delete();
              $result[] = [
                 $specialty
              ];
           }
+          DB::commit();
           return $result;
         }
         catch(Exception $e){

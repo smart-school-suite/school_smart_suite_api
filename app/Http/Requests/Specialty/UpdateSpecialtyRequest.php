@@ -24,7 +24,8 @@ class UpdateSpecialtyRequest extends FormRequest
             'department_id' => 'sometimes|nullable|string',
             'registration_fee' => 'sometimes|nullable|decimal:0, 2',
             'school_fee' => 'sometimes|nullable|decimal:0, 2',
-            'level_id' => 'sometimes|nullable|string|exists:education_levels,id'
+            'level_id' => 'sometimes|nullable|string|exists:education_levels,id',
+            'description' => 'sometimes|nullable|string'
         ];
     }
 }

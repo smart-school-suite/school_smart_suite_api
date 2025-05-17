@@ -32,17 +32,17 @@ Route::middleware(['permission:schoolAdmin.specialty.deactivate'])->post('/speci
     ->name('specialties.deactivate');
 
 // Bulk delete specialties
-Route::middleware(['permission:schoolAdmin.specialty.delete'])->delete('/specialties/bulk-delete/{specialtyIds}', [SpecialtyController::class, 'bulkDeleteSpecialty'])
+Route::middleware(['permission:schoolAdmin.specialty.delete'])->post('/specialties/bulk-delete', [SpecialtyController::class, 'bulkDeleteSpecialty'])
     ->name('specialties.bulk-delete');
 
 // Bulk update specialties
-Route::middleware(['permission:schoolAdmin.specialty.update'])->put('/specialties/bulk-update', [SpecialtyController::class, 'bulkUdateSpecialty'])
+Route::middleware(['permission:schoolAdmin.specialty.update'])->patch('/specialties/bulk-update', [SpecialtyController::class, 'bulkUdateSpecialty'])
     ->name('specialties.bulk-update');
 
 // Bulk activate specialties
-Route::middleware(['permission:schoolAdmin.specialty.activate'])->post('/specialties/bulk-activate/{specialtyIds}', [SpecialtyController::class, 'bulkActivateSpecialty'])
+Route::middleware(['permission:schoolAdmin.specialty.activate'])->post('/specialties/bulk-activate', [SpecialtyController::class, 'bulkActivateSpecialty'])
     ->name('specialties.bulk-activate');
 
 // Bulk deactivate specialties
-Route::middleware(['permission:schoolAdmin.specialty.deactivate'])->post('/specialties/bulk-deactivate/{specialtyIds}', [SpecialtyController::class, 'bulkDeactivateSpecialty'])
+Route::middleware(['permission:schoolAdmin.specialty.deactivate'])->post('/specialties/bulk-deactivate', [SpecialtyController::class, 'bulkDeactivateSpecialty'])
     ->name('specialties.bulk-deactivate');

@@ -92,7 +92,7 @@ class DepartmentController extends Controller
     }
     public function bulkUpdateDepartment(BulkUpdateDepartmentRequest $request){
         try{
-           $bulkUpdateDepartment = $this->departmentService->bulkUpdateDepartment($request->validated());
+           $bulkUpdateDepartment = $this->departmentService->bulkUpdateDepartment($request->departments);
            return ApiResponseService::success("Departments Updated Succesfully", $bulkUpdateDepartment, null, 200);
         }
         catch(Exception $e){
