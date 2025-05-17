@@ -27,9 +27,9 @@ class CourseService
 
         return $course;
     }
-    public function deleteCourse(string $course_id, $currentSchool)
+    public function deleteCourse(string $courseId, $currentSchool)
     {
-        $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
+        $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if (!$course) {
             return ApiResponseService::error('Course Not found', null, 404);
         }
@@ -42,11 +42,9 @@ class CourseService
         try {
             DB::beginTransaction();
             foreach ($coursesIds as $courseId) {
-                $course = Courses::findOrFail($courseId);
+                $course = Courses::findOrFail($courseId['course_id']);
                 $course->delete();
-                $resuls[] = [
-                    $course
-                ];
+                $result[] = $course;
             }
             DB::commit();
             return $result;
@@ -55,9 +53,9 @@ class CourseService
             throw $e;
         }
     }
-    public function updateCourse(string $course_id, array $data, $currentSchool)
+    public function updateCourse(string $courseId, array $data, $currentSchool)
     {
-        $course = Courses::where("school_branch_id", $currentSchool->id)->find($course_id);
+        $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if (!$course) {
             return ApiResponseService::error('Course Not found', null, 404);
         }
@@ -77,9 +75,7 @@ class CourseService
                 $course = Courses::findOrFail($updateCourse['course_id']);
                 $filteredData = array_filter($updateCourse);
                 $course->update($filteredData);
-                $result[] = [
-                    $course
-                ];
+                $result[] = $course;
             }
             DB::commit();
             return $result;
@@ -94,11 +90,11 @@ class CourseService
             ->with(['department', 'specialty', 'semester', 'level'])
             ->get();
     }
-    public function courseDetails(string $course_id, $currentSchool)
+    public function courseDetails(string $courseId, $currentSchool)
     {
         $course = Courses::where('school_branch_id', $currentSchool->id)
             ->with(['department', 'specialty', 'semester', 'level'])
-            ->find($course_id);
+            ->find($courseId);
         if (!$course) {
             return ApiResponseService::error("Course not found please try again", null, 404);
         }
@@ -136,7 +132,7 @@ class CourseService
         try {
             DB::beginTransaction();
             foreach ($coursesIds as $courseId) {
-                $course = Courses::findOrFail($courseId);
+                $course = Courses::findOrFail($courseId['course_id']);
                 $course->status = 'inactive';
                 $course->save();
                 $result[] = [
@@ -166,7 +162,7 @@ class CourseService
         try {
             DB::beginTransaction();
             foreach ($courseIds as $courseId) {
-                $course = Courses::findOrFail($courseId);
+                $course = Courses::findOrFail($courseId['course_id']);
                 $course->status = 'active';
                 $course->save();
                 $result[] = [

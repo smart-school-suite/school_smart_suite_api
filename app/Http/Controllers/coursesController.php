@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Course\CourseIdRequest;
 use App\Http\Requests\Course\CreateCourseRequest;
 use App\Http\Requests\Course\UpdateCourseRequest;
 use App\Http\Requests\Course\BulkUpdateCourseRequest;
@@ -49,15 +50,15 @@ class CoursesController extends Controller
     public function getCourseDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $courseId = $request->route("course_id");
+        $courseId = $request->route("courseId");
         $courseDetails = $this->courseService->courseDetails($courseId, $currentSchool);
         return ApiResponseService::success('Course Details fetched succefully', $courseDetails, null, 200);
     }
     public function getBySpecialtyLevelSemester(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $specialtyId = $request->route("specialty_id");
-        $semesterId = $request->route("semester_id");
+        $specialtyId = $request->route("specialtyId");
+        $semesterId = $request->route("semesterId");
         if (!$currentSchool || !$specialtyId || !$semesterId) {
             return ApiResponseService::error('Invalid input parameters', null, 400);
         }
@@ -93,68 +94,28 @@ class CoursesController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkDeleteCourse($courseIds){
-        $idsArray = explode(',', $courseIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:courses,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteCourse(CourseIdRequest $request){
        try{
-          $bulkDelete = $this->courseService->bulkDeleteCourse($idsArray);
+          $bulkDelete = $this->courseService->bulkDeleteCourse($request->courseIds);
           return ApiResponseService::success("Course Deleted Successfully", $bulkDelete, null, 200);
        }
        catch(Exception $e){
         return ApiResponseService::error($e->getMessage(), null, 400);
        }
     }
-    public function bulkDeactivateCourse($courseIds){
-        $idsArray = explode(',', $courseIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:courses,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
-
+    public function bulkDeactivateCourse(CourseIdRequest $request){
         try{
-            $bulkDeactivate = $this->courseService->bulkDeactivateCourse($idsArray);
+            $bulkDeactivate = $this->courseService->bulkDeactivateCourse($request->courseIds);
             return ApiResponseService::success("Course Deactivated Successfully", $bulkDeactivate, null, 200);
         }
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkActivateCourse($courseIds){
-        $idsArray = explode(',', $courseIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:courses,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkActivateCourse(CourseIdRequest $request){
 
         try{
-             $bulkActivate = $this->courseService->bulkActivateCourse($idsArray);
+             $bulkActivate = $this->courseService->bulkActivateCourse($request->courseIds);
              return ApiResponseService::success("Course Activated Successfully", $bulkActivate, null, 200);
         }
         catch(Exception $e){

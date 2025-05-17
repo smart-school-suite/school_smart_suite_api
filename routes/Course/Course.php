@@ -19,12 +19,9 @@ Route::middleware(['permission:schoolAdmin.course.view.active'])->get('/courses/
 Route::middleware(['permission:schoolAdmin.course.show'])->get('/courses/{courseId}', [CoursesController::class, 'getCourseDetails'])
     ->name('courses.show');
 
-// Get courses for the authenticated user
-Route::get('/my/courses', [CoursesController::class, 'getCourses'])
-    ->name('my-courses.index');
 
 // Get courses by specialty, level, and semester (consider renaming level to semester for consistency)
-Route::middleware(['permission:schoolAdmin.course.view'])->get('/my/courses/specialties/{specialtyId}/semesters/{semesterId}', [CoursesController::class, 'getBySpecialtyLevelSemester'])
+Route::middleware(['permission:schoolAdmin.course.view'])->get('courses/specialty/{specialtyId}/semester/{semesterId}', [CoursesController::class, 'getBySpecialtyLevelSemester'])
     ->name('my-courses.by-specialty-semester');
 
 // Get courses by school semester and specialty
@@ -48,17 +45,17 @@ Route::middleware(['permission:schoolAdmin.course.delete'])->delete('/courses/{c
     ->name('courses.destroy');
 
 // Bulk delete courses
-Route::middleware(['permission:schoolAdmin.course.delete'])->delete('/courses/bulk-delete/{courseIds}', [CoursesController::class, 'bulkDeleteCourse'])
+Route::middleware(['permission:schoolAdmin.course.delete'])->post('/courses/bulk-delete', [CoursesController::class, 'bulkDeleteCourse'])
     ->name('courses.bulk-delete');
 
 // Bulk update courses
-Route::middleware(['permission:schoolAdmin.course.update'])->put('/courses/bulk-update', [CoursesController::class, 'bulkUpdateCourse'])
+Route::middleware(['permission:schoolAdmin.course.update'])->patch('/courses/bulk-update', [CoursesController::class, 'bulkUpdateCourse'])
     ->name('courses.bulk-update');
 
 // Bulk activate courses
-Route::middleware(['permission:schoolAdmin.course.activate'])->post('/courses/bulk-activate/{courseIds}', [CoursesController::class, 'bulkActivateCourse'])
+Route::middleware(['permission:schoolAdmin.course.activate'])->post('/courses/bulk-activate', [CoursesController::class, 'bulkActivateCourse'])
     ->name('courses.bulk-activate');
 
 // Bulk deactivate courses
-Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/courses/bulk-deactivate/{courseIds}', [CoursesController::class, 'bulkDeactivateCourse'])
+Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/courses/bulk-deactivate', [CoursesController::class, 'bulkDeactivateCourse'])
     ->name('courses.bulk-deactivate');
