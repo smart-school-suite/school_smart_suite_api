@@ -23,8 +23,7 @@ class CreateSchoolSemesterRequest extends FormRequest
         return [
             'start_date' => 'required|date|after_or_equal:start_time',
             'end_date' => 'required|date|after:start_date',
-            'school_year_start' => 'required|integer',
-            'school_year_end' => 'required|integer',
+            'school_year' => 'required|string',
             'semester_id' => 'required|string|exists:semesters,id',
             'specialty_id' => 'required|string|exists:specialty,id',
             'student_batch_id' => 'required|string|exists:student_batch,id'

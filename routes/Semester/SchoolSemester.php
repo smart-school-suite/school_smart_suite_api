@@ -24,11 +24,11 @@ Route::middleware(['permission:schoolAdmin.schoolSemester.show'])->get('/school-
 ->name('school-semesters.show');
 
 // Bulk delete school semesters
-Route::middleware(['permission:permission:schoolAdmin.schoolSemester.delete'])->delete('/school-semesters/bulk-delete/{schoolSemesterIds}', [SchoolSemesterController::class, 'bulkDeleteSchoolSemester'])
+Route::middleware(['permission:schoolAdmin.schoolSemester.delete'])->post('/school-semesters/bulk-delete', [SchoolSemesterController::class, 'bulkDeleteSchoolSemester'])
 ->name('school-semesters.bulk-delete');
 
 // Bulk update school semesters
-Route::middleware(['permission:schoolAdmin.schoolSemester.update'])->put('/school-semesters/bulk-update', [SchoolSemesterController::class, 'bulkUpdateSchoolSemester'])
+Route::middleware(['permission:schoolAdmin.schoolSemester.update'])->patch('/school-semesters/bulk-update', [SchoolSemesterController::class, 'bulkUpdateSchoolSemester'])
 ->name('school-semesters.bulk-update');
 
 // Get active school semesters

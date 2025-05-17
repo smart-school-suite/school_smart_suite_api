@@ -11,6 +11,7 @@ use App\Http\Requests\StudentBatch\UpdateStudentBatchRequest;
 use App\Http\Requests\StudentBatch\AddGraduationDateRequest;
 use App\Http\Requests\StudentBatch\BulkUpdateStudentBatchRequest;
 use App\Http\Requests\StudentBatch\BulkAddGraduationDateRequest;
+use App\Http\Requests\StudentBatch\StudentBatchIdRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 use Exception;
@@ -31,9 +32,8 @@ class StudentBatchcontroller extends Controller
         return ApiResponseService::success("Student Batch Created Successfully", $createStudentBatch, null, 201);
     }
 
-    public function updateStudentBatch(UpdateStudentBatchRequest $request)
+    public function updateStudentBatch(UpdateStudentBatchRequest $request, $batchId)
     {
-        $batchId = $request->route('batchId');
         $currentSchool = $request->attributes->get('currentSchool');
         $updateStudentBatch = $this->studentBatchService->updateStudentBatch($request->validated(), $batchId, $currentSchool);
         return ApiResponseService::success('Student Batch Updated Successfully', $updateStudentBatch, null, 200);
@@ -78,22 +78,9 @@ class StudentBatchcontroller extends Controller
         return ApiResponseService::success("Graduation Dates Fetched Successfully",  GraduationBatchDateResource::collection($getGraduationDatesByBatch), null, 200);
     }
 
-    public function bulkDeleteStudentBatch($batchIds){
-        $idsArray = explode(',', $batchIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_batch,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteStudentBatch(StudentBatchIdRequest $request){
          try{
-           $bulkDeleteBatch = $this->studentBatchService->bulkDeleteStudentBatch($idsArray);
+           $bulkDeleteBatch = $this->studentBatchService->bulkDeleteStudentBatch($request->studentBatchIds);
            return ApiResponseService::success("Student Batch Deleted Successfully", $bulkDeleteBatch, null, 200);
          }
          catch(Exception $e){
@@ -101,22 +88,9 @@ class StudentBatchcontroller extends Controller
          }
     }
 
-    public function bulkActivateStudentBatch($batchIds){
-        $idsArray = explode(',', $batchIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_batch,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkActivateStudentBatch(StudentBatchIdRequest $request){
         try{
-          $bulkActivateBatch = $this->studentBatchService->bulkActivateBatch($idsArray);
+          $bulkActivateBatch = $this->studentBatchService->bulkActivateBatch($request->studentBatchIds);
           return ApiResponseService::success("Student Batch Activated Successfully", $bulkActivateBatch, null, 200);
         }
         catch(Exception $e){
@@ -124,22 +98,9 @@ class StudentBatchcontroller extends Controller
         }
     }
 
-    public function bulkDeactivateStudentBatch($batchIds){
-        $idsArray = explode(',', $batchIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_batch,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeactivateStudentBatch(StudentBatchIdRequest $request){
         try{
-           $bulkDeactivateBatch = $this->studentBatchService->bulkDeactivateBatch($idsArray);
+           $bulkDeactivateBatch = $this->studentBatchService->bulkDeactivateBatch($request->studentBatchIds);
            return ApiResponseService::success("Student Batch Deactivated Succesfully", $bulkDeactivateBatch, null, 200);
         }
         catch(Exception $e){

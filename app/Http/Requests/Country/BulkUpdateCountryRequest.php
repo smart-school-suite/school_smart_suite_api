@@ -22,7 +22,7 @@ class BulkUpdateCountryRequest extends FormRequest
         return [
             'country' => 'required|array',
             'country.*.country_id' => 'required|string|exists:country,id',
-            'country.*.country' => 'sometimes|nullable|string|unique',
+            'country.*.country' => 'sometimes|nullable|string',
             'country.*.code' => 'sometimes|nullable|string',
             'country.*.currency' => 'sometimes|nullable|string',
             'country.*.official_language' => 'sometimes|nullable|string'

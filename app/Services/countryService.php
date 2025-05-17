@@ -21,9 +21,9 @@ class CountryService
         return $country;
     }
 
-    public function updateCountry(array $data, string $country_id)
+    public function updateCountry(array $data, string $countryId)
     {
-        $country = Country::find($country_id);
+        $country = Country::find($countryId);
         if (!$country) {
             return ApiResponseService::error('Country Not found', null, 404);
         }
@@ -40,9 +40,7 @@ class CountryService
                $country = Country::findOrFail($updateCountry['country_id']);
                $filteredData = array_filter($updateCountry);
                $country->update($filteredData);
-               $result[] = [
-                 $country
-               ];
+               $result[] = $country;
             }
             DB::commit();
             return $result;
@@ -53,9 +51,9 @@ class CountryService
         }
     }
 
-    public function deleteCountry(string $country_id)
+    public function deleteCountry(string $countryId)
     {
-        $country = Country::find($country_id);
+        $country = Country::find($countryId);
         if (!$country) {
             return ApiResponseService::error('Country Not found', null, 404);
         }
@@ -68,11 +66,9 @@ class CountryService
         try{
             DB::beginTransaction();
             foreach($countryIds as $countryId){
-                $country = Country::findOrFail($countryId);
+                $country = Country::findOrFail($countryId['country_id']);
                 $country->delete();
-                $result[] = [
-                     $country
-                ];
+                $result[] = $country;
             }
             DB::commit();
             return $result;

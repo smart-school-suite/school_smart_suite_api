@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Country\CountryIdsRequest;
 use App\Models\Country;
 use App\Services\CountryService;
 use App\http\Requests\Country\CreateCountryRequest;
@@ -40,29 +41,16 @@ class CountryController extends Controller
     }
     public function bulkUpdateCountry(BulkUpdateCountryRequest $request){
         try{
-           $bulkUpdateCountry = $this->countryService->bulkUpdateCountry($request->validated());
+           $bulkUpdateCountry = $this->countryService->bulkUpdateCountry($request->country);
            return  ApiResponseService::success("Country Updated Successfully", $bulkUpdateCountry, null, 200);
         }
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkDeleteCountry($countryIds){
-        $idsArray = explode(',', $countryIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:country,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteCountry(CountryIdsRequest $request){
         try{
-           $bulkDeleteCountry = $this->countryService->bulkDeleteCountry($idsArray);
+           $bulkDeleteCountry = $this->countryService->bulkDeleteCountry($request->countryIds);
            return ApiResponseService::success("Country Deleted Successfully", $bulkDeleteCountry, null, 200);
         }
         catch(Exception $e){

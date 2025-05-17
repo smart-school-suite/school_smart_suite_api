@@ -21,7 +21,7 @@ class CreateStudentBatchRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'description' => 'nullable|string'
+            'description' => 'required|string'
         ];
     }
 }

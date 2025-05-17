@@ -14,7 +14,7 @@ class StudentBatchService
     {
         $newBatch = new Studentbatch();
         $newBatch->name = $data["name"];
-        $newBatch->description = $data["description"];
+        $newBatch->description = $data["description"] ;
         $newBatch->school_branch_id = $currentSchool->id;
         $newBatch->save();
         return $newBatch;
@@ -23,7 +23,7 @@ class StudentBatchService
     public function updateStudentBatch(array $data, $studentBatchId, $currentSchool)
     {
         $studentBatch = Studentbatch::where("school_branch_id", $currentSchool->id)->find($studentBatchId);
-        if ($studentBatch) {
+        if (!$studentBatch) {
             return ApiResponseService::error("Student Batch Not Found", null, 404);
         }
         $filteredData = array_filter($data);
@@ -36,7 +36,7 @@ class StudentBatchService
         try{
             DB::beginTransaction();
            foreach($updateDataArray as $updateData){
-              $studentBatch = Studentbatch::findOrFail($updateData['student_id']);
+              $studentBatch = Studentbatch::findOrFail($updateData['student_batch_id']);
               $filteredData = array_filter($updateData);
               $studentBatch->update($filteredData);
               $result[] = [
@@ -67,11 +67,9 @@ class StudentBatchService
         try{
             DB::beginTransaction();
             foreach($batchIds as $batchId){
-                $studentBatch = Studentbatch::findOrFail($batchId);
+                $studentBatch = Studentbatch::findOrFail($batchId['student_batch_id']);
                 $studentBatch->delete();
-                $result[] = [
-                    $studentBatch
-                ];
+                $result[] = $studentBatch;
             }
             DB::commit();
            return $result;
@@ -100,12 +98,10 @@ class StudentBatchService
          try{
             DB::beginTransaction();
             foreach($batchIds as $batchId){
-                $studentBatch = Studentbatch::findOrFail($batchId);
+                $studentBatch = Studentbatch::findOrFail($batchId['student_batch_id']);
                 $studentBatch->status = 'inactive';
                 $studentBatch->save();
-                $result[] = [
-                     $studentBatch
-                ];
+                $result[] = $studentBatch;
 
             }
             DB::commit();
@@ -130,12 +126,10 @@ class StudentBatchService
         try{
             DB::beginTransaction();
            foreach($batchIds as $batchId){
-            $studentBatch = Studentbatch::findOrFail($batchId);
+            $studentBatch = Studentbatch::findOrFail($batchId['student_batch_id']);
             $studentBatch->status = 'active';
             $studentBatch->save();
-            $result[] = [
-                 $studentBatch
-            ];
+            $result[] = $studentBatch;
            }
            DB::commit();
             return $result;

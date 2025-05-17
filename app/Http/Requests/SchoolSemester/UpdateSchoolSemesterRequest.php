@@ -20,12 +20,12 @@ class UpdateSchoolSemesterRequest extends FormRequest
     public function rules()
     {
         return [
-            'start_date' => 'sometimes|required|date|after_or_equal:start_time',
-            'end_date' => 'sometimes|required|date|after:start_date',
-            'school_year_start' => 'sometimes|required|integer',
-            'school_year_end' => 'sometimes|required|integer',
-            'semester_id' => 'sometimes|required|integer|exists:semesters,id',
-            'specialty_id' => 'sometimes|required|integer|exists:specialties,id',
+            'start_date' => 'sometimes|nullable|date|after_or_equal:start_time',
+            'end_date' => 'sometimes|nullable|date|after:start_date',
+            'school_year' => 'sometimes|nullable|string',
+            'semester_id' => 'sometimes|nullable|string|exists:semesters,id',
+            'specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
+            'student_batch_id' => 'sometimes|nullable|exists:student_batch,id'
         ];
     }
 }

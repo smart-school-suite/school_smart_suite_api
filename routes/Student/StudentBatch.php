@@ -31,23 +31,23 @@ use App\Http\Controllers\StudentBatchcontroller;
         ->name('student-batches.deactivate');
 
     // Assign graduation dates to a batch (by specialty)
-    Route::middleware(['schoolAdmin.student.batch.create.graduation.dates'])->post('/student-batches/assign-graduation-dates', [StudentBatchController::class, 'assignGradDatesBySpecialty'])
+    Route::middleware(['permission:schoolAdmin.student.batch.create.graduation.dates'])->post('/student-batches/assign-graduation-dates', [StudentBatchController::class, 'assignGradDatesBySpecialty'])
         ->name('student-batches.assign-graduation-dates');
 
     // Bulk delete student batches
-    Route::middleware(['permission:schoolAdmin.student.batch.delete'])->delete('/student-batches/bulk-delete/{batchIds}', [StudentBatchController::class, 'bulkDeleteStudentBatch'])
+    Route::middleware(['permission:schoolAdmin.student.batch.delete'])->post('/student-batches/bulk-delete', [StudentBatchController::class, 'bulkDeleteStudentBatch'])
         ->name('student-batches.bulk-delete');
 
     // Bulk activate student batches
-    Route::middleware(['permission:schoolAdmin.student.batch.activate'])->post('/student-batches/bulk-activate/{batchIds}', [StudentBatchController::class, 'bulkActivateStudentBatch'])
+    Route::middleware(['permission:schoolAdmin.student.batch.activate'])->post('/student-batches/bulk-activate', [StudentBatchController::class, 'bulkActivateStudentBatch'])
         ->name('student-batches.bulk-activate');
 
     // Bulk deactivate student batches
-    Route::middleware(['permission:schoolAdmin.student.batch.deactivate'])->post('/student-batches/bulk-deactivate/{batchIds}', [StudentBatchController::class, 'bulkDeactivateStudentBatch'])
+    Route::middleware(['permission:schoolAdmin.student.batch.deactivate'])->post('/student-batches/bulk-deactivate', [StudentBatchController::class, 'bulkDeactivateStudentBatch'])
         ->name('student-batches.bulk-deactivate');
 
     // Bulk update student batches
-    Route::middleware(['permission:schoolAdmin.student.batch.update'])->put('/student-batches/bulk-update', [StudentBatchController::class, 'bulkUpdateStudentBatch'])
+    Route::middleware(['permission:schoolAdmin.student.batch.update'])->patch('/student-batches/bulk-update', [StudentBatchController::class, 'bulkUpdateStudentBatch'])
         ->name('student-batches.bulk-update');
 
     // Bulk assign graduation dates to batches (by specialty)

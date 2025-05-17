@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 use App\Http\Requests\SchoolSemester\CreateSchoolSemesterRequest;
+use App\Http\Requests\SchoolSemester\SchoolSemesterIdRequest;
 use App\Http\Requests\SchoolSemester\UpdateSchoolSemesterRequest;
 use App\Http\Requests\SchoolSemester\BulkUpdateSchoolSemesterRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Facades\Validator;
 use App\Services\SchoolSemesterService;
 use Exception;
 use Illuminate\Http\Request;
@@ -24,7 +24,7 @@ class SchoolSemesterController extends Controller
         return ApiResponseService::success("School Semester Created Succesfully", $createSchoolSemester, null, 201);
     }
 
-    public function deleteSchoolSemester($request, $schoolSemesterId){
+    public function deleteSchoolSemester(Request $request, $schoolSemesterId){
         $currentSchool = $request->attributes->get("currentSchool");
         $deleteSchoolSemester = $this->schoolSemesterService->deleteSchoolSemester($schoolSemesterId, $currentSchool);
         return ApiResponseService::success("School Deleted Sucessfully", $deleteSchoolSemester, null, 200);
@@ -58,22 +58,9 @@ class SchoolSemesterController extends Controller
          }
     }
 
-    public function bulkDeleteSchoolSemester($schoolSemesterIds){
-        $idsArray = explode(',', $schoolSemesterIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:school_semesters,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteSchoolSemester(SchoolSemesterIdRequest $request){
         try{
-           $bulkDeleteSchoolSemester = $this->schoolSemesterService->bulkDeleteSchoolSemester($idsArray);
+           $bulkDeleteSchoolSemester = $this->schoolSemesterService->bulkDeleteSchoolSemester($request->schoolSemesterIds);
            return ApiResponseService::success("School Semester Deleted Successfully", $bulkDeleteSchoolSemester, null, 200);
         }
         catch(Exception $e){
@@ -82,7 +69,7 @@ class SchoolSemesterController extends Controller
     }
 
     public function getActiveSchoolSemesters(Request $request){
-        $currentSchool = $request->attributes->get("currentSchool");
+         $currentSchool = $request->attributes->get("currentSchool");
         $activeSchoolSemesters = $this->schoolSemesterService->getActiveSchoolSemesters($currentSchool);
         return ApiResponseService::success("Active School Semesters Fetched Successfully", $activeSchoolSemesters, null, 200);
     }

@@ -20,7 +20,7 @@ class UpdateStudentBatchRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'sometimes|nullable|string',
+             'name' => 'sometimes|nullable|string',
              'description' => 'sometimes|nullable|string'
         ];
     }

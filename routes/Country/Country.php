@@ -20,10 +20,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ->name('countries.destroy');
 
     // Bulk delete countries
-    Route::middleware(['permission:appAdmin.country.delete'])->delete('/countries/bulk-delete/{countryIds}', [CountryController::class, 'bulkDeleteCountry'])
+    Route::post('/countries/bulk-delete', [CountryController::class, 'bulkDeleteCountry'])
         ->name('countries.bulk-delete');
 
     // Bulk update countries
-    Route::middleware(['permission:appAdmin.country.update'])->put('/countries/bulk-update', [CountryController::class, 'bulkUpdateCountry'])
+    Route::middleware(['permission:appAdmin.country.update'])->patch('/countries/bulk-update', [CountryController::class, 'bulkUpdateCountry'])
         ->name('countries.bulk-update');
 });

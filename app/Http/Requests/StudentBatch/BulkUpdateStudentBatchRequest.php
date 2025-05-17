@@ -21,7 +21,7 @@ class BulkUpdateStudentBatchRequest extends FormRequest
     {
         return [
             'student_batches' => 'required|array',
-            'student_batches.*.batch_id' => 'required|batch_id|exists:table,column',
+            'student_batches.*.student_batch_id' => 'required|string|exists:student_batch,id',
             'student_batches.*.name' => 'sometimes|nullable|string',
             'student_batches.*.description' => 'sometimes|nullable|string'
         ];

@@ -14,8 +14,7 @@ class SchoolSemester extends Model
     protected $fillable = [
         'start_date',
         'end_date',
-        'school_year_start',
-        'school_year_end',
+        'school_year',
         'semester_id',
         'specialty_id',
         'status',

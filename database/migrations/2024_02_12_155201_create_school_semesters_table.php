@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->date("start_date");
             $table->date("end_date");
-            $table->integer("school_year_start");
-            $table->integer('school_year_end');
+            $table->string("school_year");
+            $table->enum('status', ['inactive', 'active']);
             $table->timestamps();
         });
     }

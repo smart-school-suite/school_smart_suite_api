@@ -89,7 +89,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class])->prefix('api/v1/timetable')
               ->group(base_path('routes/Specialty/Timetable.php'));
 
-            Route::middleware(['auth:sanctum'])->prefix('api/v1/school-semester')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-semester')
                ->group(base_path('routes/Semester/SchoolSemester.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester')
