@@ -14,9 +14,9 @@ use illuminate\Support\Facades\Route;
         ->name('elections.update');
     Route::middleware(['permission:schoolAdmin.election.view.candidates'])->get('/elections/{electionId}/candidates', [ElectionsController::class, 'getElectionCandidates'])
         ->name('elections.candidates.index');
-    Route::middleware(['permission:schoolAdmin.election.delete'])->delete('/elections/bulk-delete/{electionIds}', [ElectionsController::class, 'bulkDeleteElection'])
+    Route::middleware(['permission:schoolAdmin.election.delete'])->post('/elections/bulk-delete', [ElectionsController::class, 'bulkDeleteElection'])
         ->name('elections.bulk-delete');
-    Route::middleware(['permission:schoolAdmin.election.update'])->put('/elections/bulk-update', [ElectionsController::class, 'bulkUpdateElection'])
+    Route::middleware(['permission:schoolAdmin.election.update'])->patch('/elections/bulk-update', [ElectionsController::class, 'bulkUpdateElection'])
         ->name('elections.bulk-update');
     Route::middleware(['permission:schoolAdmin.election.view.participants'])->get('/elections/{electionId}/allowed-participants', [ElectionsController::class, 'getAllowedParticipants'])
         ->name('elections.allowed-participants.index');

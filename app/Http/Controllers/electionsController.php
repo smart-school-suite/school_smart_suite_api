@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AddAllowedParticipantsRequest;
-use App\Http\Requests\CreateElectionTypeRequest;
-use App\Http\Requests\UpdateElectionTypeRequest;
+use App\Http\Requests\ElectionType\CreateElectionTypeRequest;
+use App\Http\Requests\ElectionType\UpdateElectionTypeRequest;
+use App\Http\Requests\ElectionType\BulkUpdateElectionTypeRequest;
 use App\Http\Requests\Election\CreateElectionRequest;
 use App\Http\Requests\Election\UpdateElectionRequest;
 use App\Http\Requests\Election\BulkUpdateElectionRequest;
 use App\Http\Requests\Election\AddElectionParticipantsRequest;
 use App\Http\Requests\Election\CreateVoteRequest;
-use App\Http\Requests\VoteRequest;
+use App\Http\Requests\Election\ElectionIdRequest;
 use App\Http\Resources\ElectionCandidateResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ElectionService;
@@ -37,11 +37,12 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Created Sucessfully", $election, null, 201);
     }
 
+    //add fetch election details
     public function deleteElection(Request $request, $electionId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $deleteElection = $this->electionService->deleteElection($currentSchool, $electionId);
-        return ApiResponseService::success("Election Results Fetched Sucessfully", $deleteElection, null, 200);
+        return ApiResponseService::success("Election Deleted Successfully", $deleteElection, null, 200);
     }
 
     public function getElections(Request $request)
@@ -72,13 +73,6 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Candidates Retrieved Successfully", ElectionCandidateResource::collection($getElectionCandidates), null, 200);
     }
 
-    //new methods
-    public function getElectionResults(Request $request, $electionId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getelectionResults = $this->electionService->getElectionResults($currentSchool, $electionId);
-        return ApiResponseService::success("Election Results Fetch Successfully", $getelectionResults, null, 200);
-    }
 
     public function getPastElectionWinners(Request $request)
     {
@@ -159,29 +153,17 @@ class ElectionsController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         try{
             $addAllowedParticipants = $this->electionService->addAllowedElectionParticipants($request->election_participants, $currentSchool);
-            return ApiResponseService::success("Allowed Election Participants Fetched Successfully", $addAllowedParticipants, null, 200);
+            return ApiResponseService::success("Allowed Election Participants Added Successfully", $addAllowedParticipants, null, 200);
         }
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkDeleteElection($electionIds){
-        $idsArray = explode(',', $electionIds);
+    public function bulkDeleteElection(ElectionIdRequest $request){
 
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:elections,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try{
-        $bulkDeleteElection = $this->electionService->bulkDeleteElection($idsArray);
+        $bulkDeleteElection = $this->electionService->bulkDeleteElection($request->electionIds);
         return ApiResponseService::success("Elections Deleted Successfully", $bulkDeleteElection, null, 200);
         }
         catch(Exception $e){

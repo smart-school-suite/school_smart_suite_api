@@ -22,9 +22,9 @@ class ElectionRolesService
         return $electionRole;
     }
 
-    public function updateElectionRole(array $data, $currentSchool, $election_role_id)
+    public function updateElectionRole(array $data, $currentSchool, $electionRoleId)
     {
-        $electionRole = ElectionRoles::where("school_branch_id", $currentSchool->id)->find($election_role_id);
+        $electionRole = ElectionRoles::where("school_branch_id", $currentSchool->id)->find($electionRoleId);
         if (!$electionRole) {
             return ApiResponseService::error("Election Role Not found", null, 404);
         }
@@ -42,9 +42,7 @@ class ElectionRolesService
               $electionRole = ElectionRoles::findOrFail($UpdateElection['election_role_id']);
               $filteredData = array_filter($UpdateElection);
               $electionRole->update($filteredData);
-              $result[] = [
-                 $electionRole
-              ];
+              $result[] = $electionRole;
            }
            DB::commit();
            return $result;
@@ -55,9 +53,9 @@ class ElectionRolesService
         }
     }
 
-    public function deleteElectionRole($election_role_id, $currentSchool)
+    public function deleteElectionRole($electionRoleId, $currentSchool)
     {
-        $electionRole = ElectionRoles::where("school_branch_id", $currentSchool->id)->find($election_role_id);
+        $electionRole = ElectionRoles::where("school_branch_id", $currentSchool->id)->find($electionRoleId);
         if (!$electionRole) {
             return ApiResponseService::error("Election Role Not found", null, 404);
         }
@@ -70,11 +68,9 @@ class ElectionRolesService
         try{
             DB::beginTransaction();
             foreach($electionRoleIds as $electionRoleId){
-               $electionRole = ElectionRoles::findOrFail($electionRoleId);
+               $electionRole = ElectionRoles::findOrFail($electionRoleId['election_role_id']);
                $electionRole->delete();
-               $result[] = [
-                $electionRole
-               ];
+               $result[] = $electionRole;
             }
             DB::commit();
            return $result;
@@ -86,18 +82,19 @@ class ElectionRolesService
     }
 
 
-    public function getElectionRole($currentSchool, $election_id)
+    public function getElectionRole($currentSchool, $electionId)
     {
+        $election = Elections::findOrFail($electionId);
         $electionRoles = ElectionRoles::where('school_branch_id', $currentSchool->id)
-            ->where('election_id', $election_id)
-            ->with(['election'])
+            ->where('election_type_id', $election->election_type_id)
+            ->with(['electionType'])
             ->get();
         return $electionRoles;
     }
 
     public function getAllElectionRoles($currentSchool){
         $electionRoles = ElectionRoles::where("school_branch_id", $currentSchool->id)
-                         ->with(['election'])
+                         ->with(['electionType'])
                          ->get();
         return $electionRoles;
     }
@@ -114,12 +111,10 @@ class ElectionRolesService
          try{
             DB::beginTransaction();
             foreach($electionRoleIds as $electionRoleId){
-                $electionRole = ElectionRoles::findOrFail($electionRoleId);
+                $electionRole = ElectionRoles::findOrFail($electionRoleId['election_role_id']);
                 $electionRole->status = 'active';
                 $electionRole->save();
-                $result[] = [
-                    $electionRole
-                ];
+                $result[] = $electionRole;
             }
             DB::commit();
            return $result;
@@ -150,12 +145,10 @@ class ElectionRolesService
         try{
            DB::beginTransaction();
            foreach($electionRoleIds as $electionRoleId){
-               $electionRole = ElectionRoles::findOrFail($electionRoleId);
+               $electionRole = ElectionRoles::findOrFail($electionRoleId['election_role_id']);
                $electionRole->status = 'inactive';
                $electionRole->save();
-               $result[] = [
-                   $electionRole
-               ];
+               $result[] = $electionRole;
            }
            DB::commit();
           return $result;

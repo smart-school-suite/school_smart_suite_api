@@ -256,8 +256,8 @@ return new class extends Migration
         });
 
         Schema::table('election_roles', function(Blueprint $table) {
-            $table->string('election_id');
-            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('election_type_id');
+            $table->foreign('election_type_id')->references('id')->on('election_type');
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
@@ -327,6 +327,8 @@ return new class extends Migration
         Schema::table('election_candidates', function(Blueprint $table) {
             $table->string('application_id');
             $table->foreign('application_id')->references('id')->on('election_application');
+            $table->string('election_id');
+            $table->foreign('election_id')->references('id')->on('elections');
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');

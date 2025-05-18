@@ -48,22 +48,22 @@ class ElectionApplicationService
         return $applcationExists;
     }
 
-    public function bulkUpdateApplication(array $updateApplicationList){
+    public function bulkUpdateApplication(array $updateApplicationList)
+    {
         $result = [];
-        try{
+        try {
             DB::beginTransaction();
-            foreach($updateApplicationList as $updateApplication){
-               $electionApplication = ElectionApplication::find($updateApplication['applicaiton_id']);
-               $filteredData = array_filter($updateApplication);
-               $electionApplication->update($filteredData);
-               $result[] = [
-                 $electionApplication
-               ];
+            foreach ($updateApplicationList as $updateApplication) {
+                $electionApplication = ElectionApplication::find($updateApplication['applicaiton_id']);
+                $filteredData = array_filter($updateApplication);
+                $electionApplication->update($filteredData);
+                $result[] = [
+                    $electionApplication
+                ];
             }
             DB::commit();
             $result;
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
@@ -79,31 +79,29 @@ class ElectionApplicationService
         return $applcationExists;
     }
 
-    public function bulkDeleteApplication($applicationIds){
+    public function bulkDeleteApplication($applicationIds)
+    {
         $result = [];
-        try{
-           DB::beginTransaction();
-           foreach($applicationIds as $applicationId){
-             $application = ElectionApplication::find($applicationId);
-             $application->delete();
-             $result [] = [
-                $application
-             ];
-           }
-           DB::commit();
-           return $result;
-        }
-        catch(Exception $e){
+        try {
+            DB::beginTransaction();
+            foreach ($applicationIds as $applicationId) {
+                $application = ElectionApplication::find($applicationId['election_application_id']);
+                $application->delete();
+                $result[] = $application;
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
 
-    public function approveApplication(string $application_id, $currentSchool)
+    public function approveApplication(string $applicationId, $currentSchool)
     {
-        try{
+        try {
             DB::beginTransaction();
-            $application = ElectionApplication::where("school_branch_id", $currentSchool->id)->find($application_id);
+            $application = ElectionApplication::where("school_branch_id", $currentSchool->id)->find($applicationId);
             if (!$application) {
                 return ApiResponseService::error("Application not found", null, 404);
             }
@@ -114,8 +112,9 @@ class ElectionApplicationService
                 'id' => $randomId,
                 "election_status" => "pending",
                 "isActive" => true,
-                "application_id" => $application_id,
+                "application_id" => $applicationId,
                 "school_branch_id" => $currentSchool->id,
+                'election_id' => $application->election_id,
                 "student_id" => $application->student_id
             ]);
             ElectionResults::create([
@@ -127,37 +126,44 @@ class ElectionApplicationService
             ]);
             DB::commit();
             return $application;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-        catch(Exception $e){
-           DB::rollBack();
-           throw $e;
-        }
-
-
     }
 
+    //add constrain to prevent multiple same student for multiple or same roles
     public function bulkApproveApplication($applicationIds, $currentSchool)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($applicationIds as $applicationId) {
-                $applcationExists = ElectionApplication::where("school_branch_id", $currentSchool->id)->find($applicationId);
-                if (!$applcationExists) {
+                $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
+                    ->find($applicationId['election_application_id']);
+                if (!$application) {
                     return ApiResponseService::error("Application not found", null, 404);
                 }
-                $applcationExists->isApproved = true;
-                $applcationExists->save();
+                $application->isApproved = true;
+                $application->save();
+                $randomId = Str::uuid()->toString();
                 ElectionCandidates::create([
+                    'id' => $randomId,
                     "election_status" => "pending",
                     "isActive" => true,
-                    "application_id" => $applicationId,
+                    "application_id" => $applicationId['election_application_id'],
+                    "election_id" => $application->election_id,
                     "school_branch_id" => $currentSchool->id,
-                    "student_id" => $applcationExists->student_id
+                    "student_id" => $application->student_id
                 ]);
-                $result[] = [
-                    $applcationExists
-                ];
+                ElectionResults::create([
+                    'vote_count' => 0,
+                    'election_id' => $application->election_id,
+                    'position_id' => $application->election_role_id,
+                    'candidate_id' => $randomId,
+                    'school_branch_id' => $currentSchool->id
+                ]);
+                $result[] = $application;
             }
             DB::commit();
             return $result;
@@ -166,10 +172,10 @@ class ElectionApplicationService
             throw $e;
         }
     }
-    public function getApplications(string $election_id, $currentSchool)
+    public function getApplications(string $electionId, $currentSchool)
     {
         $applications = ElectionApplication::where('school_branch_id', $currentSchool->id)
-            ->where("election_id", $election_id)
+            ->where("election_id", $electionId)
             ->with(['student', 'election', 'electionRole'])
             ->get();
         return $applications;

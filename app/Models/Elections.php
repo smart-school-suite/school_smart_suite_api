@@ -49,7 +49,7 @@ class Elections extends Model
          return $this->hasMany(ElectionApplication::class,'election_id');
     }
 
-    public function electionRole(): hasMany{
+    public function electionRole(): hasMany {
          return $this->hasMany(ElectionRoles::class);
     }
 

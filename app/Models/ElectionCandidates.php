@@ -16,6 +16,7 @@ class ElectionCandidates extends Model
         "isActive",
         "application_id",
         "school_branch_id",
+        "election_id",
         "student_id"
     ];
 

@@ -11,6 +11,7 @@ use App\Models\ElectionType;
 use App\Models\PastElectionWinners;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ElectionService
 {
@@ -30,9 +31,9 @@ class ElectionService
         return $election;
     }
 
-    public function updateElection(array $data, $currentSchool, $election_id)
+    public function updateElection(array $data, $currentSchool, $electionId)
     {
-        $election = Elections::where("school_branch_id", $currentSchool->id)->find($election_id);
+        $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
         if (!$election) {
             return ApiResponseService::error("Election not found", null, 404);
         }
@@ -41,18 +42,16 @@ class ElectionService
         return $election;
     }
 
-    public function bulkUpdateElection(array $ElectionList)
+    public function bulkUpdateElection(array $electionList)
     {
         $result = [];
         try {
             DB::beginTransaction();
-            foreach ($ElectionList as $Election) {
-                $election = Elections::findOrFail($Election['election_id']);
-                $filterData = array_filter($Election);
-                $election->update($filterData);
-                $result[] = [
-                    $result
-                ];
+            foreach ($electionList as $election) {
+                $schoolElection = Elections::findOrFail($election['election_id']);
+                $filterData = array_filter($election);
+                $schoolElection->update($filterData);
+                $result[] = $schoolElection;
             }
             DB::commit();
             return $result;
@@ -68,11 +67,9 @@ class ElectionService
         try {
             DB::beginTransaction();
             foreach ($electionIds as $electionId) {
-                $election = Elections::findOrFail($electionId);
+                $election = Elections::findOrFail($electionId['election_id']);
                 $election->delete();
-                $result[] = [
-                    $election
-                ];
+                $result[] = $election;
             }
             DB::commit();
            return $result;
@@ -82,9 +79,9 @@ class ElectionService
         }
     }
 
-    public function deleteElection($currentSchool, $election_id)
+    public function deleteElection($currentSchool, $electionId)
     {
-        $election = Elections::where("school_branch_id", $currentSchool->id)->find($election_id);
+        $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
         if (!$election) {
             return ApiResponseService::error("Election not found", null, 404);
         }
@@ -119,9 +116,7 @@ class ElectionService
                     'level_id' => $electionParticipant['level_id'],
                     'school_branch_id' => $currentSchool->id
                 ]);
-                $result[] = [
-                    $allowedParticipants
-                ];
+                $result[] = $allowedParticipants;
             }
             DB::commit();
             return $result;
@@ -149,13 +144,11 @@ class ElectionService
             foreach ($electionParticipants as $electionParticipant) {
                 $allowedParticipants = ElectionParticipants::create([
                     'specialty_id' => $electionParticipant['specialty_id'],
-                    'election_id' => $$electionId,
+                    'election_id' => $electionId,
                     'level_id' => $electionParticipant['level_id'],
                     'school_branch_id' => $currentSchool->id
                 ]);
-                $result[] = [
-                    $allowedParticipants
-                ];
+                $result[] = $allowedParticipants;
             }
             DB::commit();
             return $result;
@@ -269,13 +262,5 @@ class ElectionService
         return $pastElectionWinners;
     }
 
-    public function getElectionResults($currentSchool, $electionId)
-    {
-        $electionResults = ElectionResults::where("school_branch_id", $currentSchool->id)
-            ->where("election_id", $electionId)
-            ->with(['ElectionRoles', 'Elections', 'electionCandidate', 'electionCandidate.student'])
-            ->get();
-        return $electionResults;
-    }
 
 }

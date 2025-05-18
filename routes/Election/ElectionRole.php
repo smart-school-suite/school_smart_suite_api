@@ -28,11 +28,11 @@ Route::middleware(['permission:schoolAdmin.electionRole.delete'])->delete('/elec
     ->name('election-roles.destroy');
 
 // Bulk delete election roles
-Route::middleware(['permission:schoolAdmin.electionRole.delete'])->delete('/election-roles/bulk-delete/{electionRoleId}', [ElectionRolesController::class, 'bulkDeleteRole'])
+Route::middleware(['permission:schoolAdmin.electionRole.delete'])->post('/election-roles/bulk-delete', [ElectionRolesController::class, 'bulkDeleteRole'])
     ->name('election-roles.bulk-delete');
 
 // Bulk update election roles
-Route::middleware(['permission:schoolAdmin.electionRole.update'])->put('/election-roles/bulk-update', [ElectionRolesController::class, 'bulkUpdateElectionRole'])
+Route::middleware(['permission:schoolAdmin.electionRole.update'])->patch('/election-roles/bulk-update', [ElectionRolesController::class, 'bulkUpdateElectionRole'])
     ->name('election-roles.bulk-update');
 
 // Activate a specific election role
@@ -44,9 +44,9 @@ Route::middleware(['permission:schoolAdmin.electionRole.deactivate'])->post('/el
     ->name('election-roles.deactivate');
 
 // Bulk activate election roles
-Route::middleware(['permission:schoolAdmin.electionRole.activate'])->post('/election-roles/bulk-activate/{electionRoleId}', [ElectionRolesController::class, 'bulkActivateRole'])
+Route::middleware(['permission:schoolAdmin.electionRole.activate'])->post('/election-roles/bulk-activate', [ElectionRolesController::class, 'bulkActivateRole'])
     ->name('election-roles.bulk-activate');
 
 // Bulk deactivate election roles
-Route::middleware(['permission:schoolAdmin.electionRole.deactivate'])->post('/election-roles/bulk-deactivate/{electionRoleId}', [ElectionRolesController::class, 'bulkDeactivateRole'])
+Route::middleware(['permission:schoolAdmin.electionRole.deactivate'])->post('/election-roles/bulk-deactivate', [ElectionRolesController::class, 'bulkDeactivateRole'])
     ->name('election-roles.bulk-deactivate');

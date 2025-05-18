@@ -16,7 +16,7 @@ class ElectionCandidateResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'student_name' => $this->student->student->name,
+            'student_name' => $this->student->name ?? null,
             'election_application_id' => $this->electionApplication->id,
             'isApproved' => $this->electionApplication->isApproved,
             'manifesto' => $this->electionApplication->manifesto,

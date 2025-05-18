@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ElectionRole\ElectionRoleIdRequest;
 use App\Services\ApiResponseService;
 use App\Services\ElectionRolesService;
 use Illuminate\Support\Facades\Validator;
@@ -53,22 +54,9 @@ class ElectionRolesController extends Controller
         return ApiResponseService::success('Election Roles Fetched Succesfully', $electionRoles, null, 200);
     }
 
-    public function bulkDeleteRole($electionRoleIds){
-        $idsArray = explode(',', $electionRoleIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:election_roles,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteRole(ElectionRoleIdRequest $request){
         try{
-           $bulkDeleteRole = $this->electionRolesService->bulkDeleteElectionRole($idsArray);
+           $bulkDeleteRole = $this->electionRolesService->bulkDeleteElectionRole($request->electionRoleIds);
            return ApiResponseService::success("Election Roles Deleted Successfully", $bulkDeleteRole, null, 200);
         }
         catch(Exception $e){
@@ -91,22 +79,9 @@ class ElectionRolesController extends Controller
         return ApiResponseService::success("Election Role Activated Successfully", $activateRole, null, 200);
     }
 
-    public function bulkActivateRole($electionRoleIds){
-        $idsArray = explode(',', $electionRoleIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:election_roles,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkActivateRole(ElectionRoleIdRequest $request){
         try{
-           $bulkActivate = $this->electionRolesService->bulkActivateElectionRole($idsArray);
+           $bulkActivate = $this->electionRolesService->bulkActivateElectionRole($request->electionRoleIds);
            return ApiResponseService::success("Election Roles Activated Successfully", $bulkActivate, null, 200);
         }
         catch(Exception $e){
@@ -119,23 +94,9 @@ class ElectionRolesController extends Controller
         return ApiResponseService::success("Election Roles Deactivated Successfully", $deactivateRole, null, 200);
     }
 
-    public function bulkDeactivateRole($electionRoleIds){
-        $idsArray = explode(',', $electionRoleIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:election_roles,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
-
+    public function bulkDeactivateRole(ElectionRoleIdRequest $request){
         try{
-            $bulkActivate = $this->electionRolesService->bulkDeactivateRole($idsArray);
+            $bulkActivate = $this->electionRolesService->bulkDeactivateRole($request->electionRoleIds);
             return ApiResponseService::success("Election Roles Deactivated Successfully", $bulkActivate, null, 200);
          }
          catch(Exception $e){

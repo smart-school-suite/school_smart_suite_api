@@ -19,7 +19,7 @@ class UpdateElectionRoleRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'sometimes|nullable|string',
+             'name' => 'sometimes|nullable|string',
              'election_type_id' => 'required|string|exists:election_type,id',
              'description' => 'sometimes|string'
         ];

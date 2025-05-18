@@ -21,7 +21,7 @@ class BulkUpdateElectionRoleRequest extends FormRequest
     {
         return [
             'election_roles' => 'required|array',
-            'election_roles.*.election_role_id' => 'required|array|exists:table,column',
+            'election_roles.*.election_role_id' => 'required|string|exists:election_roles,id',
             'election_roles.*.name' => 'sometimes|nullable|string',
             'election_roles.*.election_type_id' => 'sometimes|nullable|exists:election_type,id',
             'election_roles.*.description' => 'sometimes|nullable|string'

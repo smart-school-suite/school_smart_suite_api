@@ -32,5 +32,5 @@ Route::middleware(['permission:schoolAdmin.electionApplications.approve'])->post
     ->name('election-applications.bulk-approve');
 
 // Bulk delete election applications
-Route::middleware(['permission:schoolAdmin.electionApplications.delete'])->delete('/election-applications/bulk-delete', [ElectionApplicationController::class, 'bulkDeleteApplication'])
+Route::middleware(['permission:schoolAdmin.electionApplications.delete'])->post('/election-applications/bulk-delete', [ElectionApplicationController::class, 'bulkDeleteApplication'])
     ->name('election-applications.bulk-delete');

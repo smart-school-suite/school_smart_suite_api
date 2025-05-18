@@ -25,11 +25,12 @@ class BulkUpdateElectionRequest extends FormRequest
     {
         return [
             'elections' => 'required|array',
-            'elections.*.election_type_id' => 'required|string|exists:election_types,id',
-            'elections.*.application_start' => 'nullable|date_format:Y-m-d H:i:s|after_or_equal:now',
-            'elections.*.application_end' => 'nullable|date_format:Y-m-d H:i:s|after:elections.*.application_start',
-            'elections.*.voting_start' => 'nullable|date_format:Y-m-d H:i:s|after_or_equal:elections.*.application_end',
-            'elections.*.voting_end' => 'nullable|date_format:Y-m-d H:i:s|after:elections.*.voting_start',
+            'elections.*.election_id' => 'required|string|exists:elections,id',
+            'elections.*.election_type_id' => 'sometimes|nullable|string|exists:election_type,id',
+            'elections.*.application_start' => 'nullable|date_format:Y-m-d H:i|after_or_equal:now',
+            'elections.*.application_end' => 'nullable|date_format:Y-m-d H:i|after:elections.*.application_start',
+            'elections.*.voting_start' => 'nullable|date_format:Y-m-d H:i|after_or_equal:elections.*.application_end',
+            'elections.*.voting_end' => 'nullable|date_format:Y-m-d H:i|after:elections.*.voting_start',
             'elections.*.school_year' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
         ];
     }
