@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\SchoolExpenses;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\Log;
+
 class SchoolExpensesService
 {
     // Implement your logic here
@@ -16,7 +18,7 @@ class SchoolExpensesService
         $new_expenses_instance->expenses_category_id = $data["expenses_category_id"];
         $new_expenses_instance->date = $data["date"];
         $new_expenses_instance->amount = $data["amount"];
-        $new_expenses_instance->description = $data["description"];
+        $new_expenses_instance->description = $data["description"] ?? null;
         $new_expenses_instance->school_branch_id = $currentSchool->id;
         $new_expenses_instance->save();
         return $new_expenses_instance;
@@ -24,23 +26,23 @@ class SchoolExpensesService
 
     public function deleteExpenses($currentSchool, $expensesId)
     {
-        $expensesExist = SchoolExpenses::where('school_branch_id', $currentSchool->id)->find($expensesId);
-        if (!$expensesExist) {
-            return ApiResponseService::error("Expenses Deleted Sucessfully", null, 404);
+        $expenses = SchoolExpenses::where('school_branch_id', $currentSchool->id)->find($expensesId);
+        if (!$expenses) {
+            return ApiResponseService::error("Expenses Not Found", null, 404);
         }
-        $expensesExist->delete();
-        return $expensesExist;
+        $expenses->delete();
+        return $expenses;
     }
 
     public function updateExpenses(array $data, $currentSchool, $expensesId)
     {
-        $expensesExist = SchoolExpenses::where('school_branch_id', $currentSchool->id)->find($expensesId);
-        if (!$expensesExist) {
-            return ApiResponseService::error("Expenses Deleted Sucessfully", null, 404);
+        $expenses = SchoolExpenses::where('school_branch_id', $currentSchool->id)->find($expensesId);
+        if (!$expenses) {
+            return ApiResponseService::error("School Expenses Not Found", null, 404);
         }
         $filterData = array_filter($data);
-        $expensesExist->update($filterData);
-        return $expensesExist;
+        $expenses->update($filterData);
+        return $expenses;
     }
 
     public function getExpenses($currentSchool)
@@ -52,13 +54,13 @@ class SchoolExpensesService
 
     public function getExpensesDetails($expensesId, $currentSchool)
     {
-        $expensesExist = SchoolExpenses::where('school_branch_id', $currentSchool->id)
+        $expenses = SchoolExpenses::where('school_branch_id', $currentSchool->id)
                                          ->with(['schoolexpensescategory'])
                                          ->find($expensesId);
-        if (!$expensesExist) {
-            return ApiResponseService::error("Expenses Deleted Sucessfully", null, 404);
+        if (!$expenses) {
+            return ApiResponseService::error("School Expenses Not found", null, 404);
         }
-        return $expensesExist;
+        return $expenses;
     }
 
     public function bulkDeleteSchoolExpenses($expensesIds){
@@ -66,11 +68,9 @@ class SchoolExpensesService
            try{
              DB::beginTransaction();
              foreach($expensesIds as $expensesId){
-               $schoolExpense = SchoolExpenses::findOrFail($expensesId['id']);
+               $schoolExpense = SchoolExpenses::findOrFail($expensesId['expense_id']);
                $schoolExpense->delete();
-               $result[] = [
-                   $schoolExpense
-                ];
+               $result[] =  $schoolExpense;
              }
              DB::commit();
              return $result;
@@ -86,7 +86,7 @@ class SchoolExpensesService
          try{
              DB::beginTransaction();
              foreach($expensesDataList as $expensesData){
-                $schoolExpense = SchoolExpenses::findOrFail($expensesData->id);
+                $schoolExpense = SchoolExpenses::findOrFail($expensesData['expense_id']);
                 if ($schoolExpense) {
                     $cleanedData = array_filter($expensesData, function ($value) {
                         return $value !== null && $value !== '';

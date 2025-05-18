@@ -18,12 +18,12 @@ class ExpensesCategorycontroller extends Controller
     }
     public function createCategory(CreateExpensesCategoryRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated, $currentSchool);
+        $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated(), $currentSchool);
         return ApiResponseService::success("Category Expenses Created Sucessfully", $createCategoryExpenses, null, 201);
     }
 
     public function updateCategory(UpdateExpensesCategoryRequest $request, $categoryId){
-        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated,  $categoryId);
+        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated(),  $categoryId);
         return ApiResponseService::success("Expenses Category Updated Sucessfully", $updateCategoryExpenses, null, 200);
     }
 

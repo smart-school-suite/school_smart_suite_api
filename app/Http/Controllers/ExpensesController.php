@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SchoolExpenses\BulkUpdateSchoolExpensesRequest;
 use App\Http\Requests\SchoolExpenses\CreateSchoolExpensesRequest;
+use App\Http\Requests\SchoolExpenses\ExpensesIdRequest;
 use App\Http\Requests\SchoolExpenses\UpdateSchoolExpensesRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
@@ -47,30 +48,16 @@ class ExpensesController extends Controller
         return ApiResponseService::success('Expenses data fetched Succefully', $expensesData, null, 200);
     }
 
-    public function getExpensesDetails(Request $request)
+    public function getExpensesDetails(Request $request, $expenseId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $expenseId = $request->route("expense_id");
         $expensesDetails = $this->schoolExpensesService->getExpensesDetails($expenseId, $currentSchool);
         return ApiResponseService::success("Expenses details fetched sucessfully", $expensesDetails, null, 200);
     }
 
-    public function bulkDeleteSchoolExpenses($expensesIds){
-        $idsArray = explode(',', $expensesIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:specialty,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteSchoolExpenses(ExpensesIdRequest $request){
         try{
-            $bulkDelete = $this->schoolExpensesService->bulkDeleteSchoolExpenses($idsArray);
+            $bulkDelete = $this->schoolExpensesService->bulkDeleteSchoolExpenses($request->expenseIds);
             return ApiResponseService::success("School Expenses Deleted Succesfully", $bulkDelete, null, 200);
         }
         catch(Exception $e){

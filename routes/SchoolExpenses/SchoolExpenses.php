@@ -24,9 +24,9 @@ Route::middleware(['permission:schoolAdmin.schoolExpenses.delete'])->delete('/ex
     ->name('expenses.destroy');
 
 // Bulk delete school expenses
-Route::middleware(['permission:schoolAdmin.schoolExpenses.delete'])->delete('/expenses/bulk-delete/{expensesIds}', [ExpensesController::class, 'bulkDeleteSchoolExpenses'])
+Route::middleware(['permission:schoolAdmin.schoolExpenses.delete'])->post('/expenses/bulk-delete', [ExpensesController::class, 'bulkDeleteSchoolExpenses'])
     ->name('expenses.bulk-delete');
 
 // Bulk update school expenses
-Route::middleware(['permission:schoolAdmin.schoolExpenses.update'])->put('/expenses/bulk-update', [ExpensesController::class, 'bulkUpdateSchoolExpenses'])
+Route::middleware(['permission:schoolAdmin.schoolExpenses.update'])->patch('/expenses/bulk-update', [ExpensesController::class, 'bulkUpdateSchoolExpenses'])
     ->name('expenses.bulk-update');

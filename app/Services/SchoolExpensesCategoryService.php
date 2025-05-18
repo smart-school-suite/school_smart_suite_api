@@ -10,10 +10,11 @@ class SchoolExpensesCategoryService
 
     public function createSchoolExpense(array $data, $currentSchool)
     {
-        $new_category_instance = new Schoolexpensescategory();
-        $new_category_instance->name = $data["name"];
-        $new_category_instance->school_branch_id = $currentSchool->id;
-        return $new_category_instance;
+        $expensesCategory = new Schoolexpensescategory();
+        $expensesCategory->name = $data["name"];
+        $expensesCategory->school_branch_id = $currentSchool->id;
+        $expensesCategory->save();
+        return $expensesCategory;
     }
 
     public function updateSchoolExpenseCategory(array $data, $schoolExpensesId)
