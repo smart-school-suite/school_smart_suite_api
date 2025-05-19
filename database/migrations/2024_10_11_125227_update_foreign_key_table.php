@@ -149,8 +149,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels')->onDelete('cascade');
-            $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('school_semesters');
+            $table->string('school_semester_id');
+            $table->foreign('school_semester_id')->references('id')->on('school_semesters');
             $table->string('teacher_id');
             $table->foreign('teacher_id')->references('id')->on('teacher')->onDelete('cascade');
             $table->string('specialty_id');

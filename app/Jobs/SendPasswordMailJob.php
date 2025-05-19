@@ -30,6 +30,6 @@ class SendPasswordMailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Mail::to($this->email)->to(new SendPasswordMail($this->password));
+        Mail::to($this->email)->send(new SendPasswordMail($this->password));
     }
 }

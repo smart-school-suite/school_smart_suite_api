@@ -26,11 +26,8 @@ class CreateTeacherRequest extends FormRequest
             "last_name" => 'required|string',
             'email' => 'required|email|string',
             'phone_one' => 'required|string',
-            'employment_status' => 'required|string',
-            'highest_qualification' => 'required|string',
-            'field_of_study' => 'required|string',
-            'years_experience' => 'required|integer',
-            'salary' => 'required'
+            'phone_two' => 'required|string',
+            'address' => 'sometimes|nullable|string'
         ];
     }
 }

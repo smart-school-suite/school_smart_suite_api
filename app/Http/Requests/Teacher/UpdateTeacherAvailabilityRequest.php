@@ -17,12 +17,9 @@ class UpdateTeacherAvailabilityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'instructor_availability' => 'required|array',
-            'instructor_availability.*.teacher_id' => 'sometimes|string',
-            'instructor_availability.*.day_of_week' => 'sometimes|string',
-            'instructor_availability.*.start_time' => 'sometimes|date_format:H:i',
-            'instructor_availability.*.end_time' => 'sometimes|date_format:H:i|after:start_time',
-            'instructor_availability.*.semester_id' => 'sometimes|string',
+            'day_of_week' => 'sometimes|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
+            'start_time' => 'sometimes|date_format:H:i',
+            'end_time' => 'sometimes|date_format:H:i|after:start_time',
         ];
     }
 }

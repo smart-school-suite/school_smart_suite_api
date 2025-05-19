@@ -17,11 +17,8 @@ class CreateTeacherService
         $instructor->last_name = $teacherData['last_name'];
         $instructor->password = Hash::make($password);
         $instructor->phone_one = $teacherData["phone_one"];
-        $instructor->employment_status = $teacherData["employment_status"];
-        $instructor->highest_qualification = $teacherData["highest_qualification"];
-        $instructor->field_of_study = $teacherData["field_of_study"];
-        $instructor->years_experience = $teacherData["years_experience"];
-        $instructor->salary = $teacherData["salary"];
+        $instructor->phone_one = $teacherData["phone_two"] ?? null;
+        $instructor->address = $teacherData['address'] ?? null;
         $instructor->school_branch_id = $currentSchool->id;
         $instructor->save();
         SendPasswordMailJob::dispatch( $password, $teacherData['email']);

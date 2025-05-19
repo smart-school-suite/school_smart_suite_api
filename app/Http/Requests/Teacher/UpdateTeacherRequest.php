@@ -28,10 +28,9 @@ class UpdateTeacherRequest extends FormRequest
             'last_name' => 'sometimes|nullable|string',
             'name' => 'sometimes|nullable|string',
             'email' => 'sometimes|nullable|email',
-            'hire_date' => 'sometimes|nullable|date',
-            'highest_qualification' => 'sometimes|nullable|string',
-            'field_of_study' => 'sometimes|nullable|string',
-            'years_experience' => 'sometimes|nullable|integer|max:50|min:0'
+            'address' => 'sometimes|nullable|string',
+            'phone_one' => 'sometimes|nullable|string',
+            'phone_two' => 'sometimes|nullable|string'
         ];
     }
 }

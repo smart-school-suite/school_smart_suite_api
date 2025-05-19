@@ -4,7 +4,7 @@ namespace App\Http\Requests\Teacher;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AddSpecialtyPreferenceRequest extends FormRequest
+class TeacherIdRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -18,9 +18,8 @@ class AddSpecialtyPreferenceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'specailties_preference' => 'required|array',
-            'specailties_preference.*.specialty_id' => 'required|string|exists:specialty,id',
-            'specailties_preference.*.teacher_id' => 'required|string|exists:teacher,id'
+            'teacherIds' => 'required|array',
+            'teacherIds.*.teacher_id' => 'required|string|exists:teacher,id'
         ];
     }
 }

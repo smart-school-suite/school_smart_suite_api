@@ -24,7 +24,7 @@ Route::middleware(['permission:schoolAdmin.teacher.view.time.timetable'])->get('
     ->name('teachers.timetable.index');
 
 // Assign a specialty preference to a teacher/instructor
-Route::middleware(['permission:schoolAdmin.teacher.add.specialty.peference'])->post('/teachers/{teacherId}/specialty-preference', [TeacherController::class, 'assignTeacherSpecailtyPreference'])
+Route::middleware(['permission:schoolAdmin.teacher.add.specialty.peference'])->post('/teachers/specialty-preference', [TeacherController::class, 'assignTeacherSpecailtyPreference'])
     ->name('teachers.specialty-preference.store');
 
 // Deactivate a specific teacher/instructor account
@@ -40,17 +40,14 @@ Route::middleware(['permission:schoolAdmin.teacher.update'])->put('/teachers/bul
     ->name('teachers.bulk-update');
 
 // Bulk activate teachers/instructors
-Route::middleware(['permission:schoolAdmin.teacher.activate'])->post('/teachers/bulk-activate/{teacherIds}', [TeacherController::class, 'bulkActivateTeacher'])
+Route::middleware(['permission:schoolAdmin.teacher.activate'])->post('/teachers/bulk-activate', [TeacherController::class, 'bulkActivateTeacher'])
     ->name('teachers.bulk-activate');
 
 // Bulk deactivate teachers/instructors
-Route::middleware(['permission:schoolAdmin.teacher.deactivate'])->post('/teachers/bulk-deactivate/{teacherIds}', [TeacherController::class, 'bulkDeactivateTeacher'])
+Route::middleware(['permission:schoolAdmin.teacher.deactivate'])->post('/teachers/bulk-deactivate', [TeacherController::class, 'bulkDeactivateTeacher'])
     ->name('teachers.bulk-deactivate');
 
 // Bulk delete teachers/instructors
-Route::middleware(['permission:schoolAdmin.teacher.delete'])->delete('/teachers/bulk-delete/{teacherIds}', [TeacherController::class, 'bulkDeleteTeacher'])
+Route::middleware(['permission:schoolAdmin.teacher.delete'])->delete('/teachers/bulk-delete', [TeacherController::class, 'bulkDeleteTeacher'])
     ->name('teachers.bulk-delete');
 
-// Bulk add specialty preferences to teachers/instructors
-Route::middleware(['permission:schoolAdmin.teacher.add.specialty.peference'])->post('/teachers/bulk-add-specialty-preferences', [TeacherController::class, 'bulkAddSpecialtyPreference'])
-    ->name('teachers.bulk-add-specialty-preferences');

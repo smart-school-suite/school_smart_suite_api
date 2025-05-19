@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolSemester extends Model
 {
@@ -27,7 +28,7 @@ class SchoolSemester extends Model
     public $table = 'school_semesters';
     public $keyType = 'string';
 
-    public function specailty(): BelongsTo {
+    public function specialty(): BelongsTo {
          return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
@@ -35,6 +36,9 @@ class SchoolSemester extends Model
         return $this->belongsTo(Semester::class, 'semester_id');
     }
 
+    public function teacherAvailability(): HasMany {
+        return $this->hasMany(InstructorAvailability::class, 'school_semester_id');
+    }
     public function studentBatch(): BelongsTo {
          return $this->belongsTo(Studentbatch::class, 'student_batch_id');
     }

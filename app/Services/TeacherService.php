@@ -12,20 +12,20 @@ use Carbon\Carbon;
 class TeacherService
 {
     // Implement your logic here
-    public function getTeacherDetails($teacher_id)
+    public function getTeacherDetails($teacherId)
     {
-        $find_teacher = Teacher::findOrFail($teacher_id);
+        $find_teacher = Teacher::findOrFail($teacherId);
         return $find_teacher;
     }
-    public function deletetTeacher($teacher_id)
+    public function deletetTeacher($teacherId)
     {
-        $teacher = Teacher::findOrFail($teacher_id);
+        $teacher = Teacher::findOrFail($teacherId);
         $teacher->delete();
         return $teacher;
     }
-    public function updateTeacher(array $data, $teacher_id)
+    public function updateTeacher(array $data, $teacherId)
     {
-        $teacher = Teacher::findOrFail($teacher_id);
+        $teacher = Teacher::findOrFail($teacherId);
         $filterData = array_filter($data);
         $teacher->update($filterData);
         return $teacher;
@@ -79,13 +79,13 @@ class TeacherService
         return $getInstructors;
     }
 
-    public function addSpecailtyPreference(array $specailtyData, $currentSchool, $teacherId)
+    public function addSpecailtyPreference(array $specailtyData, $currentSchool)
     {
         $result = [];
         foreach ($specailtyData as $specailty) {
             $createdEntry = TeacherSpecailtyPreference::create([
                 'specialty_id' => $specailty["specialty_id"],
-                'teacher_id' =>  $teacherId,
+                'teacher_id' =>  $specailty['teacher_id'],
                 "school_branch_id" => $currentSchool->id
             ]);
             $result[] = $createdEntry;
@@ -115,7 +115,7 @@ class TeacherService
         try {
             DB::beginTransaction();
             foreach ($teacherIds as $teacherId) {
-                $teacher = Teacher::findOrFail($teacherId['id']);
+                $teacher = Teacher::findOrFail($teacherId['teacher_id']);
                 $teacher->status = "inactive";
                 $teacher->save();
                 $result[] = [
@@ -136,7 +136,7 @@ class TeacherService
         try {
             DB::beginTransaction();
             foreach ($teacherIds as $teacherId) {
-                $teacher = Teacher::findOrFail($teacherId['id']);
+                $teacher = Teacher::findOrFail($teacherId['teacher_id']);
                 $teacher->status = "active";
                 $teacher->save();
                 $result[] = [
@@ -157,7 +157,7 @@ class TeacherService
         try {
             DB::beginTransaction();
             foreach ($teacherIds as $teacherId) {
-                $teacher = Teacher::findOrFail($teacherId['id']);
+                $teacher = Teacher::findOrFail($teacherId['teacher_id']);
                 $teacher->delete();
                 $result[] = [
                     $teacher
@@ -199,26 +199,4 @@ class TeacherService
         }
     }
 
-    public function bulkAddTeacherSpecialtyPreference($currentSchool, $preferenceDataList, $teacherIds)
-    {
-        $result = [];
-        try {
-            DB::beginTransaction();
-            foreach ($teacherIds as $teacherId) {
-                foreach ($preferenceDataList as $preferenceData) {
-                    $createdEntry = TeacherSpecailtyPreference::create([
-                        'specialty_id' => $preferenceData["specialty_id"],
-                        'teacher_id' =>  $teacherId,
-                        "school_branch_id" => $currentSchool->id
-                    ]);
-                    $result[] = $createdEntry;
-                }
-            }
-            DB::commit();
-            return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
 }

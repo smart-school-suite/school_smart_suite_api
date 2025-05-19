@@ -19,10 +19,10 @@ class AddTeacherAvailabilityRequest extends FormRequest
         return [
             'instructor_availability' => 'required|array',
             'instructor_availability.*.teacher_id' => 'required|string',
-            'instructor_availability.*.day_of_week' => 'required|string',
+            'instructor_availability.*.day_of_week' => 'required|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'instructor_availability.*.start_time' => 'required|date_format:H:i',
             'instructor_availability.*.end_time' => 'required|date_format:H:i|after:start_time',
-            'instructor_availability.*.semester_id' => 'required|integer',
+            'instructor_availability.*.school_semester_id' => 'required|string|exists:school_semesters,id',
         ];
     }
 }

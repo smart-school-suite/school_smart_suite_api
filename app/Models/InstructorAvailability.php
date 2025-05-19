@@ -18,7 +18,7 @@ class InstructorAvailability extends Model
         'start_time',
         'end_time',
         'level_id',
-        'semester_id',
+        'school_semester_id',
         'specialty_id'
     ];
 
@@ -35,6 +35,9 @@ class InstructorAvailability extends Model
             $user->id = substr($uuid, 0, 10);
          });
 
+    }
+    public function schoolSemester(): BelongsTo {
+        return $this->belongsTo(SchoolSemester::class, 'school_semester_id');
     }
 
     public function teacher() : BelongsTo {

@@ -15,16 +15,16 @@ class LetterGradeService
         return LetterGrade::all();
     }
 
-    public function deleteLetterGrade($letter_grade_id)
+    public function deleteLetterGrade($letterGradeId)
     {
-        $letterGrade = LetterGrade::findOrFail($letter_grade_id);
+        $letterGrade = LetterGrade::findOrFail($letterGradeId);
         $letterGrade->delete();
         return $letterGrade;
     }
 
-    public function updateLetterGrade($id, array $data)
+    public function updateLetterGrade($letterGradeId, array $data)
     {
-        $letterGrade = LetterGrade::findOrFail($id);
+        $letterGrade = LetterGrade::findOrFail($letterGradeId);
         $letterGrade->update($data);
 
         return $letterGrade;

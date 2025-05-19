@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InstructorAvailability;
 use App\Http\Requests\Teacher\UpdateTeacherAvailabilityRequest;
 use App\Http\Requests\Teacher\AddTeacherAvailabilityRequest;
+use App\Http\Requests\Teacher\BulkUpdateTeacherAvailabilitySlotsRequest;
 use App\Services\ApiResponseService;
 use App\Services\InstructorAvaliabilityService;
 use Illuminate\Http\Request;
@@ -26,11 +27,11 @@ class InstructorAvailabilityController extends Controller
             $createInstructorAvailability = $this->instructorAvaliabilityService->createInstructorAvailability($request->instructor_availability, $currentSchool);
             return ApiResponseService::success("Instructor Avialability Created Sucessfully", $createInstructorAvailability, null, 201);
         } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
+            return ApiResponseService::error($e->getMessage(), null,  500);
         }
     }
 
-    public function bulkUpdateInstructorAvialabililty(Request $request)
+    public function bulkUpdateInstructorAvialabililty(BulkUpdateTeacherAvailabilitySlotsRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
@@ -56,16 +57,29 @@ class InstructorAvailabilityController extends Controller
 
     public function deleteInstructorAvailabilty(Request $request, $availabilityId)
     {
-        $availabilty = InstructorAvailability::find($availabilityId);
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteInstructorAvailability = $this->instructorAvaliabilityService->deleteInstructorAvailability($currentSchool, $availabilty);
+        $deleteInstructorAvailability = $this->instructorAvaliabilityService->deleteInstructorAvailability($currentSchool, $availabilityId);
         return ApiResponseService::success('Teachers availability deleted succefully', $deleteInstructorAvailability, null, 200);
     }
 
     public function updateInstructorAvailability(UpdateTeacherAvailabilityRequest $request,  $availabilityId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->instructor_availability, $currentSchool, $availabilityId);
+        $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->validated(), $currentSchool, $availabilityId);
         return ApiResponseService::success("Availability updated succesfully", $updateTeacherAvailability, null, 200);
+    }
+
+    public function getSchoolSemestersByTeacherSpecialtyPreference(Request $request, $teacherId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $schoolSemesters = $this->instructorAvaliabilityService->getSchoolSemestersByTeacherSpecialtyPreference($currentSchool, $teacherId);
+        return ApiResponseService::success("School Semesters Fetched Successfully", $schoolSemesters, null, 200);
+    }
+
+    public function deleteAllAvailabilitySlotsBySemester(Request $request){
+        $teacherId = $request->route('teacherId');
+        $schoolSemesterId = $request->route('schoolSemesterId');
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteSlots = $this->instructorAvaliabilityService->deleteAvailabilityBySemester($schoolSemesterId,$currentSchool,$teacherId);
+        return ApiResponseService::success("All Availability Slots Deleted Successfully", $deleteSlots, null, 200);
     }
 }

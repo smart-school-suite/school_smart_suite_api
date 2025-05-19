@@ -20,29 +20,15 @@ class Teacher extends Model
      */
     protected $fillable = [
         'school_branch_id',
-        'phone_number',
         'email',
         'name',
+        'phone_one',
+        'phone_two',
         'first_name',
         'last_name',
-        'profile_picture',
-        'date_of_birth',
-        'address',
-        'employment_status',
-        'hire_date',
-        'emergency_contact_name',
-        'emergency_contact_phone',
-        'last_performance_review',
-        'highest_qualification',
-        'field_of_study',
-        'leave',
-        'holiday',
-        'city',
         'status',
-        'cultural_background',
-        'religion',
-        'years_experience',
-        'salary'
+        'profile_picture',
+        'address',
     ];
 
     /**

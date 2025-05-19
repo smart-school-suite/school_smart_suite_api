@@ -55,7 +55,7 @@ class CreateStudentService
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,
             ]);
-             SendPasswordMailJob::dispatch($studentData["email"], $password);
+             SendPasswordMailJob::dispatch( $password, $studentData["email"]);
             return $student;
         } catch (QueryException $e) {
 

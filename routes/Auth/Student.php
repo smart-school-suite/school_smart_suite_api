@@ -16,7 +16,7 @@ Route::post('/login', [LoginStudentController::class, 'loginStudent'])
     ->name('student.login');
 
 // OTP Verification (for login)
-Route::post('/verify-otp', [ValidateOtpController::class, 'verifyInstructorLoginOtp'])
+Route::post('/verify-otp', [ValidateOtpController::class, 'verifyOtp'])
     ->name('student.otp.verify');
 
 // Request New OTP (for login)

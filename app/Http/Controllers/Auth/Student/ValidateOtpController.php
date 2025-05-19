@@ -16,10 +16,10 @@ class ValidateOtpController extends Controller
     {
         $this->validateOtpService = $validateOtpService;
     }
-    public function verify_otp(OtpRequest $request)
+    public function verifyOtp(OtpRequest $request)
     {
-        $token_header = $request->header('OTP_TOKEN_HEADER');
-        $verifyOtp = $this->validateOtpService->verifyOtp($token_header, $request->otp);
+        $tokenheader = $request->header('otp-token-header');
+        $verifyOtp = $this->validateOtpService->verifyOtp($tokenheader, $request->otp);
         return ApiResponseService::success("OTP verified Sucessfully OTP verification complete", $verifyOtp, null, 200);
     }
     public function request_another_code(Request $request)
