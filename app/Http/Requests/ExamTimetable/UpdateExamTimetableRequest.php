@@ -17,8 +17,9 @@ class UpdateExamTimetableRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
-            'entries' => ['required', 'array', new ExamTimetableRule($this->entries)],
+            'entries' => 'required|array',
             'entries.*.entry_id'> 'required|exists:examtimetable,id',
             'entries.*.course_id' => 'required|exists:courses,id',
             'entries.*.exam_id' => 'required|exists:exams,id',
@@ -28,6 +29,7 @@ class UpdateExamTimetableRequest extends FormRequest
             'entries.*.level_id' => 'required|exists:education_levels,id',
             'entries.*.date' => 'required|date|after_or_equal:today',
             'entries.*.end_time' => 'required|date_format:H:i|after:entries.*.start_time',
+            'entries.*.duration' => 'required|string'
         ];
     }
 }

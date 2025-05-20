@@ -8,7 +8,7 @@ use App\Services\SchoolAdminService;
 use App\Models\SchoolBranchApiKey;
 use App\Http\Requests\Auth\UpdateProfilePictureRequest;
 use App\Http\Requests\SchoolAdmin\BulkUpdateSchoolAdminRequest;
-use App\Http\Requests\SchoolAdmin\CreateSchoolAdminRequest;
+use App\Http\Requests\SchoolAdmin\CreateSchoolSuperAdminRequest;
 use App\Http\Requests\SchoolAdmin\UpdateSchoolAdminRequest;
 use Illuminate\Support\Facades\Validator;
 use Exception;
@@ -53,7 +53,7 @@ class SchoolAdminController extends Controller
         return ApiResponseService::success("School Admin Details Fetched Successfully", $schoolAdminDetails, null, 200);
     }
 
-    public function createAdminOnSignup(CreateSchoolAdminRequest $request)
+    public function createAdminOnSignup(CreateSchoolSuperAdminRequest $request)
     {
         $schoolBranchApiKey = $request->header('API-KEY');
         if (!$schoolBranchApiKey) {

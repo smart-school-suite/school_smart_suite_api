@@ -36,11 +36,10 @@ class ExamTimeTableService
             }
 
             $createdTimetables = [];
-            $uniqueId = Str::uuid();
 
             foreach ($examTimetableEntries as $entry) {
                 $createdTimetableId = DB::table('examtimetable')->insertGetId([
-                    'id' => $uniqueId,
+                    'id' => Str::uuid(),
                     'course_id' => $entry['course_id'],
                     'exam_id' => $examId,
                     'student_batch_id' => $entry['student_batch_id'],
@@ -120,16 +119,14 @@ class ExamTimeTableService
     /**
      * Generates the exam timetable data for a given level and specialty.
      *
-     * @param string $levelId The ID of the level.
-     * @param string $specialtyId The ID of the specialty.
+     * @param string $examId The ID of the level.
      * @param SchoolBranches $currentSchool The current school.
      * @return array The generated exam timetable data, keyed by date.
      */
-    public function generateExamTimeTable(string $levelId, string $specialtyId, Schoolbranches $currentSchool): array
+    public function generateExamTimeTable(string $examId, Schoolbranches $currentSchool): array
     {
         $timetables = Examtimetable::where('school_branch_id', $currentSchool->id)
-            ->where('level_id', $levelId)
-            ->where('specialty_id', $specialtyId)
+            ->where('exam_id', $examId)
             ->with(['course' => function ($query) {
                 $query->select('id', 'course_title', 'credit', 'course_code');
             }])
@@ -139,18 +136,19 @@ class ExamTimeTableService
         $examTimetable = [];
 
         foreach ($timetables as $timetable) {
-            $date = $timetable->date->format('Y-m-d');
+            $date = $timetable->date;
 
             if (!isset($examTimetable[$date])) {
                 $examTimetable[$date] = [];
             }
 
             $examTimetable[$date][] = [
+                'id' => $timetable->id,
                 'course_title' => $timetable->course->course_title,
                 'credit' => $timetable->course->credit,
                 'course_code' => $timetable->course->course_code,
-                'start_time' => $timetable->start_time->format('H:i'),
-                'end_time' => $timetable->end_time->format('H:i'),
+                'start_time' => $timetable->start_time,
+                'end_time' => $timetable->end_time,
                 'duration' => $timetable->duration,
             ];
         }
@@ -167,7 +165,7 @@ class ExamTimeTableService
     public function prepareExamTimeTableData($examId, SchoolBranches $currentSchool): array
     {
         try {
-            $exam = Exams::with(['semester:id,semester_name', 'specialty:id,specialty_name', 'level:id,level_name']) // Specify the columns you need.
+            $exam = Exams::with(['semester:id,name', 'specialty:id,specialty_name', 'level:id,name'])
                 ->where('id', $examId)
                 ->firstOrFail();
         } catch (ModelNotFoundException $e) {

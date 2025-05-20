@@ -25,6 +25,7 @@ class CreateGradeRequest extends FormRequest
             'grades.*.determinant' => 'required|string',
             'grades.*.grade_points' => "required|numeric|min:0|max:4.00|regex:/^\d+(\.\d{1,2})?$/",
             'grades.*.grades_category_id' => 'required|string|exists:grades_category,id',
+            'grades.*.resit_status' => 'required|string|in:no_resit,resit,high_resit_potential,low_resit_potential',
             'grades.*.grade_status' => 'required|string',
         ];
     }

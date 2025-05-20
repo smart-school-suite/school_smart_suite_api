@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Exam\CreateExamRequest;
 use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Http\Requests\Exam\BulkUpdateExamRequest;
+use App\Http\Requests\Exam\ExamIdRequest;
 use App\Http\Resources\AssiocaiteWeigtedMarkLetterGrades;
 use App\Http\Requests\ExamGrading\BulkAddExamGradingRequest;
 use App\Http\Resources\AccessedExamResource;
@@ -57,7 +58,7 @@ class ExamsController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $examData = $this->examService->getAssociateWeightedMarkLetterGrades($examId, $currentSchool);
-        return ApiResponseService::success('Data fetched Sucessfully', AssiocaiteWeigtedMarkLetterGrades::collection($examData), null, 200);
+        return ApiResponseService::success('Data fetched Sucessfully', $examData, null, 200);
     }
     public function getAccessedExams(Request $request)
     {
@@ -78,22 +79,10 @@ class ExamsController extends Controller
         $examTypeResit = $this->examService->getResitExams($currentSchool);
         return ApiResponseService::success("Exam Type Resit Fetched Successfully", ExamResource::collection($examTypeResit), null, 200);
     }
-    public function bulkDeleteExam($examIds){
-        $idsArray = explode(',', $examIds);
+    public function bulkDeleteExam(ExamIdRequest $request){
 
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:exams,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try{
-           $deleteExam = $this->examService->bulkDeleteExam($idsArray);
+           $deleteExam = $this->examService->bulkDeleteExam($request->examIds);
            return ApiResponseService::success("Exam Deleted Succesfully", $deleteExam, null, 200);
         }
         catch(Exception $e){

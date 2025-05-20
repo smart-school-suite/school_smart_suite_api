@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-
+use Illuminate\Support\Facades\Log;
 class ExamTimetableRule implements ValidationRule
 {
     protected $examsEntries; // Store exam entries
@@ -13,6 +13,9 @@ class ExamTimetableRule implements ValidationRule
     {
         $this->examsEntries = $examsEntries;
     }
+
+
+
 
     /**
      * Run the validation rule.
@@ -24,6 +27,7 @@ class ExamTimetableRule implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        Log::info('ExamTimetableRule initialized with entries: ', $this->examsEntries);
         $conflicts = []; // Store conflicting appointment details
         $entryCount = count($this->examsEntries);
 

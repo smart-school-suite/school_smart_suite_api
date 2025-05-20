@@ -32,7 +32,7 @@ use App\Http\Controllers\GradesController;
         ->name('exams.config-data');
 
     // Bulk delete grades for multiple exams
-    Route::middleware(['permission:permission:schoolAdmin.grades.delete'])->delete('/exams/bulk-delete-grades/{examIds}', [GradesController::class, 'bulkDeleteGrades'])
+    Route::middleware(['permission:permission:schoolAdmin.grades.delete'])->post('/exams/bulk-delete-grades', [GradesController::class, 'bulkDeleteGrades'])
         ->name('exams.grades.bulk-delete');
 
     // Create grades based on another grade configuration

@@ -36,11 +36,11 @@ Route::middleware(['permission:schoolAdmin.exam.add.grade.config'])->post('/exam
     ->name('exams.grading-configs.store');
 
 // Bulk delete exams
-Route::middleware(['permission:schoolAdmin.exam.delete'])->delete('/exams/bulk-delete/{examIds}', [ExamsController::class, 'bulkDeleteExam'])
+Route::middleware(['permission:schoolAdmin.exam.delete'])->post('/exams/bulk-delete', [ExamsController::class, 'bulkDeleteExam'])
     ->name('exams.bulk-delete');
 
 // Bulk update exams
-Route::middleware(['permission:schoolAdmin.exam.update'])->put('/exams/bulk-update', [ExamsController::class, 'bulkUpdateExam'])
+Route::middleware(['permission:schoolAdmin.exam.update'])->patch('/exams/bulk-update', [ExamsController::class, 'bulkUpdateExam'])
     ->name('exams.bulk-update');
 
 // Bulk add grading configurations to exams

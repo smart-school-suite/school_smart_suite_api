@@ -57,6 +57,7 @@ class SchoolAdminService
         $schoolAdmin->last_name = $data["last_name"];
         $schoolAdmin->school_branch_id = $schoolBranchId;
         $schoolAdmin->save();
+        $schoolAdmin->assignRole("schoolSuperAdmin");
         return $schoolAdmin;
     }
 

@@ -20,7 +20,8 @@ class AccessedStudentController extends Controller
         return ApiResponseService::success("Accessed student fetched Sucessfully", $accessedStudents, null, 200);
     }
 
-    public function deleteAccessedStudent(Request $request, $accessedStudentId){
-        $this->accessedStudentService->deleteAccessedStudent($accessedStudentId);
+    public function deleteAccessedStudent(Request $request, $candidateId){
+      $deleteCandidate =  $this->accessedStudentService->deleteAccessedStudent($candidateId);
+        ApiResponseService::success("Accessed Student Deleted Successfully", $deleteCandidate, null, 200);
     }
 }

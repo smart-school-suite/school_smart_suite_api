@@ -20,4 +20,14 @@ class SchoolGradeConfigController extends Controller
         $getSchoolGradesConfig =  $this->schoolGradesConfigService->getSchoolGradeConfig($currentSchool);
         return ApiResponseService::success("School Grades Config fetched Succesfully",  SchoolGradeConfigResource::collection($getSchoolGradesConfig), null, 200);
      }
+
+    public function getGradingBySchoolGradeCongfig(Request $request, $schoolGradeConfigId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $gradingBySchoolGradeConfig = $this->schoolGradesConfigService->getGradingBySchoolGradeCongfig($currentSchool, $schoolGradeConfigId);
+        return ApiResponseService::success("Grading By School Grade Config Fetched Successfully", $gradingBySchoolGradeConfig, null, 200);
+    }
+
+    public function createGradingBySchoolGradeConfig(Request $request){
+
+    }
 }

@@ -19,7 +19,7 @@ class CreateSchoolAdminService
         $schoolAdmin->school_branch_id = $currentSchool->id;
         $schoolAdmin->save();
         $schoolAdmin->assignRole('schoolAdmin');
-        SendPasswordMailJob::dispatch($schoolAdminData['email'], $password);
+        SendPasswordMailJob::dispatch( $password, $schoolAdminData['email']);
         return $schoolAdmin;
     }
 

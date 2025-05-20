@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth\Teacher;
 use App\Services\ApiResponseService;
+use App\Models\SchoolBranchApiKey;
 use App\Models\OTP;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -27,11 +28,14 @@ class ValidateOtpService
 
         $user = Teacher::where('id', $otpRecord->actorable_id)->first();
 
-        $token = $user->createToken('instructorToken')->plainTextToken;
+        $token = $user->createToken('teacherToken')->plainTextToken;
 
+        $apiKey = SchoolBranchApiKey::where("school_branch_id", $user->school_branch_id)->first();
         $otpRecord->delete();
-
-        return $token;
+        return [
+            'auth_token' => $token,
+            'apiKey' => $apiKey->api_key
+        ];
     }
 
 

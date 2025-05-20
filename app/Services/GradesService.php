@@ -10,40 +10,50 @@ use Exception;
 class GradesService
 {
     // Implement your logic here
-    public function getGrades($currentSchool){
+    public function getExamGrades($currentSchool){
         $gradesData = Grades::where('school_branch_id', $currentSchool->id)
             ->with(['exam.examtype.semesters', 'lettergrade'])->get();
             return $gradesData;
     }
-    public function deleteGrades($currentSchool, $examId){
-        $gradesByExam = Grades::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)->get();
-        foreach($gradesByExam as $grades){
-            $grades->delete();
-        }
-        return $gradesByExam;
+    public function deleteExamGrading($currentSchool, $examId){
+        $exam = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
+        $exam->grades_category_id = null;
+        $exam->grading_added = false;
+        $exam->save();
+        return $exam;
     }
-    public function bulkDeleteGrades($examIds, $currentSchool){
+    public function bulkDeleteExamGrading($examIds, $currentSchool){
         $results = [];
         try{
             DB::beginTransaction();
             foreach($examIds as $examId){
-                $gradesByExam = Grades::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)->get();
-                foreach($gradesByExam as $grades){
-                    $grades->delete();
-                    $results[] = [
-                        $grades
-                    ];
-                }
+                $exam = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
+                $exam->grades_category_id = null;
+                $exam->grading_added = false;
+                $exam->save();
+                $results[] = [
+                    'exam' => $exam
+                ];
             }
             DB::commit();
             return $results;
         }
         catch(Exception $e){
-
+            DB::rollBack();
+            throw $e;
         }
     }
+
+    public function updateExamGrading($currentSchool, $examId, $updateData){
+        $exams = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
+        $exams->grades_category_id = $updateData['grades_category_id'];
+        $exams->grading_added = true;
+        $exams->save();
+    }
     public function getExamGradesConfiguration($currentSchool, string $examId){
-        $grades = Grades::where("school_branch_id", $currentSchool->id)->where("exam_id", $examId)
+        $exam = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
+        $grades = Grades::where("school_branch_id", $currentSchool->id)
+        ->where("grades_category_id", $exam->grades_category_id)
           ->with(['lettergrade'])
         ->get();
         return $grades;

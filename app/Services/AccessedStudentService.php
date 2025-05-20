@@ -19,7 +19,7 @@ class AccessedStudentService
     public function deleteAccessedStudent($accessedStudentId){
         $deleteAccessedStudent = AccessedStudent::findOrFail($accessedStudentId);
         $deleteAccessedStudent->delete();
-        return ApiResponseService::success("Accessed Student Deleted Successfully", $deleteAccessedStudent, null, 200);
+        return $deleteAccessedStudent;
     }
 
 

@@ -28,6 +28,7 @@ class CreateExamTimetableRequest extends FormRequest
             'entries.*.level_id' => 'required|exists:education_levels,id',
             'entries.*.date' => 'required|date|after_or_equal:today',
             'entries.*.end_time' => 'required|date_format:H:i|after:entries.*.start_time',
+            'entries.*.duration' => 'required|string'
         ];
     }
 }

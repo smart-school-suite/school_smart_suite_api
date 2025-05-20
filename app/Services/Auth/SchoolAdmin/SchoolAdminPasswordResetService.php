@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Schooladmin;
 use App\Services\ApiResponseService;
 use App\Models\PasswordResetToken;
+use App\Jobs\SendOtpJob;
 class SchoolAdminPasswordResetService
 {
     // Implement your logic here
@@ -33,7 +34,9 @@ class SchoolAdminPasswordResetService
             'expires_at' => $expiresAt,
         ]);
 
-        return ['otp_header' => $otp_header, 'otp' => $otp];
+        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+
+        return ['otp_header' => $otp_header];
     }
     public function verifyOtp($otp, $tokenHeader)
     {
@@ -52,17 +55,19 @@ class SchoolAdminPasswordResetService
 
         $otpRecord->update(['used' => true]);
 
-        $password_reset_token = Str::random(35);
+        $passwordResetToken = Str::random(35);
 
         PasswordResetToken::create([
-            'token' => $password_reset_token,
+            'token' => $passwordResetToken,
             'actorable_id' => $otpRecord->actorable_id,
             'actorable_type' => Schooladmin::class,
             'expires_at' => Carbon::now()->addDay(),
         ]);
         $otpRecord->delete();
 
-        return $password_reset_token;
+        return [
+            'password_reset_token' => $passwordResetToken,
+        ];
     }
     public function changeSchoolAdminPasswordUnAuthenticated($passwordData, $passwordResetToken)
     {

@@ -17,13 +17,13 @@ class ValidateOtpController extends Controller
     }
     public function verifyInstructorLoginOtp(OtpRequest $request)
     {
-        $token_header = $request->header('OTP_TOKEN_HEADER');
-        $verifyOtp = $this->validateOtpService->verifyOtp($token_header, $request->otp);
+        $tokenHeader = $request->header('otp-token-header');
+        $verifyOtp = $this->validateOtpService->verifyOtp($tokenHeader, $request->otp);
         return ApiResponseService::success("OTP token verified Succesfully", $verifyOtp, null, 200);
     }
     public function requestNewOtp(Request $request)
     {
-        $token_header = $request->header('OTP_TOKEN_HEADER');
+        $token_header = $request->header('opt-token-header');
         $requestNewOtp = $this->validateOtpService->requestOtp($token_header);
         return ApiResponseService::success("OTP code sent successfully", $requestNewOtp, null, 200);
     }

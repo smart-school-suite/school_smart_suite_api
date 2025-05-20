@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Exam\ExamIdRequest;
 use App\Services\AddGradesService;
 use App\Services\ApiResponseService;
 use App\Models\Exams;
@@ -47,34 +48,21 @@ class GradesController extends Controller
     public function getAllGrades(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getGrades = $this->gradesService->getGrades($currentSchool);
+        $getGrades = $this->gradesService->getExamGrades($currentSchool);
         return ApiResponseService::success("Exam Grades Fetched Sucessfully", $getGrades, null, 200);
     }
 
     public function deleteGrades(Request $request, $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteGrades = $this->gradesService->deleteGrades($currentSchool, $examId);
+        $deleteGrades = $this->gradesService->deleteExamGrading($currentSchool, $examId);
         return ApiResponseService::success("Grade Deleted Sucessfully", $deleteGrades, null, 200);
     }
 
-    public function bulkDeleteGrades(Request $request, $examIds){
-        $idsArray = explode(',', $examIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:exams,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteGrades(ExamIdRequest $request){
         try{
             $currentSchool = $request->attributes->get('currentSchool');
-            $bulkDeleteGrades = $this->gradesService->bulkDeleteGrades($examIds, $currentSchool);
+            $bulkDeleteGrades = $this->gradesService->bulkDeleteExamGrading($request->examIds, $currentSchool);
            return ApiResponseService::success("Grades Deleted Successfully", $bulkDeleteGrades, null, 200);
         }
         catch(Exception $e){

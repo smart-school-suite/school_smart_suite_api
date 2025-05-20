@@ -23,7 +23,6 @@ class UpdateExamRequest extends FormRequest
             'start_date' => 'sometimes|nullable|date',
             'end_date' => 'sometimes|nullable|date',
             'exam_type_id' => 'sometimes|nullable|string|exists:exam_type,id',
-            'level_id' => 'sometimes|nullable|string|exists:education_levels,id',
             'weighted_mark' => [
                 'sometimes',
                 'nullable',
@@ -32,9 +31,7 @@ class UpdateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'semester_id' => 'sometimes|nullable|string|exists:semesters,id',
             'school_year' => 'sometimes|nullable|string',
-            'specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
         ];
     }
 }

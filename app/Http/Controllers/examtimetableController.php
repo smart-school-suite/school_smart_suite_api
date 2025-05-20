@@ -6,6 +6,7 @@ use App\Services\ExamTimeTableService;
 use App\Services\ApiResponseService;
 use App\Http\Requests\ExamTimetable\CreateExamTimetableRequest;
 use App\Http\Requests\ExamTimetable\UpdateExamTimetableRequest;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use Illuminate\Http\Request;
@@ -33,12 +34,12 @@ class ExamTimeTableController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
-            $createdExamTimeTable = $this->examTimeTableService->createExamTimeTable($request->validated(), $currentSchool, $examId); // Use validated data
-            return ApiResponseService::success("Timetable Created Successfully", $createdExamTimeTable, null, Response::HTTP_CREATED); // Use the constant
+            $createdExamTimeTable = $this->examTimeTableService->createExamTimeTable($request->entries, $currentSchool, $examId);
+            return ApiResponseService::success("Timetable Created Successfully", $createdExamTimeTable, null, Response::HTTP_CREATED);
         } catch (InvalidArgumentException $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_UNPROCESSABLE_ENTITY); // Use the constant
+            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR); // Use the constant
+            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -91,7 +92,7 @@ class ExamTimeTableController extends Controller
     {
         try {
             $currentSchool = $request->attributes->get('currentSchool');
-            $updatedExamTimetable = $this->examTimeTableService->updateExamTimetable($request->validated()->entries, $currentSchool);
+            $updatedExamTimetable = $this->examTimeTableService->updateExamTimetable($request->entries, $currentSchool);
             return ApiResponseService::success("Exam Timetable Updated Successfully", $updatedExamTimetable, null, Response::HTTP_OK);
         } catch (ModelNotFoundException $e) {
             return ApiResponseService::error("Exam Timetable Entry Not Found", null, Response::HTTP_NOT_FOUND);
@@ -108,12 +109,11 @@ class ExamTimeTableController extends Controller
      * @param string $levelId The ID of the level.
      * @return JsonResponse
      */
-    public function getTimetableBySpecialty(Request $request): JsonResponse
+    public function generateExamTimetable(Request $request): JsonResponse
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $specialtyId = $request->route('specialtyId');
-        $levelId = $request->route('levelId');
-        $generatedExamTimeTable = $this->examTimeTableService->generateExamTimeTable($levelId, $specialtyId, $currentSchool);
+        $examId = $request->route('examId');
+        $generatedExamTimeTable = $this->examTimeTableService->generateExamTimeTable($examId, $currentSchool);
         return ApiResponseService::success("Exam Timetable Generated Successfully", $generatedExamTimeTable, null, Response::HTTP_OK);
     }
 

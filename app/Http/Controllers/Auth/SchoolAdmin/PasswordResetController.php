@@ -25,13 +25,13 @@ class PasswordResetController extends Controller
     }
     public function verifySchoolAdminOtp(OtpRequest $request)
     {
-        $token_header = $request->header('OTP_TOKEN_HEADER');
+        $token_header = $request->header('otp-token-header');
         $verifyOtp = $this->schoolAdminPasswordResetService->verifyOtp($request->otp, $token_header);
         return ApiResponseService::success("OTP token verified Successfully", $verifyOtp, null, 200);
     }
     public function changeShoolAdminPasswordUnAuthenticated(ChangePasswordUnAuthenticatedRequest $request)
     {
-        $password_reset_token = $request->header('PASSWORD_RESET_TOKEN');
+        $password_reset_token = $request->header('password-reset-token');
         $this->schoolAdminPasswordResetService->changeSchoolAdminPasswordUnAuthenticated($request->validated(), $password_reset_token);
         return ApiResponseService::success("Password Changed Successfully", null, null, 200);
     }

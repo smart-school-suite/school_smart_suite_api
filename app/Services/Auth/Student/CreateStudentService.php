@@ -56,6 +56,7 @@ class CreateStudentService
                 'student_id' => $randomId,
             ]);
              SendPasswordMailJob::dispatch( $password, $studentData["email"]);
+             $student->assignRole('student');
             return $student;
         } catch (QueryException $e) {
 

@@ -24,13 +24,13 @@ class ResetPasswordController extends Controller
     }
     public function verifyStudentOtp(OtpRequest $request)
     {
-        $token_header = $request->header('OTP_TOKEN_HEADER');
+        $token_header = $request->header('otp-token-header');
         $verifyOtp = $this->resetStudentPasswordService->verifyOtp($request->otp, $token_header);
         return ApiResponseService::success("OTP verified Succesfully", $verifyOtp, null, 200);
     }
     public function changeStudentPasswordUnAuthenticated(ChangePasswordUnAuthenticatedRequest $request)
     {
-        $password_reset_token = $request->header('PASSWORD_RESET_TOKEN');
-        $this->resetStudentPasswordService->changeStudentPasswordUnAuthenticated($request->validated, $password_reset_token);
+        $passwordResetToken = $request->header('password-reset-token');
+        $this->resetStudentPasswordService->changeStudentPasswordUnAuthenticated($request->validated(), $passwordResetToken);
     }
 }

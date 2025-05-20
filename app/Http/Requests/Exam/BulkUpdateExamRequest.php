@@ -24,7 +24,6 @@ class BulkUpdateExamRequest extends FormRequest
             'exams.*.start_date' => 'sometimes|nullable|date',
             'exams.*.end_date' => 'sometimes|nullable|date',
             'exams.*.exam_type_id' => 'sometimes|nullable|string|exists:exam_type,id',
-            'exams.*.level_id' => 'sometimes|nullable|string|exists:education_levels,id',
             'exams.*.weighted_mark' =>  [
                 'sometimes',
                 'nullable',
@@ -33,9 +32,7 @@ class BulkUpdateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'exams.*.semester_id' => 'sometimes|nullable|string|exists:semesters,id',
             'exams.*.school_year' => 'sometimes|nullable|string',
-            'exams.*.specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
         ];
     }
 }

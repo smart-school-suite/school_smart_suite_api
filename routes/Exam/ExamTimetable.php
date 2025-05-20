@@ -4,16 +4,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ExamTimeTableController;
 
 // Create a new exam timetable for a specific exam
-Route::middleware(['permission:schoolAdmin.exam.timetable.create'])->post('/exams/{examId}/timetable', [ExamTimeTableController::class, 'createTimtable'])
+Route::middleware(['permission:schoolAdmin.exam.timetable.create'])->post('/exams/{examId}/timetable', [ExamTimeTableController::class, 'createTimetable'])
     ->name('exams.timetable.store');
 
 // Update the exam timetable (requires request body to identify which entry to update)
-Route::middleware(['permission:schoolAdmin.exam.timetable.update'])->put('/exam-timetable', [ExamTimeTableController::class, 'updateTimetable'])
+Route::middleware(['permission:schoolAdmin.exam.timetable.update'])->patch('/exam-timetable', [ExamTimeTableController::class, 'updateTimetable'])
     ->name('exam-timetable.update');
 
 // Get exam timetable by level and specialty
-Route::middleware(['permission:schoolAdmin.exam.timetable.view'])->get('/levels/{levelId}/specialties/{specialtyId}/exam-timetable', [ExamTimeTableController::class, 'getTimetableBySpecialty'])
-    ->name('levels.specialties.exam-timetable.index');
+Route::middleware(['permission:schoolAdmin.exam.timetable.view'])->get('/exam-timetable/{examId}', [ExamTimeTableController::class, 'generateExamTimetable'])
+    ->name('generate-exam-timetable.index');
 
 // Get course data for preparing an exam timetable
 Route::middleware(['permission:schoolAdmin.exam.timetable.course.data'])->get('/exams/{examId}/timetable/data', [ExamTimeTableController::class, 'prepareExamTimeTableData'])

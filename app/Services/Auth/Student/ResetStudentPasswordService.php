@@ -54,17 +54,19 @@ class ResetStudentPasswordService
 
         $otpRecord->update(['used' => true]);
 
-        $password_reset_token = Str::random(35);
+        $passwordResetToken = Str::random(35);
 
         PasswordResetToken::create([
-            'token' => $password_reset_token,
+            'token' => $passwordResetToken,
             'actorable_id' => $otpRecord->actorable_id,
             'actorable_type' => Student::class,
             'expires_at' => Carbon::now()->addDay(),
         ]);
         $otpRecord->delete();
 
-        return $password_reset_token;
+        return [
+            'password_reset_token' => $passwordResetToken
+        ];
     }
     public function changeStudentPasswordUnAuthenticated($passwordData, $passwordResetToken)
     {

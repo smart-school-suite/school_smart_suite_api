@@ -26,7 +26,7 @@ Route::post('/request-otp', [ValidateOtpController::class, 'requestNewOtp'])
 // Password Reset
 Route::post('/password/reset', [ResetPasswordController::class, 'resetInstructorPassword'])
     ->name('teacher.password.email');
-Route::post('/password/reset/verify-otp', [ResetPasswordController::class, 'resetInstructorPassword'])
+Route::post('/password/reset/verify-otp', [ResetPasswordController::class, 'verifyInstructorOtp'])
     ->name('teacher.password.verify');
 Route::post('/password/reset/update', [ResetPasswordController::class, 'ChangeInstructorPasswordUnAuthenticated'])
     ->name('teacher.password.update');

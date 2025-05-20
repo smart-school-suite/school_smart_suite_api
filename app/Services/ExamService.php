@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use App\Models\LetterGrade;
 use App\Models\SchoolGradesConfig;
 use App\Jobs\CreateExamCandidatesJob;
+use App\Models\AccessedStudent;
 use App\Models\Examtype;
 use App\Models\Student;
 use App\Models\Specialty;
@@ -39,9 +40,10 @@ class ExamService
         return $exam;
 
     }
-    public function deleteExam(string $exam_id, $currentSchool)
+    public function deleteExam(string $examId, $currentSchool)
     {
-        $exam = Exams::where("school_branch_id", $currentSchool->id)->find($exam_id);
+        $this->deleteExamCandidates($examId);
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
         if (!$exam) {
             return ApiResponseService::error("Exam not found", null, 404);
         }
@@ -54,11 +56,10 @@ class ExamService
          try{
             DB::beginTransaction();
            foreach($examIds as $examId){
-              $exam = Exams::find($examId);
+              $this->deleteExamCandidates($examId['exam_id']);
+              $exam = Exams::find($examId['exam_id']);
               $exam->delete();
-              $result[] = [
-                 $result
-              ];
+              $result[] = $exam;
            }
            DB::commit();
            return $result;
@@ -68,9 +69,9 @@ class ExamService
             throw $e;
          }
     }
-    public function updateExam(string $exam_id, $currentSchool, array $data)
+    public function updateExam(string $examId, $currentSchool, array $data)
     {
-        $exam = Exams::where("school_branch_id", $currentSchool->id)->find($exam_id);
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
         if (!$exam) {
             return ApiResponseService::error("Exam not found", null, 404);
         }
@@ -106,11 +107,11 @@ class ExamService
             ->get();
         return $exams;
     }
-    public function examDetails($currentSchool, string $exam_id)
+    public function examDetails($currentSchool, string $examId)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)
             ->with(['examtype', 'semester', 'specialty', 'level', 'studentBatch'])
-            ->find($exam_id);
+            ->find($examId);
         if (!$exam) {
             return ApiResponseService::error("Exam not found", null, 404);
         }
@@ -129,14 +130,21 @@ class ExamService
             ->get();
         return $examData;
     }
-    public function getAssociateWeightedMarkLetterGrades(string $exam_id, $currentSchool)
+    public function getAssociateWeightedMarkLetterGrades(string $examId, $currentSchool)
     {
-        $exam = Exams::where("school_branch_id", $currentSchool->id)->with(["examtype"])->find($exam_id);
+        $results = [];
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->with(["examtype"])->find($examId);
         if (!$exam) {
             return ApiResponseService::error("Exam Data not found", null, 404);
         }
         $letterGrades = LetterGrade::all();
-        return $letterGrades && $exam;
+        foreach($letterGrades as $letterGrade){
+            $results[] = [
+                "letter_grade" => $letterGrade,
+                "exam" => $exam,
+            ];
+        }
+        return $results;
     }
     public function addExamGrading(string $examId, $currentSchool, $gradesConfigId){
         $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($gradesConfigId);
@@ -157,7 +165,8 @@ class ExamService
          try{
             DB::beginTransaction();
             foreach($examGradingList as $examGrading){
-                $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($examGradingList['grades_config_Id']);
+                $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
+                ->find($examGrading['grades_config_Id']);
                 if(!$gradesConfig){
                     return ApiResponseService::error("Exam Grades Configuration Not Found", null, 404);
                 }
@@ -189,5 +198,14 @@ class ExamService
         return $exams;
     }
 
+    private function deleteExamCandidates($examId)
+    {
+        $examCandidates = AccessedStudent::where("exam_id", $examId)->get();
+        if ($examCandidates) {
+            foreach ($examCandidates as $examCandidate) {
+                $examCandidate->delete();
+            }
+        }
+    }
 
 }
