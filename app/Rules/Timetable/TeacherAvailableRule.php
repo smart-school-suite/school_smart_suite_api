@@ -4,105 +4,85 @@ namespace App\Rules\Timetable;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use App\Models\InstructorAvailability;
+use App\Models\InstructorAvailability; // Assuming this model points to the table storing WHEN they ARE available
 use Illuminate\Support\Collection;
+
 class TeacherAvailableRule implements ValidationRule
 {
-    protected Collection $timetableEntries; // Store timetable entries
     protected array $errors = [];
 
-    public function __construct(array $timetableEntries)
+    protected $scheduleEntries;
+     public function __construct($scheduleEntries)
     {
-        $this->timetableEntries = collect($timetableEntries);
+        $this->scheduleEntries = $scheduleEntries;
     }
 
     /**
      * Run the validation rule.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
+     * @param  string  $attribute // This will be 'scheduleEntries'
+     * @param  mixed   $value     // This will be the entire array of submitted schedule entries
      * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$this->timetableEntries->count()) {
-            return;
+        $scheduleEntries = collect($value);
+
+        if ($scheduleEntries->isEmpty()) {
+            return; // No entries to validate
         }
 
-        $currentIndex = $this->extractIndexFromAttribute($attribute);
-        if ($currentIndex === null) {
-            return;
-        }
+        foreach ($scheduleEntries as $currentIndex => $currentEntry) {
+            if (!isset(
+                $currentEntry['teacher_id'],
+                $currentEntry['day_of_week'],
+                $currentEntry['start_time'],
+                $currentEntry['end_time']
+            )) {
+                continue;
+            }
 
-        $currentEntry = $this->timetableEntries->get($currentIndex);
+            $teacherId = $currentEntry['teacher_id'];
+            $dayOfWeek = strtolower($currentEntry['day_of_week']);
+            $startTime = $currentEntry['start_time'];
+            $endTime = $currentEntry['end_time'];
 
-        if (!$currentEntry) {
-            return;
-        }
+            $levelId = $currentEntry['level_id'] ?? null;
+            $semesterId = $currentEntry['semester_id'] ?? null;
+            $specialtyId = $currentEntry['specialty_id'] ?? null;
 
-        $teacherId = $currentEntry['teacher_id'] ?? null;
-        $dayOfWeek = strtolower($currentEntry['day_of_week'] ?? '');
-        $startTime = $currentEntry['start_time'] ?? null;
-        $endTime = $currentEntry['end_time'] ?? null;
-        $levelId = $currentEntry['level_id'] ?? null;
-        $semesterId = $currentEntry['semester_id'] ?? null;
-        $specialtyId = $currentEntry['specialty_id'] ?? null;
+            $matchingAvailabilityCount = InstructorAvailability::query()
+                ->where('teacher_id', $teacherId)
+                ->where('day_of_week', $dayOfWeek)
+                ->where('start_time', '<=', $startTime)
+                ->where('end_time', '>=', $endTime)
+                ->where("school_semester_id", $semesterId)
+                ->where("specialty_id", $specialtyId)
+                ->where("level_id", $levelId)
+                ->count();
 
-        if (!$teacherId || !$dayOfWeek || !$startTime || !$endTime) {
-            return;
-        }
-
-        $overlappingAvailabilities = InstructorAvailability::query()
-            ->where('teacher_id', $teacherId)
-            ->where('day_of_week', $dayOfWeek)
-            ->where(function ($query) use ($startTime, $endTime) {
-                $query->where(function ($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '<', $endTime)
-                      ->where('end_time', '>', $startTime);
-                });
-            })
-            ->when($levelId, function ($query, $levelId) {
-                return $query->where('level_id', $levelId);
-            })
-            ->when($semesterId, function ($query, $semesterId) {
-                return $query->where('semester_id', $semesterId);
-            })
-            ->when($specialtyId, function ($query, $specialtyId) {
-                return $query->where('specialty_id', $specialtyId);
-            })
-            ->get();
-
-        if ($overlappingAvailabilities->isNotEmpty()) {
-            $availabilityDetails = $overlappingAvailabilities->map(function ($availability) {
-                $details = "On {$availability->day_of_week} from {$availability->start_time} to {$availability->end_time}";
-                if ($availability->level_id) {
-                    $details .= " for Level {$availability->level_id}";
+            if ($matchingAvailabilityCount === 0) {
+                $entryDescription = "the entry";
+                if (isset($currentEntry['course_id'])) {
+                    $entryDescription .= " for Course ID: {$currentEntry['course_id']}";
                 }
-                if ($availability->semester_id) {
-                    $details .= " in Semester {$availability->semester_id}";
+                if (isset($currentEntry['level_id'])) {
+                    $entryDescription .= ", Level: {$currentEntry['level_id']}";
                 }
-                if ($availability->specialty_id) {
-                    $details .= " for Specialty {$availability->specialty_id}";
+                if (isset($currentEntry['semester_id'])) {
+                    $entryDescription .= ", Semester: {$currentEntry['semester_id']}";
                 }
-                return $details;
-            })->implode('; ');
+                if (isset($currentEntry['specialty_id'])) {
+                    $entryDescription .= ", Specialty: {$currentEntry['specialty_id']}";
+                }
 
-            $entryDescription = "the entry for";
-            if (isset($currentEntry['course_id'])) {
-                $entryDescription .= " Course ID: {$currentEntry['course_id']}";
+                $this->errors[] = "Schedule Entry #{$currentIndex}: The teacher (ID: {$teacherId}) is NOT available on {$currentEntry['day_of_week']} from {$startTime} to {$endTime} for {$entryDescription}. Please ensure this time slot is fully contained within their defined availabilities.";
             }
-            if (isset($currentEntry['level_id'])) {
-                $entryDescription .= ", Level: {$currentEntry['level_id']}";
-            }
-            if (isset($currentEntry['semester_id'])) {
-                $entryDescription .= ", Semester: {$currentEntry['semester_id']}";
-            }
-            if (isset($currentEntry['specialty_id'])) {
-                $entryDescription .= ", Specialty: {$currentEntry['specialty_id']}";
-            }
+        }
 
-            $this->errors[] = "The scheduled time for {$entryDescription} on {$currentEntry['day_of_week']} from {$startTime} to {$endTime} conflicts with the teacher's existing availability: {$availabilityDetails}.";
+        if (!empty($this->errors)) {
+            $fail(implode(' | ', $this->errors));
         }
     }
 
@@ -114,19 +94,5 @@ class TeacherAvailableRule implements ValidationRule
     public function message(): array
     {
         return $this->errors;
-    }
-
-    /**
-     * Extracts the index from the attribute name (e.g., 'scheduleEntries.0.teacher_id' => 0).
-     *
-     * @param  string  $attribute
-     * @return int|null
-     */
-    protected function extractIndexFromAttribute(string $attribute): ?int
-    {
-        if (preg_match('/\.(\d+)\./', $attribute, $matches)) {
-            return (int) $matches[1];
-        }
-        return null;
     }
 }

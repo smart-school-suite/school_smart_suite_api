@@ -38,12 +38,12 @@ class NoTimeTableClashesRule implements ValidationRule
                             'day_of_week' => $entry1['day_of_week'],
                             'conflict_between' => [
                                 'appointment_1' => [
-                                    'starting_time' => $entry1['starting_time'],
-                                    'ending_time' => $entry1['ending_time'],
+                                    'start_time' => $entry1['start_time'],
+                                    'end_time' => $entry1['end_time'],
                                 ],
                                 'appointment_2' => [
-                                    'starting_time' => $entry2['starting_time'],
-                                    'ending_time' => $entry2['ending_time'],
+                                    'start_time' => $entry2['start_time'],
+                                    'end_time' => $entry2['end_time'],
                                 ]
                             ]
                         ];
@@ -59,10 +59,10 @@ class NoTimeTableClashesRule implements ValidationRule
                     'Conflict for teacher ID %d on %s: Appointment overlaps between Appointment 1 (%s - %s) and Appointment 2 (%s - %s)',
                     $conflict['teacher_id'],
                     $conflict['day_of_week'],
-                    $conflict['conflict_between']['appointment_1']['starting_time'],
-                    $conflict['conflict_between']['appointment_1']['ending_time'],
-                    $conflict['conflict_between']['appointment_2']['starting_time'],
-                    $conflict['conflict_between']['appointment_2']['ending_time']
+                    $conflict['conflict_between']['appointment_1']['start_time'],
+                    $conflict['conflict_between']['appointment_1']['end_time'],
+                    $conflict['conflict_between']['appointment_2']['start_time'],
+                    $conflict['conflict_between']['appointment_2']['end_time']
                 );
             }
 
@@ -72,6 +72,6 @@ class NoTimeTableClashesRule implements ValidationRule
 
     private function hasOverlap($appt1, $appt2)
     {
-        return $appt1['starting_time'] < $appt2['ending_time'] && $appt1['ending_time'] > $appt2['starting_time'];
+        return $appt1['start_time'] < $appt2['end_time'] && $appt1['end_time'] > $appt2['start_time'];
     }
 }

@@ -3,10 +3,9 @@
 namespace App\Http\Requests\SpecialtyTimetable;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Rules\Timetable\TimeSlotAvailableRule;
 use App\Rules\Timetable\NoTimeTableClashesRule;
 use App\Rules\Timetable\TeacherAvailableRule;
-
+use App\Rules\Timetable\UpdateTimeTableSlotAvailableRule;
 class UpdateTimetableByTeacherAvailability extends FormRequest
 {
     /**
@@ -24,9 +23,9 @@ class UpdateTimetableByTeacherAvailability extends FormRequest
             'scheduleEntries' => [
                 'required',
                 'array',
-                new TimeSlotAvailableRule($this->scheduleEntries),
                 new NoTimeTableClashesRule($this->scheduleEntries),
-                new TeacherAvailableRule($this->scheduleEntries)
+                new TeacherAvailableRule($this->scheduleEntries),
+                new UpdateTimeTableSlotAvailableRule($this->scheduleEntries)
             ],
             'scheduleEntries.*.entry_id' => 'required|string|exists:timetables,id',
             'scheduleEntries.*.teacher_id' => 'required|string|exists:teacher,id',

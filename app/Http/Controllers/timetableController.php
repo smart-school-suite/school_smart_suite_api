@@ -53,18 +53,16 @@ class TimeTableController extends Controller
      * Creates a timetable based on teacher availability.
      *
      * @param CreateTimeTableByTeacherAvailabilityRequest $request
-     * @param string $semesterId
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createTimetableByAvailability(CreateTimeTableByTeacherAvailabilityRequest $request, string $semesterId)
+    public function createTimetableByAvailability(CreateTimeTableByTeacherAvailabilityRequest $request)
     {
 
         $currentSchool = $request->attributes->get('currentSchool');
         try {
             $result = $this->createSpecailtyTimeTableService->createTimetableByAvailability(
                 $request->scheduleEntries,
-                 $currentSchool,
-                  $semesterId
+                 $currentSchool
                 );
             return ApiResponseService::success("Timetable Created Successfully", $result, null, Response::HTTP_CREATED);
         } catch (Exception $e) {
@@ -76,17 +74,15 @@ class TimeTableController extends Controller
      * Creates a new timetable.
      *
      * @param CreateTimetableRequest $request
-     * @param string $semesterId
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createTimetable(CreateTimetableRequest $request, string $semesterId)
+    public function createTimetable(CreateTimetableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
             $result = $this->createSpecailtyTimeTableService->createTimetable(
                 $request->scheduleEntries,
-                 $currentSchool,
-                  $semesterId
+                 $currentSchool
                 );
             return ApiResponseService::success("Timetable Created Successfully", $result, null, Response::HTTP_CREATED);
         } catch (Exception $e) {
@@ -97,24 +93,14 @@ class TimeTableController extends Controller
     /**
      * Deletes a timetable based on the provided parameters.
      *
-     * @param Request $request
+     * @param GenerateTimeTableRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteTimetable(Request $request)
+    public function deleteTimetable(GenerateTimeTableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $studentBatchId = $request->route('studentBatchId');
-        $specialtyId = $request->route('specialtyId');
-        $levelId = $request->route('levelId');
-        $semesterId = $request->route('semesterId');
-        $routeParams = [
-            'studentBatchId' => $studentBatchId,
-            'specialtyId' => $specialtyId,
-            'levelId' => $levelId,
-            'semesterId' => $semesterId
-        ];
         try {
-            $deleteTimetable = $this->specailtyTimeTableService->deleteTimetable($currentSchool, $routeParams);
+            $deleteTimetable = $this->specailtyTimeTableService->deleteTimetable($currentSchool, $request->validated());
             return ApiResponseService::success("Timetable Deleted Successfully", $deleteTimetable, null, Response::HTTP_OK);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, Response::HTTP_NOT_FOUND);
@@ -149,7 +135,7 @@ class TimeTableController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         try {
-            $updateTimetable = $this->updateTimeTableService->updateTimetableEntries($request->validated()->scheduleEntries, $currentSchool);
+            $updateTimetable = $this->updateTimeTableService->updateTimetableEntries($request->scheduleEntries, $currentSchool);
             return ApiResponseService::success("{$updateTimetable} entries updated Successfully", null, null, Response::HTTP_OK);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
@@ -167,7 +153,7 @@ class TimeTableController extends Controller
         try {
             $currentSchool = $request->attributes->get('currentSchool');
             $updateTimetable = $this->updateTimeTableService->updateTimetableEntriesByTeacherAvailability(
-                $request->validated()->scheduleEntries,
+                $request->scheduleEntries,
                 $currentSchool
             );
             return ApiResponseService::success("{$updateTimetable} entries updated Successfully", null, null, Response::HTTP_OK);

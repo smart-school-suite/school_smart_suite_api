@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Timetable;
 use Exception;
-use illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 
 class UpdateTimeTableService
 {

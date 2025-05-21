@@ -6,10 +6,11 @@ use App\Models\Timetable;
 use App\Models\Specialty;
 use App\Models\Schoolbranches;
 use App\Models\InstructorAvailability;
+use App\Models\SchoolSemester;
 use App\Models\TeacherSpecailtyPreference;
 use Carbon\Carbon;
 use illuminate\Support\Facades\Log;
-use illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -27,8 +28,19 @@ class SpecailtyTimeTableService
     public function deleteTimeTableEntry(Schoolbranches $currentSchool, string $entryId): Timetable
     {
         try {
-            $timeTableEntry = Timetable::where('school_id', $currentSchool->id)->findOrFail($entryId);
+            $timeTableEntry = Timetable::where('school_branch_id', $currentSchool->id)->findOrFail($entryId);
             $timeTableEntry->delete();
+            $timeTableEntries = Timetable::where('school_branch_id', $currentSchool->id)
+                ->where('specialty_id', $timeTableEntry->specialty_id)
+                ->where('level_id', $timeTableEntry->level_id)
+                ->where('student_batch_id', $timeTableEntry->student_batch_id)
+                ->where('semester_id', $timeTableEntry->semester_id)
+                ->count();
+            if ($timeTableEntries == 0) {
+                $schoolSemester = SchoolSemester::findOrFail($timeTableEntry->semester_id);
+                $schoolSemester->timetable_published = false;
+                $schoolSemester->save();
+            }
             return $timeTableEntry;
         } catch (ModelNotFoundException $e) {
             throw $e;
@@ -46,18 +58,18 @@ class SpecailtyTimeTableService
      * Deletes timetable entries based on the provided parameters.
      *
      * @param SchoolBranches $currentSchool The current school.
-     * @param array $routeParams The parameters to filter timetable entries.
+     * @param array $timtableData The parameters to filter timetable entries.
      * @return array An array of deleted timetable entries.
      * @throws Exception
      */
-    public function deleteTimetable(SchoolBranches $currentSchool, array $routeParams): array
+    public function deleteTimetable(SchoolBranches $currentSchool, array $timtableData): array
     {
         try {
             $timetableEntries = Timetable::where("school_branch_id", $currentSchool->id)
-                ->where("specialty_id", $routeParams['specialtyId'])
-                ->where("level_id", $routeParams['levelId'])
-                ->where("student_batch_id", $routeParams['studentBatchId'])
-                ->where("semester_id", $routeParams['semesterId'])
+                ->where("specialty_id", $timtableData['specialty_id'])
+                ->where("level_id", $timtableData['level_id'])
+                ->where("student_batch_id", $timtableData['student_batch_id'])
+                ->where("semester_id", $timtableData['semester_id'])
                 ->get();
 
             if ($timetableEntries->isEmpty()) {
@@ -72,10 +84,14 @@ class SpecailtyTimeTableService
                 }
             });
 
+            $schoolSemester =  SchoolSemester::findOrFail($timtableData['semester_id']);
+            $schoolSemester->timetable_published = false;
+            $schoolSemester->save();
+
             return $deletedEntries;
         } catch (Exception $e) {
             Log::error('Error deleting timetable entries: ' . $e->getMessage(), [
-                'routeParams' => $routeParams,
+                'routeParams' => $timtableData,
                 'currentSchoolId' => $currentSchool->id,
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -85,20 +101,20 @@ class SpecailtyTimeTableService
     /**
      * Generates the timetable data based on route parameters.
      *
-     * @param array $routeParams An array containing route parameters: 'specialty_id', 'level_id',
+     * @param array $timtableData An array containing route parameters: 'specialty_id', 'level_id',
      * 'semester_id', and 'student_batch_id'.
      * @param SchoolBranches $currentSchool The current school.
      * @return array
      * @throws Exception
      */
-    public function generateTimeTable(array $routeParams, SchoolBranches $currentSchool): array
+    public function generateTimeTable(array $timtableData, SchoolBranches $currentSchool): array
     {
         try {
             $timetables = Timetable::where('school_branch_id', $currentSchool->id)
-                ->where('specialty_id', $routeParams['specialty_id'])
-                ->where('level_id', $routeParams['level_id'])
-                ->where('semester_id', $routeParams['semester_id'])
-                ->where("student_batch_id", $routeParams['student_batch_id'])
+                ->where('specialty_id', $timtableData['specialty_id'])
+                ->where('level_id', $timtableData['level_id'])
+                ->where('semester_id', $timtableData['semester_id'])
+                ->where("student_batch_id", $timtableData['student_batch_id'])
                 ->with(['course:id,course_title', 'teacher:id,name'])
                 ->get();
 
@@ -121,6 +137,7 @@ class SpecailtyTimeTableService
 
                 if (array_key_exists($day, $timeTable)) {
                     $timeTable[$day][] = [
+                        "id" => $entry->id,
                         "course" => $entry->course->course_title,
                         "start_time" => Carbon::parse($entry->start_time)->format('g:i A'),
                         "end_time" => Carbon::parse($entry->end_time)->format('g:i A'),
@@ -132,7 +149,7 @@ class SpecailtyTimeTableService
             return $timeTable;
         } catch (Exception $e) {
             Log::error('Error generating timetable: ' . $e->getMessage(), [
-                'routeParams' => $routeParams,
+                'routeParams' => $timtableData,
                 'currentSchoolId' => $currentSchool->id,
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -152,13 +169,13 @@ class SpecailtyTimeTableService
     public function getInstructorAvailability(string $specialtyId, string $semesterId, SchoolBranches $currentSchool): array
     {
         try {
-            $specialty = Specialty::with(['level:id,level_name'])->findOrFail($specialtyId);
+            $specialty = Specialty::with(['level:id,name'])->findOrFail($specialtyId);
             $levelId = $specialty->level->id;
 
             $teacherIds = TeacherSpecailtyPreference::where("specialty_id", $specialtyId)->pluck("teacher_id");
             $instructorAvailabilityData = InstructorAvailability::whereIn("teacher_id", $teacherIds)
                 ->where("school_branch_id", $currentSchool->id)
-                ->where("semester_id", $semesterId)
+                ->where("school_semester_id", $semesterId)
                 ->with(['teacher:id,name'])
                 ->get();
 

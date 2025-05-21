@@ -10,12 +10,15 @@ use Illuminate\Support\Str;
 
 class CreateSpecailtyTimeTableService
 {
-    public function createTimetableByAvailability(array $scheduleEntries, $currentSchool, $semesterId)
+    public function createTimetableByAvailability(array $scheduleEntries, $currentSchool)
     {
         $entriesToInsert = [];
-
+        $schoolSemester = null;
         foreach ($scheduleEntries as $entry) {
             $uniqueId = Str::uuid();
+            if($schoolSemester == null){
+                $schoolSemester = SchoolSemester::findOrFail($entry['semester_id']);
+            }
             $entriesToInsert[] = [
                 'id' => $uniqueId,
                 'school_branch_id' => $currentSchool->id,
@@ -38,9 +41,9 @@ class CreateSpecailtyTimeTableService
         }
 
         try {
-            DB::transaction(function () use ($entriesToInsert, $semesterId) {
+            DB::transaction(function () use ($entriesToInsert, $schoolSemester) {
                 Timetable::insert($entriesToInsert);
-                SchoolSemester::where('id', $semesterId)->update(['timetable_published' => true]);
+                SchoolSemester::where('id', $schoolSemester->id)->update(['timetable_published' => true]);
             });
 
             $insertedTimetable = Timetable::where('school_branch_id', $currentSchool->id)
@@ -54,12 +57,15 @@ class CreateSpecailtyTimeTableService
             throw $e;
         }
     }
-    public function createTimetable(array $scheduleEntries, $currentSchool, $semesterId)
+    public function createTimetable(array $scheduleEntries, $currentSchool)
     {
         $entriesToInsert = [];
-
+        $schoolSemester = null;
         foreach ($scheduleEntries as $entry) {
             $uniqueId = Str::uuid();
+            if($schoolSemester == null){
+                $schoolSemester = SchoolSemester::findOrFail($entry['semester_id']);
+            }
             $entriesToInsert[] = [
                 'id' => $uniqueId,
                 'school_branch_id' => $currentSchool->id,
@@ -82,9 +88,9 @@ class CreateSpecailtyTimeTableService
         }
 
         try {
-            DB::transaction(function () use ($entriesToInsert, $semesterId) {
+            DB::transaction(function () use ($entriesToInsert, $schoolSemester) {
                 Timetable::insert($entriesToInsert);
-                SchoolSemester::where('id', $semesterId)->update(['timetable_published' => true]);
+                SchoolSemester::where('id', $schoolSemester->id)->update(['timetable_published' => true]);
             });
 
             $insertedTimetable = Timetable::where('school_branch_id', $currentSchool->id)

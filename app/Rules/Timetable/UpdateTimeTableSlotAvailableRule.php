@@ -4,14 +4,12 @@ namespace App\Rules\Timetable;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Support\Collection;
 use App\Models\Timetable;
 use App\Models\Courses;
 use App\Models\Educationlevels;
-
-class TimeSlotAvailableRule implements ValidationRule
+class UpdateTimeTableSlotAvailableRule implements ValidationRule
 {
-    // The constructor now receives the entire array of schedule entries
+     // The constructor now receives the entire array of schedule entries
     protected $scheduleEntries;
     protected array $errors = []; // To collect all custom error messages
 
@@ -20,15 +18,7 @@ class TimeSlotAvailableRule implements ValidationRule
         $this->scheduleEntries = $scheduleEntries;
     }
 
-    /**
-     * Run the validation rule.
-     *
-     * @param  string  $attribute // Will be 'scheduleEntries' from the FormRequest
-     * @param  mixed   $value     // Will be the entire array of submitted schedule entries
-     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
-     * @return void
-     */
-    public function validate(string $attribute, mixed $value, Closure $fail): void
+      public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $scheduleEntries = collect($value);
 
@@ -41,7 +31,8 @@ class TimeSlotAvailableRule implements ValidationRule
                 $currentEntry['teacher_id'],
                 $currentEntry['day_of_week'],
                 $currentEntry['start_time'],
-                $currentEntry['end_time']
+                $currentEntry['end_time'],
+                $currentEntry['entry_id']
             )) {
                 continue;
             }
@@ -50,10 +41,12 @@ class TimeSlotAvailableRule implements ValidationRule
             $dayOfWeek = strtolower($currentEntry['day_of_week']);
             $startTime = $currentEntry['start_time'];
             $endTime = $currentEntry['end_time'];
+            $slotId = $currentEntry['entry_id'];
 
             $clashingExistingEntries = Timetable::query()
                 ->where('teacher_id', $teacherId)
                 ->where('day_of_week', $dayOfWeek)
+                ->where('id', '!=', $slotId)
                 ->where(function ($query) use ($startTime, $endTime) {
                     $query->where('start_time', '<', $endTime)
                           ->where('end_time', '>', $startTime);
@@ -143,5 +136,4 @@ class TimeSlotAvailableRule implements ValidationRule
 
         return $description;
     }
-
 }
