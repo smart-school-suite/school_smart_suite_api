@@ -187,11 +187,9 @@ class StudentResitService
         try {
             DB::beginTransaction();
             foreach ($studentResitIds as $studentResitId) {
-                $studentResit = Studentresit::findOrFail($studentResitId);
+                $studentResit = Studentresit::findOrFail($studentResitId['resit_id']);
                 $studentResit->delete();
-                $result[] = [
-                    $studentResit
-                ];
+                $result[] = $studentResit;
             }
             DB::commit();
             return $result;
@@ -234,7 +232,7 @@ class StudentResitService
             DB::beginTransaction();
             foreach ($studentResitIds as $studentResitId) {
                 $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
-                    ->find($studentResitId);
+                    ->find($studentResitId['resit_id']);
 
                 if (!$studentResit) {
                     return ApiResponseService::error("Student Resit Not found", null, 404);
@@ -272,11 +270,9 @@ class StudentResitService
         try {
             DB::beginTransaction();
             foreach ($transactionIds as $transactionId) {
-                $transaction = ResitFeeTransactions::findOrFail($transactionId['id']);
+                $transaction = ResitFeeTransactions::findOrFail($transactionId['transaction_id']);
                 $transaction->delete();
-                $result[] = [
-                    $transaction
-                ];
+                $result[] = $transaction;
             }
             DB::commit();
             return $result;
@@ -292,7 +288,7 @@ class StudentResitService
             DB::beginTransaction();
             foreach ($transactionIds as $transactionId) {
                 $transaction = ResitFeeTransactions::where('school_branch_id', $currentSchool->id)
-                    ->find($transactionId);
+                    ->find($transactionId['transaction_id']);
 
                 if (!$transaction) {
                     return ApiResponseService::error("Transaction Not found", null, 404);

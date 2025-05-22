@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StudentResit\StudentResitIdRequest;
+use App\Http\Requests\StudentResit\StudentResitTransactionIdRequest;
 use Exception;
 use Illuminate\Http\Request;
 use App\Services\StudentResitService;
@@ -128,87 +130,39 @@ class StudentResitController extends Controller
         $prepareResitData = $this->studentResitService->prepareResitScoresData($currentSchool, $examId, $studentId);
         return ApiResponseService::success("Student Resit Info fetched Succesfully", $prepareResitData, null, 200);
     }
-    public function bulkDeleteStudentResit($studentResitIds)
+    public function bulkDeleteStudentResit(StudentResitIdRequest $request)
     {
-        $idsArray = explode(',', $studentResitIds);
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_resit,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkDeleteStudentResit = $this->studentResitService->bulkDeleteStudentResit($idsArray);
+            $bulkDeleteStudentResit = $this->studentResitService->bulkDeleteStudentResit($request->resitIds);
             return ApiResponseService::success("Student Resit Deleted Succesfully", $bulkDeleteStudentResit, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkPayStudentResit(Request $request, $studentResitIds)
+    public function bulkPayStudentResit(StudentResitIdRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $idsArray = explode(',', $studentResitIds);
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_resit,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkPayStudentResit = $this->studentResitService->bulkPayStudentResit($request->validated(), $idsArray, $currentSchool);
+            $bulkPayStudentResit = $this->studentResitService->bulkPayStudentResit($request->validated(), $request->resitIds, $currentSchool);
             return ApiResponseService::success("Student Resit Paid Succesfully", $bulkPayStudentResit, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkDeleteStudentResitTransactions($transactionIds)
+    public function bulkDeleteStudentResitTransactions(StudentResitTransactionIdRequest $request)
     {
-        $idsArray = explode(',', $transactionIds);
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:resit_fee_transactions,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkDeletResitTransactions = $this->studentResitService->bulkDeleteTransaction($idsArray);
+            $bulkDeletResitTransactions = $this->studentResitService->bulkDeleteTransaction($request->transactionIds);
             return ApiResponseService::success("Student Resit Transactions Deleted Succefully", $bulkDeletResitTransactions, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkReverseTransaction(Request $request, $transactionIds)
+    public function bulkReverseTransaction(StudentResitTransactionIdRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $idsArray = explode(',', $transactionIds);
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:resit_fee_transactions,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try {
-            $bulkReverseTransaction = $this->studentResitService->bulkReverseResitTransaction($idsArray, $currentSchool);
+            $bulkReverseTransaction = $this->studentResitService->bulkReverseResitTransaction($request->transactionIds, $currentSchool);
             return ApiResponseService::success("Transactions Reversed Succesfully", $bulkReverseTransaction, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);

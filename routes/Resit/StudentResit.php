@@ -63,15 +63,15 @@ Route::middleware(['permission:schoolAdmin.studentResits.pay'])->post('/student-
 ->name('student-resits.bulk-pay');
 
 // Bulk deletion of student resits
-Route::middleware(['permission:schoolAdmin.studentResits.delete'])->delete('/student-resits/bulk-delete/{studentResitIds}', [StudentResitController::class, 'bulkDeleteStudentResit'])
+Route::middleware(['permission:schoolAdmin.studentResits.delete'])->delete('/student-resits/bulk-delete', [StudentResitController::class, 'bulkDeleteStudentResit'])
 ->name('student-resits.bulk-delete');
 
 // Bulk deletion of resit transactions
-Route::middleware(['permission:schoolAdmin.studentResits.transactions.delete'])->delete('/resit-transactions/bulk-delete/{transactionIds}', [StudentResitController::class, 'bulkDeleteStudentResitTransactions'])
+Route::middleware(['permission:schoolAdmin.studentResits.transactions.delete'])->post('/resit-transactions/bulk-delete', [StudentResitController::class, 'bulkDeleteStudentResitTransactions'])
 ->name('resit-transactions.bulk-delete');
 
 // Bulk reversal of resit transactions
-Route::middleware(['permission:schoolAdmin.studentResits.transaction.reverse'])->post('/resit-transactions/bulk-reverse/{transactionIds}', [StudentResitController::class, 'bulkReverseTransaction'])
+Route::middleware(['permission:schoolAdmin.studentResits.transaction.reverse'])->post('/resit-transactions/bulk-reverse', [StudentResitController::class, 'bulkReverseTransaction'])
 ->name('resit-transactions.bulk-reverse');
 
 // Bulk update of student resits

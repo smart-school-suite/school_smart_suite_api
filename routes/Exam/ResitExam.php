@@ -32,5 +32,5 @@ Route::middleware(['permission:schoolAdmin.resitExam.update'])->put('/resit-exam
     ->name('resit-exams.bulk-update');
 
 // Bulk delete resit exams
-Route::middleware(['permission:schoolAdmin.resitExam.delete'])->delete('/resit-exams/bulk-delete/{resitExamIds}', [ResitExamController::class, 'bulkDeleteResitExam'])
+Route::middleware(['permission:schoolAdmin.resitExam.delete'])->post('/resit-exams/bulk-delete', [ResitExamController::class, 'bulkDeleteResitExam'])
     ->name('resit-exams.bulk-delete');

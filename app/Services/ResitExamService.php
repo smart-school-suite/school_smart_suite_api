@@ -92,11 +92,10 @@ class ResitExamService
         try{
             DB::beginTransaction();
             foreach($resitExamIds as $resitExamId){
-                $resitExam = ResitExam::findOrFail($resitExamId);
-                $result[] = [
-                    $resitExam
-                ];
+                $resitExam = ResitExam::findOrFail($resitExamId['resit_exam_id']);
+                $result[] = $resitExam;
             }
+            DB::commit();
             return $result;
         }
         catch(Exception $e){

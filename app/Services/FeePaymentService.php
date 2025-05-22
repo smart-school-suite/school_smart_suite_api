@@ -276,7 +276,7 @@ class FeePaymentService
             foreach($transactionIds as $transactionId){
                 $transaction = RegistrationFeeTransactions::where('school_branch_id', $currentSchool->id)
                 ->with(['registrationFee'])
-                ->find($transactionId);
+                ->find($transactionId['transaction_id']);
 
             if (!$transaction) {
                 throw new Exception("Transaction  record not found", 404);
@@ -314,7 +314,7 @@ class FeePaymentService
             foreach($transactionIds as $transactionId){
                 $transaction = TuitionFeeTransactions::where('school_branch_id', $currentSchool->id)
                 ->with(['tuition'])
-                ->find($transactionId['id']);
+                ->find($transactionId['transaction_id']);
 
             if (!$transaction) {
                 throw new Exception("Payment record not found", 404);
@@ -399,11 +399,9 @@ class FeePaymentService
          try{
             DB::beginTransaction();
            foreach($transactionIds as $transactionId){
-            $transactions = TuitionFeeTransactions::findOrFail($transactionId);
+            $transactions = TuitionFeeTransactions::findOrFail($transactionId['transaction_id']);
             $transactions->delete();
-            $result[] = [
-                 $transactions
-            ];
+            $result[] = $transactions;
            }
            DB::commit();
            return $result;
@@ -419,11 +417,9 @@ class FeePaymentService
          try{
             DB::beginTransaction();
             foreach($transactionIds as $transactionId){
-               $transaction = RegistrationFeeTransactions::findOrFail($transactionId);
+               $transaction = RegistrationFeeTransactions::findOrFail($transactionId['transaction_id']);
                $transaction->delete();
-               $result[] = [
-                 $transaction
-               ];
+               $result[] = $transaction;
             }
             DB::commit();
             return $result;
