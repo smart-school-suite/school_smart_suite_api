@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('profile_picture')->nullable();
             $table->boolean('deactivate')->default(false);
             $table->date('last_login_at')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->boolean('dropout_status')->default(false);
             $table->enum('payment_format', ["one time", "installmental"])->default('installmental');
             $table->rememberToken();

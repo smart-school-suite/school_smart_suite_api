@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Requests\School;
+namespace App\Http\Requests\RegistrationFee;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSchoolRequest extends FormRequest
+class RegistrationFeeTransactionIdRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-
 
     /**
      * Get the validation rules that apply to the request.
@@ -19,10 +18,8 @@ class UpdateSchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|nullable|string',
-            'motor' => 'sometimes|nullable|string',
-            'type' => 'sometimes|nullable|string',
-            'established_year' => 'sometimes|nullable|date',
+            'transactionIds' => 'required|array',
+            'transactionIds.*.transaction_id' => 'required|string|exists:registration_fee_transactions,id',
         ];
     }
 }

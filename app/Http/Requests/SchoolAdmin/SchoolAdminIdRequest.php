@@ -1,16 +1,14 @@
 <?php
 
-namespace App\Http\Requests\School;
+namespace App\Http\Requests\SchoolAdmin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSchoolRequest extends FormRequest
+class SchoolAdminIdRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -19,10 +17,8 @@ class UpdateSchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|nullable|string',
-            'motor' => 'sometimes|nullable|string',
-            'type' => 'sometimes|nullable|string',
-            'established_year' => 'sometimes|nullable|date',
+            'schoolAdminIds' => 'required|array',
+            'schoolAdminIds.*.school_admin_id' => 'required|string|exists:school_admin,id',
         ];
     }
 }

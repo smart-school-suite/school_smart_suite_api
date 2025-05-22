@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\ResitExam\ResitExamIdRequest;
 use App\Http\Requests\ResitExam\UpdateResitExamRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\ExamGrading\BulkAddResitExamGradingRequest;
@@ -53,22 +54,9 @@ class ResitExamController extends Controller
         return ApiResponseService::success("Resit Exam Details Fetched Successfully", $resitExamDetails, null, 200);
     }
 
-    public function bulkDeleteResitExam($examIds){
-        $idsArray = explode(',', $examIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:resit_exams,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteResitExam(ResitExamIdRequest $request){
         try{
-           $deleteExam = $this->resitExamService->bulkDeleteResitExam($idsArray);
+           $deleteExam = $this->resitExamService->bulkDeleteResitExam($request->resitExamIds);
            return ApiResponseService::success("Exam Deleted Succesfully", $deleteExam, null, 200);
         }
         catch(Exception $e){

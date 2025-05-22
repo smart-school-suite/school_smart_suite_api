@@ -13,7 +13,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ->name('school-branches.destroy');
 
     // Update a specific school branch
-    Route::middleware(['permission:schoolAdmin.schoolBranch.update'])->put('/school-branches/{branchId}', [SchoolBranchesController::class, 'updateSchoolBranch'])
+    Route::put('/school-branches/{branchId}', [SchoolBranchesController::class, 'updateSchoolBranch'])
         ->name('school-branches.update');
 
     Route::middleware(['permission:appAdmin.schoolBranch.view'])->get('/school-branches', [SchoolBranchesController::class, 'getAllSchoolBranches'])

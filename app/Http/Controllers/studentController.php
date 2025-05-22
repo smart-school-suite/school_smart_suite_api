@@ -9,6 +9,7 @@ use App\Services\StudentService;
 use App\Http\Requests\Student\UpdateStudentRequest;
 use App\Http\Requests\Student\BulkAddStudentDropoutRequest;
 use App\Http\Requests\Student\BulkUpdateStudentRequest;
+use App\Http\Requests\Student\StudentIdRequest;
 use App\Http\Resources\StudentDropOutResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
@@ -74,7 +75,7 @@ class StudentController extends Controller
     public function getStudentDropoutList(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $studentDropoutList = $this->studentService->getAllDropoutStudents($currentSchool);
-        return ApiResponseService::success("Student Dropout List Fetched Successfully", StudentDropOutResource::collection($studentDropoutList), null, 200);
+        return ApiResponseService::success("Student Dropout List Fetched Successfully", $studentDropoutList, null, 200);
     }
 
     public function reinstateDropedOutStudent(Request $request, string $studentDropoutId){
@@ -94,22 +95,9 @@ class StudentController extends Controller
          }
     }
 
-    public function bulkDeleteStudent($studentIds){
-        $idsArray = explode(',', $studentIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteStudent(StudentIdRequest $request){
         try{
-           $bulkDeleteStudent = $this->studentService->bulkDeleteStudent($idsArray);
+           $bulkDeleteStudent = $this->studentService->bulkDeleteStudent($request->studentIds);
           return ApiResponseService::success("Student Deleted Successfully", $bulkDeleteStudent, null, 200);
         }
         catch(Exception $e){
@@ -120,29 +108,17 @@ class StudentController extends Controller
     public function bulkUpdateStudent(BulkUpdateStudentRequest $request){
         try{
            $bulkUpdateStudent = $this->studentService->bulkUpdateStudent($request->students);
-           ApiResponseService::success("Students Updated Succesfully", $bulkUpdateStudent, null, 200);
+          return ApiResponseService::success("Students Updated Succesfully", $bulkUpdateStudent, null, 200);
         }
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkActivateStudent($studentIds){
-        $idsArray = explode(',', $studentIds);
+    public function bulkActivateStudent(StudentIdRequest $request){
 
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try{
-           $bulkActivateStudent = $this->studentService->bulkActivateStudent($idsArray);
+           $bulkActivateStudent = $this->studentService->bulkActivateStudent($request->studentIds);
            return ApiResponseService::success("Student Activated Succesfully", $bulkActivateStudent, null, 200);
         }
         catch(Exception $e){
@@ -150,22 +126,10 @@ class StudentController extends Controller
         }
     }
 
-    public function bulkDeactivateStudent($studentIds){
-        $idsArray = explode(',', $studentIds);
+    public function bulkDeactivateStudent(StudentIdRequest $request){
 
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
         try{
-          $bulkDeactivateStudent = $this->studentService->bulkDeactivateStudent($idsArray);
+          $bulkDeactivateStudent = $this->studentService->bulkDeactivateStudent($request->studentIds);
           return ApiResponseService::success("Student Deactivated Successfully", $bulkDeactivateStudent, null, 200);
         }
         catch(Exception $e){
@@ -173,22 +137,9 @@ class StudentController extends Controller
         }
     }
 
-    public function bulkReinstateStudentDropout($dropOutIds){
-        $idsArray = explode(',', $dropOutIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_dropout,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkReinstateStudentDropout(StudentIdRequest $request){
         try{
-          $bulkReinstateStudent = $this->studentService->bulkReinstateStudent($dropOutIds);
+          $bulkReinstateStudent = $this->studentService->bulkReinstateStudent($request->studentIds);
           return ApiResponseService::success("Student Reinstated Succesfully", $bulkReinstateStudent, null, 200);
         }
         catch(Exception $e){

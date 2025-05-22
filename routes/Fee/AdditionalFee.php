@@ -56,9 +56,9 @@ Route::middleware(['permission:schoolAdmin.additionalFee.transactions.reverse'])
     ->name('additional-fee-transactions.reverse');
 
 // Bulk reverse additional fee transactions
-Route::middleware(['permission:schoolAdmin.additionalFee.transactions.reverse'])->post('/additional-fee-transactions/bulk-reverse/{transactionIds}', [StudentAdditionalFeesController::class, 'bulkReverseTransaction'])
+Route::middleware(['permission:schoolAdmin.additionalFee.transactions.reverse'])->post('/additional-fee-transactions/bulk-reverse', [StudentAdditionalFeesController::class, 'bulkReverseTransaction'])
     ->name('additional-fee-transactions.bulk-reverse');
 
 // Bulk delete additional fee transactions
-Route::middleware(['permission:schoolAdmin.additionalFee.transactions.delete'])->delete('/additional-fee-transactions/bulk-delete/{transactionIds}', [StudentAdditionalFeesController::class, 'bulkDeleteTransaction'])
+Route::middleware(['permission:schoolAdmin.additionalFee.transactions.delete'])->delete('/additional-fee-transactions/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteTransaction'])
     ->name('additional-fee-transactions.bulk-delete');

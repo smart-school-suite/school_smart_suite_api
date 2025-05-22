@@ -44,11 +44,11 @@ use App\Http\Controllers\FeePaymentController;
         ->name('tuition-fee-transactions.destroy');
 
     // Bulk delete tuition fee transactions
-    Route::middleware(['permission:schoolAdmin.tuitionFee.delete.transaction'])->delete('/tuition-fee-transactions/bulk-delete/{transactionIds}', [FeePaymentController::class, 'bulkDeleteTuitionFeeTransactions'])
+    Route::middleware(['permission:schoolAdmin.tuitionFee.delete.transaction'])->post('/tuition-fee-transactions/bulk-delete', [FeePaymentController::class, 'bulkDeleteTuitionFeeTransactions'])
         ->name('tuition-fee-transactions.bulk-delete');
 
     // Bulk reverse tuition fee transactions
-    Route::middleware(['permission:schoolAdmin.tuitionFee.reverse.transaction'])->post('/tuition-fee-transactions/bulk-reverse/{transactionIds}', [FeePaymentController::class, 'bulkReverseTuitionFeeTransaction'])
+    Route::middleware(['permission:schoolAdmin.tuitionFee.reverse.transaction'])->post('/tuition-fee-transactions/bulk-reverse', [FeePaymentController::class, 'bulkReverseTuitionFeeTransaction'])
         ->name('tuition-fee-transactions.bulk-reverse');
 
     // Pay registration fee for a student
@@ -68,11 +68,11 @@ use App\Http\Controllers\FeePaymentController;
         ->name('registration-fee-transactions.reverse');
 
     // Bulk delete registration fee transactions
-    Route::middleware(['permission:schoolAdmin.registrationFee.delete.transaction'])->delete('/registration-fee-transactions/bulk-delete/{transactionIds}', [FeePaymentController::class, 'bulkDeleteRegistrationFeeTransactions'])
+    Route::middleware(['permission:schoolAdmin.registrationFee.delete.transaction'])->post('/registration-fee-transactions/bulk-delete', [FeePaymentController::class, 'bulkDeleteRegistrationFeeTransactions'])
         ->name('registration-fee-transactions.bulk-delete');
 
     // Bulk reverse registration fee transactions
-    Route::middleware(['permission:schoolAdmin.registrationFee.reverse.transaction'])->post('/registration-fee-transactions/bulk-reverse/{transactionIds}', [FeePaymentController::class, 'bulkReverseRegistrationFeeTransaction'])
+    Route::middleware(['permission:schoolAdmin.registrationFee.reverse.transaction'])->post('/registration-fee-transactions/bulk-reverse', [FeePaymentController::class, 'bulkReverseRegistrationFeeTransaction'])
         ->name('registration-fee-transactions.bulk-reverse');
 
     // Bulk pay registration fees for multiple students

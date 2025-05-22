@@ -153,7 +153,6 @@ class StudentAdditionalFeeService
                                 ->findOrFail($transationId);
         return $transactionDetials;
     }
-
     public function bulkBillStudents(array $studentList, $currentSchool){
         $result = [];
         try{
@@ -180,13 +179,12 @@ class StudentAdditionalFeeService
             throw $e;
         }
     }
-
     public function bulkDeleteStudentAdditionalFees($additionalFeeIds){
          $result = [];
          try{
             DB::beginTransaction();
             foreach($additionalFeeIds as $additionalFeeId){
-              $studentAdditionalFee = AdditionalFees::findOrFail($additionalFeeId);
+              $studentAdditionalFee = AdditionalFees::findOrFail($additionalFeeId['fee_id']);
               $studentAdditionalFee->delete();
               $result[] = [
                  $studentAdditionalFee
@@ -206,7 +204,7 @@ class StudentAdditionalFeeService
          try{
              DB::beginTransaction();
              foreach($transactionIds as $transactionId){
-                 $transaction = AdditionalFeeTransactions::findOrFail($transactionId);
+                 $transaction = AdditionalFeeTransactions::findOrFail($transactionId['transaction_id']);
                  $transaction->delete();
                  $result[] = [
                      $transaction
@@ -227,7 +225,7 @@ class StudentAdditionalFeeService
             DB::beginTransaction();
             foreach($transactionIds as $transactionId){
                 $transaction = AdditionalFeeTransactions::where('school_branch_id', $currentSchool->id)
-                ->find($transactionId);
+                ->find($transactionId['transaction_id']);
 
             if (!$transaction) {
                 return ApiResponseService::error("Transaction Not Found", null, 404);

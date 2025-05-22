@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Services\SchoolBranchesService;
 use App\Http\Requests\SchoolBranch\CreateSchoolBranchRequest;
 use App\Http\Requests\SchoolBranch\UpdateSchoolBranchRequest;
-use App\Http\Requests\SchoolBranch\BulkUpdateSchoolBranchRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 

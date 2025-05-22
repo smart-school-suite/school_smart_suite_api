@@ -25,6 +25,9 @@ class BulkUpdateParentRequest extends FormRequest
             'parents.*.parent_id' => 'required|string|exists:parents,id',
             'parents.*.name' => 'sometimes|nullable|string',
             'parents.*.phone_one' => 'sometimes|nullable|string',
+            'parents.*.phone_two' => 'sometimes|nullable|string',
+            'parents.*.email' => 'sometimes|nullable|string|email',
+            'parents.*.address' => 'sometimes|nullable|string',
             'parents.*.relationship_to_student' => 'sometimes|nullable|string'
         ];
     }
