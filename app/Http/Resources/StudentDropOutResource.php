@@ -20,7 +20,7 @@ class StudentDropOutResource extends JsonResource
             'reason' => $this->reason,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'student_name' => $this->student->name,
+            'student_name' => $this->name,
             'level' => $this->level->level,
             'level_name' => $this->level->name,
             'specialty_title' => $this->specialty->specialty_name,

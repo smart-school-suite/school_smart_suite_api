@@ -18,24 +18,20 @@ use App\Http\Controllers\StudentController;
     Route::middleware(['permission:schoolAdmin.student.view.student.dropout'])->get('/students/dropouts', [StudentController::class, 'getStudentDropoutList'])
         ->name('students.dropouts.index');
 
-    // Delete a specific student dropout record
-    Route::middleware(['permission:schoolAdmin.student.delete.student.dropout'])->delete('/students/dropouts/{studentDropoutId}', [StudentController::class, 'deleteStudentDropout'])
-        ->name('students.dropouts.destroy');
-
     // Reinstate a dropped-out student
     Route::middleware(['permission:schoolAdmin.student.reinstate.dropout.student'])->post('/students/dropouts/{studentDropoutId}/reinstate', [StudentController::class, 'reinstateDropedOutStudent'])
         ->name('students.dropouts.reinstate');
 
     // Bulk delete students
-    Route::middleware(['permission:schoolAdmin.student.delete.student.dropout'])->delete('/students/bulk-delete/{studentIds}', [StudentController::class, 'bulkDeleteStudent'])
+    Route::middleware(['permission:schoolAdmin.student.delete.student.dropout'])->post('/students/bulk-delete', [StudentController::class, 'bulkDeleteStudent'])
         ->name('students.bulk-delete');
 
     // Bulk activate students
-    Route::middleware(['permission:schoolAdmin.student.activate'])->post('/students/bulk-activate/{studentIds}', [StudentController::class, 'bulkActivateStudent'])
+    Route::middleware(['permission:schoolAdmin.student.activate'])->post('/students/bulk-activate', [StudentController::class, 'bulkActivateStudent'])
         ->name('students.bulk-activate');
 
     // Bulk deactivate students
-    Route::middleware(['permission:schoolAdmin.student.deactivate'])->post('/students/bulk-deactivate/{studentIds}', [StudentController::class, 'bulkDeActivateStudent'])
+    Route::middleware(['permission:schoolAdmin.student.deactivate'])->post('/students/bulk-deactivate', [StudentController::class, 'bulkDeActivateStudent'])
         ->name('students.bulk-deactivate');
 
     // Bulk mark students as dropouts
@@ -43,7 +39,7 @@ use App\Http\Controllers\StudentController;
         ->name('students.bulk-dropout');
 
     // Bulk update students
-    Route::middleware(['permission:schoolAdmin.student.update'])->put('/students/bulk-update', [StudentController::class, 'bulkUpdateStudent'])
+    Route::middleware(['permission:schoolAdmin.student.update'])->patch('/students/bulk-update', [StudentController::class, 'bulkUpdateStudent'])
         ->name('students.bulk-update');
 
     // Get all students

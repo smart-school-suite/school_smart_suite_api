@@ -26,7 +26,7 @@ class SchoolAdminService
     public function deleteSchoolAdmin($schoolAdminId, $currentSchool)
     {
         $SchoolAdminExists =  Schooladmin::where("school_branch_id", $currentSchool->id)->find($schoolAdminId);
-        if ($SchoolAdminExists) {
+        if (!$SchoolAdminExists) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $SchoolAdminExists->delete();
@@ -111,14 +111,14 @@ class SchoolAdminService
         $schoolAdmin = Schooladmin::findOrFail($schoolAdminId);
         $schoolAdmin->status = 'inactive';
         $schoolAdmin->save();
-        return ApiResponseService::success("Account successfully suspended", $schoolAdmin, null, 200);
+        return $schoolAdmin;
     }
 
     public function activateAccount(string $schoolAdminId){
         $schoolAdmin = Schooladmin::findOrFail($schoolAdminId);
-        $schoolAdmin->status = "inactive";
+        $schoolAdmin->status = "active";
         $schoolAdmin->save();
-        return ApiResponseService::success("Account successfully activated", $schoolAdmin, null, 200);
+        return $schoolAdmin;
     }
 
     public function bulkUpdateSchoolAdmin(array $schoolAdminList){
@@ -158,7 +158,7 @@ class SchoolAdminService
         try {
             DB::beginTransaction();
             foreach($deleteAdminList as $adminData){
-                $schoolAdmin = SchoolAdmin::find($adminData);
+                $schoolAdmin = SchoolAdmin::find($adminData['school_admin_id']);
                 $schoolAdmin->delete();
                 $deletedSchoolAdmin[] = [
                    "school_admin_name" => $schoolAdmin->name,
@@ -180,12 +180,13 @@ class SchoolAdminService
         try{
             DB::beginTransaction();
            foreach($schoolAdminList as $schoolAdminData){
-              $schoolAdmin = SchoolAdmin::find($schoolAdminData);
+              $schoolAdmin = SchoolAdmin::find($schoolAdminData['school_admin_id']);
               $schoolAdmin->status = "inactive";
               $schoolAdmin->save();
               $result[] = [
                  "school_admin_name" => $schoolAdmin->name,
-                 "school_admin_email" => $schoolAdmin->email
+                 "school_admin_email" => $schoolAdmin->email,
+                 "account_status" => $schoolAdmin->status
               ];
            }
            DB::commit();
@@ -202,12 +203,13 @@ class SchoolAdminService
          try{
             DB::beginTransaction();
             foreach($schoolAdminList as $schoolAdminData){
-                $schoolAdmin = SchoolAdmin::find($schoolAdminData);
+                $schoolAdmin = SchoolAdmin::find($schoolAdminData['school_admin_id']);
                 $schoolAdmin->status = "active";
                 $schoolAdmin->save();
                 $result[] = [
                    "school_admin_name" => $schoolAdmin->name,
-                   "school_admin_email" => $schoolAdmin->email
+                   "school_admin_email" => $schoolAdmin->email,
+                   "account_status" => $schoolAdmin->status
                 ];
             }
             DB::commit();

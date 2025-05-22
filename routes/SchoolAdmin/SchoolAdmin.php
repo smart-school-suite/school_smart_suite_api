@@ -37,17 +37,17 @@ Route::middleware(['permission:schoolAdmin.schoolAdmin.activate'])->post('/schoo
     ->name('school-admins.activate');
 
 // Bulk delete school admins
-Route::middleware(['permission:schoolAdmin.schoolAdmin.delete'])->delete('/school-admins/bulk-delete/{schoolAdminIds}', [SchoolAdminController::class, 'bulkDeleteSchoolAdmin'])
+Route::middleware(['permission:schoolAdmin.schoolAdmin.delete'])->post('/school-admins/bulk-delete', [SchoolAdminController::class, 'bulkDeleteSchoolAdmin'])
     ->name('school-admins.bulk-delete');
 
 // Bulk update school admins
-Route::middleware(['permission:schoolAdmin.schoolAdmin.update'])->put('/school-admins/bulk-update', [SchoolAdminController::class, 'bulkUpdateSchoolAdmin'])
+Route::middleware(['permission:schoolAdmin.schoolAdmin.update'])->patch('/school-admins/bulk-update', [SchoolAdminController::class, 'bulkUpdateSchoolAdmin'])
     ->name('school-admins.bulk-update');
 
 // Bulk deactivate school admins
-Route::middleware(['permission:schoolAdmin.schoolAdmin.deactivate'])->post('/school-admins/bulk-deactivate/{schoolAdminIds}', [SchoolAdminController::class, 'bulkDeactivateSchoolAdmin'])
+Route::middleware(['permission:schoolAdmin.schoolAdmin.deactivate'])->post('/school-admins/bulk-deactivate', [SchoolAdminController::class, 'bulkDeactivateSchoolAdmin'])
     ->name('school-admins.bulk-deactivate');
 
 // Bulk activate school admins
-Route::middleware(['permission:schoolAdmin.schoolAdmin.activate'])->post('/school-admins/bulk-activate/{schoolAdminIds}', [SchoolAdminController::class, 'bulkActivateSchoolAdmin'])
+Route::middleware(['permission:schoolAdmin.schoolAdmin.activate'])->post('/school-admins/bulk-activate', [SchoolAdminController::class, 'bulkActivateSchoolAdmin'])
     ->name('school-admins.bulk-activate');

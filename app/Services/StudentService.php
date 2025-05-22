@@ -56,14 +56,14 @@ class StudentService
     public function deactivateStudentAccount($studentId, $currentSchool)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
-        $student->account_status = 'inactive';
+        $student->status = 'inactive';
         $student->save();
         return $student;
     }
     public function activateStudentAccount($studentId, $currentSchool)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
-        $student->account_status = 'active';
+        $student->status = 'active';
         $student->save();
         return $student;
     }
@@ -79,7 +79,6 @@ class StudentService
     {
         $dropoutStudents = Student::where('school_branch_id', $currentSchool->id)
             ->with([
-                'student',
                 'level',
                 'specialty',
                 'studentBatch',
@@ -108,6 +107,7 @@ class StudentService
                 $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentDropout['student_id']);
                 $student->dropout_status = true;
                 $student->save();
+                $result[] = $student;
             }
             DB::commit();
             return $result;
@@ -122,11 +122,9 @@ class StudentService
         try {
             DB::beginTransaction();
             foreach ($studentIds as $studentId) {
-                $student = Student::findOrFail($studentId);
+                $student = Student::findOrFail($studentId['student_id']);
                 $student->delete();
-                $result[] = [
-                    $student
-                ];
+                $result[] = $student;
             }
             DB::commit();
             return $result;
@@ -144,9 +142,7 @@ class StudentService
                 $student = Student::find($data['student_id']);
                 $filteredData = array_filter($data);
                 $student->update($filteredData);
-                $result[] = [
-                    $student
-                ];
+                $result[] = $student;
             }
             DB::commit();
             return $result;
@@ -161,12 +157,10 @@ class StudentService
         try {
             DB::beginTransaction();
             foreach ($studentIds as $studentId) {
-                $student = Student::findOrFail($studentId);
+                $student = Student::findOrFail($studentId['student_id']);
                 $student->status =  'active';
                 $student->save();
-                $result[] = [
-                    $student
-                ];
+                $result[] = $student;
             }
             DB::commit();
             return $result;
@@ -181,12 +175,10 @@ class StudentService
         try {
             DB::beginTransaction();
             foreach ($studentIds as $studentId) {
-                $student = Student::findOrFail($studentId);
-                $student->status =  'active';
+                $student = Student::findOrFail($studentId['student_id']);
+                $student->status =  'inactive';
                 $student->save();
-                $result[] = [
-                    $student
-                ];
+                $result[] = $student;
             }
             DB::commit();
             return $result;
@@ -201,12 +193,10 @@ class StudentService
         try {
             DB::beginTransaction();
             foreach ($dropOutIds as $dropOutId) {
-                $studentDropout = Student::findOrFail($dropOutId);
+                $studentDropout = Student::findOrFail($dropOutId['student_id']);
                 $studentDropout->dropout_status = false;
                 $studentDropout->save();
-                $result[] = [
-                    $studentDropout
-                ];
+                $result[] = $studentDropout;
             }
             DB::commit();
             return $result;

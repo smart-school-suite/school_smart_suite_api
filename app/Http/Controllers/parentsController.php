@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Requests\Parent\ParentIdRequest;
 use App\Services\ApiResponseService;
 use App\Http\Resources\ParentResource;
 use App\Http\Requests\Parent\UpdateParentRequest;
@@ -27,6 +28,11 @@ class ParentsController extends Controller
         return ApiResponseService::success("Parents Data fetched Sucessfully",  ParentResource::collection($parentData), null, 200);
     }
 
+    public function createParent(CreateParentRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $createParent = $this->parentService->createParent($request->validated(), $currentSchool);
+        return ApiResponseService::success("Parent Created Successfully", $createParent, null, 201);
+    }
     public function deleteParent(Request $request, string $parentId){
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteParent = $this->parentService->deleteParent($parentId, $currentSchool);
@@ -41,7 +47,7 @@ class ParentsController extends Controller
 
     public function getParentDetails(Request $request){
          $currentSchool = $request->attributes->get("currentSchool");
-         $parentId = $request->route("parent_id");
+         $parentId = $request->route("parentId");
          $parentDetails = $this->parentService->getParentDetails( $parentId, $currentSchool);
          return ApiResponseService::success("Parent Details Fetched Sucessfully", $parentDetails, null,200);
     }
@@ -56,22 +62,9 @@ class ParentsController extends Controller
        }
     }
 
-    public function bulkDeleteParents($parentIds){
-        $idsArray = explode(',', $parentIds);
-
-        $idsArray = array_map('trim', $idsArray);
-        if (empty($idsArray)) {
-            return ApiResponseService::error("No IDs provided", null, 422);
-        }
-        $validator = Validator::make(['ids' => $idsArray], [
-            'ids' => 'required|array',
-            'ids.*' => 'string|exists:student_dropout,id',
-        ]);
-        if ($validator->fails()) {
-            return ApiResponseService::error($validator->errors(), null, 422);
-        }
+    public function bulkDeleteParents(ParentIdRequest $request){
       try{
-         $bulkDeleteParent = $this->parentService->bulkDeleteParent($idsArray);
+         $bulkDeleteParent = $this->parentService->bulkDeleteParent($request->parentIds);
          return ApiResponseService::success("Parents Deleted Successfully", $bulkDeleteParent, null, 200);
       }
       catch(Exception $e){

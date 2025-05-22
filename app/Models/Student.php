@@ -9,10 +9,11 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasPermissions;
 
 class Student extends Model
 {
-    use HasFactory,  HasApiTokens, Notifiable;
+    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions;
 
     /**
      * The attributes that are mass assignable.

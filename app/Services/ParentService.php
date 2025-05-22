@@ -18,7 +18,7 @@ class ParentService
             'address' => $parentData['address'],
             'email' => $parentData['email'],
             "phone_one" => $parentData['phone_one'],
-            "phone_two" => $parentData['phone_two'],
+            "phone_two" => $parentData['phone_two'] ?? null,
             "relationship_to_student" => $parentData['relationship_to_student'],
             "preferred_language" => $parentData['preferred_language']
         ]);
@@ -76,12 +76,10 @@ class ParentService
         try {
             DB::beginTransaction();
             foreach ($updateDataArray as $updateData) {
-                $parent = Parents::findOrFail($updateData['student_id']);
+                $parent = Parents::findOrFail($updateData['parent_id']);
                 $filterData = array_filter($updateData);
                 $parent->update($filterData);
-                $result[] = [
-                    $parent
-                ];
+                $result[] = $parent;
             }
             DB::commit();
             return $result;

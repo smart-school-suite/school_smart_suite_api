@@ -7,6 +7,8 @@ use App\Http\Controllers\ParentsController;
 Route::middleware(['permission:schoolAdmin.parent.view'])->get('/parents', [ParentsController::class, 'getAllParents'])
     ->name('parents.index');
 
+//create parent
+Route::post('/parents', [ParentsController::class, 'createParent'])->name('parents.create');
 // Get details of a specific parent
 Route::middleware(['permission:schoolAdmin.parent.show'])->get('/parents/{parentId}', [ParentsController::class, 'getParentDetails'])
     ->name('parents.show');
@@ -20,9 +22,9 @@ Route::middleware(['permission:schoolAdmin.parent.delete'])->delete('/parents/{p
     ->name('parents.destroy');
 
 // Bulk delete parents
-Route::middleware(['permission:schoolAdmin.parent.delete'])->delete('/parents/bulk-delete/{parentIds}', [ParentsController::class, 'bulkDeleteParents'])
+Route::middleware(['permission:schoolAdmin.parent.delete'])->post('/parents/bulk-delete', [ParentsController::class, 'bulkDeleteParents'])
     ->name('parents.bulk-delete');
 
 // Bulk update parents
-Route::middleware(['permission:schoolAdmin.parent.update'])->put('/parents/bulk-update', [ParentsController::class, 'BulkUpdateParents'])
+Route::middleware(['permission:schoolAdmin.parent.update'])->patch('/parents/bulk-update', [ParentsController::class, 'BulkUpdateParents'])
     ->name('parents.bulk-update');
