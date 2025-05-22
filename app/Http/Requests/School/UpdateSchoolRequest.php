@@ -19,15 +19,10 @@ class UpdateSchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-          'country_id' => 'sometimes|required|string',
-            'name' => 'sometimes|required|string',
-            'address' => 'sometimes|required|string',
-            'city' => 'sometimes|required|string',
-            'state' => 'sometimes|required|string',
-            'motor' => 'sometimes|required',
-            'type' => 'sometimes|required|string',
-            'established_year' => 'sometimes|nullable|string',
-            'director_name' => 'sometimes|required|string',
+            'name' => 'sometimes|nullable|string',
+            'motor' => 'sometimes|nullable|string',
+            'type' => 'sometimes|nullable|string',
+            'established_year' => 'sometimes|nullable|date',
         ];
     }
 }

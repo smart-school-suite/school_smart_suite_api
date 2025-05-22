@@ -72,7 +72,7 @@ class SchoolBranchesService
 
     public function getSchoolBranches()
     {
-        $schoolBranches = Schoolbranches::with('schools')->get();
+        $schoolBranches = Schoolbranches::with('school')->get();
         return $schoolBranches;
     }
 

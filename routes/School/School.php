@@ -12,7 +12,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ->name('schools.details');
 
     // Update the authenticated school
-    Route::middleware(['permission:schoolAdmin.school.update'])->put('/schools', [SchoolsController::class, 'updateSchool'])
+    Route::middleware(['permission:schoolAdmin.school.update'])->put('/schools/{schoolId}', [SchoolsController::class, 'updateSchool'])
         ->name('schools.update');
 
     // Delete a specific school

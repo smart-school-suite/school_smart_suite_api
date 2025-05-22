@@ -20,7 +20,6 @@ class UpdateSchoolBranchRequest extends FormRequest
     public function rules()
     {
         return [
-            'school_id' => 'sometimes|required|string',
             'branch_name' => 'sometimes|required|string',
             'address' => 'sometimes|required|string',
             'city' => 'sometimes|required|string',
