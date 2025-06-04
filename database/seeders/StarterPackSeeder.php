@@ -14,6 +14,11 @@ use App\Models\GradesCategory;
 use App\Models\Parents;
 use App\Models\SchoolGradesConfig;
 use App\Models\Permission;
+use App\Models\Educationlevels;
+use App\Models\Department;
+use App\Models\Studentbatch;
+use App\Models\Student;
+use App\Models\Specialty;
 use Exception;
 use App\Models\PermissionCategory;
 use Illuminate\Database\Seeder;
@@ -50,6 +55,10 @@ class StarterPackSeeder extends Seeder
         $this->subscribeSchool($schoolBranchId);
         $this->createSchoolAdmin($schoolBranchId);
         $this->createGradesConfig($schoolBranchId);
+        $this->createDepartments($schoolBranchId);
+        $this->createSpecialties();
+        $this->createStudentBatch($schoolBranchId);
+        $this->createStudents();
     }
 
     private function seedCountries(): void
@@ -1967,7 +1976,6 @@ class StarterPackSeeder extends Seeder
         Role::create(['uuid' => Str::uuid(), "name" => "appAdmin", "guard_name" => "appAdmin"]);
         Role::Create(['uuid' =>  Str::uuid(), "name" => "schoolSuperAdmin", "guard_name" => "schooladmin"]);
     }
-
     private function createGradeCategory()
     {
         // Define the categories
@@ -2204,6 +2212,163 @@ class StarterPackSeeder extends Seeder
 
         $this->command->info("Permission Category Seeded Successfully");
     }
+    private function createDepartments($schoolBranchId){
+        $departments = [
+    [
+        'department_name' => 'Computer Science',
+        'description' => 'The Department of Computer Science offers undergraduate and postgraduate programs focused on software development, algorithms, and data systems.',
+        'school_branch_id' => $schoolBranchId
+    ],
+    [
+        'department_name' => 'Mathematics',
+        'description' => 'The Department of Mathematics provides courses and research opportunities in pure and applied mathematics, including calculus, algebra, and statistics.',
+        'school_branch_id' => $schoolBranchId
+    ],
+    [
+        'department_name' => 'Physics',
+        'description' => 'The Department of Physics explores fundamental principles of matter and energy through theoretical and experimental research.',
+        'school_branch_id' => $schoolBranchId
+    ],
+    [
+        'department_name' => 'Chemistry',
+        'description' => 'The Department of Chemistry offers programs in organic, inorganic, and physical chemistry, emphasizing laboratory skills and research.',
+        'school_branch_id' => $schoolBranchId
+    ],
+    [
+        'department_name' => 'Biology',
+        'description' => 'The Department of Biology focuses on the study of living organisms, ecology, genetics, and molecular biology with research opportunities.',
+        'school_branch_id' => $schoolBranchId
+    ],
+    [
+        'department_name' => 'Engineering',
+        'description' => 'The Department of Engineering provides comprehensive programs in civil, mechanical, electrical, and software engineering, emphasizing practical skills and innovation.',
+        'school_branch_id' => $schoolBranchId
+    ],
+    [
+        'department_name' => 'Health Science',
+        'description' => 'The Department of Health Science offers courses and research in public health, nursing, biomedical sciences, and healthcare management.',
+        'school_branch_id' => $schoolBranchId
+    ]
+];
+        foreach ($departments as $department) {
+            Department::create($department);
+        }
+    }
+    private function createSpecialties()
+    {
+        $departments = Department::all();
+        $levels = Educationlevels::all();
+        $specialtyNames = [
+            'Computer Science' => [
+                'Software Engineering', 'Data Science', 'Cybersecurity', 'Artificial Intelligence', 'Networking'
+            ],
+            'Mathematics' => [
+                'Applied Mathematics', 'Pure Mathematics', 'Statistics', 'Financial Mathematics', 'Actuarial Science'
+            ],
+            'Physics' => [
+                'Astrophysics', 'Nuclear Physics', 'Quantum Mechanics', 'Solid State Physics', 'Theoretical Physics'
+            ],
+            'Chemistry' => [
+                'Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry', 'Analytical Chemistry', 'Biochemistry'
+            ],
+            'Biology' => [
+                'Genetics', 'Ecology', 'Microbiology', 'Molecular Biology', 'Environmental Science'
+            ],
+            'Engineering' => [
+                'Civil Engineering', 'Mechanical Engineering', 'Electrical Engineering', 'Chemical Engineering', 'Computer Engineering'
+            ],
+            'Health Science' => [
+                'Public Health', 'Nursing Science', 'Biomedical Science', 'Health Informatics', 'Nutrition and Dietetics'
+            ]
+        ];
 
+        foreach ($departments as $department) {
+            $this->command->info("Seeding specialties for Department: $department->name");
+            $departmentSpecialties = $specialtyNames[$department->name] ?? [
+                'General Specialty A', 'General Specialty B', 'General Specialty C', 'General Specialty D', 'General Specialty E'
+            ];
+
+            shuffle($departmentSpecialties);
+            $selectedSpecialties = array_slice($departmentSpecialties, 0, 5);
+
+            foreach ($selectedSpecialties as $specialtyName) {
+               foreach($levels as $level){
+                 $registrationFee = rand(5000, 15000) * 10;
+                $schoolFee = rand(100000, 500000) * 10;
+                Specialty::create([
+                    'department_id'    => $department->id,
+                    'specialty_name'   => $specialtyName,
+                    'registration_fee' => $registrationFee,
+                    'school_fee'       => $schoolFee,
+                    'level_id'         => $level->id,
+                    'status'           => 'active',
+                    'description'      => "A comprehensive program in {$specialtyName} within the {$department->name} department, designed to equip students with advanced skills.",
+                    'school_branch_id' => $department->school_branch_id,
+                ]);
+               }
+            }
+        }
+    }
+    private function createStudentBatch($schoolBranchId){
+       StudentBatch::create([
+           'name' => "batch of greate archievements",
+           "description" => "The Batch of Great Achievements stands as a testament to dedication, resilience, and excellence. Comprising individuals who have relentlessly pursued their goals, this group has set new standards of success through innovation, hard work, and unwavering commitment. Their collective accomplishments not only reflect personal excellence but also inspire future generations to strive for greatness. This batch symbolizes the pinnacle of perseverance and the transformative power of determination, leaving a lasting legacy of achievement and excellence",
+           "status" => "active",
+           "school_branch_id" => $schoolBranchId
+       ]);
+    }
+     private function createStudents()
+    {
+        $specialties = Specialty::all();
+        $levels = EducationLevels::all();
+        $guardians = Parents::all();
+        $studentBatches = StudentBatch::all();
+        $genders = ['Male', 'Female'];
+        $accountStatuses = ['active','inactive'];
+        $paymentFormats = ['one time','installmental'];
+
+        foreach ($specialties as $specialty) {
+            $this->command->info("Seeding students for Specialty: " . $specialty->specialty_name);
+            $specialtyLevel = $levels->where('id', $specialty->level_id)->first();
+            if (!$specialtyLevel) {
+                $this->command->error("Level not found for specialty ID: {$specialty->id}. Skipping students for this specialty.");
+                continue;
+            }
+
+            for ($i = 0; $i < 5; $i++) {
+                $firstName = Faker::create()->firstName();
+                $lastName = Faker::create()->lastName();
+                $fullName = $firstName . ' ' . $lastName;
+                $gender = $genders[array_rand($genders)];
+                $dob = Faker::create()->dateTimeBetween('-20 years', '-15 years')->format('Y-m-d');
+                $phoneOne = Faker::create()->unique()->phoneNumber();
+                $phoneTwo = ($i % 2 == 0) ? Faker::create()->unique()->phoneNumber() : null;
+                $email = Str::slug($firstName . '.' . $lastName . rand(1, 99)) . '@student.com';
+                $password = Hash::make('password');
+                $paymentFormat = $paymentFormats[array_rand($paymentFormats)];
+
+                Student::create([
+                    'id' => Str::uuid()->toString(),
+                    'name'             => $fullName,
+                    'first_name'       => $firstName,
+                    'last_name'        => $lastName,
+                    'DOB'              => $dob,
+                    'gender'           => $gender,
+                    'phone_one'        => $phoneOne,
+                    'phone_two'        => $phoneTwo,
+                    'level_id'         => $specialtyLevel->id,
+                    'school_branch_id' => $specialty->school_branch_id,
+                    'specialty_id'     => $specialty->id,
+                    'department_id'    => $specialty->department_id,
+                    'guardian_id'      => $guardians->random()->id,
+                    'student_batch_id' => $studentBatches->random()->id,
+                    'payment_format'   => $paymentFormat,
+                    'email'            => $email,
+                    'password'         => $password,
+                    'profile_picture'  => 'https://i.pravatar.cc/150?img=' . rand(1, 70), // Mock profile picture
+                ]);
+            }
+        }
+    }
 
 }

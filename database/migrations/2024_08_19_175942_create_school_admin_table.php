@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('school_admin', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
-            $table->string('email');
+            $table->string('email')->index();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('profile_picture')->nullable();

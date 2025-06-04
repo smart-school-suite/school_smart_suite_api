@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasPermissions;
 
@@ -35,7 +36,6 @@ class Student extends Model
         'department_id',
         'guardian_id',
         'student_batch_id',
-        'religion',
         'account_status',
         'payment_format',
         'email',
@@ -110,6 +110,10 @@ class Student extends Model
     public function otp()
     {
         return $this->morphMany(Otp::class, 'actorable');
+    }
+
+    public function audience(): MorphMany {
+        return $this->morphMany(Audiences::class, 'audienceable');
     }
 
     public function additionalFees(): HasMany

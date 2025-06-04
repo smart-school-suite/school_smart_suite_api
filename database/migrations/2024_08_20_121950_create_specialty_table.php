@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('specialty', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('specialty_name');
-            $table->decimal('registration_fee', 8, 2);
-            $table->decimal('school_fee', 8, 2);
+            $table->decimal('registration_fee', 12, 2);
+            $table->decimal('school_fee', 12, 2);
             $table->enum('status', ['active', 'inactive']);
             $table->text("description");
             $table->timestamps();

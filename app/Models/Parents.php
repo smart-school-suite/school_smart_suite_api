@@ -4,9 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Traits\HasRoles;
+use App\Models\Audiences;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -64,6 +65,9 @@ class Parents extends Model
         return $this->belongsTo(Parents::class);
     }
 
+   public function audience(): MorphMany {
+        return $this->morphMany(Audiences::class, 'audienceable');
+    }
     public function schoolbranches(): BelongsTo {
         return $this->belongsTo(Schoolbranches::class);
     }

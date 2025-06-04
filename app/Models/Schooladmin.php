@@ -8,6 +8,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
@@ -86,6 +87,9 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+    public function audience(): MorphMany {
+        return $this->morphMany(Audiences::class, 'audienceable');
+    }
     public function passwordResetTokens()
     {
         return $this->morphMany(PasswordResetToken::class, 'actorable');
