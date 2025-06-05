@@ -116,6 +116,10 @@ class Student extends Model
         return $this->morphMany(Audiences::class, 'audienceable');
     }
 
+    public function announcementTargetUser(): MorphMany {
+        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
+    }
+
     public function additionalFees(): HasMany
     {
         return $this->hasMany(AdditionalFees::class, 'student_id');

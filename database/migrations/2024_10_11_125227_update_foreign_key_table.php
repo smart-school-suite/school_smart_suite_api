@@ -680,6 +680,73 @@ return new class extends Migration
            $table->foreign('permission_category_id')->references('id')->on('permission_category');
         });
 
+        Schema::table('audiences', function (Blueprint $table) {
+            $table->string('school_set_audience_group_id');
+            $table->foreign('school_set_audience_group_id')->references('id')->on('school_set_audience_groups');
+        });
+
+        Schema::table('school_set_audience_groups', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('announcement_categories', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('tags', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('announcements', function(Blueprint $table) {
+            $table->string('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('announcement_categories')->onDelete('set null');
+            $table->string('label_id');
+            $table->foreign('label_id')->references('id')->on('labels')->onDelete('cascade');
+            $table->string('tag_id');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('annoucement_author', function(Blueprint $table) {
+            $table->string('announcement_id');
+            $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
+        });
+
+        Schema::table('school_announcement_settings', function(Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('announcement_setting_id');
+            $table->foreign('announcement_setting_id')->references('id')->on('announcement_settings')->onDelete('cascade');
+        });
+
+        Schema::table('target_groups', function(Blueprint $table) {
+            $table->string('school_set_audience_group_id');
+            $table->foreign('school_set_audience_group_id')->references('id')->on('school_set_audience_groups')->onDelete('cascade');
+            $table->string('announcement_id');
+            $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+        Schema::table('target_preset_groups', function(Blueprint $table) {
+            $table->string('preset_group_id');
+            $table->foreign('preset_group_id')->references('id')->on('preset_audiences')->onDelete('cascade');
+            $table->string('announcement_id');
+            $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+        Schema::table('target_users', function(Blueprint $table) {
+            $table->string('actorable_type');
+            $table->string('actorable_id');
+            $table->string('announcement_id');
+            $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
     }
 
     /**

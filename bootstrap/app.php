@@ -184,6 +184,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1')
                 ->group(base_path('routes/Audience/PresetAudience.php'));
+
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/announcement-label')
+                ->group(base_path('routes/Annnouncement/AnnouncementLabel.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

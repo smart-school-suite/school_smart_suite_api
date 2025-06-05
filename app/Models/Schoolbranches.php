@@ -38,6 +38,22 @@ class Schoolbranches extends Model
     {
         return $this->hasMany(StudentBatchGradeDates::class);
     }
+
+    public function announcementTargetGroup(): HasMany {
+        return $this->hasMany(AnnouncementTargetGroup::class, 'school_branch_id');
+    }
+
+    public function announcementTag(): HasMany {
+        return $this->hasMany(AnnouncementTag::class, 'school_branch_id');
+    }
+
+    public function announcementCategory(): HasMany {
+        return $this->hasMany(AnnouncementCategory::class, 'school_branch_id');
+    }
+
+    public function announcement(): HasMany {
+        return $this->hasMany(Announcement::class, 'school_branch_id');
+    }
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);

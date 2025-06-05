@@ -24,16 +24,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('description')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->timestamps();
         });
         Schema::create('audiences', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('audienceable_id');
             $table->string('audienceable_type');
-            $table->string('school_set_audience_group_id');
-            $table->foreign('school_set_audience_group_id')->references('id')->on('school_set_audience_groups');
             $table->timestamps();
         });
     }

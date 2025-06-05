@@ -67,7 +67,13 @@ class Teacher extends Model
         return $this->morphMany(Otp::class, 'actorable');
     }
 
-    public function devices() {
+    public function announcementTargetUser(): MorphMany
+    {
+        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
+    }
+
+    public function devices()
+    {
         return $this->morphMany(UserDevices::class, 'devicesable');
     }
     public function passwordResetTokens()
@@ -75,7 +81,8 @@ class Teacher extends Model
         return $this->morphMany(PasswordResetToken::class, 'actorable');
     }
 
-     public function audience(): MorphMany {
+    public function audience(): MorphMany
+    {
         return $this->morphMany(Audiences::class, 'audienceable');
     }
 

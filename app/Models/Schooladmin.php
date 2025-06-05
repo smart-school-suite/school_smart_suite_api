@@ -87,6 +87,10 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+      public function announcementTargetUser(): MorphMany {
+        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
+    }
+
     public function audience(): MorphMany {
         return $this->morphMany(Audiences::class, 'audienceable');
     }
@@ -101,6 +105,10 @@ class Schooladmin extends Authenticatable
     public function otp() {
         return $this->morphMany(Otp::class, 'actorable');
     }
+
+    public function announcementAuthor(): MorphMany {
+        return $this->morphMany(AnnouncementAuthor::class, 'authorable');
+    }
     protected static function boot()
     {
         parent::boot();
@@ -111,4 +119,6 @@ class Schooladmin extends Authenticatable
          });
 
     }
+
+
 }

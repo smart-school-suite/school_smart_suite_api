@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class PresetAudiences extends Model
 {
     use HasFactory, GeneratesUuid;
@@ -20,4 +22,8 @@ class PresetAudiences extends Model
 
     public $incrementing = false;
     public $keyType = 'string';
+
+    public function announcementTargetPresetGroup(): HasMany {
+        return $this->hasMany(AnnouncementTargetPresetGroup::class, 'preset_group_id');
+    }
 }

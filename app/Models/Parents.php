@@ -31,7 +31,7 @@ class Parents extends Model
         'preferred_language',
         'school_branch_id',
         'relationship_to_student',
-     ];
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -61,30 +61,34 @@ class Parents extends Model
     }
 
 
-    public function school(): BelongsTo {
+    public function school(): BelongsTo
+    {
         return $this->belongsTo(Parents::class);
     }
 
-   public function audience(): MorphMany {
+    public function audience(): MorphMany
+    {
         return $this->morphMany(Audiences::class, 'audienceable');
     }
-    public function schoolbranches(): BelongsTo {
+    public function schoolbranches(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class);
     }
 
-    public function student(): HasMany {
+    public function student(): HasMany
+    {
         return $this->hasMany(Student::class, 'guardian_id');
     }
-    public function otps()
+    public function announcementTargetUser(): MorphMany
     {
-        return $this->morphMany(Otp::class, 'otpable');
+        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
     }
-   protected static function boot()
-   {
-    parent::boot();
+    protected static function boot()
+    {
+        parent::boot();
 
-    static::creating(function ($user) {
-        $user->id = (string) Str::uuid();
-    });
-  }
+        static::creating(function ($user) {
+            $user->id = (string) Str::uuid();
+        });
+    }
 }
