@@ -187,8 +187,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/announcement-label')
                 ->group(base_path('routes/Annnouncement/AnnouncementLabel.php'));
-                 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement-tag')
+
+             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement-tag')
                 ->group(base_path('routes/Annnouncement/AnnouncementTag.php'));
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement-category')
+                ->group(base_path('routes/Annnouncement/AnnouncementCategory.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
