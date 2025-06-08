@@ -63,7 +63,7 @@
             <p>This code is valid for the next 5 minutes and should not be shared with anyone.</p>
         </div>
         <div class="footer">
-            &copy; {{ date('Y') }} Your schoolsmartsuite. All rights reserved.
+            &copy; {{ date('Y') }}  schoolsmartsuite. All rights reserved.
         </div>
     </div>
 </body>

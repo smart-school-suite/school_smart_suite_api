@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Traits\GeneratesUuid;
 class AnnouncementAuthor extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'id',
@@ -17,7 +17,7 @@ class AnnouncementAuthor extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'announcement_author';
+    public $table = 'annoucement_author';
     public $incrementing = false;
 
     public function announcement()

@@ -4,21 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Announcement extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory;
 
     protected $fillable = [
+        'id',
         'title',
         'content',
         'status',
         'published_at',
         'expires_at',
         'category_id',
+        'notification_sent_at',
         'label_id',
         'tag_id',
         'school_branch_id'

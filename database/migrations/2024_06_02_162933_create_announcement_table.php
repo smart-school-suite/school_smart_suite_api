@@ -39,6 +39,7 @@ return new class extends Migration
             $table->text('content');
             $table->enum('status', ['draft', 'scheduled', 'active', 'expired'])->default('draft');
             $table->timestamp('published_at')->nullable();
+            $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });

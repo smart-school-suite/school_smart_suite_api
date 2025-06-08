@@ -198,6 +198,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/Annnouncement/AnnouncementSetting.php'));
              Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-announcement-setting')
                 ->group(base_path('routes/Annnouncement/SchoolAnnouncementSetting.php'));
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement')
+             ->group(base_path('routes/Annnouncement/Announcement.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
