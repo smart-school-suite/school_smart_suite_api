@@ -37,5 +37,9 @@ class SchoolSetAudienceGroups extends Model
         return $this->hasMany(AnnouncementTargetGroup::class, 'school_set_audience_group_id');
     }
 
+    public function schoolEvent(): HasMany {
+        return $this->hasMany(SchoolEvent::class, 'school_set_audience_group_id');
+    }
+
 
 }

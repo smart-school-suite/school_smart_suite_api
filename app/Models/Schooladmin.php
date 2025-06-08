@@ -106,8 +106,15 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(Otp::class, 'actorable');
     }
 
+    public function eventInvitedMember(): MorphMany {
+        return $this->morphMany(EventInvitedMember::class, 'actorable');
+    }
     public function announcementAuthor(): MorphMany {
         return $this->morphMany(AnnouncementAuthor::class, 'authorable');
+    }
+
+    public function eventAuthor(): MorphMany {
+        return $this->morphMany(EventAuthor::class, 'actorable');
     }
     protected static function boot()
     {

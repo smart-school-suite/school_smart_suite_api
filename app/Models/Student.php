@@ -139,6 +139,9 @@ class Student extends Model
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+    public function eventInvitedMember(): MorphMany {
+        return $this->morphMany(EventInvitedMember::class, 'actorable');
+    }
     public function electionVotes(): HasMany
     {
         return $this->hasMany(ElectionVotes::class);

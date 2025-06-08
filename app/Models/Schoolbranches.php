@@ -81,9 +81,8 @@ class Schoolbranches extends Model
         return $this->hasMany(Department::class);
     }
 
-    public function events(): HasMany
-    {
-        return $this->hasMany(Events::class);
+    public function schoolEventSetting(): HasMany {
+        return $this->hasMany(SchoolEventSetting::class, 'school_branch_id');
     }
 
     public function exams(): HasMany

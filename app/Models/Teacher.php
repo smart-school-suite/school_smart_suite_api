@@ -81,6 +81,9 @@ class Teacher extends Model
         return $this->morphMany(PasswordResetToken::class, 'actorable');
     }
 
+    public function eventInvitedMember(): MorphMany {
+        return $this->morphMany(EventInvitedMember::class, 'actorable');
+    }
     public function audience(): MorphMany
     {
         return $this->morphMany(Audiences::class, 'audienceable');
