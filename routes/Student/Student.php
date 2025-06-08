@@ -57,3 +57,9 @@ use App\Http\Controllers\StudentController;
     // Delete a specific student
     Route::middleware(['permission:schoolAdmin.student.delete.student'])->delete('/students/{studentId}', [StudentController::class, 'deleteStudent'])
         ->name('students.destroy');
+
+    Route::post('/student/avatar/upload', [StudentController::class, 'uploadProfilePicture'])
+    ->name('student.avatar.upload');
+
+    Route::delete('/student/avatar/delete', [StudentController::class, 'deleteProfilePicture'])
+    ->name('student.avatar.delete');

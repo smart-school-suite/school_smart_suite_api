@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\UpdateProfilePictureRequest;
 use App\Http\Resources\StudentResource;
 use Exception;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use App\Http\Requests\Student\StudentIdRequest;
 use App\Http\Resources\StudentDropOutResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
+use Throwable;
 
 class StudentController extends Controller
 {
@@ -145,5 +147,27 @@ class StudentController extends Controller
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
+    }
+
+    public function uploadProfilePicture(UpdateProfilePictureRequest $request){
+         try{
+              $authStudent = auth()->guard('student')->user();
+              $updateProfilePicture = $this->studentService->uploadProfilePicture($request, $authStudent);
+              return ApiResponseService::success("Profile Picture Uploaded Successfully", $updateProfilePicture, null, 200);
+         }
+         catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 500);
+         }
+    }
+
+    public function deleteProfilePicture(Request $request){
+         try{
+           $authStudent = auth()->guard('student')->user();
+           $deleteProfilePicture = $this->studentService->deleteProfilePicture($authStudent);
+           return ApiResponseService::success("Profile Picture Deleted Successfully", $deleteProfilePicture, null, 200);
+         }
+         catch(Throwable $e){
+            return ApiResponseService::error($e->getMessage(), null, 500);
+         }
     }
 }

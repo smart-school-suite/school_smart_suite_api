@@ -7,11 +7,13 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "http-interop/http-factory-guzzle": "^1.2",
         "kreait/firebase-php": "^5.26",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
-        "laravel/scout": "^10.13",
+        "laravel/scout": "^10.15",
         "laravel/tinker": "^2.9",
+        "meilisearch/meilisearch-php": "^1.14",
         "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-ignition": "^2.8",
         "spatie/laravel-permission": "^6.10"

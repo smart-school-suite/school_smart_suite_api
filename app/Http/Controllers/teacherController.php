@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\UpdateProfilePictureRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\Teacher\UpdateTeacherRequest;
 use App\Services\TeacherService;
@@ -10,6 +11,7 @@ use App\Http\Requests\Teacher\AddSpecialtyPreferenceRequest;
 use App\Http\Requests\Teacher\TeacherIdRequest;
 use Exception;
 use Illuminate\Http\Request;
+use Throwable;
 
 class TeacherController extends Controller
 {
@@ -89,6 +91,28 @@ class TeacherController extends Controller
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
+    }
+
+    public function uploadProfilePicture(UpdateProfilePictureRequest $request){
+         try{
+            $authTeacher = auth()->guard('teacher')->user();
+            $updateProfilePicture = $this->teacherService->uploadProfilePicture($request, $authTeacher);
+            return ApiResponseService::success("Profile Picture Uploaded Successfully", $updateProfilePicture, null, 200);
+         }
+         catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 500);
+         }
+    }
+
+    public function deleteProfilePicture(Request $request){
+          try{
+              $authTeacher = auth()->guard('teacher')->user();
+              $deleteProfilePicture = $this->teacherService->deleteProfilePicture($authTeacher);
+              return ApiResponseService::success("Profile Picture Deleted Successfully", $deleteProfilePicture, null, 200);
+          }
+          catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 500);
+          }
     }
 
 }

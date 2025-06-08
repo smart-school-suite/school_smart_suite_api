@@ -7,7 +7,9 @@ use App\Models\TeacherSpecailtyPreference;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\Timetable;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Throwable;
 
 class TeacherService
 {
@@ -30,7 +32,6 @@ class TeacherService
         $teacher->update($filterData);
         return $teacher;
     }
-
     public function getTeacherSchedule($teacherId, $currentSchool)
     {
         $teacher_timetable_data = Timetable::where('school_branch_id', $currentSchool->id)
@@ -71,14 +72,12 @@ class TeacherService
 
         return $time_table;
     }
-
     public function getAllTeachers($currentSchool)
     {
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
             ->get();
         return $getInstructors;
     }
-
     public function addSpecailtyPreference(array $specailtyData, $currentSchool)
     {
         $result = [];
@@ -92,7 +91,6 @@ class TeacherService
         }
         return $result;
     }
-
     public function deactivateTeacher($teacherId)
     {
         $teacher = Teacher::findOrFail($teacherId);
@@ -100,7 +98,6 @@ class TeacherService
         $teacher->save();
         return $teacher;
     }
-
     public function activateTeacher($teacherId)
     {
         $teacher = Teacher::findOrFail($teacherId);
@@ -108,7 +105,6 @@ class TeacherService
         $teacher->save();
         return $teacher;
     }
-
     public function bulkDeactivateTeacher($teacherIds)
     {
         $result = [];
@@ -129,7 +125,6 @@ class TeacherService
             throw $e;
         }
     }
-
     public function bulkActivateTeacher($teacherIds)
     {
         $result = [];
@@ -150,7 +145,6 @@ class TeacherService
             throw $e;
         }
     }
-
     public function bulkDeleteTeacher($teacherIds)
     {
         $result = [];
@@ -170,7 +164,6 @@ class TeacherService
             throw $e;
         }
     }
-
     public function bulkUpdateTeacher($updateDataList)
     {
         $result = [];
@@ -195,6 +188,46 @@ class TeacherService
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function uploadProfilePicture($request, $authTeacher)
+    {
+
+        try {
+             $teacher = Teacher::findOrFail($authTeacher->id);
+            DB::transaction(function () use ($request, $teacher) {
+
+                if ($teacher->profile_picture) {
+                    Storage::disk('public')->delete('TeacherAvatars/' . $teacher->profile_picture);
+                }
+                $profilePicture = $request->file('profile_picture');
+                $fileName = time() . '.' . $profilePicture->getClientOriginalExtension();
+                $profilePicture->storeAs('public/TeacherAvatars', $fileName);
+
+                $teacher->profile_picture = $fileName;
+                $teacher->save();
+            });
+            return true;
+        } catch (Throwable $e) {
+            throw $e;
+        }
+    }
+    public function deleteProfilePicture($authTeacher)
+    {
+        try {
+            $teacher = Teacher::findOrFail($authTeacher->id);
+            if (!$teacher->profile_picture) {
+                return ApiResponseService::error("No Profile Picture to Delete {$teacher->name}", null, 400);
+            }
+            Storage::disk('public')->delete('TeacherAvatars/' . $teacher->profile_picture);
+
+            $teacher->profile_picture = null;
+            $teacher->save();
+
+            return $teacher;
+        } catch (Throwable $e) {
             throw $e;
         }
     }

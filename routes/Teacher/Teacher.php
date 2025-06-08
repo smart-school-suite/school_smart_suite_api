@@ -51,3 +51,8 @@ Route::middleware(['permission:schoolAdmin.teacher.deactivate'])->post('/teacher
 Route::middleware(['permission:schoolAdmin.teacher.delete'])->delete('/teachers/bulk-delete', [TeacherController::class, 'bulkDeleteTeacher'])
     ->name('teachers.bulk-delete');
 
+Route::post('/teacher/avatar/upload', [TeacherController::class, 'uploadProfilePicture'])
+->name('teacher.avatar.upload');
+
+Route::delete('/teacher/avatar/delete', [TeacherController::class, 'deleteProfilePicture'])
+->name('teacher.avatar.delete');

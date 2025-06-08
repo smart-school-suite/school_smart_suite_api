@@ -3,9 +3,10 @@
 namespace App\Services;
 
 use App\Models\Student;
-use App\Models\StudentDropout;
+use Illuminate\Support\Facades\Storage;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class StudentService
 {
@@ -13,11 +14,11 @@ class StudentService
     public function getStudents($currentSchool)
     {
         $students = Student::where('school_branch_id', $currentSchool->id)->with([
-                'guardian',
-                'specialty',
-                'level',
-                'studentBatch'
-            ])
+            'guardian',
+            'specialty',
+            'level',
+            'studentBatch'
+        ])
             ->get();
         return $students;
     }
@@ -202,6 +203,50 @@ class StudentService
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
+            throw $e;
+        }
+    }
+    public function uploadProfilePicture($request, $authStudent)
+    {
+        $student = Student::find($authStudent->id);
+        if (!$student) {
+            return ApiResponseService::error("Student Not Found", null, 400);
+        }
+        try {
+            DB::transaction(function () use ($request, $student) {
+
+                if ($student->profile_picture) {
+                    Storage::disk('public')->delete('StudentAvatars/' . $student->profile_picture);
+                }
+                $profilePicture = $request->file('profile_picture');
+                $fileName = time() . '.' . $profilePicture->getClientOriginalExtension();
+                $profilePicture->storeAs('public/StudentAvatars', $fileName);
+
+                $student->profile_picture = $fileName;
+                $student->save();
+            });
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+    public function deleteProfilePicture($authStudent)
+    {
+        try {
+            $student = Student::find($authStudent->id);
+            if (!$student) {
+                return ApiResponseService::error("Student Not found", null, 400);
+            }
+            if (!$student->profile_picture) {
+                return ApiResponseService::error("No Profile Picture to Delete {$student->name}", null, 400);
+            }
+            Storage::disk('public')->delete('SchoolAdminAvatars/' . $student->profile_picture);
+
+            $student->profile_picture = null;
+            $student->save();
+
+            return $student;
+        } catch (Throwable $e) {
             throw $e;
         }
     }
