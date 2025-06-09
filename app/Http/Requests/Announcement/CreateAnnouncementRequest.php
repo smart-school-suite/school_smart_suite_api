@@ -17,21 +17,6 @@ class CreateAnnouncementRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Define all target fields to be used in 'required_without_all'
-        // (Note: required_without_all is removed from individual rules,
-        // but this list is still useful for the custom validation below)
-        $allTargetFields = [
-            'parent_ids',
-            'school_admin_ids',
-            'student_ids',
-            'teacher_ids',
-            'preset_group_ids',
-            'school_set_group_ids',
-        ];
-
-        // The $allTargetFieldsString is no longer strictly needed for direct rule application
-        // but kept for reference if you decide to re-introduce a similar rule in the future.
-        // $allTargetFieldsString = implode(',', $allTargetFields);
 
         return [
             'title' => 'required|string|max:150',

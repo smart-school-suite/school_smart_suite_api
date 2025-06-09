@@ -3,50 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiResponseService;
-use App\Http\Requests\Events\CreateEventRequest;
-use App\Http\Requests\Events\BulkUpdateEventRequest;
-use App\Http\Requests\Events\UpdateEventRequest;
-use App\Services\EventsService;
-use Illuminate\Http\Request;
+use App\Http\Requests\Event\CreateEventRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Model;
+use App\Services\CreateEventService;
+use Throwable;
 
 class EventsController extends Controller
 {
-    //
-    protected EventsService $eventsService;
-    public function __construct(EventsService $eventsService)
+    protected CreateEventService $createEventService;
+
+    public function __construct(CreateEventService $createEventService)
     {
-        $this->eventsService = $eventsService;
-    }
-    public function createEvent(CreateEventRequest $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $createElection = $this->eventsService->createEvent($request->all(), $currentSchool);
-        return ApiResponseService::success("Events Created Succefully", $createElection, null, 201);
+        $this->createEventService = $createEventService;
     }
 
-    public function updateEvent(UpdateEventRequest $request, $eventId)
+    public function createSchoolEvent(CreateEventRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $updateEvent = $this->eventsService->updateEvent($request->validated(), $currentSchool, $eventId);
-        return ApiResponseService::success('Event updated succefully', $updateEvent, null, 200);
+        try {
+            $currentSchool = $request->attributes->get('currentSchool');
+            $authenticatedUser = $this->getAuthenticatedUser();
+            $createSchoolEvent = $this->createEventService->createEvent($request->validated(), $currentSchool, $authenticatedUser);
+            return ApiResponseService::success("School Event Created Successfully", $createSchoolEvent, null, 201);
+        } catch (Throwable $e) {
+            return ApiResponseService::error($e->getMessage(), null, 500);
+        }
     }
 
-    public function deleteEvent($eventId)
+    private function getAuthenticatedUser()
     {
-        $deleteEvent = $this->eventsService->deleteEvent($eventId);
-        return ApiResponseService::success('Event Deleted Successfully', $deleteEvent, null, 200);
-    }
-    public function getEvents(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getEvents = $this->eventsService->getEvents($currentSchool);
-        return ApiResponseService::success('Events fetched successfully', $getEvents, null, 200);
-    }
+        $user = Auth::user();
 
-    public function getEventDetails(Request $request, $eventId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $eventDetails = $this->eventsService->eventDetails($currentSchool, $eventId);
-        return ApiResponseService::success('Event Details Fetched Succefully', $eventDetails, null, 200);
+        if ($user instanceof Model) {
+            return [
+                'userId' => $user->id,
+                'userType' => get_class($user),
+            ];
+        }
+
+        return [
+            'userId' => null,
+            'userType' => null,
+        ];
     }
 }

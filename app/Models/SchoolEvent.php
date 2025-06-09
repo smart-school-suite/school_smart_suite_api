@@ -22,6 +22,7 @@ class SchoolEvent extends Model
         'likes',
         'status',
         'start_date',
+        'invitee_count',
         'end_date',
         'published_at',
         'notification_sent_at',

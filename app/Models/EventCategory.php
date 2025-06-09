@@ -14,6 +14,7 @@ class EventCategory extends Model
     protected $fillable = [
        'name',
        'status',
+       'school_branch_id',
        'description'
     ];
 
