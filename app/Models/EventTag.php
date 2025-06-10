@@ -18,6 +18,8 @@ class EventTag extends Model
     ];
 
     public $incrementing = 'false';
+
+    public $keyType = "string";
     public $table = 'event_tags';
 
     public function schoolBranch(): BelongsTo {

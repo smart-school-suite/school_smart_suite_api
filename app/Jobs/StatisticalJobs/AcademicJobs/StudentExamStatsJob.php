@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Jobs\StatisticalJobs;
+namespace App\Jobs\StatisticalJobs\AcademicJobs;
 
-use App\Models\Exams;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use App\Models\Marks;
+use App\Models\Exams;
 use App\Models\Student;
 use App\Models\StudentResults;
-use Illuminate\Queue\SerializesModels;
 
 class StudentExamStatsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $exam;
-    protected $student; // Add student ID
+    protected $student;
 
     /**
      * Create a new job instance.

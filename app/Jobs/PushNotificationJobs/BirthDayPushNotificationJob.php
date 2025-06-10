@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\FinancialStatsJobs;
+namespace App\Jobs\PushNotificationJobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -8,7 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class RegistrationFeeStatsJob implements ShouldQueue
+class BirthDayPushNotificationJob implements ShouldQueue
 {
     use Queueable;
 

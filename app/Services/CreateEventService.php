@@ -34,8 +34,9 @@ class CreateEventService
      */
     public function createEvent(array $schoolEventData, object $currentSchool, array $authUserData): array
     {
-
         $targetUserRecords = [];
+        $customGroupDataToInsert = [];
+        $presetGroupDataToInsert = [];
 
         try {
             DB::beginTransaction();
@@ -47,21 +48,38 @@ class CreateEventService
             $this->addIndividualTargets($schoolEventData, $currentSchool, $eventId, $targetUserRecords);
 
             if (!empty($schoolEventData['school_set_group_ids'])) {
-                $this->processCustomGroupTargets($schoolEventData['school_set_group_ids'], $currentSchool, $eventId, $targetUserRecords);
+                $this->processCustomGroupTargets($schoolEventData['school_set_group_ids'], $currentSchool, $eventId, $targetUserRecords, $customGroupDataToInsert);
             }
 
             if (!empty($schoolEventData['preset_group_ids'])) {
-                $this->processPresetGroupTargets($schoolEventData['preset_group_ids'], $currentSchool, $eventId, $targetUserRecords);
+                $this->processPresetGroupTargets($schoolEventData['preset_group_ids'], $currentSchool, $eventId, $targetUserRecords, $presetGroupDataToInsert);
             }
+            $uniqueTargetRecords = collect($targetUserRecords)
+                ->unique(fn ($item) => $item['actorable_id'] . '_' . $item['actorable_type'])
+                ->values()
+                ->all();
+
+            $targetUserRecords = $uniqueTargetRecords;
+
+            $inviteeCount = count($targetUserRecords);
+
+            $this->createSchoolEvent($schoolEventData, $eventId, $currentSchool, $inviteeCount);
 
             $this->insertUniqueEventInvitedMembers($targetUserRecords, $eventId, $currentSchool);
 
-            $this->createSchoolEvent($schoolEventData, $eventId, $currentSchool, count($targetUserRecords));
+            if (!empty($customGroupDataToInsert)) {
+                EventInvitedCustomGroups::insert($customGroupDataToInsert);
+            }
 
-            $this->createEventAuthor($authUserData, $eventId);
+            if (!empty($presetGroupDataToInsert)) {
+                EventInvitedPresetGroup::insert($presetGroupDataToInsert);
+            }
+
+            $this->createEventAuthor($authUserData, $eventId, $currentSchool);
 
             DB::commit();
 
+            // 8. Dispatch notification job after successful transaction.
             $this->dispatchNotificationJob($status, $publishedAt, $eventId);
 
             return [
@@ -102,14 +120,16 @@ class CreateEventService
 
     /**
      * Processes custom group targets and adds their members to targetUserRecords.
+     * It now collects the data for EventInvitedCustomGroups to be inserted later.
      *
      * @param array $schoolSetGroupIds
      * @param object $currentSchool
      * @param string $eventId
      * @param array $targetUserRecords
+     * @param array $customGroupDataToInsert
      * @return void
      */
-    private function processCustomGroupTargets(array $schoolSetGroupIds, object $currentSchool, string $eventId, array &$targetUserRecords): void
+    private function processCustomGroupTargets(array $schoolSetGroupIds, object $currentSchool, string $eventId, array &$targetUserRecords, array &$customGroupDataToInsert): void
     {
         $groupMembers = SchoolSetAudienceGroups::whereIn('id', $schoolSetGroupIds)->get();
 
@@ -122,10 +142,8 @@ class CreateEventService
                 $targetUserRecords
             );
         }
-
-        $customGroupData = [];
         foreach ($schoolSetGroupIds as $schoolSetGroupId) {
-            $customGroupData[] = [
+            $customGroupDataToInsert[] = [
                 'school_set_audience_group_id' => $schoolSetGroupId,
                 'event_id' => $eventId,
                 'school_branch_id' => $currentSchool->id,
@@ -133,19 +151,20 @@ class CreateEventService
                 'updated_at' => now(),
             ];
         }
-        EventInvitedCustomGroups::insert($customGroupData);
     }
 
     /**
      * Processes preset group targets and adds their members to targetUserRecords.
+     * It now collects the data for EventInvitedPresetGroup to be inserted later.
      *
      * @param array $presetGroupIds
      * @param object $currentSchool
      * @param string $eventId
      * @param array $targetUserRecords
+     * @param array $presetGroupDataToInsert
      * @return void
      */
-    private function processPresetGroupTargets(array $presetGroupIds, object $currentSchool, string $eventId, array &$targetUserRecords): void
+    private function processPresetGroupTargets(array $presetGroupIds, object $currentSchool, string $eventId, array &$targetUserRecords, array &$presetGroupDataToInsert): void
     {
         $presetTargets = PresetAudiences::whereIn('id', $presetGroupIds)->pluck('target')->toArray();
 
@@ -205,10 +224,9 @@ class CreateEventService
             }
         }
 
-        // Create entries in EventInvitedPresetGroup
-        $presetGroupData = [];
         foreach ($presetGroupIds as $presetGroupId) {
-            $presetGroupData[] = [
+            $presetGroupDataToInsert[] = [
+                'id' => Str::uuid(),
                 'preset_group_id' => $presetGroupId,
                 'event_id' => $eventId,
                 'school_branch_id' => $currentSchool->id,
@@ -216,7 +234,6 @@ class CreateEventService
                 'updated_at' => now(),
             ];
         }
-        EventInvitedPresetGroup::insert($presetGroupData);
     }
 
     /**
@@ -260,7 +277,7 @@ class CreateEventService
                 'id' => Str::uuid(),
                 'actorable_id' => $id,
                 'actorable_type' => $userType,
-                'event_id' => $eventId, // Changed from announcement_id to event_id
+                'event_id' => $eventId,
                 'school_branch_id' => $currentSchool->id,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -282,14 +299,9 @@ class CreateEventService
             return;
         }
 
-        $uniqueTargetRecords = collect($targetUserRecords)
-            ->unique(fn ($item) => $item['actorable_id'] . '_' . $item['actorable_type'])
-            ->values()
-            ->all();
-
-        $targetUserRecords = $uniqueTargetRecords;
-
-        foreach (array_chunk($uniqueTargetRecords, 1000) as $chunk) {
+        // The unique filtering is already done in the createEvent method before calling this.
+        // This method now just performs the chunked insert.
+        foreach (array_chunk($targetUserRecords, 1000) as $chunk) {
             EventInvitedMember::insert($chunk);
         }
     }
@@ -340,11 +352,12 @@ class CreateEventService
      * @param string $eventId
      * @return void
      */
-    private function createEventAuthor(array $authUserData, string $eventId): void
+    private function createEventAuthor(array $authUserData, string $eventId, object $currentSchool): void
     {
         EventAuthor::create([
             'authorable_id' => $authUserData['userId'],
             'authorable_type' => $authUserData['userType'],
+            'school_branch_id' => $currentSchool->id,
             'event_id' => $eventId,
         ]);
     }

@@ -49,7 +49,7 @@ class EventCategoryService
 
     public function getCategories($currentSchool){
         try{
-           $categories = EventCategory::where("school_branch_id", $currentSchool->id)->all();
+           $categories = EventCategory::where("school_branch_id", $currentSchool->id)->get();
            return $categories;
         }
         catch(Throwable $e){
@@ -84,7 +84,7 @@ class EventCategoryService
     public function activateCategory($categoryId){
         try{
              $category = EventCategory::findOrFail($categoryId);
-             $category->status = "inactive";
+             $category->status = "active";
              $category->save();
              return $category;
         }

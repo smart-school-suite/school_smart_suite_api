@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use APP\Console\Commands\UpdatePastSchoolSemesters;
+use App\Console\Commands\SendBirthdayWishes;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Artisan;
 
@@ -10,3 +11,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command(UpdatePastSchoolSemesters::class)->daily();
+Schedule::command(SendBirthdayWishes::class)->dailyAt('00:01');

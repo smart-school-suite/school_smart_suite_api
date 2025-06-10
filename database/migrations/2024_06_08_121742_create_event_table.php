@@ -22,6 +22,7 @@ return new class extends Migration
         Schema::create('event_tags', function(Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
+            $table->timestamps();
         });
 
         Schema::create('school_events', function (Blueprint $table) {

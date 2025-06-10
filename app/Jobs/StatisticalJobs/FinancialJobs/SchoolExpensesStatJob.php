@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\FinancialStatsJobs;
+namespace App\Jobs\StatisticalJobs\FinancialJobs;
 
 use App\Models\SchoolExpenses;
 use App\Models\Student;
@@ -9,12 +9,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-
-class SchoolExpensesStatsJob implements ShouldQueue
+use Carbon\Carbon;
+class SchoolExpensesStatJob implements ShouldQueue
 {
-    use Queueable;
+     use Queueable;
 
     /**
      * Create a new job instance.

@@ -22,7 +22,7 @@ class EventTagService
 
    public function getTags($currentSchool){
       try{
-         $tags = EventTag::where("school_branch_id", $currentSchool->id)->all();
+         $tags = EventTag::where("school_branch_id", $currentSchool->id)->get();
          return $tags;
       }
       catch(Throwable $e){

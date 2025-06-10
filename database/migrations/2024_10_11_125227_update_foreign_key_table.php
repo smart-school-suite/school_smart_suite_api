@@ -200,7 +200,7 @@ return new class extends Migration
         });
 
         Schema::table('student_resit', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -218,7 +218,7 @@ return new class extends Migration
 
 
         Schema::table('school_subscriptions', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('rate_card_id');
             $table->foreign('rate_card_id')->references('id')->on('rate_cards');
@@ -227,13 +227,13 @@ return new class extends Migration
         Schema::table('payments', function (Blueprint $table) {
             $table->string('school_subscription_id');
             $table->foreign('school_subscription_id')->references('id')->on('school_subscriptions');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
 
         Schema::table('election_application', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('election_id');
             $table->foreign('election_id')->references('id')->on('elections');
@@ -244,7 +244,7 @@ return new class extends Migration
         });
 
         Schema::table('elections', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('election_type_id');
             $table->foreign('election_type_id')->references('id')->on('election_type');
@@ -253,12 +253,12 @@ return new class extends Migration
         Schema::table('election_roles', function (Blueprint $table) {
             $table->string('election_type_id');
             $table->foreign('election_type_id')->references('id')->on('election_type');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
         Schema::table('election_votes', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('election_id');
             $table->foreign('election_id')->references('id')->on('elections');
@@ -304,7 +304,7 @@ return new class extends Migration
         });
 
         Schema::table('election_type', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
@@ -315,7 +315,7 @@ return new class extends Migration
             $table->foreign('position_id')->references('id')->on('election_roles');
             $table->string('candidate_id');
             $table->foreign('candidate_id')->references('id')->on('election_candidates');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
@@ -324,14 +324,14 @@ return new class extends Migration
             $table->foreign('application_id')->references('id')->on('election_application');
             $table->string('election_id');
             $table->foreign('election_id')->references('id')->on('elections');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
         });
 
         Schema::table('teacher_specailty_preference', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string("teacher_id");
             $table->foreign('teacher_id')->references('id')->on('teacher');
@@ -344,14 +344,14 @@ return new class extends Migration
             $table->foreign('semester_id')->references('id')->on('semesters');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
 
         Schema::table('hod', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('department_id');
             $table->foreign('department_id')->references('id')->on('department');
@@ -360,14 +360,14 @@ return new class extends Migration
         Schema::table('hos', function (Blueprint $table) {
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
         Schema::table('tuition_fees', function (Blueprint $table) {
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -376,7 +376,7 @@ return new class extends Migration
         });
 
         Schema::table('fee_waiver', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -389,7 +389,7 @@ return new class extends Migration
         Schema::table("registration_fees", function (Blueprint $table) {
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -398,7 +398,7 @@ return new class extends Migration
         });
 
         Schema::table("fee_payment_schedule", function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -407,7 +407,7 @@ return new class extends Migration
         });
 
         Schema::table("additional_fees", function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -420,47 +420,47 @@ return new class extends Migration
         });
 
         Schema::table("additional_fee_category", function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
         Schema::table("tuition_fee_transactions", function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('tuition_id');
             $table->foreign('tuition_id')->references('id')->on('tuition_fees');
         });
 
         Schema::table("additional_fee_transactions", function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('fee_id');
             $table->foreign('fee_id')->references('id')->on('additional_fees');
         });
 
         Schema::table('registration_fee_transactions', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('registrationfee_id');
             $table->foreign('registrationfee_id')->references('id')->on('registration_fees');
         });
 
         Schema::table("resit_fee_transactions", function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('resitfee_id');
             $table->foreign('resitfee_id')->references('id')->on('student_resit');
         });
 
         Schema::table('schoolbranch_apikey', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
         Schema::table('school_grades_config', function (Blueprint $table) {
             $table->string("grades_category_id");
             $table->foreign('grades_category_id')->references('id')->on('grades_category');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
@@ -475,7 +475,7 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
         Schema::table('studentbatch_grad_dates', function ($table) {
@@ -485,13 +485,13 @@ return new class extends Migration
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
 
         Schema::table('resit_examtimetable', function ($table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('resit_exam_id');
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
@@ -507,7 +507,7 @@ return new class extends Migration
 
 
         Schema::table('resit_marks', function ($table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
@@ -536,7 +536,7 @@ return new class extends Migration
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
             $table->string('failed_exam_id');
             $table->foreign('failed_exam_id')->references('id')->on('exams');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
@@ -558,7 +558,7 @@ return new class extends Migration
         });
 
         Schema::table('school_operational_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('stat_type_id');
             $table->foreign('stat_type_id')->references('id')->on('stat_types');
@@ -567,7 +567,7 @@ return new class extends Migration
         });
 
         Schema::table('school_academic_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('stat_type_id');
             $table->foreign('stat_type_id')->references('id')->on('stat_types');
@@ -576,7 +576,7 @@ return new class extends Migration
         });
 
         Schema::table('school_financial_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('stat_type_id');
             $table->foreign('stat_type_id')->references('id')->on('stat_types');
@@ -585,7 +585,7 @@ return new class extends Migration
         });
 
         Schema::table('student_academic_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
@@ -596,7 +596,7 @@ return new class extends Migration
         });
 
         Schema::table('student_financial_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
@@ -607,21 +607,21 @@ return new class extends Migration
         });
 
         Schema::table('school_exam_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
         });
 
         Schema::table('school_resit_exam_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('resit_exam_id');
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
         });
 
         Schema::table('student_exam_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
@@ -630,7 +630,7 @@ return new class extends Migration
         });
 
         Schema::table('student_resit_exam_stats', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('resit_exam_id');
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
@@ -639,7 +639,7 @@ return new class extends Migration
         });
 
         Schema::table('student_exam_summary', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
@@ -653,7 +653,7 @@ return new class extends Migration
         });
 
         Schema::table('exam_candidates', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
@@ -666,7 +666,7 @@ return new class extends Migration
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
@@ -681,17 +681,17 @@ return new class extends Migration
         });
 
         Schema::table('school_set_audience_groups', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
         Schema::table('announcement_categories', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('tags', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
@@ -702,7 +702,7 @@ return new class extends Migration
             $table->foreign('label_id')->references('id')->on('labels')->onDelete('cascade');
             $table->string('tag_id');
             $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
@@ -712,7 +712,7 @@ return new class extends Migration
         });
 
         Schema::table('school_announcement_settings', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->string('announcement_setting_id');
             $table->foreign('announcement_setting_id')->references('id')->on('announcement_settings')->onDelete('cascade');
@@ -723,7 +723,7 @@ return new class extends Migration
             $table->foreign('school_set_audience_group_id')->references('id')->on('school_set_audience_groups')->onDelete('cascade');
             $table->string('announcement_id');
             $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
         Schema::table('target_preset_groups', function (Blueprint $table) {
@@ -731,7 +731,7 @@ return new class extends Migration
             $table->foreign('preset_group_id')->references('id')->on('preset_audiences')->onDelete('cascade');
             $table->string('announcement_id');
             $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
         Schema::table('target_users', function (Blueprint $table) {
@@ -739,17 +739,22 @@ return new class extends Migration
             $table->string('actorable_id');
             $table->string('announcement_id');
             $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('event_tags', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('event_categories', function(Blueprint $table) {
+             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('school_events', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->string('event_category_id');
             $table->foreign("event_category_id")->references('id')->on("event_categories");
@@ -760,12 +765,12 @@ return new class extends Migration
         Schema::table('event_author', function (Blueprint $table) {
             $table->string('event_id');
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('school_event_settings', function (Blueprint $table) {
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->string('event_setting_id');
             $table->foreign('event_setting_id')->references('id')->on('event_settings');
@@ -776,7 +781,7 @@ return new class extends Migration
             $table->foreign('school_set_audience_group_id')->references('id')->on('school_set_audience_groups')->onDelete('cascade');
             $table->string('event_id');
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
@@ -785,16 +790,16 @@ return new class extends Migration
             $table->foreign('preset_group_id')->references('id')->on('preset_audiences')->onDelete('cascade');
             $table->string('event_id');
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('ev_inv_members', function (Blueprint $table) {
             $table->string('actorable_type');
-            $table->string('actorable_id');
+            $table->string('actorable_id')->index();
             $table->string('event_id');
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
-            $table->string('school_branch_id');
+            $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
     }

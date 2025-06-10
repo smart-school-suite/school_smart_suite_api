@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\FinancialStatsJobs;
+namespace App\Jobs\EmailNotificationJobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -8,17 +8,16 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TuitionFeeStatsJob implements ShouldQueue
+class EmailEventNotificationJob implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public $tuitionFeePayment;
-    public function __construct($tuitionFeePayment)
+    public function __construct()
     {
-        $this->tuitionFeePayment = $tuitionFeePayment;
+        //
     }
 
     /**

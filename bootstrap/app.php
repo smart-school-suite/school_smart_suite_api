@@ -161,7 +161,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/school-subscription')
                 ->group(base_path("routes/Subscription/SchoolSubscription.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/event')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-event')
                 ->group(base_path("routes/Event/SchoolEvent.php"));
 
             Route::prefix('api/v1/student-promotion')

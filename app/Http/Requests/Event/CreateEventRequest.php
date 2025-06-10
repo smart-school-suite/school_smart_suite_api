@@ -58,8 +58,8 @@ class CreateEventRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'organizer' => 'required|string|max:255',
                     'location' => 'required|string|max:255',
-                    'start_date' => 'required|date_format:Y-m-d H:i:s|after_or_equal:today',
-                    'end_date' => 'required|date_format:Y-m-d H:i:s|after_or_equal:start_date',
+                    'start_date' => 'required|date_format:Y-m-d H:i|after_or_equal:today',
+                    'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
                     'published_at' => 'nullable',
                 ]);
                 break;
@@ -68,9 +68,9 @@ class CreateEventRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'organizer' => 'required|string|max:255',
                     'location' => 'required|string|max:255',
-                    'start_date' => 'required|date_format:Y-m-d H:i:s|after_or_equal:today',
-                    'end_date' => 'required|date_format:Y-m-d H:i:s|after_or_equal:start_date',
-                    'published_at' => 'required|date_format:Y-m-d H:i:s|after:now',
+                    'start_date' => 'required|date_format:Y-m-d H:i|after_or_equal:today',
+                    'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
+                    'published_at' => 'required|date_format:Y-m-d H:i|after:now',
                 ]);
                 break;
 

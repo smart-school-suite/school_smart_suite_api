@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs\StatisticalJobs;
+namespace App\Jobs\StatisticalJobs\AcademicJobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Exams;
 use App\Models\Student;
 use App\Models\StudentResults;
 use App\Models\Marks;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 
 class StudentCaStatsJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.

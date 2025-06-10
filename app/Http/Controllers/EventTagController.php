@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Events\UpdateEventRequest;
+use App\Http\Requests\Event\UpdateEventRequest;
 use App\Http\Requests\EventTag\CreateEventTagRequest;
+use App\Http\Requests\EventTag\UpdateEventTagRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\EventTagService;
@@ -27,7 +28,7 @@ class EventTagController extends Controller
         }
     }
 
-    public function updateEventTag(UpdateEventRequest $request, $tagId) {
+    public function updateEventTag(UpdateEventTagRequest $request, $tagId) {
         try{
            $currentSchool = $request->attributes->get('currentSchool');
            $updateTag = $this->eventTagService->updateTag($request->validated(), $currentSchool, $tagId);

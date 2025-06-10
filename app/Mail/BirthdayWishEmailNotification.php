@@ -9,16 +9,20 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class EventEmailNotification extends Mailable
+class BirthdayWishEmailNotification extends Mailable
 {
-    use Queueable, SerializesModels;
+   use Queueable, SerializesModels;
+
+    public $recipientName;
+    public $recipientType;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(protected $title, protected $description)
+    public function __construct($recipientName, $recipientType)
     {
-
+        $this->recipientName = $recipientName;
+        $this->recipientType = $recipientType;
     }
 
     /**
@@ -27,7 +31,7 @@ class EventEmailNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Event Email Notification',
+            subject: 'Happy Birthday!',
         );
     }
 
@@ -37,11 +41,11 @@ class EventEmailNotification extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.SchoolEventEmail',
-            with:([
-                'title' => $this->title,
-                'description' => $this->description,
-                ])
+            view: 'emails.BirthDayWishEmail',
+            with: [
+                'name' => $this->recipientName,
+                'type' => $this->recipientType,
+            ],
         );
     }
 
