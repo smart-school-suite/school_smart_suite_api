@@ -2,9 +2,7 @@
 
 namespace App\Jobs\StatisticalJobs\AcademicJobs;
 
-use App\Models\Exams;
 use App\Models\LetterGrade;
-use App\Models\Student;
 use App\Models\StudentResults;
 use App\Models\Marks;
 use App\Models\StatTypes;
@@ -15,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**

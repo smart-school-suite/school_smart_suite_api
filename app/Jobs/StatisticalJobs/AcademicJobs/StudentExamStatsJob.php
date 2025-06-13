@@ -7,14 +7,18 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Marks;
 use App\Models\Exams;
 use App\Models\Student;
+use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
+use App\Models\StatTypes;
 use App\Models\StudentResults;
-
+use App\Models\Marks;
+use App\Models\LetterGrade;
+use Illuminate\Support\Facades\DB;
 class StudentExamStatsJob implements ShouldQueue
 {
-use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $exam;
     protected $student;
@@ -38,277 +42,541 @@ use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
      */
     public function handle()
     {
-        $currentExamResults = StudentResults::where('student_id', $this->student->Id)
-            ->where('exam_id', $this->exam->Id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
+        $schoolBranchId = $this->student->school_branch_id;
+        $schoolYear = $this->exam->school_year;
+        $examTypeId = $this->exam->exam_type_id;
+        $year = now()->year;
+        $month = now()->month;
+        $kpiNames =  [
+            'student_exam_percentage_increase_performance_by_exam_type',
+            'student_exam_percentage_increase_performance_by_semester',
+            'student_exam_percentage_decrease_performance_by_exam_type',
+            'student_exam_percentage_decrease_performance_by_semester',
+            'student_exam_courses_sat',
+            'student_exam_courses_passed',
+            'student_exam_courses_failed',
+            'student_exam_pass_rate',
+            'student_exam_fail_rate',
+            'student_exam_school_year_on_gpa_changes_by_exam',
+            'student_exam_school_year_on_total_score_changes_by_exam',
+            'student_exam_resits',
+            'student_exam_no_resit',
+            'student_exam_grades_distribution',
+            'student_exam_marks_score_distribution_by_course'
+        ];
+
+         $currentExamResult = StudentResults::where('student_id', $this->student->id)
+            ->where('exam_id', $this->exam->id)
+            ->with(['exam.semester', 'exam.examType'])
             ->first();
 
-        $previousExamResults = StudentResults::where('student_id', $this->student->Id)
-            ->where('exam_id', '<>', $this->exam->Id)
-            ->where("exam_type_id", $currentExamResults->exam_type_id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
+
+        if (!$currentExamResult) {
+            return;
+        }
+
+
+        // Fetch previous results for the *same exam type* as the current exam
+        $previousExamResults = StudentResults::where('student_id', $this->student->id)
+            ->where('exam_id', '<>', $this->exam->id)
+            ->with([
+                'exam' => function ($query) use ($examTypeId) {
+                    $query->where('exam_type_id', $examTypeId);
+                },
+                'exam.semester',
+                'exam.examType'
+            ])
             ->get();
-        $classExamResults = StudentResults::where('specialty_id', $this->student->specialty_id)
-            ->where("level_id", $this->student->level_id)
-            ->where("student_batch_id", $this->student->student_batch_id)
-            ->where('exam_id', $this->exam->Id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
-            ->get();
+
+
+        // Fetch all marks for the current exam for the student
         $marks = Marks::where('student_id', $this->student->id)
             ->where('exam_id', $this->exam->id)
-            ->with(['exam', 'exam.semester', 'exam.examType'])
+            ->with(['exams.semester', 'exams.examType', 'course'])
             ->get();
 
-        $this->increaseInPerformanceByExamType($currentExamResults, $previousExamResults);
+        // Fetch all student results for the current exam type, across all exams,
+        $studentResultsForGpaAndScoreChange = StudentResults::where('student_id', $this->student->id)
+            ->with([
+                'exam' => function ($query) use ($examTypeId) {
+                    $query->where('exam_type_id', $examTypeId);
+                },
+                'exam.semester',
+                'exam.examType'
+            ]) // Only need schoolYear for this specific KPI
+            ->get();
+
+        // Fetch StatTypes once and key them by 'name' for efficient lookup
+        $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
+
+        $letterGrades = LetterGrade::all();
+
+        $dataToBeInserted = [];
+
+                // 1. Percentage Increase/Decrease Performance by Exam Type
+        $increaseByExamType = $this->calculatePerformanceChange(
+            $currentExamResult,
+            $previousExamResults,
+            'examType',
+            'increase'
+        );
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_percentage_increase_performance_by_exam_type'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'decimal_value',
+            $increaseByExamType
+        );
+
+        $decreaseByExamType = $this->calculatePerformanceChange(
+            $currentExamResult,
+            $previousExamResults,
+            'examType',
+            'decrease'
+        );
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_percentage_decrease_performance_by_exam_type'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'decimal_value',
+            $decreaseByExamType
+        );
+
+        // 2. Percentage Increase/Decrease Performance by Semester
+        $increaseBySemester = $this->calculatePerformanceChange(
+            $currentExamResult,
+            $previousExamResults,
+            'semester',
+            'increase'
+        );
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_percentage_increase_performance_by_semester'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'decimal_value',
+            $increaseBySemester
+        );
+
+        $decreaseBySemester = $this->calculatePerformanceChange(
+            $currentExamResult,
+            $previousExamResults,
+            'semester',
+            'decrease'
+        );
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_percentage_decrease_performance_by_semester'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'decimal_value',
+            $decreaseBySemester
+        );
+
+        // 3. Courses Sat, Passed, Failed
+        $coursesSat = $this->coursesSat($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_courses_sat'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'integer_value',
+            $coursesSat
+        );
+
+        $coursesPassed = $this->coursesPassed($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_courses_passed'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'integer_value',
+            $coursesPassed
+        );
+
+        $coursesFailed = $this->coursesFailed($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_courses_failed'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'integer_value',
+            $coursesFailed
+        );
+
+        // 4. Pass Rate and Fail Rate
+        $examPassRate = $this->examPassRate($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_pass_rate'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'decimal_value',
+            $examPassRate
+        );
+
+        $examFailRate = $this->examFailRate($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_fail_rate'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'decimal_value',
+            $examFailRate
+        );
+
+        // 5. Year-on-Year GPA and Total Score Changes
+        $yearOnGpaChangesByExam = $this->yearOnGpaChangesByExam($studentResultsForGpaAndScoreChange);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_school_year_on_gpa_changes_by_exam'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'json_value',
+            json_encode($yearOnGpaChangesByExam)
+        );
+
+        $yearOnTotalScoreChangesByExam = $this->yearOnTotalScoreByExam($studentResultsForGpaAndScoreChange);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_school_year_on_total_score_changes_by_exam'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'json_value',
+            json_encode($yearOnTotalScoreChangesByExam)
+        );
+
+        $gradesDistribution = $this->gradesDistribution($letterGrades, $marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_grades_distribution'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'json_value',
+            json_encode($gradesDistribution)
+        );
+
+        // 6. Potential Resits and Chances of Resit
+        $totalPotentialResit = $this->totalNumberOfResits($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_resits'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'integer_value',
+            $totalPotentialResit
+        );
+
+        $totalNoResit = $this->totalNumberOfNoResits( $marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_no_resit'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'integer_value',
+            $totalNoResit
+        );
+
+        $marksDistributionByCourse = $this->marksDistributionbyCourse($marks);
+        $dataToBeInserted[] = $this->prepareStatData(
+            $kpis->get('student_exam_marks_score_distribution_by_course'),
+            $this->exam->id,
+            $schoolBranchId,
+            $this->student->id,
+            $schoolYear,
+            $month,
+            $year,
+            'json_value',
+            json_encode($marksDistributionByCourse)
+        );
+
+        // Perform a single bulk insert for all prepared data
+        if (!empty($dataToBeInserted)) {
+            DB::table('student_exam_stats')->insert($dataToBeInserted);
+        }
+
+    }
+       private function prepareStatData(
+        ?StatTypes $kpi,
+        string $examId,
+        string $schoolBranchId,
+        string $studentId,
+        string $schoolYear,
+        int $month,
+        int $year,
+        string $valueType,
+        mixed $value
+    ): array {
+        $data = [
+            'id' => Str::uuid(),
+            'exam_id' => $examId,
+            'school_branch_id' => $schoolBranchId,
+            'student_id' => $studentId,
+            'decimal_value' => null,
+            'integer_value' => null,
+            'json_value' => null,
+            'stat_type_id' => $kpi->id ?? null,
+            'school_year' => $schoolYear,
+            'month' => $month,
+            'year' => $year,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        // Assign the actual value to the correct column
+        $data[$valueType] = $value;
+
+        return $data;
     }
 
-    public function increaseInPerformanceByExamType($currentExamResult, $previousExamResults)
-    {
-        if (!$currentExamResult) {
-            return 0.0;
-        }
-        $currentExamTypeId = $currentExamResult->exam->examType->id;
+    /**
+     * Calculates the percentage change in performance (increase or decrease) based on GPA.
+     * This method is generic for both exam type and semester comparisons.
+     *
+     * @param StudentResults $currentExamResult   The current exam result for the student.
+     * @param Collection     $previousExamResults A collection of previous exam results for the student.
+     * @param string         $comparisonBasis     Specifies how to filter previous results: 'examType' or 'semester'.
+     * @param string         $changeType          Specifies the type of change to return: 'increase' or 'decrease'.
+     * @return float The calculated percentage change. Returns 0.0 if current result is null or no relevant previous results,
+     * or 100.0 if previous average is 0 and current is positive for 'increase', or 0.0 for 'decrease'.
+     */
+    private function calculatePerformanceChange(
+        StudentResults $currentExamResult,
+        Collection $previousExamResults,
+        string $comparisonBasis,
+        string $changeType
+    ): float {
+        $currentScore = $currentExamResult->gpa;
 
-        $filteredPreviousResults = $previousExamResults->filter(function ($previousResult) use ($currentExamTypeId) {
-            return $previousResult->exam->examType->id === $currentExamTypeId;
+        $comparisonId = null;
+        if ($comparisonBasis === 'examType' && $currentExamResult->exam->examType) {
+            $comparisonId = $currentExamResult->exam->examType->id;
+        } elseif ($comparisonBasis === 'semester' && $currentExamResult->exam->semester) {
+            $comparisonId = $currentExamResult->exam->semester->id;
+        }
+
+        $filteredPreviousResults = $previousExamResults->filter(function ($previousResult) use ($comparisonBasis, $comparisonId) {
+            $prevComparisonId = null;
+            if ($comparisonBasis === 'examType' && $previousResult->exam->examType) {
+                $prevComparisonId = $previousResult->exam->examType->id;
+            } elseif ($comparisonBasis === 'semester' && $previousResult->exam->semester) {
+                $prevComparisonId = $previousResult->exam->semester->id;
+            }
+            return $prevComparisonId === $comparisonId;
         });
 
-        $currentScore = $currentExamResult->gpa;
         if ($filteredPreviousResults->isEmpty()) {
-            return 100.00;
+            return ($changeType === 'increase') ? 100.00 : 0.00;
         }
 
         $previousAverageGpa = $filteredPreviousResults->avg('gpa');
 
-        if ($previousAverageGpa > 0) {
-            $percentageIncrease = (($currentScore - $previousAverageGpa) / $previousAverageGpa) * 100;
+        if ($previousAverageGpa == 0) {
+            return ($currentScore > 0) ? 100.00 : 0.00;
+        }
+
+        $percentageChange = (($currentScore - $previousAverageGpa) / $previousAverageGpa) * 100;
+
+        if ($changeType === 'increase') {
+            return max(0.00, round($percentageChange, 2));
         } else {
-            $percentageIncrease = 100;
+            return min(0.00, round($percentageChange, 2));
         }
-        return max(0.00, round($percentageIncrease, 2));
-    }
-    public function increaseInPerformanceBySemester($currentExamResult, $previousExamResults)
-    {
-        if (!$currentExamResult) {
-            return 0.0;
-        }
-        $currentExamSemeserId = $currentExamResult->exam->semester->id;
-
-        $filteredPreviousResults = $previousExamResults->filter(function ($previousResult) use ($currentExamSemeserId) {
-            return $previousResult->exam->examType->id === $currentExamSemeserId;
-        });
-
-        $currentScore = $currentExamResult->gpa;
-        if ($filteredPreviousResults->isEmpty()) {
-            return 100.00;
-        }
-
-        $previousAverageGpa = $filteredPreviousResults->avg('gpa');
-
-        if ($previousAverageGpa > 0) {
-            $percentageIncrease = (($currentScore - $previousAverageGpa) / $previousAverageGpa) * 100;
-        } else {
-            $percentageIncrease = 100;
-        }
-        return max(0.00, round($percentageIncrease, 2));
-    }
-    public function decreaseInPerformanceByExamType($currentExamResult, $previousExamResults)
-    {
-        if (!$currentExamResult) {
-            return 0.0;
-        }
-
-        $currentExamTypeId = $currentExamResult->exam->examType->id;
-        $filteredPreviousResults = $previousExamResults->filter(function ($previousResult) use ($currentExamTypeId) {
-            return $previousResult->exam->examType->id === $currentExamTypeId;
-        });
-
-        $currentScore = $currentExamResult->gpa;
-
-        if ($filteredPreviousResults->isEmpty()) {
-            return 100.00;
-        }
-
-        $previousAverageGpa = $filteredPreviousResults->avg('gpa');
-
-        if ($currentScore > $previousAverageGpa) {
-            $percentageChange = (($currentScore - $previousAverageGpa) / $previousAverageGpa) * 100;
-        } elseif ($currentScore < $previousAverageGpa) {
-            $percentageChange = - ((($previousAverageGpa - $currentScore) / $previousAverageGpa) * 100);
-        } else {
-            return 0.00;
-        }
-        return max(0.00, round($percentageChange, 2));
-    }
-    public function decreaseInPerformanceBySemester($currentExamResult, $previousExamResults)
-    {
-        if (!$currentExamResult) {
-            return 0.0;
-        }
-
-        $currentExamSemeserId = $currentExamResult->exam->semester->id;
-        $filteredPreviousResults = $previousExamResults->filter(function ($previousResult) use ($currentExamSemeserId) {
-            return $previousResult->exam->examType->id === $currentExamSemeserId;
-        });
-
-        $currentScore = $currentExamResult->gpa;
-
-        if ($filteredPreviousResults->isEmpty()) {
-            return 100.00;
-        }
-
-        $previousAverageGpa = $filteredPreviousResults->avg('gpa');
-
-        if ($currentScore > $previousAverageGpa) {
-            $percentageChange = (($currentScore - $previousAverageGpa) / $previousAverageGpa) * 100;
-        } elseif ($currentScore < $previousAverageGpa) {
-            $percentageChange = - ((($previousAverageGpa - $currentScore) / $previousAverageGpa) * 100);
-        } else {
-            return 0.00;
-        }
-        return max(0.00, round($percentageChange, 2));
-    }
-    public function groupStudentGpaByExamTypeAndSemester($currentExamResult, $previousExamResults)
-    {
-        $gpaBySemesterAndType = [];
-        $allResults = [];
-        if ($currentExamResult) {
-            $allResults[] = $currentExamResult;
-        }
-        foreach ($previousExamResults as $previousResult) {
-            $allResults[] = $previousResult;
-        }
-
-        foreach ($allResults as $result) {
-            $examSemester = $result->exam->semester->name;
-            $examType = $result->exam->examType->name;
-            $gpa = $result->gpa;
-            $type = $result === $currentExamResult ? 'current' : 'previous';
-            $gpaBySemesterAndType[$examSemester][$examType][$type][] = $gpa;
-        }
-        return $gpaBySemesterAndType;
     }
 
-    public function groupStudentTotalScoreByExamTypeAndSemester($currentExamResult, $previousExamResults)
-    {
-        $gpaBySemesterAndType = [];
-        $allResults = [];
-        if ($currentExamResult) {
-            $allResults[] = $currentExamResult;
-        }
-        foreach ($previousExamResults as $previousResult) {
-            $allResults[] = $previousResult;
-        }
-
-        foreach ($allResults as $result) {
-            $examSemester = $result->exam->semester->name;
-            $examType = $result->exam->examType->name;
-            $total_score = $result->total_score;
-            $type = $result === $currentExamResult ? 'current' : 'previous';
-            $gpaBySemesterAndType[$examSemester][$examType][$type][] = $total_score;
-        }
-        return $gpaBySemesterAndType;
-    }
-    public function coursesSat($marks)
+    /**
+     * Counts the number of courses a student sat for in the given exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return int The total number of courses sat.
+     */
+    public function coursesSat(Collection $marks): int
     {
         return $marks->count();
     }
-    public function coursesPassed($marks)
+
+    /**
+     * Counts the number of courses a student passed in the given exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return int The total number of courses passed.
+     */
+    public function coursesPassed(Collection $marks): int
     {
-        return $marks->where('status', 'pass')->count();
+        return $marks->where('grade_status', 'passed')->count();
     }
-    public function coursesFailed($marks)
+
+    /**
+     * Counts the number of courses a student failed in the given exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return int The total number of courses failed.
+     */
+    public function coursesFailed(Collection $marks): int
     {
-        return $marks->where('status', 'fail')->count();
+        return $marks->where('grade_status', 'failed')->count();
     }
-    public function classAveragePerformanceVsIndividualPerformance($classExamResults, $currentExamResult)
+
+    /**
+     * Calculates the pass rate for the given exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return float The pass rate as a percentage, rounded to two decimal places. Returns 0.0 if no courses were sat.
+     */
+    public function examPassRate(Collection $marks): float
     {
-        $classAverage = array_sum(array_column($classExamResults, 'gpa')) / count($classExamResults);
-
-        $performanceDeviation = $currentExamResult->gpa - $classAverage;
-
-        $aboveAverageCount = count(array_filter($classExamResults, function ($student) use ($currentExamResult) {
-            return $student->gpa > $currentExamResult->gpa;
-        }));
-
-        $percentageAboveAverage = ($aboveAverageCount / count($classExamResults)) * 100;
-
-        $squaredDiffs = array_map(function ($student) use ($classAverage) {
-            return pow(($student->gpa - $classAverage), 2);
-        }, $classExamResults);
-
-        $stdDev = sqrt(array_sum($squaredDiffs) / count($classExamResults));
-
-        $zScore = $stdDev > 0 ? ($currentExamResult->gpa - $classAverage) / $stdDev : 0;
-
-        $passingCount = count(array_filter($classExamResults, function ($student) {
-            return $student->exam_status === 'passed';
-        }));
-
-        $classPassRate = ($passingCount / count($classExamResults)) * 100;
-
-        $individualPassStatus = $currentExamResult->exam_status === 'pass' ? 'Passed' : 'Failed';
-
-        $performanceGap = max(array_column($classExamResults, 'gpa')) - min(array_column($classExamResults, 'gpa'));
-
-        $scoreAsPercentOfAverage = $classAverage > 0 ? ($currentExamResult->gpa / $classAverage) * 100 : 0;
-
-        return [
-            'class_average' => $classAverage,
-            'individual_score' => $currentExamResult->gpa,
-            'performance_deviation' => $performanceDeviation,
-            'percentage_above_average' => $percentageAboveAverage,
-            'standard_deviation' => $stdDev,
-            'z_score' => $zScore,
-            'class_pass_rate' => $classPassRate,
-            'individual_pass_status' => $individualPassStatus,
-            'performance_gap' => $performanceGap,
-            'score_as_percent_of_average' => $scoreAsPercentOfAverage,
-        ];
-    }
-    public function analyzeGradeDistribution($marks) {
-        $totalScore = 0;
-        $totalGrades = 0;
-        $passCount = 0;
-        $failCount = 0;
-        $courseScores = [];
-        foreach ($marks as $mark) {
-            $score = $mark->score;
-            $gradeStatus = $mark->grade_status;
-
-            $totalScore += $score;
-            $totalGrades++;
-            if ($gradeStatus === 'pass') {
-                $passCount++;
-            } else {
-                $failCount++;
-            }
-            $courseId = $mark->course_id;
-            if (!isset($courseScores[$courseId])) {
-                $courseScores[$courseId] = ['totalScore' => 0, 'totalMarks' => 0];
-            }
-            $courseScores[$courseId]['totalScore'] += $score;
-            $courseScores[$courseId]['totalMarks']++;
+        $coursesSat = $marks->count();
+        if ($coursesSat === 0) {
+            return 0.0;
         }
-        $overallAverage = ($totalGrades > 0) ? ($totalScore / $totalGrades) : 0;
-        $passingRate = ($totalGrades > 0) ? ($passCount / $totalGrades) * 100 : 0;
-        $failingRate = ($totalGrades > 0) ? ($failCount / $totalGrades) * 100 : 0;
+        $coursesPassedCount = $this->coursesPassed($marks);
+        return round(($coursesPassedCount / $coursesSat) * 100, 2);
+    }
 
-        $courseAverages = [];
-        foreach ($courseScores as $courseId => $scores) {
-            $courseAverages[$courseId] = [
-                'averageScore' => ($scores['totalMarks'] > 0) ? ($scores['totalScore'] / $scores['totalMarks']) : 0
+    /**
+     * Calculates the fail rate for the given exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return float The fail rate as a percentage, rounded to two decimal places. Returns 0.0 if no courses were sat.
+     */
+    public function examFailRate(Collection $marks): float
+    {
+        $coursesSat = $marks->count();
+        if ($coursesSat === 0) {
+            return 0.0;
+        }
+        $coursesFailedCount = $this->coursesFailed($marks);
+        return round(($coursesFailedCount / $coursesSat) * 100, 2);
+    }
+
+    /**
+     * Prepares data for year-on-year GPA changes for a student across exams of a specific type.
+     *
+     * @param Collection $results A collection of StudentResults models for the student,
+     * filtered by exam type and eager loaded with exam school year.
+     * @return array An array of associative arrays, each containing 'school_year' and 'gpa'.
+     */
+    public function yearOnGpaChangesByExam(Collection $results): array
+    {
+        return $results->map(function ($result) {
+            return [
+                'school_year' => $result->exam->school_year ?? null,
+                'gpa' => $result->gpa,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Prepares data for year-on-year total score changes for a student across exams of a specific type.
+     *
+     * @param Collection $results A collection of StudentResults models for the student,
+     * filtered by exam type and eager loaded with exam school year.
+     * @return array An array of associative arrays, each containing 'school_year' and 'total_score'.
+     */
+    public function yearOnTotalScoreByExam(Collection $results): array
+    {
+        return $results->map(function ($result) {
+            return [
+                'school_year' => $result->exam->school_year ?? null,
+                'total_score' => $result->total_score,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Counts the total number of courses with a 'high_resit_potential' status for the student in the current exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return int The count of courses with 'high_resit_potential' status.
+     */
+    public function totalNumberOfResits(Collection $marks): int
+    {
+        return $marks->where('resit_status', 'resit')->count();
+    }
+   /**
+     * Counts the total number of courses with a 'high_resit_potential' status for the student in the current exam.
+     *
+     * @param Collection $marks A collection of Marks models for the student in the current exam.
+     * @return int The count of courses with 'high_resit_potential' status.
+     */
+    public function totalNumberOfNoResits(Collection $marks): int
+    {
+        return $marks->where('resit_status', 'no_resit')->count();
+    }
+
+    public function gradesDistribution(Collection $letterGrades, Collection $marks): array
+    {
+        $distribution = [];
+        foreach ($letterGrades as $gradeDefinition) {
+            $letterGrade = $gradeDefinition->letter_grade;
+            $distribution[$letterGrade] = [
+                'letter_grade' => $letterGrade,
+                'count' => 0,
             ];
         }
+        foreach ($marks as $mark) {
+            $assignedGrade = $mark->grade ?? null;
 
-        return [
-            'overall_average' => $overallAverage,
-            'passing_rate' => $passingRate,
-            'failing_rate' => $failingRate,
-            'total_marks' => $totalGrades,
-            'pass_count' => $passCount,
-            'fail_count' => $failCount,
-            'course_averages' => $courseAverages
-        ];
+            if ($assignedGrade && isset($distribution[$assignedGrade])) {
+                $distribution[$assignedGrade]['count']++;
+            }
+        }
+        return array_values($distribution);
+    }
+
+    public function marksDistributionbyCourse(Collection $marks): array {
+        $courseMarksRanking = [];
+         foreach($marks as $mark){
+            $marks[] = [
+                'course_code' => $mark->course->course_code,
+                'course_title' => $mark->course->course_title,
+                'score' => $mark->score
+            ];
+         }
+        return $courseMarksRanking;
     }
 }

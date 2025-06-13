@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateResitCandidateJob;
+use App\Jobs\StatisticalJobs\AcademicJobs\StudentExamStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentResults;
@@ -15,6 +16,8 @@ use App\Models\Courses;
 use App\Models\AccessedStudent;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+
 class AddExamScoresService
 {
     // Implement your logic here
@@ -34,6 +37,7 @@ class AddExamScoresService
     {
         $results = [];
         $examDetails = null;
+        $targetStudent = null;
 
         DB::beginTransaction();
         try {
@@ -41,8 +45,11 @@ class AddExamScoresService
                 // Retrieve the student based on school and student ID.
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
                 // Retrieve the exam details with its type.
+                $targetStudent = $student;
+                Log::info($scoreData['exam_id']);
                 $exam = Exams::with('examtype')->findOrFail($scoreData['exam_id']);
                 $examDetails = $exam;
+
 
                 // Ensure both student and exam exist.
                 $this->validateStudentAndExam($student, $exam);
@@ -97,7 +104,7 @@ class AddExamScoresService
 
             // Update the count of evaluated students for the exam and potentially trigger a resit exam job.
             $this->updateEvaluatedStudentCount($examDetails);
-
+            StudentExamStatsJob::dispatch($examDetails, $targetStudent);
             DB::commit();
             return $results;
         } catch (Exception $e) {
@@ -253,7 +260,6 @@ class AddExamScoresService
         $additionalExam = $this->findCaExamForCurrentExam($scoreData['exam_id']);
         // Retrieve the CA score for the student in the specified course and CA exam.
         $caScore = $this->retrieveCaScore($schoolId, $student, $scoreData['course_id'], $additionalExam->id);
-
         $totalScore = $scoreData['score'] + $caScore->score;
 
         // Check if the total score exceeds the maximum possible score.
@@ -282,7 +288,6 @@ class AddExamScoresService
         $caExamType = ExamType::where('semester', $exam->examType->semester)
             ->where('type', 'ca')
             ->firstOrFail();
-
         return Exams::where('school_year', $exam->school_year)
             ->where('exam_type_id', $caExamType->id)
             ->where('specialty_id', $exam->specialty_id)
