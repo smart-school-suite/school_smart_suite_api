@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Auth\SchoolAdmin;
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\OTP;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -8,7 +9,6 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Schooladmin;
 use App\Services\ApiResponseService;
 use App\Models\PasswordResetToken;
-use App\Jobs\SendOtpJob;
 class SchoolAdminPasswordResetService
 {
     // Implement your logic here
@@ -34,7 +34,7 @@ class SchoolAdminPasswordResetService
             'expires_at' => $expiresAt,
         ]);
 
-        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+        SendOTPViaEmailJob::dispatch($passwordResetData['email'], $otp);
 
         return ['otp_header' => $otp_header];
     }

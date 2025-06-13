@@ -22,7 +22,7 @@ class CreateEventRequest extends FormRequest
     {
         $rules = [
             'title' => 'required|string|max:200',
-            'description' => 'required|string|max:5000',
+            'description' => 'nullable|string|max:5000',
             'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,bmp|max:2048',
             'organizer' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -30,8 +30,7 @@ class CreateEventRequest extends FormRequest
             'start_date' => 'nullable|date_format:Y-m-d H:i',
             'end_date' => 'nullable|date_format:Y-m-d H:i|after_or_equal:start_date',
             'published_at' => 'nullable|date_format:Y-m-d H:i',
-            'event_category_id' => 'required|exists:event_categories,id',
-            'tag_id' => 'required|exists:event_tags,id',
+
 
             'parent_ids' => ['sometimes', 'array'],
             'parent_ids.*' => ['string', Rule::exists('parents', 'id')],
@@ -61,6 +60,9 @@ class CreateEventRequest extends FormRequest
                     'start_date' => 'required|date_format:Y-m-d H:i|after_or_equal:today',
                     'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
                     'published_at' => 'nullable',
+                    'description' => 'required|string|max:5000',
+                    'event_category_id' => 'required|exists:event_categories,id',
+                    'tag_id' => 'required|exists:event_tags,id',
                 ]);
                 break;
 
@@ -71,13 +73,18 @@ class CreateEventRequest extends FormRequest
                     'start_date' => 'required|date_format:Y-m-d H:i|after_or_equal:today',
                     'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
                     'published_at' => 'required|date_format:Y-m-d H:i|after:now',
+                    'description' => 'required|string|max:5000',
+                    'event_category_id' => 'required|exists:event_categories,id',
+                    'tag_id' => 'required|exists:event_tags,id',
                 ]);
                 break;
 
             case 'draft':
-                // 'title' and 'description' are already 'required'
-                // All other fields can remain 'nullable' or 'sometimes|nullable'
-                // The existing 'nullable' rules are sufficient here.
+                $rules = array_merge($rules, [
+                    'event_category_id' => 'sometimes|nullable|exists:event_categories,id',
+                    'tag_id' => 'sometimes|nullable|exists:event_tags,id',
+                    'description' => 'sometimes|nullable|string|max:5000'
+                ]);
                 break;
         }
 

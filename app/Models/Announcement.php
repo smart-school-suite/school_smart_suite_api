@@ -19,6 +19,7 @@ class Announcement extends Model
         'published_at',
         'expires_at',
         'category_id',
+        'reciepient_count',
         'notification_sent_at',
         'label_id',
         'tag_id',

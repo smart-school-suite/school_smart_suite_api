@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth\Teacher;
 
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Jobs\SendOtpJob;
 use App\Models\Teacher;
 use App\Services\ApiResponseService;
@@ -34,7 +35,7 @@ class LoginTeacherService
             'expires_at' => $expiresAt,
         ]);
 
-        SendOtpJob::dispatch($loginData['email'], $otp);
+        SendOTPViaEmailJob::dispatch($loginData['email'], $otp);
         return ['otp_token_header'=>$otp_header];
     }
 }

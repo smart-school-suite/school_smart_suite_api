@@ -28,15 +28,15 @@ return new class extends Migration
         Schema::create('school_events', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->string('background_image')->nullable();
-            $table->string('organizer');
-            $table->string('location');
+            $table->string('organizer')->nullable();
+            $table->string('location')->nullable();
             $table->integer('likes')->default(0);
             $table->integer('invitee_count')->default(0);
             $table->enum('status', ['draft', 'scheduled', 'active', 'expired'])->default('draft');
-            $table->timestamp('start_date');
-            $table->timestamp('end_date');
+            $table->timestamp('start_date')->nullable();
+            $table->timestamp('end_date')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();

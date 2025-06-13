@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth\Student;
 
-use App\Jobs\SendOtpJob;
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\Student;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -34,7 +34,7 @@ class LoginStudentService
             'expires_at' => $expiresAt,
         ]);
 
-        SendOtpJob::dispatch($loginData['email'], $otp);
+        SendOTPViaEmailJob::dispatch($loginData['email'], $otp);
 
         return ['otp_token_header' => $otp_header];
     }

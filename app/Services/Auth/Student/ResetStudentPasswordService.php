@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Student;
 use App\Services\ApiResponseService;
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\PasswordResetToken;
 class ResetStudentPasswordService
 {
@@ -34,7 +35,7 @@ class ResetStudentPasswordService
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+        SendOTPViaEmailJob::dispatch($passwordResetData['email'], $otp);
         return ['otp_header' => $otp_header];
     }
     public function verifyOtp($otp, $tokenHeader)

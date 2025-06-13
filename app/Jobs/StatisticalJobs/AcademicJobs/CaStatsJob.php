@@ -7,6 +7,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\StudentResults;
 use App\Models\Marks;
+use App\Models\StatTypes;
+use Illuminate\Support\Str;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
@@ -28,6 +30,30 @@ class CaStatsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $schoolBranchId = $this->exam->school_branch_id;
+        $schoolYear = $this->exam->school_year;
+        $examTypeId = $this->exam->exam_type_id;
+        $year = now()->year;
+        $month = now()->month;
+        $kpiNames = [
+            'ca_exam_total_students_accessed',
+            'ca_exam_total_students_passed',
+            'ca_exam_total_students_failed',
+            'ca_exam_pass_rate',
+            'ca_exam_fail_rate',
+            'average_ca_exam_total_score',
+            'average_ca_exam_total_gpa',
+            'percentage_increase_ca_pass_rate',
+            'percentage_decrease_ca_fail_rate',
+            'ca_exam_course_fail_rates',
+            'ca_exam_course_pass_rates',
+            'ca_exam_course_potential_resit_distribution',
+            'ca_total_number_of_potential_resits',
+            'ca_exam_grades_distribution',
+            'ca_exam_course_score_distribution',
+            'ca_exam_course_best_performas',
+
+        ];
         $examResults = StudentResults::where("exam_id", $this->exam->id)->get();
         $studentMarks = Marks::where("exam_id", $this->exam->id)->with('courses')->get();
         $studentResultsHistory = StudentResults::where("specialty_id", $this->exam->specialty_id)
@@ -37,14 +63,47 @@ class CaStatsJob implements ShouldQueue
             }])->get();
     }
 
+      private function prepareStatData(
+        ?StatTypes $kpi,
+        string $examId,
+        string $schoolBranchId,
+        string $studentId,
+        string $schoolYear,
+        int $month,
+        int $year,
+        string $valueType,
+        mixed $value
+    ): array {
+        $data = [
+            'id' => Str::uuid(),
+            'exam_id' => $examId,
+            'school_branch_id' => $schoolBranchId,
+            'student_id' => $studentId,
+            // Initialize all value columns to null first
+            'decimal_value' => null,
+            'integer_value' => null,
+            'json_value' => null,
+            'stat_type_id' => $kpi->id ?? null,
+            'school_year' => $schoolYear,
+            'month' => $month,
+            'year' => $year,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        // Assign the actual value to the correct column
+        $data[$valueType] = $value;
+
+        return $data;
+    }
     public function accessmentStats($examResults)
     {
         $totalStudents = count($examResults);
         $passedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'pass';
+            return $result['exam_status'] === 'passed';
         });
         $failedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'fail';
+            return $result['exam_status'] === 'failed';
         });
         return [
             'total_students' => $totalStudents,
@@ -56,7 +115,7 @@ class CaStatsJob implements ShouldQueue
     {
         $totalStudents = count($examResults);
         $passedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'pass';
+            return $result['exam_status'] === 'passed';
         });
         $totalStudents > 0 ? $passRate = (count($passedStudents) / $totalStudents) * 100 : $passRate = 0;
         return max(0.00, round($passRate, 2));
@@ -65,7 +124,7 @@ class CaStatsJob implements ShouldQueue
     {
         $totalStudents = count($examResults);
         $failedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'fail';
+            return $result['exam_status'] === 'failed';
         });
         $totalStudents > 0 ? $failRate = (count($failedStudents) / $totalStudents) * 100 : $failRate = 0;
         return max(0.00, round($failRate, 2));
@@ -109,70 +168,29 @@ class CaStatsJob implements ShouldQueue
 
         return $kpis;
     }
-    public function analyzeGpaDistribution($currentExamResults)
-    {
-        $gpas = array_map(function ($result) {
-            return $result['gpa'];
-        }, $currentExamResults);
-        sort($gpas);
-        $totalStudents = count($gpas);
-        $top10Index = ceil($totalStudents * 0.90) - 1;
-        $bottom10Index = floor($totalStudents * 0.10) - 1;
-        $top10Group = array_slice($gpas, $top10Index);
-        $bottom10Group = array_slice($gpas, 0, $bottom10Index + 1);
-        $topStats = $this->calculateStatistics($top10Group);
-        $bottomStats = $this->calculateStatistics($bottom10Group);
-        return [
-            'top_10' => array_merge($topStats, ['gpas' => $top10Group]),
-            'bottom_10' => array_merge($bottomStats, ['gpas' => $bottom10Group]),
-        ];
-    }
-    private function calculateStatistics($gpas)
-    {
-        $count = count($gpas);
-        if ($count === 0) return [
-            'count' => 0,
-            'mean' => 0,
-            'median' => 0,
-            'range' => 0,
-            'standard_deviation' => 0,
-        ];
-
-        $mean = array_sum($gpas) / $count;
-        $median = $this->calculateMedian($gpas);
-        $range = max($gpas) - min($gpas);
-        $stdDeviation = $this->calculateStandardDeviation($gpas, $mean);
-
-        return [
-            'count' => $count,
-            'mean' => round($mean, 2),
-            'median' => round($median, 2),
-            'range' => round($range, 2),
-            'standard_deviation' => round($stdDeviation, 2),
-        ];
-    }
-    private function calculateMedian($gpas)
-    {
-        $count = count($gpas);
-        $middle = floor(($count - 1) / 2);
-        if ($count % 2) {
-            return $gpas[$middle]; // odd count
-        } else {
-            return ($gpas[$middle] + $gpas[$middle + 1]) / 2.0; // even count
+    public function gradesDistributionByExam($studentMarks, $letterGrades){
+      $distribution = [];
+        foreach ($letterGrades as $gradeDefinition) {
+            $letterGrade = $gradeDefinition->letter_grade;
+            $distribution[$letterGrade] = [
+                'letter_grade' => $letterGrade,
+                'count' => 0,
+            ];
         }
-    }
-    private function calculateStandardDeviation($gpas, $mean)
-    {
-        $sumOfSquares = array_reduce($gpas, function ($carry, $gpa) use ($mean) {
-            return $carry + pow($gpa - $mean, 2);
-        }, 0);
-        return sqrt($sumOfSquares / count($gpas));
-    }
+        foreach ($studentMarks as $mark) {
+            $assignedGrade = $mark->grade ?? null;
+
+            if ($assignedGrade && isset($distribution[$assignedGrade])) {
+                $distribution[$assignedGrade]['count']++;
+            }
+        }
+        return array_values($distribution);
+     }
     public function analyzeCourseStatistics($studentMarks)
     {
         $courseStats = [];
         foreach ($studentMarks as $result) {
-            $courseName = $result['course_name'];
+            $courseName = $result['course_title'];
             $examStatus = $result['grade_status'];
             if (!isset($courseStats[$courseName])) {
                 $courseStats[$courseName] = [
@@ -203,7 +221,7 @@ class CaStatsJob implements ShouldQueue
         foreach ($studentMarks as $mark) {
             $courseId = $mark->course_id;
             $totalScore = $mark->total_score;
-            $courseName = $mark->courses->name;
+            $courseName = $mark->courses->course_title;
             if (!isset($courseScores[$courseId])) {
                 $courseScores[$courseName] = [
                     'highest_score' => $totalScore,
@@ -232,10 +250,10 @@ class CaStatsJob implements ShouldQueue
         foreach ($studentMarks as $mark) {
             if ($mark->resit_status === 'high_resit_potential') {
                 $courseId = $mark->course_id;
-                $courseName = $mark->courses->name;
+                $courseName = $mark->courses->course_title;
                 if (!isset($potResitsPerCourse[$courseId])) {
                     $potResitsPerCourse[] = [
-                        'course_name' => $courseName,
+                        'course_title' => $courseName,
                         'resit_count' => 1,
                     ];
                 } else {
@@ -251,10 +269,10 @@ class CaStatsJob implements ShouldQueue
         $courseData = [];
         foreach ($studentMarks as $mark) {
             $courseId = $mark->course_id;
-            $courseName = $mark->courses->name;
+            $courseName = $mark->courses->course_title;
             if (!isset($courseData[$courseId])) {
                 $courseData[$courseId] = [
-                    'course_name' => $courseName,
+                    'course_title' => $courseName,
                     'total_students' => 0,
                     'passed_students' => 0,
                 ];
@@ -270,7 +288,7 @@ class CaStatsJob implements ShouldQueue
             $passedStudents = $data['passed_students'];
             $passRate = $totalStudents > 0 ? ($passedStudents / $totalStudents) * 100 : 0;
             $passRates[] = [
-                'course_name' => $data['course_name'],
+                'course_title' => $data['course_title'],
                 'pass_rate' => round($passRate, 2),
             ];
         }
@@ -282,10 +300,10 @@ class CaStatsJob implements ShouldQueue
         $courseData = [];
         foreach ($studentMarks as $mark) {
             $courseId = $mark->course_id;
-            $courseName = $mark->courses->name;
+            $courseName = $mark->courses->course_title;
             if (!isset($courseData[$courseId])) {
                 $courseData[$courseId] = [
-                    'course_name' => $courseName,
+                    'course_title' => $courseName,
                     'total_students' => 0,
                     'fail_students' => 0,
                 ];
@@ -301,7 +319,7 @@ class CaStatsJob implements ShouldQueue
             $failedStudents = $data['passed_students'];
             $failRate = $totalStudents > 0 ? ($failedStudents / $totalStudents) * 100 : 0;
             $failRates[] = [
-                'course_name' => $data['course_name'],
+                'course_title' => $data['course_title'],
                 'fail_rate' => round($failRate, 2),
             ];
         }

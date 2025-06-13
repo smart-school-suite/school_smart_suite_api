@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Jobs\SendEventEmailNotificationJob;
+use App\Jobs\EmailNotificationJobs\EmailEventNotificationJob;
 use App\Models\EventAuthor;
 use App\Models\EventInvitedCustomGroups;
 use App\Models\EventInvitedMember;
@@ -32,7 +32,7 @@ class CreateEventService
      * @return array An array containing event details and receiver count.
      * @throws Throwable If an error occurs during event creation.
      */
-    public function createEvent(array $schoolEventData, object $currentSchool, array $authUserData): array
+    public function createEvent(array $schoolEventData, object $currentSchool, array $authUserData, $eventBackgroundImg): array
     {
         $targetUserRecords = [];
         $customGroupDataToInsert = [];
@@ -55,7 +55,7 @@ class CreateEventService
                 $this->processPresetGroupTargets($schoolEventData['preset_group_ids'], $currentSchool, $eventId, $targetUserRecords, $presetGroupDataToInsert);
             }
             $uniqueTargetRecords = collect($targetUserRecords)
-                ->unique(fn ($item) => $item['actorable_id'] . '_' . $item['actorable_type'])
+                ->unique(fn($item) => $item['actorable_id'] . '_' . $item['actorable_type'])
                 ->values()
                 ->all();
 
@@ -63,7 +63,7 @@ class CreateEventService
 
             $inviteeCount = count($targetUserRecords);
 
-            $this->createSchoolEvent($schoolEventData, $eventId, $currentSchool, $inviteeCount);
+            $this->createSchoolEvent($schoolEventData, $eventId, $currentSchool, $inviteeCount, $eventBackgroundImg);
 
             $this->insertUniqueEventInvitedMembers($targetUserRecords, $eventId, $currentSchool);
 
@@ -79,13 +79,12 @@ class CreateEventService
 
             DB::commit();
 
-            // 8. Dispatch notification job after successful transaction.
             $this->dispatchNotificationJob($status, $publishedAt, $eventId);
 
             return [
                 'event_title' => $schoolEventData['title'],
-                'event_description' => $schoolEventData['description'],
-                'number_of_recipients' => count($targetUserRecords),
+                'event_description' => $schoolEventData['description'] ?? null,
+                'number_of_recipients' => count($targetUserRecords) ?? 0,
             ];
         } catch (Throwable $e) {
             DB::rollBack();
@@ -202,7 +201,7 @@ class CreateEventService
                 case "masters-one-students":
                 case "masters-two-students":
                     $levelName = $this->mapPresetTargetToLevelName($presetTarget);
-                    $ids = Student::whereHas('level', fn ($query) => $query->where('name', $levelName))
+                    $ids = Student::whereHas('level', fn($query) => $query->where('name', $levelName))
                         ->where('school_branch_id', $currentSchool->id)
                         ->pluck('id')
                         ->toArray();
@@ -251,7 +250,7 @@ class CreateEventService
             'bachelor-students' => "Bachelor's Degree Programs",
             'masters-one-students' => "Master's Degree One",
             'masters-two-students' => "Master's Degree Two",
-            default => '', // Should not happen with current switch logic
+            default => '',
         };
     }
 
@@ -298,9 +297,6 @@ class CreateEventService
         if (empty($targetUserRecords)) {
             return;
         }
-
-        // The unique filtering is already done in the createEvent method before calling this.
-        // This method now just performs the chunked insert.
         foreach (array_chunk($targetUserRecords, 1000) as $chunk) {
             EventInvitedMember::insert($chunk);
         }
@@ -315,7 +311,7 @@ class CreateEventService
      * @param int $inviteeCount
      * @return void
      */
-    private function createSchoolEvent(array $schoolEventData, string $eventId, object $currentSchool, int $inviteeCount): void
+    private function createSchoolEvent(array $schoolEventData, string $eventId, object $currentSchool, int $inviteeCount, $eventBackgroundImg): void
     {
         $status = $schoolEventData['status'];
         $publishedAt = null;
@@ -329,20 +325,32 @@ class CreateEventService
         SchoolEvent::create([
             'id' => $eventId,
             'title' => $schoolEventData['title'],
-            'description' => $schoolEventData['description'],
-            'organizer' => $schoolEventData['organizer'],
-            'location' => $schoolEventData['location'],
+            'description' => $schoolEventData['description'] ?? null,
+            'organizer' => $schoolEventData['organizer'] ?? null,
+            'location' => $schoolEventData['location'] ?? null,
             'status' => $status,
-            'start_date' => $schoolEventData['start_date'],
-            'end_date' => $schoolEventData['end_date'],
-            'invitee_count' => $inviteeCount,
-            'published_at' => $publishedAt,
+            'background_image' => $this->handlePictureUpload($eventBackgroundImg) ?? null,
+            'start_date' => $schoolEventData['start_date'] ?? null,
+            'end_date' => $schoolEventData['end_date'] ?? null,
+            'invitee_count' => $inviteeCount ?? null,
+            'published_at' => $publishedAt ?? null,
             'notification_sent_at' => null,
-            'expires_at' => $schoolEventData['end_date'],
+            'expires_at' => $schoolEventData['end_date'] ?? null,
             'school_branch_id' => $currentSchool->id,
-            'event_category_id' => Arr::get($schoolEventData, 'event_category_id'),
-            'tag_id' => Arr::get($schoolEventData, 'tag_id'),
+            'event_category_id' => Arr::get($schoolEventData, 'event_category_id') ?? null,
+            'tag_id' => Arr::get($schoolEventData, 'tag_id') ?? null,
         ]);
+    }
+
+    private function handlePictureUpload($eventImage)
+    {
+        if($eventImage){
+          $fileName = time() . '.' . $eventImage->getClientOriginalExtension();
+          $eventImage->storeAs('public/EventBackgroundImg', $fileName);
+          return $fileName;
+        }
+        return null;
+
     }
 
     /**
@@ -384,7 +392,7 @@ class CreateEventService
 
             Log::info("Dispatching SendEventEmailNotificationJob for Event ID: {$eventId} with delay: {$delayInSeconds} seconds.");
 
-            SendEventEmailNotificationJob::dispatch($eventId)
+            EmailEventNotificationJob::dispatch($eventId)
                 ->delay(now()->addSeconds($delayInSeconds));
         }
     }

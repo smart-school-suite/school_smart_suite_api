@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth\Teacher;
 
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Jobs\SendOtpJob;
 use App\Models\OTP;
 use Illuminate\Support\Str;
@@ -34,7 +35,7 @@ class ResetTeacherPasswordService
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+        SendOTPViaEmailJob::dispatch($passwordResetData['email'], $otp);
         return ['otp_header' => $otp_header];
     }
     public function verifyOtp($otp, $tokenHeader)

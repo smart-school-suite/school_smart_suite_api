@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Jobs\SendEmailAnnouncementNotificationJob;
+use App\Jobs\EmailNotificationJobs\EmailAnnouncementNotificationJob;
 use App\Models\Announcement;
 use App\Models\AnnouncementAuthor;
 use App\Models\AnnouncementTargetUser;
@@ -177,7 +177,7 @@ class CreateAnnouncementService
                 Log::info("time now: $timenow");
                 Log::info("Dispatching SendEmailAnnouncementNotificationJob for Announcement ID: {$announcementId} with delay: {$delayInSeconds} seconds.");
 
-                SendEmailAnnouncementNotificationJob::dispatch($announcementId)
+                EmailAnnouncementNotificationJob::dispatch($announcementId)
                     ->delay(Carbon::now()->addSeconds($delayInSeconds));
             }
 

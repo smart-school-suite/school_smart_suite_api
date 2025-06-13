@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DataCreationJob\CreateResitCandidateJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentResults;
@@ -12,7 +13,6 @@ use App\Models\Marks;
 use App\Models\Examtype;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
-use App\Jobs\CreateResitExamJob;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
 class AddExamScoresService
@@ -159,7 +159,7 @@ class AddExamScoresService
     {
         $exam->increment('evaluated_candidate_number');
         if ($exam->evaluated_candidate_number === $exam->expected_candidate_number) {
-            dispatch(new CreateResitExamJob($exam));
+            dispatch(new CreateResitCandidateJob($exam));
         }
     }
 

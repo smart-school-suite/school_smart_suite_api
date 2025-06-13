@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\Exams;
@@ -32,13 +33,14 @@ class AddCaScoresService
     {
         $results = [];
         $examDetails = null;
-
+        $studentTarget = null;
         DB::beginTransaction();
         try {
             foreach ($studentScores as $scoreData) {
                 // Retrieve the student based on school and student ID.
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
                 // Retrieve the exam details.
+                $studentTarget = $student;
                 $exam = Exams::findOrFail($scoreData['exam_id']);
                 $examDetails = $exam;
 
@@ -72,6 +74,9 @@ class AddCaScoresService
             $this->addStudentResultRecords($student, $currentSchool, $totalScoreAndGpa, $examDetails, $results, $examStatus);
 
             DB::commit();
+             Log::info("exam_details", $examDetails->toArray());
+             Log::info("student_details", $studentTarget->toArray());
+            StudentCaStatsJob::dispatch($examDetails, $studentTarget);
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
@@ -187,10 +192,10 @@ class AddCaScoresService
 
         return [
             'letterGrade' => 'F',
-            'gradeStatus' => 'fail',
+            'gradeStatus' => 'failed',
             'gratification' => 'poor',
             'score' => $score,
-            'resitStatus' => 'not_applicable', // CA failure might not directly lead to resit
+            'resitStatus' => 'high_resit_potential', // CA failure might not directly lead to resit
             'gradePoints' => 0.0,
         ];
     }

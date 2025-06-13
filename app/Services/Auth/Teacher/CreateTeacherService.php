@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth\Teacher;
 
-use App\Jobs\SendPasswordMailJob;
+use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
 use App\Models\Teacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +28,7 @@ class CreateTeacherService
             $instructor->school_branch_id = $currentSchool->id;
             $instructor->save();
             $instructor->assignRole('teacher');
-            SendPasswordMailJob::dispatch($password, $teacherData['email']);
+            SendPasswordVaiMailJob::dispatch($password, $teacherData['email']);
             DB::commit();
             return $instructor;
         } catch (Exception $e) {

@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth\Student;
 
-use App\Jobs\SendPasswordMailJob;
+use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
 use App\Models\Specialty;
 use App\Models\Student;
 use App\Models\TuitionFees;
@@ -55,7 +55,7 @@ class CreateStudentService
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,
             ]);
-             SendPasswordMailJob::dispatch( $password, $studentData["email"]);
+            SendPasswordVaiMailJob::dispatch( $password, $studentData["email"]);
              $student->assignRole('student');
             return $student;
         } catch (QueryException $e) {

@@ -1,13 +1,13 @@
 <?php
 
 namespace App\Services\Auth\SchoolAdmin;
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Models\OTP;
-use App\Jobs\SendOtpJob;
 class LoginSchoolAdminService
 {
     // Implement your logic here
@@ -32,7 +32,7 @@ class LoginSchoolAdminService
             'expires_at' => $expiresAt,
         ]);
 
-        SendOtpJob::dispatch($user->email, $otp);
+        SendOTPViaEmailJob::dispatch($user->email, $otp);
 
         return ['otp_token_header'=>$otp_header];
     }

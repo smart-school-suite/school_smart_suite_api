@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DataCreationJob\CreateExamCandidateJob;
 use App\Models\Exams;
 use Illuminate\Support\Str;
 use App\Models\LetterGrade;
@@ -36,7 +37,7 @@ class ExamService
         $exam->specialty_id = $specialty->id;
         $exam->student_batch_id = $data["student_batch_id"];
         $exam->save();
-        CreateExamCandidatesJob::dispatch($data['specialty_id'], $specialty->level_id, $data['student_batch_id'], $examId);
+        CreateExamCandidateJob::dispatch($data['specialty_id'], $specialty->level_id, $data['student_batch_id'], $examId);
         return $exam;
 
     }

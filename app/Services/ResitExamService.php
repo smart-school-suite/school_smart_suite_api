@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DataCreationJob\CreateResitCandidateJob;
 use App\Models\ResitExam;
 use App\Jobs\CreateResitCandidates;
 use App\Models\SchoolGradesConfig;
@@ -22,7 +23,7 @@ class ResitExamService
             }
 
             $resit->update($updateData);
-            dispatch(new CreateResitCandidates($resit));
+            dispatch(new CreateResitCandidateJob($resit));
             DB::commit();
             return $resit;
         } catch (Exception $e) {

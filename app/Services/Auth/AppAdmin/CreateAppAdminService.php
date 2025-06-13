@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Auth\AppAdmin;
+use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
 use App\Jobs\SendPasswordMailJob;
 use App\Models\Edumanageadmin;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +16,7 @@ class CreateAppAdminService
         $appAdmin->phone_number = $adminData["phone_number"];
         $appAdmin->password = Hash::make($password);
         $appAdmin->save();
-        SendPasswordMailJob::dispatch($adminData['email'], $password);
+        SendPasswordVaiMailJob::dispatch($adminData['email'], $password);
         return $appAdmin;
     }
 

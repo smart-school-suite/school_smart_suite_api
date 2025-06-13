@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth\AppAdmin;
 
+use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Jobs\SendOtpJob;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Edumanageadmin;
@@ -33,7 +34,7 @@ class LoginAppAdminService
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-        SendOtpJob::dispatch($loginData['email'], $otp);
+        SendOTPViaEmailJob::dispatch($loginData['email'], $otp);
         return ['otp_token_header'=>$otp_header];
     }
 }

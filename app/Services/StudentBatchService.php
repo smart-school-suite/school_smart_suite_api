@@ -55,7 +55,7 @@ class StudentBatchService
     public function deleteStudentBatch($studentBatchId, $currentSchool)
     {
         $studentBatch = Studentbatch::where("school_branch_id", $currentSchool->id)->find($studentBatchId);
-        if ($studentBatch) {
+        if (!$studentBatch) {
             return ApiResponseService::error("Student Batch Not Found", null, 404);
         }
         $studentBatch->delete();

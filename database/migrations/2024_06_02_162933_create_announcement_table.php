@@ -37,6 +37,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('title');
             $table->text('content');
+            $table->integer('reciepient_count')->default(0);
             $table->enum('status', ['draft', 'scheduled', 'active', 'expired'])->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->timestamp('notification_sent_at')->nullable();
