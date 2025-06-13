@@ -2,13 +2,19 @@
 
 namespace App\Jobs\StatisticalJobs\AcademicJobs;
 
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Marks;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use App\Models\StudentResults;
+use App\Models\Marks;
+use App\Models\StatTypes;
+use App\Models\LetterGrade;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 class ExamStatsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -27,284 +33,339 @@ class ExamStatsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $examResults = StudentResults::where("exam_id", $this->exam->id)->get();
-        $studentMarks = Marks::where("exam_id", $this->exam->id)->with('courses')->get();
-        $studentResultsHistory = StudentResults::where("specialty_id", $this->exam->specialty_id)
-            ->where("level_id", $this->exam->level_id)
-            ->with(['exam' => function ($query) {
-                $query->where("exam_type_id", $this->exam->exam_type_id);
-            }])->get();
-    }
+         // Extract relevant exam properties for cleaner access
+        $schoolBranchId = $this->exam->school_branch_id;
+        $schoolYear = $this->exam->school_year;
+        $year = now()->year;
+        $month = now()->month;
 
-    public function accessmentStats($examResults)
-    {
-        $totalStudents = count($examResults);
-        $passedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'pass';
-        });
-        $failedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'fail';
-        });
-        return [
-            'total_students' => $totalStudents,
-            'passed_students' => count($passedStudents),
-            'failed_students' => count($failedStudents),
-        ];
-    }
-    public function examPassRate($examResults)
-    {
-        $totalStudents = count($examResults);
-        $passedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'pass';
-        });
-        $totalStudents > 0 ? $passRate = (count($passedStudents) / $totalStudents) * 100 : $passRate = 0;
-        return max(0.00, round($passRate, 2));
-    }
-    public function examFailRate($examResults)
-    {
-        $totalStudents = count($examResults);
-        $failedStudents = array_filter($examResults, function ($result) {
-            return $result['exam_status'] === 'fail';
-        });
-        $totalStudents > 0 ? $failRate = (count($failedStudents) / $totalStudents) * 100 : $failRate = 0;
-        return max(0.00, round($failRate, 2));
-    }
-    public function averageTotalScore($examResults)
-    {
-        $totalScore = array_reduce($examResults, function ($carry, $result) {
-            return $carry + $result['total_score'];
-        }, 0);
-        $totalStudents = count($examResults);
-        $totalStudents > 0 ? $averageScore = $totalScore / $totalStudents : $averageScore = 0;
-        return max(0.00, round($averageScore, 2));
-    }
-    public function averageGpa($examResults)
-    {
-        $totalGpa = array_reduce($examResults, function ($carry, $result) {
-            return $carry + $result['gpa'];
-        }, 0);
-        $totalStudents = count($examResults);
-        $totalStudents > 0 ? $averageGpa = $totalGpa / $totalStudents : $averageGpa = 0;
-        return max(0.00, round($averageGpa, 2));
-    }
-    public function calculateHistoricalPerformanceKpis($currentExamResults, $examResultsHistory)
-    {
-        $currentPassRate = $this->examPassRate($currentExamResults);
-        $currentFailRate = $this->examFailRate($currentExamResults);
-        $currentAverageScore = $this->averageTotalScore($currentExamResults);
-        $historicalPassRate = $this->examPassRate($examResultsHistory);
-        $historicalFailRate = $this->examFailRate($examResultsHistory);
-        $historicalAverageScore = $this->averageTotalScore($examResultsHistory);
-        $improvementPassRate = $currentPassRate - $historicalPassRate;
-        $improvementFailRate = $currentFailRate - $historicalFailRate;
-        $kpis = [
-            'current_pass_rate' => $currentPassRate,
-            'current_fail_rate' => $currentFailRate,
-            'improvement_pass_rate' => round($improvementPassRate, 2),
-            'improvement_fail_rate' => round($improvementFailRate, 2),
-            'current_average_score' => round($currentAverageScore, 2),
-            'historical_average_score' => round($historicalAverageScore, 2),
+        // Define the KPI names we are interested in.
+        // These should correspond to 'program_name' in the stat_types table.
+        $kpiNames = [
+            'exam_total_students_accessed',
+            'exam_total_students_passed',
+            'exam_total_students_failed',
+            'exam_pass_rate',
+            'exam_fail_rate',
+            'average_exam_total_score',
+            'average_exam_gpa',
+            'exam_course_fail_rates',
+            'exam_course_pass_rates',
+            'exam_course_fail_distribution',
+            'exam_course_pass_distribution',
+            'exam_course_resit_distribution',
+            'exam_total_number_of_resits',
+            'exam_grades_distribution',
+            'exam_course_score_distribution',
         ];
 
-        return $kpis;
-    }
-    public function analyzeGpaDistribution($currentExamResults)
-    {
-        $gpas = array_map(function ($result) {
-            return $result['gpa'];
-        }, $currentExamResults);
-        sort($gpas);
-        $totalStudents = count($gpas);
-        $top10Index = ceil($totalStudents * 0.90) - 1;
-        $bottom10Index = floor($totalStudents * 0.10) - 1;
-        $top10Group = array_slice($gpas, $top10Index);
-        $bottom10Group = array_slice($gpas, 0, $bottom10Index + 1);
-        $topStats = $this->calculateStatistics($top10Group);
-        $bottomStats = $this->calculateStatistics($bottom10Group);
-        return [
-            'top_10' => array_merge($topStats, ['gpas' => $top10Group]),
-            'bottom_10' => array_merge($bottomStats, ['gpas' => $bottom10Group]),
-        ];
-    }
-    private function calculateStatistics($gpas)
-    {
-        $count = count($gpas);
-        if ($count === 0) return [
-            'count' => 0,
-            'mean' => 0,
-            'median' => 0,
-            'range' => 0,
-            'standard_deviation' => 0,
-        ];
+        // Retrieve necessary data efficiently
+        // Using `toBase()` to work with generic objects/arrays for simpler calculations,
+        // reducing Eloquent model overhead in intense loops if relationships aren't needed there.
+        $examResults = StudentResults::where("exam_id", $this->exam->id)->get()->toBase();
+        // Eager load 'course' relationship for Marks to avoid N+1 queries in loops
+        $studentMarks = Marks::where("exam_id", $this->exam->id)->with('course')->get()->toBase();
+        $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
+        $letterGrades = LetterGrade::all()->toBase();
 
-        $mean = array_sum($gpas) / $count;
-        $median = $this->calculateMedian($gpas);
-        $range = max($gpas) - min($gpas);
-        $stdDeviation = $this->calculateStandardDeviation($gpas, $mean);
+        $dataToInsert = [];
 
-        return [
-            'count' => $count,
-            'mean' => round($mean, 2),
-            'median' => round($median, 2),
-            'range' => round($range, 2),
-            'standard_deviation' => round($stdDeviation, 2),
-        ];
-    }
-    private function calculateMedian($gpas)
-    {
-        $count = count($gpas);
-        $middle = floor(($count - 1) / 2);
-        if ($count % 2) {
-            return $gpas[$middle]; // odd count
-        } else {
-            return ($gpas[$middle] + $gpas[$middle + 1]) / 2.0; // even count
-        }
-    }
-    private function calculateStandardDeviation($gpas, $mean)
-    {
-        $sumOfSquares = array_reduce($gpas, function ($carry, $gpa) use ($mean) {
-            return $carry + pow($gpa - $mean, 2);
-        }, 0);
-        return sqrt($sumOfSquares / count($gpas));
-    }
-    public function analyzeCourseStatistics($studentMarks)
-    {
-        $courseStats = [];
-        foreach ($studentMarks as $result) {
-            $courseName = $result['course_name'];
-            $examStatus = $result['grade_status'];
-            if (!isset($courseStats[$courseName])) {
-                $courseStats[$courseName] = [
-                    'total_students' => 0,
-                    'passed_students' => 0,
-                    'failed_students' => 0,
+        try {
+            DB::beginTransaction();
+
+            // --- 1. Overall Exam Statistics ---
+
+            $totalStudents = $examResults->count();
+            $passedStudentsCount = $examResults->where('exam_status', 'passed')->count();
+            $failedStudentsCount = $examResults->where('exam_status', 'failed')->count();
+
+            // Total Students Accessed
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_total_students_accessed'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $totalStudents
+            );
+
+            // Total Students Passed
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_total_students_passed'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $passedStudentsCount
+            );
+
+            // Total Students Failed
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_total_students_failed'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $failedStudentsCount
+            );
+
+            // Exam Pass Rate
+            $examPassRate = $totalStudents > 0 ? round(($passedStudentsCount / $totalStudents) * 100, 2) : 0.00;
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_pass_rate'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $examPassRate
+            );
+
+            // Exam Fail Rate
+            $examFailRate = $totalStudents > 0 ? round(($failedStudentsCount / $totalStudents) * 100, 2) : 0.00;
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_fail_rate'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $examFailRate
+            );
+
+            // Average Total Score
+            $totalScoreSum = $examResults->sum('total_score');
+            $examAverageTotalScore = $totalStudents > 0 ? round($totalScoreSum / $totalStudents, 2) : 0.00;
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('average_exam_total_score'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $examAverageTotalScore
+            );
+
+            // Average GPA
+            $totalGpaSum = $examResults->sum('gpa');
+            $examAverageGpa = $totalStudents > 0 ? round($totalGpaSum / $totalStudents, 2) : 0.00;
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('average_exam_gpa'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $examAverageGpa
+            );
+
+            // Grades Distribution by Exam
+            $examGradesDistribute = $this->gradesDistributionByExam($studentMarks, $letterGrades);
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_grades_distribution'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($examGradesDistribute)
+            );
+
+            // --- 2. Course-level Statistics ---
+            $courseStats = $this->analyzeCourseStatistics($studentMarks);
+
+            // Course Pass Rates
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_course_pass_rates'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($courseStats['pass_rates'])
+            );
+
+            // Course Fail Rates
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_course_fail_rates'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($courseStats['fail_rates'])
+            );
+
+            // Course Pass Distribution (more granular, if needed, otherwise 'pass_rates' already covers this)
+            // Assuming 'distribution' implies a detailed list of courses with their pass/fail counts, not just rates.
+            $coursePassDistribution = $studentMarks->groupBy('course.course_title')->map(function ($marksPerCourse, $courseTitle) {
+                return [
+                    'course_title' => $courseTitle,
+                    'total_students' => $marksPerCourse->count(),
+                    'passed_students' => $marksPerCourse->where('grade_status', 'pass')->count(),
                 ];
-            }
-            $courseStats[$courseName]['total_students']++;
-            if ($examStatus === 'pass') {
-                $courseStats[$courseName]['passed_students']++;
-            } else {
-                $courseStats[$courseName]['failed_students']++;
-            }
-        }
-        foreach ($courseStats as $courseName => $stats) {
-            $total = $stats['total_students'];
-            $passRate = $total > 0 ? ($stats['passed_students'] / $total) * 100 : 0;
-            $courseStats[$courseName]['pass_rate'] = round($passRate, 2);
-        }
+            })->values()->toArray();
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_course_pass_distribution'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($coursePassDistribution)
+            );
 
-        return $courseStats;
-    }
-    public function analyzeCourseScores($studentMarks)
-    {
-        $courseScores = [];
-
-        foreach ($studentMarks as $mark) {
-            $courseId = $mark->course_id;
-            $totalScore = $mark->total_score;
-            $courseName = $mark->courses->name;
-            if (!isset($courseScores[$courseId])) {
-                $courseScores[$courseName] = [
-                    'highest_score' => $totalScore,
-                    'lowest_score' => $totalScore,
+            // Course Fail Distribution
+            $courseFailDistribution = $studentMarks->groupBy('course.course_title')->map(function ($marksPerCourse, $courseTitle) {
+                return [
+                    'course_title' => $courseTitle,
+                    'total_students' => $marksPerCourse->count(),
+                    'failed_students' => $marksPerCourse->where('grade_status', 'fail')->count(),
                 ];
-            } else {
-                if ($totalScore > $courseScores[$courseId]['highest_score']) {
-                    $courseScores[$courseId]['highest_score'] = $totalScore;
-                }
-                if ($totalScore < $courseScores[$courseId]['lowest_score']) {
-                    $courseScores[$courseId]['lowest_score'] = $totalScore;
-                }
-            }
-        }
+            })->values()->toArray();
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_course_fail_distribution'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($courseFailDistribution)
+            );
 
-        return array_values($courseScores);
-    }
-    public function totalNumberOfResits($studentMarks)
-    {
-        return $studentMarks->where('resit_status', 'resit')->count();
-    }
-    public function courseWithNumberOfResits($studentMarks)
-    {
-        $resitsPerCourse = [];
 
-        foreach ($studentMarks as $mark) {
-            if ($mark->resit_status === 'resit') {
-                $courseId = $mark->course_id;
-                $courseName = $mark->courses->name;
-                if (!isset($resitsPerCourse[$courseId])) {
-                    $resitsPerCourse[] = [
-                        'course_name' => $courseName,
-                        'resit_count' => 1,
+            // Total Number of Potential Resits
+            $totalPotResits = $studentMarks->where('resit_status', 'resit')->count();
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_total_number_of_resits'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'decimal_value', $totalPotResits
+            );
+
+            // Course with Number of Potential Resits Distribution
+            $potResitsPerCourse = $studentMarks->where('resit_status', 'resit')
+                ->groupBy('course.course_title')
+                ->map(function ($marks, $courseTitle) {
+                    return [
+                        'course_title' => $courseTitle,
+                        'resit_count' => $marks->count(),
                     ];
-                } else {
-                    $resitsPerCourse[$courseId]['resit_count']++;
-                }
-            }
-        }
+                })
+                ->values()
+                ->toArray();
 
-        return array_values($resitsPerCourse);
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_course_resit_distribution'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($potResitsPerCourse)
+            );
+
+            // Course Score Distribution (Highest/Lowest Scores per course)
+            $courseScoreDistribution = $this->analyzeCourseScores($studentMarks);
+            $dataToInsert[] = $this->prepareStatData(
+                $kpis->get('exam_course_score_distribution'),
+                $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
+                'json_value', json_encode($courseScoreDistribution)
+            );
+
+            // --- 3. Batch Insert All Prepared Statistics ---
+            $chunkSize = 500;
+            foreach (array_chunk($dataToInsert, $chunkSize) as $chunk) {
+                DB::table('school_exam_stats')->insert($chunk);
+            }
+
+            DB::commit();
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error("Failed to process CA Exam Statistics for Exam ID: {$this->exam->id}. Error: " . $e->getMessage());
+            $this->fail($e);
+        }
     }
-    public function coursePassRates($studentMarks)
+      /**
+     * Prepares an array of statistical data for insertion into the database.
+     *
+     * @param StatTypes|null $kpi The StatTypes model instance for the KPI.
+     * @param string $examId The ID of the exam.
+     * @param string $schoolBranchId The ID of the school branch.
+     * @param string $schoolYear The school year.
+     * @param int $month The month of the statistic.
+     * @param int $year The year of the statistic.
+     * @param string $valueType The type of value ('decimal_value', 'integer_value', 'json_value').
+     * @param mixed $value The actual statistical value.
+     * @return array The prepared data array.
+     */
+    private function prepareStatData(
+        ?StatTypes $kpi,
+        string $examId,
+        string $schoolBranchId,
+        string $schoolYear,
+        int $month,
+        int $year,
+        string $valueType,
+        mixed $value
+    ): array {
+        $data = [
+            'id' => Str::uuid(),
+            'exam_id' => $examId,
+            'school_branch_id' => $schoolBranchId,
+            'decimal_value' => null,
+            'integer_value' => null,
+            'json_value' => null,
+            'stat_type_id' => $kpi->id ?? null,
+            'school_year' => $schoolYear,
+            'month' => $month,
+            'year' => $year,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        // Assign the actual value to the correct column based on $valueType
+        $data[$valueType] = $value;
+
+        return $data;
+    }
+
+    /**
+     * Calculates the distribution of grades across the entire exam based on student marks.
+     *
+     * @param \Illuminate\Support\Collection $studentMarks A collection of Marks models.
+     * @param \Illuminate\Support\Collection $letterGrades A collection of LetterGrade models.
+     * @return array An array of grade distributions, e.g., [['letter_grade' => 'A', 'count' => 10], ...].
+     */
+    public function gradesDistributionByExam($studentMarks, $letterGrades): array
     {
-        $courseData = [];
-        foreach ($studentMarks as $mark) {
-            $courseId = $mark->course_id;
-            $courseName = $mark->courses->name;
-            if (!isset($courseData[$courseId])) {
-                $courseData[$courseId] = [
-                    'course_name' => $courseName,
-                    'total_students' => 0,
-                    'passed_students' => 0,
-                ];
-            }
-            $courseData[$courseId]['total_students']++;
-            if ($mark->grade_status === 'pass') {
-                $courseData[$courseId]['passed_students']++;
-            }
-        }
-        $passRates = [];
-        foreach ($courseData as $courseId => $data) {
-            $totalStudents = $data['total_students'];
-            $passedStudents = $data['passed_students'];
-            $passRate = $totalStudents > 0 ? ($passedStudents / $totalStudents) * 100 : 0;
-            $passRates[] = [
-                'course_name' => $data['course_name'],
-                'pass_rate' => round($passRate, 2),
-            ];
-        }
+        // 1. Create a base distribution with all letter grades and 0 count
+        // This ensures all defined grades are present, even if no student got them.
+        $baseDistribution = $letterGrades->mapWithKeys(function ($gradeDefinition) {
+            return [$gradeDefinition->letter_grade => [
+                'letter_grade' => $gradeDefinition->letter_grade,
+                'count' => 0,
+            ]];
+        });
 
-        return $passRates;
+        // 2. Count actual grade occurrences from student marks
+        // pluck('grade') gets only the 'grade' values, filter() removes nulls, countBy() counts occurrences.
+        $actualGradeCounts = $studentMarks
+            ->pluck('grade')
+            ->filter()
+            ->countBy();
 
+        // 3. Merge actual counts into the base distribution
+        // Use map to iterate over the base distribution and update counts.
+        $finalDistribution = $baseDistribution->map(function ($gradeData, $letterGradeKey) use ($actualGradeCounts) {
+            // Get the count for this specific letter grade, defaulting to 0 if no students got it.
+            $count = $actualGradeCounts->get($letterGradeKey, 0);
+            $gradeData['count'] = $count; // Update the count in the copied array element
+            return $gradeData; // Return the modified array element
+        });
+
+        // Convert the collection back to an array of values for the final output.
+        return $finalDistribution->values()->toArray();
     }
-    public function courseFailRates($studentMarks) {
-        $courseData = [];
-        foreach ($studentMarks as $mark) {
-            $courseId = $mark->course_id;
-            $courseName = $mark->courses->name;
-            if (!isset($courseData[$courseId])) {
-                $courseData[$courseId] = [
-                    'course_name' => $courseName,
-                    'total_students' => 0,
-                    'fail_students' => 0,
-                ];
-            }
-            $courseData[$courseId]['total_students']++;
-            if ($mark->grade_status === 'fail') {
-                $courseData[$courseId]['fail_students']++;
-            }
-        }
-        $failRates = [];
-        foreach ($courseData as $courseId => $data) {
-            $totalStudents = $data['total_students'];
-            $failedStudents = $data['passed_students'];
-            $failRate = $totalStudents > 0 ? ($failedStudents / $totalStudents) * 100 : 0;
-            $failRates[] = [
-                'course_name' => $data['course_name'],
-                'fail_rate' => round($failRate, 2),
-            ];
-        }
 
-        return $failRates;
+    /**
+     * Analyzes course-specific pass and fail statistics.
+     *
+     * @param \Illuminate\Support\Collection $studentMarks A collection of Marks models, with 'course' relationship loaded.
+     * @return array An array containing 'pass_rates' and 'fail_rates' keyed by course title.
+     */
+    public function analyzeCourseStatistics($studentMarks): array
+    {
+        $courseGroupedMarks = $studentMarks->groupBy('course.course_title');
+
+        $passRates = $courseGroupedMarks->mapWithKeys(function ($marks, $courseTitle) {
+            $total = $marks->count();
+            $passed = $marks->where('grade_status', 'pass')->count();
+            $passRate = $total > 0 ? round(($passed / $total) * 100, 2) : 0.00;
+            return [$courseTitle => $passRate];
+        })->toArray();
+
+        $failRates = $courseGroupedMarks->mapWithKeys(function ($marks, $courseTitle) {
+            $total = $marks->count();
+            $failed = $marks->where('grade_status', 'fail')->count();
+            $failRate = $total > 0 ? round(($failed / $total) * 100, 2) : 0.00;
+            return [$courseTitle => $failRate];
+        })->toArray();
+
+        return [
+            'pass_rates' => $passRates,
+            'fail_rates' => $failRates,
+        ];
+    }
+
+    /**
+     * Analyzes the highest and lowest scores for each course.
+     *
+     * @param \Illuminate\Support\Collection $studentMarks A collection of Marks models, with 'course' relationship loaded.
+     * @return array An array of course score statistics, e.g., [['course_title' => 'Math', 'highest_score' => 95, 'lowest_score' => 30], ...].
+     */
+    public function analyzeCourseScores($studentMarks): array
+    {
+        $courseScores = $studentMarks->groupBy('course.course_title')->map(function ($marksPerCourse, $courseTitle) {
+            $scores = $marksPerCourse->pluck('total_score');
+            return [
+                'course_title' => $courseTitle,
+                'highest_score' => $scores->max(),
+                'lowest_score' => $scores->min(),
+            ];
+        })->values()->toArray();
+
+        return $courseScores;
     }
 }

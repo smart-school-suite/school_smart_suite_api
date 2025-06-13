@@ -133,68 +133,131 @@ class statTypeSeeder extends Seeder
 
         ];
 
-$kpiNamesThree = [
-    [
-        'name' => 'Student Percentage Increase Performance by Exam Type',
-        'program_name' => 'student_exam_percentage_increase_performance_by_exam_type'
-    ],
-    [
-        'name' => 'Student Percentage Increase Performance by Semester',
-        'program_name' => 'student_exam_percentage_increase_performance_by_semester'
-    ],
-    [
-        'name' => 'Student Percentage Decrease Performance by Exam Type',
-        'program_name' => 'student_exam_percentage_decrease_performance_by_exam_type'
-    ],
-    [
-        'name' => 'Student Percentage Decrease Performance by Semester',
-        'program_name' => 'student_exam_percentage_decrease_performance_by_semester'
-    ],
-    [
-        'name' => 'Student Courses SAT',
-        'program_name' => 'student_exam_courses_sat'
-    ],
-    [
-        'name' => 'Student Courses Passed',
-        'program_name' => 'student_exam_courses_passed'
-    ],
-    [
-        'name' => 'Student Courses Failed',
-        'program_name' => 'student_exam_courses_failed'
-    ],
-    [
-        'name' => 'Student Exam Pass Rate',
-        'program_name' => 'student_exam_pass_rate'
-    ],
-    [
-        'name' => 'Student Exam Fail Rate',
-        'program_name' => 'student_exam_fail_rate'
-    ],
-    [
-        'name' => 'Student GPA Changes by Exam and School Year',
-        'program_name' => 'student_exam_school_year_on_gpa_changes_by_exam'
-    ],
-    [
-        'name' => 'Student Total Score Changes by Exam and School Year',
-        'program_name' => 'student_exam_school_year_on_total_score_changes_by_exam'
-    ],
-    [
-        'name' => 'Student Resits',
-        'program_name' => 'student_exam_resits'
-    ],
-    [
-        'name' => 'Student No Resit',
-        'program_name' => 'student_exam_no_resit'
-    ],
-    [
-        'name' => 'Student Grades Distribution',
-        'program_name' => 'student_exam_grades_distribution'
-    ],
-    [
-        'name' => 'Student Marks Score Distribution by Course',
-        'program_name' => 'student_exam_marks_score_distribution_by_course'
-    ],
-];
+        $kpiNamesThree = [
+            [
+                'name' => 'Student Percentage Increase Performance by Exam Type',
+                'program_name' => 'student_exam_percentage_increase_performance_by_exam_type'
+            ],
+            [
+                'name' => 'Student Percentage Increase Performance by Semester',
+                'program_name' => 'student_exam_percentage_increase_performance_by_semester'
+            ],
+            [
+                'name' => 'Student Percentage Decrease Performance by Exam Type',
+                'program_name' => 'student_exam_percentage_decrease_performance_by_exam_type'
+            ],
+            [
+                'name' => 'Student Percentage Decrease Performance by Semester',
+                'program_name' => 'student_exam_percentage_decrease_performance_by_semester'
+            ],
+            [
+                'name' => 'Student Courses SAT',
+                'program_name' => 'student_exam_courses_sat'
+            ],
+            [
+                'name' => 'Student Courses Passed',
+                'program_name' => 'student_exam_courses_passed'
+            ],
+            [
+                'name' => 'Student Courses Failed',
+                'program_name' => 'student_exam_courses_failed'
+            ],
+            [
+                'name' => 'Student Exam Pass Rate',
+                'program_name' => 'student_exam_pass_rate'
+            ],
+            [
+                'name' => 'Student Exam Fail Rate',
+                'program_name' => 'student_exam_fail_rate'
+            ],
+            [
+                'name' => 'Student GPA Changes by Exam and School Year',
+                'program_name' => 'student_exam_school_year_on_gpa_changes_by_exam'
+            ],
+            [
+                'name' => 'Student Total Score Changes by Exam and School Year',
+                'program_name' => 'student_exam_school_year_on_total_score_changes_by_exam'
+            ],
+            [
+                'name' => 'Student Resits',
+                'program_name' => 'student_exam_resits'
+            ],
+            [
+                'name' => 'Student No Resit',
+                'program_name' => 'student_exam_no_resit'
+            ],
+            [
+                'name' => 'Student Grades Distribution',
+                'program_name' => 'student_exam_grades_distribution'
+            ],
+            [
+                'name' => 'Student Marks Score Distribution by Course',
+                'program_name' => 'student_exam_marks_score_distribution_by_course'
+            ],
+        ];
+
+        $kpiNamesFive = [
+            [
+                'name' => 'Total Students Accessed',
+                'program_name' => 'exam_total_students_accessed'
+            ],
+            [
+                'name' => 'Total Students Passed',
+                'program_name' => 'exam_total_students_passed'
+            ],
+            [
+                'name' => 'Total Students Failed',
+                'program_name' => 'exam_total_students_failed'
+            ],
+            [
+                'name' => 'Pass Rate',
+                'program_name' => 'exam_pass_rate'
+            ],
+            [
+                'name' => 'Fail Rate',
+                'program_name' => 'exam_fail_rate'
+            ],
+            [
+                'name' => 'Average Total Score',
+                'program_name' => 'average_exam_total_score'
+            ],
+            [
+                'name' => 'Average GPA',
+                'program_name' => 'average_exam_gpa'
+            ],
+            [
+                'name' => 'Course Fail Rates',
+                'program_name' => 'exam_course_fail_rates'
+            ],
+            [
+                'name' => 'Course Pass Rates',
+                'program_name' => 'exam_course_pass_rates'
+            ],
+            [
+                'name' => 'Course Fail Distribution',
+                'program_name' => 'exam_course_fail_distribution'
+            ],
+            [
+                'name' => 'Course Pass Distribution',
+                'program_name' => 'exam_course_pass_distribution'
+            ],
+            [
+                'name' => 'Course Resit Distribution',
+                'program_name' => 'exam_course_resit_distribution'
+            ],
+            [
+                'name' => 'Total Number of Resits',
+                'program_name' => 'exam_total_number_of_resits'
+            ],
+            [
+                'name' => 'Grades Distribution',
+                'program_name' => 'exam_grades_distribution'
+            ],
+            [
+                'name' => 'Course Score Distribution',
+                'program_name' => 'exam_course_score_distribution'
+            ],
+        ];
         foreach ($kpiNamesThree as $kpiName) {
             DB::table('stat_types')->insert(
                 [

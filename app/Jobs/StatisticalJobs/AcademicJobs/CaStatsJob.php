@@ -11,7 +11,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentResults;
 use App\Models\Marks;
-use App\Models\Exams;
 use App\Models\StatTypes;
 use App\Models\LetterGrade;
 use Illuminate\Support\Facades\Log;
