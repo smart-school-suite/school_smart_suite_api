@@ -67,7 +67,70 @@ class statTypeSeeder extends Seeder
                 'program_name' => 'grades_distribution'
              ]
         ];
-        foreach($kpiNames as $kpiName){
+
+        $kpiNamesTwo = [
+    [
+        'name' => 'CA Exam Total Students Accessed',
+        'program_name' => 'ca_exam_total_students_accessed'
+    ],
+    [
+        'name' => 'CA Exam Total Students Passed',
+        'program_name' => 'ca_exam_total_students_passed'
+    ],
+    [
+        'name' => 'CA Exam Total Students Failed',
+        'program_name' => 'ca_exam_total_students_failed'
+    ],
+    [
+        'name' => 'CA Exam Pass Rate',
+        'program_name' => 'ca_exam_pass_rate'
+    ],
+    [
+        'name' => 'CA Exam Fail Rate',
+        'program_name' => 'ca_exam_fail_rate'
+    ],
+    [
+        'name' => 'CA Exam Average Total Score',
+        'program_name' => 'average_ca_exam_total_score'
+    ],
+    [
+        'name' => 'CA Exam Average GPA',
+        'program_name' => 'average_ca_exam_gpa'
+    ],
+    [
+        'name' => 'CA Exam Course Fail Rates',
+        'program_name' => 'ca_exam_course_fail_rates'
+    ],
+    [
+        'name' => 'CA Exam Course Pass Rates',
+        'program_name' => 'ca_exam_course_pass_rates'
+    ],
+    [
+        'name' => 'CA Exam Course Fail Distribution',
+        'program_name' => 'ca_exam_course_fail_distribution'
+    ],
+    [
+        'name' => 'CA Exam Course Pass Distribution',
+        'program_name' => 'ca_exam_course_pass_distribution'
+    ],
+    [
+        'name' => 'CA Exam Potential Resit Distribution',
+        'program_name' => 'ca_exam_course_potential_resit_distribution'
+    ],
+    [
+        'name' => 'CA Exam Total Potential Resits',
+        'program_name' => 'ca_total_number_of_potential_resits'
+    ],
+    [
+        'name' => 'CA Exam Grades Distribution',
+        'program_name' => 'ca_exam_grades_distribution'
+    ],
+    [
+        'name' => 'CA Exam Course Score Distribution',
+        'program_name' => 'ca_exam_course_score_distribution'
+    ],
+];
+        foreach($kpiNamesTwo as $kpiName){
             DB::table('stat_types')->insert(
                 [
                     'id' => Str::uuid(),
