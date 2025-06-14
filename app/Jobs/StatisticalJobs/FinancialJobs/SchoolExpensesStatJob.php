@@ -4,25 +4,30 @@ namespace App\Jobs\StatisticalJobs\FinancialJobs;
 
 use App\Models\SchoolExpenses;
 use App\Models\Student;
+use App\Models\StatTypes;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
+
 class SchoolExpensesStatJob implements ShouldQueue
 {
-     use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    public $schoolExpenses;
-    public function __construct(SchoolExpenses $schoolExpenses)
+    public $schoolExpensesId;
+    public $schoolBranchId;
+    public function __construct(string $schoolExpensesId, string $schoolBranchId)
     {
         //
-        $this->schoolExpenses = $schoolExpenses;
+        $this->schoolExpensesId = $schoolExpensesId;
+        $this->schoolBranchId = $schoolBranchId;
     }
 
     /**
@@ -30,125 +35,50 @@ class SchoolExpensesStatJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $expenseDate = Carbon::parse($this->schoolExpenses->date);
-        $year = $expenseDate->year;
-        $month = $expenseDate->month;
-        $totalNumberOfStudents = Student::where("school_branch_id", $this->schoolExpenses->school_branch_id)
-            ->count();
-        $generalStatByYearAndMonth = DB::table('school_financial_stats')
-            ->where('school_branch_id', $this->schoolExpenses->school_branch_id)
-            ->where('school_year', $this->schoolExpenses->school_year)
-            ->where('year', $year)
-            ->where('month', $month)
-            ->join('stat_categories', 'school_financial_stats.stat_category_id', '=', 'stat_categories.id')
-            ->where('stat_categories.program_name', 'school_expenses')
-            ->join('stat_types', 'school_financial_stats.stat_type_id', '=', 'stat_types.id')
-            ->select('school_financial_stats.*', 'stat_types.program_name as stat_type_program_name')
-            ->get();
-
-
-        $previousStatByYearAndMonth = DB::table('school_financial_stats')
-            ->where('school_branch_id', $this->schoolExpenses->school_branch_id)
-            ->where('school_year', $this->schoolExpenses->school_year)
-            ->where('year', $month == 1 ? $year - 1 : $year)
-            ->where('month', $month == 1 ? 12 : $month - 1)
-            ->join('stat_categories', 'school_financial_stats.stat_category_id', '=', 'stat_categories.id')
-             ->where('stat_categories.program_name', 'school_expenses')
-            ->join('stat_types', 'school_financial_id', '=', 'stat_types.id')
-            ->select('school_financial_stats.*', 'stat_types.program_name as stat_type_program_name')
-            ->get();
-    }
-
-    public function calculateTotalExpensesByMonth($generalStatByYearAndMonth){
-        if ($generalStatByYearAndMonth->isEmpty()) {
-            return [
-                'total_expenses' => $this->schoolExpenses->amount,
-            ];
-        }
-
-        $totalExpensesStat = $generalStatByYearAndMonth->where('stat_type_program_name', 'total_expenses')->first();
-
-        $total = $this->schoolExpenses->amount + ($totalExpensesStat ? $totalExpensesStat->stat_value : 0);
-
-        return [
-            'total_expenses' => $total,
+        $schoolExpensesId = $this->schoolExpensesId;
+        $schoolBranchId = $this->schoolBranchId;
+        $year = now()->year;
+        $month = now()->month;
+        $kpiNames = [
+            'monthly_school_expenses'
         ];
+        $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
+        $schoolExpenses = SchoolExpenses::where("school_branch_id", $schoolBranchId)->find($schoolExpensesId);
+
+        $this->monthlySchoolExpensesTotal(
+            $year,
+            $month,
+            $schoolExpensesId,
+            $kpis->get('monthly_school_expenses'),
+            $schoolBranchId,
+            $schoolExpenses
+        );
     }
 
-    public function calculatePercentageIncreaseByMonth($previousStatByYearAndMonth, $generalStatByYearAndMonth): float
+    private function monthlySchoolExpensesTotal($year, $month, $schoolExpensesId, $kpi, $schoolBranchId, $schoolExpenses)
     {
-        $currentTotalExpenses = 0;
-        $previousTotalExpenses = 0;
-
-        if ($generalStatByYearAndMonth->isNotEmpty()) {
-            $currentTotalExpensesStat = $generalStatByYearAndMonth->where('stat_type_program_name', 'total_expenses')->first();
-            $currentTotalExpenses = $currentTotalExpensesStat ? $currentTotalExpensesStat->stat_value : 0;
+        $kpiData =  DB::table('school_financial_stats')->where("year", $year)
+            ->where("month", $month)
+            ->where("stat_type_id", $kpi->id)
+            ->where("school_branch_id", $schoolBranchId)
+            ->where("school_expenses_id", $schoolExpensesId)
+            ->first();
+        if ($kpiData) {
+            $kpi->decimal_value += $schoolExpenses->amount;
+            $kpi->save();
         }
 
-        if ($previousStatByYearAndMonth->isNotEmpty()) {
-            $previousTotalExpensesStat = $previousStatByYearAndMonth->where('stat_type_program_name', 'total_expenses')->first();
-            $previousTotalExpenses = $previousTotalExpensesStat ? $previousTotalExpensesStat->stat_value : 0;
-        }
-        if ($previousTotalExpenses == 0) {
-            return 0;
-        }
-        return (($currentTotalExpenses - $previousTotalExpenses) / $previousTotalExpenses) * 100;
-    }
-
-    public function calculatePercentageDecreaseByMonth($previousStatByYearAndMonth, $generalStatByYearAndMonth): float
-    {
-        $currentTotalExpenses = 0;
-        $previousTotalExpenses = 0;
-
-         if ($generalStatByYearAndMonth->isNotEmpty()) {
-            $currentTotalExpensesStat = $generalStatByYearAndMonth->where('stat_type_program_name', 'total_expenses')->first();
-            $currentTotalExpenses = $currentTotalExpensesStat ? $currentTotalExpensesStat->stat_value : 0;
-        }
-
-        if ($previousStatByYearAndMonth->isNotEmpty()) {
-            $previousTotalExpensesStat = $previousStatByYearAndMonth->where('stat_type_program_name', 'total_expenses')->first();
-            $previousTotalExpenses = $previousTotalExpensesStat ? $previousTotalExpensesStat->stat_value : 0;
-        }
-        if ($previousTotalExpenses == 0) {
-            return 0;
-        }
-        return (($previousTotalExpenses - $currentTotalExpenses) / $previousTotalExpenses) * 100;
-    }
-    public function getGroupedExpensesByMonth($month, $year,  $schoolBranchId){
-        $groupedExpenses = SchoolExpenses::select([
-            'school_expenses_category.name as category_name',
-            DB::raw('SUM(school_expenses.amount) as total_amount'),
-        ])
-        ->join(
-            'school_expenses_category',
-            'school_expenses.expenses_category_id',
-            '=',
-            'school_expenses_category.id'
-        )
-        ->where('school_expenses.school_branch_id', $schoolBranchId)
-        ->whereYear('school_expenses.date', $year)
-        ->whereMonth('school_expenses.date', $month)
-        ->groupBy('school_expenses_category.name')
-        ->get();
-
-    return $groupedExpenses->toArray();
-    }
-
-    public function costPerStudent($generalStatByYearAndMonth, $totalNumberOfStudents){
-        if ($generalStatByYearAndMonth->isEmpty()) {
-            return [
-                'total_expenses' => $this->schoolExpenses->amount,
-            ];
-        }
-
-        $totalExpensesStat = $generalStatByYearAndMonth->where('stat_type_program_name', 'total_expenses')->first();
-
-        $total = $this->schoolExpenses->amount + ($totalExpensesStat ? $totalExpensesStat->stat_value : 0);
-        $costPerStudent = $total / $totalNumberOfStudents;
-        return [
-            'cost_per_student' => $costPerStudent,
-            'total_expenses_stat' => $totalExpensesStat
-        ];
-
+        DB::table('school_financial_stats')->insert([
+            'id' => Str::uuid(),
+            'school_branch_id' => $schoolBranchId,
+            'decimal_value' => $schoolExpenses->amount,
+            'integer_value' => null,
+            'json_value' => null,
+            'stat_type_id' => $kpi->id ?? null,
+            'month' => $month,
+            'year' => $year,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
