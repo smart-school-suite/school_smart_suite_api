@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use App\Traits\GeneratesUuid;
 class ResitFeeTransactions extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'transaction_id',
@@ -25,14 +24,5 @@ class ResitFeeTransactions extends Model
 
     public function studentResit() : BelongsTo {
          return $this->belongsTo(Studentresit::class, 'resitfee_id');
-    }
-     protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
     }
 }
