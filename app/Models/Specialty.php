@@ -122,11 +122,6 @@ class Specialty extends Model
     {
         return $this->hasMany(Teacher::class);
     }
-
-    public function events(): HasMany
-    {
-        return $this->hasMany(Events::class);
-    }
     public function marks(): HasMany
     {
         return $this->hasMany(Marks::class, 'specialty_id');
