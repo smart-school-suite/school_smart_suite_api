@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\GeneratesUuid;
 class ResitFeeTransactions extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory;
 
     protected $fillable = [
+        'id',
         'transaction_id',
         'amount',
         'payment_method',

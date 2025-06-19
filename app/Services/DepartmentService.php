@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Services;
+use App\Jobs\StatisticalJobs\OperationalJobs\DepartmentStatJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\Department;
+use Illuminate\Support\Str;
 
 
 class DepartmentService
@@ -12,10 +14,13 @@ class DepartmentService
     public function createDepartment(array $data, $currentSchool)
     {
         $department = new Department();
+        $departmentId = Str::uuid();
+        $department->id = $departmentId;
         $department->department_name = $data["department_name"];
         $department->description = $data["description"];
         $department->school_branch_id = $currentSchool->id;
         $department->save();
+        DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
         return $department;
     }
 

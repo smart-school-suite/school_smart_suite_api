@@ -3,12 +3,14 @@
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
 use App\Models\StatTypes;
+use App\Models\ElectionResults; // Import ElectionResult model
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // Import Log facade
 use Illuminate\Support\Str;
 
 class ElectionWinnerStatJob implements ShouldQueue
@@ -16,10 +18,23 @@ class ElectionWinnerStatJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * Create a new job instance.
+     * The ID of the election.
+     * @var string
      */
-    protected $electionId;
-    protected $schoolBranchId;
+    protected readonly string $electionId;
+
+    /**
+     * The ID of the school branch.
+     * @var string
+     */
+    protected readonly string $schoolBranchId;
+
+    /**
+     * Create a new job instance.
+     *
+     * @param string $electionId The ID of the election.
+     * @param string $schoolBranchId The ID of the school branch.
+     */
     public function __construct(string $electionId, string $schoolBranchId)
     {
         $this->electionId = $electionId;
@@ -28,13 +43,14 @@ class ElectionWinnerStatJob implements ShouldQueue
 
     /**
      * Execute the job.
+     *
+     * @return void
      */
     public function handle(): void
     {
-        $electionId = $this->electionId;
-        $schoolBranchId = $this->schoolBranchId;
         $year = now()->year;
         $month = now()->month;
+
         $kpiNames = [
             'election_role_winner_total_vote',
             'election_role_winner_by_department',
@@ -42,184 +58,201 @@ class ElectionWinnerStatJob implements ShouldQueue
             'election_role_winner_by_male_gender',
             'election_role_Winner_by_female_gender'
         ];
-        $electionWinners = DB::table('elections_results')
-            ->where("election_id", $electionId)
-            ->where("school_branch_id", $schoolBranchId)
-            ->where("status", "won")
-            ->with(['Elections', 'electionCandidate.student'])
-            ->get();
+
         $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
 
-        $this->electionRoleWinnerTotalVote(
-            $year,
-            $month,
-            $schoolBranchId,
-            $kpis->get('election_role_winner_total_vote'),
-            $electionWinners
-        );
-        $this->electionRoleWinnerByDepartment(
-            $schoolBranchId,
-            $kpis->get('election_role_winner_by_department'),
-            $electionWinners
-        );
-        $this->electionRoleWinnerBySpecialty(
-            $schoolBranchId,
-            $kpis->get('election_role_winner_by_specialty'),
-            $electionWinners
-        );
-        $this->electionRoleWinnerByMaleGender(
-            $schoolBranchId,
-            $kpis->get('election_role_winner_by_male_gender'),
-            $electionWinners
-        );
-        $this->electionRoleWinnerByFemaleGender(
-            $schoolBranchId,
-            $kpis->get('election_role_Winner_by_female_gender'),
-            $electionWinners
-        );
+
+        $electionWinners = ElectionResults::where("election_id", $this->electionId)
+            ->where("school_branch_id", $this->schoolBranchId)
+            ->where("status", "won")
+            ->with(['election', 'electionCandidate.student.department', 'electionCandidate.student.specialty'])
+            ->get();
+
+        if ($electionWinners->isEmpty()) {
+            Log::info("No election winners found for election ID: {$this->electionId} in school branch: {$this->schoolBranchId}. Skipping stats calculation.");
+            return;
+        }
+
+        foreach ($electionWinners as $winner) {
+
+            if (!$winner->election || !$winner->electionCandidate || !$winner->electionCandidate->student) {
+                Log::warning("Skipping winner stat for ElectionResult ID {$winner->id} due to missing election, candidate, or student data.");
+                continue;
+            }
+
+            $electionTypeId = $winner->election->election_type_id;
+            $electionRoleId = $winner->position_id;
+            $student = $winner->electionCandidate->student;
+            $totalVoteKpi = $kpis->get('election_role_winner_total_vote');
+            if ($totalVoteKpi) {
+                $this->upsertElectionStat(
+                    $year,
+                    $month,
+                    $this->schoolBranchId,
+                    $totalVoteKpi,
+                    $electionTypeId,
+                    $electionRoleId,
+                    (int) $winner->vote_count,
+                    null,
+                    null,
+                    null
+                );
+            } else {
+                Log::warning("StatType 'election_role_winner_total_vote' not found. Skipping total winner vote count for election type {$electionTypeId}, role {$electionRoleId}.");
+            }
+
+
+            $byDepartmentKpi = $kpis->get('election_role_winner_by_department');
+            if ($byDepartmentKpi) {
+                if ($student->department_id) {
+                    $this->upsertElectionStat(
+                        $year,
+                        $month,
+                        $this->schoolBranchId,
+                        $byDepartmentKpi,
+                        $electionTypeId,
+                        $electionRoleId,
+                        1,
+                        null,
+                        $student->department_id,
+                        null
+                    );
+                } else {
+                    Log::info("Winner {$winner->id} (student {$student->id}) has no department ID. Skipping department stat.");
+                }
+            } else {
+                Log::warning("StatType 'election_role_winner_by_department' not found. Skipping department-based winner count.");
+            }
+
+            $bySpecialtyKpi = $kpis->get('election_role_winner_by_specialty');
+            if ($bySpecialtyKpi) {
+                if ($student->specialty_id) {
+                    $this->upsertElectionStat(
+                        $year,
+                        $month,
+                        $this->schoolBranchId,
+                        $bySpecialtyKpi,
+                        $electionTypeId,
+                        $electionRoleId,
+                        1,
+                        null,
+                        null,
+                        $student->specialty_id
+                    );
+                } else {
+                    Log::info("Winner {$winner->id} (student {$student->id}) has no specialty ID. Skipping specialty stat.");
+                }
+            } else {
+                Log::warning("StatType 'election_role_winner_by_specialty' not found. Skipping specialty-based winner count.");
+            }
+
+            $byMaleGenderKpi = $kpis->get('election_role_winner_by_male_gender');
+            if ($byMaleGenderKpi) {
+                if ($student->gender === 'male') {
+                    $this->upsertElectionStat(
+                        $year,
+                        $month,
+                        $this->schoolBranchId,
+                        $byMaleGenderKpi,
+                        $electionTypeId,
+                        $electionRoleId,
+                        1
+                    );
+                }
+            } else {
+                Log::warning("StatType 'election_role_winner_by_male_gender' not found. Skipping male winner count.");
+            }
+
+
+            $byFemaleGenderKpi = $kpis->get('election_role_Winner_by_female_gender');
+            if ($byFemaleGenderKpi) {
+                if ($student->gender === 'female') {
+                    $this->upsertElectionStat(
+                        $year,
+                        $month,
+                        $this->schoolBranchId,
+                        $byFemaleGenderKpi,
+                        $electionTypeId,
+                        $electionRoleId,
+                        1
+                    );
+                }
+            } else {
+                Log::warning("StatType 'election_role_Winner_by_female_gender' not found. Skipping female winner count.");
+            }
+        }
     }
 
-    private function electionRoleWinnerTotalVote($year, $month,  $schoolBranchId, $kpi, $electionWinners)
-    {
-        $winnersListToBeInserted = [];
-        foreach ($electionWinners as $electionWinner) {
-            $winnersListToBeInserted = [
+    /**
+     * Inserts or updates an election winner statistic record.
+     *
+     * @param int $year The year for the statistic.
+     * @param int $month The month for the statistic.
+     * @param string $schoolBranchId The ID of the school branch.
+     * @param StatTypes $kpi The StatTypes model instance for the KPI.
+     * @param string $electionTypeId The ID of the election type.
+     * @param string $electionRoleId The ID of the election role/position.
+     * @param int $integerValue The integer value to add/set for the stat. Default is 1 for counts.
+     * @param float|null $decimalValue The decimal value for the stat.
+     * @param string|null $departmentId The department ID, if the stat is department-specific.
+     * @param string|null $specialtyId The specialty ID, if the stat is specialty-specific.
+     * @return void
+     */
+    private function upsertElectionStat(
+        int $year,
+        int $month,
+        string $schoolBranchId,
+        StatTypes $kpi,
+        string $electionTypeId,
+        string $electionRoleId,
+        int $integerValue = 1,
+        ?float $decimalValue = null,
+        ?string $departmentId = null,
+        ?string $specialtyId = null
+    ): void {
+
+        $matchCriteria = [
+            'year' => $year,
+            'month' => $month,
+            'school_branch_id' => $schoolBranchId,
+            'stat_type_id' => $kpi->id,
+            'election_type_id' => $electionTypeId,
+            'election_role_id' => $electionRoleId,
+            'department_id' => $departmentId,
+            'specialty_id' => $specialtyId,
+        ];
+
+
+        $existingStat = DB::table('election_winner_stats')->where($matchCriteria)->first();
+
+        if ($existingStat) {
+
+            DB::table('election_winner_stats')
+                ->where($matchCriteria)
+                ->update([
+                    'integer_value' => DB::raw("COALESCE(integer_value, 0) + {$integerValue}"),
+                    'decimal_value' => $decimalValue,
+                    'updated_at' => now(),
+                ]);
+            Log::info("Incremented existing election winner stat for KPI '{$kpi->program_name}' (value: {$integerValue}) for school: {$schoolBranchId}, election_type: {$electionTypeId}, role: {$electionRoleId}, dept: {$departmentId}, specialty: {$specialtyId}, year: {$year}, month: {$month}.");
+        } else {
+            DB::table('election_winner_stats')->insert([
                 'id' => Str::uuid(),
-                'stat_type_id' => $kpi->id,
-                'election_type_id' => $electionWinner->election->election_type_id,
-                'election_role_id' => $electionWinner->position_id,
-                'decimal_value' => null,
-                'interger_value' => $electionWinner->vote_count,
-                'json_value' => null,
-                'school_branch_id' => $schoolBranchId,
-                'month' => $month,
                 'year' => $year,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-        DB::table('election_winner_stats')->insert($winnersListToBeInserted);
-    }
-    private function electionRoleWinnerByDepartment($schoolBranchId, $kpi, $electionWinners)
-    {
-        foreach ($electionWinners as $electionWinner) {
-            $roleWinnerByDepartment = DB::table('election_winners_by_department')
-                ->where("election_type_id", $electionWinner->election->election_type_id)
-                ->where("election_role_id", $electionWinner->position_id)
-                ->where("stat_type_id", $kpi->id)
-                ->where("school_branch_id", $schoolBranchId)
-                ->where("department_id", $electionWinners->electionCandidate->student->department_id)
-                ->first();
-            if ($roleWinnerByDepartment) {
-                $roleWinnerByDepartment->interger_value++;
-                $roleWinnerByDepartment->save();
-            }
-
-            DB::table('election_winner_stats')->insert([
-                'id' => Str::uuid(),
-                'stat_type_id' => $kpi->id,
-                'election_type_id' => $electionWinner->election->election_type_id,
-                'election_role_id' => $electionWinner->position_id,
-                'department_id' => $electionWinners->electionCandidate->student->department_id,
-                'decimal_value' => null,
-                'interger_value' => 1,
-                'json_value' => null,
+                'month' => $month,
                 'school_branch_id' => $schoolBranchId,
-                'month' => null,
-                'year' => null,
+                'stat_type_id' => $kpi->id,
+                'election_type_id' => $electionTypeId,
+                'election_role_id' => $electionRoleId,
+                'department_id' => $departmentId,
+                'specialty_id' => $specialtyId,
+                'integer_value' => $integerValue,
+                'decimal_value' => $decimalValue,
+                'json_value' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        }
-    }
-    private function electionRoleWinnerBySpecialty($schoolBranchId, $kpi, $electionWinners)
-    {
-        foreach ($electionWinners as $electionWinner) {
-            $roleWinnerByDepartment = DB::table('election_winners_by_specialty')
-                ->where("election_type_id", $electionWinner->election->election_type_id)
-                ->where("election_role_id", $electionWinner->position_id)
-                ->where("stat_type_id", $kpi->id)
-                ->where("school_branch_id", $schoolBranchId)
-                ->where("specialty_id", $electionWinners->electionCandidate->student->specialty_id)
-                ->first();
-            if ($roleWinnerByDepartment) {
-                $roleWinnerByDepartment->interger_value++;
-                $roleWinnerByDepartment->save();
-            }
-
-            DB::table('election_winner_stats')->insert([
-                'id' => Str::uuid(),
-                'stat_type_id' => $kpi->id,
-                'election_type_id' => $electionWinner->election->election_type_id,
-                'election_role_id' => $electionWinner->position_id,
-                'specialty_id' => $electionWinners->electionCandidate->student->specialty_id,
-                'decimal_value' => null,
-                'interger_value' => 1,
-                'json_value' => null,
-                'school_branch_id' => $schoolBranchId,
-                'month' => null,
-                'year' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-    private function electionRoleWinnerByMaleGender($schoolBranchId, $kpi, $electionWinners){
-        foreach ($electionWinners as $electionWinner) {
-            $roleWinnerByDepartment = DB::table('election_winners_stat_by_gender')
-                ->where("election_type_id", $electionWinner->election->election_type_id)
-                ->where("election_role_id", $electionWinner->position_id)
-                ->where("stat_type_id", $kpi->id)
-                ->where("school_branch_id", $schoolBranchId)
-                ->first();
-            if ($roleWinnerByDepartment) {
-                $roleWinnerByDepartment->interger_value++;
-                $roleWinnerByDepartment->save();
-            }
-
-            DB::table('election_winner_stats')->insert([
-                'id' => Str::uuid(),
-                'stat_type_id' => $kpi->id,
-                'election_type_id' => $electionWinner->election->election_type_id,
-                'election_role_id' => $electionWinner->position_id,
-                'decimal_value' => null,
-                'interger_value' => 1,
-                'json_value' => null,
-                'school_branch_id' => $schoolBranchId,
-                'month' => null,
-                'year' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-    private function electionRoleWinnerByFemaleGender($schoolBranchId, $kpi, $electionWinners){
-        foreach ($electionWinners as $electionWinner) {
-            $roleWinnerByDepartment = DB::table('election_winners_stat_by_gender')
-                ->where("election_type_id", $electionWinner->election->election_type_id)
-                ->where("election_role_id", $electionWinner->position_id)
-                ->where("stat_type_id", $kpi->id)
-                ->where("school_branch_id", $schoolBranchId)
-                ->first();
-            if ($roleWinnerByDepartment) {
-                $roleWinnerByDepartment->interger_value++;
-                $roleWinnerByDepartment->save();
-            }
-
-            DB::table('election_winner_stats')->insert([
-                'id' => Str::uuid(),
-                'stat_type_id' => $kpi->id,
-                'election_type_id' => $electionWinner->election->election_type_id,
-                'election_role_id' => $electionWinner->position_id,
-                'decimal_value' => null,
-                'interger_value' => 1,
-                'json_value' => null,
-                'school_branch_id' => $schoolBranchId,
-                'month' => null,
-                'year' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            Log::info("Created new election winner stat for KPI '{$kpi->program_name}' (value: {$integerValue}) for school: {$schoolBranchId}, election_type: {$electionTypeId}, role: {$electionRoleId}, dept: {$departmentId}, specialty: {$specialtyId}, year: {$year}, month: {$month}.");
         }
     }
 }

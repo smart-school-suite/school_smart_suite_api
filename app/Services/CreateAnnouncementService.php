@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\EmailNotificationJobs\EmailAnnouncementNotificationJob;
+use App\Jobs\StatisticalJobs\OperationalJobs\AnnouncementStatJob;
 use App\Models\Announcement;
 use App\Models\AnnouncementAuthor;
 use App\Models\AnnouncementTargetUser;
@@ -162,27 +163,17 @@ class CreateAnnouncementService
 
             DB::commit();
 
-            // *** FIX APPLIED HERE: Use the derived $status variable ***
-            // Only dispatch the notification job if the announcement is actually 'scheduled' or 'active' (published).
             if ($status === 'scheduled' || $status === 'active') {
 
                 $delayInSeconds = now()->diffInSeconds($publishedAt, false);
-                $timenow = now();
                 if ($delayInSeconds < 0) {
                     $delayInSeconds = 0;
                 }
-
-                Log::info("published_at: $publishedAt");
-                Log::info("delay time:  $delayInSeconds");
-                Log::info("time now: $timenow");
-                Log::info("Dispatching SendEmailAnnouncementNotificationJob for Announcement ID: {$announcementId} with delay: {$delayInSeconds} seconds.");
-
                 EmailAnnouncementNotificationJob::dispatch($announcementId)
                     ->delay(Carbon::now()->addSeconds($delayInSeconds));
             }
 
-            // Note: count($usersForNotification) will reflect all associated targets,
-            // even if the announcement is a draft and no notification is sent.
+            AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
             return [
                 'annoucement_title' => $announcementData['title'],
                 'announcement_content' => $announcementData['content'],

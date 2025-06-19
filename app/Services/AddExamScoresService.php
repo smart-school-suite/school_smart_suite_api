@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateResitCandidateJob;
+use App\Jobs\StatisticalJobs\AcademicJobs\ExamStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentExamStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class AddExamScoresService
         $results = [];
         $examDetails = null;
         $targetStudent = null;
-
+        $allStudentsEvaluated = false;
         DB::beginTransaction();
         try {
             foreach ($studentScores as $scoreData) {
@@ -103,9 +104,13 @@ class AddExamScoresService
             );
 
             // Update the count of evaluated students for the exam and potentially trigger a resit exam job.
-            $this->updateEvaluatedStudentCount($examDetails);
-            StudentExamStatsJob::dispatch($examDetails, $targetStudent);
+            $this->updateEvaluatedStudentCount($examDetails, $allStudentsEvaluated);
             DB::commit();
+            StudentExamStatsJob::dispatch($examDetails, $targetStudent);
+            if($allStudentsEvaluated == true){
+                dispatch(new CreateResitCandidateJob($exam));
+                ExamStatsJob::dispatch($exam);
+            }
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
@@ -161,12 +166,14 @@ class AddExamScoresService
      * Increments the evaluated candidate number for an exam and dispatches a resit exam job if all expected candidates have been evaluated.
      *
      * @param object $exam The exam object.
+     * @param  $allStudentsEvaluated
      */
-    private function updateEvaluatedStudentCount(Exams $exam): void
+    private function updateEvaluatedStudentCount(Exams $exam, $allStudentsEvaluated): void
     {
         $exam->increment('evaluated_candidate_number');
         if ($exam->evaluated_candidate_number === $exam->expected_candidate_number) {
-            dispatch(new CreateResitCandidateJob($exam));
+            $allStudentsEvaluated = true;
+            return;
         }
     }
 
@@ -323,7 +330,6 @@ class AddExamScoresService
 
         foreach ($grades as $grade) {
             if ($score >= $grade->minimum_score && $score <= $grade->maximum_score) {
-                // If the grade indicates a resit, create a resitable course record.
                 if ($grade->resit_status === 'resit') {
                     $this->createResitableCourse($courseId, $examId, $student, $schoolId);
                 }
@@ -338,8 +344,6 @@ class AddExamScoresService
                 ];
             }
         }
-
-        // If no matching grade is found, default to a failing grade.
         return [
             'letterGrade' => 'F',
             'gradeStatus' => 'fail',
@@ -360,7 +364,7 @@ class AddExamScoresService
      */
     private function createResitableCourse(string $courseId, string $examId, Student $student, string $schoolId): void
     {
-        // Check if a resit record already exists for the student, course, and level.
+
         if (!Studentresit::where("student_id", $student->id)
             ->where("level_id", $student->level_id)
             ->where("specialty_id", $student->specialty_id)

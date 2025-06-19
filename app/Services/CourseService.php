@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\OperationalJobs\CourseStatJob;
 use App\Models\Courses;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CourseService
 {
@@ -14,7 +16,9 @@ class CourseService
     public function createCourse(array $data, $currentSchool): Courses
     {
         $specialty = Specialty::findOrFail($data['specialty_id']);
+        $courseId = Str::uuid();
         $course = new Courses();
+        $course->id = $courseId;
         $course->course_code = $data['course_code'];
         $course->course_title = $data['course_title'];
         $course->specialty_id = $specialty->id;
@@ -24,8 +28,9 @@ class CourseService
         $course->semester_id = $data['semester_id'];
         $course->level_id = $specialty->level_id;
         $course->save();
-
+        CourseStatJob::dispatch($currentSchool->id, $courseId);
         return $course;
+
     }
     public function deleteCourse(string $courseId, $currentSchool)
     {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\AcademicJobs\CaStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -34,8 +35,9 @@ class AddCaScoresService
         $results = [];
         $examDetails = null;
         $studentTarget = null;
-        DB::beginTransaction();
+        $allStudentsEvaluated = false;
         try {
+            DB::beginTransaction();
             foreach ($studentScores as $scoreData) {
                 // Retrieve the student based on school and student ID.
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
@@ -72,11 +74,12 @@ class AddCaScoresService
 
             // Add a record to the student results table (this might be an initial record or updated later).
             $this->addStudentResultRecords($student, $currentSchool, $totalScoreAndGpa, $examDetails, $results, $examStatus);
-
+            $this->updateEvaluatedStudentCount($exam, $allStudentsEvaluated);
             DB::commit();
-             Log::info("exam_details", $examDetails->toArray());
-             Log::info("student_details", $studentTarget->toArray());
             StudentCaStatsJob::dispatch($examDetails, $studentTarget);
+            if($allStudentsEvaluated === true){
+                CaStatsJob::dispatch($exam);
+            }
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
@@ -304,6 +307,14 @@ class AddCaScoresService
         return $studentResult;
     }
 
+     private function updateEvaluatedStudentCount($exam, $allStudentsEvaluated): void
+    {
+        $exam->increment('evaluated_candidate_number');
+        if ($exam->evaluated_candidate_number === $exam->expected_candidate_number) {
+            $allStudentsEvaluated = true;
+            return;
+        }
+    }
     /**
      * Determines the overall exam result status based on individual course grades.
      *

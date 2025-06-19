@@ -10,17 +10,31 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log; // Import Log facade
+use Illuminate\Support\Str; // Import Str facade
 
 class TeacherRegistrationStatsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * Create a new job instance.
+     * The ID of the teacher for whom statistics are being calculated.
+     * @var string
      */
-    protected $teacherId;
-    protected $schoolBranchId;
+    protected readonly string $teacherId;
+
+    /**
+     * The ID of the school branch where the teacher is registered.
+     * @var string
+     */
+    protected readonly string $schoolBranchId;
+
+    /**
+     * Create a new job instance.
+     *
+     * @param string $teacherId The ID of the teacher.
+     * @param string $schoolBranchId The ID of the school branch.
+     */
     public function __construct(string $teacherId, string $schoolBranchId)
     {
         $this->teacherId = $teacherId;
@@ -29,14 +43,21 @@ class TeacherRegistrationStatsJob implements ShouldQueue
 
     /**
      * Execute the job.
+     *
+     * @return void
      */
     public function handle(): void
     {
-        $teacherId = $this->teacherId;
-        $schoolBranchId = $this->schoolBranchId;
         $year = now()->year;
         $month = now()->month;
-        $teacher = Teacher::where("school_branch_id", $schoolBranchId)->find($teacherId);
+
+        $teacher = Teacher::where("school_branch_id", $this->schoolBranchId)->find($this->teacherId);
+
+        if (!$teacher) {
+            Log::warning("Teacher with ID '{$this->teacherId}' not found in school branch '{$this->schoolBranchId}'. Skipping teacher registration stats job.");
+            return;
+        }
+
         $kpiNames = [
             "registered_teachers_count_over_time",
             "female_registered_teachers_count_over_time",
@@ -44,106 +65,80 @@ class TeacherRegistrationStatsJob implements ShouldQueue
         ];
 
         $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
-        if ($teacher->gender === 'male') {
-            $this->maleRegisteredMaleTeachersCountOverTime(
-                $year,
-                $month,
-                $kpis->get('male_registered_teachers_count_over_time'),
-                $schoolBranchId
-            );
-        }
-        if ($teacher->gender === 'female') {
-            $this->femaleRegisteredTeachersCountOverTime(
-                $year,
-                $month,
-                $kpis->get('female_registered_teachers_count_over_time'),
-                $schoolBranchId
-            );
-        }
 
-        $this->registeredTeachersCountOverTime(
+
+        $this->upsertTeacherStat(
             $year,
             $month,
             $kpis->get('registered_teachers_count_over_time'),
-            $schoolBranchId
+            $this->schoolBranchId
         );
+
+        if ($teacher->gender === 'male') {
+            $this->upsertTeacherStat(
+                $year,
+                $month,
+                $kpis->get('male_registered_teachers_count_over_time'),
+                $this->schoolBranchId
+            );
+        } elseif ($teacher->gender === 'female') {
+            $this->upsertTeacherStat(
+                $year,
+                $month,
+                $kpis->get('female_registered_teachers_count_over_time'),
+                $this->schoolBranchId
+            );
+        }
     }
 
-    private function registeredTeachersCountOverTime(int $year, int $month, $kpi, $schoolBranchId)
-    {
-        $kpiData =  DB::table('school_operational_stats')->where("year", $year)
-            ->where("month", $month)
-            ->where("stat_type_id", $kpi->id)
-            ->where("school_branch_id", $schoolBranchId)
-            ->first();
-        if ($kpiData) {
-            $kpi->integer_value++;
-            $kpi->save();
+    /**
+     * Inserts or updates a teacher statistic record, incrementing its integer_value.
+     *
+     * @param int $year The year for the statistic.
+     * @param int $month The month for the statistic.
+     * @param StatTypes|null $kpi The StatTypes model instance for the KPI, or null if not found.
+     * @param string $schoolBranchId The ID of the school branch.
+     * @return void
+     */
+    private function upsertTeacherStat(
+        int $year,
+        int $month,
+        ?StatTypes $kpi,
+        string $schoolBranchId
+    ): void {
+        if (!$kpi) {
+            Log::warning("StatType for KPI not found. Cannot record teacher stat for year: {$year}, month: {$month}, school: {$schoolBranchId}.");
+            return;
         }
 
-        DB::table('school_operational_stats')->insert([
-            'id' => Str::uuid(),
-            'school_branch_id' => $schoolBranchId,
-            'decimal_value' => null,
-            'integer_value' => 1,
-            'json_value' => null,
-            'stat_type_id' => $kpi->id ?? null,
-            'month' => $month,
-            'year' => $year,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
 
-    private function femaleRegisteredTeachersCountOverTime(int $year, int $month, $kpi, $schoolBranchId)
-    {
-        $kpiData =  DB::table('school_operational_stats')->where("year", $year)
-            ->where("month", $month)
-            ->where("stat_type_id", $kpi->id)
-            ->where("school_branch_id", $schoolBranchId)
-            ->first();
-        if ($kpiData) {
-            $kpi->integer_value++;
-            $kpi->save();
+        $matchCriteria = [
+            'year' => $year,
+            'month' => $month,
+            'stat_type_id' => $kpi->id,
+            'school_branch_id' => $schoolBranchId,
+        ];
+
+        $existingStat = DB::table('teacher_stats')->where($matchCriteria)->first();
+        if ($existingStat) {
+            DB::table('teacher_stats')
+                ->where($matchCriteria)
+                ->increment('integer_value', 1, ['updated_at' => now()]);
+            Log::info("Incremented existing teacher stat for KPI '{$kpi->program_name}' for school: {$schoolBranchId}, year: {$year}, month: {$month}.");
+        } else {
+            DB::table('teacher_stats')->insert([
+                'id' => Str::uuid(),
+                'year' => $year,
+                'month' => $month,
+                'stat_type_id' => $kpi->id,
+                'school_branch_id' => $schoolBranchId,
+                'integer_value' => 1,
+                'decimal_value' => null,
+                'json_value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            Log::info("Created new teacher stat for KPI '{$kpi->program_name}' for school: {$schoolBranchId}, year: {$year}, month: {$month}.");
         }
-
-        DB::table('school_operational_stats')->insert([
-            'id' => Str::uuid(),
-            'school_branch_id' => $schoolBranchId,
-            'decimal_value' => null,
-            'integer_value' => 1,
-            'json_value' => null,
-            'stat_type_id' => $kpi->id ?? null,
-            'month' => $month,
-            'year' => $year,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    private function maleRegisteredMaleTeachersCountOverTime(int $year, int $month, $kpi, $schoolBranchId)
-    {
-        $kpiData =  DB::table('school_operational_stats')->where("year", $year)
-            ->where("month", $month)
-            ->where("stat_type_id", $kpi->id)
-            ->where("school_branch_id", $schoolBranchId)
-            ->first();
-        if ($kpiData) {
-            $kpi->integer_value++;
-            $kpi->save();
-        }
-
-        DB::table('school_operational_stats')->insert([
-            'id' => Str::uuid(),
-            'school_branch_id' => $schoolBranchId,
-            'decimal_value' => null,
-            'integer_value' => 1,
-            'json_value' => null,
-            'stat_type_id' => $kpi->id ?? null,
-            'month' => $month,
-            'year' => $year,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 }

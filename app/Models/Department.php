@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 
 class Department extends Model
@@ -14,6 +13,7 @@ class Department extends Model
     use HasFactory;
 
     protected $fillable = [
+      'id',
       'school_branch_id',
       'department_name',
       'description',
@@ -56,17 +56,4 @@ class Department extends Model
       return $this->hasMany(Teacher::class);
     }
 
-    public function events(): HasMany {
-      return $this->hasMany(Events::class);
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
-    }
 }

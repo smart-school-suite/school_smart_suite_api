@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +12,7 @@ class SchoolExpenses extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'expenses_category_id',
         'school_branch_id',
         'date',
@@ -30,16 +30,6 @@ class SchoolExpenses extends Model
 
     public function schoolexpensescategory(): BelongsTo {
         return $this->belongsTo(Schoolexpensescategory::class, 'expenses_category_id');
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 25);
-         });
-
     }
 
 }

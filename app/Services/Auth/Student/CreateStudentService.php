@@ -3,6 +3,9 @@
 namespace App\Services\Auth\Student;
 
 use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
+use App\Jobs\StatisticalJobs\FinancialJobs\RegistrationFeeStatJob;
+use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeeStatJob;
+use App\Jobs\StatisticalJobs\OperationalJobs\StudentRegistrationStatsJob;
 use App\Models\Specialty;
 use App\Models\Student;
 use App\Models\TuitionFees;
@@ -37,26 +40,31 @@ class CreateStudentService
             $student->school_branch_id = $currentSchool->id;
             $student->password = Hash::make($password);
             $student->save();
-
+            $registrationFeeId = Str::uuid();
             RegistrationFee::create([
+                'id' => $registrationFeeId,
                 'level_id' => $specialty->level_id,
                 'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'amount' => $specialty->registration_fee,
                 'student_id' => $randomId,
             ]);
-
+            $tuitionFeeId = Str::uuid();
             TuitionFees::create([
+                'id' => $tuitionFeeId,
                 'level_id' => $specialty->level_id,
                 'specialty_id' => $specialty->id,
                 'amount_paid' => 0.00,
-                'amount_left' => 0.00,
+                'amount_left' => $specialty->school_fee,
                 'school_branch_id' => $currentSchool->id,
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,
             ]);
+            $student->assignRole('student');
             SendPasswordVaiMailJob::dispatch( $password, $studentData["email"]);
-             $student->assignRole('student');
+            TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
+            RegistrationFeeStatJob::dispatch($registrationFeeId, $currentSchool->id);
+            StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
             return $student;
         } catch (QueryException $e) {
 

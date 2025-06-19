@@ -30,6 +30,7 @@ class Student extends Model
         'gender',
         'phone_one',
         'phone_two',
+        'gender',
         'level_id',
         'school_branch_id',
         'specialty_id',

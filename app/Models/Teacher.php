@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\HasPermissions;
@@ -22,6 +21,7 @@ class Teacher extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
         'school_branch_id',
         'email',
         'name',
@@ -122,13 +122,4 @@ class Teacher extends Model
         return $this->hasMany(Timetable::class);
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
-    }
 }

@@ -11,6 +11,7 @@ class TuitionFees extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'student_id',
         'school_branch_id',
         'specialty_id',
@@ -37,14 +38,4 @@ class TuitionFees extends Model
         return $this->belongsTo(Educationlevels::class , 'level_id');
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 30);
-         });
-
-    }
 }

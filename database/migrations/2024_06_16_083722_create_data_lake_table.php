@@ -20,10 +20,17 @@ return new class extends Migration
 
         Schema::create('school_exam_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->string('school_year')->nullable();
+            $table->timestamps();
+        });
+
+         Schema::create('school_ca_exam_stats', function (Blueprint $table) {
+            $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -35,12 +42,17 @@ return new class extends Migration
 
         Schema::create('student_exam_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->string('school_year')->nullable();
+            $table->timestamps();
+        });
+
+         Schema::create('student_ca_exam_stats', function (Blueprint $table) {
+            $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -52,14 +64,6 @@ return new class extends Migration
 
         Schema::create('additional_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -71,14 +75,6 @@ return new class extends Migration
 
         Schema::create('resit_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -90,10 +86,6 @@ return new class extends Migration
 
         Schema::create('school_expenses_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -104,14 +96,6 @@ return new class extends Migration
 
         Schema::create('tuition_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -122,10 +106,6 @@ return new class extends Migration
 
         Schema::create('announcement_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -136,14 +116,6 @@ return new class extends Migration
 
         Schema::create('election_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -154,16 +126,6 @@ return new class extends Migration
 
         Schema::create('election_winner_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('election_type_id')->nullable();
-            $table->foreign('election_type_id')->references('id')->on('election_type');
-            $table->string('election_role_id')->nullable();
-            $table->foreign('election_role_id')->references('id')->on('election_roles');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -174,10 +136,6 @@ return new class extends Migration
 
         Schema::create('student_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -188,10 +146,6 @@ return new class extends Migration
 
         Schema::create('teacher_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -202,10 +156,6 @@ return new class extends Migration
 
         Schema::create('class_timetable_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -216,10 +166,6 @@ return new class extends Migration
 
         Schema::create('exam_timetable_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();
@@ -230,20 +176,12 @@ return new class extends Migration
 
         Schema::create('department_stats', function(Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->timestamps();
         });
 
         Schema::create('specialty_stats', function(Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->integer('integer_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -252,28 +190,52 @@ return new class extends Migration
 
         Schema::create('course_stats', function(Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
             $table->integer('integer_value')->nullable();
             $table->timestamps();
         });
 
         Schema::create('registration_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('stat_type_id')->index();
-            $table->foreign('stat_type_id')->references('id')->on('stat_types');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id')->nullable();
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('department_id')->nullable();
-            $table->foreign('department_id')->references('id')->on('departments');
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('additional_fee_trans_stats', function(Blueprint $table) {
+            $table->string('id')->primary();
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('election_vote_stats', function(Blueprint $table) {
+            $table->string('id')->primary();
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create("resit_fee_trans_stats", function(Blueprint $table) {
+            $table->string('id')->primary();
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create("tuition_fee_trans_stats", function(Blueprint $table) {
+            $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
             $table->decimal('decimal_value')->nullable();
             $table->json('json_value')->nullable();

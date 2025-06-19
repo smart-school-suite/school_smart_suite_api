@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-
+use App\Traits\GeneratesUuid;
 
 class AdditionalFeesCategory extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'title',
@@ -25,15 +25,5 @@ class AdditionalFeesCategory extends Model
 
      public function additionalFees(): HasMany {
         return $this->hasMany(AdditionalFees::class);
-     }
-     protected static function boot()
-     {
-         parent::boot();
-
-          static::creating(function ($user){
-             $uuid = str_replace('-', '', Str::uuid()->toString());
-             $user->id = substr($uuid, 0, 10);
-          });
-
      }
 }

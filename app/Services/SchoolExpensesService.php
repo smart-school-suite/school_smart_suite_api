@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\FinancialJobs\SchoolExpensesStatJob;
 use App\Models\SchoolExpenses;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SchoolExpensesService
 {
@@ -13,15 +15,17 @@ class SchoolExpensesService
 
     public function createExpenses(array $data, $currentSchool)
     {
-        $new_expenses_instance = new SchoolExpenses();
-
-        $new_expenses_instance->expenses_category_id = $data["expenses_category_id"];
-        $new_expenses_instance->date = $data["date"];
-        $new_expenses_instance->amount = $data["amount"];
-        $new_expenses_instance->description = $data["description"] ?? null;
-        $new_expenses_instance->school_branch_id = $currentSchool->id;
-        $new_expenses_instance->save();
-        return $new_expenses_instance;
+        $schoolExpenses = new SchoolExpenses();
+        $schoolExpensesId = Str::uuid();
+        $schoolExpenses->id = $schoolExpensesId;
+        $schoolExpenses->expenses_category_id = $data["expenses_category_id"];
+        $schoolExpenses->date = $data["date"];
+        $schoolExpenses->amount = $data["amount"];
+        $schoolExpenses->description = $data["description"] ?? null;
+        $schoolExpenses->school_branch_id = $currentSchool->id;
+        $schoolExpenses->save();
+        SchoolExpensesStatJob::dispatch($schoolExpensesId, $currentSchool->id);
+        return $schoolExpenses;
     }
 
     public function deleteExpenses($currentSchool, $expensesId)
@@ -55,37 +59,38 @@ class SchoolExpensesService
     public function getExpensesDetails($expensesId, $currentSchool)
     {
         $expenses = SchoolExpenses::where('school_branch_id', $currentSchool->id)
-                                         ->with(['schoolexpensescategory'])
-                                         ->find($expensesId);
+            ->with(['schoolexpensescategory'])
+            ->find($expensesId);
         if (!$expenses) {
             return ApiResponseService::error("School Expenses Not found", null, 404);
         }
         return $expenses;
     }
 
-    public function bulkDeleteSchoolExpenses($expensesIds){
-          $result = [];
-           try{
-             DB::beginTransaction();
-             foreach($expensesIds as $expensesId){
-               $schoolExpense = SchoolExpenses::findOrFail($expensesId['expense_id']);
-               $schoolExpense->delete();
-               $result[] =  $schoolExpense;
-             }
-             DB::commit();
-             return $result;
-           }
-           catch(Exception $e){
+    public function bulkDeleteSchoolExpenses($expensesIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($expensesIds as $expensesId) {
+                $schoolExpense = SchoolExpenses::findOrFail($expensesId['expense_id']);
+                $schoolExpense->delete();
+                $result[] =  $schoolExpense;
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
-           }
+        }
     }
 
-    public function bulkUpdateExpenses($expensesDataList){
-         $result = [];
-         try{
-             DB::beginTransaction();
-             foreach($expensesDataList as $expensesData){
+    public function bulkUpdateExpenses($expensesDataList)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($expensesDataList as $expensesData) {
                 $schoolExpense = SchoolExpenses::findOrFail($expensesData['expense_id']);
                 if ($schoolExpense) {
                     $cleanedData = array_filter($expensesData, function ($value) {
@@ -97,16 +102,14 @@ class SchoolExpensesService
                     }
                 }
                 $result[] = [
-                   $schoolExpense
-              ];
-             }
-             DB::commit();
-             return $result;
-         }
-
-         catch(Exception $e){
+                    $schoolExpense
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
-         }
+        }
     }
 }

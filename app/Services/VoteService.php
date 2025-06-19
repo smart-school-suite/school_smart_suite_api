@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\OperationalJobs\ElectionVoteStatJob;
 use App\Models\Student;
 use App\Models\ElectionVotes;
 use App\Models\ElectionResults;
@@ -10,6 +11,7 @@ use App\Events\VoteCastEvent;
 use Illuminate\Support\Facades\Broadcast;
 use App\Models\Elections;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class VoteService
 {
@@ -38,7 +40,9 @@ class VoteService
                  return ApiResponseService::error("You cannot vote multiple times in the same category.", null, 403);
              }
 
+             $voteId = Str::uuid();
              $vote = ElectionVotes::create([
+                 "id" => $voteId,
                  "school_branch_id" => $currentSchool->id,
                  "election_id" => $data['election_id'],
                  "candidate_id" => $data['candidate_id'],
@@ -50,6 +54,7 @@ class VoteService
              $updatedResult = $this->updateElectionResults($currentSchool->id, $data);
              broadcast(new VoteCastEvent($updatedResult))->toOthers();
              DB::commit();
+             ElectionVoteStatJob::dispatch($voteId, $currentSchool->id);
              return $vote;
         }
         catch(Exception $e){

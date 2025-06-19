@@ -2,16 +2,17 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\OperationalJobs\ElectionStatJob;
 use App\Models\CurrentElectionWinners;
 use App\Models\ElectionCandidates;
 use App\Models\ElectionParticipants;
-use App\Models\ElectionResults;
 use App\Models\Elections;
 use App\Models\ElectionType;
 use App\Models\PastElectionWinners;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ElectionService
 {
@@ -20,6 +21,8 @@ class ElectionService
     public function createElection(array $data, $currentSchool)
     {
         $election = new Elections();
+        $electionId = Str::uuid();
+        $election->id = $electionId;
         $election->application_start = $data["application_start"];
         $election->application_end = $data["application_end"];
         $election->voting_start = $data["voting_start"];
@@ -28,6 +31,7 @@ class ElectionService
         $election->election_type_id = $data["election_type_id"];
         $election->school_branch_id = $currentSchool->id;
         $election->save();
+        ElectionStatJob::dispatch($electionId, $currentSchool->id);
         return $election;
     }
 

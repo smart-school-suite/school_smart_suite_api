@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\AdditionalFeeCategory\CreateAdditionalFeeCategoryRequest;
 use App\Services\AdditionalFeeCategoryService;
-use App\Http\Requests\AdditionalFee\CreateAdditionalFeeRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class AdditionalFeeCategoryController extends Controller
         $this->additionalFeeCategoryService = $additionalFeeCategoryService;
     }
 
-    public function createAddtionalFeeCategory(CreateAdditionalFeeRequest $request){
+    public function createAddtionalFeeCategory(CreateAdditionalFeeCategoryRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $createAdditionalFee = $this->additionalFeeCategoryService->createAdditionalFeeCategory($request->validated(), $currentSchool);
         return ApiResponseService::success("Additional Fee Category Created Sucessfully", $createAdditionalFee, null, 201);

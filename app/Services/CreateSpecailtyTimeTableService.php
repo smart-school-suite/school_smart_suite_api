@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\OperationalJobs\TimetableStatsJob;
 use Illuminate\Support\Facades\DB;
 use App\Models\SchoolSemester;
 use App\Models\Timetable;
@@ -14,10 +15,16 @@ class CreateSpecailtyTimeTableService
     {
         $entriesToInsert = [];
         $schoolSemester = null;
+        $specialtyId = null;
+        $studentBatchId = null;
         foreach ($scheduleEntries as $entry) {
             $uniqueId = Str::uuid();
             if($schoolSemester == null){
                 $schoolSemester = SchoolSemester::findOrFail($entry['semester_id']);
+            }
+            if( $specialtyId === null && $studentBatchId === null){
+                $specialtyId = $entry['specialty_id'];
+                $studentBatchId = $entry['student_batch_id'];
             }
             $entriesToInsert[] = [
                 'id' => $uniqueId,
@@ -50,7 +57,7 @@ class CreateSpecailtyTimeTableService
                 ->whereIn('start_time', array_column($entriesToInsert, 'start_time'))
                 ->whereIn('end_time', array_column($entriesToInsert, 'end_time'))
                 ->get();
-
+            TimetableStatsJob::dispatch($currentSchool->id, $specialtyId, $studentBatchId, $schoolSemester->id);
             return $insertedTimetable;
 
         } catch (Exception $e) {

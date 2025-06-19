@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\FinancialJobs\ResitFeeStatJob;
 use App\Models\Marks;
 use App\Models\ResitCandidates;
 use App\Models\ResitExam;
@@ -72,7 +73,9 @@ class StudentResitService
             }
             $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
 
+            $transactionId = Str::uuid();
             ResitFeeTransactions::create([
+                'id' => $transactionId,
                 'amount' => $studentResitData['amount'],
                 'payment_method' => $studentResitData['payment_method'],
                 'resitfee_id' => $studentResitData['student_resit_id'],
@@ -83,7 +86,7 @@ class StudentResitService
             $studentResit->paid_status = "Paid";
             $studentResit->save();
             DB::commit();
-
+            ResitFeeStatJob::dispatch($transactionId, $currentSchool->id);
             return $studentResit;
         } catch (Exception $e) {
             DB::rollBack();

@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Courses extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'id',
        'course_code',
        'course_title',
        'specialty_id',
@@ -81,15 +81,5 @@ class Courses extends Model
     }
     public function studentresit() : HasMany {
         return $this->hasMany(Studentresit::class);
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
     }
 }

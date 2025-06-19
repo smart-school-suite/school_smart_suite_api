@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\FinancialJobs\AdditionalFeeStatJob;
+use App\Jobs\StatisticalJobs\FinancialJobs\AdditionalFeeTransactionJob;
 use App\Models\AdditionalFees;
 use App\Models\AdditionalFeeTransactions;
+use App\Models\Student;
 use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -15,22 +18,25 @@ class StudentAdditionalFeeService
 
     public function createStudentAdditionalFees(array $additionalFees, $currentSchool)
     {
+        $student = Student::where("school_branch_id", $currentSchool->id)->find($additionalFees['student_id']);
         $studentAdditionFees = new AdditionalFees();
+        $additionalFeeId = Str::uuid();
+        $studentAdditionFees->id = $additionalFeeId;
         $studentAdditionFees->reason = $additionalFees['reason'];
         $studentAdditionFees->amount = $additionalFees['amount'];
-        $studentAdditionFees->additional_fee_category = $additionalFees['additional_fee_category'];
+        $studentAdditionFees->additionalfee_category_id = $additionalFees['additionalfee_category_id'];
         $studentAdditionFees->school_branch_id = $currentSchool->id;
-        $studentAdditionFees->specialty_id = $additionalFees['specialty_id'];
-        $studentAdditionFees->level_id = $additionalFees['level_id'];
-        $studentAdditionFees->student_id = $additionalFees['student_id'];
+        $studentAdditionFees->specialty_id = $student->specialty_id;
+        $studentAdditionFees->level_id = $student->level_id;
+        $studentAdditionFees->student_id = $student->id;
         $studentAdditionFees->save();
+        AdditionalFeeStatJob::dispatch($additionalFeeId, $currentSchool->id);
         return $studentAdditionFees;
     }
 
     public function deleteStudentAdditionalFees(string $feeId, $currentSchool)
     {
         $studentAdditionFeesExist = AdditionalFees::where("school_branch_id", $currentSchool->id)->find($feeId);
-        Log::info($feeId);
         if (!$studentAdditionFeesExist) {
             return ApiResponseService::error("Student Additional Fees Appears To Be Deleted", null, 404);
         }
@@ -76,7 +82,9 @@ class StudentAdditionalFeeService
             }
 
             $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
+            $feeTransactionId = Str::uuid();
             $transaction = AdditionalFeeTransactions::create([
+                'id' => $feeTransactionId,
                 'transaction_id' => $transactionId,
                 'amount' => $additionalFeesData['amount'],
                 'payment_method' => $additionalFeesData['payment_method'],
@@ -87,6 +95,7 @@ class StudentAdditionalFeeService
             $studentAdditionFeesExist->status =  'paid';
             $studentAdditionFeesExist->save();
             DB::commit();
+            AdditionalFeeTransactionJob::dispatch($feeTransactionId, $currentSchool->id);
             return $transaction;
         } catch (Exception $e) {
             throw $e;

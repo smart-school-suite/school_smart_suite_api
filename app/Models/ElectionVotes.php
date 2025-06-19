@@ -11,6 +11,7 @@ class ElectionVotes extends Model
     use HasFactory;
 
     protected $fillable = [
+        "id",
         "school_branch_id",
         "election_id",
         "candidate_id",

@@ -1,9 +1,12 @@
 <?php
 
 namespace App\Services;
+
+use App\Jobs\StatisticalJobs\OperationalJobs\SpecialtyStatJob;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SpecailtyService
 {
@@ -11,6 +14,8 @@ class SpecailtyService
 
     public function createSpecialty(array $data, $currentSchool){
         $specialty = new Specialty();
+        $specialtyId = Str::uuid();
+        $specialty->id = $specialtyId;
         $specialty->school_branch_id = $currentSchool->id;
         $specialty->department_id = $data["department_id"];
         $specialty->specialty_name = $data["specialty_name"];
@@ -19,6 +24,7 @@ class SpecailtyService
         $specialty->description = $data["description"] ?? null;
         $specialty->level_id = $data["level_id"];
         $specialty->save();
+        SpecialtyStatJob::dispatch($specialtyId, $currentSchool->id);
         return $specialty;
     }
 

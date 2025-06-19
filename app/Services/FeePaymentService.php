@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeePaymentStatJob;
 use App\Models\Student;
 use App\Models\TuitionFees;
 use Illuminate\Support\Facades\DB;
@@ -45,15 +46,17 @@ class FeePaymentService
             $studentTuitionFees->save();
 
             $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
+            $paymentId = Str::uuid();
             TuitionFeeTransactions::create([
+                'id' => $paymentId,
                 'transaction_id' => $transactionId,
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
                 'tuition_id' => $data['tuition_id'],
                 'school_branch_id' => $currentSchool->id,
             ]);
-
             DB::commit();
+            TuitionFeePaymentStatJob::dispatch($paymentId, $currentSchool->id);
             return $studentTuitionFees;
         } catch (QueryException $e) {
             DB::rollBack();
@@ -191,10 +194,10 @@ class FeePaymentService
         return $paidFeesData;
     }
 
-    public function updateStudentFeesPayment(array $data, $fee_id, $currentSchool)
+    public function updateStudentFeesPayment(array $data, $feeId, $currentSchool)
     {
         $findFeePayment = Feepayment::where('school_branch_id', $currentSchool->id)
-            ->find($fee_id);
+            ->find($feeId);
         if (!$findFeePayment) {
             return ApiResponseService::error('Fee Payment Not found', null, 400);
         }
@@ -223,10 +226,10 @@ class FeePaymentService
         }
         return $transactionDetail;
     }
-    public function deleteFeePayment($fee_id, $currentSchool)
+    public function deleteFeePayment($feeId, $currentSchool)
     {
         $findFeePayment = Feepayment::where('school_branch_id', $currentSchool->id)
-            ->find($fee_id);
+            ->find($feeId);
         if (!$findFeePayment) {
             return ApiResponseService::error('Fee Payment Not found', null, 400);
         }

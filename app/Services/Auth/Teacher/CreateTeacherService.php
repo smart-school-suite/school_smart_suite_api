@@ -3,10 +3,12 @@
 namespace App\Services\Auth\Teacher;
 
 use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
+use App\Jobs\StatisticalJobs\OperationalJobs\TeacherRegistrationStatsJob;
 use App\Models\Teacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CreateTeacherService
 {
@@ -17,6 +19,8 @@ class CreateTeacherService
             DB::beginTransaction();
             $password = $this->generateRandomPassword();
             $instructor = new Teacher();
+            $instructorId = Str::uuid();
+            $instructor->id = $instructorId;
             $instructor->name = $teacherData["name"];
             $instructor->email = $teacherData["email"];
             $instructor->first_name = $teacherData['first_name'];
@@ -28,8 +32,9 @@ class CreateTeacherService
             $instructor->school_branch_id = $currentSchool->id;
             $instructor->save();
             $instructor->assignRole('teacher');
-            SendPasswordVaiMailJob::dispatch($password, $teacherData['email']);
             DB::commit();
+            SendPasswordVaiMailJob::dispatch($password, $teacherData['email']);
+            TeacherRegistrationStatsJob::dispatch($instructorId, $currentSchool->id);
             return $instructor;
         } catch (Exception $e) {
             DB::rollBack();

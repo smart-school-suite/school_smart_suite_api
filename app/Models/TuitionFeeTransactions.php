@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
 class TuitionFeeTransactions extends Model
@@ -11,6 +10,7 @@ class TuitionFeeTransactions extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'transaction_id',
         'amount',
         'payment_method',
@@ -26,14 +26,4 @@ class TuitionFeeTransactions extends Model
         return $this->belongsTo(TuitionFees::class, 'tuition_id');
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 30);
-         });
-
-    }
 }

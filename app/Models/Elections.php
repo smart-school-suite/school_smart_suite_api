@@ -13,6 +13,7 @@ class Elections extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         "election_type_id",
         "application_start",
         "application_end",
@@ -61,15 +62,5 @@ class Elections extends Model
          return $this->hasMany(ElectionVotes::class);
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
-    }
 
 }
