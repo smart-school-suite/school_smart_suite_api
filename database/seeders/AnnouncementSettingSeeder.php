@@ -15,11 +15,13 @@ class AnnouncementSettingSeeder extends Seeder
     public function run(): void
     {
         $settings = AnnouncementSetting::all();
+        $this->command->info("Creating School Announcement Settings................................");
         foreach($settings as $setting){
            SchoolAnnouncementSetting::create([
                 'announcement_setting_id' => $setting['id'],
                 'school_branch_id' => "a6e8ecad-e331-4500-b076-655c89d68e02"
            ]);
         }
+        $this->command->info("School Announcement Settings Created Successfully");
     }
 }

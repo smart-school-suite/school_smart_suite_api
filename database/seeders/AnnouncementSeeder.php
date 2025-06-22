@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\AnnouncementLabel;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +13,18 @@ class AnnouncementSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $announcementLabels = [
+             'info',
+             'urgent',
+             "important",
+             'All'
+        ];
+        $this->command->info("Creating Announcement Labels.......................");
+         foreach($announcementLabels as $announcementLabel){
+             AnnouncementLabel::create([
+                 'name' => $announcementLabel
+             ]);
+         }
+         $this->command->info("Announcement Labels Created Successfully");
     }
 }

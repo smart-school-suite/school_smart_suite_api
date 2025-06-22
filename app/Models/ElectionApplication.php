@@ -13,12 +13,13 @@ class ElectionApplication extends Model
     use HasFactory;
 
     protected $fillable = [
-        'isApproved',
+        'id',
         'school_branch_id',
         'election_id',
         'election_role_id',
         'student_id',
         "manifesto",
+        "application_status",
         "personal_vision",
         "commitment_statement",
     ];
@@ -49,14 +50,4 @@ class ElectionApplication extends Model
          return $this->hasMany(ElectionCandidates::class);
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
-    }
 }

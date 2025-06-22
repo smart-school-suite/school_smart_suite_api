@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
-use App\Models\Courses; // Ensure this model is correctly configured
+use App\Models\Courses;
 use App\Models\StatTypes;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -10,7 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // Import Log facade
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CourseStatJob implements ShouldQueue

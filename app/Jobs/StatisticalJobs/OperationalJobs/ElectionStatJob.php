@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
-use App\Models\Elections; // Ensure this model is used and correctly configured
+use App\Models\Elections;
 use App\Models\StatTypes;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -10,7 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // Import Log facade
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ElectionStatJob implements ShouldQueue

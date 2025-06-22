@@ -244,6 +244,37 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('progressive_stats', function(Blueprint $table) {
+            $table->string('id')->primary();
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+
+       });
+
+       Schema::create('election_application_stats', function(Blueprint $table) {
+         $table->string('id')->primary();
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+       });
+
+       Schema::create('school_admin_stats', function(Blueprint $table){
+            $table->string('id')->primary();
+            $table->integer('integer_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->json('json_value')->nullable();
+            $table->integer('year')->nullable();
+            $table->integer('month')->nullable();
+            $table->timestamps();
+       });
+
 
     }
 

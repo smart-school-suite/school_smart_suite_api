@@ -7,6 +7,7 @@ use App\Http\Requests\Course\CreateCourseRequest;
 use App\Http\Requests\Course\UpdateCourseRequest;
 use App\Http\Requests\Course\BulkUpdateCourseRequest;
 use App\Http\Resources\CourseResource;
+use App\Models\Courses;
 use Illuminate\Support\Facades\Validator;
 use App\Services\CourseService;
 use App\Services\ApiResponseService;
@@ -126,5 +127,16 @@ class CoursesController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $activeCourses =  $this->courseService->getActiveCourses($currentSchool);
         return ApiResponseService::success("Active Courses Fetched Successfully", $activeCourses, null, 200);
+    }
+
+    public function getCoursesBySpecialtySemester(Request $request){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $specialtyId = $request->route("specialtyId");
+         $semesterId = $request->route("semesterId");
+         $courses = Courses::where("school_branch_id", $currentSchool->id)
+             ->where("specialty_id", $specialtyId)
+             ->where("semester_id", $semesterId)
+             ->get();
+        return ApiResponseService::success("Courses By Specialty Semester Fetched Successfully", CourseResource::collection($courses), null, 200);
     }
 }

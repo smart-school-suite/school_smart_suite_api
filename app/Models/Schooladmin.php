@@ -22,6 +22,7 @@ class Schooladmin extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
         'name',
         'first_name',
         'last_name',
@@ -115,16 +116,6 @@ class Schooladmin extends Authenticatable
 
     public function eventAuthor(): MorphMany {
         return $this->morphMany(EventAuthor::class, 'actorable');
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 25);
-         });
-
     }
 
 

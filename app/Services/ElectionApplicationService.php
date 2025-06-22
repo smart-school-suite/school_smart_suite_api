@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\OperationalJobs\ElectionApplicationStatJob;
 use App\Models\ElectionCandidates;
 use App\Models\ElectionApplication;
 use App\Models\ElectionResults;
@@ -25,6 +26,8 @@ class ElectionApplicationService
         }
 
         $electionApplication = new ElectionApplication();
+        $applicationId = Str::uuid()->toString();
+        $electionApplication->id = $applicationId;
         $electionApplication->manifesto = $data["manifesto"];
         $electionApplication->personal_vision = $data["personal_vision"];
         $electionApplication->commitment_statement = $data["commitment_statement"];
@@ -34,6 +37,8 @@ class ElectionApplicationService
         $electionApplication->school_branch_id = $currentSchool->id;
         $electionApplication->isApproved = false;
         $electionApplication->save();
+
+        ElectionApplicationStatJob::dispatch($applicationId, $currentSchool->id);
         return $electionApplication;
     }
 
@@ -105,7 +110,7 @@ class ElectionApplicationService
             if (!$application) {
                 return ApiResponseService::error("Application not found", null, 404);
             }
-            $application->isApproved = true;
+            $application->application_status = "approved";
             $application->save();
             $randomId = Str::uuid()->toString();
             ElectionCandidates::create([
@@ -144,7 +149,7 @@ class ElectionApplicationService
                 if (!$application) {
                     return ApiResponseService::error("Application not found", null, 404);
                 }
-                $application->isApproved = true;
+                $application->application_status = "approved";
                 $application->save();
                 $randomId = Str::uuid()->toString();
                 ElectionCandidates::create([

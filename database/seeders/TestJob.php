@@ -2,10 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Jobs\StatisticalJobs\OperationalJobs\ElectionWinnerStatJob;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\CaStatsJob;
+use App\Models\ElectionResults;
 use App\Models\Exams;
 use App\Models\Student;
 
@@ -18,9 +20,7 @@ class TestJob extends Seeder
     {
         //
         $this->command->info("Seeder Has Begun");
-        $exam = Exams::findOrFail("b9be6a18-96b2-4416-9983-75c6ca5b7462");
-        $student = Student::findOrFail("08542652-cd3c-45d3-a1e6-cceddadbbdb0");
-
-        CaStatsJob::dispatch($exam);
+        $electionResults = ElectionResults::find("3bc2146086");
+        ElectionWinnerStatJob::dispatch($electionResults->election_id, $electionResults->school_branch_id);
     }
 }

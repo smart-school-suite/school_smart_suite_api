@@ -25,6 +25,7 @@ class CreateTeacherService
             $instructor->email = $teacherData["email"];
             $instructor->first_name = $teacherData['first_name'];
             $instructor->last_name = $teacherData['last_name'];
+            $instructor->gender = $teacherData['gender'];
             $instructor->password = Hash::make($password);
             $instructor->phone_one = $teacherData["phone_one"];
             $instructor->phone_one = $teacherData["phone_two"] ?? null;

@@ -32,6 +32,7 @@ class Teacher extends Model
         'status',
         'profile_picture',
         'address',
+        'gender'
     ];
 
     /**

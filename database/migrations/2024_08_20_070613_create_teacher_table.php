@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('email');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('address')->nullable();
+            $table->string('gender');
             $table->rememberToken();
             $table->timestamps();
         });

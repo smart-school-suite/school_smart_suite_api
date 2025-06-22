@@ -59,3 +59,5 @@ Route::middleware(['permission:schoolAdmin.course.activate'])->post('/courses/bu
 // Bulk deactivate courses
 Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/courses/bulk-deactivate', [CoursesController::class, 'bulkDeactivateCourse'])
     ->name('courses.bulk-deactivate');
+Route::get('/courses/specialty/{specialtyId}/semester/{semesterId}', [CoursesController::class, 'getCoursesBySpecialtySemester'])
+    ->name('courses.by-specialty-semester');

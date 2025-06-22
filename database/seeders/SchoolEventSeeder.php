@@ -50,18 +50,22 @@ class SchoolEventSeeder extends Seeder
             'Virtual',
         ];
 
+        $this->command->info("Creation Of Event Category Started");
         foreach ($eventCategories as $eventCategory) {
             EventCategory::create([
                 'name' => $eventCategory,
                 'school_branch_id' => $this->schoolBranchId
             ]);
         }
+       $this->command->info("Event Category Created Successfully");
 
+       $this->command->info("Creation Of Event Tags Started Successfully");
         foreach ($eventTags as $eventTag) {
             EventTag::create([
                 'name' => $eventTag,
                 'school_branch_id' => $this->schoolBranchId
             ]);
         }
+        $this->command->info("Event Tags Created Successfully");
     }
 }

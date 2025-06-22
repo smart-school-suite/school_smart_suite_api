@@ -48,6 +48,6 @@ class AssignPermissionToRoles extends Seeder
         $this->command->info("Started Assigning Role to admin");
         $schoolAdmin = Schooladmin::where("email", "chongongprecious@gmail.com")->firstOrFail();
         $schoolAdmin->assignRole("schoolSuperAdmin");
-        $this->command->info("Assigned Schoo Super admin Role To school admin Successfully");
+        $this->command->info("Assigned School Super admin Role To school admin Successfully");
     }
 }

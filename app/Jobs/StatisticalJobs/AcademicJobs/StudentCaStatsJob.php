@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -53,20 +54,20 @@ class StudentCaStatsJob implements ShouldQueue
 
         //KPI names for consistent lookup and clarity
         $kpiNames = [
-            'percentage_increase_performance_by_exam_type',
-            'percentage_increase_performance_by_semester',
-            'percentage_decrease_performance_by_exam',
-            'percentage_decrease_performance_by_semester',
-            'courses_sat',
-            'courses_passed',
-            'courses_failed',
-            'pass_rate',
-            'fail_rate',
-            'school_year_on_gpa_changes_by_exam',
-            'school_year_on_total_score_changes_by_exam',
-            'potential_resits',
-            'chances_of_resit',
-            'grades_distribution',
+            'student_ca_percentage_increase_performance_by_exam_type',
+            'student_ca_percentage_increase_performance_by_semester',
+            'student_ca_percentage_decrease_performance_by_exam',
+            'student_ca_percentage_decrease_performance_by_semester',
+            'student_ca_courses_sat',
+            'student_ca_courses_passed',
+            'student_ca_courses_failed',
+            'student_ca_pass_rate',
+            'student_ca_fail_rate',
+            'student_ca_school_year_on_gpa_changes_by_exam',
+            'student_ca_school_year_on_total_score_changes_by_exam',
+            'student_ca_potential_resits',
+            'student_ca_chances_of_resit',
+            'student_ca_grades_distribution',
         ];
 
 
@@ -127,8 +128,12 @@ class StudentCaStatsJob implements ShouldQueue
             'examType',
             'increase'
         );
+        if($kpis->get('student_ca_percentage_increase_performance_by_exam_type') === null) {
+           Log::error('KPI not found: student_ca_percentage_increase_performance_by_exam_type');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('percentage_increase_performance_by_exam_type'),
+            $kpis->get('student_ca_percentage_increase_performance_by_exam_type'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -145,8 +150,12 @@ class StudentCaStatsJob implements ShouldQueue
             'examType',
             'decrease'
         );
+        if($kpis->get('student_ca_percentage_decrease_performance_by_exam') === null) {
+           Log::error('KPI not found: student_ca_percentage_decrease_performance_by_exam');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('percentage_decrease_performance_by_exam'),
+            $kpis->get('student_ca_percentage_decrease_performance_by_exam'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -164,8 +173,12 @@ class StudentCaStatsJob implements ShouldQueue
             'semester',
             'increase'
         );
+        if($kpis->get('student_ca_percentage_increase_performance_by_semester') === null) {
+           Log::error('KPI not found: student_ca_percentage_increase_performance_by_semester');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('percentage_increase_performance_by_semester'),
+            $kpis->get('student_ca_percentage_increase_performance_by_semester'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -182,8 +195,12 @@ class StudentCaStatsJob implements ShouldQueue
             'semester',
             'decrease'
         );
+        if($kpis->get('student_ca_percentage_decrease_performance_by_semester') === null) {
+           Log::error('KPI not found: student_ca_percentage_decrease_performance_by_semester');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('percentage_decrease_performance_by_semester'),
+            $kpis->get('student_ca_percentage_decrease_performance_by_semester'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -196,8 +213,12 @@ class StudentCaStatsJob implements ShouldQueue
 
         // 3. Courses Sat, Passed, Failed
         $coursesSat = $this->coursesSat($marks);
+        if($kpis->get('student_ca_courses_sat') === null) {
+           Log::error('KPI not found: student_ca_courses_sat');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('courses_sat'),
+            $kpis->get('student_ca_courses_sat'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -208,9 +229,14 @@ class StudentCaStatsJob implements ShouldQueue
             $coursesSat
         );
 
+
         $coursesPassed = $this->coursesPassed($marks);
+        if($kpis->get('student_ca_courses_passed') === null) {
+           Log::error('KPI not found: student_ca_courses_passed');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('courses_passed'),
+            $kpis->get('student_ca_courses_passed'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -222,8 +248,12 @@ class StudentCaStatsJob implements ShouldQueue
         );
 
         $coursesFailed = $this->coursesFailed($marks);
+         if($kpis->get('student_ca_courses_failed') === null) {
+           Log::error('KPI not found: student_ca_courses_failed');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('courses_failed'),
+            $kpis->get('student_ca_courses_failed'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -236,8 +266,12 @@ class StudentCaStatsJob implements ShouldQueue
 
         // 4. Pass Rate and Fail Rate
         $examPassRate = $this->examPassRate($marks);
+        if($kpis->get('student_ca_pass_rate') === null) {
+           Log::error('KPI not found: student_ca_pass_rate');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('pass_rate'),
+            $kpis->get('student_ca_pass_rate'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -249,8 +283,12 @@ class StudentCaStatsJob implements ShouldQueue
         );
 
         $examFailRate = $this->examFailRate($marks);
+        if($kpis->get('student_ca_fail_rate') === null) {
+           Log::error('KPI not found: student_ca_fail_rate');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('fail_rate'),
+            $kpis->get('student_ca_fail_rate'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -263,8 +301,12 @@ class StudentCaStatsJob implements ShouldQueue
 
         // 5. Year-on-Year GPA and Total Score Changes
         $yearOnGpaChangesByExam = $this->yearOnGpaChangesByExam($studentResultsForGpaAndScoreChange);
+        if($kpis->get('student_ca_school_year_on_gpa_changes_by_exam') === null) {
+           Log::error('KPI not found: student_ca_school_year_on_gpa_changes_by_exam');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('school_year_on_gpa_changes_by_exam'),
+            $kpis->get('student_ca_school_year_on_gpa_changes_by_exam'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -276,8 +318,12 @@ class StudentCaStatsJob implements ShouldQueue
         );
 
         $yearOnTotalScoreChangesByExam = $this->yearOnTotalScoreByExam($studentResultsForGpaAndScoreChange);
+        if($kpis->get('student_ca_school_year_on_total_score_changes_by_exam') === null) {
+           Log::error('KPI not found: student_ca_school_year_on_total_score_changes_by_exam');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('school_year_on_total_score_changes_by_exam'),
+            $kpis->get('student_ca_school_year_on_total_score_changes_by_exam'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -289,8 +335,12 @@ class StudentCaStatsJob implements ShouldQueue
         );
 
         $gradesDistribution = $this->gradesDistribution($letterGrades, $marks);
+        if($kpis->get('student_ca_grades_distribution') === null) {
+           Log::error('KPI not found: student_ca_grades_distribution');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('grades_distribution'),
+            $kpis->get('student_ca_grades_distribution'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -303,8 +353,12 @@ class StudentCaStatsJob implements ShouldQueue
 
         // 6. Potential Resits and Chances of Resit
         $totalPotentialResit = $this->totalNumberOfPotResits($marks);
+        if($kpis->get('student_ca_potential_resits') === null) {
+           Log::error('KPI not found: student_ca_potential_resits');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('potential_resits'),
+            $kpis->get('student_ca_potential_resits'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,
@@ -316,8 +370,12 @@ class StudentCaStatsJob implements ShouldQueue
         );
 
         $resitChances = $this->determineResitChance($this->exam->weighted_mark, $marks);
+         if($kpis->get('student_ca_chances_of_resit') === null) {
+           Log::error('KPI not found: student_ca_chances_of_resit');
+              return;
+        }
         $dataToBeInserted[] = $this->prepareStatData(
-            $kpis->get('chances_of_resit'),
+            $kpis->get('student_ca_chances_of_resit'),
             $this->exam->id,
             $schoolBranchId,
             $this->student->id,

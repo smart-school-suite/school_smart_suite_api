@@ -59,9 +59,6 @@ class ExamStatsJob implements ShouldQueue
             'exam_course_score_distribution',
         ];
 
-        // Retrieve necessary data efficiently
-        // Using `toBase()` to work with generic objects/arrays for simpler calculations,
-        // reducing Eloquent model overhead in intense loops if relationships aren't needed there.
         $examResults = StudentResults::where("exam_id", $this->exam->id)->get()->toBase();
         // Eager load 'course' relationship for Marks to avoid N+1 queries in loops
         $studentMarks = Marks::where("exam_id", $this->exam->id)->with('course')->get()->toBase();

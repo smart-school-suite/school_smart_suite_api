@@ -3,7 +3,7 @@
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
 use App\Models\StatTypes;
-use App\Models\ElectionResults; // Import ElectionResult model
+use App\Models\ElectionResults;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -64,8 +64,8 @@ class ElectionWinnerStatJob implements ShouldQueue
 
         $electionWinners = ElectionResults::where("election_id", $this->electionId)
             ->where("school_branch_id", $this->schoolBranchId)
-            ->where("status", "won")
-            ->with(['election', 'electionCandidate.student.department', 'electionCandidate.student.specialty'])
+            ->where("election_status", "won")
+            ->with(['Elections', 'electionCandidate.student.department', 'electionCandidate.student.specialty'])
             ->get();
 
         if ($electionWinners->isEmpty()) {
@@ -75,12 +75,12 @@ class ElectionWinnerStatJob implements ShouldQueue
 
         foreach ($electionWinners as $winner) {
 
-            if (!$winner->election || !$winner->electionCandidate || !$winner->electionCandidate->student) {
+            if (!$winner->Elections || !$winner->electionCandidate || !$winner->electionCandidate->student) {
                 Log::warning("Skipping winner stat for ElectionResult ID {$winner->id} due to missing election, candidate, or student data.");
                 continue;
             }
 
-            $electionTypeId = $winner->election->election_type_id;
+            $electionTypeId = $winner->Elections->election_type_id;
             $electionRoleId = $winner->position_id;
             $student = $winner->electionCandidate->student;
             $totalVoteKpi = $kpis->get('election_role_winner_total_vote');

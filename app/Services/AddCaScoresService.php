@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\StatisticalJobs\AcademicJobs\CaStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +13,6 @@ use App\Models\Marks;
 use App\Models\Grades;
 use App\Models\StudentResults;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 
 class AddCaScoresService
 {
@@ -77,9 +75,6 @@ class AddCaScoresService
             $this->updateEvaluatedStudentCount($exam, $allStudentsEvaluated);
             DB::commit();
             StudentCaStatsJob::dispatch($examDetails, $studentTarget);
-            if($allStudentsEvaluated === true){
-                CaStatsJob::dispatch($exam);
-            }
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
@@ -175,7 +170,6 @@ class AddCaScoresService
             ->where('grades_category_id', $exam->grades_category_id)
             ->orderBy('minimum_score', 'desc')
             ->get();
-
         if ($grades->isEmpty()) {
             throw new Exception("No grades found for school ID: {$schoolId} and exam ID: {$examId}");
         }
@@ -198,7 +192,7 @@ class AddCaScoresService
             'gradeStatus' => 'failed',
             'gratification' => 'poor',
             'score' => $score,
-            'resitStatus' => 'high_resit_potential', // CA failure might not directly lead to resit
+            'resitStatus' => 'high_resit_potential',
             'gradePoints' => 0.0,
         ];
     }
