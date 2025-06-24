@@ -31,7 +31,7 @@ class ExamStatService
             ->get()
             ->keyBy('program_name');
 
-        $examStatData = DB::table('school_exam_stats_data')
+        $examStatData = DB::table('school_exam_stats')
             ->where('school_branch_id', $currentSchool->id)
             ->where('exam_id', $examId)
             ->get()
@@ -45,8 +45,8 @@ class ExamStatService
             'exam_fail_rate' => ['Exam Fail Rate', 'decimal_value'],
             'average_exam_total_score' => ['Average Exam Total Score', 'decimal_value'],
             'average_exam_gpa' => ['Average Exam GPA', 'decimal_value'],
-            'exam_course_fail_rates' => ['Courses Failed Rate', 'decimal_value'],
-            'exam_course_pass_rates' => ['Courses Pass Rate', 'decimal_value'],
+            'exam_course_fail_rates' => ['Courses Failed Rate', 'json_value'],
+            'exam_course_pass_rates' => ['Courses Pass Rate', 'json_value'],
             'exam_course_fail_distribution' => ['Exam Course Fail Distribution', 'json_value'],
             'exam_course_pass_distribution' => ['Exam Course Pass Distribution', 'json_value'],
             'exam_course_resit_distribution' => ['Exam Course Resit Distribution', 'json_value'],

@@ -86,21 +86,21 @@ class CaStatsJob implements ShouldQueue
             $dataToInsert[] = $this->prepareStatData(
                 $kpis->get('ca_exam_total_students_accessed'),
                 $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
-                'decimal_value', $totalStudents
+                'integer_value', $totalStudents
             );
 
             // Total Students Passed
             $dataToInsert[] = $this->prepareStatData(
                 $kpis->get('ca_exam_total_students_passed'),
                 $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
-                'decimal_value', $passedStudentsCount
+                'integer_value', $passedStudentsCount
             );
 
             // Total Students Failed
             $dataToInsert[] = $this->prepareStatData(
                 $kpis->get('ca_exam_total_students_failed'),
                 $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
-                'decimal_value', $failedStudentsCount
+                'integer_value', $failedStudentsCount
             );
 
             // Exam Pass Rate
@@ -168,7 +168,7 @@ class CaStatsJob implements ShouldQueue
                 return [
                     'course_title' => $courseTitle,
                     'total_students' => $marksPerCourse->count(),
-                    'passed_students' => $marksPerCourse->where('grade_status', 'pass')->count(),
+                    'passed_students' => $marksPerCourse->where('grade_status', 'passed')->count(),
                 ];
             })->values()->toArray();
             $dataToInsert[] = $this->prepareStatData(
@@ -182,7 +182,7 @@ class CaStatsJob implements ShouldQueue
                 return [
                     'course_title' => $courseTitle,
                     'total_students' => $marksPerCourse->count(),
-                    'failed_students' => $marksPerCourse->where('grade_status', 'fail')->count(),
+                    'failed_students' => $marksPerCourse->where('grade_status', 'failed')->count(),
                 ];
             })->values()->toArray();
             $dataToInsert[] = $this->prepareStatData(
@@ -197,7 +197,7 @@ class CaStatsJob implements ShouldQueue
             $dataToInsert[] = $this->prepareStatData(
                 $kpis->get('ca_total_number_of_potential_resits'),
                 $this->exam->id, $schoolBranchId, $schoolYear, $month, $year,
-                'decimal_value', $totalPotResits
+                'integer_value', $totalPotResits
             );
 
             // Course with Number of Potential Resits Distribution
@@ -229,7 +229,7 @@ class CaStatsJob implements ShouldQueue
             // --- 3. Batch Insert All Prepared Statistics ---
             $chunkSize = 500;
             foreach (array_chunk($dataToInsert, $chunkSize) as $chunk) {
-                DB::table('school_exam_stats')->insert($chunk);
+                DB::table('school_ca_exam_stats')->insert($chunk);
             }
 
             DB::commit();
@@ -335,14 +335,14 @@ class CaStatsJob implements ShouldQueue
 
         $passRates = $courseGroupedMarks->mapWithKeys(function ($marks, $courseTitle) {
             $total = $marks->count();
-            $passed = $marks->where('grade_status', 'pass')->count();
+            $passed = $marks->where('grade_status', 'passed')->count();
             $passRate = $total > 0 ? round(($passed / $total) * 100, 2) : 0.00;
             return [$courseTitle => $passRate];
         })->toArray();
 
         $failRates = $courseGroupedMarks->mapWithKeys(function ($marks, $courseTitle) {
             $total = $marks->count();
-            $failed = $marks->where('grade_status', 'fail')->count();
+            $failed = $marks->where('grade_status', 'failed')->count();
             $failRate = $total > 0 ? round(($failed / $total) * 100, 2) : 0.00;
             return [$courseTitle => $failRate];
         })->toArray();
@@ -362,7 +362,7 @@ class CaStatsJob implements ShouldQueue
     public function analyzeCourseScores($studentMarks): array
     {
         $courseScores = $studentMarks->groupBy('course.course_title')->map(function ($marksPerCourse, $courseTitle) {
-            $scores = $marksPerCourse->pluck('total_score');
+            $scores = $marksPerCourse->pluck('score');
             return [
                 'course_title' => $courseTitle,
                 'highest_score' => $scores->max(),

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\StatisticalJobs\FinancialJobs\RegistrationFeeStatJob;
 use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeePaymentStatJob;
 use App\Models\Student;
 use App\Models\TuitionFees;
@@ -127,8 +128,9 @@ class FeePaymentService
             }
 
             $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
-
+            $feePaymentId = Str::uuid();
             $transaction = RegistrationFeeTransactions::create([
+                'id' => $feePaymentId,
                 'transaction_id' => $transactionId,
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
@@ -139,6 +141,7 @@ class FeePaymentService
             $studentRegistrationExists->status = 'paid';
             $studentRegistrationExists->save();
             DB::commit();
+            RegistrationFeeStatJob::dispatch($feePaymentId, $currentSchool->id);
             return $transaction;
         } catch (Exception $e) {
             DB::rollBack();

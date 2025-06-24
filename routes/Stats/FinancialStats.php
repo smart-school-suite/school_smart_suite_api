@@ -1,5 +1,5 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Stats\FinancialStatsController;
+use App\Http\Controllers\Stats\FinancialStatController;
 
-Route::middleware(['auth:sanctum'])->get("get/financial-stats", [FinancialStatsController::class, 'getFinanacialStats']);
+Route::get("/{year}", [FinancialStatController::class, 'getFinancialStats'])->name('stat.financial.stat');

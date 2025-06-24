@@ -29,6 +29,7 @@ class CreateStudentService
             $student->id = $randomId;
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
+            $student->gender = $studentData['gender'];
             $student->phone_one = $studentData['phone_one'];
             $student->last_name = $studentData["last_name"];
             $student->guardian_id = $studentData["guardian_id"];
@@ -63,7 +64,6 @@ class CreateStudentService
             $student->assignRole('student');
             SendPasswordVaiMailJob::dispatch( $password, $studentData["email"]);
             TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
-            RegistrationFeeStatJob::dispatch($registrationFeeId, $currentSchool->id);
             StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
             return $student;
         } catch (QueryException $e) {

@@ -562,6 +562,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('stat_type_id')->nullable()->index();
             $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('exam_id')->nullable();
+            $table->foreign('exam_id')->references('id')->on('exams');
         });
 
         Schema::table('school_ca_exam_stats', function (Blueprint $table) {
@@ -569,6 +571,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('stat_type_id')->nullable()->index();
             $table->foreign('stat_type_id')->references('id')->on('stat_types');
+            $table->string('exam_id')->nullable();
+            $table->foreign('exam_id')->references('id')->on('exams');
         });
 
         Schema::table('student_exam_stats', function (Blueprint $table) {
@@ -606,6 +610,8 @@ return new class extends Migration
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('department_id')->nullable();
             $table->foreign('department_id')->references('id')->on('department');
+            $table->string('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('additional_fee_category');
         });
 
         Schema::table('resit_fee_stats', function (Blueprint $table) {
@@ -759,6 +765,8 @@ return new class extends Migration
             $table->foreign('specialty_id')->references('id')->on('specialty');
             $table->string('department_id')->nullable();
             $table->foreign('department_id')->references('id')->on('department');
+            $table->string('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('additional_fee_category');
         });
 
         Schema::table('election_vote_stats', function(Blueprint $table) {

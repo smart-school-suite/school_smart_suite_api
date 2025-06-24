@@ -6,6 +6,7 @@ use App\Models\Exams;
 use App\Models\StatTypes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection; // Added for type hinting
+use Illuminate\Support\Facades\Log;
 
 class AcademicStatService
 {
@@ -67,6 +68,8 @@ class AcademicStatService
             ->get();
 
         // Prepare the results array, calling private helper methods
+        $courseKpi = $kpiIds['total_courses_count'];
+        Log::info("Courses Kpi: $courseKpi");
         return [
             'average_gpa_current_year' => $this->averageGpa(
                 $academicData,
@@ -102,9 +105,11 @@ class AcademicStatService
                 $academicData,
                 array_filter([$kpiIds['average_ca_exam_gpa'], $kpiIds['average_exam_gpa']])
             ),
+
             'total_courses_count' => $this->totalNumberOfCourses(
                 $courseData->where('stat_type_id', $kpiIds['total_courses_count'] ?? null)->first()
             ),
+
             'total_courses_count_by_department' => $this->totalCoursesCountByDepartment(
                 $courseData->where('stat_type_id', $kpiIds['total_courses_count_by_department'] ?? null)
             ),

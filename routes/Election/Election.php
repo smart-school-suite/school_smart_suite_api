@@ -2,8 +2,9 @@
 use App\Http\Controllers\ElectionsController;
 use App\Http\Controllers\ElectionResultsController;
 use illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Stats\ElectionStatController;
  // Elections Resource
+    Route::get("/stats/{year}", [ElectionStatController::class, 'getElectionStats'])->name('election.stats');
     Route::middleware(['permission:schoolAdmin.election.create'])->post('/elections', [ElectionsController::class, 'createElection'])
         ->name('elections.store');
     Route::middleware(['permission:schoolAdmin.election.view'])->get('/elections', [ElectionsController::class, 'getElections'])

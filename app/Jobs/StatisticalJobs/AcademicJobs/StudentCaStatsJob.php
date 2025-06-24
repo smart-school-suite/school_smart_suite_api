@@ -388,7 +388,7 @@ class StudentCaStatsJob implements ShouldQueue
 
         // Perform a single bulk insert for all prepared data
         if (!empty($dataToBeInserted)) {
-            DB::table('student_exam_stats')->insert($dataToBeInserted);
+            DB::table('student_ca_exam_stats')->insert($dataToBeInserted);
         }
     }
 

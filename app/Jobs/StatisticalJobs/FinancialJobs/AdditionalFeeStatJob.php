@@ -79,7 +79,8 @@ class AdditionalFeeStatJob implements ShouldQueue
                 $totalAdditionalFeeKpi,
                 $amount,
                 null,
-                null
+                null,
+                $additionalFeeDetails->additionalfee_category_id
             );
         } else {
             Log::warning("StatType 'total_additional_fee' not found. Skipping general additional fee stat.");
@@ -97,7 +98,8 @@ class AdditionalFeeStatJob implements ShouldQueue
                         $byDepartmentKpi,
                         $amount,
                         $additionalFeeDetails->student->department_id,
-                        null
+                        null,
+                        $additionalFeeDetails->additionalfee_category_id
                     );
                 } else {
                     Log::info("Student for additional fee '{$this->additionalFeeId}' has no department ID. Skipping department-based additional fee stat.");
@@ -117,7 +119,8 @@ class AdditionalFeeStatJob implements ShouldQueue
                         $bySpecialtyKpi,
                         $amount,
                         null,
-                        $additionalFeeDetails->student->specialty_id
+                        $additionalFeeDetails->student->specialty_id,
+                        $additionalFeeDetails->additionalfee_category_id
                     );
                 } else {
                     Log::info("Student for additional fee '{$this->additionalFeeId}' has no specialty ID. Skipping specialty-based additional fee stat.");
@@ -149,7 +152,8 @@ class AdditionalFeeStatJob implements ShouldQueue
         StatTypes $kpi,
         float $amount,
         ?string $departmentId = null,
-        ?string $specialtyId = null
+        ?string $specialtyId = null,
+        string $categoryId
     ): void {
 
         $matchCriteria = [
@@ -159,6 +163,7 @@ class AdditionalFeeStatJob implements ShouldQueue
             'stat_type_id' => $kpi->id,
             'department_id' => $departmentId,
             'specialty_id' => $specialtyId,
+            'category_id' => $categoryId
         ];
 
         $existingStat = DB::table('additional_fee_stats')->where($matchCriteria)->first();
@@ -177,6 +182,7 @@ class AdditionalFeeStatJob implements ShouldQueue
                 'stat_type_id' => $kpi->id,
                 'department_id' => $departmentId,
                 'specialty_id' => $specialtyId,
+                'category_id' => $categoryId,
                 'integer_value' => null,
                 'decimal_value' => $amount,
                 'json_value' => null,

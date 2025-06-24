@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,6 +11,7 @@ class AdditionalFeeTransactions extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'transaction_id',
         'amount',
         'payment_method',
@@ -25,15 +25,5 @@ class AdditionalFeeTransactions extends Model
 
     public function additionFee() : BelongsTo {
          return $this->belongsTo(AdditionalFees::class, 'fee_id');
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
     }
 }

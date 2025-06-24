@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
+use App\Jobs\StatisticalJobs\AcademicJobs\CaStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\Exams;
@@ -72,9 +73,12 @@ class AddCaScoresService
 
             // Add a record to the student results table (this might be an initial record or updated later).
             $this->addStudentResultRecords($student, $currentSchool, $totalScoreAndGpa, $examDetails, $results, $examStatus);
-            $this->updateEvaluatedStudentCount($exam, $allStudentsEvaluated);
+            $allStudentsEvaluated = $this->updateEvaluatedStudentCount($exam);
             DB::commit();
             StudentCaStatsJob::dispatch($examDetails, $studentTarget);
+            if ($allStudentsEvaluated) {
+                CaStatsJob::dispatch($examDetails);
+            }
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
@@ -301,13 +305,12 @@ class AddCaScoresService
         return $studentResult;
     }
 
-     private function updateEvaluatedStudentCount($exam, $allStudentsEvaluated): void
+     private function updateEvaluatedStudentCount($exam): bool
     {
         $exam->increment('evaluated_candidate_number');
-        if ($exam->evaluated_candidate_number === $exam->expected_candidate_number) {
-            $allStudentsEvaluated = true;
-            return;
-        }
+        // Reload the exam to get the latest evaluated_candidate_number
+        $exam->refresh();
+        return $exam->evaluated_candidate_number >= $exam->expected_candidate_number;
     }
     /**
      * Determines the overall exam result status based on individual course grades.

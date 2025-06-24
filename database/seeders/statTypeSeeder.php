@@ -40,8 +40,12 @@ class StatTypeSeeder extends Seeder
                 'program_name' => 'student_ca_courses_passed'
             ],
             [
-                'name' => 'Student CA Pass Rate',
+                'name' => 'Student CA Courses Failed',
                 'program_name' => 'student_ca_courses_failed'
+            ],
+            [
+                'name' => 'Student CA Pass Rate',
+                'program_name' => 'student_ca_pass_rate'
             ],
             [
                 'name' => 'Student CA Fail Rate',

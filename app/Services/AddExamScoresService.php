@@ -104,12 +104,12 @@ class AddExamScoresService
             );
 
             // Update the count of evaluated students for the exam and potentially trigger a resit exam job.
-            $this->updateEvaluatedStudentCount($examDetails, $allStudentsEvaluated);
+            $allStudentsEvaluated = $this->updateEvaluatedStudentCount($examDetails);
             DB::commit();
             StudentExamStatsJob::dispatch($examDetails, $targetStudent);
-            if($allStudentsEvaluated == true){
-                dispatch(new CreateResitCandidateJob($exam));
-                ExamStatsJob::dispatch($exam);
+             if ($allStudentsEvaluated) {
+                dispatch(new CreateResitCandidateJob($examDetails)); // Use $examDetails here
+                ExamStatsJob::dispatch($examDetails); // Use $examDetails here
             }
             return $results;
         } catch (Exception $e) {
@@ -168,13 +168,12 @@ class AddExamScoresService
      * @param object $exam The exam object.
      * @param  $allStudentsEvaluated
      */
-    private function updateEvaluatedStudentCount(Exams $exam, $allStudentsEvaluated): void
+     private function updateEvaluatedStudentCount(Exams $exam): bool
     {
         $exam->increment('evaluated_candidate_number');
-        if ($exam->evaluated_candidate_number === $exam->expected_candidate_number) {
-            $allStudentsEvaluated = true;
-            return;
-        }
+        // Reload the exam to get the latest evaluated_candidate_number
+        $exam->refresh();
+        return $exam->evaluated_candidate_number >= $exam->expected_candidate_number;
     }
 
     /**
@@ -292,16 +291,17 @@ class AddExamScoresService
             throw new Exception('Exam type is not valid or not found');
         }
 
-        $caExamType = ExamType::where('semester', $exam->examType->semester)
+        $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
             ->where('type', 'ca')
             ->firstOrFail();
-        return Exams::where('school_year', $exam->school_year)
+        $additionalExams = Exams::where('school_year', $exam->school_year)
             ->where('exam_type_id', $caExamType->id)
             ->where('specialty_id', $exam->specialty_id)
             ->where('level_id', $exam->level_id)
             ->where('student_batch_id', $exam->student_batch_id)
             ->where('semester_id', $exam->semester_id)
-            ->firstOrFail();
+            ->first();
+        return $additionalExams;
     }
 
     /**

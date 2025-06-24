@@ -74,7 +74,8 @@ class SchoolExpensesStatJob implements ShouldQueue
                 $month,
                 $this->schoolBranchId,
                 $monthlyExpensesKpi,
-                $amount
+                $amount,
+                $schoolExpenses->expenses_category_id
             );
         } else {
             Log::warning("StatType 'monthly_school_expenses' not found. Skipping monthly school expenses stat.");
@@ -96,14 +97,16 @@ class SchoolExpensesStatJob implements ShouldQueue
         int $month,
         string $schoolBranchId,
         StatTypes $kpi,
-        float $amount
+        float $amount,
+        string $categoryId
     ): void {
 
         $matchCriteria = [
             'year' => $year,
             'month' => $month,
             'school_branch_id' => $schoolBranchId,
-            'stat_type_id' => $kpi->id
+            'stat_type_id' => $kpi->id,
+            'category_id' => $categoryId
         ];
 
 
@@ -122,6 +125,7 @@ class SchoolExpensesStatJob implements ShouldQueue
                 'month' => $month,
                 'school_branch_id' => $schoolBranchId,
                 'stat_type_id' => $kpi->id,
+                'category_id' => $categoryId,
                 'integer_value' => null,
                 'decimal_value' => $amount,
                 'json_value' => null,

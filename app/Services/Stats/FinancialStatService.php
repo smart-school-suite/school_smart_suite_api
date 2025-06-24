@@ -36,7 +36,7 @@ class FinancialStatService
 
         // Define target KPIs to fetch from StatTypes
         $targetKpis = [
-            'total_additional_fee',
+            'additional_fee_total_amount_paid',
             'resit_fee_total_amount_paid',
             'registration_fee_total_amount_paid',
             'registered_students_count_over_time',
@@ -51,7 +51,7 @@ class FinancialStatService
 
         // Prepare KPI IDs for direct, null-safe access
         $kpiIds = [
-            'total_additional_fee'              => $kpis->get('total_additional_fee')->id ?? null,
+            'additional_fee_total_amount_paid'              => $kpis->get('additional_fee_total_amount_paid')->id ?? null,
             'resit_fee_total_amount_paid'       => $kpis->get('resit_fee_total_amount_paid')->id ?? null,
             'registration_fee_total_amount_paid' => $kpis->get('registration_fee_total_amount_paid')->id ?? null,
             'registered_students_count_over_time' => $kpis->get('registered_students_count_over_time')->id ?? null,
@@ -61,13 +61,13 @@ class FinancialStatService
         ];
 
         // --- Fetch all raw data efficiently from the database ---
-        $additionalFeeData = DB::table('additional_fees_trans_stats')
+        $additionalFeeData = DB::table('additional_fee_trans_stats')
             ->where('school_branch_id', $currentSchool->id)
             ->where('year', $year)
-            ->when($kpiIds['total_additional_fee'], fn ($query, $kpiId) => $query->where('stat_type_id', $kpiId))
+            ->when($kpiIds['additional_fee_total_amount_paid'], fn ($query, $kpiId) => $query->where('stat_type_id', $kpiId))
             ->get(['decimal_value', 'month', 'category_id']);
 
-        $tuitionFeeData = DB::table('tuition_fees_trans_stats')
+        $tuitionFeeData = DB::table('tuition_fee_trans_stats')
             ->where('school_branch_id', $currentSchool->id)
             ->where('year', $year)
             ->when($kpiIds['total_tuition_fee_amount_paid'], fn ($query, $kpiId) => $query->where('stat_type_id', $kpiId))
@@ -109,9 +109,9 @@ class FinancialStatService
             'total_school_expenses' => $this->totalSchoolExpenses($schoolExpensesData),
             'school_expenses_over_time' => $this->schoolExpensesOverTime($schoolExpensesData),
             'school_expenses_by_category' => $this->schoolExpensesByCategory($schoolExpensesData),
-            'total_additional_fees' => $this->totalAdditionalFees($additionalFeeData),
+            'additional_fee_total_amount_paids' => $this->totalAdditionalFees($additionalFeeData),
             'additional_fees_total_by_category' => $this->additionalFeesTotalByCategory($additionalFeeData),
-            'total_additional_fees_over_time' => $this->totalAdditionalFeesOverTime($additionalFeeData),
+            'additional_fee_total_amount_paids_over_time' => $this->totalAdditionalFeesOverTime($additionalFeeData),
             'total_resit_fees' => $this->totalResitFees($resitFeeData),
             'total_resit_fee_over_years' => $this->totalResitFeeOverYears($resitFeeData),
             'total_registration_fee' => $this->totalRegistrationFee($registrationFeeData),

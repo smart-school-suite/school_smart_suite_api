@@ -81,7 +81,8 @@ class AdditionalFeeTransactionJob implements ShouldQueue
                 $totalAmountPaidKpi,
                 $amount,
                 null,
-                null
+                null,
+                $additionalFeeTransaction->additionFee->additionalfee_category_id
             );
         } else {
             Log::warning("StatType 'additional_fee_total_amount_paid' not found. Skipping general additional fee transaction amount stat.");
@@ -101,7 +102,8 @@ class AdditionalFeeTransactionJob implements ShouldQueue
                         $byDepartmentKpi,
                         $amount,
                         $student->department_id,
-                        null
+                        null,
+                        $additionalFeeTransaction->additionFee->additionalfee_category_id
                     );
                 } else {
                     Log::info("Student for additional fee transaction '{$this->transactionId}' has no department ID. Skipping department-based amount paid stat.");
@@ -120,7 +122,8 @@ class AdditionalFeeTransactionJob implements ShouldQueue
                         $bySpecialtyKpi,
                         $amount,
                         null,
-                        $student->specialty_id
+                        $student->specialty_id,
+                        $additionalFeeTransaction->additionFee->additionalfee_category_id
                     );
                 } else {
                     Log::info("Student for additional fee transaction '{$this->transactionId}' has no specialty ID. Skipping specialty-based amount paid stat.");
@@ -152,7 +155,8 @@ class AdditionalFeeTransactionJob implements ShouldQueue
         StatTypes $kpi,
         float $amount,
         ?string $departmentId = null,
-        ?string $specialtyId = null
+        ?string $specialtyId = null,
+        string $categoryId
     ): void {
 
         $matchCriteria = [
@@ -162,6 +166,7 @@ class AdditionalFeeTransactionJob implements ShouldQueue
             'stat_type_id' => $kpi->id,
             'department_id' => $departmentId,
             'specialty_id' => $specialtyId,
+            'category_id' => $categoryId
         ];
 
 
@@ -181,6 +186,7 @@ class AdditionalFeeTransactionJob implements ShouldQueue
                 'stat_type_id' => $kpi->id,
                 'department_id' => $departmentId,
                 'specialty_id' => $specialtyId,
+                'category_id' => $categoryId,
                 'integer_value' => null,
                 'decimal_value' => $amount,
                 'json_value' => null,

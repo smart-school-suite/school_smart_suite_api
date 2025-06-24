@@ -63,8 +63,6 @@ class OperationalStatService
         $specialtyStatsValue = DB::table('specialty_stats')
             ->where('school_branch_id', $currentSchool->id)
             ->when($kpiIds['total_number_of_specialties'], fn ($query, $kpiId) => $query->where('stat_type_id', $kpiId))
-            ->where('year', $year) // Assuming count is per year
-            ->latest('month')
             ->value('integer_value'); // Get just the integer_value
 
         // Department stats (assuming a single record for total, or sum for current month/year)
@@ -72,8 +70,6 @@ class OperationalStatService
         $departmentStatsValue = DB::table('department_stats')
             ->where('school_branch_id', $currentSchool->id)
             ->when($kpiIds['total_number_of_departments'], fn ($query, $kpiId) => $query->where('stat_type_id', $kpiId))
-            ->where('year', $year) // Assuming count is per year
-            ->latest('month')
             ->value('integer_value'); // Get just the integer_value
 
         // Teacher stats (for both historical and current total)
@@ -370,26 +366,24 @@ class OperationalStatService
      */
     private function totalStudentCountOverYearsByDepartment(Collection $studentDepartmentData): Collection
     {
-        // Get unique department IDs from the fetched data
+
         $departmentIds = $studentDepartmentData->pluck('department_id')->filter()->unique();
 
-        // Fetch department names from the database in a single query
         $departments = Department::whereIn('id', $departmentIds)->get()->keyBy('id');
 
-        // Group by year first, then by department_id within each year
         $result = $studentDepartmentData->groupBy('year')->map(function ($yearData, $year) use ($departments) {
             $departmentCounts = $yearData->groupBy('department_id')->map(function ($items, $departmentId) use ($departments) {
                 return [
                     'department' => $departments->get($departmentId)->name ?? 'Unknown',
-                    'total_students' => (int) $items->sum('integer_value'), // Sum the integer_value for students in this department for this year
+                    'total_students' => (int) $items->sum('integer_value'),
                 ];
-            })->values(); // Reset keys for department counts within the year
+            })->values();
 
             return [
                 'year' => (int) $year,
-                'department_data' => $departmentCounts->toArray(), // Convert department data to array
+                'department_data' => $departmentCounts->toArray(),
             ];
-        })->values()->sortBy('year'); // Reset keys for the main collection and sort by year
+        })->values()->sortBy('year');
 
         return $result;
     }

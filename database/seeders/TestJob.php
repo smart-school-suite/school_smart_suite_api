@@ -3,14 +3,10 @@
 namespace Database\Seeders;
 
 use App\Jobs\StatisticalJobs\OperationalJobs\ElectionWinnerStatJob;
+use App\Models\RegistrationFee;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
-use App\Jobs\StatisticalJobs\AcademicJobs\CaStatsJob;
-use App\Models\ElectionResults;
-use App\Models\Exams;
-use App\Models\Student;
-
+use Faker\Factory as Faker;
 class TestJob extends Seeder
 {
     /**
@@ -18,9 +14,16 @@ class TestJob extends Seeder
      */
     public function run(): void
     {
-        //
-        $this->command->info("Seeder Has Begun");
-        $electionResults = ElectionResults::find("3bc2146086");
-        ElectionWinnerStatJob::dispatch($electionResults->election_id, $electionResults->school_branch_id);
+       $registrationFees = RegistrationFee::all();
+       foreach($registrationFees as $fee){
+          $fee->update([
+              'status' => 'unpaid'
+          ]);
+       }
+    }
+    public function randomMoney($max, $min){
+      $faker = Faker::create();
+      $randomMoney = $faker->numberBetween($min, $max);
+      return $randomMoney;
     }
 }

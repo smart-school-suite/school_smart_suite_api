@@ -31,7 +31,7 @@ class CaExamStatService
             ->get()
             ->keyBy('program_name');
 
-        $examStatData = DB::table('school_ca_exam_stats_data')
+        $examStatData = DB::table('school_ca_exam_stats')
             ->where('school_branch_id', $currentSchool->id)
             ->where('exam_id', $examId)
             ->get()
@@ -45,8 +45,8 @@ class CaExamStatService
             'ca_exam_fail_rate' => ['Exam Fail Rate', 'decimal_value'],
             'average_ca_exam_total_score' => ['Average Exam Total Score', 'decimal_value'],
             'average_ca_exam_gpa' => ['Average Exam GPA', 'decimal_value'],
-            'ca_exam_course_fail_rates' => ['Courses Fail Rate', 'decimal_value'],
-            'ca_exam_course_pass_rates' => ['Courses Pass Rate', 'decimal_value'],
+            'ca_exam_course_fail_rates' => ['Courses Fail Rate', 'json_value'],
+            'ca_exam_course_pass_rates' => ['Courses Pass Rate', 'json_value'],
             'ca_exam_course_fail_distribution' => ['Exam Course Fail Distribution', 'json_value'],
             'ca_exam_course_pass_distribution' => ['Exam Course Pass Distribution', 'json_value'],
             'ca_exam_course_potential_resit_distribution' => ['Exam Course Potential Resit Distribution', 'json_value'],
