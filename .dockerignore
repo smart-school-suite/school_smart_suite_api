@@ -1,0 +1,20 @@
+# Docker ignore file for Laravel project
+.git
+.gitignore
+README.md
+.env.example
+.dockerignore
+Dockerfile
+docker-compose.yml
+.github/
+node_modules/
+npm-debug.log
+vendor/
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
