@@ -10,11 +10,12 @@ use Illuminate\Queue\SerializesModels;
 
 class BirthDayPushNotificationJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
      */
+
     public function __construct()
     {
         //

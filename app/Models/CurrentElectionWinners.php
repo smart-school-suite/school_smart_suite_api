@@ -13,14 +13,14 @@ class CurrentElectionWinners extends Model
 
     protected $fillable = [
         'total_votes',
-        'election_id',
+        'election_type_id',
         'election_role_id',
         'student_id',
         'school_branch_id'
     ];
 
-    public function election(): BelongsTo {
-        return $this->belongsTo(Elections::class, 'election_id');
+    public function electionType(): BelongsTo {
+        return $this->belongsTo(ElectionType::class, 'election_type_id');
     }
 
     public function electionRole(): BelongsTo {

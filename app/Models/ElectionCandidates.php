@@ -17,6 +17,7 @@ class ElectionCandidates extends Model
         "application_id",
         "school_branch_id",
         "election_id",
+        "election_role_id",
         "student_id"
     ];
 
@@ -29,6 +30,9 @@ class ElectionCandidates extends Model
          return $this->hasMany(ElectionResults::class);
     }
 
+    public function electionRole(): BelongsTo {
+            return $this->belongsTo(ElectionRoles::class, "election_role_id");
+    }
     public function student(): BelongsTo {
          return $this->belongsTo(Student::class, 'student_id');
     }

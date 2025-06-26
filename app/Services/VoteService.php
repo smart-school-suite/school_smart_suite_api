@@ -21,7 +21,7 @@ class VoteService
     {
         try{
              DB::beginTransaction();
-             $election = Elections::with('electionRole')->find($data['election_id']);
+             $election = Elections::with('electionType.electionRoles')->find($data['election_id']);
 
              if (!$election) {
                  return ApiResponseService::error("Election not found", null, 404);
@@ -41,7 +41,7 @@ class VoteService
              }
 
              $voteId = Str::uuid();
-             $vote = ElectionVotes::create([
+             ElectionVotes::create([
                  "id" => $voteId,
                  "school_branch_id" => $currentSchool->id,
                  "election_id" => $data['election_id'],
@@ -55,7 +55,7 @@ class VoteService
              broadcast(new VoteCastEvent($updatedResult))->toOthers();
              DB::commit();
              ElectionVoteStatJob::dispatch($voteId, $currentSchool->id);
-             return $vote;
+             return $updatedResult;
         }
         catch(Exception $e){
             DB::rollBack();
@@ -79,8 +79,12 @@ class VoteService
         ->where("position_id", $validatedData['position_id'])
         ->where("candidate_id", $validatedData['candidate_id'])
         ->first();
-
-        $result->increment('vote_count');
+        if($result->vote_count === null){
+            $result->vote_count =  1;
+        }
+        else{
+            $result->increment('vote_count');
+        }
         return $result->fresh();
     }
 }

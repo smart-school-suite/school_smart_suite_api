@@ -103,6 +103,7 @@ class ResitScoresService
             );
             $this->updateAccessmentStatus($candidateId);
             DB::commit();
+
             return [
                 "results" => $results,
                 "ca_results" => $caResults,
@@ -631,4 +632,5 @@ class ResitScoresService
             }
         }
     }
+
 }

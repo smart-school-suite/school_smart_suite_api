@@ -123,4 +123,8 @@ class Teacher extends Model
         return $this->hasMany(Timetable::class);
     }
 
+    public function badges()
+    {
+        return $this->morphMany(BadgeAssignment::class, 'assignable');
+    }
 }

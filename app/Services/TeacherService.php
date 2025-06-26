@@ -191,7 +191,6 @@ class TeacherService
             throw $e;
         }
     }
-
     public function uploadProfilePicture($request, $authTeacher)
     {
 

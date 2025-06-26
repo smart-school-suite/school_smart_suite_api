@@ -16,7 +16,7 @@ class ElectionResultsService
             ->where('election_id', $electionId)
             ->with(['ElectionRoles', 'Elections', 'electionCandidate'])
             ->get();
-            return $electionresults;
+        return $electionresults;
     }
 
 }

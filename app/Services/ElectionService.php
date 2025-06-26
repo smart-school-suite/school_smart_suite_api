@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\DataCleanupJobs\UpdateElectionResultStatus;
+use App\Jobs\DataCleanupJobs\UpdateElectionStatusJob;
+use App\Jobs\NotificationJobs\SendElectionOpenNotificationJob;
+use App\Jobs\NotificationJobs\SendElectionVoteOpenNotification;
 use App\Jobs\StatisticalJobs\OperationalJobs\ElectionStatJob;
 use App\Models\CurrentElectionWinners;
 use App\Models\ElectionCandidates;
@@ -9,15 +13,15 @@ use App\Models\ElectionParticipants;
 use App\Models\Elections;
 use App\Models\ElectionType;
 use App\Models\PastElectionWinners;
+use App\Models\Student;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ElectionService
 {
     // Implement your logic here
-
     public function createElection(array $data, $currentSchool)
     {
         $election = new Elections();
@@ -31,10 +35,20 @@ class ElectionService
         $election->election_type_id = $data["election_type_id"];
         $election->school_branch_id = $currentSchool->id;
         $election->save();
-        ElectionStatJob::dispatch($electionId, $currentSchool->id);
+        $this->dispatchJobs($electionId, $currentSchool, $data);
         return $election;
     }
 
+    private function dispatchJobs($electionId, $currentSchool, $data){
+        ElectionStatJob::dispatch($electionId, $currentSchool->id);
+        SendElectionOpenNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_start"]));
+        SendElectionVoteOpenNotification::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_start"]));
+        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_end"]));
+        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_start"]));
+        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_start"]));
+        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
+        UpdateElectionResultStatus::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
+    }
     public function updateElection(array $data, $currentSchool, $electionId)
     {
         $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
@@ -45,7 +59,6 @@ class ElectionService
         $election->update($filterData);
         return $election;
     }
-
     public function bulkUpdateElection(array $electionList)
     {
         $result = [];
@@ -64,7 +77,6 @@ class ElectionService
             throw $e;
         }
     }
-
     public function bulkDeleteElection($electionIds)
     {
         $result = [];
@@ -76,13 +88,12 @@ class ElectionService
                 $result[] = $election;
             }
             DB::commit();
-           return $result;
+            return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-
     public function deleteElection($currentSchool, $electionId)
     {
         $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
@@ -92,13 +103,38 @@ class ElectionService
         $election->delete();
         return $election;
     }
-
     public function fetchElections($currentSchool)
     {
         $elections = Elections::where('school_branch_id', $currentSchool->id)->get();
         return $elections;
     }
+    public function upcomingElectionByStudent($currentSchool, $studentId)
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
+            ->find($studentId);
 
+        if (!$student) {
+            return collect();
+        }
+        $upcomingElections = Elections::where('school_branch_id', $currentSchool->id)
+            ->where('voting_start', '<=', now())
+            ->where('voting_end', '>=', now())
+            ->where('status', 'pending')
+            ->with(['electionType'])
+            ->get();
+
+        $eligibleElections = $upcomingElections->filter(function ($election) use ($student, $currentSchool) {
+            $isParticipantEligible = ElectionParticipants::where('election_id', $election->id)
+                ->where('school_branch_id', $currentSchool->id)
+                ->where('specialty_id', $student->specialty_id)
+                ->where('level_id', $student->level_id)
+                ->exists();
+
+            return $isParticipantEligible;
+        });
+
+        return $eligibleElections;
+    }
     public function getElectionCandidates(string $electionId, $currentSchool)
     {
         $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
@@ -107,7 +143,6 @@ class ElectionService
             ->get();
         return $getElectionCandidates;
     }
-
     public function addAllowedElectionParticipants(array $electionParticipantsList, $currentSchool)
     {
         $result = [];
@@ -129,7 +164,6 @@ class ElectionService
             throw $e;
         }
     }
-
     public function getAllowedElectionParticipants($currentSchool, $electionId)
     {
         $electionParticipants = ElectionParticipants::where("school_branch_id", $currentSchool->id)
@@ -138,7 +172,6 @@ class ElectionService
             ->get();
         return $electionParticipants;
     }
-
     public function addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId)
     {
         $result = [];
@@ -161,7 +194,6 @@ class ElectionService
             throw $e;
         }
     }
-
     public function getCurrentElectionWinners($currentSchool)
     {
         $currentElectionWinners = CurrentElectionWinners::where("school_branch_id", $currentSchool->id)
@@ -169,7 +201,6 @@ class ElectionService
             ->get();
         return $currentElectionWinners;
     }
-
     public function createElectionType($electionTypeData, $currentSchool)
     {
         $electionType = ElectionType::create([
@@ -179,24 +210,26 @@ class ElectionService
         ]);
         return $electionType;
     }
-
-    public function UpdateElectionType($updateData, $electionTypeId){
+    public function UpdateElectionType($updateData, $electionTypeId)
+    {
         $electionType = ElectionType::findOrFail($electionTypeId);
         $cleanedData = array_filter($updateData);
         $electionType->update($cleanedData);
         return $electionType;
     }
-    public function getElectionType($currentSchool){
+    public function getElectionType($currentSchool)
+    {
         $electionTypes = ElectionType::where("school_branch_id", $currentSchool->id)->get();
         return $electionTypes;
     }
-
-    public function deleteElectionType($electionTypeId){
+    public function deleteElectionType($electionTypeId)
+    {
         $electionType = ElectionType::findOrFail($electionTypeId);
         $electionType->delete();
         return $electionType;
     }
-    public function getActiveElectionType($currentSchool){
+    public function getActiveElectionType($currentSchool)
+    {
         $electionTypes = ElectionType::where("school_branch_id", $currentSchool->id)->where("status", "active")->get();
         return $electionTypes;
     }
@@ -207,7 +240,6 @@ class ElectionService
         $electionType->save();
         return $electionType;
     }
-
     public function bulkDeactivateElectionType($electionTypeIds)
     {
         $result = [];
@@ -228,7 +260,6 @@ class ElectionService
             throw $e;
         }
     }
-
     public function bulkActivateElectionType($electionTypeIds)
     {
         $result = [];
@@ -249,7 +280,6 @@ class ElectionService
             throw $e;
         }
     }
-
     public function activateElectionType($electionTypeId)
     {
         $electionType = ElectionType::findOrFail($electionTypeId);
@@ -257,7 +287,6 @@ class ElectionService
         $electionType->save();
         return $electionType;
     }
-
     public function getPastElectionWinners($currentSchool)
     {
         $pastElectionWinners = PastElectionWinners::where("school_branch_id", $currentSchool->id)
@@ -265,6 +294,4 @@ class ElectionService
             ->get();
         return $pastElectionWinners;
     }
-
-
 }

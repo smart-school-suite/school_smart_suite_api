@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
-
+use Illuminate\Support\Facades\Log;
 class TestNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -42,6 +42,7 @@ class TestNotification extends Notification implements ShouldQueue
      */
     public function toDatabase($notifiable)
     {
+         Log::info("toDatabase method called for notification ID: " . $this->id ?? 'N/A'); // <--- Add this log
         return [
             'title' => $this->title,
             'body' => $this->body,

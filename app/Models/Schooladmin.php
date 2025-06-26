@@ -118,5 +118,8 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(EventAuthor::class, 'actorable');
     }
 
-
+    public function badges()
+    {
+        return $this->morphMany(BadgeAssignment::class, 'assignable');
+    }
 }

@@ -219,4 +219,9 @@ class Student extends Model
     {
         return $this->hasMany(Studentresit::class);
     }
+
+    public function badges()
+    {
+        return $this->morphMany(BadgeAssignment::class, 'assignable');
+    }
 }

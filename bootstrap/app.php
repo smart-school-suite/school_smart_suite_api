@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/auth/school-admin')
                 ->group(base_path('routes/Auth/SchoolAdmin.php'));
 
+            Route::prefix('api/v1/school-admin')
+               ->group(base_path('routes/Notification/SchoolAdminNotification.php'));
+
             Route::prefix('api/v1/auth/teacher')
                 ->group(base_path('routes/Auth/Teacher.php'));
 

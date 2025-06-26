@@ -27,7 +27,7 @@ use App\Http\Controllers\Stats\ElectionStatController;
         ->name('elections.allowed-participants.store-from-other');
 
     // Voting
-    Route::middleware(['permission:schoolAdmin.election.vote'])->post('/elections/{electionId}/cast-vote', [ElectionsController::class, 'vote'])
+    Route::post('/elections/{electionId}/cast-vote', [ElectionsController::class, 'vote'])
         ->name('elections.vote');
 
     // Election Results
@@ -53,3 +53,6 @@ use App\Http\Controllers\Stats\ElectionStatController;
         ->name('election-types.deactivate');
     Route::middleware(['permission:schoolAdmin.electionType.view.active'])->get('/active-election-types', [ElectionsController::class, 'getActiveElectionTypes'])
         ->name('election-types.active');
+
+    Route::get('/student/{studentId}/upcoming-elections', [ElectionsController::class, 'getStudentElections'])
+        ->name('upcoming-elections.student.get');

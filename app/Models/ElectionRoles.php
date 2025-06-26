@@ -35,6 +35,9 @@ class ElectionRoles extends Model
          return $this->hasMany(ElectionApplication::class);
     }
 
+    public function electionCandidates(): HasMany {
+            return $this->hasMany(ElectionCandidates::class);
+    }
     public function schoolbranches(): BelongsTo {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }

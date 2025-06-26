@@ -271,8 +271,8 @@ return new class extends Migration
         });
 
         Schema::table('past_election_winners', function (Blueprint $table) {
-            $table->string('election_id');
-            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('election_type_id');
+            $table->foreign('election_type_id')->references('id')->on('election_type');
             $table->string('election_role_id');
             $table->foreign('election_role_id')->references('id')->on('election_roles');
             $table->string('student_id');
@@ -282,8 +282,8 @@ return new class extends Migration
         });
 
         Schema::table('current_election_winners', function (Blueprint $table) {
-            $table->string('election_id');
-            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('election_type_id');
+            $table->foreign('election_type_id')->references('id')->on('election_type');
             $table->string('election_role_id');
             $table->foreign('election_role_id')->references('id')->on('election_roles');
             $table->string('student_id');
@@ -328,6 +328,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_id');
             $table->foreign('student_id')->references('id')->on('student');
+            $table->string('election_role_id');
+            $table->foreign('election_role_id')->references('id')->on('election_roles');
         });
 
         Schema::table('teacher_specailty_preference', function (Blueprint $table) {
@@ -963,6 +965,12 @@ return new class extends Migration
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
+
+        Schema::table('roles', function(Blueprint $table){
+            $table->string('school_branch_id')->nullable()->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
     }
 
     /**

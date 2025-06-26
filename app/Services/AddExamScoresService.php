@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Jobs\DataCreationJob\CreateResitCandidateJob;
+use App\Jobs\DataCreationJob\CreateResitExamJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\ExamStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentExamStatsJob;
 use Exception;
@@ -17,6 +17,8 @@ use App\Models\Courses;
 use App\Models\AccessedStudent;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\ExamResultsAvailable;
 use Illuminate\Support\Facades\Log;
 
 class AddExamScoresService
@@ -108,8 +110,9 @@ class AddExamScoresService
             DB::commit();
             StudentExamStatsJob::dispatch($examDetails, $targetStudent);
              if ($allStudentsEvaluated) {
-                dispatch(new CreateResitCandidateJob($examDetails)); // Use $examDetails here
-                ExamStatsJob::dispatch($examDetails); // Use $examDetails here
+                CreateResitExamJob::dispatch($examDetails);
+                ExamStatsJob::dispatch($examDetails);
+                $this->sendExamResultsNotification($examDetails);
             }
             return $results;
         } catch (Exception $e) {
@@ -479,6 +482,11 @@ class AddExamScoresService
             'passed' => false,
             'failed' => true,
         ];
+    }
+
+    private function sendExamResultsNotification(Exams $exam){
+        $students = $exam->student;
+        Notification::send($students, new ExamResultsAvailable( $exam));
     }
 
 }

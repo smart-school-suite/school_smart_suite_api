@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 Broadcast::channel('election.results.{schoolBranchId}.{electionId}', function ($user, $schoolBranchId, $electionId) {
     return (string) $user->school_branch_id === (string) $schoolBranchId;
-}, ['guards' => ['student', 'teacher', 'schoolAdmin']]);
+}, ['guards' => ['student', 'teacher', 'schooladmin']]);
 
 Broadcast::channel('App.Models.Teacher.{id}', function ($user, $id) {
     return $user->id == $id;

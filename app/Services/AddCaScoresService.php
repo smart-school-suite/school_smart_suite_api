@@ -13,6 +13,8 @@ use App\Models\Courses;
 use App\Models\Marks;
 use App\Models\Grades;
 use App\Models\StudentResults;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\ExamResultsAvailable;
 use Illuminate\Support\Collection;
 
 class AddCaScoresService
@@ -78,6 +80,7 @@ class AddCaScoresService
             StudentCaStatsJob::dispatch($examDetails, $studentTarget);
             if ($allStudentsEvaluated) {
                 CaStatsJob::dispatch($examDetails);
+                $this->sendExamResultsNotification($examDetails);
             }
             return $results;
         } catch (Exception $e) {
@@ -335,6 +338,11 @@ class AddCaScoresService
             'passed' => false,
             'failed' => true,
         ];
+    }
+
+    private function sendExamResultsNotification(Exams $exam){
+        $students = $exam->student;
+        Notification::send($students, new ExamResultsAvailable( $exam));
     }
 
 }

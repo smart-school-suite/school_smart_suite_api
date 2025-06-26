@@ -27,6 +27,9 @@ class ElectionType extends Model
        return $this->hasMany(Elections::class);
    }
 
+   public function pastElectionWinners(): HasMany {
+      return $this->hasMany(PastElectionWinners::class);
+   }
    public function electionRoles(): HasMany {
       return $this->hasMany(ElectionRoles::class );
    }

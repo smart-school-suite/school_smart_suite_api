@@ -180,4 +180,10 @@ class ElectionsController extends Controller
         return ApiResponseService::error($e->getMessage(), null, 400);
        }
     }
+
+    public function getUpcomingElectionsByStudent(Request $request, $studentId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $elections = $this->electionService->upcomingElectionByStudent($currentSchool, $studentId);
+        return ApiResponseService::success("Upcoming Elections Fetched Successfully", $elections, null, 200);
+    }
 }

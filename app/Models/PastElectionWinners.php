@@ -16,6 +16,7 @@ class PastElectionWinners extends Model
         'election_id',
         'election_role_id',
         'student_id',
+        'election_type_id',
         'school_branch_id'
     ];
 
@@ -23,8 +24,8 @@ class PastElectionWinners extends Model
     public $incrementing = 'false';
     public $keyType = 'string';
 
-    public function election(): BelongsTo {
-         return $this->belongsTo(Elections::class, 'election_id');
+    public function electionType(): BelongsTo {
+         return $this->belongsTo(ElectionType::class, 'election_type_id');
     }
 
     public function electionRole(): BelongsTo {
