@@ -27,6 +27,10 @@ class VoteService
                  return ApiResponseService::error("Election not found", null, 404);
              }
 
+             if($election->voting_status != 'ongoing'){
+                return ApiResponseService::error("Voting Period Has Started", null, 404);
+             }
+
              if ($election->is_results_published) {
                  return ApiResponseService::error("Election Results Already Published", null, 400);
              }

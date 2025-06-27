@@ -56,3 +56,7 @@ use App\Http\Controllers\Stats\ElectionStatController;
 
     Route::get('/student/{studentId}/upcoming-elections', [ElectionsController::class, 'getStudentElections'])
         ->name('upcoming-elections.student.get');
+    Route::get('/election/{electionId}', [ElectionsController::class, 'getElectionDetails'])->name('get.election-details');
+
+
+

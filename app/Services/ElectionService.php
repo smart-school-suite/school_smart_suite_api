@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Jobs\DataCleanupJobs\UpdateElectionResultStatus;
 use App\Jobs\DataCleanupJobs\UpdateElectionStatusJob;
+use App\Jobs\NotificationJobs\SendAdminElectionConcludedNotificationJob;
+use App\Jobs\NotificationJobs\SendElectionConcludedNotificationJob;
 use App\Jobs\NotificationJobs\SendElectionOpenNotificationJob;
 use App\Jobs\NotificationJobs\SendElectionVoteOpenNotification;
 use App\Jobs\StatisticalJobs\OperationalJobs\ElectionStatJob;
@@ -39,6 +41,12 @@ class ElectionService
         return $election;
     }
 
+    public function getElectionDetails($currentSchool, $electionId){
+        $electionDetails = Elections::where("school_branch_id", $currentSchool->id)
+                                    ->with(['electionType'])
+                                     ->find($electionId);
+        return $electionDetails;
+    }
     private function dispatchJobs($electionId, $currentSchool, $data){
         ElectionStatJob::dispatch($electionId, $currentSchool->id);
         SendElectionOpenNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_start"]));
@@ -48,6 +56,8 @@ class ElectionService
         UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_start"]));
         UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
         UpdateElectionResultStatus::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
+        SendAdminElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
+        SendElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
     }
     public function updateElection(array $data, $currentSchool, $electionId)
     {

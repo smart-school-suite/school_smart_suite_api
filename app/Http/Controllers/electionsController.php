@@ -37,7 +37,11 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Created Sucessfully", $election, null, 201);
     }
 
-    //add fetch election details
+    public function getElectionDetails(Request $request, $electionId){
+       $currentSchool = $request->attributes->get("currentSchool");
+       $electionDetails = $this->electionService->getElectionDetails($currentSchool, $electionId);
+       return $electionDetails;
+    }
     public function deleteElection(Request $request, $electionId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
@@ -186,4 +190,5 @@ class ElectionsController extends Controller
         $elections = $this->electionService->upcomingElectionByStudent($currentSchool, $studentId);
         return ApiResponseService::success("Upcoming Elections Fetched Successfully", $elections, null, 200);
     }
+
 }

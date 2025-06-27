@@ -214,4 +214,11 @@ class ElectionApplicationService
             ->get();
         return $application;
     }
+    public function getMyApplications($currentSchool, $studentId){
+        $studentApplications = ElectionApplication::where("school_branch_id", $currentSchool->id)
+                                                     ->where("student_id", $studentId)
+                                                     ->get();
+        return $studentApplications;
+
+    }
 }

@@ -9,7 +9,6 @@ use App\Http\Requests\ElectionApplication\CreateApplicationRequest;
 use App\Http\Requests\ElectionApplication\UpdateElectionApplicationRequest;
 use App\Services\ApiResponseService;
 use Exception;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 
 class ElectionApplicationController extends Controller
@@ -82,4 +81,12 @@ class ElectionApplicationController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
+
+    public function getMyApplications(Request $request, $studentId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getMyApplications = $this->electionApplicationService->getMyApplications($currentSchool, $studentId);
+        return $getMyApplications;
+    }
+
+
 }
