@@ -2,7 +2,7 @@
 
 namespace App\Jobs\NotificationJobs;
 
-use App\Notifications\AdminApplicationApproved;
+use App\Notifications\AdminAdditionalFee;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -10,21 +10,21 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Schooladmin;
 use App\Models\PermissionCategory;
+use Illuminate\Support\Facades\Notification;
 
-
-class SendAdminApplicationApprovedNotification implements ShouldQueue
+class SendAdminAdditionalFeeNotificationJob implements ShouldQueue
 {
-     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    protected $applicationData;
     protected $schoolBranchId;
-    public function __construct(array $applicationData, string $schoolBranchId)
+    protected $additionalFeeData;
+    public function __construct(string $schoolBranchId, array $additionalFeeData)
     {
-        $this->applicationData = $applicationData;
         $this->schoolBranchId = $schoolBranchId;
+        $this->additionalFeeData = $additionalFeeData;
     }
 
     /**
@@ -32,22 +32,19 @@ class SendAdminApplicationApprovedNotification implements ShouldQueue
      */
     public function handle(): void
     {
-
-        $schoolAdminsToNotify = $this->getAuthorizedAdmins($this->schoolBranchId);
-        if($schoolAdminsToNotify->isNotEmpty()){
-            foreach($this->applicationData as $application){
-                $application['student']->notify(new AdminApplicationApproved(
-                    $application['student']->name,
-                     $application['electionRole']->name,
-                      $application['election']->electionType->election_title
-                ));
-            }
+        $admins = $this->getAuthorizedAdmins($this->schoolBranchId);
+        foreach($this->additionalFeeData as $fee){
+           Notification::send($admins, new AdminAdditionalFee(
+            $fee['student']->name,
+             $fee['amount'],
+              $fee['reason']
+            ));
         }
     }
 
-    private function getAuthorizedAdmins($schoolBranchId){
+     private function getAuthorizedAdmins($schoolBranchId){
                 $electionPermissionNames = PermissionCategory::with('permissions')
-            ->where('name', 'Election Manager')
+            ->where('name', 'Additional Fee Manager')
             ->first()
             ?->permission
             ->pluck('name')
