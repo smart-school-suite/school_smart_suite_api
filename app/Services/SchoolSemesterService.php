@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\FeeSchedule;
 use App\Models\SchoolSemester;
+use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SchoolSemesterService
 {
@@ -12,7 +15,12 @@ class SchoolSemesterService
 
     public function createSchoolSemester($semesterData, $currentSchool)
     {
+        DB::beginTransaction();
         $schoolSemester = new SchoolSemester();
+        $schoolSemesterId = Str::uuid();
+        $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                               ->find($semesterData['specialty_id']);
+        $schoolSemester->id = $schoolSemesterId;
         $schoolSemester->start_date = $semesterData["start_date"];
         $schoolSemester->end_date = $semesterData["end_date"];
         $schoolSemester->school_year = $semesterData["school_year"];
@@ -22,6 +30,13 @@ class SchoolSemesterService
         $schoolSemester->student_batch_id = $semesterData["student_batch_id"];
         $schoolSemester->school_branch_id = $currentSchool->id;
         $schoolSemester->save();
+        FeeSchedule::create([
+               'specialty_id' => $semesterData['specialty_id'],
+               'level_id' => $specialty->level_id,
+               'school_branch_id' => $currentSchool->id,
+               'school_semester_id' => $schoolSemesterId
+        ]);
+        DB::commit();
         return $schoolSemester;
     }
 

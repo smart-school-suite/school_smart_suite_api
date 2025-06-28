@@ -35,7 +35,7 @@ class LoginStudentService
         ]);
 
         SendOTPViaEmailJob::dispatch($loginData['email'], $otp);
-
         return ['otp_token_header' => $otp_header];
+
     }
 }

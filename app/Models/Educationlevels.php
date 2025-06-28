@@ -3,14 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use App\Traits\GeneratesUuid;
 class Educationlevels extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'name',
@@ -22,16 +20,9 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'education_levels';
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
+    public function feeSchedule(): HasMany {
+        return $this->hasMany(FeeSchedule::class);
     }
-
     public function electionParticipants(): HasMany
     {
         return $this->hasMany(ElectionParticipants::class);
@@ -48,6 +39,9 @@ class Educationlevels extends Model
         return $this->hasMany(StudentBatchGradeDates::class);
     }
 
+    public function studentFeeSchedule(): HasMany {
+        return $this->hasMany(StudentFeeSchedule::class);
+    }
     public function resitmarks(): HasMany
     {
         return $this->hasMany(ResitMarks::class, 'level_id');

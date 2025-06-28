@@ -32,6 +32,10 @@ class Specialty extends Model
         return $this->hasMany(StudentBatchGradeDates::class);
     }
 
+    public function feeSchedule(): HasMany {
+        return $this->hasMany(FeeSchedule::class);
+    }
+
     public function electionParticipants(): HasMany
     {
         return $this->hasMany(ElectionParticipants::class);
@@ -43,6 +47,9 @@ class Specialty extends Model
     public function resitResults(): HasMany
     {
         return $this->hasMany(ResitResults::class);
+    }
+    public function studentFeeSchedule(): HasMany {
+        return $this->hasMany(StudentFeeSchedule::class);
     }
     public function examResit(): HasMany {
         return $this->hasMany(ResitExam::class);
@@ -67,7 +74,6 @@ class Specialty extends Model
     {
         return $this->hasMany(HOS::class, 'specialty_id');
     }
-
     public function registrationFee(): HasMany
     {
         return $this->hasMany(RegistrationFee::class, 'specialty_id');
@@ -88,12 +94,10 @@ class Specialty extends Model
     {
         return $this->hasMany(Courses::class);
     }
-
     public function exams(): HasMany
     {
         return $this->hasMany(Exams::class);
     }
-
     public function TeacherSpecailtyPreference(): HasMany
     {
         return $this->hasMany(TeacherSpecailtyPreference::class);
@@ -102,7 +106,6 @@ class Specialty extends Model
     {
         return $this->belongsTo(School::class);
     }
-
     public function schoolbranches(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class);

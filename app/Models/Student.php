@@ -71,6 +71,10 @@ class Student extends Model
             'password' => 'hashed',
         ];
     }
+
+    public function studentFeeSchedule(): HasMany {
+        return $this->hasMany(StudentFeeSchedule::class);
+    }
     public function resitCandidates(): HasMany {
         return $this->hasMany(ResitCandidates::class, 'resit_id');
     }

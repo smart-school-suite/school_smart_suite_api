@@ -2,40 +2,58 @@
 
 namespace App\Services;
 
-use App\Models\SchoolFeeSchedule;
+use App\Models\FeeSchedule;
+use App\Models\Student;
+use App\Models\StudentFeeSchedule;
+use Illuminate\Support\Collection;
 
 class FeeScheduleService
 {
-    // Implement your logic here
 
-    public function scheduleFeePayment(array $feeSchedule, $currentSchool){
-         $result = [];
-         foreach($feeSchedule as $schedule){
-           $createdSchoolFeeSchedule = SchoolFeeSchedule::create([
-                'school_branch_id' => $currentSchool->id,
-                'specialty_id' => $schedule['specialty_id'],
-                'title' => $schedule['title'],
-                'amount' => $schedule['amount'],
-                'deadline_date' => $schedule['deadline_date']
-            ]);
-
-            $result[$schedule] = $createdSchoolFeeSchedule;
-         }
-
-         return $result;
+    //new methods
+    public function getFeeSchedule($currentSchool){
+        $feeSchedule = FeeSchedule::where("school_branch_id", $currentSchool->id)
+                                   ->with(['specialty.level', 'schoolSemester.semester'])
+                                   ->get();
+        return $feeSchedule;
     }
-
-    public function deleteSchedule($scheduleId, $currentSchool){
-        $feeScheduleExists = SchoolFeeSchedule::where("school_branch_id", $currentSchool->id)->find($scheduleId);
-        if(!$feeScheduleExists){
-            return ApiResponseService::error("Schedule Not Found I think It must have been deleted");
-        }
-        $feeScheduleExists->delete();
-        return $feeScheduleExists;
+    public function deleteFeeShedule($currentSchool, $feeScheduleId){
+       $feeSchedule = FeeSchedule::where("school_branch_id", $currentSchool->id)
+                        ->findOrFail($feeScheduleId);
+       $feeSchedule->delete();
+       return $feeSchedule;
     }
+    public function getStudentFeeSchedule($currentSchool, string $studentId): Collection
+    {
+        $student = Student::where("school_branch_id", $currentSchool->id)
+                            ->findOrFail($studentId);
 
-    public function getFeePaymentSchedule(string $specialtyId, $currentSchool){
-        $specailtyFeePaymentSchedule = SchoolFeeSchedule::where("school_branch_id", $currentSchool->id)->where("specialty_id", $specialtyId)->get();
-        return $specailtyFeePaymentSchedule;
+        $schedule = StudentFeeSchedule::where("school_branch_id", $currentSchool->id)
+                                      ->where("specialty_id", $student->specialty_id)
+                                      ->where("level_id", $student->level_id)
+                                      ->with(['student', 'feeScheduleSlot.installment', 'level', 'specialty'])
+                                      ->get();
+
+        $sortedSchedule = $schedule->sortBy(function ($item) {
+            return $item->feeScheduleSlot->installment->count ?? PHP_INT_MAX;
+        })->values();
+
+        $formattedSchedule = $sortedSchedule->map(function ($item) {
+            $installmentName = $item->feeScheduleSlot->installment->name ?? null;
+            $dueDate = $item->feeScheduleSlot->due_date ?? null;
+            $status = $item->status;
+            $amount = $item->expected_amount;
+            $gramification =$item->gramification;
+
+            return [
+                'installment' => $installmentName,
+                'amount' => $amount,
+                'due_date' => $dueDate,
+                'status' => $status,
+                'gramification' => $gramification,
+            ];
+        });
+
+        return $formattedSchedule;
     }
 }
