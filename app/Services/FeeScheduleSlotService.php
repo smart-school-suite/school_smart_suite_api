@@ -4,15 +4,19 @@ namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateStudentFeeScheduleJob;
 use App\Jobs\DataCreationJob\UpdateStudentFeeScheduleJob;
+use App\Jobs\NotificationJobs\SendAdminFeeScheduleNotificationJob;
+use App\Jobs\NotificationJobs\SendFeeScheduleNotificationJob;
 use App\Models\FeeSchedule;
 use App\Models\FeeScheduleSlot;
 use App\Models\Schoolbranches;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 class FeeScheduleSlotService
 {
+
     /**
      * Creates fee schedule slots for a given fee schedule.
      *
@@ -26,13 +30,17 @@ class FeeScheduleSlotService
     public function createFeeScheduleSlots(Schoolbranches $currentSchool, string $feeScheduleId, array $slotsData): bool
     {
         DB::beginTransaction();
-
         try {
 
             $feeSchedule = FeeSchedule::where('school_branch_id', $currentSchool->id)
-                                      ->with('specialty')
+                                      ->with(['specialty', 'level', 'schoolSemester.semester'])
                                       ->findOrFail($feeScheduleId);
-
+            $scheduleData = [
+                'schoolYear' => $feeSchedule->schoolSemester->school_year,
+                'specialty' => $feeSchedule->specialty->specialty_name,
+                'level' => $feeSchedule->level->level,
+                'semester' => $feeSchedule->schoolSemester->semester->name
+            ];
             if (!$feeSchedule->specialty || !isset($feeSchedule->specialty->school_fee)) {
                 throw new \InvalidArgumentException('Fee Schedule or associated Specialty/School Fee data is incomplete.');
             }
@@ -53,11 +61,10 @@ class FeeScheduleSlotService
 
                 $percentage = floatval($slotData['fee_percentage']);
 
-                // 4. Calculate amount accurately
                 $amount = round($baseSchoolFee * ($percentage / 100), 2);
 
                 $slotsToCreate[] = [
-                    'id'               => (string) \Illuminate\Support\Str::uuid(),
+                    'id'               => (string) Str::uuid(),
                     'due_date'         => $slotData['due_date'],
                     'fee_percentage'   => $percentage,
                     'amount'           => $amount,
@@ -69,11 +76,21 @@ class FeeScheduleSlotService
                 ];
             }
 
-            // 5. Bulk Insert
             FeeScheduleSlot::insert($slotsToCreate);
-
+             $feeSchedule->update([
+                'config_status' => 'configured'
+             ]);
             DB::commit();
             CreateStudentFeeScheduleJob::dispatch($feeScheduleId, $currentSchool->id,  $feeSchedule->specialty->id);
+            SendAdminFeeScheduleNotificationJob::dispatch(
+                $currentSchool->id,
+                $scheduleData
+            );
+            SendFeeScheduleNotificationJob::dispatch(
+               $currentSchool->id,
+                $feeSchedule->specialty->id,
+                $scheduleData
+            );
             return true;
 
         } catch (ModelNotFoundException $e) {
