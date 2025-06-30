@@ -3,15 +3,18 @@
 namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateExamCandidateJob;
+use App\Jobs\NotificationJobs\SendAdminExamCreatedNotificationJob;
+use App\Jobs\NotificationJobs\SendExamTimetableAvailableNotification;
 use App\Models\Exams;
 use Illuminate\Support\Str;
 use App\Models\LetterGrade;
 use App\Models\SchoolGradesConfig;
-use App\Jobs\CreateExamCandidatesJob;
 use App\Models\AccessedStudent;
 use App\Models\Examtype;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Specialty;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +24,7 @@ class ExamService
 
     public function createExam(array $data, $currentSchool)
     {
-        $specialty = Specialty::findOrFail($data['specialty_id']);
+        $specialty = Specialty::with(['level'])->findOrFail($data['specialty_id']);
         $examType = Examtype::findOrFail($data['exam_type_id']);
         $examId = Str::uuid();
         $exam = new Exams();
@@ -37,7 +40,23 @@ class ExamService
         $exam->specialty_id = $specialty->id;
         $exam->student_batch_id = $data["student_batch_id"];
         $exam->save();
-        CreateExamCandidateJob::dispatch($data['specialty_id'], $specialty->level_id, $data['student_batch_id'], $examId);
+        $examData =  [
+            'specialty' => $specialty->specialty_name,
+            'level' => $specialty->level->name,
+            'startDate' => Carbon::parse($data['start_date'])->format('l, F j, Y'),
+            'endDate' => Carbon::parse($data['end_date'])->format('l, F j, Y'),
+            'school_year' => $data['school_year'],
+            'semester' => Semester::find($examType->semester_id)->name
+        ];
+        CreateExamCandidateJob::dispatch(
+            $data['specialty_id'],
+             $specialty->level_id,
+              $data['student_batch_id'],
+               $examId
+        );
+        SendAdminExamCreatedNotificationJob::dispatch($currentSchool->id,
+             $examData
+         );
         return $exam;
 
     }

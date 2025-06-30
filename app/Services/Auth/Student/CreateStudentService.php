@@ -3,6 +3,7 @@
 namespace App\Services\Auth\Student;
 
 use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
+use App\Jobs\NotificationJobs\SendAdminStudentCreatedNotificationJob;
 use App\Jobs\StatisticalJobs\FinancialJobs\RegistrationFeeStatJob;
 use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeeStatJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\StudentRegistrationStatsJob;
@@ -21,6 +22,7 @@ class CreateStudentService
     {
         try {
             $specialty = Specialty::where('school_branch_id', $currentSchool->id)
+                ->with(['level'])
                 ->findOrFail($studentData["specialty_id"]);
 
             $password = $this->generateRandomPassword();
@@ -65,6 +67,12 @@ class CreateStudentService
             SendPasswordVaiMailJob::dispatch( $password, $studentData["email"]);
             TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
             StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
+            SendAdminStudentCreatedNotificationJob::dispatch(
+                $specialty->specialty_name,
+                 $studentData["name"],
+                 $specialty->level->name,
+                 $currentSchool->id
+            );
             return $student;
         } catch (QueryException $e) {
 

@@ -7,10 +7,10 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Traits\GeneratesUuid;
 class Examtype extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
       'semester_id',
@@ -26,16 +26,6 @@ class Examtype extends Model
     public $keyType = 'string';
     public $table = 'exam_type';
 
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
-    }
     public function examResit(): HasMany {
         return $this->hasMany(ResitExam::class);
     }

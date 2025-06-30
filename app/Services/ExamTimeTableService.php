@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Jobs\NotificationJobs\SendAdminExamTimetableAvailableNotificationJob;
+use App\Jobs\NotificationJobs\SendExamTimetableAvailableNotificationJob;
 use Illuminate\Support\Facades\DB;
 use App\Models\Examtimetable;
 use App\Models\Exams;
@@ -57,11 +59,25 @@ class ExamTimeTableService
                 $createdTimetables[] = $createdTimetableId;
             }
 
-            $exam = Exams::findOrFail($examId);
+            $exam = Exams::with(['examtype.semesters', 'level'])->findOrFail($examId);
             $exam->timetable_published = true;
             $exam->save();
-
             DB::commit();
+            $examData = [
+                'semester' => $exam->examtype->semesters->name,
+                'examName' => $exam->examtype->exam_name,
+                'level' => $exam->level->name,
+                'schoolYear' => $exam->school_year
+            ];
+            SendExamTimetableAvailableNotificationJob::dispatch(
+                $exam->specialty_id,
+                 $currentSchool->id,
+                  $examData
+            );
+            SendAdminExamTimetableAvailableNotificationJob::dispatch(
+                $currentSchool->id,
+                $examData
+            );
             return $createdTimetables;
         } catch (InvalidArgumentException $e) {
             DB::rollBack();
