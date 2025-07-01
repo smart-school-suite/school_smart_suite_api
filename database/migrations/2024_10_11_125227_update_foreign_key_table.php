@@ -399,14 +399,6 @@ return new class extends Migration
             $table->foreign('level_id')->references('id')->on('education_levels');
         });
 
-        Schema::table("fee_payment_schedule", function (Blueprint $table) {
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
-        });
 
         Schema::table("additional_fees", function (Blueprint $table) {
             $table->string('school_branch_id')->index();
@@ -958,8 +950,6 @@ return new class extends Migration
         });
 
         Schema::table('ev_inv_members', function (Blueprint $table) {
-            $table->string('actorable_type');
-            $table->string('actorable_id')->index();
             $table->string('event_id');
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
             $table->string('school_branch_id')->index();
@@ -971,30 +961,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('fee_schedule_slots', function(Blueprint $table){
-            $table->string('installment_id');
-            $table->foreign('installment_id')->references('id')->on('installments');
-            $table->string('fee_schedule_id');
-            $table->foreign('fee_schedule_id')->references('id')->on('fee_schedule');
-        });
-        Schema::table('fee_schedule', function(Blueprint $table){
-             $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
-            $table->string('school_semester_id');
-            $table->foreign('school_semester_id')->references('id')->on('school_semesters');
-        });
-        Schema::table('student_fee_schedule', function(Blueprint $table){
-           $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('education_levels');
-            $table->string('fee_schedule_slot_id');
-           $table->foreign('fee_schedule_slot_id')->references('id')->on('fee_schedule_slots');
-        });
-
-
         Schema::table('fee_schedules', function(Blueprint $table){
             $table->string('specialty_id')->index();
             $table->foreign('specialty_id')->references('id')->on('specialty');
@@ -1005,7 +971,7 @@ return new class extends Migration
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
-        Schema::create('fee_schedule_slots', function(Blueprint $table){
+        Schema::table('fee_schedule_slots', function(Blueprint $table){
             $table->string('installment_id');
             $table->foreign('installment_id')->references('id')->on('installments');
             $table->string('fee_schedule_id')->index();
@@ -1014,7 +980,7 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::create('student_fee_schedule', function(Blueprint $table){
+        Schema::table('student_fee_schedule', function(Blueprint $table){
            $table->string('student_id')->index();
            $table->foreign('student_id')->references('id')->on('student');
            $table->string('level_id')->index();
@@ -1027,7 +993,6 @@ return new class extends Migration
            $table->foreign('fee_schedule_id')->references('id')->on('fee_schedules');
            $table->string('school_branch_id')->index();
            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-           $table->timestamps();
         });
     }
 

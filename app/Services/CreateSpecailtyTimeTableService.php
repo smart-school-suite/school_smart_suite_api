@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\NotificationJobs\SendTimetableAvailableNotificationJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\TimetableStatsJob;
 use Illuminate\Support\Facades\DB;
 use App\Models\SchoolSemester;
@@ -20,7 +21,9 @@ class CreateSpecailtyTimeTableService
         foreach ($scheduleEntries as $entry) {
             $uniqueId = Str::uuid();
             if($schoolSemester == null){
-                $schoolSemester = SchoolSemester::findOrFail($entry['semester_id']);
+                $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->
+                with(['specialty.level', 'semester'])->
+                findOrFail($entry['semester_id']);
             }
             if( $specialtyId === null && $studentBatchId === null){
                 $specialtyId = $entry['specialty_id'];
@@ -57,9 +60,17 @@ class CreateSpecailtyTimeTableService
                 ->whereIn('start_time', array_column($entriesToInsert, 'start_time'))
                 ->whereIn('end_time', array_column($entriesToInsert, 'end_time'))
                 ->get();
-            TimetableStatsJob::dispatch($currentSchool->id, $specialtyId, $studentBatchId, $schoolSemester->id);
+                $timetableData = [
+                    'schoolYear' => $schoolSemester->school_year,
+                    'level' => $schoolSemester->specialty->level->name,
+                    'semester' => $schoolSemester->semester->name
+                ];
+                SendTimetableAvailableNotificationJob::dispatch(
+                    $currentSchool->id,
+                    $specialtyId,
+                    $timetableData
+                );
             return $insertedTimetable;
-
         } catch (Exception $e) {
             throw $e;
         }
@@ -71,7 +82,9 @@ class CreateSpecailtyTimeTableService
         foreach ($scheduleEntries as $entry) {
             $uniqueId = Str::uuid();
             if($schoolSemester == null){
-                $schoolSemester = SchoolSemester::findOrFail($entry['semester_id']);
+                $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->
+                with(['specialty.level', 'semester'])->
+                findOrFail($entry['semester_id']);
             }
             $entriesToInsert[] = [
                 'id' => $uniqueId,
@@ -104,7 +117,16 @@ class CreateSpecailtyTimeTableService
                 ->whereIn('start_time', array_column($entriesToInsert, 'start_time'))
                 ->whereIn('end_time', array_column($entriesToInsert, 'end_time'))
                 ->get();
-
+             $timetableData = [
+                    'schoolYear' => $schoolSemester->school_year,
+                    'level' => $schoolSemester->specialty->level->name,
+                    'semester' => $schoolSemester->semester->name
+                ];
+                SendTimetableAvailableNotificationJob::dispatch(
+                    $currentSchool->id,
+                    $schoolSemester->specialty->id,
+                    $timetableData
+                );
             return $insertedTimetable;
 
         } catch (Exception $e) {

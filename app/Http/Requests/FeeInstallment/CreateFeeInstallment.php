@@ -7,22 +7,17 @@ use Illuminate\Foundation\Http\FormRequest;
 class CreateFeeInstallment extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return false;
-    }
-
-    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return [
-            //
+       return [
+            'name' => 'string|required|max:100',
+            'program_name' => 'string|required|max:150',
+            'code' => 'string|required|max:5',
+            'count' => 'integer|max:10'
         ];
     }
 }

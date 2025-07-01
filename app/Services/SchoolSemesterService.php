@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Jobs\SendNewSemesterAvialableNotificationJob;
+use App\Models\Educationlevels;
 use App\Models\FeeSchedule;
 use App\Models\SchoolSemester;
+use App\Models\Semester;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +22,7 @@ class SchoolSemesterService
         $schoolSemester = new SchoolSemester();
         $schoolSemesterId = Str::uuid();
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                                ->with(['level'])
                                ->find($semesterData['specialty_id']);
         $schoolSemester->id = $schoolSemesterId;
         $schoolSemester->start_date = $semesterData["start_date"];
@@ -37,9 +41,20 @@ class SchoolSemesterService
                'school_semester_id' => $schoolSemesterId
         ]);
         DB::commit();
+        $data = [
+             'startDate' => $semesterData['start_date'],
+             'endDate' => $semesterData['end_date'],
+             'semester' => Semester::find($semesterData['semester_id'])->name,
+             'level' => $specialty->level->name,
+             'schoolYear' => $semesterData['school_year']
+        ];
+        SendNewSemesterAvialableNotificationJob::dispatch(
+            $semesterData['specialty_id'],
+            $currentSchool->id,
+            $data
+        );
         return $schoolSemester;
     }
-
     public function updateSchoolSemester($semesterData, $currentSchool, $schoolSemesterId)
     {
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->find($schoolSemesterId);
@@ -51,7 +66,6 @@ class SchoolSemesterService
         $schoolSemester->update($filteredData);
         return $schoolSemester;
     }
-
     public function bulkUpdateSchoolSemester(array $updateSemesterList)
     {
         $result = [];
@@ -81,7 +95,6 @@ class SchoolSemesterService
         $schoolSemester->delete();
         return $schoolSemester;
     }
-
     public function bulkDeleteSchoolSemester($schoolSemesterIds)
     {
         $result = [];
@@ -99,13 +112,11 @@ class SchoolSemesterService
             throw $e;
         }
     }
-
     public function getSchoolSemesters($currentSchool)
     {
         $schoolSemesters = SchoolSemester::with(['specailty', 'specailty.level', 'semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->get();
         return $schoolSemesters;
     }
-
     public function getActiveSchoolSemesters($currentSchool)
     {
         $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
@@ -114,7 +125,6 @@ class SchoolSemesterService
             ->get();
         return $schoolSemesters;
     }
-
     public function getSchoolSemesterDetail($currentSchool, $semesterId)
     {
         $schoolSemesterDetails = SchoolSemester::with(['specailty', 'specailty.level', 'semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->find($semesterId);

@@ -19,12 +19,12 @@ class AnnouncementSeeder extends Seeder
              "important",
              'All'
         ];
-        $this->command->info("Creating Announcement Labels.......................");
+        $this->command->info("Creating Announcement Labels.......................0%");
          foreach($announcementLabels as $announcementLabel){
              AnnouncementLabel::create([
                  'name' => $announcementLabel
              ]);
          }
-         $this->command->info("Announcement Labels Created Successfully");
+         $this->command->info("Announcement Labels Created Successfully...................................100%");
     }
 }

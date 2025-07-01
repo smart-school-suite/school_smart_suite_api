@@ -22,26 +22,26 @@ class AssignPermissionToRoles extends Seeder
     }
 
     private function assignPermissionToRoles(){
-        $this->command->info("Started Assigning Permission To Super Admin Role");
+        $this->command->info("Assigning Permission To School Super Admin Role.............................0%");
         $superAdminRole = Role::where('name', 'schoolSuperAdmin')->firstOrFail();
         $schoolAdminPermissions = Permission::where("guard_name", "schooladmin")
                                               ->pluck('name')->toArray();
         $superAdminRole->givePermissionTo($schoolAdminPermissions);
-        $this->command->info("Assigned Permissions To Super Admin Role Successfully");
+        $this->command->info("Permissions Assigned Successfully.............................100%");
 
-        $this->command->info("Started Assigning Permission To Students");
+        $this->command->info("Assigning Permission To Student Role.............................0%");
         $studentRole = Role::where('name', 'student')->firstOrFail();
         $studentPermissions = Permission::where("guard_name", "student")
                                            ->pluck("name")->toArray();
         $studentRole->givePermissionTo($studentPermissions);
-        $this->command->info("Assigned Permissions To Student Role Successfully");
+        $this->command->info("Permissions Assigned Successfully.............................100%");
 
-        $this->command->info("Started Assigning Permissions to Teachers");
+        $this->command->info("Assigning Permission To Teacher Role.............................0%");
         $teacherRole = Role::where("name", "teacher")->firstOrFail();
         $teacherPermissions = Permission::where("guard_name", "teacher")
                                           ->pluck("name")->toArray();
         $teacherRole->givePermissionTo($teacherPermissions);
-        $this->command->info("Assigned Permissions To teacher Successfully");
+        $this->command->info("Permissions Assigned Successfully....................................100%");
     }
 
     private function assignRoleToAdmin() {
