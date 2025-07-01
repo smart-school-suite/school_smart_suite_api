@@ -10,6 +10,7 @@ use App\Models\Resitexamtimetable;
 use App\Models\ResitFeeTransactions;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\ResitPayment;
 use Exception;
 use App\Models\Studentresit;
 
@@ -62,6 +63,7 @@ class StudentResitService
         DB::beginTransaction();
         try {
             $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
+                 ->with(['courses', 'student'])
                 ->find($studentResitData['student_resit_id']);
 
             if (!$studentResit) {
@@ -87,6 +89,12 @@ class StudentResitService
             $studentResit->save();
             DB::commit();
             ResitFeeStatJob::dispatch($transactionId, $currentSchool->id);
+            $paymentDetails = [
+                'amount' => $studentResit->resit_fee,
+                'transactionRef' => $transactionId,
+                'courseName' => $studentResit->courses->course_title
+            ];
+            $studentResit->student->notify(new ResitPayment($paymentDetails));
             return $studentResit;
         } catch (Exception $e) {
             DB::rollBack();

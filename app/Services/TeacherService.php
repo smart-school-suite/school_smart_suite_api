@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Specialty;
 use App\Models\Teacher;
 use App\Models\TeacherSpecailtyPreference;
+use App\Notifications\SpecialtyAssignedToTeacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\Timetable;
@@ -78,17 +80,33 @@ class TeacherService
             ->get();
         return $getInstructors;
     }
-    public function addSpecailtyPreference(array $specailtyData, $currentSchool)
+    public function addSpecailtyPreference(array $preferenceData, $currentSchool)
     {
         $result = [];
-        foreach ($specailtyData as $specailty) {
+        $teacher = null;
+        $specialties = [];
+        $specialty = null;
+        foreach ($preferenceData as $preference) {
+            if($specialty == null){
+                $specialtyDetails = Specialty::where("school_branch_id", $currentSchool->id)
+                                   ->with('level')
+                                   ->find($preference['specialty_id']);
+                $specialty = $specialtyDetails;
+            }
+            if($teacher == null){
+                $teacherDetails = Teacher::where("school_branch_id", $currentSchool->id)
+                                         ->find($preference['teacher_id']);
+                $teacher = $teacherDetails;
+            }
             $createdEntry = TeacherSpecailtyPreference::create([
-                'specialty_id' => $specailty["specialty_id"],
-                'teacher_id' =>  $specailty['teacher_id'],
+                'specialty_id' => $preference["specialty_id"],
+                'teacher_id' =>  $preference['teacher_id'],
                 "school_branch_id" => $currentSchool->id
             ]);
             $result[] = $createdEntry;
+            $specialties[] = "{$specialty->specialty_name}, {$specialty->level->name}";
         }
+        $teacher->notify(new SpecialtyAssignedToTeacher($specialties));
         return $result;
     }
     public function deactivateTeacher($teacherId)
