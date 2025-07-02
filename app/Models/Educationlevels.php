@@ -20,6 +20,9 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'education_levels';
 
+     public function instructorAvailability(): HasMany {
+        return $this->hasMany(InstructorAvailability::class);
+    }
     public function feeSchedule(): HasMany {
         return $this->hasMany(FeeSchedule::class);
     }

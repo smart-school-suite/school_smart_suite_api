@@ -73,6 +73,9 @@ class Teacher extends Model
         return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
     }
 
+    public function instructorAvailability(): HasMany {
+        return $this->hasMany(InstructorAvailability::class);
+    }
     public function devices()
     {
         return $this->morphMany(UserDevices::class, 'devicesable');
@@ -109,9 +112,9 @@ class Teacher extends Model
         return $this->hasMany(Courses::class);
     }
 
-    public function instructoravailability(): HasMany
+    public function instructoravailabilitySlots(): HasMany
     {
-        return $this->hasMany(InstructorAvailability::class);
+        return $this->hasMany(InstructorAvailabilitySlot::class);
     }
 
     public function hod()

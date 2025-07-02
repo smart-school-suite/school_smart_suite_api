@@ -19,7 +19,6 @@ class InstructorAvailabilityController extends Controller
     {
         $this->instructorAvaliabilityService = $instructorAvaliabilityService;
     }
-
     public function createInstructorAvailability(AddTeacherAvailabilityRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -30,7 +29,22 @@ class InstructorAvailabilityController extends Controller
             return ApiResponseService::error($e->getMessage(), null,  500);
         }
     }
-
+    public function createAvailabilityByOtherSlots(Request $request){
+        try{
+            $currentSchool = $request->attributes->get('currentSchool');
+            $targetAvailabilityId = $request->route('targetAvailabilityId');
+            $availabilityId = $request->route('availabilityId');
+             $this->instructorAvaliabilityService->createAvialabilityByOtherSlots(
+                 $targetAvailabilityId,
+                 $availabilityId,
+                $currentSchool
+            );
+            return ApiResponseService::success("Instructor Avialability Created Sucessfully", null, null, 201);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 500);
+        }
+    }
     public function bulkUpdateInstructorAvialabililty(BulkUpdateTeacherAvailabilitySlotsRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -41,45 +55,38 @@ class InstructorAvailabilityController extends Controller
             return ApiResponseService::error($e->getMessage(), null, $e->getCode() ?: 500);
         }
     }
-    public function getAllInstructorAvailability(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getAllInstructorAvailability = $this->instructorAvaliabilityService->getAllInstructorAvailabilties($currentSchool);
-        return ApiResponseService::success("teacher availability data fetched successfully", $getAllInstructorAvailability, null, 200);
-    }
-
-    public function getInstructorAvailability(Request $request, $teacherId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getMyInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailability($currentSchool, $teacherId);
-        return ApiResponseService::success('Instructor Availabilty Fetched Sucessfully', $getMyInstructorAvailability, null, 200);
-    }
-
-    public function deleteInstructorAvailabilty(Request $request, $availabilityId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $deleteInstructorAvailability = $this->instructorAvaliabilityService->deleteInstructorAvailability($currentSchool, $availabilityId);
-        return ApiResponseService::success('Teachers availability deleted succefully', $deleteInstructorAvailability, null, 200);
-    }
-
-    public function updateInstructorAvailability(UpdateTeacherAvailabilityRequest $request,  $availabilityId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $updateTeacherAvailability = $this->instructorAvaliabilityService->updateInstructorAvailability($request->validated(), $currentSchool, $availabilityId);
-        return ApiResponseService::success("Availability updated succesfully", $updateTeacherAvailability, null, 200);
-    }
-
     public function getSchoolSemestersByTeacherSpecialtyPreference(Request $request, $teacherId){
         $currentSchool = $request->attributes->get('currentSchool');
         $schoolSemesters = $this->instructorAvaliabilityService->getSchoolSemestersByTeacherSpecialtyPreference($currentSchool, $teacherId);
         return ApiResponseService::success("School Semesters Fetched Successfully", $schoolSemesters, null, 200);
     }
-
-    public function deleteAllAvailabilitySlotsBySemester(Request $request){
+    public function deleteAvailabilitySlots(Request $request){
         $teacherId = $request->route('teacherId');
-        $schoolSemesterId = $request->route('schoolSemesterId');
+        $availabilityId = $request->route('availabilityId');
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteSlots = $this->instructorAvaliabilityService->deleteAvailabilityBySemester($schoolSemesterId,$currentSchool,$teacherId);
+        $deleteSlots = $this->instructorAvaliabilityService->deleteAvailabilitySlots($availabilityId,$currentSchool,$teacherId);
         return ApiResponseService::success("All Availability Slots Deleted Successfully", $deleteSlots, null, 200);
+    }
+    public function getInstructorAvailabilities(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getAllInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailabilities($currentSchool);
+        return ApiResponseService::success("teacher availability data fetched successfully", $getAllInstructorAvailability, null, 200);
+    }
+    public function getInstructorAvailabilitesByTeacher(Request $request, $teacherId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getMyInstructorAvailability = $this->instructorAvaliabilityService->getInstructorAvailabilitesByTeacher($currentSchool, $teacherId);
+        return ApiResponseService::success('Instructor Availabilty Fetched Sucessfully', $getMyInstructorAvailability, null, 200);
+    }
+    public function getInstructorAvailabilityDetails(Request $request, $availabilityId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $avaialbilityDetails = $this->instructorAvaliabilityService->getInstructorAvailabilityDetails($currentSchool, $availabilityId);
+        return ApiResponseService::success("Instructor Availability Details Fetched Successfully", $avaialbilityDetails, null, 200);
+    }
+    public function getAvailabilitySlotsByTeacherAvailability(Request $request, $availabilityId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $slots = $this->instructorAvaliabilityService->getAvailabilitySlotsByTeacher($currentSchool, $availabilityId);
+        return ApiResponseService::success("Availability Slots By Teacher Fetched Successfully", $slots, null, 200);
     }
 }

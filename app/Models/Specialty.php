@@ -31,7 +31,13 @@ class Specialty extends Model
     {
         return $this->hasMany(StudentBatchGradeDates::class);
     }
+     public function instructorAvailability(): HasMany {
+        return $this->hasMany(InstructorAvailability::class);
+    }
 
+    public function instructorAvailabilitySlot(): HasMany {
+        return $this->hasMany(InstructorAvailabilitySlot::class);
+    }
     public function feeSchedule(): HasMany {
         return $this->hasMany(FeeSchedule::class);
     }

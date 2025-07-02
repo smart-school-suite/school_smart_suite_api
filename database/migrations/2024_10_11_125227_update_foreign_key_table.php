@@ -139,7 +139,22 @@ return new class extends Migration
             $table->foreign('student_batch_id')->references('id')->on('student_batch');
         });
 
-        Schema::table('instructor_availabilities', function (Blueprint $table) {
+        Schema::table('teacher_availability_slots', function (Blueprint $table) {
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels')->onDelete('cascade');
+            $table->string('school_semester_id');
+            $table->foreign('school_semester_id')->references('id')->on('school_semesters');
+            $table->string('teacher_id');
+            $table->foreign('teacher_id')->references('id')->on('teacher')->onDelete('cascade');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty');
+            $table->string('teacher_availability_id');
+            $table->foreign('teacher_availability_id')->references('id')->on('teacher_availabilities');
+        });
+
+        Schema::table('teacher_availabilities', function (Blueprint $table) {
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('level_id');

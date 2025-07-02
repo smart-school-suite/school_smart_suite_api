@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Timetable;
 use App\Models\Specialty;
 use App\Models\Schoolbranches;
-use App\Models\InstructorAvailability;
+use App\Models\InstructorAvailabilitySlot;
 use App\Models\SchoolSemester;
 use App\Models\TeacherSpecailtyPreference;
 use Carbon\Carbon;
@@ -173,7 +173,7 @@ class SpecailtyTimeTableService
             $levelId = $specialty->level->id;
 
             $teacherIds = TeacherSpecailtyPreference::where("specialty_id", $specialtyId)->pluck("teacher_id");
-            $instructorAvailabilityData = InstructorAvailability::whereIn("teacher_id", $teacherIds)
+            $instructorAvailabilityData = InstructorAvailabilitySlot::whereIn("teacher_id", $teacherIds)
                 ->where("school_branch_id", $currentSchool->id)
                 ->where("school_semester_id", $semesterId)
                 ->with(['teacher:id,name'])

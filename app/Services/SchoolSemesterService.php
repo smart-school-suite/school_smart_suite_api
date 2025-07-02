@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\SendNewSemesterAvialableNotificationJob;
 use App\Models\Educationlevels;
 use App\Models\FeeSchedule;
@@ -52,6 +53,10 @@ class SchoolSemesterService
             $semesterData['specialty_id'],
             $currentSchool->id,
             $data
+        );
+        CreateInstructorAvailabilityJob::dispatch(
+            $currentSchool->id,
+                       $schoolSemesterId
         );
         return $schoolSemester;
     }

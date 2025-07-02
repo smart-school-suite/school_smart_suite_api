@@ -28,6 +28,9 @@ class SchoolSemester extends Model
     public $table = 'school_semesters';
     public $keyType = 'string';
 
+     public function instructorAvailability(): HasMany {
+        return $this->hasMany(InstructorAvailability::class);
+    }
     public function feeSchedule(): HasMany {
         return $this->hasMany(FeeSchedule::class);
     }
@@ -39,8 +42,8 @@ class SchoolSemester extends Model
         return $this->belongsTo(Semester::class, 'semester_id');
     }
 
-    public function teacherAvailability(): HasMany {
-        return $this->hasMany(InstructorAvailability::class, 'school_semester_id');
+    public function teacherAvailabilitySlot(): HasMany {
+        return $this->hasMany(InstructorAvailabilitySlot::class, 'school_semester_id');
     }
     public function studentBatch(): BelongsTo {
          return $this->belongsTo(Studentbatch::class, 'student_batch_id');
