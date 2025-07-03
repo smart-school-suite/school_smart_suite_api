@@ -191,10 +191,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/resit-exam')
                 ->group(base_path("routes/Exam/ResitExam.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-group')
                 ->group(base_path('routes/Audience/SchoolSetAudienceGroup.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/preset-audience')
                 ->group(base_path('routes/Audience/PresetAudience.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/announcement-label')

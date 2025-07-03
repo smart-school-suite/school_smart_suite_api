@@ -5,17 +5,17 @@ use App\Http\Controllers\InstructorAvailabilityController;
 
 //review this routes and update the routes folder permissions
 
-Route::middleware(['permission:teacher.avialability.create'])->post('/instructor-availability/create', [InstructorAvailabilityController::class, 'createInstructorAvailability'])
-    ->name('instructor-availability.store');
+Route::middleware(['permission:teacher.avialability.create'])->post('/create', [InstructorAvailabilityController::class, 'createInstructorAvailability'])
+    ->name('instructor-availability.create');
 
-Route::middleware(['permission:teacher.avialability.create'])->post('/intructor-availability/{targetAvailabilityId}/{availabilityId}/create',
+Route::middleware(['permission:teacher.avialability.create'])->post('/{targetAvailabilityId}/{availabilityId}/create',
   [InstructorAvailabilityController::class, 'createAvailabilityByOtherSlots']
-)->name('instructor-availability.store');
+)->name('instructor-availability.create');
 
-Route::middleware(['permission:teacher.avialability.show'])->get('/teachers/{teacherId}/availability', [InstructorAvailabilityController::class, 'getInstructorAvailabilitesByTeacher'])
+Route::middleware(['permission:teacher.avialability.show'])->get('/teacher/{teacherId}/availability', [InstructorAvailabilityController::class, 'getInstructorAvailabilitesByTeacher'])
     ->name('teachers.availability.index');
 
-Route::middleware(['permission:teacher.avialability.update'])->patch('/instructor-availability/update', [InstructorAvailabilityController::class, 'bulkUpdateInstructorAvialabililty'])
+Route::middleware(['permission:teacher.avialability.update'])->patch('/update', [InstructorAvailabilityController::class, 'bulkUpdateInstructorAvialabililty'])
        ->name('instructor-availability.bulk-update');
 
 Route::get('/school-semesters/teacher/{teacherId}/specialty-preference', [InstructorAvailabilityController::class, 'getSchoolSemestersByTeacherSpecialtyPreference']);

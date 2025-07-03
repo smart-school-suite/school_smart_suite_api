@@ -4,11 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentAdditionalFeesController;
 
 // Create a new student additional fee
-Route::middleware(['permission:schoolAdmin.additionalFee.create'])->post('/student-additional-fees', [StudentAdditionalFeesController::class, 'createStudentAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.create'])->post('/', [StudentAdditionalFeesController::class, 'createStudentAdditionalFees'])
     ->name('student-additional-fees.store');
 
 // Get all student additional fees
-Route::middleware(['permission:schoolAdmin.additionalFee.view'])->get('/student-additional-fees', [StudentAdditionalFeesController::class, 'getAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.view'])->get('/', [StudentAdditionalFeesController::class, 'getAdditionalFees'])
     ->name('student-additional-fees.index');
 
 // Get additional fees for a specific student
@@ -16,27 +16,27 @@ Route::middleware(['permission:schoolAdmin.additionalFee.view.student|student.ad
     ->name('students.additional-fees.index');
 
 // Update a specific student additional fee
-Route::middleware(['permission:schoolAdmin.additionalFee.update'])->put('/student-additional-fees/{feeId}', [StudentAdditionalFeesController::class, 'updateStudentAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.update'])->put('/{feeId}', [StudentAdditionalFeesController::class, 'updateStudentAdditionalFees'])
     ->name('student-additional-fees.update');
 
 // Delete a specific student additional fee
-Route::middleware(['permission:'])->delete('/student-additional-fees/{feeId}', [StudentAdditionalFeesController::class, 'deleteStudentAdditionalFees'])
+Route::middleware(['permission:'])->delete('/{feeId}', [StudentAdditionalFeesController::class, 'deleteStudentAdditionalFees'])
     ->name('student-additional-fees.destroy');
 
 // Bulk delete student additional fees
-Route::middleware(['permission:schoolAdmin.additionalFee.delete'])->delete('/student-additional-fees/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteStudentAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.delete'])->delete('/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteStudentAdditionalFees'])
     ->name('student-additional-fees.bulk-delete');
 
 // Bill multiple students for additional fees
-Route::middleware(['permission:schoolAdmin.additionalFee.create'])->post('/student-additional-fees/bulk-bill', [StudentAdditionalFeesController::class, 'bulkBillStudents'])
+Route::middleware(['permission:schoolAdmin.additionalFee.create'])->post('/bulk-bill', [StudentAdditionalFeesController::class, 'bulkBillStudents'])
     ->name('student-additional-fees.bulk-bill');
 
 // Pay additional fees for a student
-Route::middleware(['permission:schoolAdmin.additionalFee.pay'])->post('/student-additional-fees/pay', [StudentAdditionalFeesController::class, 'payAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.pay'])->post('/pay', [StudentAdditionalFeesController::class, 'payAdditionalFees'])
     ->name('student-additional-fees.pay');
 
 // Bulk pay additional fees for multiple students
-Route::middleware(['permission:schoolAdmin.additionalFee.pay'])->post('/student-additional-fees/bulk-pay', [StudentAdditionalFeesController::class, 'bulkPayFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.pay'])->post('/bulk-pay', [StudentAdditionalFeesController::class, 'bulkPayFees'])
     ->name('student-additional-fees.bulk-pay');
 
 // Get all additional fee transactions

@@ -12,11 +12,11 @@ Route::middleware(['permission:schoolAdmin.course.view'])->get('/courses', [Cour
     ->name('courses.index');
 
 // Get active courses
-Route::middleware(['permission:schoolAdmin.course.view.active'])->get('/courses/active', [CoursesController::class, 'getActiveCourses'])
+Route::middleware(['permission:schoolAdmin.course.view.active'])->get('/active', [CoursesController::class, 'getActiveCourses'])
     ->name('courses.active');
 
 // Get details of a specific course
-Route::middleware(['permission:schoolAdmin.course.show'])->get('/courses/{courseId}', [CoursesController::class, 'getCourseDetails'])
+Route::middleware(['permission:schoolAdmin.course.show'])->get('/{courseId}', [CoursesController::class, 'getCourseDetails'])
     ->name('courses.show');
 
 
@@ -29,35 +29,35 @@ Route::middleware(['permission:schoolAdmin.course.view'])->get('/school-semester
     ->name('school-semesters.specialties.courses.index');
 
 // Update a specific course
-Route::middleware(['permission:schoolAdmin.course.update'])->put('/courses/{courseId}', [CoursesController::class, 'updateCourse'])
+Route::middleware(['permission:schoolAdmin.course.update'])->put('/{courseId}', [CoursesController::class, 'updateCourse'])
     ->name('courses.update');
 
 // Activate a specific course
-Route::middleware(['permission:schoolAdmin.course.activate'])->post('/courses/{courseId}/activate', [CoursesController::class, 'activateCourse'])
+Route::middleware(['permission:schoolAdmin.course.activate'])->post('/{courseId}/activate', [CoursesController::class, 'activateCourse'])
     ->name('courses.activate');
 
 // Deactivate a specific course
-Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/courses/{courseId}/deactivate', [CoursesController::class, 'deactivateCourse'])
+Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/{courseId}/deactivate', [CoursesController::class, 'deactivateCourse'])
     ->name('courses.deactivate');
 
 // Delete a specific course
-Route::middleware(['permission:schoolAdmin.course.delete'])->delete('/courses/{courseId}', [CoursesController::class, 'deleteCourse'])
+Route::middleware(['permission:schoolAdmin.course.delete'])->delete('/{courseId}', [CoursesController::class, 'deleteCourse'])
     ->name('courses.destroy');
 
 // Bulk delete courses
-Route::middleware(['permission:schoolAdmin.course.delete'])->post('/courses/bulk-delete', [CoursesController::class, 'bulkDeleteCourse'])
+Route::middleware(['permission:schoolAdmin.course.delete'])->post('/bulk-delete', [CoursesController::class, 'bulkDeleteCourse'])
     ->name('courses.bulk-delete');
 
 // Bulk update courses
-Route::middleware(['permission:schoolAdmin.course.update'])->patch('/courses/bulk-update', [CoursesController::class, 'bulkUpdateCourse'])
+Route::middleware(['permission:schoolAdmin.course.update'])->patch('/bulk-update', [CoursesController::class, 'bulkUpdateCourse'])
     ->name('courses.bulk-update');
 
 // Bulk activate courses
-Route::middleware(['permission:schoolAdmin.course.activate'])->post('/courses/bulk-activate', [CoursesController::class, 'bulkActivateCourse'])
+Route::middleware(['permission:schoolAdmin.course.activate'])->post('/bulk-activate', [CoursesController::class, 'bulkActivateCourse'])
     ->name('courses.bulk-activate');
 
 // Bulk deactivate courses
-Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/courses/bulk-deactivate', [CoursesController::class, 'bulkDeactivateCourse'])
+Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/bulk-deactivate', [CoursesController::class, 'bulkDeactivateCourse'])
     ->name('courses.bulk-deactivate');
-Route::get('/courses/specialty/{specialtyId}/semester/{semesterId}', [CoursesController::class, 'getCoursesBySpecialtySemester'])
+Route::get('/specialty/{specialtyId}/semester/{semesterId}', [CoursesController::class, 'getCoursesBySpecialtySemester'])
     ->name('courses.by-specialty-semester');
