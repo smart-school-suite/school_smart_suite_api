@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Traits\GeneratesUuid;
 class OTP extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = ['token_header', 'otp', 'expires_at', 'used', 'actorable_id',
         'actorable_type'];
@@ -28,15 +27,5 @@ class OTP extends Model
     {
         return $query->where('used', false)
                      ->where('expires_at', '>', now());
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 25);
-         });
-
     }
 }

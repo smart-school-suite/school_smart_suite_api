@@ -1,12 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolBranchesController;
-use App\Http\Middleware\IdentifyTenant;
-
-// Publicly accessible route for school branch registration
-Route::post('/', [SchoolBranchesController::class, 'createSchoolBranch'])
-    ->name('school-branches.store');
-
 Route::middleware(['auth:sanctum'])->group(function () {
     // Delete a specific school branch
     Route::middleware(['permission:schoolAdmin.schoolBranch.delete'])->delete('/{branchId}', [SchoolBranchesController::class, 'deleteSchoolBranch'])

@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Traits\GeneratesUuid;
 class FeePaymentSchedule extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'title',
@@ -31,16 +30,5 @@ class FeePaymentSchedule extends Model
 
     public function level() {
         return $this->belongsTo(Educationlevels::class , 'level_id');
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 30);
-         });
-
     }
 }

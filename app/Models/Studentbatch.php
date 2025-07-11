@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 
 class Studentbatch extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'name',
@@ -23,16 +23,6 @@ class Studentbatch extends Model
     public $table = 'student_batch';
     public $keyType = 'string';
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
-
-    }
     public function resitResults(): HasMany
     {
         return $this->hasMany(ResitResults::class);

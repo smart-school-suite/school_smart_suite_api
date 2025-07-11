@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SchoolBranchApiKey extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'school_branch_id',
@@ -26,15 +26,5 @@ class SchoolBranchApiKey extends Model
 
     public function schoolBranch(): BelongsTo {
      return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 35);
-         });
-
     }
 }

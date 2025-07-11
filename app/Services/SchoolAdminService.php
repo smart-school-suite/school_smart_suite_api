@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class SchoolAdminService
 {
@@ -47,18 +48,35 @@ class SchoolAdminService
         return $SchoolAdminExists;
     }
 
-    public function createSchoolAdmin(array $data, $schoolBranchId)
+   public function createSchoolAdmin(array $data, string $schoolBranchId): SchoolAdmin
     {
-        $schoolAdmin = new Schooladmin();
-        $schoolAdmin->name = $data["name"];
-        $schoolAdmin->email = $data["email"];
-        $schoolAdmin->password = Hash::make($data["password"]);
-        $schoolAdmin->first_name = $data["first_name"];
-        $schoolAdmin->last_name = $data["last_name"];
-        $schoolAdmin->school_branch_id = $schoolBranchId;
-        $schoolAdmin->save();
-        $schoolAdmin->assignRole("schoolSuperAdmin");
-        return $schoolAdmin;
+        try {
+
+            DB::beginTransaction();
+
+            $schoolAdmin = new SchoolAdmin();
+             $schoolAdminId = Str::uuid();
+            $schoolAdmin->id = $schoolAdminId;
+            $schoolAdmin->name = $data["name"];
+            $schoolAdmin->email = $data["email"];
+
+            $schoolAdmin->password = Hash::make($data["password"]);
+
+            $schoolAdmin->first_name = $data["first_name"];
+            $schoolAdmin->last_name = $data["last_name"];
+            $schoolAdmin->school_branch_id = $schoolBranchId;
+            $schoolAdmin->save();
+            DB::commit();
+            $user = Schooladmin::where("school_branch_id", $schoolBranchId)
+                     ->find($schoolAdminId);
+            $user->assignRole("schoolSuperAdmin");
+
+            return $schoolAdmin;
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function uploadProfilePicture($request, $authSchoolAdmin){

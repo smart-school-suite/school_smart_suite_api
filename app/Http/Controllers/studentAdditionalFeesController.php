@@ -31,6 +31,12 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Student Additional Fees Created Sucessfully", $createAdditionalFees, null, 201);
     }
 
+    public function getAdditionalFeeDetails(Request $request, $feeId){
+        $currenSchool = $request->attributes->get('currentSchool');
+        $additionalFeeDetails = $this->studentAdditionalFeeService->getAdditionalFeeDetails($currenSchool, $feeId);
+        return ApiResponseService::success("Student Additional Fee Fetched Successfully", $additionalFeeDetails, null, 200);
+    }
+
     public function updateStudentAdditionalFees(UpdateAdditionalFeeRequest $request, string $feeId)
     {
         $currentSchool = $request->attributes->get('currentSchool');

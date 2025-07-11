@@ -7,3 +7,4 @@ Route::post('/create',  [AnnouncementController::class, 'createAnnoucement'])->n
 Route::get('/{status}', [AnnouncementController::class, 'getAnnouncementByState'])->name('announcement.status.get');
 Route::put('/update-content/{announcementId}', [AnnouncementController::class, 'updateAnnouncementContent'])->name('announcement.update.content');
 Route::delete('/delete/{announcementId}', [AnnouncementController::class, 'deleteAnnouncement'])->name('announcement.delete');
+Route::get('/details/{announcementId}', [AnnouncementController::class, 'getAnnouncementDetails'])->name('announcement.get.details');

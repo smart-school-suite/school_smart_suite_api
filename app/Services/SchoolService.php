@@ -7,20 +7,7 @@ use Illuminate\Support\Str;
 
 class SchoolService
 {
-    // Implement your logic here
-    public function createSchool(array $data)
-    {
-        $new_school_instance = new School();
-        $random_id = Str::uuid()->toString();
-        $new_school_instance->id = $random_id;
-        $new_school_instance->country_id = $data["country_id"];
-        $new_school_instance->name = $data["name"];
-        $new_school_instance->motor = $data["motor"];
-        $new_school_instance->type = $data["type"];
-        $new_school_instance->established_year = $data["established_year"];
-        $new_school_instance->save();
-        return $random_id;
-    }
+
 
     public function deleteSchool(string $schoolId)
     {

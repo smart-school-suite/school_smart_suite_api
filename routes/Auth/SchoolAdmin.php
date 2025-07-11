@@ -37,7 +37,7 @@ Route::post('/register/super-admin', [SchoolAdminController::class, 'createAdmin
     ->name('school-admin.register.super');
 
 // Authenticated routes (requires sanctum and tenant identification)
-Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     // Logout
     Route::post('/logout', [LogoutSchoolAdminController::class, 'logoutSchoolAdmin'])
         ->name('school-admin.logout');

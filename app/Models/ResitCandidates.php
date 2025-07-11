@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
 class ResitCandidates extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'resit_exam_id',
@@ -31,14 +32,4 @@ class ResitCandidates extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-         });
-
-    }
 }

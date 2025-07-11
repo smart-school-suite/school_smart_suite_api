@@ -6,7 +6,8 @@ use App\Http\Controllers\StudentAdditionalFeesController;
 // Create a new student additional fee
 Route::middleware(['permission:schoolAdmin.additionalFee.create'])->post('/', [StudentAdditionalFeesController::class, 'createStudentAdditionalFees'])
     ->name('student-additional-fees.store');
-
+Route::get('/{feeId}', [StudentAdditionalFeesController::class, "getAdditionalFeeDetails"])
+     ->name('additional-fee-details');
 // Get all student additional fees
 Route::middleware(['permission:schoolAdmin.additionalFee.view'])->get('/', [StudentAdditionalFeesController::class, 'getAdditionalFees'])
     ->name('student-additional-fees.index');
@@ -24,7 +25,7 @@ Route::middleware(['permission:'])->delete('/{feeId}', [StudentAdditionalFeesCon
     ->name('student-additional-fees.destroy');
 
 // Bulk delete student additional fees
-Route::middleware(['permission:schoolAdmin.additionalFee.delete'])->delete('/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteStudentAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.delete'])->post('/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteStudentAdditionalFees'])
     ->name('student-additional-fees.bulk-delete');
 
 // Bill multiple students for additional fees
@@ -60,5 +61,5 @@ Route::middleware(['permission:schoolAdmin.additionalFee.transactions.reverse'])
     ->name('additional-fee-transactions.bulk-reverse');
 
 // Bulk delete additional fee transactions
-Route::middleware(['permission:schoolAdmin.additionalFee.transactions.delete'])->delete('/additional-fee-transactions/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteTransaction'])
+Route::middleware(['permission:schoolAdmin.additionalFee.transactions.delete'])->post('/additional-fee-transactions/bulk-delete', [StudentAdditionalFeesController::class, 'bulkDeleteTransaction'])
     ->name('additional-fee-transactions.bulk-delete');

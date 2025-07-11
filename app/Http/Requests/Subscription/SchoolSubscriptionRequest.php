@@ -21,7 +21,11 @@ class SchoolSubscriptionRequest extends FormRequest
             'rates_card_id' => 'required|string|exists:rate_cards,id',
             'num_students' => 'required|integer',
             'billing_frequency' => 'required|string',
-            'school_branch_id' => 'required|string|exists:school_branches,id'
+            'school_name' => 'required|string|max:250',
+            'country_id' => 'required|string|exists:country,id',
+            'type' => 'required|string|in:private,government',
+            'school_branch_name' => 'required|string|max:300',
+            'abbreviation' => 'required|string|max:20'
         ];
     }
 }

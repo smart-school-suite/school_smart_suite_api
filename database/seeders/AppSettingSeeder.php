@@ -37,25 +37,6 @@ class AppSettingSeeder extends Seeder
                 'title' => 'Election Feature',
                 'allowed_value' => 'boolean',
                 'default' => true
-             ],
-             [
-                'title' => 'Additional Fee Feature',
-                'allowed_value' => 'boolean',
-                'default' => true
-             ],
-             [
-                'title' => 'School Events Feature',
-                'allowed_value' => 'boolean',
-                'default' => true
-             ],
-             [
-                'title' => 'Announcement Feature',
-                'allowed_value' => 'boolean',
-                'default' => true
-             ],
-             [
-                'title' => 'Tuition Fee Feature',
-                'allowed_value' => 'boolean'
              ]
         ];
     }

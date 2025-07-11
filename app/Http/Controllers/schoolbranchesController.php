@@ -14,10 +14,6 @@ class SchoolBranchesController extends Controller
     public function __construct(SchoolBranchesService $schoolBranchesService){
         $this->schoolBranchesService = $schoolBranchesService;
     }
-    public function createSchoolBranch(CreateSchoolBranchRequest $request){
-         $createSchoolBranch = $this->schoolBranchesService->createSchoolBranch($request->validated());
-         return ApiResponseService::success("School Branch Created Succesfully", $createSchoolBranch, null, 201);
-    }
 
     public function updateSchoolBranch(UpdateSchoolBranchRequest $request, $branchId){
         $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $branchId);

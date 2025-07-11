@@ -38,9 +38,6 @@ class School extends Model
         return $this->hasMany(Department::class);
     }
 
-    public function events(): HasMany {
-        return $this->hasMany(Events::class);
-    }
 
     public function exams(): HasMany {
         return $this->hasMany(Exams::class);

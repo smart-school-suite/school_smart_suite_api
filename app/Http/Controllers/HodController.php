@@ -35,13 +35,6 @@ class HodController extends Controller
         $removeHod = $this->hodService->removeHod($hodId, $currentSchool);
         return ApiResponseService::success("Head of department Removed Successfully", $removeHod, null, 200);
     }
-
-    public function getAllHods(Request $request){
-        $currentSchool = $request->attributes->get("currentSchool");
-        $getHods = $this->hodService->getAllHod($currentSchool);
-        return ApiResponseService::success("Head of department Fetched Sucessfully",  HodResource::collection($getHods), null, 200);
-    }
-
     public function bulkRemoveHod($hodIds){
         $idsArray = explode(',', $hodIds);
 

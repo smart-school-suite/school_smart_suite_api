@@ -5,11 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
-
+use App\Traits\GeneratesUuid;
 class PermissionCategory extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'title',
@@ -23,13 +22,5 @@ class PermissionCategory extends Model
 
     public function permission(): HasMany {
         return $this->hasMany(Permission::class);
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $user->id = (string) Str::uuid();
-        });
     }
 }

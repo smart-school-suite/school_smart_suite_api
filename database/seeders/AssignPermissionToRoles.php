@@ -17,7 +17,6 @@ class AssignPermissionToRoles extends Seeder
     {
         //
         $this->assignPermissionToRoles();
-        $this->assignRoleToAdmin();
 
     }
 
@@ -44,10 +43,4 @@ class AssignPermissionToRoles extends Seeder
         $this->command->info("Permissions Assigned Successfully....................................100%");
     }
 
-    private function assignRoleToAdmin() {
-        $this->command->info("Started Assigning Role to admin");
-        $schoolAdmin = Schooladmin::where("email", "chongongprecious@gmail.com")->firstOrFail();
-        $schoolAdmin->assignRole("schoolSuperAdmin");
-        $this->command->info("Assigned School Super admin Role To school admin Successfully");
-    }
 }

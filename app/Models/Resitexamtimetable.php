@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Resitexamtimetable extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
     protected $fillable = [
         'id',
         'school_branch_id',
@@ -37,16 +37,6 @@ class Resitexamtimetable extends Model
       public function resitExam()
       {
           return $this->belongsTo(ResitExam::class, 'resit_exam_id');
-      }
-      protected static function boot()
-      {
-          parent::boot();
-
-           static::creating(function ($user){
-              $uuid = str_replace('-', '', Str::uuid()->toString());
-              $user->id = substr($uuid, 0, 10);
-           });
-
       }
 
       public function course(): HasMany {

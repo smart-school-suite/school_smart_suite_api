@@ -32,8 +32,8 @@ return new class extends Migration
            $table->boolean('boolean_value')->nullable();
            $table->decimal('decimal_value')->nullable();
            $table->integer('integer_value')->nullable();
-           $table->date('date_value');
-           $table->dateTime('date_time_value');
+           $table->date('date_value')->nullable();
+           $table->dateTime('date_time_value')->nullable();
            $table->timestamps();
         });
 

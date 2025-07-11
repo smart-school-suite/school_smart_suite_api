@@ -3,9 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolsController;
 
-Route::post('/schools', [SchoolsController::class, 'createSchool'])
-    ->name('schools.store');
-
 Route::middleware(['auth:sanctum'])->group(function () {
     // Get details of the authenticated school
     Route::middleware(['permission:schoolAdmin.school.show'])->get('/{schoolId}', [SchoolsController::class, 'getSchoolDetails'])

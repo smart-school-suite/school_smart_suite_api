@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Specialty extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'department_id',
@@ -138,14 +138,5 @@ class Specialty extends Model
     public function studentresit(): HasMany
     {
         return $this->hasMany(Studentresit::class);
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
     }
 }

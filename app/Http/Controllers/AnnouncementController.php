@@ -33,6 +33,11 @@ class AnnouncementController extends Controller
         }
     }
 
+    public function getAnnouncementDetails(Request $request, $announcementId){
+        $currentSchool = $request->attributes->get('currentSchool');
+       $announcementDetails = $this->announcementService->getAnnouncementDetails($currentSchool, $announcementId);
+       return ApiResponseService::success("Announcement Details Fetched Successfully", $announcementDetails, null, 200);
+    }
     public function updateAnnouncementContent(UpdateAnnouncementContentRequest $request, string $announcementId){
          try{
             $currentSchool = $request->attributes->get('currentSchool');

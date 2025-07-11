@@ -16,7 +16,7 @@ class Schoolbranches extends Model
     protected $fillable = [
         'id',
         'school_id',
-        'branch_name',
+        'name',
         'address',
         'city',
         'state',
@@ -26,7 +26,7 @@ class Schoolbranches extends Model
         'semester_count',
         'email',
         'final_semester',
-        'abbrevaition',
+        'abbreviation',
         'max_gpa'
     ];
 

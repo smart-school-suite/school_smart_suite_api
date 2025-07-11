@@ -639,6 +639,8 @@ return new class extends Migration
             $table->foreign('stat_type_id')->references('id')->on('stat_types');
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('school_expenses_category');
         });
 
         Schema::table('tuition_fee_stats', function (Blueprint $table) {

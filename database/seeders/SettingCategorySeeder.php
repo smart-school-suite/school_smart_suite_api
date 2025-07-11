@@ -22,15 +22,13 @@ class SettingCategorySeeder extends Seeder
             'Exam Settings',
             'Exam Time-table Settings',
             'Fee Schedule Settings',
-            'Fee Waiver Settings',
-            'Letter Grade Settings',
             'Resit Settings',
             'Specialty Settings',
             'School Semester Settings',
             'Student Batch Settings',
             'Teacher Settings',
             'Subscription Settings',
-            'Time table Settings',
+            'Time-table Settings',
             'Student Settings'
         ];
 

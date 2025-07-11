@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\School;
-use App\Http\Requests\SchoolRequest;
+
 use App\Services\ApiResponseService;
 use App\Http\Requests\School\UpdateSchoolRequest;
-use App\Http\Requests\School\CreateSchoolRequest;
 use App\Services\SchoolService;
 
 class SchoolsController extends Controller
@@ -16,11 +14,6 @@ class SchoolsController extends Controller
      public function __construct(SchoolService $schoolService){
         $this->schoolService = $schoolService;
      }
-    public function createSchool(CreateSchoolRequest $request)
-    {
-        $createSchool = $this->schoolService->createSchool($request->validated());
-        return ApiResponseService::success("School Created Sucessfully", $createSchool, null, 201);
-    }
 
     public function updateSchool(UpdateSchoolRequest $request, $schoolId)
     {

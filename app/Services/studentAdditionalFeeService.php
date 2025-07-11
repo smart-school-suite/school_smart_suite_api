@@ -63,6 +63,11 @@ class StudentAdditionalFeeService
         $studentAdditionFees = AdditionalFees::where("school_branch_id", $currentSchool->id)->where("student_id", $studentId)->with(['student', 'specialty', 'level', 'feeCategory'])->get();
         return $studentAdditionFees;
     }
+    public function getAdditionalFeeDetails($currentSchool, string $feeId){
+       return  AdditionalFees::where("school_branch_id", $currentSchool->id)
+                               ->where("id", $feeId)
+                               ->with(['student', 'specialty', 'level', 'feeCategory'])->get();
+    }
     public function getAdditionalFees($currentSchool)
     {
         $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)->with(['student', 'specialty', 'level', 'feeCategory'])->get();

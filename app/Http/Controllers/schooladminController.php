@@ -56,13 +56,18 @@ class SchoolAdminController extends Controller
 
     public function createAdminOnSignup(CreateSchoolSuperAdminRequest $request)
     {
-        $schoolBranchApiKey = $request->header('API-KEY');
+      try{
+          $schoolBranchApiKey = $request->header('API-KEY');
         if (!$schoolBranchApiKey) {
             ApiResponseService::error("School Branch Api Key is required please provide a valid api key", null, 400);
         }
         $schoolBranch = SchoolBranchApiKey::where("api_key", $schoolBranchApiKey)->with(['schoolBranch'])->first();
         $createSchoolAdmin = $this->schoolAdminService->createSchoolAdmin($request->validated(), $schoolBranch->schoolBranch->id);
         return ApiResponseService::success("School Admin Created Sucessfully", $createSchoolAdmin, null, 201);
+      }
+      catch(Exception $e){
+        return ApiResponseService::error($e->getMessage(), null, 400);
+      }
     }
 
     public function uploadProfilePicture(UpdateProfilePictureRequest $request)

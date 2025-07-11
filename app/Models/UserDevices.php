@@ -23,13 +23,4 @@ class UserDevices extends Model
     public $table = 'user_devices';
     public $keyType = 'string';
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 10);
-        });
-    }
 }

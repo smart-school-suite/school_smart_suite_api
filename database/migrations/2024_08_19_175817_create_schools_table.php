@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('schools', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name')->unique();
-            $table->enum('type', ['private', 'goverment']); // e.g., public, private
+            $table->enum('type', ['private', 'government']);
             $table->date('established_year')->nullable();
             $table->string('school_logo')->nullable();
-            $table->text('motor');
+            $table->text('motor')->nullable();
             $table->timestamps();
         });
     }

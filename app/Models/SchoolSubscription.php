@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
 class SchoolSubscription extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'school_branch_id', 'subscription_plan_id', 'total_monthly_cost', 'total_yearly_cost', 'billing_frequency',
@@ -36,15 +36,5 @@ class SchoolSubscription extends Model
     public function rateCard()
     {
         return $this->hasOne(RatesCard::class);
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-         static::creating(function ($user){
-            $uuid = str_replace('-', '', Str::uuid()->toString());
-            $user->id = substr($uuid, 0, 25);
-         });
-
     }
 }

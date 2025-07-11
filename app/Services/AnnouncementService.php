@@ -59,4 +59,10 @@ class AnnouncementService
             throw $e;
         }
    }
+
+   public function getAnnouncementDetails($currentSchool, $announcementId){
+       return Announcement::where("school_branch_id", $currentSchool->id)
+                            ->with(['announcementLabel', 'announcementTag', 'announcementCategory'])
+                            ->get();
+   }
 }

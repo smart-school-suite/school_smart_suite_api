@@ -36,19 +36,14 @@ class StarterPackSeeder extends Seeder
     public function run(): void
     {
         try{
-            DB::beginTransaction();
-            $this->createLetterGrades();
+        DB::beginTransaction();
+        $this->createLetterGrades();
         $this->createGradeCategory();
         $this->seedCountries();
         $this->seedRateCards();
         $this->createLevel();
         $this->createSemesters();
         $this->createExamType();
-        $schoolId = $this->createSchool();
-        $schoolBranchId = $this->createSchoolBranch($schoolId);
-        $this->subscribeSchool($schoolBranchId);
-        $this->createSchoolAdmin($schoolBranchId);
-        $this->createGradesConfig($schoolBranchId);
          DB::commit();
         }
         catch(Exception $e){
@@ -255,120 +250,8 @@ class StarterPackSeeder extends Seeder
         DB::table('rate_cards')->insert($rateCards); // Bulk insert
         Log::info('Created ' . count($rateCards) . ' rate cards.');
     }
-    private function createSchool(): string
-    {
-        $country = Country::where("country", "Cameroon")->firstOrFail();
-        $schoolId = Str::uuid()->toString();
-        School::create([
-            'id' => $schoolId,
-            'country_id' => $country->id,
-            'name' => 'Experiential Higher Institute',
-            'motor' => 'Quality Education for holistic training',
-            'type' => 'private',
-            'established_year' => '2020-10-10',
-        ]);
-        Log::info('Created school with ID: ' . $schoolId);
-        return $schoolId;
-    }
-    private function createSchoolBranch(string $schoolId): string
-    {
-        $faker = Faker::create();
-        $schoolBranchId = Str::uuid()->toString();
-        Schoolbranches::create([
-            'id' => $schoolBranchId,
-            'school_id' => $schoolId,
-            "branch_name" => "Experiential Higher Institute Yaounde",
-            "address" => $faker->address,
-            "city" => "Yaounde",
-            "state" => "Center",
-            "postal_code" => $faker->postcode,
-            "phone_one" => $faker->phoneNumber,
-            "phone_two" => $faker->phoneNumber,
-            "email" => $faker->safeEmail,
-            "max_gpa" => 4.00,
-            "semester_count" => 2,
-            "website" => $faker->url,
-            "abbrevaition" => "EXHIST",
-        ]);
-        Log::info('Created school branch with ID: ' . $schoolBranchId . ' for school ID: ' . $schoolId);
-        return $schoolBranchId;
-    }
-    private function subscribeSchool(string $schoolBranchId): string
-    {
-        $studentNumber = 10000;
-        $rateCard = RatesCard::where('min_students', '<=', $studentNumber)
-            ->where('max_students', '>=', $studentNumber)
-            ->firstOrFail();
-        $totalCost = $rateCard->yearly_rate_per_student * $studentNumber;
-        $subscriptionStartDate = Carbon::now();
-        $subscriptionEndDate = $subscriptionStartDate->copy()->addYear();
-
-        $subscription = SchoolSubscription::create([
-            'school_branch_id' => $schoolBranchId,
-            'rate_card_id' => $rateCard->id,
-            'subscription_start_date' => $subscriptionStartDate,
-            'subscription_end_date' => $subscriptionEndDate,
-            'max_number_students' => $studentNumber,
-            'max_number_parents' => $studentNumber * 2,
-            'max_number_school_admins' => $rateCard->max_school_admins,
-            'max_number_teacher' => $rateCard->max_teachers,
-            'total_monthly_cost' => null,
-            'total_yearly_cost' => $totalCost,
-            'billing_frequency' => "yearly",
-            'status' => 'active',
-        ]);
-
-        $apiKey = Str::random(100);
-
-        SchoolBranchApiKey::create([
-            'school_branch_id' => $schoolBranchId,
-            'api_key' => $apiKey,
-        ]);
-
-        SubscriptionPayment::create([
-            'school_subscription_id' => $subscription->id,
-            'payment_date' => $subscriptionStartDate,
-            'school_branch_id' => $schoolBranchId,
-            'amount' => $totalCost,
-            'payment_method' => 'card',
-            'payment_status' => 'completed',
-            'transaction_id' => Str::random(25),
-            'description' => 'Subscription payment for school branch ID: ' . $schoolBranchId,
-        ]);
-        Log::info("Subscribed school branch {$schoolBranchId} with API key: {$apiKey}.");
-        return $apiKey;
-    }
-    private function createSchoolAdmin(string $schoolBranchId): void
-    {
-        $admin = Schooladmin::create([
-            'id' => Str::uuid(),
-            'name' => "chongong precious gemuh",
-            'email' => "chongongprecious@gmail.com",
-            'first_name' => "chongong",
-            'last_name' => "gemuh",
-            'school_branch_id' => $schoolBranchId,
-            'password' => Hash::make("Keron484$"),
-        ]);
-        Log::info("Created school admin with email: {$admin->email} for school branch: {$schoolBranchId}");
-    }
-    private function createGradesConfig(string $schoolBranchId)
-    {
-        $gradeCategories = GradesCategory::all();
-        $configs = $gradeCategories->map(function ($gradeCategory) use ($schoolBranchId) {
-            return [
-                'id' => Str::uuid(),
-                'school_branch_id' => $schoolBranchId,
-                'grades_category_id' => $gradeCategory->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        })->toArray();
-
-        SchoolGradesConfig::insert($configs);
-    }
     private function createGradeCategory()
     {
-        // Define the categories
         $categories = [
             ['title' => 'Level One CA', 'status' => 'active'],
             ['title' => 'Level One Exam', 'status' => 'active'],
@@ -386,8 +269,6 @@ class StarterPackSeeder extends Seeder
             ['title' => 'Masters Degree Exam', 'status' => 'active'],
             ['title' => 'Masters Degree Resit', 'status' => 'active'],
         ];
-
-        // Insert the categories into the database
         foreach ($categories as $category) {
             GradesCategory::create($category);
         }
