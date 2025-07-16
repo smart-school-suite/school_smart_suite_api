@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\HttP\Requests\PermissionRequest;
-use App\Http\Requests\AssignPermissionRequest;
 use APP\Http\Requests\Permission\CreatePermissionRequest;
 use APP\Http\Requests\Permission\UpdatePermissionRequest;
-use APP\Http\Requests\Permission\AddUserPermissionRequest;
-use APP\Http\Requests\Permission\RevokePermissionRequest;
+use App\Http\Requests\Permission\AddUserPermissionRequest;
+use App\Http\Requests\Permission\RevokePermissionRequest;
 use App\Services\ApiResponseService;
 use App\Services\PermissionService;
+use Exception;
 
 class PermissionController extends Controller
 {
@@ -58,4 +57,14 @@ class PermissionController extends Controller
         return ApiResponseService::success("School Admin Permission Revoked Succesfully", $revokePermission, null, 200);
     }
 
+    public function getAssignablePermissions(Request $request, $schoolAdminId){
+        try{
+            $currentSchool = $request->attributes->get('currentSchool');
+        $permissions = $this->permissionService->getAssignablePermission($schoolAdminId, $currentSchool);
+        return ApiResponseService::success("Assignable Permissions Fetched Successfully", $permissions, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
 }

@@ -35,10 +35,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/student')
                 ->group(base_path('routes/Student/Student.php'));
 
-            Route::middleware(['auth:sanctum'])->prefix('api/v1/role')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/role')
                 ->group(base_path('routes/RoleAndPermission/Role.php'));
 
-            Route::middleware(['auth:sanctum'])->prefix('api/v1/permission')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/permission')
                 ->group(base_path('routes/RoleAndPermission/Permission.php'));
 
             Route::prefix('api/v1/school-branch')

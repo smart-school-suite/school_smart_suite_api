@@ -26,7 +26,6 @@ class CreateTeacherRequest extends FormRequest
             "last_name" => 'required|string',
             'email' => 'required|email|string',
             'phone_one' => 'required|string',
-            'phone_two' => 'required|string',
             'address' => 'sometimes|nullable|string',
             'gender' => 'required|string'
         ];

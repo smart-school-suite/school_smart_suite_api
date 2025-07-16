@@ -28,7 +28,6 @@ class CreateTeacherService
             $instructor->gender = $teacherData['gender'];
             $instructor->password = Hash::make($password);
             $instructor->phone_one = $teacherData["phone_one"];
-            $instructor->phone_one = $teacherData["phone_two"] ?? null;
             $instructor->address = $teacherData['address'] ?? null;
             $instructor->school_branch_id = $currentSchool->id;
             $instructor->save();

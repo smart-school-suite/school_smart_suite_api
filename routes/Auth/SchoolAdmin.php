@@ -52,6 +52,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Create new school admin (requires tenant identification and admin limit)
     Route::post('/register', [CreatesSchoolAdminController::class, 'createSchoolAdmin'])
-        ->middleware([LimitSchoolAdmin::class, 'permission:schoolAdmin.schoolAdmin.create'])
+        ->middleware([LimitSchoolAdmin::class, IdentifyTenant::class, 'permission:schoolAdmin.schoolAdmin.create'])
         ->name('school-admin.register');
 });

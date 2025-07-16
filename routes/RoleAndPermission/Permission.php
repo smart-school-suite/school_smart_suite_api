@@ -11,6 +11,9 @@ Route::middleware(['permission:appAdmin.permission.create'])->post('/', [Permiss
 Route::get('/', [PermissionController::class, 'getPermission'])
 ->name('permissions.index');
 
+Route::get('/assignable-permissions/{schoolAdminId}', [PermissionController::class, "getAssignablePermissions"])
+->name('assignable-permission.index');
+
 // Delete a specific permission
 Route::middleware(['permission:appAdmin.permission.delete'])->delete('/{permissionId}', [PermissionController::class, 'deletePermission'])
 ->name('permissions.destroy');

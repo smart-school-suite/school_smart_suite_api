@@ -49,7 +49,7 @@ class DepartmentController extends Controller
     public function getDepartmentDetails(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $departmentId = $request->route("department_id");
+        $departmentId = $request->route("departmentId");
         $departmentDetails = $this->departmentService->getDepartmentDetails($currentSchool, $departmentId);
         return ApiResponseService::success("Department Details Fetched Sucessfully", $departmentDetails, null, 200);
     }
