@@ -56,6 +56,7 @@ class TeacherController extends Controller
         $assignTeacherSpecailtyPreference = $this->teacherService->addSpecailtyPreference($request->specailties_preference, $currentSchool);
         return ApiResponseService::success("Teacher Specailty Preference Added Sucessfully", $assignTeacherSpecailtyPreference, null, 200);
     }
+
     public function deactivateTeacher($teacherId){
         $deactivateTeacher = $this->teacherService->deactivateTeacher($teacherId);
         return ApiResponseService::success("Teacher Account Deactivated Successfully", $deactivateTeacher, null, 200);

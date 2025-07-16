@@ -39,14 +39,14 @@ class AddSpecialtyPreferenceRequest extends FormRequest
             'specailties_preference.*.specialty_id' => [
                 'required',
                 'string',
-                'exists:specialties,id',
+                'exists:specialty,id',
                 function ($attribute, $value, $fail) use ($schoolBranchId) {
                     $index = explode('.', $attribute)[1];
                     $teacherId = $this->input("specailties_preference.$index.teacher_id");
                     if (empty($teacherId)) {
                         return;
                     }
-                    $exists = DB::table('teacher_specialty_preferences')
+                    $exists = DB::table('teacher_specailty_preference')
                                 ->where('specialty_id', $value)
                                 ->where('teacher_id', $teacherId)
                                 ->where('school_branch_id', $schoolBranchId)
@@ -59,7 +59,7 @@ class AddSpecialtyPreferenceRequest extends FormRequest
             'specailties_preference.*.teacher_id' => [
                 'required',
                 'string',
-                'exists:teachers,id',
+                'exists:teacher,id',
             ],
         ];
     }
