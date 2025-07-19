@@ -731,6 +731,15 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
+        Schema::table('exam_candidates', function(Blueprint $table){
+             $table->string('school_branch_id')->index();
+             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+             $table->string('exam_id')->nullable();
+            $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('student_id')->nullable()->index();
+            $table->foreign('student_id')->references('id')->on('student');
+        });
+
         Schema::table('department_stats', function(Blueprint $table) {
             $table->string('stat_type_id')->index();
             $table->foreign('stat_type_id')->references('id')->on('stat_types');

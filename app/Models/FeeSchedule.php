@@ -16,6 +16,7 @@ class FeeSchedule extends Model
         'level_id',
         'school_semester_id',
         'config_status',
+        'school_branch_id',
         'status'
     ];
 

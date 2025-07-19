@@ -3,13 +3,15 @@
 namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
-use App\Jobs\SendNewSemesterAvialableNotificationJob;
+use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
 use App\Models\Educationlevels;
+use Illuminate\Database\Eloquent\Collection;
 use App\Models\FeeSchedule;
 use App\Models\SchoolSemester;
 use App\Models\Semester;
 use App\Models\Specialty;
 use Exception;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -19,6 +21,7 @@ class SchoolSemesterService
 
     public function createSchoolSemester($semesterData, $currentSchool)
     {
+
         DB::beginTransaction();
         $schoolSemester = new SchoolSemester();
         $schoolSemesterId = Str::uuid();
@@ -34,6 +37,7 @@ class SchoolSemesterService
         $schoolSemester->status = 'active';
         $schoolSemester->student_batch_id = $semesterData["student_batch_id"];
         $schoolSemester->school_branch_id = $currentSchool->id;
+        $schoolSemester->timetable_published = false;
         $schoolSemester->save();
         FeeSchedule::create([
                'specialty_id' => $semesterData['specialty_id'],
@@ -117,10 +121,40 @@ class SchoolSemesterService
             throw $e;
         }
     }
-    public function getSchoolSemesters($currentSchool)
+      public function getSchoolSemesters($currentSchool)
     {
-        $schoolSemesters = SchoolSemester::with(['specailty', 'specailty.level', 'semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->get();
-        return $schoolSemesters;
+        $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
+            ->select('id', 'start_date', 'end_date', 'school_year', 'status', 'specialty_id', 'semester_id', 'timetable_published')
+            ->with([
+                'specialty' => function (BelongsTo $belongsTo) {
+                    $belongsTo->select('id', 'specialty_name', 'level_id');
+                },
+                'specialty.level' => function (BelongsTo $belongsTo) {
+                    $belongsTo->select('id', 'level', 'name');
+                },
+                'semester' => function (BelongsTo $belongsTo) {
+
+                    $belongsTo->select('id', 'name',);
+                },
+            ])
+            ->get();
+
+        return $schoolSemesters->map(function ($semester) {
+            return [
+                "id" => $semester->id,
+                "start_date" => $semester->start_date,
+                "end_date" => $semester->end_date,
+                "school_year" => $semester->school_year,
+                "status" => $semester->status,
+                "specialty_id" => $semester->specialty_id,
+                "specialty_name" => $semester->specialty->specialty_name ?? null,
+                "level_name" => $semester->specialty->level->name ?? null,
+                "level" => $semester->specialty->level->level ?? null,
+                "semester_id" => $semester->semester_id,
+                "timetable_published" => $semester->timetable_published,
+                "semester_name" => $semester->semester->name ?? $semester->semester->semester_name ?? null,
+            ];
+        });
     }
     public function getActiveSchoolSemesters($currentSchool)
     {

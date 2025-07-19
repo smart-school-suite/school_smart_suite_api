@@ -30,6 +30,7 @@ class StudentResource extends JsonResource
             'specialty_name' => $this->specialty->specialty_name,
             'level_name' => $this->level->name,
             'level_number' => $this->level->level,
+            'status' => $this->status,
             'batch_title' => $this->studentBatch->name,
         ];
     }

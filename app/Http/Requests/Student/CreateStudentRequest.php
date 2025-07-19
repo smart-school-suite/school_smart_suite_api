@@ -23,10 +23,8 @@ class CreateStudentRequest extends FormRequest
             'name' => 'required|string',
             'first_name' => 'required|string',
             'last_name' => 'required|string',
-            'DOB' => 'required|string',
             'gender' => 'required|string',
             'email' => 'required|email',
-            'phone_one' => 'required|string',
             'specialty_id' => 'required|string|exists:specialty,id',
             'guardian_id' => 'required|string|exists:parents,id',
             'student_batch_id' => 'required|string|exists:student_batch,id'

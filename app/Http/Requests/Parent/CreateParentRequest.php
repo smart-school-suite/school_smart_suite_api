@@ -23,7 +23,6 @@ class CreateParentRequest extends FormRequest
             'address' => 'required|string',
             'email' => 'required|string|email',
             'phone_one' => 'string|required',
-            'phone_two' => 'string|required',
             'relationship_to_student' => 'required|string',
             'preferred_language' => 'required|string',
         ];

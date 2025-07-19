@@ -19,7 +19,7 @@ class StudentService
             'level',
             'studentBatch'
         ])
-            ->get();
+          ->where("dropout_status", false)  ->get();
         return $students;
     }
     public function deleteStudent($studentId, $currentSchool)

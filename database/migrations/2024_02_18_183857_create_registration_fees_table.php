@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('title')->default('Registration Fees');
             $table->decimal('amount', 8, 2);
-            $table->enum('status', ['paid', 'not paid', 'bad debt']);
+            $table->enum('status', ['paid', 'not paid', 'bad debt'])->default('not paid');
             $table->timestamps();
         });
     }

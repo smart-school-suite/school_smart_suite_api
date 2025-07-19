@@ -68,16 +68,13 @@ class StudentController extends Controller
 
     public function markStudentAsDropout(Request $request, string $studentId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $request->validate([
-            'reason' => 'sometimes|nullable|string'
-        ]);
         $markStudentAsDropout = $this->studentService->markStudentAsDropout($studentId, $currentSchool, $request->reason);
         return ApiResponseService::success("Student Marked As Dropout Successfully", $markStudentAsDropout, null, 200);
     }
     public function getStudentDropoutList(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $studentDropoutList = $this->studentService->getAllDropoutStudents($currentSchool);
-        return ApiResponseService::success("Student Dropout List Fetched Successfully", $studentDropoutList, null, 200);
+        return ApiResponseService::success("Student Dropout List Fetched Successfully", StudentResource::collection($studentDropoutList), null, 200);
     }
 
     public function reinstateDropedOutStudent(Request $request, string $studentDropoutId){

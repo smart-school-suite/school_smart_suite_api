@@ -12,6 +12,10 @@ use App\Http\Requests\TuitionFee\BulkPayTuitionFeeRequest;
 use App\Http\Requests\TuitionFee\PayTuitionFeeRequest;
 use App\Http\Requests\TuitionFee\TuitionFeeTransactionIdRequest;
 use App\Http\Requests\TuitionFee\UpdateTuitionFeePaymentRequest;
+use App\Http\Resources\RegistrationFeeResource;
+use App\Http\Resources\RegistrationFeeTransResource;
+use App\Http\Resources\TuitionFeeResource;
+use App\Http\Resources\TuitionFeeTransacResource;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Http\Request;
@@ -38,7 +42,7 @@ class FeePaymentController extends Controller
     public function getRegistrationFees(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $registrationFees = $this->feePaymentService->getRegistrationFees($currentSchool);
-        return ApiResponseService::success("Registration Fees Fetched Sucessfully", $registrationFees, null, 200);
+        return ApiResponseService::success("Registration Fees Fetched Sucessfully", RegistrationFeeResource::collection($registrationFees), null, 200);
     }
 
     public function getFeesPaid(Request $request){
@@ -68,13 +72,13 @@ class FeePaymentController extends Controller
     public function getTuitionFees(Request $request) {
         $currentSchool = $request->attributes->get('currentSchool');
         $tuitionFees = $this->feePaymentService->getTuitionFees($currentSchool);
-        return ApiResponseService::success("Tuition Fees Fetched Successfully", $tuitionFees, null, 200);
+        return ApiResponseService::success("Tuition Fees Fetched Successfully", TuitionFeeResource::collection($tuitionFees), null, 200);
     }
 
     public function getTuitionFeeTransactions(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $transactions = $this->feePaymentService->getTuitionFeeTransactions($currentSchool);
-        return ApiResponseService::success("Tuition Fee Transactions fetched Successfully", $transactions, null, 200);
+        return ApiResponseService::success("Tuition Fee Transactions fetched Successfully", TuitionFeeTransacResource::collection($transactions), null, 200);
     }
 
     public function reverseTuitionFeeTransaction(Request $request, $transactionId){
@@ -97,7 +101,7 @@ class FeePaymentController extends Controller
     public function getRegistrationFeeTransactions(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $registrationFeeTransactions = $this->feePaymentService->getRegistrationFeeTransactions($currentSchool);
-        return ApiResponseService::success("Registration Fee Transactions Fetched Succesfully", $registrationFeeTransactions, null, 200);
+        return ApiResponseService::success("Registration Fee Transactions Fetched Succesfully", RegistrationFeeTransResource::collection($registrationFeeTransactions), null, 200);
     }
 
     public function reverseRegistrationFeeTransaction(Request $request, $transactionId){

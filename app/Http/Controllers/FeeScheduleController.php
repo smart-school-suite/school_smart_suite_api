@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TuitionFeeSchedule\CreateFeeScheduleSlotsRequest;
 use App\Http\Requests\TuitionFeeSchedule\UpdateFeeScheduleSlotsRequest;
+use App\Http\Resources\FeeScheduleResource;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\FeeScheduleService;
-use APP\Services\FeeScheduleSlotService;
+use App\Services\FeeScheduleSlotService;
 class FeeScheduleController extends Controller
 {
     protected FeeScheduleService $feeScheduleService;
@@ -24,7 +25,7 @@ class FeeScheduleController extends Controller
     public function getFeeSchedule(Request $request){
          $currentSchool = $request->attributes->get('currentSchool');
          $feeSchedule = $this->feeScheduleService->getFeeSchedule($currentSchool);
-         return ApiResponseService::success("Fee Schedule Fetched Successfully", $feeSchedule, null, 200);
+         return ApiResponseService::success("Fee Schedule Fetched Successfully", FeeScheduleResource::collection($feeSchedule), null, 200);
     }
 
     public function deleteFeeSchedule(Request $request, $feeScheduleId){

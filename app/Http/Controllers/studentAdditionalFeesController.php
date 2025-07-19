@@ -9,6 +9,8 @@ use App\Http\Requests\AdditionalFee\UpdateAdditionalFeeRequest;
 use App\Http\Requests\AdditionalFee\CreateAdditionalFeeRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\BulkPayAdditionFeeRequest;
+use App\Http\Resources\AdditionalFeeResource;
+use App\Http\Resources\AdditionalFeeTransactionResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\studentAdditionalFeeService;
 use Exception;
@@ -62,7 +64,7 @@ class StudentAdditionalFeesController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getAdditionalFees = $this->studentAdditionalFeeService->getAdditionalFees($currentSchool);
-        return ApiResponseService::success("Student Additional Fees Fetched Successfully", $getAdditionalFees, null, 200);
+        return ApiResponseService::success("Student Additional Fees Fetched Successfully", AdditionalFeeResource::collection($getAdditionalFees), null, 200);
     }
 
     public function payAdditionalFees(PayAdditionalFeeRequest $request)
@@ -76,7 +78,7 @@ class StudentAdditionalFeesController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getAdditionalFeesTransactions = $this->studentAdditionalFeeService->getAdditionalFeesTransactions($currentSchool);
-        return ApiResponseService::success("Student Additional Fees Transactions Fetched Sucessfully", $getAdditionalFeesTransactions, null, 200);
+        return ApiResponseService::success("Student Additional Fees Transactions Fetched Sucessfully", AdditionalFeeTransactionResource::collection($getAdditionalFeesTransactions), null, 200);
     }
 
     public function reverseAdditionalFeesTransaction(Request $request, string $transactionId)

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Department;
 use App\Models\HOD;
 use App\Models\Teacher;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use App\Models\Schooladmin;
 use App\Models\SchoolBranches;
 use App\Notifications\AppointedAsHOD;
@@ -97,61 +99,49 @@ class HodService
      */
     public function getAssignedHods(SchoolBranches $currentSchool): Collection
     {
-        return HOD::where("school_branch_id", $currentSchool->id)
-            ->with(['hodable', 'department'])
+       return HOD::where("school_branch_id", $currentSchool->id)
+            ->with([
+                'hodable' => function (MorphTo $morphTo) {
+                    $morphTo->select('id', 'profile_picture', 'first_name', 'last_name', 'full_names');
+                },
+                'department' => function (BelongsTo $belongsTo) {
+                    $belongsTo->select('id', 'department_name');
+                }
+            ])
             ->get();
     }
-
-    // Removed getAllHod as it's identical to getAssignedHods.
-    // If you need a method that truly gets ALL HODs across all schools,
-    // you would remove the school_branch_id scope here.
-    /*
-    public function getAllHod(): Collection
-    {
-        return HOD::with(['hodable', 'department'])->get();
-    }
-    */
 
     /**
      * Retrieves the details of a specific HOD assignment by its ID.
      *
-     * @param int $hodId The ID of the HOD assignment.
+     * @param string $hodId The ID of the HOD assignment.
      * @return HOD|null The HOD model instance or null if not found.
      */
-    public function getHodDetails(int $hodId): ?HOD
+    public function getHodDetails(string $hodId, $currentSchool): ?HOD
     {
-        return HOD::with(['hodable', 'department'])->find($hodId);
+        return HOD::where("school_branch_id", $currentSchool->id)
+        ->with(['hodable', 'department'])->find($hodId);
     }
 
     /**
      * Bulk removes multiple HOD assignments by their IDs.
      *
-     * @param array $hodIds An array of HOD IDs to be removed. Each element should ideally be just the ID.
+     * @param array $removeData An array of HOD IDs to be removed. Each element should ideally be just the ID.
      * Example: [1, 5, 10]
-     * @return int The number of HOD assignments deleted.
+     * @return void The number of HOD assignments deleted.
      * @throws Exception If an error occurs during the bulk deletion.
      */
-    public function bulkRemoveHod(array $hodIds): int
+    public function bulkRemoveHod(array $hods, $currentSchool): void
     {
-        // Extract just the IDs if the input format is ['id' => 1], ['id' => 5]
-        $idsToDeletete = array_map(function ($item) {
-            return is_array($item) && isset($item['id']) ? $item['id'] : $item;
-        }, $hodIds);
-
-        if (empty($idsToDeletete)) {
-            return 0; // No IDs to delete
-        }
-
-        DB::beginTransaction();
         try {
-            // Use whereIn for efficient bulk deletion
-            $deletedCount = HOD::whereIn('id', $idsToDeletete)->delete();
-
+            DB::beginTransaction();
+            foreach($hods as $hod){
+                $hod = HOD::where("school_branch_id", $currentSchool->id)->find($hod['hod_id']);
+                $hod->delete();
+            }
             DB::commit();
-            return $deletedCount;
         } catch (Exception $e) {
             DB::rollBack();
-            // Re-throw the exception for the controller to handle
             throw new Exception("Failed to perform bulk removal of HOD assignments: " . $e->getMessage(), 0, $e);
         }
     }

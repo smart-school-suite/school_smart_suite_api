@@ -6,6 +6,7 @@ use App\Http\Requests\SchoolExpenses\BulkUpdateSchoolExpensesRequest;
 use App\Http\Requests\SchoolExpenses\CreateSchoolExpensesRequest;
 use App\Http\Requests\SchoolExpenses\ExpensesIdRequest;
 use App\Http\Requests\SchoolExpenses\UpdateSchoolExpensesRequest;
+use App\Http\Resources\SchoolExpensesResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 use App\Services\SchoolExpensesService;
@@ -45,7 +46,7 @@ class ExpensesController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $expensesData = $this->schoolExpensesService->getExpenses($currentSchool);
-        return ApiResponseService::success('Expenses data fetched Succefully', $expensesData, null, 200);
+        return ApiResponseService::success('Expenses data fetched Succefully', SchoolExpensesResource::collection($expensesData), null, 200);
     }
 
     public function getExpensesDetails(Request $request, $expenseId)

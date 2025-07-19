@@ -28,6 +28,7 @@ class StudentAdditionalFeeService
         $studentAdditionFees->id = $additionalFeeId;
         $studentAdditionFees->reason = $additionalFees['reason'];
         $studentAdditionFees->amount = $additionalFees['amount'];
+        $studentAdditionFees->status = "unpaid";
         $studentAdditionFees->additionalfee_category_id = $additionalFees['additionalfee_category_id'];
         $studentAdditionFees->school_branch_id = $currentSchool->id;
         $studentAdditionFees->specialty_id = $student->specialty_id;
@@ -70,7 +71,8 @@ class StudentAdditionalFeeService
     }
     public function getAdditionalFees($currentSchool)
     {
-        $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)->with(['student', 'specialty', 'level', 'feeCategory'])->get();
+        $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            ->with(['student', 'specialty', 'level', 'feeCategory'])->get();
         return $additionalFees;
     }
     public function payAdditionalFees(array $additionalFeesData,  $currentSchool): AdditionalFeeTransactions
@@ -129,8 +131,8 @@ class StudentAdditionalFeeService
             ];
 
             SendAdminAdditionalFeeNotificationJob::dispatch(
-                $adminNotificationData,
-                $currentSchool->id
+                $currentSchool->id,
+                $adminNotificationData
             );
 
             return $transaction;
@@ -153,7 +155,7 @@ class StudentAdditionalFeeService
                 return ApiResponseService::error("Transaction Not Found", null, 404);
             }
 
-            $additionalFees = AdditionalFees::where('id', $transaction->additional_fee_id)
+            $additionalFees = AdditionalFees::where('id', $transaction->fee_id)
                 ->where('school_branch_id', $currentSchool->id)
                 ->first();
 
@@ -174,7 +176,8 @@ class StudentAdditionalFeeService
     }
     public function getAdditionalFeesTransactions($currentSchool)
     {
-        $getAdditionalFeesTransactions = AdditionalFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['additionFee.feeCategory', 'additionFee.student'])->get();
+        $getAdditionalFeesTransactions = AdditionalFeeTransactions::where("school_branch_id", $currentSchool->id)
+        ->with(['additionFee.feeCategory', 'additionFee.student.specialty', 'additionFee.student.specialty.level'])->get();
         return $getAdditionalFeesTransactions;
     }
     public function deleteTransaction($transactionId, $currentSchool)

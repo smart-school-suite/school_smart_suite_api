@@ -215,7 +215,7 @@ class FeePaymentService
             if (!$registrationFees) {
                 throw new Exception("Registration fees record not found", 404);
             }
-            $registrationFees->status = 'unpaid';
+            $registrationFees->status = 'not paid';
             $registrationFees->save();
             $transaction->delete();
             DB::commit();
@@ -291,7 +291,8 @@ class FeePaymentService
     }
     public function getTuitionFeeTransactions($currentSchool)
     {
-        $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['tuition', 'tuition.student', 'tuition.specialty', 'tuition.level'])->get();
+        $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
+        ->with(['tuition.student', 'tuition.specialty', 'tuition.level'])->get();
         return $getTuitionFeeTransactions;
     }
     public function getTuitionFees($currentSchool)
@@ -307,7 +308,7 @@ class FeePaymentService
     {
 
         $transactions = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
-            ->with(['registrationFee', 'registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
+            ->with(['registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
             ->get();
         return $transactions;
     }

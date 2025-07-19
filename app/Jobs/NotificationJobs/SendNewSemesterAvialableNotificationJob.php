@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\NotificationJobs;
 
 use App\Models\Student;
 use App\Notifications\NewSemesterAvailable;

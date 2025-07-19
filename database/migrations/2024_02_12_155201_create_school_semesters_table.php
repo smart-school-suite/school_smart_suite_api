@@ -16,8 +16,8 @@ return new class extends Migration
             $table->date("start_date");
             $table->date("end_date");
             $table->string("school_year");
-            $table->string("timetable_published");
-            $table->enum('status', ['inactive', 'active']);
+            $table->boolean("timetable_published")->default(false);
+            $table->enum('status', ['expired', 'active', 'pending'])->default('pending');
             $table->timestamps();
         });
     }

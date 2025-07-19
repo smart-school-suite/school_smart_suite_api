@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Requests\AdditionalFeeCategory\CreateAdditionalFeeCategoryRequest;
+use App\Http\Requests\AdditionalFeeCategory\UpdateAdditionalFeeCategoryRequest;
 use App\Services\AdditionalFeeCategoryService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
@@ -26,9 +27,9 @@ class AdditionalFeeCategoryController extends Controller
         return ApiResponseService::success("Additionla Fee Category Deleted Succesfully", $deleteAdditionalFeeCategory, null, 200);
     }
 
-    public function updateAdditionalFeeCategory(Request $request, string $feeCategoryId){
+    public function updateAdditionalFeeCategory(UpdateAdditionalFeeCategoryRequest $request, string $feeCategoryId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateAdditionalFeeCategory = $this->additionalFeeCategoryService->updateAdditionalFeeCategory($request->validated, $currentSchool, $feeCategoryId);
+        $updateAdditionalFeeCategory = $this->additionalFeeCategoryService->updateAdditionalFeeCategory($request->validated(), $currentSchool, $feeCategoryId);
         return ApiResponseService::success("Additional Fee Category Updated Sucessfully", $updateAdditionalFeeCategory, null, 200);
     }
 

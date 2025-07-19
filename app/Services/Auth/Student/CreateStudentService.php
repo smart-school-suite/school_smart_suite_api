@@ -32,7 +32,7 @@ class CreateStudentService
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
             $student->gender = $studentData['gender'];
-            $student->phone_one = $studentData['phone_one'];
+            $student->phone_one = $studentData['phone_one'] ?? null;
             $student->last_name = $studentData["last_name"];
             $student->guardian_id = $studentData["guardian_id"];
             $student->email = $studentData["email"];
@@ -50,6 +50,7 @@ class CreateStudentService
                 'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'amount' => $specialty->registration_fee,
+                'status' => "not paid",
                 'student_id' => $randomId,
             ]);
             $tuitionFeeId = Str::uuid();

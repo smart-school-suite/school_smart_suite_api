@@ -6,7 +6,7 @@ use App\Http\Controllers\StudentAdditionalFeesController;
 // Create a new student additional fee
 Route::middleware(['permission:schoolAdmin.additionalFee.create'])->post('/', [StudentAdditionalFeesController::class, 'createStudentAdditionalFees'])
     ->name('student-additional-fees.store');
-Route::get('/{feeId}', [StudentAdditionalFeesController::class, "getAdditionalFeeDetails"])
+Route::get('/details/{feeId}', [StudentAdditionalFeesController::class, "getAdditionalFeeDetails"])
      ->name('additional-fee-details');
 // Get all student additional fees
 Route::middleware(['permission:schoolAdmin.additionalFee.view'])->get('/', [StudentAdditionalFeesController::class, 'getAdditionalFees'])
