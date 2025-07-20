@@ -47,7 +47,7 @@ class SendAdminTuitionFeePaidNotificationJob implements ShouldQueue
     private function getAuthorizedAdmins($schoolBranchId)
     {
         $electionPermissionNames = PermissionCategory::with('permissions')
-            ->where('name', 'Tuition Fee Manager')
+            ->where('title', 'Tuition Fee Manager')
             ->first()
             ?->permission
             ->pluck('name')

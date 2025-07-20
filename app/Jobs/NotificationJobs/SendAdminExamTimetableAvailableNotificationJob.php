@@ -37,7 +37,7 @@ class SendAdminExamTimetableAvailableNotificationJob implements ShouldQueue
     private function getAuthorizedAdmins($schoolBranchId)
     {
         $electionPermissionNames = PermissionCategory::with('permissions')
-            ->where('name', 'Exam Manager')
+            ->where('title', 'Exam Manager')
             ->first()
             ?->permission
             ->pluck('name')
