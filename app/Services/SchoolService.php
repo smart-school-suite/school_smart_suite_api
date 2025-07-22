@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\School;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Exception;
 
 class SchoolService
 {
@@ -37,5 +40,31 @@ class SchoolService
             return ApiResponseService::error("School Not found", null, 404);
         }
         return $school;
+    }
+
+    public function uploadSchoolLogo($request, $schoolId)
+    {
+
+        try {
+            $school = School::find($schoolId);
+            if (!$school) {
+                throw new Exception("School Not Found", 404);
+            }
+            DB::transaction(function () use ($request, $school) {
+
+                if ($school->school_logo) {
+                    Storage::disk('public')->delete('SchoolLogo/' . $school->school_logo);
+                }
+                $schoolLogo = $request->file('school_logo');
+                $fileName = time() . '.' . $schoolLogo->getClientOriginalExtension();
+                $schoolLogo->storeAs('public/SchoolLogo', $fileName);
+
+                $school->school_logo = $fileName;
+                $school->save();
+            });
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 }

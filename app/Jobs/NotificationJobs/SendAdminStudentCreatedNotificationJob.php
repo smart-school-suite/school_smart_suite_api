@@ -46,11 +46,11 @@ class SendAdminStudentCreatedNotificationJob implements ShouldQueue
 
      private function getAuthorizedAdmins($schoolBranchId)
     {
-        $electionPermissionNames = PermissionCategory::with('permissions')
+        $electionPermissionNames = PermissionCategory::with('permission')
             ->where('title', 'Student Manager')
             ->first()
             ?->permission
-            ->pluck('name')
+            ->pluck('title')
             ->toArray();
 
         if (empty($electionPermissionNames)) {

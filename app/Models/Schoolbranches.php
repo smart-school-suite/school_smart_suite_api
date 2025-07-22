@@ -25,6 +25,7 @@ class Schoolbranches extends Model
         'phone_two',
         'semester_count',
         'email',
+        "website",
         'final_semester',
         'abbreviation',
         'max_gpa'

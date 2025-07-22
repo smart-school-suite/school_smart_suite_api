@@ -30,12 +30,6 @@ class SchoolBranchesService
         return $schoolBranchExist;
     }
 
-    public function getSchoolBranches()
-    {
-        $schoolBranches = Schoolbranches::with('school')->get();
-        return $schoolBranches;
-    }
-
     public function deleteSchoolBranch($schoolBranchId)
     {
         $schoolBranchExist = Schoolbranches::find($schoolBranchId);
@@ -44,5 +38,10 @@ class SchoolBranchesService
         }
         $schoolBranchExist->delete();
         return $schoolBranchExist;
+    }
+
+    public function getSchoolBranchDetails($branchId){
+        $schoolBranch = Schoolbranches::with(['school'])->find($branchId);
+        return $schoolBranch;
     }
 }

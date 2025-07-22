@@ -2,17 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolsController;
+use App\Http\Middleware\IdentifyTenant;
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
     // Get details of the authenticated school
-    Route::middleware(['permission:schoolAdmin.school.show'])->get('/{schoolId}', [SchoolsController::class, 'getSchoolDetails'])
+    Route::middleware(['permission:schoolAdmin.school.show'])->get('/', [SchoolsController::class, 'getSchoolDetails'])
         ->name('schools.details');
 
     // Update the authenticated school
-    Route::middleware(['permission:schoolAdmin.school.update'])->put('/{schoolId}', [SchoolsController::class, 'updateSchool'])
+    Route::middleware(['permission:schoolAdmin.school.update'])->put('/', [SchoolsController::class, 'updateSchool'])
         ->name('schools.update');
 
     // Delete a specific school
-    Route::middleware(['permission:schoolAdmin.school.delete'])->delete('/{schoolId}', [SchoolsController::class, 'deleteSchool'])
+    Route::middleware(['permission:schoolAdmin.school.delete'])->delete('/', [SchoolsController::class, 'deleteSchool'])
         ->name('schools.destroy');
+    Route::post('/upload-school-logo', [SchoolsController::class, "uploadSchoolLogo"]);
 });
