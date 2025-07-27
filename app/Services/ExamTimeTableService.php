@@ -15,7 +15,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Carbon\Carbon;
 class ExamTimeTableService
 {
 
@@ -49,7 +49,7 @@ class ExamTimeTableService
                     'level_id' => $entry['level_id'],
                     'date' => $entry['date'],
                     'start_time' => $entry['start_time'],
-                    'duration' => $entry['duration'],
+                    'duration' => $this->formatDurationFromTimes($entry['start_time'], $entry['end_time']),
                     'end_time' => $entry['end_time'],
                     'school_branch_id' => $currentSchool->id,
                     'created_at' => now(),
@@ -109,6 +109,25 @@ class ExamTimeTableService
         }
     }
 
+    public function formatDurationFromTimes(string $startTime, string $endTime): string
+{
+    $start = Carbon::parse($startTime);
+    $end = Carbon::parse($endTime);
+
+    $diffInMinutes = $start->diffInMinutes($end);
+    $hours = floor($diffInMinutes / 60);
+    $minutes = $diffInMinutes % 60;
+
+    $duration = '';
+    if ($hours > 0) {
+        $duration .= "$hours . h";
+    }
+    if ($minutes > 0 || $duration === '') {
+        $duration .= "$minutes . m";
+    }
+
+    return trim($duration);
+}
     /**
      * Deletes a single exam timetable entry.
      *
@@ -163,8 +182,8 @@ class ExamTimeTableService
                 'course_title' => $timetable->course->course_title,
                 'credit' => $timetable->course->credit,
                 'course_code' => $timetable->course->course_code,
-                'start_time' => $timetable->start_time,
-                'end_time' => $timetable->end_time,
+                'start_time' => Carbon::parse($timetable->start_time)->format('h:i A'),
+                'end_time' => Carbon::parse($timetable->end_time)->format('h:i A'),
                 'duration' => $timetable->duration,
             ];
         }

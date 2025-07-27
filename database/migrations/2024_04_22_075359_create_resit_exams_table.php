@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean("grading_added")->default(false);
             $table->integer('expected_candidate_number')->default(0);
             $table->integer('evaluated_candidate_number')->default(0);
+            $table->string('school_year')->nullable();
             $table->timestamps();
         });
     }

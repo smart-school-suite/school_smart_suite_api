@@ -4,9 +4,8 @@ namespace App\Rules\Timetable;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use App\Models\InstructorAvailability; // Assuming this model points to the table storing WHEN they ARE available
 use Illuminate\Support\Collection;
-
+use App\Models\InstructorAvailabilitySlot;
 class TeacherAvailableRule implements ValidationRule
 {
     protected array $errors = [];
@@ -52,7 +51,7 @@ class TeacherAvailableRule implements ValidationRule
             $semesterId = $currentEntry['semester_id'] ?? null;
             $specialtyId = $currentEntry['specialty_id'] ?? null;
 
-            $matchingAvailabilityCount = InstructorAvailability::query()
+            $matchingAvailabilityCount = InstructorAvailabilitySlot::query()
                 ->where('teacher_id', $teacherId)
                 ->where('day_of_week', $dayOfWeek)
                 ->where('start_time', '<=', $startTime)

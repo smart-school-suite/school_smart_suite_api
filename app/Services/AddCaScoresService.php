@@ -16,6 +16,7 @@ use App\Models\StudentResults;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\ExamResultsAvailable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class AddCaScoresService
 {
@@ -44,7 +45,7 @@ class AddCaScoresService
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
                 // Retrieve the exam details.
                 $studentTarget = $student;
-                $exam = Exams::findOrFail($scoreData['exam_id']);
+                $exam = Exams::with(['student'])->findOrFail($scoreData['exam_id']);
                 $examDetails = $exam;
 
                 // Ensure both student and exam exist.

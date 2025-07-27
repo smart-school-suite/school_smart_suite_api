@@ -8,7 +8,11 @@ use Exception;
 use App\Models\Student;
 use App\Models\Examtimetable;
 use App\Models\Exams;
+use App\Models\Grades;
 use App\Models\StudentResults;
+use App\Models\Timetable;
+use App\Models\Courses;
+use Illuminate\Support\Facades\Log;
 
 class MarkService
 {
@@ -149,20 +153,19 @@ class MarkService
             throw new Exception('Exam type is not valid or not found');
         }
 
-        $caExamType = ExamType::where('semester', $exam->examType->semester)
+        $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
             ->where('type', 'ca')
-            ->first();
+            ->firstOrFail();
 
         if (!$caExamType) {
             throw new Exception('Corresponding CA exam type not found');
         }
 
-        $additionalExam = Exams::where('school_year', $exam->school_year)
-            ->where('exam_type_id', $caExamType->id)
+        $additionalExam = Exams::where('exam_type_id', $caExamType->id)
             ->where('specialty_id', $exam->specialty_id)
             ->where('level_id', $exam->level_id)
             ->where('semester_id', $exam->semester_id)
-            ->where('department_id', $exam->department_id)
+            ->where("student_batch_id", $exam->student_batch_id)
             ->first();
 
         if (!$additionalExam) {
@@ -170,5 +173,58 @@ class MarkService
         }
 
         return $additionalExam;
+    }
+
+    public function getCaExamEvaluationHelperData($currentSchool, $examId){
+         try{
+            $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($examId);
+            $examGrades = Grades::where("school_branch_id", $currentSchool->id)
+                                    ->where("grades_category_id", $exam->grades_category_id)
+                                    ->with(['lettergrade'])
+                                    ->get();
+            $timetableSlots = Examtimetable::where("school_branch_id", $currentSchool->id)
+                          ->where("specialty_id", $exam->specialty_id)
+                          ->where("student_batch_id", $exam->student_batch_id)
+                          ->where("level_id", $exam->level_id)
+                          ->where("exam_id", $exam->id)
+                          ->pluck('course_id')->toArray();
+            $courses  = Courses::where("school_branch_id", $currentSchool->id)
+                                  ->whereIn('id', array_unique($timetableSlots))
+                                  ->get();
+
+            return [
+                'exam_grading' => $examGrades,
+                'courses' => $courses,
+                'max_gpa' => $currentSchool->max_gpa ?? 4.00
+            ];
+         }
+         catch(Exception $e){
+           throw $e;
+         }
+    }
+
+    public function getExamEvaluationHelperData($currentSchool, $examId, $studentId){
+         try{
+             $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($examId);
+             $relatedCA = $this->findExamsBasedOnCriteria($examId);
+             $examGrades = Grades::where("school_branch_id", $currentSchool->id)
+                                    ->where("grades_category_id", $exam->grades_category_id)
+                                    ->with(['lettergrade'])
+                                    ->get();
+            $caScores = Marks::where("school_branch_id", $currentSchool->id)
+                              ->where("student_id", $studentId)
+                              ->where('exam_id', $relatedCA->id)
+                              ->with(['course'])
+                              ->get();
+            return [
+                'exam_grading' => $examGrades,
+                'ca_scores' => $caScores,
+                'max_gpa' => $currentSchool->max_gpa ?? 4.00
+            ];
+
+         }
+         catch(Exception $e){
+            throw $e;
+         }
     }
 }

@@ -2,12 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolAdminController;
+use App\Http\Controllers\Auth\SchoolAdmin\UpdateSchoolAdminProfileController;
 use App\Http\Middleware\IdentifyTenant;
 
 // Get all school admins (requires 'view-admin' permission)
 Route::middleware(['permission:schoolAdmin.schoolAdmin.view'])->get('/', [SchoolAdminController::class, 'getSchoolAdmin'])
     ->name('school-admins.index');
-
+Route::put('/update-profile', [UpdateSchoolAdminProfileController::class, "UpdateSchoolAdminProfile"])->name('school-admin.update-profile');
 // Get details of a specific school admin
 Route::middleware(['permission:schoolAdmin.schoolAdmin.show'])->get('/{schoolAdminId}', [SchoolAdminController::class, 'getSchoolAdminDetails'])
     ->name('school-admins.show');

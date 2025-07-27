@@ -249,4 +249,17 @@ class TeacherService
         }
     }
 
+    public function getTeachersBySpecialtyPreference($specialtyId, $currentSchool){
+        $teachers = TeacherSpecailtyPreference::where('specialty_id', $specialtyId)
+            ->where('school_branch_id', $currentSchool->id)
+            ->with('teacher')
+            ->get();
+
+        if ($teachers->isEmpty()) {
+            return ApiResponseService::error('No teachers found for this specialty', null, 404);
+        }
+
+        return $teachers->pluck('teacher');
+    }
+
 }

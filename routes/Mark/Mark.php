@@ -39,3 +39,7 @@ Route::middleware(['permission:schoolAdmin.mark.view.ca.evaluation.data'])->get(
 // Prepare exam data for a specific student in a specific exam
 Route::middleware(['permission:schoolAdmin.mark.view.exam.evaluation.data'])->get('/exams/{examId}/students/{studentId}/exam-data/prepare', [MarksController::class, 'prepareExamData'])
     ->name('exams.students.exam-data.prepare');
+
+Route::get('/ca-helper-data/{examId}', [MarksController::class, 'getCaEvaluationHelperData'])->name("ca-helper-data");
+
+Route::get('/exam-helper-data/{examId}/{studentId}', [MarksController::class, 'getExamEvaluationHelperData'])->name('exam-helper-data');

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
+use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
 use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
 use App\Models\Educationlevels;
 use Illuminate\Database\Eloquent\Collection;
@@ -44,6 +45,12 @@ class SchoolSemesterService
                'level_id' => $specialty->level_id,
                'school_branch_id' => $currentSchool->id,
                'school_semester_id' => $schoolSemesterId
+        ]);
+        CreateTeacherAvailabilityJob::dispatch([
+            'specialty_id' => $semesterData['specialty_id'],
+            'school_branch_id' => $currentSchool->id,
+            'school_semester_id' => $schoolSemesterId,
+            'level_id' => $specialty->level_id
         ]);
         DB::commit();
         $data = [
@@ -124,7 +131,7 @@ class SchoolSemesterService
       public function getSchoolSemesters($currentSchool)
     {
         $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
-            ->select('id', 'start_date', 'end_date', 'school_year', 'status', 'specialty_id', 'semester_id', 'timetable_published')
+            ->select('id', 'start_date', 'end_date', 'school_year', 'status', 'specialty_id', 'semester_id', 'timetable_published', 'student_batch_id')
             ->with([
                 'specialty' => function (BelongsTo $belongsTo) {
                     $belongsTo->select('id', 'specialty_name', 'level_id');
@@ -146,10 +153,12 @@ class SchoolSemesterService
                 "end_date" => $semester->end_date,
                 "school_year" => $semester->school_year,
                 "status" => $semester->status,
+                "student_batch_id" => $semester->student_batch_id,
                 "specialty_id" => $semester->specialty_id,
                 "specialty_name" => $semester->specialty->specialty_name ?? null,
                 "level_name" => $semester->specialty->level->name ?? null,
                 "level" => $semester->specialty->level->level ?? null,
+                "level_id" => $semester->specialty->level->id ?? null,
                 "semester_id" => $semester->semester_id,
                 "timetable_published" => $semester->timetable_published,
                 "semester_name" => $semester->semester->name ?? $semester->semester->semester_name ?? null,

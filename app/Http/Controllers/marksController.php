@@ -14,6 +14,7 @@ use App\Services\UpdateExamScoreService;
 use App\Services\UpdateCaScoreService;
 use App\Services\MarkService;
 use App\Services\ApiResponseService;
+use Exception;
 use Illuminate\Http\Request;
 
 class MarksController extends Controller
@@ -174,5 +175,30 @@ class MarksController extends Controller
             "accessed_courses" => $resultsOne,
             "grades_determinant" => $resultsTwo
         ], 200);
+    }
+
+    public function getCaEvaluationHelperData(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $examId = $request->route("examId");
+        try{
+             $evaluationData = $this->markService->getCaExamEvaluationHelperData($currentSchool, $examId);
+             return ApiResponseService::success("CA Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function getExamEvaluationHelperData(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $examId = $request->route('examId');
+        $studentId = $request->route("studentId");
+        try{
+            $evaluationData = $this->markService->getExamEvaluationHelperData($currentSchool, $examId, $studentId);
+            return ApiResponseService::success("Exam Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
+        }
+        catch(Exception $e){
+           return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }

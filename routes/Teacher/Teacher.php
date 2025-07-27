@@ -56,3 +56,6 @@ Route::post('/teacher/avatar/upload', [TeacherController::class, 'uploadProfileP
 
 Route::delete('/teacher/avatar/delete', [TeacherController::class, 'deleteProfilePicture'])
 ->name('teacher.avatar.delete');
+
+Route::get('/teachers/specialty/{specialtyId}', [TeacherController::class, 'getTeacherBySpecialtyPreference'])
+    ->name('teachers.specialty.preference');

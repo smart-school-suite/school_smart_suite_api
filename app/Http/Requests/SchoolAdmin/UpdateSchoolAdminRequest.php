@@ -25,10 +25,11 @@ class UpdateSchoolAdminRequest extends FormRequest
             'first_name' => 'sometimes|nullable|string|max:255',
             'last_name' => 'sometimes|nullable|string|max:255',
             'email' => 'sometimes|nullable|email|max:255',
-            'role' => 'sometimes|nullable|string|max:100',
-            'employment_status' => 'sometimes|nullable|string|max:100',
-            'work_location' => 'sometimes|nullable|string|max:255',
-            'hire_date' => 'sometimes|nullable|date',
+            'phone_one' => 'sometimes|nullable|string|max:100',
+            'phone_two' => 'sometimes|nullable|string|max:100',
+            'cultural_background' => 'sometimes|nullable|string|max:100',
+            'date_of_birth' => 'sometimes|nullable|date',
+            'address' => 'sometimes|nullable|string|max:225'
         ];
     }
 }

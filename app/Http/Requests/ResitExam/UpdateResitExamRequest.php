@@ -29,6 +29,7 @@ class UpdateResitExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
+            'school_year' => 'required|string'
         ];
     }
 }

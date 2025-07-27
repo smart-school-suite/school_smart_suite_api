@@ -115,7 +115,7 @@ class SpecailtyTimeTableService
                 ->where('level_id', $timtableData['level_id'])
                 ->where('semester_id', $timtableData['semester_id'])
                 ->where("student_batch_id", $timtableData['student_batch_id'])
-                ->with(['course:id,course_title', 'teacher:id,name'])
+                ->with(['course:id,course_title,course_code', 'teacher:id,name'])
                 ->get();
 
             if ($timetables->isEmpty()) {
@@ -139,6 +139,7 @@ class SpecailtyTimeTableService
                     $timeTable[$day][] = [
                         "id" => $entry->id,
                         "course" => $entry->course->course_title,
+                        "course_code" => $entry->course->course_code,
                         "start_time" => Carbon::parse($entry->start_time)->format('g:i A'),
                         "end_time" => Carbon::parse($entry->end_time)->format('g:i A'),
                         "teacher" => $entry->teacher->name,

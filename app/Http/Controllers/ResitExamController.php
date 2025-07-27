@@ -6,6 +6,7 @@ use App\Http\Requests\ResitExam\UpdateResitExamRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\ExamGrading\BulkAddResitExamGradingRequest;
 use App\Http\Requests\Exam\BulkUpdateResitExamRequest;
+use App\Http\Resources\ResitExamResource;
 use App\Services\ResitExamService;
 use Illuminate\Support\Facades\Validator;
 use Exception;
@@ -32,7 +33,7 @@ class ResitExamController extends Controller
     public function getAllResitExams(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $resitExams = $this->resitExamService->getAllResitExamsBySchoolBranch($currentSchool);
-        return ApiResponseService::success("Resit Exams Fetched Successfully", $resitExams, null, 200);
+        return ApiResponseService::success("Resit Exams Fetched Successfully", ResitExamResource::collection($resitExams), null, 200);
     }
 
     public function deleteResitExam( $resitExamId){

@@ -23,6 +23,7 @@ class ResitExam extends Model
        'school_branch_id',
        'exam_type_id',
        'reference_exam_id',
+       'school_year',
        'semester_id',
        'level_id',
        'specialty_id',

@@ -10,7 +10,7 @@ use App\Models\ResitExam;
 use App\Models\Resitexamtimetable;
 use Illuminate\Database\Eloquent\Collection;
 use App\Models\Studentresit;
-
+use Carbon\Carbon;
 class ResitTimeTableService
 {
     // Implement your logic here
@@ -29,14 +29,33 @@ class ResitTimeTableService
             }])
             ->get();
 
-        $result = $resitableCourses->pluck('coursess')->unique()->values()->toArray();
+        $result = $resitableCourses->pluck('courses')->unique()->values()->toArray();
 
         return [
             'resit_exam' => $resitExam,
             'resitable_courses' => $result,
         ];
     }
-    public function createResitTimetable(array $resitTimetableEntries, object $currentSchool, string $resitExamId): Collection
+        public function formatDurationFromTimes(string $startTime, string $endTime): string
+{
+    $start = Carbon::parse($startTime);
+    $end = Carbon::parse($endTime);
+
+    $diffInMinutes = $start->diffInMinutes($end);
+    $hours = floor($diffInMinutes / 60);
+    $minutes = $diffInMinutes % 60;
+
+    $duration = '';
+    if ($hours > 0) {
+        $duration .= "$hours hours";
+    }
+    if ($minutes > 0 || $duration === '') {
+        $duration .= "$minutes minutes";
+    }
+
+    return trim($duration);
+}
+    public function createResitTimetable(array $resitTimetableEntries, object $currentSchool, string $resitExamId)
     {
         DB::beginTransaction();
         try {
@@ -54,7 +73,7 @@ class ResitTimeTableService
                     'date' => $entry['date'],
                     'start_time' => $entry['start_time'],
                     'end_time' => $entry['end_time'],
-                    'duration' => $entry['duration'],
+                    'duration' => $this->formatDurationFromTimes($entry['start_time'], $entry['end_time']),
                     'school_branch_id' => $currentSchool->id,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -67,9 +86,7 @@ class ResitTimeTableService
             $exam->save();
 
             DB::commit();
-            return Resitexamtimetable::where('resit_exam_id', $resitExamId)
-                ->where('school_branch_id', $currentSchool->id)
-                ->pluck('id');
+            return true;
         } catch (InvalidArgumentException $e) {
             DB::rollBack();
             throw $e;

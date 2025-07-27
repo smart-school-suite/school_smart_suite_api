@@ -116,4 +116,11 @@ class TeacherController extends Controller
           }
     }
 
+    public function getTeacherBySpecialtyPreference(Request $request, $specialtyId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getTeachersBySpecialty = $this->teacherService->getTeachersBySpecialtyPreference($specialtyId, $currentSchool);
+        return ApiResponseService::success("Teachers Fetched Successfully", $getTeachersBySpecialty, null, 200);
+    }
+
 }
