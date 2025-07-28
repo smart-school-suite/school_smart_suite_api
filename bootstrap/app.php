@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher')
                 ->group(base_path('routes/Teacher/Teacher.php'));
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/resit-candidate')
+               ->group(base_path('routes/Exam/ResitExamCandidate.php'));
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-admin')
                 ->group(base_path('routes/SchoolAdmin/SchoolAdmin.php'));

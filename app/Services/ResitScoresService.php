@@ -49,7 +49,9 @@ class ResitScoresService
 
             foreach ($entries as $entry) {
                 if ($exam === null) {
+
                     $exam = Exams::findOrFail($entry['exam_id']);
+
                 }
                 $letterGradeDetails = $this->determineResitLetterGrade(
                     $entry['score'],
@@ -332,6 +334,7 @@ class ResitScoresService
     private function determineNewExamScores(object $currentSchool, string $resitLetterGrade, string $failedExamId): array
     {
         $failedExam = Exams::findOrFail($failedExamId);
+
         $letterGrade = LetterGrade::where("letter_grade", $resitLetterGrade)->firstOrFail();
         $examGrades = Grades::where("letter_grade_id", $letterGrade->id)
             ->where("school_branch_id", $currentSchool->id)
@@ -363,6 +366,7 @@ class ResitScoresService
      */
     private function determineNewCaScore(object $currentSchool, string $resitLetterGrade, string $failedCaId): array
     {
+
         $failedCa = Exams::findOrFail($failedCaId);
         $letterGrade = LetterGrade::where("letter_grade", $resitLetterGrade)->firstOrFail();
         $caGrades = Grades::where("letter_grade_id", $letterGrade->id)
@@ -440,9 +444,9 @@ class ResitScoresService
             throw new Exception('Exam type is not valid or not found');
         }
 
-        $caExamType = ExamType::where('semester', $exam->examType->semester)
+       $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
             ->where('type', 'ca')
-            ->first();
+            ->firstOrFail();
 
         if (!$caExamType) {
             throw new Exception('Corresponding CA exam type not found');

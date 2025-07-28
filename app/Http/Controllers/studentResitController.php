@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StudentResit\StudentResitIdRequest;
 use App\Http\Requests\StudentResit\StudentResitTransactionIdRequest;
+use App\Http\Resources\ResitResource;
 use Exception;
 use Illuminate\Http\Request;
 use App\Services\StudentResitService;
@@ -89,7 +90,7 @@ class StudentResitController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getStudentResits = $this->studentResitService->getStudentResits($currentSchool);
-        return ApiResponseService::success("Student Resit Records Fetched Sucessfully", $getStudentResits, null, 200);
+        return ApiResponseService::success("Student Resit Records Fetched Sucessfully", ResitResource::collection($getStudentResits), null, 200);
     }
     public function getResitDetails(Request $request)
     {
@@ -122,13 +123,13 @@ class StudentResitController extends Controller
         $reverseTransaction = $this->studentResitService->reverseResitTransaction($transactionId, $currentSchool);
         return ApiResponseService::success("Transaction Reversed Succesfully", $reverseTransaction, null, 200);
     }
-    public function prepareResitData(Request $request)
+    public function getPreparedResitEvaluationData(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $examId = $request->route('examId');
-        $studentId = $request->route('studentId');
-        $prepareResitData = $this->studentResitService->prepareResitScoresData($currentSchool, $examId, $studentId);
-        return ApiResponseService::success("Student Resit Info fetched Succesfully", $prepareResitData, null, 200);
+        $resitExamId = $request->route('resitExamId');
+        $candidateId = $request->route('candidateId');
+        $prepareResitData = $this->studentResitService->getResitEvaluationHelperData($currentSchool, $resitExamId, $candidateId);
+        return ApiResponseService::success("Resit Evaluation Helper Data Fetched Successfully", $prepareResitData, null, 200);
     }
     public function bulkDeleteStudentResit(StudentResitIdRequest $request)
     {
@@ -176,14 +177,6 @@ class StudentResitController extends Controller
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
-    }
-    public function getPreparedResitEvaluationData(Request $request)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $resitExamId = $request->route('resitExamId');
-        $candidateId = $request->route('candidateId');
-        $resitData = $this->studentResitService->prepareEvaluationData($candidateId, $resitExamId, $currentSchool);
-        return ApiResponseService::success("Resit Evaluation Data Fetched Successfully", $resitData, null, 200);
     }
     public function getAllEligableStudentByExam(Request $request, $resitExamId)
     {

@@ -1,4 +1,6 @@
 <?php
+
+
 use App\Http\Controllers\ResitTimeTableController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,3 +22,5 @@ Route::middleware(['permission:schoolAdmin.timetable.resitexam.delete'])->delete
 // Update the resit timetable for a specific resit exam
 Route::middleware(['permission:schoolAdmin.timetable.resitexam.update'])->put('/resit-exam/{resitExamId}/timetable', [ResitTimeTableController::class, 'updateResitTimetable'])
 ->name('resit-exams.timetable.update');
+
+

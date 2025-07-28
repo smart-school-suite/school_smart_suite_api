@@ -6,8 +6,8 @@ use App\Http\Controllers\StudentResitController;
  Route::middleware(['permission:student.studentResits.view.student|schoolAdmin.studentResits.view.student'])->get('/students/{studentId}/resits', [StudentResitController::class, 'getResitByStudent'])
  ->name('students.resits.index');
 
-// Record payment for a resit
-Route::middleware(['permission:schoolAdmin.studentResits.pay'])->post('/pay-resit', [StudentResitController::class, 'payResit'])
+// Record payment for a resit middleware(['permission:schoolAdmin.studentResits.pay'])
+Route::post('/pay-resit', [StudentResitController::class, 'payResit'])
  ->name('resit-payments.store');
 
 // Update the status of a specific resit
@@ -53,10 +53,6 @@ Route::middleware(['permission:schoolAdmin.studentResits.store.scores'])->post('
 // Updating a specific student's resit scores
 Route::middleware(['permission:schoolAdmin.studentResits.update.scores'])->put('/student-resits/{candidateId}/{studentResitResultId}', [StudentResitController::class, 'updateResitScores'])
 ->name('student-resits.update-scores');
-
-// Fetching resit data for a specific student and exam
-Route::middleware(['permission:schoolAdmin.studentResits.view.student.resitExam'])->get('/student-resits/{examId}/{studentId}/data', [StudentResitController::class, 'prepareResitData'])
-->name('student-resits.data');
 
 // Bulk payment for student resits
 Route::middleware(['permission:schoolAdmin.studentResits.pay'])->post('/student-resits/bulk-pay', [StudentResitController::class, 'bulkPayStudentResit'])

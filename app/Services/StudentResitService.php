@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\StatisticalJobs\FinancialJobs\ResitFeeStatJob;
+use App\Models\Grades;
 use App\Models\Marks;
 use App\Models\ResitCandidates;
 use App\Models\ResitExam;
@@ -157,40 +158,27 @@ class StudentResitService
             throw $e;
         }
     }
-    public function prepareResitScoresData($currentSchool, $examId, $studentId)
+    public function getResitEvaluationHelperData($currentSchool, $resitExamId, $candidateId)
     {
-        $results = [];
+        $resitExam = ResitExam::find($resitExamId);
+        $resitCandidate = ResitCandidates::with('student')->find($candidateId);
         $resitCoursesIds = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
-            ->where("exam_id", $examId)
-            ->plunk();
-
-        foreach ($resitCoursesIds as $resitCourseId) {
-            $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)
-                ->where("course_id", $resitCourseId)
-                ->where("student_id", $studentId)
+            ->where("resit_exam_id", $resitExamId)
+            ->pluck('course_id');
+        $studentResits = Studentresit::where("school_branch_id", $currentSchool->id)
+                ->whereIn("course_id", $resitCoursesIds)
+                ->where("student_id", $resitCandidate->student_id)
                 ->with(['courses', 'level', 'specialty', 'student'])
-                ->where("exam_status", "pending")
-                ->first();
-            if ($studentResit) {
-                $studentScore = Marks::where("school_branch_id", $currentSchool->id)
-                    ->where("student_id", $studentResit->student_id)
-                    ->where("exam_id", $studentResit->exam_id)
-                    ->where("specialty_id", $studentResit->specialty_id)
-                    ->first();
-                $results[] = [
-                    'student_id' => $studentScore->student_id,
-                    'student_name' => $studentResit->student->name,
-                    'exam_id' => $studentScore->exam_id,
-                    'course_id' => $studentScore->course_id,
-                    'course_title' => $studentResit->title,
-                    'score' => $studentScore->score,
-                    'grade' => $studentScore->grade,
-                    'grade_status' => $studentScore->grade_status
-                ];
-            }
-        }
-
-        return $results;
+                ->get();
+        $examGrading = Grades::where("school_branch_id", $currentSchool->id)
+                               ->where("grades_category_id", $resitExam->grades_category_id)
+                                ->with('lettergrade')
+                                ->get();
+        return [
+             'course_data' => $studentResits->pluck('courses'),
+             'student_data' => $resitCandidate->student,
+             'exam_grading' => $examGrading
+        ];
     }
     public function bulkDeleteStudentResit($studentResitIds)
     {
@@ -330,53 +318,6 @@ class StudentResitService
             DB::rollBack();
             throw $e;
         }
-    }
-    public function prepareEvaluationData($resitCandidateId, $resitExamId, $currentSchool)
-    {
-        $resitCandidate = ResitCandidates::findOrFail($resitCandidateId);
-        $resitExam = ResitExam::findOrFail($resitExamId);
-        $timetableCourseIds = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
-            ->where("exam_id", $resitExam->id)
-            ->pluck('course_id')
-            ->toArray();
-
-        if (empty($timetableCourseIds)) {
-            return [];
-        }
-        $studentResits = Studentresit::where('school_branch_id', $currentSchool->id)
-            ->where('student_id', $resitCandidate->student_id)
-            ->whereIn('course_id', $timetableCourseIds)
-            ->with(['course', 'exam' => function ($query) use ($resitExam) {
-                $query->where('semester_id', $resitExam->semester_id);
-            }])
-            ->get()
-            ->keyBy('course_id');
-
-        $marks = Marks::where("school_branch_id", $currentSchool->id)
-            ->where("student_id", $resitCandidate->student_id)
-            ->whereIn("course_id", $timetableCourseIds)
-            ->where('specialty_id', $resitExam->specialty_id)
-            ->whereIn('level_id', $studentResits->pluck('level_id')->unique()->toArray())
-            ->with(['exam' => function ($query) use ($resitExam) {
-                $query->where('semester_id', $resitExam->semester_id);
-            }, 'exam.examtype', 'course'])
-            ->get()
-            ->keyBy('course_id');
-
-        $results = [];
-
-        foreach ($timetableCourseIds as $courseId) {
-            if (isset($studentResits[$courseId]) && isset($marks[$courseId])) {
-                $results[] = [
-                    'course' => $studentResits[$courseId]->course,
-                    'student_resit' => $studentResits[$courseId],
-                    'marks' => $marks[$courseId],
-                    'exam_id' => $marks[$courseId]
-                ];
-            }
-        }
-
-        return $results;
     }
     public function getAllEligableStudents($currentSchool, $resitExamId)
     {
