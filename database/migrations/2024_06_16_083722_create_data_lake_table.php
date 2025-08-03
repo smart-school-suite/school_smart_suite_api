@@ -21,7 +21,7 @@ return new class extends Migration
         Schema::create('school_exam_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -32,7 +32,7 @@ return new class extends Migration
          Schema::create('school_ca_exam_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -43,7 +43,7 @@ return new class extends Migration
         Schema::create('student_exam_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -54,7 +54,7 @@ return new class extends Migration
          Schema::create('student_ca_exam_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -65,7 +65,7 @@ return new class extends Migration
         Schema::create('additional_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -76,7 +76,7 @@ return new class extends Migration
         Schema::create('resit_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -87,7 +87,7 @@ return new class extends Migration
         Schema::create('school_expenses_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -97,7 +97,7 @@ return new class extends Migration
         Schema::create('tuition_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -107,7 +107,7 @@ return new class extends Migration
         Schema::create('announcement_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -117,7 +117,7 @@ return new class extends Migration
         Schema::create('election_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -127,7 +127,7 @@ return new class extends Migration
         Schema::create('election_winner_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -137,7 +137,7 @@ return new class extends Migration
         Schema::create('student_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -147,7 +147,7 @@ return new class extends Migration
         Schema::create('teacher_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -157,7 +157,7 @@ return new class extends Migration
         Schema::create('class_timetable_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -167,7 +167,7 @@ return new class extends Migration
         Schema::create('exam_timetable_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -197,7 +197,7 @@ return new class extends Migration
         Schema::create('registration_fee_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -207,7 +207,7 @@ return new class extends Migration
         Schema::create('additional_fee_trans_stats', function(Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -217,7 +217,7 @@ return new class extends Migration
         Schema::create('election_vote_stats', function(Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -227,7 +227,7 @@ return new class extends Migration
         Schema::create("resit_fee_trans_stats", function(Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -237,7 +237,7 @@ return new class extends Migration
         Schema::create("tuition_fee_trans_stats", function(Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value')->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -247,7 +247,7 @@ return new class extends Migration
         Schema::create('progressive_stats', function(Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value', 12, 2)->nullable();
+            $table->decimal('decimal_value', 20,2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -258,7 +258,7 @@ return new class extends Migration
        Schema::create('election_application_stats', function(Blueprint $table) {
          $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value', 12, 2)->nullable();
+            $table->decimal('decimal_value', 20, 2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();
@@ -268,7 +268,7 @@ return new class extends Migration
        Schema::create('school_admin_stats', function(Blueprint $table){
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value', 12, 2)->nullable();
+            $table->decimal('decimal_value', 20, 2)->nullable();
             $table->json('json_value')->nullable();
             $table->integer('year')->nullable();
             $table->integer('month')->nullable();

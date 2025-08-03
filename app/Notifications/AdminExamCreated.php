@@ -46,7 +46,7 @@ class AdminExamCreated extends Notification implements ShouldQueue
         return [
             'type' => 'exam_created',
             'title' => 'Exam Created',
-            'body' => "exam for Level {$this->level}, {$this->semester} has been created.",
+            'body' => "exam for {$this->examData['specialty']} {$this->level}, {$this->semester} has been created.",
         ];
     }
 
@@ -54,7 +54,7 @@ class AdminExamCreated extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'New Exam Created',
-            'body' => "{$this->examData['examName']} (Level {$this->level}, {$this->semester}) is scheduled to run from {$this->examData['startDate']}
+            'body' => "{$this->examData['examName']} ({$this->examData['specialty']} {$this->level}, {$this->semester}) is scheduled to run from {$this->examData['startDate']}
              to
              {$this->examData['endDate']}
             .",

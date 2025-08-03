@@ -35,9 +35,9 @@ class SendAdminAdditionalFeeNotificationJob implements ShouldQueue
         $admins = $this->getAuthorizedAdmins($this->schoolBranchId);
         foreach($this->additionalFeeData as $fee){
            Notification::send($admins, new AdminAdditionalFee(
-            $fee['student']->name,
-             $fee['amount'],
-              $fee['reason']
+            $fee->student->name,
+             $fee->amount,
+              $fee->reason
             ));
         }
     }

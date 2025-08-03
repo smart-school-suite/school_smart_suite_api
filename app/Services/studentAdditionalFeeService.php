@@ -123,7 +123,7 @@ class StudentAdditionalFeeService
 
 
             $adminNotificationData = [
-                'student_name' => $additionalFee->student ? $additionalFee->student->name : 'N/A',
+                'student' => $additionalFee->student ?? null,
                 'amount_paid' => $additionalFeesData['amount'],
                 'fee_reason' => $additionalFee->reason,
                 'fee_category_title' => $additionalFee->feeCategory->title,
