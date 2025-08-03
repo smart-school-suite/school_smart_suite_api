@@ -26,6 +26,7 @@ class CreateCourseRequest extends FormRequest
             'specialty_id' => 'required|string',
             'credit' => 'required|integer',
             'semester_id' => 'required|string',
+            'description' => 'nullable|string'
         ];
     }
 }

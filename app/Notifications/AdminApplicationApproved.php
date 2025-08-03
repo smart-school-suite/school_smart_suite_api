@@ -56,7 +56,7 @@ class AdminApplicationApproved extends Notification
     {
         return [
             'title' => 'Candidate Approved',
-            'message' => "{$this->studentName} has been approved for the {$this->roleName} role in {$this->electionName}.",
+            'body' => "{$this->studentName} has been approved for the {$this->roleName} role in {$this->electionName}.",
         ];
     }
 
@@ -64,7 +64,7 @@ class AdminApplicationApproved extends Notification
     {
         return new BroadcastMessage([
             'title' => 'Candidate Approved',
-            'message' => "{$this->studentName} has been approved for the {$this->roleName} role in {$this->electionName}.",
+            'body' => "{$this->studentName} has been approved for the {$this->roleName} role in {$this->electionName}.",
         ]);
     }
 }

@@ -42,7 +42,7 @@ class AdminExamTimetableAvialable extends Notification implements ShouldQueue
         return [
             'type' => 'exam_timetable_created',
             'title' => 'Exam Timetable Created',
-            'message' => "Exam timetable for Level {$this->examData['level']} ({$this->examData['semester']} {$this->examData['schoolYear']}) has been created.",
+            'body' => "Exam timetable for Level {$this->examData['level']} ({$this->examData['semester']} {$this->examData['schoolYear']}) has been created.",
         ];
     }
 
@@ -50,7 +50,7 @@ class AdminExamTimetableAvialable extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Exam Timetable Created',
-            'message' => "Exam timetable for {$this->examData['semester']} {$this->examData['schoolYear']} (Level {$this->examData['level']}) is now set.",
+            'body' => "Exam timetable for {$this->examData['semester']} {$this->examData['schoolYear']} (Level {$this->examData['level']}) is now set.",
         ]);
     }
 }

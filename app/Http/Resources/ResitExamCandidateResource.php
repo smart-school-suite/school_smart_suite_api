@@ -17,7 +17,7 @@ class ResitExamCandidateResource extends JsonResource
         return [
             "id" => $this->id,
             "grades_submitted" => $this->grades_submitted == false ? "Not Submitted" : "Submitted",
-            "student_accessed" => $this->student_accessed == false ? "Not Accessed" : "Accessed",
+            "student_accessed" => $this->student_accessed == false ? "Not Accessed" : "accessed",
             "student_name" => $this->student->name,
             "student_id" => $this->student->id,
             "level" => $this->student->level->level ?? null,

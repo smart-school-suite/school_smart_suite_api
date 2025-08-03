@@ -40,7 +40,7 @@ class TimetableAvailable extends Notification
         return [
             'type' => 'timetable_available',
             'title' => "Timetable Available",
-            'message' => "Your timetable for Level {$this->timetableData['level']}, {$this->timetableData['semester']} {$this->timetableData['schoolYear']} is now available.",
+            'body' => "Your timetable for Level {$this->timetableData['level']}, {$this->timetableData['semester']} {$this->timetableData['schoolYear']} is now available.",
         ];
     }
 
@@ -48,7 +48,7 @@ class TimetableAvailable extends Notification
     {
         return new BroadcastMessage([
             'title' => 'Timetable Published',
-            'message' => "Your timetable for Level {$this->timetableData['level']}, {$this->timetableData['semester']} {$this->timetableData['schoolYear']} is now available.",
+            'body' => "Your timetable for Level {$this->timetableData['level']}, {$this->timetableData['semester']} {$this->timetableData['schoolYear']} is now available.",
         ]);
     }
 }

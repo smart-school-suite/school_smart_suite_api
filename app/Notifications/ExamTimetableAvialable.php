@@ -43,7 +43,7 @@ class ExamTimetableAvialable extends Notification implements ShouldQueue
         return [
             'type' => 'exam_timetable_published',
             'title' => 'Exam Timetable Available',
-            'message' => "The {$this->examData['examName']} time table is now available, Best of luck with your exams",
+            'body' => "The {$this->examData['examName']} time table is now available, Best of luck with your exams",
         ];
     }
 
@@ -51,7 +51,7 @@ class ExamTimetableAvialable extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Exam Timetable Available',
-            'message' => "The {$this->examData['examName']} time table is now available, Best of luck with your exams",
+            'body' => "The {$this->examData['examName']} time table is now available, Best of luck with your exams",
         ]);
     }
 }

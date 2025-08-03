@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Schooladmin;
 use App\Models\PermissionCategory;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
 class SendAdminStudentCreatedNotificationJob implements ShouldQueue
@@ -37,6 +38,7 @@ class SendAdminStudentCreatedNotificationJob implements ShouldQueue
     public function handle(): void
     {
         $schoolAdmins  = $this->getAuthorizedAdmins($this->schoolBranchId);
+
         Notification::send($schoolAdmins, new StudentCreated(
             $this->studentName,
                          $this->level,
@@ -46,19 +48,20 @@ class SendAdminStudentCreatedNotificationJob implements ShouldQueue
 
      private function getAuthorizedAdmins($schoolBranchId)
     {
-        $electionPermissionNames = PermissionCategory::with('permission')
+        $studentManagerPermissions = PermissionCategory::with('permission')
             ->where('title', 'Student Manager')
             ->first()
             ?->permission
-            ->pluck('title')
+            ->pluck('name')
             ->toArray();
 
-        if (empty($electionPermissionNames)) {
+        if (empty($studentManagerPermissions)) {
             return collect();
         }
 
+
         return Schooladmin::where('school_branch_id', $schoolBranchId)
             ->get()
-            ->filter(fn($admin) => $admin->hasAnyPermission($electionPermissionNames));
+            ->filter(fn($admin) => $admin->hasAnyPermission($studentManagerPermissions));
     }
 }

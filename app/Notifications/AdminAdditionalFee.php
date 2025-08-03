@@ -44,7 +44,7 @@ class AdminAdditionalFee extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Student Charged Additional Fee',
-            'message' => "{$this->studentName} incurred ₦{$this->amount} for: {$this->reason}.",
+            'body' => "{$this->studentName} incurred ₦{$this->amount} for: {$this->reason}.",
         ];
     }
 
@@ -52,7 +52,7 @@ class AdminAdditionalFee extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Student Charged Additional Fee',
-            'message' => "{$this->studentName} incurred ₦{$this->amount} for: {$this->reason}.",
+            'body' => "{$this->studentName} incurred ₦{$this->amount} for: {$this->reason}.",
         ]);
     }
 }

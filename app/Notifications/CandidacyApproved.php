@@ -49,7 +49,7 @@ class CandidacyApproved extends Notification
     {
         return [
             'title' => 'Candidacy Approved',
-            'message' => "Your application for the role of {$this->roleName} in {$this->electionName} has been approved. Best of luck!",
+            'body' => "Your application for the role of {$this->roleName} in {$this->electionName} has been approved. Best of luck!",
         ];
     }
 
@@ -57,7 +57,7 @@ class CandidacyApproved extends Notification
     {
         return new BroadcastMessage([
             'title' => 'Candidacy Approved',
-            'message' => "Your application for the role of {$this->roleName} in {$this->electionName} has been approved.",
+            'body' => "Your application for the role of {$this->roleName} in {$this->electionName} has been approved.",
         ]);
     }
 }

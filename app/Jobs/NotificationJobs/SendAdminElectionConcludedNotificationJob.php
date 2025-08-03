@@ -63,7 +63,7 @@ class SendAdminElectionConcludedNotificationJob implements ShouldQueue
      */
     private function getElectionManagers(string $schoolBranchId): \Illuminate\Database\Eloquent\Collection
     {
-        $electionPermissionNames = PermissionCategory::with('permissions')
+        $electionPermissionNames = PermissionCategory::with('permission')
             ->where('title', 'Election Manager')
             ->first()
             ?->permission

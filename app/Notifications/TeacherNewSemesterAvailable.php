@@ -43,7 +43,7 @@ class TeacherNewSemesterAvailable extends Notification implements ShouldQueue
         return [
             'type' => 'availability_request',
             'title' => 'Submit Preferred Teaching Time',
-            'message' => "Submit your preferred teaching time for {$this->semesterData['specialty']} - Level {$this->semesterData['level']} ({$this->semesterData['semester']}, {$this->semesterData['schoolYear']}).",
+            'body' => "Submit your preferred teaching time for {$this->semesterData['specialty']} - Level {$this->semesterData['level']} ({$this->semesterData['semester']}, {$this->semesterData['schoolYear']}).",
         ];
     }
 
@@ -51,7 +51,7 @@ class TeacherNewSemesterAvailable extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Preferred Teaching Time Needed',
-            'message' => "Submit your preferred teaching time for {$this->semesterData['specialty']} - Level {$this->semesterData['level']} ({$this->semesterData['semester']} {$this->semesterData['schoolYear']}).",
+            'body' => "Submit your preferred teaching time for {$this->semesterData['specialty']} - Level {$this->semesterData['level']} ({$this->semesterData['semester']} {$this->semesterData['schoolYear']}).",
         ]);
     }
 }

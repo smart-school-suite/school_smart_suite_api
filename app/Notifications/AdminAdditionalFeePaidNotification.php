@@ -46,7 +46,7 @@ class AdminAdditionalFeePaidNotification extends Notification
     {
         return [
             'title' => 'Additional Fee Paid by Student',
-            'message' => "{$this->studentName} paid {$this->currency}{$this->amount} for: {$this->reason} ",
+            'body' => "{$this->studentName} paid {$this->currency}{$this->amount} for: {$this->reason} ",
         ];
     }
 
@@ -54,7 +54,7 @@ class AdminAdditionalFeePaidNotification extends Notification
     {
         return new BroadcastMessage([
             'title' => 'Student Payment Received',
-            'message' => "{$this->studentName} paid {$this->currency}{$this->amount} for: {$this->reason} .",
+            'body' => "{$this->studentName} paid {$this->currency}{$this->amount} for: {$this->reason} .",
         ]);
     }
 }

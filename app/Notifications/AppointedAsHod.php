@@ -41,7 +41,7 @@ class AppointedAsHOD extends Notification implements ShouldQueue
         return [
             'type' => 'appointment_hod',
             'title' => 'HOD Appointment',
-            'message' => "Congratulations! You are now the HOD of {$this->department}",
+            'body' => "Congratulations! You are now the HOD of {$this->department}",
         ];
     }
 
@@ -49,7 +49,7 @@ class AppointedAsHOD extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'HOD Appointment',
-            'message' => "Congratulations! You are now the HOD of {$this->department}",
+            'body' => "Congratulations! You are now the HOD of {$this->department}",
         ]);
     }
 }

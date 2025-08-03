@@ -16,7 +16,7 @@ class ExamCandidateResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "grades_submitted" => $this->grades_submitted,
+            "grades_submitted" => $this->grades_submitted ? "Submitted" : 'Not Submitted',
             "student_accessed" => $this->student_accessed,
             "student_name" => $this->student->name,
             "student_id" => $this->student->id,

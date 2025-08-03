@@ -54,9 +54,8 @@ class ElectionVotingOpen extends Notification
     {
         return [
             'election_id' => $this->election->id,
-            'election_title' => $this->election->electionType->election_title,
-            'message' => 'The voting period for "' . $this->election->electionType->election_title . '" has opened.',
-            'link' => url('/elections/' . $this->election->id . '/apply'),
+            'title' => $this->election->electionType->election_title,
+            'body' => 'The voting period for "' . $this->election->electionType->election_title . '" has opened.',
         ];
     }
 }

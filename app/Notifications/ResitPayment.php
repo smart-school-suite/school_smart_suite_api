@@ -43,7 +43,7 @@ class ResitPayment extends Notification implements ShouldQueue
         return [
             'type' => 'resit_payment_successful',
             'title' => 'Course Resit Payment Successful',
-            'message' => "Your resit payment for {$this->paymentDetail['courseName']} has been received. Amount: {$this->paymentDetail['amount']}.",
+            'body' => "Your resit payment for {$this->paymentDetail['courseName']} has been received. Amount: {$this->paymentDetail['amount']}.",
         ];
     }
 
@@ -51,7 +51,7 @@ class ResitPayment extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Course Resit Payment Successful',
-            'message' => "Payment for {$this->paymentDetail['courseName']} resit has been received.",
+            'body' => "Payment for {$this->paymentDetail['courseName']} resit has been received.",
         ]);
     }
 }

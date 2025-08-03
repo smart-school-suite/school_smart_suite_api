@@ -46,7 +46,8 @@ class ExamService
             'startDate' => Carbon::parse($data['start_date'])->format('l, F j, Y'),
             'endDate' => Carbon::parse($data['end_date'])->format('l, F j, Y'),
             'school_year' => $data['school_year'],
-            'semester' => Semester::find($examType->semester_id)->name
+            'semester' => Semester::find($examType->semester_id)->name,
+            'examName' => $examType->exam_name
         ];
         CreateExamCandidateJob::dispatch(
             $data['specialty_id'],

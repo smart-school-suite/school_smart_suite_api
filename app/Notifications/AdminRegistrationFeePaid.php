@@ -52,7 +52,7 @@ use Queueable;
     {
         return new BroadcastMessage([
             'title' => 'Registration Payment Received',
-            'message' => "{$this->studentName} paid XAF{$this->amountPaid} for registration on {$this->paymentDate}.",
+            'body' => "{$this->studentName} paid XAF{$this->amountPaid} for registration on {$this->paymentDate}.",
         ]);
     }
 }

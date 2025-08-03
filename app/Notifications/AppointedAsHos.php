@@ -41,7 +41,7 @@ class AppointedAsHOS extends Notification implements ShouldQueue
         return [
             'type' => 'appointment_hos',
             'title' => 'Appointed as Head of Specialty',
-            'message' => "You have been appointed as Head of the {$this->specialty} Specialty",
+            'body' => "You have been appointed as Head of the {$this->specialty} Specialty",
         ];
     }
 
@@ -49,7 +49,7 @@ class AppointedAsHOS extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'HOS Appointment',
-            'message' => "You have been appointed Head of the {$this->specialty} Specialty",
+            'body' => "You have been appointed Head of the {$this->specialty} Specialty",
         ]);
     }
 }

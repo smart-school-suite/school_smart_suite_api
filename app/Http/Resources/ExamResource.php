@@ -26,7 +26,7 @@ class ExamResource extends JsonResource
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'status' => $this->status,
-            'timetable_published' => $this->timetable_published,
+            'timetable_published' => $this->timetable_published ? 'created' : 'not created',
             'school_year' => $this->school_year,
             'weighted_mark' => $this->weighted_mark,
             'grading_added' => $this->grading_added

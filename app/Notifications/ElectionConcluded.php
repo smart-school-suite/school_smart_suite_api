@@ -49,7 +49,7 @@ class ElectionConcluded extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Election Concluded',
-            'message' => "The {$this->electionName} has ended. Check out the results!",
+            'body' => "The {$this->electionName} has ended. Check out the results!",
         ];
     }
 
@@ -57,7 +57,7 @@ class ElectionConcluded extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Election Concluded',
-            'message' => "The {$this->electionName} has ended. Results are now available.",
+            'body' => "The {$this->electionName} has ended. Results are now available.",
         ]);
     }
 }

@@ -75,7 +75,7 @@ class FeeScheduleAvailable extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => "Fee Schedule for  $this->semester  $this->schoolYear",
-            'message' => "Your tuition fee schedule for {$this->semester} semester of {$this->schoolYear} is now available.",
+            'body' => "Your tuition fee schedule for {$this->semester} semester of {$this->schoolYear} is now available.",
         ]);
     }
 }

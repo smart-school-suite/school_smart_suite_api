@@ -55,7 +55,7 @@ class AdminFeeScheduleAvailable extends Notification implements ShouldQueue
         return [
             'type' => 'admin_fee_schedule_published',
             'title' => "Fee Schedule Published for {$this->specialty}, Level {$this->level} ({$this->semester} {$this->schoolYear})",
-            'message' => "The fee schedule for {$this->specialty}, Level {$this->level} - {$this->semester} semester of {$this->schoolYear} has been published.",
+            'body' => "The fee schedule for {$this->specialty}, Level {$this->level} - {$this->semester} semester of {$this->schoolYear} has been published.",
         ];
     }
 
@@ -66,7 +66,7 @@ class AdminFeeScheduleAvailable extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => "Fee Schedule Published for {$this->specialty}, Level {$this->level}",
-            'message' => "{$this->semester} semester fee schedule for {$this->specialty}, Level {$this->level}, {$this->schoolYear} is now live.",
+            'body' => "{$this->semester} semester fee schedule for {$this->specialty}, Level {$this->level}, {$this->schoolYear} is now live.",
         ]);
     }
 }

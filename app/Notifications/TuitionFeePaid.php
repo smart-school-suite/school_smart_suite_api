@@ -44,7 +44,7 @@ class TuitionFeePaid extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Tuition Fee Payment Update',
-            'message' => "You paid XAF{$this->amountPaid}. for tuition fees Balance left: XAF{$this->balanceRemaining}.",
+            'body' => "You paid XAF{$this->amountPaid}. for tuition fees Balance left: XAF{$this->balanceRemaining}.",
         ];
     }
 
@@ -52,7 +52,7 @@ class TuitionFeePaid extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Payment Received',
-            'message' => "You paid XAF{$this->amountPaid}. for tuition fees Remaining: XAF{$this->balanceRemaining}.",
+            'body' => "You paid XAF{$this->amountPaid}. for tuition fees Remaining: XAF{$this->balanceRemaining}.",
         ]);
     }
 }

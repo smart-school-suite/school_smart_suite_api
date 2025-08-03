@@ -48,7 +48,7 @@ class AdminElectionConcluded extends Notification
     {
         return [
             'title' => 'Election Completed',
-            'message' => "The {$this->electionName} has concluded. Review and publish results.",
+            'body' => "The {$this->electionName} has concluded. Review and publish results.",
         ];
     }
 
@@ -56,7 +56,7 @@ class AdminElectionConcluded extends Notification
     {
         return new BroadcastMessage([
             'title' => 'Election Completed',
-            'message' => "The {$this->electionName} has ended. Admin actions may be required.",
+            'body' => "The {$this->electionName} has ended. Admin actions may be required.",
         ]);
     }
 }

@@ -58,7 +58,7 @@ class ElectionWinner extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Election Winner 🎉',
-            'message' => "You have been elected as the {$this->roleName} in the {$this->electionName}.",
+            'body' => "You have been elected as the {$this->roleName} in the {$this->electionName}.",
         ];
     }
 
@@ -66,7 +66,7 @@ class ElectionWinner extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Election Winner 🎉',
-            'message' => "You have been elected as the {$this->roleName} in the {$this->electionName}.",
+            'body' => "You have been elected as the {$this->roleName} in the {$this->electionName}.",
         ]);
     }
 }

@@ -44,7 +44,7 @@ class AdditionalFeePaidNotification extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Additional Fee Payment Completed',
-            'message' => "You paid  {$this->currency}{$this->amount} for: {$this->feeTitle}.",
+            'body' => "You paid  {$this->currency}{$this->amount} for: {$this->feeTitle}.",
         ];
     }
 
@@ -52,7 +52,7 @@ class AdditionalFeePaidNotification extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Additional Fee Payment Completed',
-            'message' => "You paid {$this->currency}{$this->amount} for: {$this->feeTitle}.",
+            'body' => "You paid {$this->currency}{$this->amount} for: {$this->feeTitle}.",
         ]);
     }
 }

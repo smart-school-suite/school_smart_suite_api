@@ -160,7 +160,7 @@ class SchoolSemesterService
                 "level" => $semester->specialty->level->level ?? null,
                 "level_id" => $semester->specialty->level->id ?? null,
                 "semester_id" => $semester->semester_id,
-                "timetable_published" => $semester->timetable_published,
+                "timetable_published" => $semester->timetable_published ? "created" : "not created",
                 "semester_name" => $semester->semester->name ?? $semester->semester->semester_name ?? null,
             ];
         });
@@ -168,14 +168,14 @@ class SchoolSemesterService
     public function getActiveSchoolSemesters($currentSchool)
     {
         $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
-            ->with(['specailty', 'specailty.level', 'semester', 'studentBatch'])
+            ->with(['specialty', 'specialty.level', 'semester', 'studentBatch'])
             ->where("status", "active")
             ->get();
         return $schoolSemesters;
     }
     public function getSchoolSemesterDetail($currentSchool, $semesterId)
     {
-        $schoolSemesterDetails = SchoolSemester::with(['specailty', 'specailty.level', 'semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->find($semesterId);
+        $schoolSemesterDetails = SchoolSemester::with(['specialty', 'specialty.level', 'semester', 'studentBatch'])->where("school_branch_id", $currentSchool->id)->find($semesterId);
         return $schoolSemesterDetails;
     }
 }

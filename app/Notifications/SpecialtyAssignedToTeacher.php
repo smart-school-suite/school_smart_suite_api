@@ -43,7 +43,7 @@ class SpecialtyAssignedToTeacher extends Notification implements ShouldQueue
         return [
             'type' => 'specialty_assigned',
             'title' => 'Specialty Assignment Confirmed',
-            'message' => 'You have been assigned to: ' . implode(', ', $this->specialties),
+            'body' => 'You have been assigned to: ' . implode(', ', $this->specialties),
         ];
     }
 
@@ -51,7 +51,7 @@ class SpecialtyAssignedToTeacher extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Assigned to Specialties',
-            'message' => 'You have been assigned to: ' . implode(', ', $this->specialties),
+            'body' => 'You have been assigned to: ' . implode(', ', $this->specialties),
         ]);
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Schooladmin;
 use App\Models\PermissionCategory;
+use Illuminate\Support\Facades\Log;
 
 class SendAdminRegistrationFeePaidNotificationJob implements ShouldQueue
 {
@@ -32,6 +33,7 @@ class SendAdminRegistrationFeePaidNotificationJob implements ShouldQueue
     public function handle(): void
     {
         $authorizedAdmins = $this->getAuthorizedAdmins($this->schoolBranchId);
+        Log::info("sending Notifications to", $authorizedAdmins->toArray());
         foreach($authorizedAdmins as $authorizedAdmin){
              foreach($this->registrationFeeData as $feeData){
                  $authorizedAdmin->notify(new AdminRegistrationFeePaid(

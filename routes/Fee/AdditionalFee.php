@@ -21,7 +21,7 @@ Route::middleware(['permission:schoolAdmin.additionalFee.update'])->put('/{feeId
     ->name('student-additional-fees.update');
 
 // Delete a specific student additional fee
-Route::middleware(['permission:'])->delete('/{feeId}', [StudentAdditionalFeesController::class, 'deleteStudentAdditionalFees'])
+Route::delete('/{feeId}', [StudentAdditionalFeesController::class, 'deleteStudentAdditionalFees'])
     ->name('student-additional-fees.destroy');
 
 // Bulk delete student additional fees

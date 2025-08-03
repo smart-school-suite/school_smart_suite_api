@@ -45,7 +45,7 @@ class NewSemesterAvailable extends Notification implements ShouldQueue
         return [
             'type' => 'new_semester_available',
             'title' => 'New Semester Available',
-            'message' => "Get ready! The {$this->semesterData['semester']} semester begins on {$this->semesterData['startDate']}",
+            'body' => "Get ready! The {$this->semesterData['semester']} semester begins on {$this->semesterData['startDate']}",
         ];
     }
 
@@ -53,7 +53,7 @@ class NewSemesterAvailable extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'New Semester Available',
-            'message' => "Get ready! The {$this->semesterData['semester']} semester begins on {$this->semesterData['startDate']}",
+            'body' => "Get ready! The {$this->semesterData['semester']} semester begins on {$this->semesterData['startDate']}",
         ]);
     }
 }

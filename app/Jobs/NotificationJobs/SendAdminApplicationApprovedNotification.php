@@ -46,7 +46,7 @@ class SendAdminApplicationApprovedNotification implements ShouldQueue
     }
 
     private function getAuthorizedAdmins($schoolBranchId){
-                $electionPermissionNames = PermissionCategory::with('permissions')
+                $electionPermissionNames = PermissionCategory::with('permission')
             ->where('title', 'Election Manager')
             ->first()
             ?->permission

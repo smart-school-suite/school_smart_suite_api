@@ -41,7 +41,7 @@ class RegistrationFeePaid extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Registration Fee Paid',
-            'message' => "You paid XAF{$this->amountPaid} for registration Fee on {$this->paymentDate}.",
+            'body' => "You paid XAF{$this->amountPaid} for registration Fee on {$this->paymentDate}.",
         ];
     }
 
@@ -49,7 +49,7 @@ class RegistrationFeePaid extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Registration Fee Paid',
-            'message' => "You paid XAF{$this->amountPaid} for registration Fee on {$this->paymentDate}.",
+            'body' => "You paid XAF{$this->amountPaid} for registration Fee on {$this->paymentDate}.",
         ]);
     }
 }

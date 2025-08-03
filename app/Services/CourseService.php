@@ -27,6 +27,7 @@ class CourseService
         $course->school_branch_id = $currentSchool->id;
         $course->semester_id = $data['semester_id'];
         $course->level_id = $specialty->level_id;
+        $course->description = $data['description'] ?? null;
         $course->save();
         CourseStatJob::dispatch($currentSchool->id, $courseId);
         return $course;

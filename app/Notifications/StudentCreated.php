@@ -54,7 +54,7 @@ class StudentCreated extends Notification implements ShouldQueue
         return [
             'type' => 'student_created',
             'title' => 'New Student Created',
-            'message' => "{$this->studentName} has been added to {$this->specialty}, Level {$this->level}.",
+            'body' => "{$this->studentName} has been added to {$this->specialty}, Level {$this->level}.",
         ];
     }
 
@@ -65,7 +65,7 @@ class StudentCreated extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'New Student Created',
-            'message' => "{$this->studentName}  registered in {$this->specialty}, Level {$this->level}.",
+            'body' => "{$this->studentName}  registered in {$this->specialty}, Level {$this->level}.",
         ]);
     }
 }

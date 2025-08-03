@@ -44,7 +44,7 @@ class AvailabilitySubmitted extends Notification implements ShouldQueue
         return [
             'type' => 'availability_submitted',
             'title' => 'Availability Submitted',
-            'message' => "Your availability for {$this->availabilityData['specialty']} - Level {$this->availabilityData['level']} ({$this->availabilityData['semester']}, {$this->availabilityData['schoolYear']}) has been saved.",
+            'body' => "Your availability for {$this->availabilityData['specialty']} - Level {$this->availabilityData['level']} ({$this->availabilityData['semester']}, {$this->availabilityData['schoolYear']}) has been saved.",
         ];
     }
 
@@ -52,7 +52,7 @@ class AvailabilitySubmitted extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'title' => 'Availability Submitted',
-            'message' => "{$this->availabilityData['specialty']} - Level {$this->availabilityData['level']} ({$this->availabilityData['semester']}, {$this->availabilityData['schoolYear']}) availability recorded.",
+            'body' => "{$this->availabilityData['specialty']} - Level {$this->availabilityData['level']} ({$this->availabilityData['semester']}, {$this->availabilityData['schoolYear']}) availability recorded.",
         ]);
     }
 }

@@ -97,7 +97,7 @@ class ResitExamResultsAvailable extends Notification implements ShouldQueue
         return new BroadcastMessage([
             'type' => 'exam_resit_results_available',
             'title' => "🎓 {$this->resitExam->examtype->exam_name} Results Available",
-            'message' => "Your results for the **{$this->resitExam->examtype->exam_name}**  are now available.",
+            'body' => "Your results for the **{$this->resitExam->examtype->exam_name}**  are now available.",
         ]);
     }
 
@@ -106,7 +106,7 @@ class ResitExamResultsAvailable extends Notification implements ShouldQueue
         return [
             'type' => 'exam_resit_results_available',
             'title' => "🎓 {$this->resitExam->examtype->exam_name} Results Available",
-            'message' => "Your results for the **{$this->resitExam->examtype->exam_name}**  are now available.",
+            'body' => "Your results for the **{$this->resitExam->examtype->exam_name}**  are now available.",
         ];
     }
 }
