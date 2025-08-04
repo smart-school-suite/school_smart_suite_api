@@ -2,31 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Country;
-use App\Models\RatesCard;
-use App\Models\School;
-use App\Models\Schooladmin;
-use App\Models\Schoolbranches;
-use App\Models\SchoolBranchApiKey;
-use App\Models\SchoolSubscription;
-use App\Models\SubscriptionPayment;
 use App\Models\GradesCategory;
-use App\Models\Parents;
-use App\Models\SchoolGradesConfig;
-use App\Models\Educationlevels;
-use App\Models\Department;
-use App\Models\Studentbatch;
-use App\Models\Student;
-use App\Models\Specialty;
+use App\Models\Semester;
 use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
-use Carbon\Carbon;
 use Faker\Factory as Faker;
-use Illuminate\Support\Facades\Hash;
 
 class StarterPackSeeder extends Seeder
 {
@@ -111,18 +95,14 @@ class StarterPackSeeder extends Seeder
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 15);
-                $semester = DB::table('semesters')->pluck('id')->toArray();
-                $randomSemesterID = Arr::random($semester);
-
                 if (count($data) >= 2) {
                     $exam_type[] = [
-                        'id' => $id,
+                        'id' => $uuid,
                         'exam_name' => $data[1],
                         "program_name" => $data[2],
                         "semester" => $data[3],
                         "type" => $data[4],
-                        'semester_id' => $randomSemesterID,
+                        'semester_id' => Semester::where('count', $data['count'])->first()->id,
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];
@@ -159,11 +139,10 @@ class StarterPackSeeder extends Seeder
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 10);
 
                 if (count($data) >= 2) {
                     $semesters[] = [
-                        'id' => $id,
+                        'id' => $uuid,
                         'name' => $data[1],
                         'program_name' => $data[2],
                         'count' => $data[3],
