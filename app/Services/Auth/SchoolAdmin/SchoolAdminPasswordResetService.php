@@ -140,7 +140,8 @@ class SchoolAdminPasswordResetService
     public function changeSchoolAdminPasswordUnAuthenticated(array $passwordData, string $passwordResetToken)
     {
         try {
-            if (empty($passwordData['new_password']) || empty($passwordData['new_password_confirmation']) || $passwordData['new_password'] !== $passwordData['new_password_confirmation']) {
+
+            if (empty($passwordData['new_password'])) {
                 throw new Exception("New password and confirmation do not match or are empty.",400);
             }
             if (strlen($passwordData['new_password']) < 8) {

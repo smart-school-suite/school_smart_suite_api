@@ -311,10 +311,6 @@ class StatTypeSeeder extends Seeder
                 "program_name" => "total_tuition_fee_progress",
             ],
             [
-                'name' => "Total Revenue Progress",
-                "program_name" => "total_revenue_progress"
-            ],
-            [
                 'name' => "Total Additional Fee Progress",
                 "program_name" => "total_additional_fee_progress"
             ],
