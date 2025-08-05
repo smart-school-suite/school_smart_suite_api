@@ -2,42 +2,27 @@
 
 namespace Database\Seeders;
 
-use App\Models\GradesCategory;
-use App\Models\Semester;
-use Exception;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
 use Illuminate\Support\Str;
-use Illuminate\Support\Arr;
-
-
-class StarterPackSeeder extends Seeder
+class SemesterSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        try{
-        DB::beginTransaction();
-        $this->createLevel();
-         DB::commit();
-        }
-        catch(Exception $e){
-           DB::rollBack();
-           Log::error($e->getMessage());
-        }
+        $this->createSemesters();
     }
 
-
-
-
-    private function createLevel(): void
+      private function createSemesters(): void
     {
-        Log::info('Education levels seeder has started.');
+        Log::info('Semester seeder has started.');
         $timestamp = now();
-        $filePath = public_path("data/education_levels.csv");
+        $filePath = public_path("data/semesters.csv");
         if (!file_exists($filePath) || !is_readable($filePath)) {
             throw new Exception("CSV file not found or not readable!");
         }
@@ -46,18 +31,18 @@ class StarterPackSeeder extends Seeder
             $header = fgetcsv($handle);
             Log::info('CSV Header: ', $header);
 
-            $education_levels = [];
+            $semesters = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 10);
 
                 if (count($data) >= 2) {
-                    $education_levels[] = [
-                        'id' => $id,
+                    $semesters[] = [
+                        'id' => $uuid,
                         'name' => $data[1],
-                        'level' => $data[2],
+                        'program_name' => $data[2],
+                        'count' => $data[3],
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
                     ];
@@ -66,19 +51,15 @@ class StarterPackSeeder extends Seeder
 
             fclose($handle);
 
-            Log::info('Education Levels Array: ', $education_levels);
+            Log::info('Semester Array: ', $semesters);
 
 
-            if (!empty($education_levels)) {
-                DB::table('education_levels')->insert($education_levels);
-                Log::info('Inserted Education levels: ' . count($education_levels) . ' entries.');
+            if (!empty($semesters)) {
+                DB::table('semesters')->insert($semesters);
+                Log::info('Inserted semesters: ' . count($semesters) . ' entries.');
             } else {
-                Log::warning('No Education levels to insert.');
+                Log::warning('No semesters to insert.');
             }
         }
     }
-
-
-
-
 }

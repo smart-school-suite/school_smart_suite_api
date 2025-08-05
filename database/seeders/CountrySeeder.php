@@ -2,29 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\InstructorAvailability;
-use App\Models\InstructorAvailabilitySlot;
-use App\Models\RegistrationFee;
-use App\Models\Schooladmin;
-use App\Models\SchoolSemester;
-use App\Models\Specialty;
-use App\Models\TeacherSpecailtyPreference;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
-class test extends Seeder
+use Illuminate\Support\Facades\DB;
+class CountrySeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-       $this->seedCountries();
+        $this->seedCountries();
     }
-       private function seedCountries(): void
+
+      private function seedCountries(): void
     {
         $timestamp = now();
         $filePath = public_path("data/country.csv");

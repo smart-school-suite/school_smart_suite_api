@@ -21,5 +21,12 @@ class DatabaseSeeder extends Seeder
         $this->call(InstallmentSeeder::class);
         $this->call(AnnouncementSeeder::class);
         $this->call(StudentBadgeSeeder::class);
+        $this->call(SemesterSeeder::class);
+        $this->call(LetterGradeSeeder::class);
+        $this->call(CountrySeeder::class);
+        $this->call(RateCardSeeder::class);
+        $this->call(ExamTypeSeeder::class);
+        $this->call(LevelSeeder::class);
+        $this->call(GradeCategorySeeder::class);
     }
 }

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('grades', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->decimal('grade_points', 4, 2);
+            $table->decimal('grade_points', 5, 2);
             $table->enum('grade_status', ['passed', 'failed'])->default('failed');
             $table->enum('resit_status', ['resit', 'no_resit', 'high_resit_potential', 'low_resit_potential']);
             $table->decimal('minimum_score', 5, 2);

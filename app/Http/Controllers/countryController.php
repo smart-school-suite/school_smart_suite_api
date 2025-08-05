@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Country\CountryIdsRequest;
-use App\Models\Country;
 use App\Services\CountryService;
-use App\http\Requests\Country\CreateCountryRequest;
-use App\http\Requests\Country\UpdateCountryRequest;
-use App\http\Requests\Country\BulkUpdateCountryRequest;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\Country\CreateCountryRequest;
+use App\Http\Requests\Country\UpdateCountryRequest;
+use App\Http\Requests\Country\BulkUpdateCountryRequest;
 use App\Services\ApiResponseService;
 use Exception;
 
@@ -31,7 +29,6 @@ class CountryController extends Controller
         return ApiResponseService::success('Country Updated sucessfully', $updatedCountry, null, 200);
     }
     public function deleteCountry(string $countryId){
-        $country = Country::find($countryId);
         $deleteCountry = $this->countryService->deleteCountry($countryId);
         return ApiResponseService::success('Country Delete succesfully', $deleteCountry, null, 200);
     }
