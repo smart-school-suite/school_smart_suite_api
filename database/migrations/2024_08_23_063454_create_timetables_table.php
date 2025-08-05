@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('timetables', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('day_of_week'); // e.g., 'Monday'
-            $table->time('start_time'); // e.g., 08:00:00
-            $table->time('end_time'); // e.g., 09:00:00
+            $table->string('day_of_week');
+            $table->time('start_time');
+            $table->time('end_time');
             $table->timestamps();
         });
     }

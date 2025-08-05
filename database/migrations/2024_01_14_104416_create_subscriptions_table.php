@@ -53,7 +53,6 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->timestamps();
         });
-
     }
 
     /**
@@ -62,17 +61,8 @@ return new class extends Migration
     public function down(): void
     {
 
-             // Drop the subscription_plans table
-             Schema::dropIfExists('subscription_plans');
-
-             // Drop the payments table
-             Schema::dropIfExists('payments');
-
-             // Drop the rate_cards table
-             Schema::dropIfExists('rate_cards');
-
-             // Drop the user_subscriptions table
-             Schema::dropIfExists('user_subscriptions');
-
+        Schema::dropIfExists('school_subscriptions');
+        Schema::dropIfExists('payments');
+        Schema::dropIfExists('rate_cards');
     }
 };

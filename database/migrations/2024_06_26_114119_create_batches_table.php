@@ -24,8 +24,6 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('assignable_id');
             $table->string('assignable_type');
-            $table->string('batch_id');
-            $table->foreign('batch_id')->references('id')->on('batches')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -36,5 +34,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('batches');
+        Schema::dropIfExists('user_batches');
     }
 };

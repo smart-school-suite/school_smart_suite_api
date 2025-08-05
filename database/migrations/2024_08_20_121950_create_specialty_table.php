@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('registration_fee', 12, 2);
             $table->decimal('school_fee', 12, 2);
             $table->enum('status', ['active', 'inactive']);
-            $table->text("description");
+            $table->text("description")->nullable();
             $table->timestamps();
         });
     }

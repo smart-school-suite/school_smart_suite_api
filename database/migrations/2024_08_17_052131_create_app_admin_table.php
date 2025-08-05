@@ -18,8 +18,6 @@ return new class extends Migration
             $table->string('phone_number');
             $table->string('profile_picture')->nullable();
             $table->string('password');
-            $table->string('otp')->nullable();
-            $table->timestamp('otp_expires_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

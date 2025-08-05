@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('labels', function (Blueprint $table){
+        Schema::create('labels', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name')->unique();
             $table->timestamps();
@@ -81,8 +81,6 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->timestamps();
         });
-
-
     }
 
     /**
@@ -90,6 +88,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('announcement');
+        Schema::dropIfExists('target_users');
+        Schema::dropIfExists('target_preset_groups');
+        Schema::dropIfExists('target_groups');
+        Schema::dropIfExists('school_announcement_settings');
+        Schema::dropIfExists('announcement_settings');
+        Schema::dropIfExists('annoucement_author');
+        Schema::dropIfExists('announcements');
+        Schema::dropIfExists('labels');
+        Schema::dropIfExists('tags');
+        Schema::dropIfExists('announcement_categories');
     }
 };

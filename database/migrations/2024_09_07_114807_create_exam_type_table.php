@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('semester'); // first , second, third, fourth, fifth
             $table->enum('type', ['exam', 'ca', 'resit']); // ex
             $table->string('program_name'); //EX, CA, RESS
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

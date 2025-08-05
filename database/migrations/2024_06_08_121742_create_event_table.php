@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('event_categories', function(Blueprint $table) {
+        Schema::create('event_categories', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('active');
@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('event_tags', function(Blueprint $table) {
+        Schema::create('event_tags', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
             $table->timestamps();
@@ -43,7 +43,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-       Schema::create('event_author', function (Blueprint $table) {
+        Schema::create('event_author', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('authorable_id')->nullable();
             $table->string('authorable_type')->nullable();
@@ -90,6 +90,14 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('event');
+        Schema::dropIfExists('ev_inv_members');
+        Schema::dropIfExists('ev_inv_preset_groups');
+        Schema::dropIfExists('ev_inv_custom_groups');
+        Schema::dropIfExists('school_event_settings');
+        Schema::dropIfExists('event_settings');
+        Schema::dropIfExists('event_author');
+        Schema::dropIfExists('school_events');
+        Schema::dropIfExists('event_tags');
+        Schema::dropIfExists('event_categories');
     }
 };

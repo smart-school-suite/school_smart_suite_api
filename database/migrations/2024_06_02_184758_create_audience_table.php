@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('preset_audiences', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name')->unique();
-            $table->string('target'); // e.g., 'students', 'teachers', 'parents'
+            $table->string('target');
             $table->string('description')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
@@ -39,8 +39,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('preset_audience');
-        Schema::dropIfExists('school_set_audience_group');
-        Schema::dropIfExists('audience');
+        Schema::dropIfExists('preset_audiences');
+        Schema::dropIfExists('school_set_audience_groups');
+        Schema::dropIfExists('audiences');
     }
 };

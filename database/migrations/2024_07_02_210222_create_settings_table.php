@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
 
-        Schema::create('setting_categories', function(Blueprint $table) {
-           $table->string('id')->primary();
-           $table->string('title');
-           $table->enum('status', ['active', 'inactive'])->default('active');
-           $table->timestamps();
+        Schema::create('setting_categories', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('title');
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
         });
         Schema::create('app_settings', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -27,16 +27,15 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('school_branch_app_settings', function(Blueprint $table){
-           $table->string('id')->primary();
-           $table->boolean('boolean_value')->nullable();
-           $table->decimal('decimal_value')->nullable();
-           $table->integer('integer_value')->nullable();
-           $table->date('date_value')->nullable();
-           $table->dateTime('date_time_value')->nullable();
-           $table->timestamps();
+        Schema::create('school_branch_app_settings', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->boolean('boolean_value')->nullable();
+            $table->decimal('decimal_value')->nullable();
+            $table->integer('integer_value')->nullable();
+            $table->date('date_value')->nullable();
+            $table->dateTime('date_time_value')->nullable();
+            $table->timestamps();
         });
-
     }
 
     /**
@@ -44,6 +43,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('school_branch_app_settings');
+        Schema::dropIfExists('app_settings');
+        Schema::dropIfExists('setting_categories');
     }
 };
