@@ -3,11 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\Teacher\ChangePasswordController;
 use App\Http\Controllers\Auth\Teacher\LoginTeacherController;
-use App\Http\Controllers\Auth\Teacher\logoutteachercontroller;
+use App\Http\Controllers\Auth\Teacher\LogoutTeacherController;
 use App\Http\Controllers\Auth\Teacher\GetAuthTeacherController;
 use App\Http\Controllers\Auth\Teacher\ResetPasswordController;
 use App\Http\Controllers\Auth\Teacher\ValidateOtpController;
-use App\Http\Controllers\Auth\Teacher\CreateteacherController;
+use App\Http\Controllers\Auth\Teacher\CreateTeacherController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\LimitTeachers;
 
@@ -46,7 +46,7 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
         ->name('teacher.password.change');
 
     // Create new teacher (requires tenant identification and teacher limit)
-    Route::post('/register', [CreateteacherController::class, 'createInstructor'])
+    Route::post('/register', [CreateTeacherController::class, 'createInstructor'])
         ->middleware(LimitTeachers::class, 'permission:schoolAdmin.teacher.create')
         ->name('teacher.register');
 });

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Auth\Teacher\LogoutTeacherService;
 use Illuminate\Http\Request;
 
-class logoutteachercontroller extends Controller
+class LogoutTeacherController extends Controller
 {
     //
     protected LogoutTeacherService $logoutTeacherService;

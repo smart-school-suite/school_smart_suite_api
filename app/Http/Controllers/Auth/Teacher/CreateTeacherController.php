@@ -7,7 +7,7 @@ use App\Http\Requests\Teacher\CreateTeacherRequest;
 use App\Services\ApiResponseService;
 use App\Services\Auth\Teacher\CreateTeacherService;
 
-class CreateteacherController extends Controller
+class CreateTeacherController extends Controller
 {
     //
     protected CreateTeacherService $createTeacherService;
