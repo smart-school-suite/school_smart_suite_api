@@ -4,9 +4,9 @@ namespace App\Services;
 use Exception;
 use App\Models\Country;
 use Illuminate\Support\Facades\DB;
-class CountryManagementService
+class CountryService
 {
-
+    // Implement your logic here
         public function createCountry(array $data)
     {
         $country = new Country();

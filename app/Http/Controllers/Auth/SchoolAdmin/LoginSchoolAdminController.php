@@ -8,7 +8,7 @@ use App\Services\Auth\SchoolAdmin\LoginSchoolAdminService;
 use App\Http\Requests\Auth\LoginSchoolAdminRequest;
 use Exception;
 
-class LoginSchoolAdmincontroller extends Controller
+class LoginSchoolAdminController extends Controller
 {
     //
     protected LoginSchoolAdminService $loginSchoolAdminService;
