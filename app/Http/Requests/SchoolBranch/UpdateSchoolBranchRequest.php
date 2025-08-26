@@ -20,17 +20,18 @@ class UpdateSchoolBranchRequest extends FormRequest
     public function rules()
     {
         return [
-            'branch_name' => 'sometimes|required|string',
-            'address' => 'sometimes|required|string',
-            'city' => 'sometimes|required|string',
-            'state' => 'sometimes|required|string',
-            'postal_code' => 'sometimes|required|string',
+            'name' => 'sometimes|nullable|string',
+            'address' => 'sometimes|nullable|string',
+            'city' => 'sometimes|nullable|string',
+            'state' => 'sometimes|nullable|string',
+            'postal_code' => 'sometimes|nullable|string',
             'website' => 'sometimes|string',
-            'phone_one' => 'sometimes|required|string',
-            'phone_two' => 'sometimes|required|string',
-            'email' => 'sometimes|required|email|string',
-            'max_gpa' => 'sometimes|required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'semester_count' => 'sometimes|required|integer'
+            'phone_one' => 'sometimes|nullable|string',
+            'phone_two' => 'sometimes|nullable|string',
+            'email' => 'sometimes|nullable|email|string',
+            'abbreviation' => 'sometimes|nullable|string',
+            'max_gpa' => 'sometimes|nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'semester_count' => 'sometimes|nullable|integer'
         ];
     }
 }
