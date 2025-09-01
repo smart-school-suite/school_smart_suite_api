@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Exam\ExamIdRequest;
+use App\Http\Requests\Grade\AutoGenExamGradingRequest;
 use App\Services\AddGradesService;
 use App\Services\ApiResponseService;
 use App\Models\Exams;
 use App\Models\Examtype;
+use App\Services\AutoGenExamGradingService;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Grade\CreateGradeRequest;
 use App\Services\GradesService;
@@ -17,11 +19,22 @@ class GradesController extends Controller
 {
 
     protected AddGradesService  $addGradesService;
+    protected AutoGenExamGradingService $autoGenExamGradingService;
     protected GradesService $gradesService;
-    public function __construct(AddGradesService $addGradesService, GradesService $gradesService)
+    public function __construct(
+    AddGradesService $addGradesService,
+    GradesService $gradesService,
+    AutoGenExamGradingService $autoGenExamGradingService
+    )
     {
         $this->addGradesService = $addGradesService;
         $this->gradesService = $gradesService;
+        $this->autoGenExamGradingService = $autoGenExamGradingService;
+    }
+
+    public function autoGenExamGrading(AutoGenExamGradingRequest $request){
+        $examGrading = $this->autoGenExamGradingService->autoGenerateExamGrading($request->validated());
+        return ApiResponseService::success("Grading Generated Successfully", $examGrading, null, 200);
     }
     public function createExamGrades(CreateGradeRequest $request)
     {

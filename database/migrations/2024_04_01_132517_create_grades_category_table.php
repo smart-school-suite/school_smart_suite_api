@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('title');
             $table->enum('status', ['active', 'inactive']);
+            $table->enum('exam_type', ['exam', 'resit', 'ca']);
             $table->timestamps();
         });
     }

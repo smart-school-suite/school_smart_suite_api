@@ -114,8 +114,8 @@ class SpecailtyTimeTableService
                 ->where('specialty_id', $timtableData['specialty_id'])
                 ->where('level_id', $timtableData['level_id'])
                 ->where('semester_id', $timtableData['semester_id'])
-                ->where("student_batch_id", $timtableData['student_batch_id'])
-                ->with(['course:id,course_title,course_code', 'teacher:id,name'])
+                ->where('student_batch_id', $timtableData['student_batch_id'])
+                ->with(['course:id,course_title,course_code,credit', 'teacher:id,name'])
                 ->get();
 
             if ($timetables->isEmpty()) {
@@ -123,31 +123,81 @@ class SpecailtyTimeTableService
             }
 
             $timeTable = [
-                "monday" => [],
-                "tuesday" => [],
-                "wednesday" => [],
-                "thursday" => [],
-                "friday" => [],
-                "saturday" => [],
-                "sunday" => []
+                'monday' => [],
+                'tuesday' => [],
+                'wednesday' => [],
+                'thursday' => [],
+                'friday' => [],
+                'saturday' => [],
+                'sunday' => []
             ];
 
             foreach ($timetables as $entry) {
                 $day = strtolower($entry->day_of_week);
 
                 if (array_key_exists($day, $timeTable)) {
-                    $timeTable[$day][] = [
-                        "id" => $entry->id,
-                        "course" => $entry->course->course_title,
-                        "course_code" => $entry->course->course_code,
-                        "start_time" => Carbon::parse($entry->start_time)->format('g:i A'),
-                        "end_time" => Carbon::parse($entry->end_time)->format('g:i A'),
-                        "teacher" => $entry->teacher->name,
-                    ];
+                    try {
+                        $startTime = Carbon::parse($entry->start_time);
+                        $endTime = Carbon::parse($entry->end_time);
+
+                        // Log parsed times for debugging
+                        Log::debug('Parsed times', [
+                            'start_time' => $entry->start_time,
+                            'parsed_start_time' => $startTime->toDateTimeString(),
+                            'end_time' => $entry->end_time,
+                            'parsed_end_time' => $endTime->toDateTimeString(),
+                        ]);
+
+                        // Calculate the duration
+                        $durationInMinutes = $endTime->diffInMinutes($startTime);
+                        Log::debug('Duration calculation', [
+                            'duration_in_minutes' => $durationInMinutes,
+                        ]);
+
+                        // Format the duration string
+                        $duration = '';
+                        if ($durationInMinutes <= 0) {
+                            $duration = '0 min';
+                        } else {
+                            $hours = floor($durationInMinutes / 60);
+                            $minutes = $durationInMinutes % 60;
+                            if ($hours > 0) {
+                                $duration .= "{$hours}h ";
+                            }
+                            if ($minutes > 0) {
+                                $duration .= "{$minutes}min";
+                            }
+                            $duration = trim($duration);
+                        }
+
+                        $timeTable[$day][] = [
+                            'id' => $entry->id,
+                            'course' => $entry->course->course_title,
+                            'course_code' => $entry->course->course_code,
+                            'course_credit' => $entry->course->credit,
+                            'start_time' => $startTime->format('g:i A'),
+                            'end_time' => $endTime->format('g:i A'),
+                            'duration' => $this->formatDurationFromTimes($startTime, $endTime),
+                            'teacher' => $entry->teacher->name,
+                        ];
+                    } catch (\Exception $e) {
+                        Log::error('Failed to process timetable entry', [
+                            'entry_id' => $entry->id,
+                            'start_time' => $entry->start_time,
+                            'end_time' => $entry->end_time,
+                            'error' => $e->getMessage(),
+                        ]);
+                        continue; // Skip invalid entries
+                    }
                 }
             }
 
-            return $timeTable;
+            // Filter out empty days
+            $filteredTimeTable = array_filter($timeTable, function ($daySchedule) {
+                return !empty($daySchedule);
+            });
+
+            return $filteredTimeTable;
         } catch (Exception $e) {
             Log::error('Error generating timetable: ' . $e->getMessage(), [
                 'routeParams' => $timtableData,
@@ -157,7 +207,25 @@ class SpecailtyTimeTableService
             throw $e;
         }
     }
+    public function formatDurationFromTimes(string $startTime, string $endTime): string
+    {
+        $start = Carbon::parse($startTime);
+        $end = Carbon::parse($endTime);
 
+        $diffInMinutes = $start->diffInMinutes($end);
+        $hours = floor($diffInMinutes / 60);
+        $minutes = $diffInMinutes % 60;
+
+        $duration = '';
+        if ($hours > 0) {
+            $duration = "$hours h";
+        }
+        if ($minutes > 0 || $duration === '') {
+            $duration = "$minutes min";
+        }
+
+        return trim($duration);
+    }
     /**
      * Retrieves instructor availability data, considering existing timetable entries.
      *
@@ -258,7 +326,7 @@ class SpecailtyTimeTableService
         }
     }
 
-        /**
+    /**
      * Retrieves the details of a specific timetable entry.
      *
      * @param string $entryId The ID of the timetable entry.
@@ -271,7 +339,7 @@ class SpecailtyTimeTableService
         try {
             return Timetable::where("school_branch_id", $currentSchool->id)
                 ->where("id", $entryId)
-                ->with(['course','teacher'])
+                ->with(['course', 'teacher'])
                 ->firstOrFail();
         } catch (ModelNotFoundException $e) {
             throw new Exception("Timetable entry Not Found");
@@ -284,5 +352,4 @@ class SpecailtyTimeTableService
             throw new Exception('Failed to retrieve timetable details');
         }
     }
-
 }

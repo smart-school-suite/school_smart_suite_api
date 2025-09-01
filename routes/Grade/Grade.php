@@ -7,6 +7,7 @@ use App\Http\Controllers\GradesController;
     Route::middleware(['permission:schoolAdmin.grades.create'])->post('/exam-grades', [GradesController::class, 'createExamGrades'])
         ->name('exam-grades.store');
 
+    Route::post('/auto-gen-grading', [GradesController::class, 'autoGenExamGrading'])->name('exam-grading.auto.generate');
     // Get all exam grades
     Route::middleware(['permission:schoolAdmin.grades.view'])->get('/exam-grades', [GradesController::class, 'getAllGrades'])
         ->name('exam-grades.index');

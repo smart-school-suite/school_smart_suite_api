@@ -14,6 +14,7 @@ class GradesCategory extends Model
     protected $fillable = [
         'title',
         'status',
+        'exam_type'
     ];
 
     public $keyType = 'string';

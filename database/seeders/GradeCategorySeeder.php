@@ -18,21 +18,21 @@ class GradeCategorySeeder extends Seeder
      private function createGradeCategory()
     {
         $categories = [
-            ['title' => 'Level One CA', 'status' => 'active'],
-            ['title' => 'Level One Exam', 'status' => 'active'],
-            ['title' => 'Level One Resit', 'status' => 'active'],
-            ['title' => 'Level Two CA', 'status' => 'active'],
-            ['title' => 'Level Two Exam', 'status' => 'active'],
-            ['title' => 'Level Two Resit', 'status' => 'active'],
-            ['title' => 'Level Three CA', 'status' => 'active'],
-            ['title' => 'Level Three Exam', 'status' => 'active'],
-            ['title' => 'Level Three Resit', 'status' => 'active'],
-            ['title' => 'Bachelors Degree CA', 'status' => 'active'],
-            ['title' => 'Bachelors Degree Exam', 'status' => 'active'],
-            ['title' => 'Bachelors Degree Resit', 'status' => 'active'],
-            ['title' => 'Masters Degree CA', 'status' => 'active'],
-            ['title' => 'Masters Degree Exam', 'status' => 'active'],
-            ['title' => 'Masters Degree Resit', 'status' => 'active'],
+            ['title' => 'Level One CA', 'status' => 'active', 'exam_type' => 'ca'],
+            ['title' => 'Level One Exam', 'status' => 'active', 'exam_type' => 'exam'],
+            ['title' => 'Level One Resit', 'status' => 'active', 'exam_type' => 'resit'],
+            ['title' => 'Level Two CA', 'status' => 'active', 'exam_type' =>  'ca'],
+            ['title' => 'Level Two Exam', 'status' => 'active', 'exam_type' => 'exam'],
+            ['title' => 'Level Two Resit', 'status' => 'active', 'exam_type' => 'resit'],
+            ['title' => 'Level Three CA', 'status' => 'active', 'exam_type' =>  'ca'],
+            ['title' => 'Level Three Exam', 'status' => 'active', 'exam_type' => 'exam'],
+            ['title' => 'Level Three Resit', 'status' => 'active', 'exam_type' => 'resit'],
+            ['title' => 'Bachelors Degree CA', 'status' => 'active', 'exam_type' =>  'ca'],
+            ['title' => 'Bachelors Degree Exam', 'status' => 'active', 'exam_type' => 'exam'],
+            ['title' => 'Bachelors Degree Resit', 'status' => 'active', 'exam_type' =>  'ca'],
+            ['title' => 'Masters Degree CA', 'status' => 'active', 'exam_type' =>  'ca'],
+            ['title' => 'Masters Degree Exam', 'status' => 'active', 'exam_type' => 'exam'],
+            ['title' => 'Masters Degree Resit', 'status' => 'active', 'exam_type' => 'resit'],
         ];
         foreach ($categories as $category) {
             GradesCategory::create($category);

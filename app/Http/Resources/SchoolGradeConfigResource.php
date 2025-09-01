@@ -19,6 +19,7 @@ class SchoolGradeConfigResource extends JsonResource
              'grade_title' => $this->gradesCategory->title,
              'isgrades_configured' => $this->isgrades_configured,
              'max_score' => $this->max_score,
+             'exam_type' => $this->gradesCategory->exam_type ?? null,
              'grades_category_id' => $this->grades_category_id,
              'status' => $this->gradesCategory->status,
              'created_at' => $this->created_at,
