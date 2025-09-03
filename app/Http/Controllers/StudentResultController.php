@@ -47,4 +47,11 @@ class StudentResultController extends Controller
         $examId = $request->route('examId');
         $this->studentResultService->generateStudentResultsPdf($examId, $studentId, $currentSchool);
     }
+
+    public function getResultDetails(Request $request){
+        $resultId = $request->route('resultId');
+        $currentSchool = $request->attributes->get('currentSchool');
+        $examResults = $this->studentResultService->getResultDetails($currentSchool, $resultId);
+        return ApiResponseService::success("Exam Results Fetched Successfully", $examResults, null, 200);
+    }
 }

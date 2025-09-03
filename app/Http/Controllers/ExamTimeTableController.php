@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ExamTimetable\AutoGenExamTimetableRequest;
 use App\Services\ExamTimeTableService;
 use App\Services\ApiResponseService;
 use App\Http\Requests\ExamTimetable\CreateExamTimetableRequest;
 use App\Http\Requests\ExamTimetable\UpdateExamTimetableRequest;
-use Illuminate\Support\Facades\Log;
+use App\Services\AutoGenExamTimetableService;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use Illuminate\Http\Request;
@@ -17,12 +18,24 @@ use illuminate\Http\JsonResponse;
 class ExamTimeTableController extends Controller
 {
     protected ExamTimeTableService $examTimeTableService;
+    protected AutoGenExamTimetableService $autoGenExamTimetableService;
 
-    public function __construct(ExamTimetableService $examTimeTableService)
+    public function __construct(ExamTimetableService $examTimeTableService, AutoGenExamTimetableService $autoGenExamTimetableService)
     {
         $this->examTimeTableService = $examTimeTableService;
+        $this->autoGenExamTimetableService  = $autoGenExamTimetableService;
     }
 
+    public function autoGenExamTimetable(AutoGenExamTimetableRequest $request){
+         try{
+            $currentSchool = $request->attributes->get('currentSchool');
+         $examTimetable = $this->autoGenExamTimetableService->autoGenExamTimetable($currentSchool, $request->validated());
+         return ApiResponseService::success("Exam Timetable Generated Successfully", $examTimetable, null, 200);
+         }
+         catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+         }
+    }
     /**
      * Creates a new exam timetable.
      *

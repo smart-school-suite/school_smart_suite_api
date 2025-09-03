@@ -27,14 +27,14 @@ class InstallmentService
    }
 
    public function deactivateInstallment($installmentId){
-     $installment = Installment::findOrFail($installmentId)->delete();
+     $installment = Installment::findOrFail($installmentId);
      $installment->status = "inactive";
      $installment->save();
      return $installment;
    }
 
    public function activateInstallment($installmentId){
-     $installment = Installment::findOrFail($installmentId)->delete();
+     $installment = Installment::findOrFail($installmentId);
      $installment->status = "active";
      $installment->save();
      return $installment;

@@ -21,6 +21,15 @@ class StudentResultService
         return $examResults;
     }
 
+    public function getResultDetails($currentSchool, $resultId){
+        $examResults = StudentResults::where("school_branch_id", $currentSchool->id)
+                           ->with(['student', 'specialty', 'level', 'exam.examtype'])
+                           ->where('id', $resultId)
+                           ->first();
+        return $examResults;
+
+    }
+
     public function getExamStandings($examId, $currentSchool)
     {
         $examResults = StudentResults::where("school_branch_id", $currentSchool->id)

@@ -23,3 +23,5 @@ Route::middleware(['permission:schoolAdmin.examResults.view.standings'])->get('/
 // Generate PDF of results for a specific student and exam
 Route::middleware(['permission:schoolAdmin.examResults.view.student|teacher.examResults.view.student|student.examResults.view.student'])->get('/exams/{examId}/students/{studentId}/results/pdf', [StudentResultController::class, 'generateStudentResultPdf'])
     ->name('exams.students.results.pdf');
+
+Route::get('/result/{resultId}', [StudentResultController::class, 'getResultDetails'])->name('student.result.details');

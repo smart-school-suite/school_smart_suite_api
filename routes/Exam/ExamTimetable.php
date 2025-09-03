@@ -26,3 +26,5 @@ Route::middleware(['permission:schoolAdmin.exam.timetable.delete'])->delete('/en
 // Delete the entire exam timetable for a specific exam
 Route::middleware(['permission:schoolAdmin.exam.timetable.delete'])->delete('/exam/{examId}/timetable', [ExamTimeTableController::class, 'deleteTimetable'])
     ->name('exams.timetable.destroy');
+
+Route::post('/auto-gen-timetable', [ExamTimeTableController::class, 'autoGenExamTimetable'])->name('auto-gen.exam-timetable');
