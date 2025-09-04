@@ -9,32 +9,36 @@ use App\Models\Timetable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use App\Models\TeacherSpecailtyPreference;
+use App\Services\AutoGenTimetablePreprocessorService;
 
 class AutomaticTimetableService
 {
+    protected AutoGenTimetablePreprocessorService $autoGenTimetablePreprocessorService;
+
+    public function __construct(AutoGenTimetablePreprocessorService $autoGenTimetablePreprocessorService)
+    {
+        $this->autoGenTimetablePreprocessorService = $autoGenTimetablePreprocessorService;
+    }
+
     /**
      * Generate a random timetable based on the provided configuration, grouped by day.
      *
      * @param mixed $currentSchool The current school object
-     * @param int $schoolSemesterId The ID of the school semester
+     * @param string $schoolSemesterId The ID of the school semester
      * @param array $data Configuration data including days, slot lengths, and constraints
-     * @return array The generated timetable assignments grouped by day
+     * @return array The generated timetable assignments grouped by day and preprocessor messages
      */
     public function generateRandomTimetable($currentSchool, $schoolSemesterId, array $data)
     {
-        // Validate configuration
-        if (!isset($data['min_slot_length'], $data['max_slot_length'], $data['slot_increment'])) {
-            throw new \InvalidArgumentException("Configuration must include min_slot_length, max_slot_length, and slot_increment.");
-        }
-        if ($data['min_slot_length'] > $data['max_slot_length'] || $data['slot_increment'] <= 0) {
-            throw new \InvalidArgumentException("Invalid slot length configuration: min_slot_length must be <= max_slot_length, and slot_increment must be positive.");
-        }
+        // Preprocess the configuration
+        $preprocessResult = $this->autoGenTimetablePreprocessorService->preprocess($currentSchool, $schoolSemesterId, $data);
+        $adjustedData = $preprocessResult['adjusted_data'];
+        $messages = $preprocessResult['messages'];
+        $teacherPriorityOrder = $preprocessResult['teacher_priority_order'] ?? [];
 
-        // Load semester context
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
             ->findOrFail($schoolSemesterId);
 
-        // Fetch required data
         $teachers = TeacherSpecailtyPreference::where("school_branch_id", $currentSchool->id)
             ->where("specialty_id", $schoolSemester->specialty_id)
             ->with('teacher')
@@ -49,34 +53,24 @@ class AutomaticTimetableService
             ->whereIn("teacher_id", $teachers->pluck('teacher_id'))
             ->get()
             ->groupBy('teacher_id');
-        Log::info("Teacher Slots", $teacherSlots->toArray());
-        // Log input data for debugging
-        Log::info("Generating timetable: Teachers: {$teachers->count()}, Courses: {$courses->count()}");
 
-        // 1. Build all available slots
-        $availableSlots = $this->buildAvailableSlots($data);
-        Log::info("Total available slots: {$availableSlots->count()}");
+        $availableSlots = $this->buildAvailableSlots($adjustedData);
 
-        // Validate feasibility
-        $requiredSlots = $teachers->count() * $data['min_day_slots'] * count($data['days']);
-        if ($requiredSlots > $availableSlots->count() && !$data['allow_doubles']) {
+        $requiredSlots = $teachers->count() * $adjustedData['min_day_slots'] * count($adjustedData['days']);
+        if ($requiredSlots > $availableSlots->count() && !$adjustedData['allow_doubles']) {
             Log::warning("Potential slot shortage: Need {$requiredSlots} slots for {$teachers->count()} teachers, but only {$availableSlots->count()} available.");
+            $messages[] = "Warning: Potential slot shortage detected. Required {$requiredSlots} slots, but only {$availableSlots->count()} available.";
         }
 
-        // 2. Build teacher availability map
-        $teacherAvailability = $this->mapTeacherAvailability($teachers, $teacherSlots, $availableSlots, $data);
+        $teacherAvailability = $this->mapTeacherAvailability($teachers, $teacherSlots, $availableSlots, $adjustedData);
 
-        // 3. Constrained assignment
-        $results = $this->assignCoursesConstrained($courses, $teacherAvailability, $availableSlots, $data);
+        $results = $this->assignCoursesConstrained($courses, $teacherAvailability, $availableSlots, $adjustedData, $teacherPriorityOrder);
 
-        // Log minimum goal failures
-        $this->logMinimumFailures($results['teacherWeekUsage'], $data);
-        $this->logDailyMinimumFailures($results['teacherDayUsage'], $data);
+        $this->logMinimumFailures($results['teacherWeekUsage'], $adjustedData);
+        $this->logDailyMinimumFailures($results['teacherDayUsage'], $adjustedData);
 
-        // Validate for clashes
         $this->validateTimetableForClashes($results['assigned']);
 
-        // Group assignments by day
         $groupedByDay = [];
         foreach ($results['assigned'] as $assignment) {
             $day = $assignment['day'];
@@ -86,14 +80,16 @@ class AutomaticTimetableService
             $groupedByDay[$day][] = $assignment;
         }
 
-        // Sort assignments within each day by start time
         foreach ($groupedByDay as $day => &$assignments) {
             usort($assignments, function ($a, $b) {
                 return strtotime($a['start_time']) - strtotime($b['start_time']);
             });
         }
 
-        return $groupedByDay;
+        return [
+            'timetable' => $groupedByDay,
+            'messages' => $messages
+        ];
     }
 
     /**
@@ -129,7 +125,6 @@ class AutomaticTimetableService
         $maxSlotLength = (int) $data['max_slot_length'];
         $slotIncrement = (int) $data['slot_increment'];
 
-        // Generate possible slot lengths (e.g., 90, 120, 150)
         $slotLengths = [];
         for ($length = $minSlotLength; $length <= $maxSlotLength; $length += $slotIncrement) {
             $slotLengths[] = $length;
@@ -140,7 +135,6 @@ class AutomaticTimetableService
             $end = strtotime($data['end']);
             $current = $start;
 
-            // Generate slots with varying durations
             while ($current < $end) {
                 foreach ($slotLengths as $length) {
                     $slotEnd = $current + ($length * 60);
@@ -164,8 +158,6 @@ class AutomaticTimetableService
 
     /**
      * Build availability per teacher by excluding all busy slots across teachers.
-     * This ensures no new slot overlaps any existing slot, regardless of teacher.
-     * If allow_doubles is false, new assignments also won't overlap each other (handled in assignment).
      *
      * @param mixed $teachers Collection of teachers
      * @param mixed $teacherSlots Existing timetable slots
@@ -201,15 +193,16 @@ class AutomaticTimetableService
     }
 
     /**
-     * Assign courses to teachers and slots, respecting constraints.
+     * Assign courses to teachers and slots, respecting constraints and prioritizing less busy teachers.
      *
      * @param mixed $courses Collection of courses
      * @param array $teacherAvailability Teacher availability map
      * @param Collection $availableSlots All possible slots
      * @param array $data Configuration data
+     * @param array $teacherPriorityOrder Ordered teacher IDs (least busy first)
      * @return array Assignment results
      */
-    protected function assignCoursesConstrained($courses, array $teacherAvailability, Collection $availableSlots, array $data): array
+    protected function assignCoursesConstrained($courses, array $teacherAvailability, Collection $availableSlots, array $data, array $teacherPriorityOrder): array
     {
         $assigned = [];
         $teacherDayUsage = [];
@@ -217,7 +210,7 @@ class AutomaticTimetableService
         $courseDayUsage = [];
         $courseWeekUsage = [];
         $lastAssignedSlot = [];
-        $occupiedSlots = []; // Track all assigned slots to prevent overlaps
+        $occupiedSlots = [];
 
         // Initialize tracking
         foreach (array_keys($teacherAvailability) as $teacherId) {
@@ -231,8 +224,11 @@ class AutomaticTimetableService
             $courseWeekUsage[$course->id] = 0;
         }
 
-        // Pre-assignment phase: Ensure min_day_slots for each teacher
-        foreach (array_keys($teacherAvailability) as $teacherId) {
+        // Pre-assignment phase: Ensure min_day_slots for each teacher, prioritizing less busy teachers
+        foreach ($teacherPriorityOrder as $teacherId) {
+            if (!isset($teacherAvailability[$teacherId])) {
+                continue;
+            }
             foreach ($data['days'] as $day) {
                 $slotsAssigned = 0;
                 $availableTeacherSlots = $teacherAvailability[$teacherId]->filter(fn($s) => $s['day'] === $day);
@@ -263,7 +259,6 @@ class AutomaticTimetableService
                                 }
                             }
                         }
-                        // Check for overlaps with already assigned slots for this teacher
                         return !$occupiedSlots[$teacherId]->contains(function ($occupied) use ($slot) {
                             $o_start = $occupied['timestamp'];
                             $o_end = $o_start + ($occupied['duration'] * 60);
@@ -302,8 +297,8 @@ class AutomaticTimetableService
                         'start_time' => $slot['start'],
                         'end_time' => $slot['end'],
                         'duration' => $this->formatDuration($slot['duration']),
-                        'timestamp' => $slot['timestamp'], // Include for clash detection
-                        'duration_minutes' => $slot['duration'] // Include for clash detection
+                        'timestamp' => $slot['timestamp'],
+                        'duration_minutes' => $slot['duration']
                     ];
 
                     $assigned[] = $assignment;
@@ -330,32 +325,24 @@ class AutomaticTimetableService
                     $slotsAssigned++;
                     $availableTeacherSlots = $teacherAvailability[$teacherId]->filter(fn($s) => $s['day'] === $day);
                 }
-
-                if ($slotsAssigned < $data['min_day_slots']) {
-                    Log::warning("Failed to assign min_day_slots ({$data['min_day_slots']}) for teacher {$teacherId} on {$day}. Assigned: {$slotsAssigned}.");
-                }
             }
         }
 
-        // Main assignment phase: Assign remaining sessions until no more can be assigned
-        $maxAttempts = $courses->count() * 10; // Prevent infinite loop
+        // Main assignment phase: Assign remaining sessions, prioritizing less busy teachers
+        $maxAttempts = $courses->count() * 10;
         $failedAttempts = 0;
 
         while (true) {
             $availableCourses = $courses->filter(fn($c) => $courseWeekUsage[$c->id] < $data['max_week_sessions']);
-
             if ($availableCourses->isEmpty()) {
-                Log::info("No more courses available for assignment.");
                 break;
             }
 
             $course = $availableCourses->random();
-
-            $availableTeachers = collect(array_keys($teacherAvailability))
-                ->filter(fn($tId) => $teacherWeekUsage[$tId] < $data['max_week_slots'] && $teacherAvailability[$tId]->isNotEmpty());
+            $availableTeachers = collect($teacherPriorityOrder)
+                ->filter(fn($tId) => isset($teacherAvailability[$tId]) && $teacherWeekUsage[$tId] < $data['max_week_slots'] && $teacherAvailability[$tId]->isNotEmpty());
 
             if ($availableTeachers->isEmpty()) {
-                Log::warning("No teacher has remaining weekly slots for course: {$course->id}");
                 $failedAttempts++;
                 if ($failedAttempts > $maxAttempts) {
                     Log::warning("Max failed attempts reached. Stopping main assignment.");
@@ -364,11 +351,7 @@ class AutomaticTimetableService
                 continue;
             }
 
-            // Sort teachers by current week usage (lowest first) to balance load
-            $availableTeachers = $availableTeachers->sortBy(fn($tId) => $teacherWeekUsage[$tId]);
-
             $teacherId = $availableTeachers->first();
-
             $slots = $teacherAvailability[$teacherId];
 
             $filteredSlots = $slots->filter(function ($slot) use ($teacherId, $course, $teacherDayUsage, $courseDayUsage, $courseWeekUsage, $lastAssignedSlot, $data, $occupiedSlots) {
@@ -395,7 +378,6 @@ class AutomaticTimetableService
                         }
                     }
                 }
-                // Check for overlaps with already assigned slots for this teacher
                 return !$occupiedSlots[$teacherId]->contains(function ($occupied) use ($slot) {
                     $o_start = $occupied['timestamp'];
                     $o_end = $o_start + ($occupied['duration'] * 60);
@@ -408,7 +390,6 @@ class AutomaticTimetableService
             });
 
             if ($filteredSlots->isEmpty()) {
-                Log::info("Skipping course {$course->id}: Slots filtered out by constraints for teacher {$teacherId}.");
                 $failedAttempts++;
                 if ($failedAttempts > $maxAttempts) {
                     Log::warning("Max failed attempts reached. Stopping main assignment.");
@@ -429,8 +410,8 @@ class AutomaticTimetableService
                 'start_time' => $slot['start'],
                 'end_time' => $slot['end'],
                 'duration' => $this->formatDuration($slot['duration']),
-                'timestamp' => $slot['timestamp'], // Include for clash detection
-                'duration_minutes' => $slot['duration'] // Include for clash detection
+                'timestamp' => $slot['timestamp'],
+                'duration_minutes' => $slot['duration']
             ];
 
             $assigned[] = $assignment;
@@ -454,7 +435,7 @@ class AutomaticTimetableService
                 }
             }
 
-            $failedAttempts = 0; // Reset on successful assignment
+            $failedAttempts = 0;
         }
 
         return [
@@ -496,7 +477,7 @@ class AutomaticTimetableService
         foreach ($teacherWeekUsage as $teacherId => $count) {
             if ($count < $minWeekSlots) {
                 $teacherName = Teacher::find($teacherId)->name ?? 'Unknown Teacher';
-                Log::warning("TIMETABLE MIN GOAL FAILURE: Teacher {$teacherName} (ID: {$teacherId}) only assigned {$count} slots, falling short of the minimum weekly goal of {$minWeekSlots}.");
+                Log::warning("Teacher {$teacherName} (ID: {$teacherId}) assigned {$count} slots, below minimum weekly goal of {$minWeekSlots}.");
             }
         }
     }
@@ -515,7 +496,7 @@ class AutomaticTimetableService
             foreach ($days as $day => $count) {
                 if ($count < $data['min_day_slots']) {
                     $teacherName = Teacher::find($teacherId)->name ?? 'Unknown Teacher';
-                    Log::warning("DAILY MIN GOAL FAILURE: Teacher {$teacherName} (ID: {$teacherId}) only assigned {$count} slots on {$day}, falling short of the minimum daily goal of {$data['min_day_slots']}.");
+                    Log::warning("Teacher {$teacherName} (ID: {$teacherId}) assigned {$count} slots on {$day}, below minimum daily goal of {$data['min_day_slots']}.");
                 }
             }
         }
@@ -571,8 +552,7 @@ class AutomaticTimetableService
 
         if (!empty($clashes)) {
             foreach ($clashes as $clash) {
-                Log::error("TIMETABLE CLASH DETECTED: Teacher {$clash['teacher_name']} (ID: {$clash['teacher_id']}) " .
-                           "has overlapping slots: " .
+                Log::error("Clash detected for teacher {$clash['teacher_name']} (ID: {$clash['teacher_id']}): " .
                            "Course '{$clash['slot1']['course']}' on {$clash['slot1']['day']} from {$clash['slot1']['start']} to {$clash['slot1']['end']}, " .
                            "conflicts with Course '{$clash['slot2']['course']}' on {$clash['slot2']['day']} from {$clash['slot2']['start']} to {$clash['slot2']['end']}.");
             }
