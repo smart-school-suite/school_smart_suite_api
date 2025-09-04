@@ -29,7 +29,7 @@ class ExamResultsAvailable extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'fcm'];
+        return ['mail', 'database'];
     }
 
     /**
@@ -63,31 +63,6 @@ class ExamResultsAvailable extends Notification implements ShouldQueue
         ];
     }
 
-     /**
-     * Get the Firebase Cloud Messaging (FCM) representation of the notification.
-     * This method is called by a custom 'fcm' channel (which you would define
-     * in AppServiceProvider and implement in App\Channels\FcmChannel.php).
-     * The returned array structures the payload for FCM, which targets both iOS and Android.
-     *
-     * @param  object  $notifiable The recipient of the notification.
-     * @return array<string, mixed> The payload for FCM.
-     */
-    public function toFcm(object $notifiable): array
-    {
-        return [
-            'notification' => [
-                'title' => "🎓 {$this->exam->examtype->exam_name} Results Available",
-                'body' => "Your results for the **{$this->exam->examtype->exam_name}**  are now available.",
-                'sound' => 'default',
-            ],
-            'data' => [
-                'notification_id' => $this->id,
-                'type' => 'exam_results_available',
-                'exam_name' => $this->exam->examtype->exam_name,
-                'user_id' => $notifiable->id,
-            ],
-        ];
-    }
     /**
      * Get the array representation of the notification.
      *

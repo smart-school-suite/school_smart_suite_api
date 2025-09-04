@@ -22,7 +22,7 @@ class CreateResitTimetableRequest extends FormRequest
            'entries' => ['required', 'array', new ResitExamTimetableRule($this->entries)],
             'entries.*.course_id' => 'required|exists:courses,id',
             'entries.*.resit_exam_id' => 'required|exists:resit_exams,id',
-           // 'entries.*.student_batch_id' => 'required|exists:student_batch,id',
+            //'entries.*.student_batch_id' => 'required|exists:student_batch,id',
             'entries.*.specialty_id' => 'required|exists:specialty,id',
             'entries.*.start_time' => 'required|date_format:H:i',
             'entries.*.level_id' => 'required|exists:education_levels,id',

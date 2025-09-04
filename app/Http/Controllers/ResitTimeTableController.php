@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ResitExamTimetable\AutoGenResitExamTimetableRequest;
 use App\Services\ApiResponseService;
 use App\Services\ResitTimeTableService;
+use App\Services\AutoGenResitExamTimetableService;
 use App\Http\Requests\ResitExamTimetable\UpdateResitExamTimetableRequest;
 use App\Http\Requests\ResitExamTimetable\CreateResitTimetableRequest;
 use InvalidArgumentException;
@@ -14,10 +16,15 @@ class ResitTimeTableController extends Controller
 {
 
 
-    protected $resitTimeTableService;
-    public function __construct(ResitTimeTableService $resitTimeTableService)
+    protected ResitTimeTableService $resitTimeTableService;
+    protected AutoGenResitExamTimetableService $autoGenResitExamTimetableService;
+    public function __construct(
+        ResitTimeTableService $resitTimeTableService,
+         AutoGenResitExamTimetableService $autoGenResitExamTimetableService
+        )
     {
         $this->resitTimeTableService = $resitTimeTableService;
+        $this->autoGenResitExamTimetableService = $autoGenResitExamTimetableService;
     }
     public function getResitCoursesByExam(Request $request, $resitExamId)
     {
@@ -32,9 +39,9 @@ class ResitTimeTableController extends Controller
             $createExamTimeTable = $this->resitTimeTableService->createResitTimetable($request->entries, $currentSchool, $resitExamId);
             return ApiResponseService::success("Time Table Created Sucessfully", $createExamTimeTable, null, 201);
         } catch (InvalidArgumentException $e) {
-            ApiResponseService::error($e->getMessage(), null, 422);
+           return  ApiResponseService::error($e->getMessage(), null, 422);
         } catch (Exception $e) {
-            ApiResponseService::error($e->getMessage(), null, 500);
+           return   ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
     public function deleteResitTimetable(Request $request, $resitExamId)
@@ -47,6 +54,12 @@ class ResitTimeTableController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $updateResitTimetable = $this->resitTimeTableService->updateResitTimetable($request->entries, $currentSchool, $resitExamId);
         return ApiResponseService::success("Resit Timetable Updated Successfully", $updateResitTimetable, null, 200);
+    }
+
+    public function autoGenerateResitExamTimetable(AutoGenResitExamTimetableRequest $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $genResitExamTimetable = $this->autoGenResitExamTimetableService->autoGenExamTimetable($currentSchool,$request->validated());
+         return ApiResponseService::success("Resit Timetable Generated Successfully", $genResitExamTimetable, null, 200);
     }
 
 }

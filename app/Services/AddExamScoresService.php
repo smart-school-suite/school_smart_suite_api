@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\DataCreationJob\CreateResitExamJob;
+use App\Jobs\NotificationJobs\SendExamResultsReleasedNotificationJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\ExamStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentExamStatsJob;
 use Exception;
@@ -485,8 +486,9 @@ class AddExamScoresService
     }
 
     private function sendExamResultsNotification(Exams $exam){
+        $examDetails = Exams::with('specialty', 'level', 'examtype')->find($exam->id);
         $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
-        Notification::send($examCandidates->pluck('student'), new ExamResultsAvailable( $exam));
+        SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
     }
 
 }

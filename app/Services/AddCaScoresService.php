@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\NotificationJobs\SendExamResultsReleasedNotificationJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\CaStatsJob;
 use Exception;
@@ -13,8 +14,7 @@ use App\Models\Courses;
 use App\Models\Marks;
 use App\Models\Grades;
 use App\Models\StudentResults;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\ExamResultsAvailable;
+
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -342,8 +342,9 @@ class AddCaScoresService
     }
 
     private function sendExamResultsNotification(Exams $exam){
+        $examDetails = Exams::with('specialty', 'level', 'examtype')->find($exam->id);
         $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
-        Notification::send($examCandidates->pluck('student'), new ExamResultsAvailable( $exam));
+        SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
     }
 
 }

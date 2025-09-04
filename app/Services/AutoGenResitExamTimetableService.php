@@ -1,29 +1,34 @@
 <?php
 
 namespace App\Services;
-
-use App\Models\Courses;
-use App\Models\Exams;
+use App\Models\ResitExam;
+use App\Models\Studentresit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
-class AutoGenExamTimetableService
+class AutoGenResitExamTimetableService
 {
     public function autoGenExamTimetable($currentSchool, $data)
     {
         try {
             // --- Initial Data Retrieval and Validation ---
-            $exam = Exams::where("school_branch_id", $currentSchool->id)->find($data['exam_id']);
+            $exam = ResitExam::where("school_branch_id", $currentSchool->id)
+                    ->with(['exam'])
+                    ->find($data['exam_id']);
 
             if (!$exam) {
                 Log::error('Exam not found', ['exam_id' => $data['exam_id'], 'school_id' => $currentSchool->id]);
                 return ['error' => 'Exam not found'];
             }
+            $resitableCourses = Studentresit::where("school_branch_id", $currentSchool->id)
+            ->where("specialty_id", $exam->specialty_id)
+            ->where("level_id", $exam->level_id)
+            ->with(['courses', 'exam' => function ($query) use ($exam) {
+                $query->where("semester_id", $exam->semester_id);
+            }])
+            ->get();
 
-            $courses = Courses::where("school_branch_id", $currentSchool->id)
-                              ->where("semester_id", $exam->semester_id)
-                              ->where("specialty_id", $exam->specialty_id)
-                              ->get();
+            $courses = $resitableCourses->pluck('courses')->unique()->values();
 
             if ($courses->isEmpty()) {
                 Log::warning('No courses found for semester', ['semester_id' => $exam->semester_id]);
@@ -38,17 +43,6 @@ class AutoGenExamTimetableService
             $maxCoursePerDay = max($minCoursePerDay, (int)$data['max_course_per_day']); // Ensure max >= min
             $courseDuration = max(30, (int)$data['course_duration']); // Minimum 30 minutes
 
-            Log::info('Timetable generation started', [
-                'courses_count' => $courses->count(),
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'min_courses_per_day' => $minCoursePerDay,
-                'max_courses_per_day' => $maxCoursePerDay,
-                'course_duration' => $courseDuration
-            ]);
-
-            // --- Validate time constraints ---
-            // Parse times ensuring they're on the same day
             $baseDate = Carbon::today();
             $startCarbonTime = Carbon::createFromFormat('Y-m-d H:i', $baseDate->format('Y-m-d') . ' ' . $startTime);
             $endCarbonTime = Carbon::createFromFormat('Y-m-d H:i', $baseDate->format('Y-m-d') . ' ' . $endTime);
@@ -67,15 +61,6 @@ class AutoGenExamTimetableService
             }
 
             $totalAvailableMinutes = $startCarbonTime->diffInMinutes($endCarbonTime);
-
-            Log::info('Time validation', [
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'start_time_parsed' => $startCarbonTime->format('H:i'),
-                'end_time_parsed' => $endCarbonTime->format('H:i'),
-                'total_available_minutes' => $totalAvailableMinutes,
-                'course_duration' => $courseDuration
-            ]);
 
             if ($totalAvailableMinutes < $courseDuration) {
                 Log::error('Not enough time in day for course duration', [
@@ -239,9 +224,7 @@ class AutoGenExamTimetableService
         }
 
         $totalAvailableMinutes = $startCarbonTime->diffInMinutes($endCarbonTime);
-        $maxStartTimeOffset = $totalAvailableMinutes - $courseDuration;
-
-        if ($maxStartTimeOffset < 0) {
+        if ($totalAvailableMinutes < $courseDuration) {
             Log::warning('Cannot fit course in time window', [
                 'available_minutes' => $totalAvailableMinutes,
                 'course_duration' => $courseDuration,
@@ -251,8 +234,29 @@ class AutoGenExamTimetableService
             return null;
         }
 
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            $randomStartMinute = rand(0, $maxStartTimeOffset);
+        // Calculate possible start times at 30-minute intervals
+        $interval = 30; // 30-minute intervals
+        $possibleStartMinutes = [];
+        $currentMinute = 0;
+
+        while ($currentMinute <= $totalAvailableMinutes - $courseDuration) {
+            $possibleStartMinutes[] = $currentMinute;
+            $currentMinute += $interval;
+        }
+
+        if (empty($possibleStartMinutes)) {
+            Log::warning('No valid start times available for course duration', [
+                'total_available_minutes' => $totalAvailableMinutes,
+                'course_duration' => $courseDuration
+            ]);
+            return null;
+        }
+
+        // Shuffle possible start times to randomize selection
+        shuffle($possibleStartMinutes);
+
+        for ($attempt = 0; $attempt < min($maxAttempts, count($possibleStartMinutes)); $attempt++) {
+            $randomStartMinute = $possibleStartMinutes[$attempt];
             $examStartDateTime = $startCarbonTime->copy()->addMinutes($randomStartMinute);
             $examEndDateTime = $examStartDateTime->copy()->addMinutes($courseDuration);
 
@@ -326,7 +330,7 @@ class AutoGenExamTimetableService
         $remainingMinutes = $minutes % 60;
 
         if ($remainingMinutes === 0) {
-            return  "$hours h";
+            return "$hours h";
         }
 
         if ($detailed) {

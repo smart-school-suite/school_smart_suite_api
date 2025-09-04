@@ -21,14 +21,16 @@ class ResitExamResource extends JsonResource
             'exam_type_id' => $this->examtype->id,
             'semester_name' => $this->semester->name ?? null,
             'semester_id' => $this->semester->id ?? null,
+            'specialty_id' => $this->specialty->id ?? null,
             'specailty_name' => $this->specialty->specialty_name ?? null,
             'level_name' => $this->level->name ?? null,
+            'level_id' => $this->level->id ?? null,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'status' => $this->status,
             'school_year' => $this->school_year,
             'reference_exam_id' => $this->reference_exam_id,
-            'timetable_published' => $this->timetable_published,
+            'timetable_published' => $this->timetable_published  == 1 ? 'created' : 'not created',
             'weighted_mark' => $this->weighted_mark,
             'grading_added' => $this->grading_added
         ];

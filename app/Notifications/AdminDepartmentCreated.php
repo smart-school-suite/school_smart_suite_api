@@ -40,7 +40,7 @@ class AdminDepartmentCreated extends Notification implements ShouldQueue
     return (new MailMessage)
         ->subject('New Department Created')
         ->greeting("Hello Admin {$notifiable->name}")
-        ->line("A new department {$this->departmentDetails['department_name']} has been successfully created.")
+        ->line("{$this->departmentDetails['department_name']} has been successfully created.")
         ->line('You can view more details and manage the department by clicking the button below.')
         ->action('View Department', url('/departments'))
         ->line('Thank you for using our application!');

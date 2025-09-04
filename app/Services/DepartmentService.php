@@ -22,7 +22,7 @@ class DepartmentService
         $department->school_branch_id = $currentSchool->id;
         $department->save();
         DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
-        SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->school_branch_id, $data);
+        SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->id, $data);
         return $department;
     }
 

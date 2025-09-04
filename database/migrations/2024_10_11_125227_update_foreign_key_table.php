@@ -508,8 +508,8 @@ return new class extends Migration
             $table->foreign('course_id')->references('id')->on('courses');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialty');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batch');
+           // $table->string('student_batch_id');
+           // $table->foreign('student_batch_id')->references('id')->on('student_batch');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('education_levels');
         });

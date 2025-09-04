@@ -23,4 +23,5 @@ Route::middleware(['permission:schoolAdmin.timetable.resitexam.delete'])->delete
 Route::middleware(['permission:schoolAdmin.timetable.resitexam.update'])->put('/resit-exam/{resitExamId}/timetable', [ResitTimeTableController::class, 'updateResitTimetable'])
 ->name('resit-exams.timetable.update');
 
+Route::post('/auto-gen-timetable', [ResitTimetableController::class, 'autoGenerateResitExamTimetable'])->name('auto-generate.resit-exam-timetable');
 
