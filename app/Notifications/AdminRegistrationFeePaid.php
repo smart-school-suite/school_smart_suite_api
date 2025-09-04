@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class AdminRegistrationFeePaid extends Notification
+class AdminRegistrationFeePaid extends Notification implements ShouldQueue
 {
 use Queueable;
 

@@ -2,29 +2,31 @@
 
 namespace App\Jobs\NotificationJobs;
 
-use App\Notifications\AdminExamCreated;
+use App\Notifications\AdminResitDetectedNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Schooladmin;
 use App\Models\PermissionCategory;
+use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Notification;
 
-class SendAdminExamCreatedNotificationJob implements ShouldQueue
+class SendAdminResitExamCreatedNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    protected string $schoolBranchId;
-    protected array $examData;
-    public function __construct(string $schoolBranchId, array $examData)
+    protected $schoolBranchId;
+    protected $resitDetails;
+    protected $examDetails;
+    public function __construct($schoolBranchId, $resitDetails, $examDetails)
     {
         $this->schoolBranchId = $schoolBranchId;
-        $this->examData = $examData;
+        $this->resitDetails = $resitDetails;
+        $this->examDetails = $examDetails;
     }
 
     /**
@@ -32,15 +34,12 @@ class SendAdminExamCreatedNotificationJob implements ShouldQueue
      */
     public function handle(): void
     {
-       $schoolAdmins = $this->getAuthorizedAdmins($this->schoolBranchId);
-       Notification::send($schoolAdmins, new AdminExamCreated(
-         $this->examData['level'],
-         $this->examData['semester'],
-         $this->examData
-       ));
+        $schoolAdmins = $this->getAuthorizedAdmins($this->schoolBranchId);
+        Notification::send($schoolAdmins,
+        new AdminResitDetectedNotification($this->examDetails, $this->resitDetails));
     }
 
-    private function getAuthorizedAdmins($schoolBranchId)
+     private function getAuthorizedAdmins($schoolBranchId)
     {
         $electionPermissionNames = PermissionCategory::with('permission')
             ->where('title', 'Exam Manager')
@@ -57,5 +56,4 @@ class SendAdminExamCreatedNotificationJob implements ShouldQueue
             ->get()
             ->filter(fn($admin) => $admin->hasAnyPermission($electionPermissionNames));
     }
-
 }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\DataCreationJob;
 
+use App\Jobs\NotificationJobs\SendAdminResitExamCreatedNotificationJob;
 use App\Models\Examtype;
 use App\Models\ResitExam;
 use App\Models\Exams;
@@ -50,6 +51,7 @@ class CreateResitExamJob implements ShouldQueue
 
         if ($studentResits->isNotEmpty() && !$this->resitExamExists()) {
             $this->createResitExam($resitType);
+            $this->notifyAdmin($this->exam, $resitType);
         }
     }
 
@@ -77,5 +79,12 @@ class CreateResitExamJob implements ShouldQueue
             'semester_id' => $this->exam->semester_id,
             'reference_exam_id' => $this->exam->id,
         ]);
+    }
+
+    private function notifyAdmin($exam, $resitDetails){
+        $examDetails = Exams::where("school_branch_id", $exam->id)
+        ->with(['specialty', 'level', 'examtype'])->find($exam->id);
+
+        SendAdminResitExamCreatedNotificationJob::dispatch($exam->school_branch_id, $resitDetails, $examDetails);
     }
 }
