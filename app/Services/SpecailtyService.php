@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\NotificationJobs\SendAdminSpecialtyCreatedNotificationJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\SpecialtyStatJob;
 use App\Models\Specialty;
 use Exception;
@@ -25,6 +26,7 @@ class SpecailtyService
         $specialty->level_id = $data["level_id"];
         $specialty->save();
         SpecialtyStatJob::dispatch($specialtyId, $currentSchool->id);
+        SendAdminSpecialtyCreatedNotificationJob::dispatch($currentSchool->id, $data);
         return $specialty;
     }
 

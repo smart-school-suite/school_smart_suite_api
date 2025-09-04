@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use App\Jobs\NotificationJobs\SendAdminDepartmentCreatedNotificationJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\DepartmentStatJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,7 @@ class DepartmentService
         $department->school_branch_id = $currentSchool->id;
         $department->save();
         DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
+        SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->school_branch_id, $data);
         return $department;
     }
 

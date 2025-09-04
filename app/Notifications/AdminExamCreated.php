@@ -33,7 +33,7 @@ class AdminExamCreated extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('New Exam Created')
             ->greeting("Hello {$notifiable->name},")
-            ->line("A new {$this->examData['examName']} has been created successfully.")
+            ->line("The {$this->examData['examName']} has been created successfully.")
             ->line("**Level:** {$this->level}")
             ->line("**Semester:** {$this->semester}")
             ->line("**Exam Date:** {$this->examData['startDate']} to {$this->examData['endDate']}")

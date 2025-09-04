@@ -32,9 +32,9 @@ class AdminAdditionalFee extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Student Incurred Additional Fee')
-            ->greeting("Hello Admin,")
+            ->greeting("Hello Admin {$notifiable->name}")
             ->line("{$this->studentName} has been charged an additional fee.")
-            ->line("**Amount:** ₦{$this->amount}")
+            ->line("**Amount:** XAF{$this->amount}")
             ->line("**Reason:** {$this->reason}")
             ->action('View Student Financial Records', url('/admin/finance'))
             ->line('This fee has been added to the student’s account.');

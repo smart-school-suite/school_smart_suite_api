@@ -34,7 +34,7 @@ class AdminAdditionalFeePaidNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Student Paid Additional Fee')
-            ->greeting("Hello Admin,")
+            ->greeting("Hello Admin {$notifiable->name}")
             ->line("{$this->studentName} has paid an additional fee.")
             ->line("**Amount:** {$this->currency}{$this->amount}")
             ->line("**Reason:** {$this->reason}")

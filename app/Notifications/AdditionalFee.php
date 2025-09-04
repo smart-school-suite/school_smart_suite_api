@@ -31,7 +31,7 @@ class AdditionalFee extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Additional Fee Incurred')
             ->greeting("Hello {$notifiable->name},")
-            ->line("An additional fee of ₦{$this->amount} has been added to your account.")
+            ->line("An additional fee of XAF{$this->amount} has been added to your account.")
             ->line("**Reason:** {$this->reason}")
             ->action('View Payment Details', url('/student/fees'))
             ->line('Please attend to the payment at your earliest convenience.');

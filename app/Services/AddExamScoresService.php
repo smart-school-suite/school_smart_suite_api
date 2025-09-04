@@ -485,8 +485,8 @@ class AddExamScoresService
     }
 
     private function sendExamResultsNotification(Exams $exam){
-        $students = $exam->student;
-        Notification::send($students, new ExamResultsAvailable( $exam));
+        $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
+        Notification::send($examCandidates->pluck('student'), new ExamResultsAvailable( $exam));
     }
 
 }
