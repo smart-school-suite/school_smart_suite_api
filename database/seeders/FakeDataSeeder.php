@@ -84,13 +84,23 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No Departments To Insert");
         }
     }
-
     public function seedSpecialty()
     {
         $faker = Faker::create();
         $schoolBranch = Schoolbranches::first();
+
+        if (!$schoolBranch) {
+            $this->command->info("Please ensure School Branches are seeded first.");
+            return;
+        }
+
         $timestamp = now();
         $departments = Department::where('school_branch_id', $schoolBranch->id)->get();
+
+        if ($departments->isEmpty()) {
+            $this->command->info("No departments found for this school branch. Please seed departments first.");
+            return;
+        }
 
         $specialtyTemplates = [
             'Computer Science' => [
@@ -182,6 +192,8 @@ class FakeDataSeeder extends Seeder
         ];
 
         $specialties = [];
+        $levels = Educationlevels::all();
+
         foreach ($departments as $department) {
             $specialtyOptions = $specialtyTemplates[$department->department_name] ?? [
                 ['name' => 'General Specialization', 'description' => 'General study within the department.'],
@@ -190,32 +202,33 @@ class FakeDataSeeder extends Seeder
             $selectedSpecialties = array_slice($specialtyOptions, 0, $numSpecialties);
 
             foreach ($selectedSpecialties as $spec) {
-                $levels = Educationlevels::all();
-                foreach($levels as $level){
+                foreach ($levels as $level) {
                     $specialties[] = [
-                    'id' => Str::uuid(),
-                    'specialty_name' => $spec['name'],
-                    'description' => $spec['description'],
-                    'registration_fee' => $faker->numberBetween(50000, 150000),
-                    'school_fee' => $faker->numberBetween(100000, 1000000),
-                    'department_id' => $department->id,
-                    'level_id' => $level->id,
-                    'school_branch_id' => $schoolBranch->id,
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ];
+                        'id' => Str::uuid(),
+                        'specialty_name' => $spec['name'],
+                        'description' => $spec['description'],
+                        'registration_fee' => $faker->numberBetween(50000, 150000),
+                        'school_fee' => $faker->numberBetween(100000, 1000000),
+                        'department_id' => $department->id,
+                        'level_id' => $level->id,
+                        'school_branch_id' => $schoolBranch->id,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
                 }
             }
         }
 
         if (!empty($specialties)) {
-            DB::table('specialty')->insert($specialties);
-            $this->command->info("Specialties Inserted Successfully");
+            $chunks = array_chunk($specialties, 1000);
+            foreach ($chunks as $chunk) {
+                DB::table('specialty')->insert($chunk);
+            }
+            $this->command->info("Specialties inserted successfully.");
         } else {
-            $this->command->info("No Specialties To Insert");
+            $this->command->info("No specialties to insert.");
         }
     }
-
     public function seedTeacher()
     {
         $faker = Faker::create();
@@ -255,7 +268,6 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No Teachers To Insert");
         }
     }
-
     public function seedParent()
     {
         $faker = Faker::create();
@@ -292,7 +304,6 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No Parents To Insert");
         }
     }
-
     public function seedStudentBatch()
     {
         $batchesData = [
@@ -324,30 +335,30 @@ class FakeDataSeeder extends Seeder
 
         foreach ($specialties as $specialty) {
             foreach ($semesters as $semester) {
-               for ($i = 0; $i < 6; $i++){
-                 $courseCode = strtoupper($faker->lexify('???')) . ' ' . $faker->numerify('###');
+                for ($i = 0; $i < 6; $i++) {
+                    $courseCode = strtoupper($faker->lexify('???')) . ' ' . $faker->numerify('###');
 
-                $courseTitle = $faker->words(rand(2, 5), true);
+                    $courseTitle = $faker->words(rand(2, 5), true);
 
-                $courseDescription = $faker->paragraph(rand(2, 4));
+                    $courseDescription = $faker->paragraph(rand(2, 4));
 
-                $credit = $faker->numberBetween(1, 6);
+                    $credit = $faker->numberBetween(1, 6);
 
-                $courses[] = [
-                    'id' => Str::uuid(),
-                    'course_code' => $courseCode,
-                    'course_title' => ucwords($courseTitle),
-                    'specialty_id' => $specialty->id,
-                    'department_id' => $specialty->department_id,
-                    'school_branch_id' => $specialty->school_branch_id,
-                    'credit' => $credit,
-                    'description' => $courseDescription,
-                    'level_id' => $specialty->level_id,
-                    'semester_id' => Semester::where("count", $semester)->first()->id,
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ];
-               }
+                    $courses[] = [
+                        'id' => Str::uuid(),
+                        'course_code' => $courseCode,
+                        'course_title' => ucwords($courseTitle),
+                        'specialty_id' => $specialty->id,
+                        'department_id' => $specialty->department_id,
+                        'school_branch_id' => $specialty->school_branch_id,
+                        'credit' => $credit,
+                        'description' => $courseDescription,
+                        'level_id' => $specialty->level_id,
+                        'semester_id' => Semester::where("count", $semester)->first()->id,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
+                }
             }
         }
 
@@ -358,17 +369,26 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No courses to insert.");
         }
     }
-
-    public function seedStudent(){
-       $faker = Faker::create();
+    public function seedStudent()
+    {
+        $faker = Faker::create();
         $schoolBranch = Schoolbranches::first();
         $studentBatch = Studentbatch::first();
+
+        if (!$schoolBranch || !$studentBatch) {
+            $this->command->info("Please ensure School Branches and Student Batches are seeded first.");
+            return;
+        }
 
         $timestamp = now();
         $students = [];
         $specialties = Specialty::where('school_branch_id', $schoolBranch->id)->get();
         $parents = Parents::where("school_branch_id", $schoolBranch->id)->pluck('id')->toArray();
 
+        if (empty($parents)) {
+            $this->command->info("No parents found for this school branch. Please seed parents first.");
+            return;
+        }
 
         foreach ($specialties as $specialty) {
             for ($i = 0; $i < 50; $i++) {
@@ -402,54 +422,76 @@ class FakeDataSeeder extends Seeder
         }
 
         if (!empty($students)) {
-            DB::table('student')->insert($students);
+            $chunks = array_chunk($students, 1000);
+            foreach ($chunks as $chunk) {
+                DB::table('student')->insert($chunk);
+            }
             $this->command->info("Student inserted successfully.");
         } else {
             $this->command->info("No Student to insert.");
         }
-
     }
-
-    public function seedStudentFees(){
+    public function seedStudentFees()
+    {
         $schoolBranch = Schoolbranches::first();
+
+        if (!$schoolBranch) {
+            $this->command->info("Please ensure School Branches are seeded first.");
+            return;
+        }
+
         $students = Student::where("school_branch_id", $schoolBranch->id)
-                 ->with('specialty')
-                 ->get();
+            ->with('specialty')
+            ->get();
+
+        if ($students->isEmpty()) {
+            $this->command->info("No students found for this school branch. Please seed students first.");
+            return;
+        }
+
         $registrationFees = [];
         $tuitionFees = [];
-        foreach($students as $student){
-            $registrationFees[] = [
-               'id' => Str::uuid(),
-               'student_id' => $student->id,
-               'school_branch_id' => $schoolBranch->id,
-               'specialty_id' => $student->specialty->id,
-               'level_id' => $student->specialty->level_id,
-               'amount' => $student->specialty->registration_fee,
-               'created_at' => now(),
-               'updated_at' => now()
-            ];
+        $timestamp = now();
 
-            $tuitionFees[] = [
-                'id' => Str::uuid(),
-               'student_id' => $student->id,
-               'school_branch_id' => $schoolBranch->id,
-               'specialty_id' => $student->specialty->id,
-               'level_id' => $student->specialty->level_id,
-               'amount_left' => $student->specialty->amount_left,
-               'tution_fee_total' => $student->specialty->school_fee,
-               'created_at' => now(),
-               'updated_at' => now()
-            ];
+        foreach ($students as $student) {
+            if ($student->specialty) {
+                $registrationFees[] = [
+                    'id' => Str::uuid(),
+                    'student_id' => $student->id,
+                    'school_branch_id' => $schoolBranch->id,
+                    'specialty_id' => $student->specialty->id,
+                    'level_id' => $student->specialty->level_id,
+                    'amount' => $student->specialty->registration_fee,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp
+                ];
 
+                $tuitionFees[] = [
+                    'id' => Str::uuid(),
+                    'student_id' => $student->id,
+                    'school_branch_id' => $schoolBranch->id,
+                    'specialty_id' => $student->specialty->id,
+                    'level_id' => $student->specialty->level_id,
+                    'amount_left' => $student->specialty->school_fee,
+                    'tution_fee_total' => $student->specialty->school_fee,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp
+                ];
+            }
         }
 
-         if (!empty($tuitionFees) && !empty($registrationFees)) {
-            DB::table('tuition_fees')->insert($tuitionFees);
-            DB::table('registration_fees')->insert($registrationFees);
+        if (!empty($tuitionFees) && !empty($registrationFees)) {
+            $regFeeChunks = array_chunk($registrationFees, 1000);
+            foreach ($regFeeChunks as $chunk) {
+                DB::table('registration_fees')->insert($chunk);
+            }
+            $tuitionFeeChunks = array_chunk($tuitionFees, 1000);
+            foreach ($tuitionFeeChunks as $chunk) {
+                DB::table('tuition_fees')->insert($chunk);
+            }
             $this->command->info("Student Registration And Tuition Fees Inserted Successfully.");
         } else {
-            $this->command->info("No Fees  to insert.");
+            $this->command->info("No Fees to insert.");
         }
     }
-
 }
