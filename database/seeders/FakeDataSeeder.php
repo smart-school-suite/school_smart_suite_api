@@ -241,6 +241,7 @@ class FakeDataSeeder extends Seeder
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'address' => $faker->address,
+                'password' => Hash::make('password'),
                 'gender' => $gender,
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
