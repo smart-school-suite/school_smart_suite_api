@@ -26,7 +26,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CountrySeeder::class);
         $this->call(RateCardSeeder::class);
         $this->call(ExamTypeSeeder::class);
-        $this->call(LevelSeeder::class);
         $this->call(GradeCategorySeeder::class);
     }
 }

@@ -51,11 +51,10 @@ class StarterPackSeeder extends Seeder
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
                 Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
-                $id = substr(md5($uuid), 0, 10);
 
                 if (count($data) >= 2) {
                     $education_levels[] = [
-                        'id' => $id,
+                        'id' => $uuid,
                         'name' => $data[1],
                         'level' => $data[2],
                         'created_at' => $timestamp,

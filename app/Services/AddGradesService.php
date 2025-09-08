@@ -50,27 +50,24 @@ class AddGradesService
     public function configureByOtherGrades($configId, $currentSchool, $targetConfigId)
     {
         $insertedGrades = [];
-        //targetConfigId is the grades to be configured
-        //configId is the grades to be used
-        // Begin a database transaction
         DB::beginTransaction();
 
         try {
-            // Fetching the source and target grade configurations
+
             $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
             $targetGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($targetConfigId);
 
-            // Check if the source config exists and the target config does not
+
             if (!$schoolGradesConfig || !$targetGradesConfig) {
-                return ApiResponseService::error("School Grades Configurations not found", null, 404);
+                throw new Exception("School Grades Configurations not found", 404);
             }
 
-            // Fetching grades from the source configuration
+
             $grades = Grades::where("school_branch_id", $currentSchool->id)
                 ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
                 ->get();
 
-            // Creating new grades based on the fetched grades
+
             foreach ($grades as $grade) {
                 $newGrade = Grades::create([
                     'school_branch_id' => $currentSchool->id,
@@ -86,21 +83,55 @@ class AddGradesService
                 $insertedGrades[] = $newGrade;
             }
 
-            // Updating the target configuration after successful insertion
+
             $targetGradesConfig->isgrades_configured = true;
             $targetGradesConfig->max_score = $schoolGradesConfig->max_score;
             $targetGradesConfig->save();
 
-            // Commit the transaction
             DB::commit();
 
-            // Return the newly created grades
             return $insertedGrades;
 
         } catch (Exception $e) {
-            // Rollback the transaction if any error occurs
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function getGradeConfigDetails($currentSchool, $configId){
+       try{
+         $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
+        if(!$schoolGradesConfig){
+            throw new Exception("School Grades Configuration Not Found", 404);
+        }
+        $grades = Grades::where("school_branch_id", $currentSchool->id)
+                        ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
+                        ->get();
+        return $grades;
+       } catch(Exception $e){
+          throw $e;
+       }
+    }
+
+    public function deleteGradesConfig($currentSchool, $configId){
+         try{
+             DB::beginTransaction();
+             $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
+        if(!$schoolGradesConfig){
+            throw new Exception("School Grades Configuration Not Found", 404);
+        }
+        $grades = Grades::where("school_branch_id", $currentSchool->id)
+                        ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
+                        ->get();
+         foreach($grades as $grade){
+            $grade->delete();
+        }
+        $schoolGradesConfig->isgrades_configured = false;
+        $schoolGradesConfig->max_score = null;
+        $schoolGradesConfig->save();
+        DB::commit();
+         } catch(Exception $e){
+            throw $e;
+         }
     }
 }

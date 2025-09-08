@@ -1,8 +1,8 @@
 id,name,level,program_name
-vOgm6PxazBLh,Master's Degree One,400,phd
-z87hY94hpT91,Bachelor's Degree Programs,300,level_three
-cZBhDBVUIgpD,Level One,200,level_one
-3FpPMu4Essyy,Doctoral (Ph.D.) Programs,500,master_one_degree
-LDfL5AfgcgJx,Master's Degree Two,700,master_two_degree
-Giehz1KE3XP4,Level Three,600,level_two
-ZuNHApIsGhcG,Level Two,100,bachelor_degree
+vOgm6PxazBLh,Master's Degree One,500,phd
+z87hY94hpT91,Bachelor's Degree Programs,400,bachelor_degre
+cZBhDBVUIgpD,Level One,100,level_one
+3FpPMu4Essyy,Doctoral (Ph.D.) Programs,700,master_one_degree
+LDfL5AfgcgJx,Master's Degree Two,600,master_two_degree
+Giehz1KE3XP4,Level Three,300,level_three
+ZuNHApIsGhcG,Level Two,200,level_two

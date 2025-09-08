@@ -32,6 +32,27 @@ class GradesController extends Controller
         $this->autoGenExamGradingService = $autoGenExamGradingService;
     }
 
+    public function deleteGradeConfig(Request $request, $configId){
+        try{
+             $currentSchool = $request->attributes->get('currentSchool');
+             $this->addGradesService->deleteGradesConfig($currentSchool, $configId);
+             return ApiResponseService::success("School Grades Configuration Deleted Successfully", null, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function getGradeConfigDetails(Request $request, $configId){
+        try{
+          $currentSchool = $request->attributes->get('currentSchool');
+          $configDetails = $this->addGradesService->getGradeConfigDetails($currentSchool, $configId);
+          return ApiResponseService::success("Grade Configuration Details Fetched Successfully", $configDetails, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
     public function autoGenExamGrading(AutoGenExamGradingRequest $request){
         $examGrading = $this->autoGenExamGradingService->autoGenerateExamGrading($request->validated());
         return ApiResponseService::success("Grading Generated Successfully", $examGrading, null, 200);

@@ -26,8 +26,6 @@ class Parents extends Model
         'email',
         'phone_one',
         'phone_two',
-        'cultural_background',
-        'preferred_contact_method',
         'preferred_language',
         'school_branch_id',
         'relationship_to_student',

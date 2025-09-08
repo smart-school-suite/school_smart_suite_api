@@ -39,3 +39,6 @@ use App\Http\Controllers\GradesController;
     // Create grades based on another grade configuration
     Route::middleware(['permission:schoolAdmin.grades.create'])->post('/grade-configs/{configId}/target-configs/{targetConfigId}/grades', [GradesController::class, 'createGradesByOtherGrades'])
         ->name('grade-configs.target-configs.grades.store');
+
+    Route::delete('/grade-config/delete/{configId}', [GradesController::class, 'deleteGradeConfig'])->name('delete-grades-configuration');
+    Route::get('/grades-config/details/{configId}', [GradesController::class, 'getGradeConfigDetails'])->name('get-grades-configuration-details');

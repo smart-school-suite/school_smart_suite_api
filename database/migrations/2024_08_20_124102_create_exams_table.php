@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->date('start_date');
             $table->date('end_date');
-            $table->decimal('weighted_mark', 4, 2);
+            $table->decimal('weighted_mark', 6, 2);
             $table->string('school_year');
             $table->boolean('timetable_published')->default(false);
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');

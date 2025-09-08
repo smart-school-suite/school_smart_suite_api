@@ -10,7 +10,7 @@ class AutoGenExamGradingService
     {
         $maxScore = $data['max_score'];
         $examType = $data['exam_type'];
-        $letterGrades = LetterGrade::all(); // letter_grade, id
+        $letterGrades = LetterGrade::all();
         $passRemarks = [
             "Excellent",
             "Great",
@@ -44,22 +44,27 @@ class AutoGenExamGradingService
             return $result; // Return empty array if no letter grades are available
         }
 
-        // Standard academic grade ranges (mapped to percentages, adjusted to maxScore)
+
         $gradeRanges = [
-            'A+' => ['min' => 97, 'max' => 100, 'points' => 4.00],
-            'A'  => ['min' => 93, 'max' => 96.99, 'points' => 4.00],
-            'A-' => ['min' => 90, 'max' => 92.99, 'points' => 3.67],
-            'B+' => ['min' => 87, 'max' => 89.99, 'points' => 3.33],
-            'B'  => ['min' => 83, 'max' => 86.99, 'points' => 3.00],
-            'B-' => ['min' => 80, 'max' => 82.99, 'points' => 2.67],
-            'C+' => ['min' => 77, 'max' => 79.99, 'points' => 2.33],
-            'C'  => ['min' => 73, 'max' => 76.99, 'points' => 2.00],
-            'C-' => ['min' => 70, 'max' => 72.99, 'points' => 1.67],
-            'D+' => ['min' => 67, 'max' => 69.99, 'points' => 1.33],
-            'D'  => ['min' => 63, 'max' => 66.99, 'points' => 1.00],
-            'D-' => ['min' => 60, 'max' => 62.99, 'points' => 0.67],
-            'F'  => ['min' => 0,  'max' => 59.99, 'points' => 0.00],
+            'A+' => ['min' => 90, 'max' => 100, 'points' => 4.00],
+            'A'  => ['min' => 85, 'max' => 89.99, 'points' => 3.90],
+            'A-' => ['min' => 80, 'max' => 84.99, 'points' => 3.70],
+
+            'B+' => ['min' => 75, 'max' => 79.99, 'points' => 3.30],
+            'B'  => ['min' => 70, 'max' => 74.99, 'points' => 3.00],
+            'B-' => ['min' => 65, 'max' => 69.99, 'points' => 2.70],
+
+            'C+' => ['min' => 60, 'max' => 64.99, 'points' => 2.30],
+            'C'  => ['min' => 55, 'max' => 59.99, 'points' => 2.00],
+            'C-' => ['min' => 50, 'max' => 54.99, 'points' => 1.70],
+
+            'D+' => ['min' => 45, 'max' => 49.99, 'points' => 1.30],
+            'D'  => ['min' => 40, 'max' => 44.99, 'points' => 1.00],
+            'D-' => ['min' => 35, 'max' => 39.99, 'points' => 0.70],
+
+            'F'  => ['min' => 0,  'max' => 34.99, 'points' => 0.00],
         ];
+
 
         foreach ($letterGrades as $letterGrade) {
             $grade = $letterGrade->letter_grade;
@@ -81,7 +86,7 @@ class AutoGenExamGradingService
             }
 
             // Determine grade status (passed/failed, assuming 60% is the passing threshold)
-            $currentGradeStatus = ($minScore >= ($maxScore * 0.6)) ? $gradeStatus[0] : $gradeStatus[1];
+            $currentGradeStatus = ($minScore >= ($maxScore * 0.5)) ? $gradeStatus[0] : $gradeStatus[1];
 
             // Determine resit status based on exam type
             $resitStatus = ($examType === 'ca')
