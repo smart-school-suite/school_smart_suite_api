@@ -11,4 +11,7 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->group(function () {
     Route::get('/available-preferences/{teacherId}', [TeacherSpecailtyPreferenceController::class, "getTeacherAvialableSpecialtyPreference"]);
 
     Route::post('/remove-preference', [TeacherSpecailtyPreferenceController::class, 'removeTeacherSpecialtyPreference']);
+
+    Route::post('/bulk-add-preference', [TeacherSpecailtyPreferenceController::class, 'bulkAddTeacherSpecialtyPreference'])->name('bulk.add.teacher.specialtypreference');
+    Route::post('/bulk-remove-preference', [TeacherSpecailtyPreferenceController::class, 'bulkRemoveTeacherSpecialtyPreference'])->name('bulk.remove.teacherSpecialtyPreference');
 });

@@ -11,6 +11,7 @@ use App\Models\FeeSchedule;
 use App\Models\SchoolSemester;
 use App\Models\Semester;
 use App\Models\Specialty;
+use App\Models\Studentbatch;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +89,7 @@ class SchoolSemesterService
         try {
             DB::beginTransaction();
             foreach ($updateSemesterList as $updateSemester) {
-                $schoolSemester = SchoolSemester::findOrFail($updateSemester['semester_id']);
+                $schoolSemester = SchoolSemester::findOrFail($updateSemester['school_semester_id']);
                 $filteredData = array_filter($updateSemester);
                 $schoolSemester->update($filteredData);
                 $result[] = [
@@ -154,6 +155,7 @@ class SchoolSemesterService
                 "school_year" => $semester->school_year,
                 "status" => $semester->status,
                 "student_batch_id" => $semester->student_batch_id,
+                'student_batch' => Studentbatch::find($semester->student_batch_id)->name,
                 "specialty_id" => $semester->specialty_id,
                 "specialty_name" => $semester->specialty->specialty_name ?? null,
                 "level_name" => $semester->specialty->level->name ?? null,

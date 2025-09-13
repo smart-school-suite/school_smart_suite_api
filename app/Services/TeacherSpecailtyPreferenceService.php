@@ -6,7 +6,7 @@ use App\Models\Specialty;
 use App\Models\TeacherSpecailtyPreference;
 use Exception;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Str;
 class TeacherSpecailtyPreferenceService
 {
     // Implement your logic here
@@ -61,23 +61,77 @@ class TeacherSpecailtyPreferenceService
         return $availableSpecialties;
     }
 
-   public function removeTeacherSpecialtyPreference($currentSchool, array $preferences)
-{
-    try {
-        DB::beginTransaction();
+    public function removeTeacherSpecialtyPreference($currentSchool, array $preferences)
+    {
+        try {
+            DB::beginTransaction();
 
-        $preferenceIds = collect($preferences)->pluck('preference_id');
+            $preferenceIds = collect($preferences)->pluck('preference_id');
 
-        $validPreferences = TeacherSpecailtyPreference::where("school_branch_id", $currentSchool->id)
-            ->whereIn("id", $preferenceIds)
-            ->pluck('id');
+            $validPreferences = TeacherSpecailtyPreference::where("school_branch_id", $currentSchool->id)
+                ->whereIn("id", $preferenceIds)
+                ->pluck('id');
 
-        TeacherSpecailtyPreference::destroy($validPreferences);
+            TeacherSpecailtyPreference::destroy($validPreferences);
 
-        DB::commit();
-    } catch (Exception $e) {
-        DB::rollBack();
-        throw $e;
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
-}
+
+    public function bulkAddTeacherSpecialtyPreference($currentSchool, array $data)
+    {
+        try {
+            $teacherIds = collect($data['teacherIds'])->pluck('teacher_id')->all();
+            $specialtyIds = collect($data['specialtyIds'])->pluck('specialty_id')->all();
+
+            $existingPreferences = TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
+                ->whereIn('teacher_id', $teacherIds)
+                ->whereIn('specialty_id', $specialtyIds)
+                ->get(['teacher_id', 'specialty_id'])
+                ->map(fn($item) => "{$item->teacher_id}-{$item->specialty_id}")
+                ->toArray();
+
+            $insertData = [];
+            foreach ($teacherIds as $teacherId) {
+                foreach ($specialtyIds as $specialtyId) {
+                    $uniqueKey = "{$teacherId}-{$specialtyId}";
+                    if (!in_array($uniqueKey, $existingPreferences)) {
+                        $insertData[] = [
+                            'id' =>  Str::uuid(),
+                            'teacher_id' => $teacherId,
+                            'specialty_id' => $specialtyId,
+                            'school_branch_id' => $currentSchool->id
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($insertData)) {
+                TeacherSpecailtyPreference::insert($insertData);
+            }
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function bulkRemoveTeacherSpecialtyPreference($currentSchool, array $data)
+    {
+        try {
+            $teacherIds = $data['teacherIds'];
+            $specialtyIds = $data['specialtyIds'];
+
+            TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
+                ->whereIn('teacher_id', $teacherIds)
+                ->whereIn('specialty_id', $specialtyIds)
+                ->delete();
+
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 }

@@ -27,8 +27,8 @@ class BulkUpdateSchoolSemesterRequest extends FormRequest
             'school_semester.*.end_date' => 'sometimes|nullable|date|after:start_date',
             'school_semester.*.school_year' => 'sometimes|nullable|string',
             'school_semester.*.semester_id' => 'sometimes|nullable|string|exists:semesters,id',
-            'school_semester.*.student_batch_id' => 'sometimes|nullable|string|exists:student_batch,id',
-            'school_semester.*.specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
+            //'school_semester.*.student_batch_id' => 'sometimes|nullable|string|exists:student_batch,id',
+            //'school_semester.*.specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
         ];
     }
 }

@@ -17,6 +17,7 @@ use App\Models\Specialty;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ExamService
 {
@@ -195,6 +196,8 @@ class ExamService
                 if(!$exam){
                     return ApiResponseService::error("Exam Not Found", null, 404);
                 }
+                Log::info("exam-details", $exam->toArray());
+                Log::info("gradesConfig", $gradesConfig->toArray());
                 $exam->grades_category_id = $gradesConfig->grades_category_id;
                 $exam->grading_added = true;
                 $exam->save();

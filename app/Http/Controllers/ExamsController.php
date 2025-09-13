@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\ApiResponseService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ExamsController extends Controller
 {
@@ -92,6 +93,7 @@ class ExamsController extends Controller
     public function bulkAddExamGrading(BulkAddExamGradingRequest $request) {
        try{
         $currentSchool = $request->attributes->get('currentSchool');
+        Log::info("TESTING");
         $bulkAddExamGrading = $this->examService->bulkAddExamGrading($request->exam_grading, $currentSchool);
         return ApiResponseService::success("Exam Grading Added Successfully", $bulkAddExamGrading, null, 200);
        }

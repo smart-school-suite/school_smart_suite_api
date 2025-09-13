@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Exam\ExamIdRequest;
 use App\Http\Requests\Grade\AutoGenExamGradingRequest;
+use App\Http\Requests\Grade\BulkConfigureByOtherGradesRequest;
+use App\Http\Requests\Grade\BulkCreateGradeRequest;
+use App\Http\Requests\Grade\BulkDeleteGradeConfigRequest;
 use App\Services\AddGradesService;
 use App\Services\ApiResponseService;
 use App\Models\Exams;
@@ -11,9 +14,12 @@ use App\Models\Examtype;
 use App\Services\AutoGenExamGradingService;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Grade\CreateGradeRequest;
+use App\Http\Requests\Grade\UpdateGradeRequest;
 use App\Services\GradesService;
 use Exception;
+use Throwable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class GradesController extends Controller
 {
@@ -32,6 +38,50 @@ class GradesController extends Controller
         $this->autoGenExamGradingService = $autoGenExamGradingService;
     }
 
+    public function updateExamGrades(UpdateGradeRequest $request){
+        try{
+          $currentSchool = $request->attributes->get('currentSchool');
+          $this->addGradesService->updateExamGrades($request->grades, $currentSchool);
+          return ApiResponseService::success("Grades Updated Successfully");
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkCreateExamGrades(BulkCreateGradeRequest $request){
+        try{
+           $currentSchool = $request->attributes->get('currentSchool');
+           $this->addGradesService->bulkCreateExamGrades($request->validated(), $currentSchool);
+           return ApiResponseService::success("Grades Created Successfully", null, null, 200);
+        }
+        catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkDeleteGradesByGradeConfig(BulkDeleteGradeConfigRequest $request){
+         try{
+            Log::info("school grades config");
+           $currentSchool = $request->attributes->get('currentSchool');
+           $this->addGradesService->bulkDeleteGradesConfig($currentSchool, $request->validated());
+           return ApiResponseService::success("Grades Deleted Successfully", null, null, 200);
+        }
+        catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkConfigureByOtherGradeConfig(BulkConfigureByOtherGradesRequest $request){
+        try{
+           $currentSchool = $request->attributes->get('currentSchool');
+           $this->addGradesService->bulkConfigureByOtherGrades($request->validated(), $currentSchool);
+           return ApiResponseService::success("Grades Configured Successfully", null, null, 200);
+        }
+        catch(Throwable $e){
+           return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
     public function deleteGradeConfig(Request $request, $configId){
         try{
              $currentSchool = $request->attributes->get('currentSchool');

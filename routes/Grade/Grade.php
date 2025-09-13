@@ -42,3 +42,11 @@ use App\Http\Controllers\GradesController;
 
     Route::delete('/grade-config/delete/{configId}', [GradesController::class, 'deleteGradeConfig'])->name('delete-grades-configuration');
     Route::get('/grades-config/details/{configId}', [GradesController::class, 'getGradeConfigDetails'])->name('get-grades-configuration-details');
+
+    Route::patch('/exam-grades/update', [GradesController::class, 'updateExamGrades'])->name('update.exam.grades');
+
+    Route::post('/bulk/create', [GradesController::class, 'bulkCreateExamGrades'])->name('bulk.create.grades.config');
+
+    Route::post('/bulk/delete', [GradesController::class, 'bulkDeleteGradesByGradeConfig'])->name('bulk.Delete.Grades.by.Grade.Category.Config');
+
+    Route::post('/bulk/create/grade-category', [GradesController::class, 'bulkConfigureByOtherGradeConfig'])->name('bulk.configure.by.grade.category');

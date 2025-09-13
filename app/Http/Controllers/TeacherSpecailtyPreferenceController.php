@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Teacher\BulkTeacherPreferenceRequest;
 use App\Http\Requests\Teacher\RemoveSpecialtyPreferenceRequest;
 use App\Services\ApiResponseService;
 use App\Services\TeacherSpecailtyPreferenceService;
@@ -36,6 +37,28 @@ class TeacherSpecailtyPreferenceController extends Controller
        }
        catch(Exception $e){
          return ApiResponseService::error($e->getMessage(), null, 400);
+       }
+    }
+
+    public function bulkAddTeacherSpecialtyPreference(BulkTeacherPreferenceRequest $request){
+      try{
+         $currentSchool = $request->attributes->get('currentSchool');
+         $this->teacherSpecailtyPreferenceService->bulkAddTeacherSpecialtyPreference($currentSchool, $request->validated());
+         return ApiResponseService::success("Teacher Specialty Preference Added Successfully");
+      }
+      catch(Exception $e){
+         return ApiResponseService::error($e->getMessage(), null, 400);
+      }
+    }
+
+    public function bulkRemoveTeacherSpecialtyPreference(BulkTeacherPreferenceRequest $request){
+       try{
+          $currentSchool = $request->attributes->get('currentSchool');
+          $this->teacherSpecailtyPreferenceService->bulkRemoveTeacherSpecialtyPreference($currentSchool, $request->validated());
+           return ApiResponseService::success("Teacher Specialty Preference Removed Successfully");
+       }
+       catch(Exception $e){
+          return ApiResponseService::error($e->getMessage(), null, 400);
        }
     }
 }

@@ -10,6 +10,7 @@ use App\Models\Studentbatch;
 use App\Models\Semester;
 use App\Models\Parents;
 use App\Models\Student;
+use App\Models\Schooladmin;
 use App\Models\RegistrationFee;
 use App\Models\TuitionFees;
 use Illuminate\Database\Seeder;
@@ -26,14 +27,15 @@ class FakeDataSeeder extends Seeder
     public function run(): void
     {
 
-        $this->seedParent();
-        $this->seedStudentBatch();
-        $this->seedDepartment();
-        $this->seedSpecialty();
-        $this->seedTeacher();
-        $this->seedCourse();
-        $this->seedStudent();
-        $this->seedStudentFees();
+        //$this->seedParent();
+        //$this->seedStudentBatch();
+        //$this->seedDepartment();
+        //$this->seedSpecialty();
+        //$this->seedTeacher();
+        //$this->seedCourse();
+        //$this->seedStudent();
+        //$this->seedStudentFees();
+        $this->seedSchoolAdmin();
     }
 
     public function seedDepartment()
@@ -492,6 +494,38 @@ class FakeDataSeeder extends Seeder
             $this->command->info("Student Registration And Tuition Fees Inserted Successfully.");
         } else {
             $this->command->info("No Fees to insert.");
+        }
+    }
+
+    public function seedSchoolAdmin(){
+        $faker = Faker::create();
+        $schoolBranch = Schoolbranches::first();
+        $timestamp = now();
+        $schoolAdmins = [];
+
+        for ($i = 0; $i < 200; $i++) {
+            $uuid = Str::uuid()->toString();
+            $firstName = $faker->firstName;
+            $lastName = $faker->lastName;
+
+            $schoolAdmins[] = [
+                'id' => $uuid,
+                'school_branch_id' => $schoolBranch->id,
+                'email' => $faker->unique()->safeEmail,
+                'name' => "$firstName $lastName",
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'password' => Hash::make('password'),
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
+
+        if (!empty($schoolAdmins)) {
+            DB::table('school_admin')->insert($schoolAdmins);
+            $this->command->info("200 School Admins Inserted Successfully");
+        } else {
+            $this->command->info("No School Admins To Insert");
         }
     }
 }

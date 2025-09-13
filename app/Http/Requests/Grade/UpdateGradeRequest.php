@@ -19,7 +19,17 @@ class UpdateGradeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'grades' => 'required|array',
+            'grades.*.letter_grade_id' => 'required|string|exists:letter_grade,id',
+            'grades.*.grade_id' => 'required|string|exists:grades,id',
+            'grades.*.minimum_score' => 'sometimes|nullable|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
+            'grades.*.maximum_score' => 'sometimes|nullable|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
+            'grades.*.max_score' => 'sometimes|nullable|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
+            'grades.*.determinant' => 'sometimes|nullable|string',
+            'grades.*.grade_points' => "sometimes|nullable|numeric|min:0|max:4.00|regex:/^\d+(\.\d{1,2})?$/",
+            'grades.*.grades_category_id' => 'sometimes|nullable|string|exists:grades_category,id',
+            'grades.*.resit_status' => 'sometimes|nullable|string|in:no_resit,resit,high_resit_potential,low_resit_potential',
+            'grades.*.grade_status' => 'sometimes|nullable|string',
         ];
     }
 }

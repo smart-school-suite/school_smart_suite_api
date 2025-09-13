@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Requests\ExamGrading;
+namespace App\Http\Requests\Grade;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class BulkAddExamGradingRequest extends FormRequest
+class BulkDeleteGradeConfigRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -18,9 +17,8 @@ class BulkAddExamGradingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'exam_grading' => 'required|array',
-            'exam_grading.*.exam_id' => 'required|string|exists:exams,id',
-            'exam_grading.*.grades_config_Id' => 'required|string|exists:school_grades_config,id'
+           'configIds' => 'required|array',
+           'configIds.*.grade_config_id' => 'required|string|exists:school_grades_config,id'
         ];
     }
 }
