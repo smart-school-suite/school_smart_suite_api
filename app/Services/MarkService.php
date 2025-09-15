@@ -14,19 +14,65 @@ use App\Models\Timetable;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class MarkService
 {
     // Implement your logic here
 
-    public function getMarksByCandidate(string $candidateId, $currentSchool){
+    public function getMarksByCandidate(string $candidateId, $currentSchool)
+    {
         $candidate = AccessedStudent::find($candidateId);
         $marks = Marks::where("school_branch_id", $currentSchool->id)
-                          ->where("student_id", $candidate->student_id)
-                          ->where("level_id", $candidate->level_id)
-                          ->where("specialty_id", $candidate->specialty_id)
-                          ->get();
+            ->where("student_id", $candidate->student_id)
+            ->where("level_id", $candidate->level_id)
+            ->where("specialty_id", $candidate->specialty_id)
+            ->get();
         return $marks;
+    }
+
+    public function getCaMarksByExamCandidate(string $candidateId, $currentSchool)
+    {
+        try {
+            $candidate = AccessedStudent::find($candidateId);
+            $marks = Marks::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $candidate->student_id)
+                ->where("level_id", $candidate->level_id)
+                ->where("specialty_id", $candidate->specialty_id)
+                ->where("exam_id", $candidate->exam_id)
+                ->get();
+            return $marks;
+        } catch (Throwable $e) {
+            throw $e;
+        }
+    }
+
+    public function getExamMarksByExamCandidate(string $candidateId, $currentSchool){
+         try{
+            $candidate = AccessedStudent::find($candidateId);
+            $caExam = $this->findExamsBasedOnCriteria($candidate->exam_id);
+            $examMarks = Marks::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $candidate->student_id)
+                ->where("level_id", $candidate->level_id)
+                ->where("specialty_id", $candidate->specialty_id)
+                ->where("exam_id", $candidate->exam_id)
+                ->get();
+
+            $caMarks = Marks::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $candidate->student_id)
+                ->where("level_id", $candidate->level_id)
+                ->where("specialty_id", $candidate->specialty_id)
+                ->where("exam_id", $caExam->id)
+                ->get();
+
+            return [
+                 'exam_marks' => $examMarks,
+                 'ca_marks' => $caMarks
+            ];
+         }
+         catch(Throwable $e){
+             throw $e;
+         }
     }
     public function deleteMark(string $mark_id, $currentSchool)
     {
@@ -187,56 +233,55 @@ class MarkService
         return $additionalExam;
     }
 
-    public function getCaExamEvaluationHelperData($currentSchool, $examId){
-         try{
+    public function getCaExamEvaluationHelperData($currentSchool, $examId)
+    {
+        try {
             $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($examId);
             $examGrades = Grades::where("school_branch_id", $currentSchool->id)
-                                    ->where("grades_category_id", $exam->grades_category_id)
-                                    ->with(['lettergrade'])
-                                    ->get();
+                ->where("grades_category_id", $exam->grades_category_id)
+                ->with(['lettergrade'])
+                ->get();
             $timetableSlots = Examtimetable::where("school_branch_id", $currentSchool->id)
-                          ->where("specialty_id", $exam->specialty_id)
-                          ->where("student_batch_id", $exam->student_batch_id)
-                          ->where("level_id", $exam->level_id)
-                          ->where("exam_id", $exam->id)
-                          ->pluck('course_id')->toArray();
+                ->where("specialty_id", $exam->specialty_id)
+                ->where("student_batch_id", $exam->student_batch_id)
+                ->where("level_id", $exam->level_id)
+                ->where("exam_id", $exam->id)
+                ->pluck('course_id')->toArray();
             $courses  = Courses::where("school_branch_id", $currentSchool->id)
-                                  ->whereIn('id', array_unique($timetableSlots))
-                                  ->get();
+                ->whereIn('id', array_unique($timetableSlots))
+                ->get();
 
             return [
                 'exam_grading' => $examGrades,
                 'courses' => $courses,
                 'max_gpa' => $currentSchool->max_gpa ?? 4.00
             ];
-         }
-         catch(Exception $e){
-           throw $e;
-         }
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
-    public function getExamEvaluationHelperData($currentSchool, $examId, $studentId){
-         try{
-             $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($examId);
-             $relatedCA = $this->findExamsBasedOnCriteria($examId);
-             $examGrades = Grades::where("school_branch_id", $currentSchool->id)
-                                    ->where("grades_category_id", $exam->grades_category_id)
-                                    ->with(['lettergrade'])
-                                    ->get();
+    public function getExamEvaluationHelperData($currentSchool, $examId, $studentId)
+    {
+        try {
+            $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($examId);
+            $relatedCA = $this->findExamsBasedOnCriteria($examId);
+            $examGrades = Grades::where("school_branch_id", $currentSchool->id)
+                ->where("grades_category_id", $exam->grades_category_id)
+                ->with(['lettergrade'])
+                ->get();
             $caScores = Marks::where("school_branch_id", $currentSchool->id)
-                              ->where("student_id", $studentId)
-                              ->where('exam_id', $relatedCA->id)
-                              ->with(['course'])
-                              ->get();
+                ->where("student_id", $studentId)
+                ->where('exam_id', $relatedCA->id)
+                ->with(['course'])
+                ->get();
             return [
                 'exam_grading' => $examGrades,
                 'ca_scores' => $caScores,
                 'max_gpa' => $currentSchool->max_gpa ?? 4.00
             ];
-
-         }
-         catch(Exception $e){
+        } catch (Exception $e) {
             throw $e;
-         }
+        }
     }
 }

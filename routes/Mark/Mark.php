@@ -43,3 +43,6 @@ Route::middleware(['permission:schoolAdmin.mark.view.exam.evaluation.data'])->ge
 Route::get('/ca-helper-data/{examId}', [MarksController::class, 'getCaEvaluationHelperData'])->name("ca-helper-data");
 
 Route::get('/exam-helper-data/{examId}/{studentId}', [MarksController::class, 'getExamEvaluationHelperData'])->name('exam-helper-data');
+
+Route::get('/exam-marks/exam-candidate/{candidateId}',[MarksController::class, "getExamMarksByCandidate"])->name("get.exam.marks.by.exam_candidate");
+Route::get('/ca-marks/exam-candidate/{candidateId}', [MarksController::class, "getCaMarksByExamCandidate"])->name("get.ca.marks.by.exam-candidate");

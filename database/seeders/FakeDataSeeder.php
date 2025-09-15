@@ -27,15 +27,15 @@ class FakeDataSeeder extends Seeder
     public function run(): void
     {
 
-        //$this->seedParent();
-        //$this->seedStudentBatch();
-        //$this->seedDepartment();
-        //$this->seedSpecialty();
-        //$this->seedTeacher();
-        //$this->seedCourse();
-        //$this->seedStudent();
-        //$this->seedStudentFees();
-        $this->seedSchoolAdmin();
+          $this->seedParent();
+          $this->seedStudentBatch();
+          $this->seedDepartment();
+          $this->seedSpecialty();
+          $this->seedTeacher();
+          $this->seedCourse();
+          $this->seedStudent();
+          $this->seedStudentFees();
+          $this->seedSchoolAdmin();
     }
 
     public function seedDepartment()
@@ -393,7 +393,7 @@ class FakeDataSeeder extends Seeder
         }
 
         foreach ($specialties as $specialty) {
-            for ($i = 0; $i < 50; $i++) {
+            for ($i = 0; $i < 10; $i++) {
                 $firstName = $faker->firstName;
                 $lastName = $faker->lastName;
                 $gender = $faker->randomElement(['Male', 'Female']);
@@ -496,7 +496,6 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No Fees to insert.");
         }
     }
-
     public function seedSchoolAdmin(){
         $faker = Faker::create();
         $schoolBranch = Schoolbranches::first();

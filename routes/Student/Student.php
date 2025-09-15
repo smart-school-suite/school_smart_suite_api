@@ -63,3 +63,5 @@ use App\Http\Controllers\StudentController;
 
     Route::delete('/student/avatar/delete', [StudentController::class, 'deleteProfilePicture'])
     ->name('student.avatar.delete');
+
+    Route::post('/bulk-reinstate/dropout', [StudentController::class, "bulkReinstateDropedOutStudent"])->name("Bulk.reinstate.dropdout.student");

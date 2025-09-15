@@ -6,6 +6,7 @@ use App\Models\Student;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class StudentService
@@ -75,6 +76,25 @@ class StudentService
         $student->dropout_status = true;
         $student->save();
         return $student;
+    }
+
+    public function bulkReinstateDropOutStudent($studentDropoutList, $currentSchool){
+           try {
+            DB::beginTransaction();
+            foreach ($studentDropoutList as $studentDropout) {
+                Log::info("student id", $studentDropout->toArray());
+                Log::info("student id", $studentDropout['student_id']->toArray());
+                $student = Student::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($studentDropout['student_id']);
+                $student->dropout_status = false;
+                $student->save();
+            }
+            DB::commit();
+            return true;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
     public function getAllDropoutStudents($currentSchool)
     {

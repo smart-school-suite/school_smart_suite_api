@@ -15,6 +15,7 @@ use App\Services\UpdateCaScoreService;
 use App\Services\MarkService;
 use App\Services\ApiResponseService;
 use Exception;
+use Throwable;
 use Illuminate\Http\Request;
 
 class MarksController extends Controller
@@ -36,6 +37,26 @@ class MarksController extends Controller
         $this->updateCaScoresService = $updateCaScoreService;
         $this->updateExamScoreService = $updateExamScoreService;
         $this->markService = $markService;
+    }
+    public function getExamMarksByCandidate(Request $request, $candidateId){
+        try{
+            $currentSchool = $request->attributes->get('currentSchool');
+            $examResults = $this->markService->getExamMarksByExamCandidate($candidateId, $currentSchool);
+            return ApiResponseService::success("Exam Marks Fetched Successfully", $examResults, null, 200);
+        }
+        catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+    public function getCaMarksByExamCandidate(Request $request, $candidateId){
+        try{
+            $currentSchool = $request->attributes->get('currentSchool');
+            $examResults = $this->markService->getCaMarksByExamCandidate($candidateId, $currentSchool);
+            return ApiResponseService::success("CA Marks Fetched Successfully", $examResults, null, 200);
+        }
+        catch(Throwable $e){
+             return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
     public function createCaMark(CreateExamScoreRequest $request)
     {
