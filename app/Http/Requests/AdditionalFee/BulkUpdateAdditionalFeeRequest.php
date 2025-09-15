@@ -21,18 +21,16 @@ class BulkUpdateAdditionalFeeRequest extends FormRequest
     {
         return [
             'additional_fee' => 'required|array',
-            'additional_fee.*.reason' => 'required|string',
+            'additional_fee.*.fee_id' => 'required|string|exists:additional_fees,id',
+            'additional_fee.*.reason' => 'sometimes|nullable|string|max:500',
             'additional_fee.*.amount' =>[
                 'sometimes',
                 'nullable',
                 'numeric',
                 'regex:/^\d{1,6}(\.\d{1,2})?$/',
                 'min:0',
-            ],,
-            'additional_fee.*.specialty_id' => 'required|string|exists:specialty,id',
-            'additional_fee.*.level_id' => 'required|string|exists:education_levels,id',
-            'additional_fee.*.additionalfee_category_id' => 'required|string|exists:additional_fee_category,id',
-            'additional_fee.*.student_id' => 'required|string|exists:student,id'
+            ],
+            'additional_fee.*.additionalfee_category_id' => 'sometimes|nullable|string|exists:additional_fee_category,id'
         ];
     }
 }

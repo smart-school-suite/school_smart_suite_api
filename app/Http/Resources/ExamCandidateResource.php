@@ -24,7 +24,7 @@ class ExamCandidateResource extends JsonResource
             "level_name" => $this->student->level->name ?? null,
             "specialty_name" => $this->student->specialty->specialty_name,
             "specialty_id" => $this->student->specialty->id,
-            "level_id" => $this->studnet->level->id ?? null,
+            "level_id" => $this->student->level->id ?? null,
             "exam_name" => $this->exam->examtype->exam_name,
             "exam_type" => $this->exam->examtype->type,
             "exam_id" => $this->exam->id

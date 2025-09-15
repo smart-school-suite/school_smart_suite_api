@@ -43,7 +43,7 @@ class MarksController extends Controller
         try {
             $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
@@ -53,7 +53,7 @@ class MarksController extends Controller
         try {
             $results = $this->addExamScoresService->addExamScores($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
@@ -63,7 +63,7 @@ class MarksController extends Controller
         try {
             $results = $this->updateExamScoreService->updateExamScore($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Updated Sucessfully", $results, null, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }
@@ -73,7 +73,7 @@ class MarksController extends Controller
         try {
             $results = $this->updateCaScoresService->updateCaScore($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Updated Sucessfully", $results, null, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 500);
         }
     }

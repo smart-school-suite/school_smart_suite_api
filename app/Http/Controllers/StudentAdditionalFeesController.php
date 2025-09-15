@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 use App\Http\Requests\AdditionalFee\AdditionalFeeIdRequest;
 use App\Http\Requests\AdditionalFee\AdditionalFeeTransactionIdRequest;
+use App\Http\Requests\AdditionalFee\BulkBillStudentAdditionalFeeRequest;
 use App\Http\Requests\AdditionalFee\BulkPayAdditionalFeeRequest;
+use App\Http\Requests\AdditionalFee\BulkUpdateAdditionalFeeRequest;
 use App\Http\Requests\AdditionalFee\PayAdditionalFeeRequest;
 use App\Http\Requests\AdditionalFee\UpdateAdditionalFeeRequest;
 use App\Http\Requests\AdditionalFee\CreateAdditionalFeeRequest;
 use App\Services\ApiResponseService;
-use App\Http\Requests\BulkPayAdditionFeeRequest;
 use App\Http\Resources\AdditionalFeeResource;
 use App\Http\Resources\AdditionalFeeTransactionResource;
-use Illuminate\Support\Facades\Validator;
 use App\Services\studentAdditionalFeeService;
 use Exception;
 use Illuminate\Http\Request;
-
+use Throwable;
 
 class StudentAdditionalFeesController extends Controller
 {
@@ -102,11 +102,11 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Transaction Details Fetched Succesfully", $transactionDetails, null, 200);
     }
 
-    public function bulkBillStudents(BulkPayAdditionalFeeRequest $request)
+    public function bulkBillStudents(BulkBillStudentAdditionalFeeRequest $request)
     {
         try {
             $currentSchool = $request->attributes->get('currentSchool');
-            $bulkBillStudents = $this->studentAdditionalFeeService->bulkBillStudents($request->additional_fee, $currentSchool);
+            $bulkBillStudents = $this->studentAdditionalFeeService->bulkBillStudents($request->fee_details, $currentSchool);
             return ApiResponseService::success("Student Billed Succesfully", $bulkBillStudents, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
@@ -152,6 +152,17 @@ class StudentAdditionalFeesController extends Controller
             return ApiResponseService::success("Additional Fees Paid Succesfully", $bulkPayFees, null, 200);
         }
         catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function bulkUpdateAdditionalFee(BulkUpdateAdditionalFeeRequest $request){
+        try{
+          $currentSchool = $request->attributes->get('currentSchool');
+          $this->studentAdditionalFeeService->bulkUpdateStudentAdditionalFees($request->additional_fee, $currentSchool);
+          return ApiResponseService::success("Additional Fees Updated Successfully", null, null, 200);
+        }
+        catch(Throwable $e){
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }

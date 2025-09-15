@@ -15,7 +15,9 @@ class AccessedStudent extends Model
          'exam_id',
          'school_branch_id',
          'grades_submitted',
-         'student_accessed'
+         'student_accessed',
+         'level_id',
+         'specialty_id'
     ];
 
     public $table = 'exam_candidates';
@@ -28,6 +30,14 @@ class AccessedStudent extends Model
 
     public function exam(): BelongsTo {
          return $this->belongsTo(Exams::class, 'exam_id');
+    }
+
+    public function level(): BelongsTo {
+        return $this->belongsTo(Educationlevels::class, 'level_id');
+    }
+
+    public function specialty(): BelongsTo {
+         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
 }

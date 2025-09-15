@@ -737,6 +737,10 @@ return new class extends Migration
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('student_id')->nullable()->index();
             $table->foreign('student_id')->references('id')->on('student');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialty')->onDelete('cascade');
+            $table->string('level_id');
+            $table->foreign('level_id')->references('id')->on('education_levels');
         });
 
         Schema::table('department_stats', function (Blueprint $table) {

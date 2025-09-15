@@ -13,7 +13,7 @@ class AccessedStudentService
         ->with(['student' => function ($query) {
             $query->with(['level', 'specialty']);
         }, 'exam.examtype'])
-        ->paginate(100);
+        ->get();
     }
 
     public function deleteAccessedStudent($accessedStudentId){

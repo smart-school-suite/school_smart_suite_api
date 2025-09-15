@@ -27,6 +27,9 @@ class Specialty extends Model
     public $table = 'specialty';
     public $incrementing = 'false';
 
+    public function examCandidate(): HasMany {
+         return $this->hasMany(AccessedStudent::class);
+    }
     public function studentGradDates(): HasMany
     {
         return $this->hasMany(StudentBatchGradeDates::class);

@@ -12,11 +12,22 @@ use App\Models\Grades;
 use App\Models\StudentResults;
 use App\Models\Timetable;
 use App\Models\Courses;
+use App\Models\AccessedStudent;
 use Illuminate\Support\Facades\Log;
 
 class MarkService
 {
     // Implement your logic here
+
+    public function getMarksByCandidate(string $candidateId, $currentSchool){
+        $candidate = AccessedStudent::find($candidateId);
+        $marks = Marks::where("school_branch_id", $currentSchool->id)
+                          ->where("student_id", $candidate->student_id)
+                          ->where("level_id", $candidate->level_id)
+                          ->where("specialty_id", $candidate->specialty_id)
+                          ->get();
+        return $marks;
+    }
     public function deleteMark(string $mark_id, $currentSchool)
     {
 
@@ -42,6 +53,7 @@ class MarkService
 
         return $scoresData;
     }
+
     public function getScoreDetails(string $markId, $currentSchool)
     {
         $findScore = Marks::where("school_branch_id", $currentSchool->id)

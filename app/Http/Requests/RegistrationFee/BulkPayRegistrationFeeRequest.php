@@ -19,7 +19,6 @@ class BulkPayRegistrationFeeRequest extends FormRequest
     {
         return [
            'registration_fee' => 'required|array',
-            'registration_fee.*.id' => 'required|string|exists:registration_fees,id',
             'registration_fee.*.amount' => 'required|integer',
             'registration_fee.*.registration_fee_id' => 'required|string|exists:registration_fees,id',
             'registration_fee.*.payment_method' => 'required|string',
