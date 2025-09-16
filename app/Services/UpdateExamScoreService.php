@@ -19,7 +19,7 @@ class UpdateExamScoreService
      * Updates the main exam scores for a batch of students, considering CA scores.
      *
      * @param array $updateData An array of student exam score update data. Each element should contain
-     * 'mark_id' and 'new_score'.
+     * 'mark_id' and 'score'.
      * @param object $currentSchool The current school object.
      * @return array An array of the updated marks data.
      * @throws Exception If any error occurs during the update process.
@@ -51,7 +51,7 @@ class UpdateExamScoreService
                 $totalScore = $this->calculateTotalScoreForExam(
                     $currentSchool->id,
                     $student,
-                    $data['new_score'],
+                    $data['score'],
                     $exam,
                     $course
                 );
@@ -205,7 +205,7 @@ class UpdateExamScoreService
         $totalScore = $newExamScore + $caScoreRecord->score;
 
         if ($totalScore > ($additionalExam->weighted_mark + $exam->weighted_mark)) {
-            throw new Exception('Total score exceeds maximum allowed score.', 400);
+            throw new Exception("Total score {$totalScore} exceeds maximum allowed score $additionalExam->weighted_mark + $exam->weighted_mark", 400);
         }
 
         return $totalScore;

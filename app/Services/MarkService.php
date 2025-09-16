@@ -23,6 +23,7 @@ class MarkService
     public function getMarksByCandidate(string $candidateId, $currentSchool)
     {
         $candidate = AccessedStudent::find($candidateId);
+
         $marks = Marks::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $candidate->student_id)
             ->where("level_id", $candidate->level_id)
@@ -35,45 +36,100 @@ class MarkService
     {
         try {
             $candidate = AccessedStudent::find($candidateId);
+            $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($candidate->exam_id);
+            $examGrades = Grades::where("school_branch_id", $currentSchool->id)
+                ->where("grades_category_id", $exam->grades_category_id)
+                ->with(['lettergrade'])
+                ->get();
             $marks = Marks::where("school_branch_id", $currentSchool->id)
                 ->where("student_id", $candidate->student_id)
                 ->where("level_id", $candidate->level_id)
                 ->where("specialty_id", $candidate->specialty_id)
                 ->where("exam_id", $candidate->exam_id)
+                ->with(['course'])
                 ->get();
-            return $marks;
+            return [
+                'ca_marks' => $marks,
+                'exam_grades' => $examGrades,
+                'max_gpa' => $currentSchool->max_gpa ?? 4.00
+            ];
         } catch (Throwable $e) {
             throw $e;
         }
     }
 
-    public function getExamMarksByExamCandidate(string $candidateId, $currentSchool){
-         try{
-            $candidate = AccessedStudent::find($candidateId);
-            $caExam = $this->findExamsBasedOnCriteria($candidate->exam_id);
-            $examMarks = Marks::where("school_branch_id", $currentSchool->id)
-                ->where("student_id", $candidate->student_id)
-                ->where("level_id", $candidate->level_id)
-                ->where("specialty_id", $candidate->specialty_id)
-                ->where("exam_id", $candidate->exam_id)
-                ->get();
+    public function getExamMarksByExamCandidate(string $candidateId, $currentSchool)
+{
+    try {
+        $candidate = AccessedStudent::find($candidateId);
+        $caExam = $this->findExamsBasedOnCriteria($candidate->exam_id);
+        $exam = Exams::where("school_branch_id", $currentSchool->id)->findorFail($candidate->exam_id);
+        $examGrades = Grades::where("school_branch_id", $currentSchool->id)
+            ->where("grades_category_id", $exam->grades_category_id)
+            ->with(['lettergrade'])
+            ->get();
 
-            $caMarks = Marks::where("school_branch_id", $currentSchool->id)
-                ->where("student_id", $candidate->student_id)
-                ->where("level_id", $candidate->level_id)
-                ->where("specialty_id", $candidate->specialty_id)
-                ->where("exam_id", $caExam->id)
-                ->get();
+        $examMarks = Marks::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $candidate->student_id)
+            ->where("level_id", $candidate->level_id)
+            ->where("specialty_id", $candidate->specialty_id)
+            ->where("exam_id", $candidate->exam_id)
+            ->with(['course'])
+            ->get();
 
-            return [
-                 'exam_marks' => $examMarks,
-                 'ca_marks' => $caMarks
+        $caMarks = Marks::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $candidate->student_id)
+            ->where("level_id", $candidate->level_id)
+            ->where("specialty_id", $candidate->specialty_id)
+            ->where("exam_id", $caExam->id)
+            ->get();
+
+        $mappedMarks = [];
+        $examMarksByCourse = $examMarks->keyBy('courses_id');
+        $caMarksByCourse = $caMarks->keyBy('courses_id');
+
+        $courseIds = collect(array_merge($examMarks->pluck('courses_id')->toArray(),
+                                       $caMarks->pluck('courses_id')->toArray()))->unique();
+
+        foreach ($courseIds as $courseId) {
+            $examMark = $examMarksByCourse->get($courseId);
+            $caMark = $caMarksByCourse->get($courseId);
+
+            $mappedMark = [
+                'exam_mark_id' => $examMark ? $examMark->id : null,
+                'course_id' => $courseId,
+                'student_id' => $examMark ? $examMark->student_id : ($caMark ? $caMark->student_id : null),
+                'exam_id' => $examMark ? $examMark->exam_id : ($caMark ? $caMark->exam_id : null),
+                'level_id' => $examMark ? $examMark->level_id : ($caMark ? $caMark->level_id : null),
+                'specialty_id' => $examMark ? $examMark->specialty_id : ($caMark ? $caMark->specialty_id : null),
+                'student_batch_id' => $examMark ? $examMark->student_batch_id : ($caMark ? $caMark->student_batch_id : null),
+                'exam_score' => $examMark ? $examMark->score : null,
+                'ca_score' => $caMark ? $caMark->score : null,
+                'exam_grade_points' => $examMark ? $examMark->grade_points : null,
+                'ca_grade_points' => $caMark ? $caMark->grade_points : null,
+                'exam_grade' => $examMark ? $examMark->grade : null,
+                'ca_grade' => $caMark ? $caMark->grade : null,
+                'exam_grade_status' => $examMark ? $examMark->grade_status : null,
+                'ca_grade_status' => $caMark ? $caMark->grade_status : null,
+                'exam_resit_status' => $examMark ? $examMark->resit_status : null,
+                'ca_resit_status' => $caMark ? $caMark->resit_status : null,
+                'exam_gratification' => $examMark ? $examMark->gratification : null,
+                'ca_gratification' => $caMark ? $caMark->gratification : null,
+                'course' => $examMark && $examMark->course ? $examMark->course : ($caMark && $caMark->course ? $caMark->course : null),
             ];
-         }
-         catch(Throwable $e){
-             throw $e;
-         }
+
+            $mappedMarks[] = $mappedMark;
+        }
+
+        return [
+            'mapped_marks' => $mappedMarks,
+            'exam_grades' => $examGrades,
+            'max_gpa' => $currentSchool->max_gpa ?? 4.00
+        ];
+    } catch (Throwable $e) {
+        throw $e;
     }
+}
     public function deleteMark(string $mark_id, $currentSchool)
     {
 

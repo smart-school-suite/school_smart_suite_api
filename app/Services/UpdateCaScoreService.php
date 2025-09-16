@@ -49,7 +49,7 @@ class UpdateCaScoreService
                 $course = Courses::findOrFail($data['course_id']);
 
                 // Determine the letter grade and other grade details based on the new score.
-                $letterGrades = $this->determineLetterGrade($data['new_score'], $exam->id, $currentSchool->id);
+                $letterGrades = $this->determineLetterGrade($data['score'], $exam->id, $currentSchool->id);
 
                 // Update the marks record with the new score and grade details.
                 $updatedScore = $this->updateMarkRecord($letterGrades, $score, $course);
