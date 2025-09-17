@@ -47,13 +47,11 @@ class StudentResitController extends Controller
     {
         try {
             $candidateId = $request->route('candidateId');
-            $studentResitResultId = $request->route('studentResitResultId');
             $currentSchool = $request->attributes->get('currentSchool');
             $updateResitScores = $this->updateResitScoreService->updateResitScores(
                 $request->entries,
                 $currentSchool,
-                $candidateId,
-                $studentResitResultId
+                $candidateId
             );
             return ApiResponseService::success("Student Resit Scores Updated Successfully", $updateResitScores, null, 200);
         } catch (Exception $e) {
@@ -130,6 +128,18 @@ class StudentResitController extends Controller
         $candidateId = $request->route('candidateId');
         $prepareResitData = $this->studentResitService->getResitEvaluationHelperData($currentSchool, $resitExamId, $candidateId);
         return ApiResponseService::success("Resit Evaluation Helper Data Fetched Successfully", $prepareResitData, null, 200);
+    }
+
+    public function getResitScoresByCandidate(Request $request){
+        try{
+            $candidateId = $request->route('candidateId');
+           $currentSchool = $request->attributes->get("currentSchool");
+           $resitScores = $this->studentResitService->getResitScoresByCandidate($currentSchool, $candidateId);
+           return ApiResponseService::success("Resit Scores Fetched Successfully", $resitScores, null, 200);
+        }
+        catch(Exception $e){
+             return  ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
     public function bulkDeleteStudentResit(StudentResitIdRequest $request)
     {

@@ -51,7 +51,7 @@ Route::middleware(['permission:schoolAdmin.studentResits.store.scores'])->post('
  ->name('candidates.resit-results.store');
 
 // Updating a specific student's resit scores
-Route::middleware(['permission:schoolAdmin.studentResits.update.scores'])->put('/student-resits/{candidateId}/{studentResitResultId}', [StudentResitController::class, 'updateResitScores'])
+Route::middleware(['permission:schoolAdmin.studentResits.update.scores'])->put('/student-resits/{candidateId}', [StudentResitController::class, 'updateResitScores'])
 ->name('student-resits.update-scores');
 
 // Bulk payment for student resits
@@ -85,3 +85,5 @@ Route::middleware(['permission:schoolAdmin.studentResits.view.eligable.student']
 // Fetching eligible resit exams for a specific student
 Route::middleware(['permission:schoolAdmin.studentResits.view.eligable.student.resitExam'])->get('/students/{studentId}/eligible-resit-exams', [StudentResitController::class, 'getEligableResitExamByStudent'])
 ->name('students.eligible-resit-exams');
+
+Route::get('resit-scores/candidate/{candidateId}', [StudentResitController::class, "getResitScoresByCandidate"])->name("get.resit.scores.by.candidate");

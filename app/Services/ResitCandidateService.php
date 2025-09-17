@@ -20,4 +20,5 @@ class ResitCandidateService
         $candidate->delete();
 
     }
+
 }

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Jobs\StatisticalJobs\FinancialJobs\ResitFeeStatJob;
 use App\Models\Grades;
-use App\Models\Marks;
+use App\Models\ResitMarks;
 use App\Models\ResitCandidates;
 use App\Models\ResitExam;
 use App\Models\Resitexamtimetable;
@@ -179,6 +179,35 @@ class StudentResitService
              'student_data' => $resitCandidate->student,
              'exam_grading' => $examGrading
         ];
+    }
+
+    public function getResitScoresByCandidate($currentSchool, $candidateId){
+        try{
+            $resitCandidate = ResitCandidates::with('student')->find($candidateId);
+            $resitExam = ResitExam::find($resitCandidate->resit_exam_id);
+
+            $examGrading = Grades::where("school_branch_id", $currentSchool->id)
+                               ->where("grades_category_id", $resitExam->grades_category_id)
+                                ->with('lettergrade')
+                                ->get();
+
+            $courses = ResitMarks::where("school_branch_id", $currentSchool->id)
+                                  ->where("resit_exam_id", $resitExam->id)
+                                  ->where("student_id", $resitCandidate->student_id)
+                               //   ->where("level_id", $resitCandidate->level_id)
+                                 // ->where("specialty_id", $resitCandidate->specialty_id)
+                                  ->with(['course'])
+                                  ->get();
+
+            return [
+             'marks_data' => $courses,
+             'student_data' => $resitCandidate->student,
+             'exam_grading' => $examGrading,
+            ];
+        }
+        catch(Exception $e){
+
+        }
     }
     public function bulkDeleteStudentResit($studentResitIds)
     {
