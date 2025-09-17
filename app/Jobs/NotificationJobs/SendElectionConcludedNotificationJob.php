@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Notification;
 class SendElectionConcludedNotificationJob implements ShouldQueue
 {
      use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
+    public $tries = 3;
     /**
      * The ID of the election.
      *

@@ -19,6 +19,7 @@ class SendAdminAdditionalFeeNotificationJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
+    public $tries = 3;
     protected $schoolBranchId;
     protected $additionalFeeData;
     public function __construct(string $schoolBranchId, array $additionalFeeData)

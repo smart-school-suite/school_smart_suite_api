@@ -19,6 +19,7 @@ class SendAdminApplicationApprovedNotification implements ShouldQueue
     /**
      * Create a new job instance.
      */
+    public $tries = 3;
     protected $applicationData;
     protected $schoolBranchId;
     public function __construct(array $applicationData, string $schoolBranchId)

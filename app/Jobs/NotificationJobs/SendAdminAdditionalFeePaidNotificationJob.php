@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Notification;
 class SendAdminAdditionalFeePaidNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public $tries = 3;
     protected $schoolBranchId;
     protected $additionalFeeData;
     public function __construct(string $schoolBranchId, array $additionalFeeData)

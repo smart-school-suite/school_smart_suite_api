@@ -19,6 +19,7 @@ class SendAdminDepartmentCreatedNotificationJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
+    public $tries = 3;
     protected $schoolBranchId;
     protected $departmentDetails;
     public function __construct($schoolBranchId, $departmentDetails)

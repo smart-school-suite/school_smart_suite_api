@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Notification;
 class SendCandidacyApprovedNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
+    public $tries = 3;
     protected array $applicationData;
 
     public function __construct(array $applicationData)

@@ -17,6 +17,7 @@ class CreateResitCandidateJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
+    public $tries = 3;
     protected  $resit;
     public function __construct($resit)
     {

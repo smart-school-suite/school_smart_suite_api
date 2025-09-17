@@ -19,6 +19,7 @@ class SendAdminResitExamCreatedNotificationJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
+    public $tries = 3;
     protected $schoolBranchId;
     protected $resitDetails;
     protected $examDetails;

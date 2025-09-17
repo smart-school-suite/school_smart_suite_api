@@ -12,18 +12,31 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class CreateResitExamJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 3;
+
+    /**
+     * The exam instance this job is processing.
+     *
+     * @var \App\Models\Exams
+     */
+    protected Exams $exam;
+
+    /**
      * Create a new job instance.
      */
-    protected $exam;
     public function __construct(Exams $exam)
     {
-        //
         $this->exam = $exam;
     }
 
@@ -40,6 +53,8 @@ class CreateResitExamJob implements ShouldQueue
 
         $resitType = $this->getResitType($examType);
         if (!$resitType) {
+            // Log an error or handle the case where the resit type doesn't exist.
+            Log::warning('Resit exam type not found for semester: ' . $examType->semester);
             return;
         }
 
@@ -51,25 +66,25 @@ class CreateResitExamJob implements ShouldQueue
 
         if ($studentResits->isNotEmpty() && !$this->resitExamExists()) {
             $this->createResitExam($resitType);
-            $this->notifyAdmin($this->exam, $resitType);
+            $this->notifyAdmin($resitType);
         }
     }
 
-    private function getResitType($examType)
+    private function getResitType(Examtype $examType): ?Examtype
     {
         return Examtype::where('type', 'resit')
             ->where('semester', $examType->semester)
             ->first();
     }
 
-    private function resitExamExists()
+    private function resitExamExists(): bool
     {
         return ResitExam::where('school_branch_id', $this->exam->school_branch_id)
             ->where('reference_exam_id', $this->exam->id)
             ->exists();
     }
 
-    private function createResitExam($resitType)
+    private function createResitExam(Examtype $resitType): void
     {
         ResitExam::create([
             'level_id' => $this->exam->level_id,
@@ -81,10 +96,15 @@ class CreateResitExamJob implements ShouldQueue
         ]);
     }
 
-    private function notifyAdmin($exam, $resitDetails){
-        $examDetails = Exams::where("school_branch_id", $exam->id)
-        ->with(['specialty', 'level', 'examtype'])->find($exam->id);
+    private function notifyAdmin(Examtype $resitDetails): void
+    {
+        $examDetails = Exams::with(['specialty', 'level', 'examtype'])->find($this->exam->id);
 
-        SendAdminResitExamCreatedNotificationJob::dispatch($exam->school_branch_id, $resitDetails, $examDetails);
+        if ($examDetails) {
+            Log::info("Exam details: " . json_encode($examDetails->toArray()));
+            Log::info("Resit details: " . json_encode($resitDetails->toArray()));
+
+            SendAdminResitExamCreatedNotificationJob::dispatch($this->exam->school_branch_id, $resitDetails, $examDetails);
+        }
     }
 }
