@@ -4,11 +4,9 @@ namespace App\Http\Requests\StudentResit;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StudentResitIdRequest extends FormRequest
+class BulkPayStudentResitRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -17,8 +15,10 @@ class StudentResitIdRequest extends FormRequest
     public function rules(): array
     {
         return [
-           "resitIds" => 'required|array',
-           "resitIds.*.resit_id" => 'required|string|exists:student_resit,id',
+            "paymentData" => 'required|array',
+            "paymentData.*.resit_id" => 'required|string|exists:student_resit,id',
+            'paymentData.*.amount' => 'required',
+            'paymentData.*.payment_method' => 'required|string'
         ];
     }
 }

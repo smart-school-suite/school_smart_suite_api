@@ -104,7 +104,9 @@ class StudentResitService
     }
     public function getResitPaymentTransactions($currentSchool)
     {
-        $getResitPaymentTransactions = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level'])->get();
+        $getResitPaymentTransactions = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)
+        ->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level', 'studentResit.courses'])
+        ->get();
         return $getResitPaymentTransactions;
     }
     public function deleteResitFeeTransaction($currentSchool, string $transactionId)
@@ -119,7 +121,7 @@ class StudentResitService
     public function getTransactionDetails($currentSchool, string $transactionId)
     {
         return ResitFeeTransactions::where("school_branch_id", $currentSchool->id)
-            ->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level'])
+            ->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level', 'studentResit.courses'])
             ->find($transactionId);
     }
     public function reverseResitTransaction($transactionId, $currentSchool)
@@ -253,7 +255,7 @@ class StudentResitService
             throw $e;
         }
     }
-    public function bulkPayStudentResit($paymentData, $studentResitIds, $currentSchool)
+    public function bulkPayStudentResit($studentResitIds, $currentSchool)
     {
         $result = [];
         try {
@@ -265,16 +267,12 @@ class StudentResitService
                 if (!$studentResit) {
                     return ApiResponseService::error("Student Resit Not found", null, 404);
                 }
-
-                if ($studentResit->resit_fee < $paymentData['amount']) {
-                    return ApiResponseService::error("The Amount paid is greater than the cost of resit", null, 409);
-                }
                 $transactionId = substr(str_replace('-', '', Str::uuid()->toString()), 0, 10);
 
                 ResitFeeTransactions::create([
-                    'amount' => $paymentData['amount'],
-                    'payment_method' => $paymentData['payment_method'],
-                    'resitfee_id' => $studentResitId,
+                    'amount' => $studentResitId['amount'],
+                    'payment_method' => $studentResitId['payment_method'],
+                    'resitfee_id' => $studentResitId['resit_id'],
                     'school_branch_id' => $currentSchool->id,
                     'transaction_id' => $transactionId
                 ]);

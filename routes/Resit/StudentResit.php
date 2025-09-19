@@ -54,8 +54,8 @@ Route::middleware(['permission:schoolAdmin.studentResits.store.scores'])->post('
 Route::middleware(['permission:schoolAdmin.studentResits.update.scores'])->put('/student-resits/{candidateId}', [StudentResitController::class, 'updateResitScores'])
 ->name('student-resits.update-scores');
 
-// Bulk payment for student resits
-Route::middleware(['permission:schoolAdmin.studentResits.pay'])->post('/student-resits/bulk-pay', [StudentResitController::class, 'bulkPayStudentResit'])
+// Bulk payment for student resits middleware(['permission:schoolAdmin.studentResits.pay'])->
+Route::post('/student-resits/bulk-pay', [StudentResitController::class, 'bulkPayStudentResit'])
 ->name('student-resits.bulk-pay');
 
 // Bulk deletion of student resits

@@ -13,8 +13,10 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StudentResit\BulkUpdateStudentResitRequest;
 use App\Http\Requests\ResitExamScore\CreateResitExamScore;
 use App\Http\Requests\ResitExamScore\UpdateResitExamScore;
+use App\Http\Requests\StudentResit\BulkPayStudentResitRequest;
 use App\Http\Requests\StudentResit\PayResitFeeRequest;
-
+use App\Http\Requests\TuitionFee\BulkPayTuitionFeeRequest;
+use App\Http\Resources\StudentResitTransResource;
 use App\Services\UpdateResitScoreService;
 use App\Services\ApiResponseService;
 
@@ -101,7 +103,7 @@ class StudentResitController extends Controller
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $getResitTransactions = $this->studentResitService->getResitPaymentTransactions($currentSchool);
-        return ApiResponseService::success("Student Resit Payment Transactions Fetched Succefully", $getResitTransactions, null, 200);
+        return ApiResponseService::success("Student Resit Payment Transactions Fetched Succefully", StudentResitTransResource::collection($getResitTransactions), null, 200);
     }
     public function deleteFeePaymentTransaction(Request $request, $transactionId)
     {
@@ -150,11 +152,11 @@ class StudentResitController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function bulkPayStudentResit(StudentResitIdRequest $request)
+    public function bulkPayStudentResit(BulkPayStudentResitRequest $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
         try {
-            $bulkPayStudentResit = $this->studentResitService->bulkPayStudentResit($request->validated(), $request->resitIds, $currentSchool);
+            $currentSchool = $request->attributes->get("currentSchool");
+            $bulkPayStudentResit = $this->studentResitService->bulkPayStudentResit( $request->paymentData, $currentSchool);
             return ApiResponseService::success("Student Resit Paid Succesfully", $bulkPayStudentResit, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);

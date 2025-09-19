@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use App\Traits\GeneratesUuid;
 class RegistrationFeeTransactions extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'id',

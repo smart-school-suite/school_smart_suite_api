@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DataCreationJob\CreateExamJob;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
 use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
@@ -61,11 +62,13 @@ class SchoolSemesterService
              'level' => $specialty->level->name,
              'schoolYear' => $semesterData['school_year']
         ];
+        CreateExamJob::dispatch($semesterData, $currentSchool);
         SendNewSemesterAvialableNotificationJob::dispatch(
             $semesterData['specialty_id'],
             $currentSchool->id,
             $data
         );
+
         CreateInstructorAvailabilityJob::dispatch(
             $currentSchool->id,
                        $schoolSemesterId

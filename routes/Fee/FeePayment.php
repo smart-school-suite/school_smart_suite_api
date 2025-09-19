@@ -78,3 +78,13 @@ use App\Http\Controllers\FeePaymentController;
     // Bulk pay registration fees for multiple students
     Route::middleware(['permission:schoolAdmin.registrationFee.pay'])->post('/registration-fee-payments/bulk-pay', [FeePaymentController::class, 'bulkPayRegistrationFee'])
         ->name('registration-fee-payments.bulk-pay');
+
+    Route::get('/tuition-fee/{feeId}', [FeePaymentController::class, 'getTuitionFeeDetails'])->name('get.tuition.fee.details');
+
+    Route::get('/registration-fee/transaction/{transactionId}', [FeePaymentController::class, 'getRegistrationFeeTransactionDetails'])->name('get.registration.fee.transaction.details');
+
+    Route::delete('/registration-fee/transaction/{delete}', [FeePaymentController::class, "deleteRegistrationFeeTransaction"])->name('delete.registration.fee.transaction');
+
+    Route::post('/registration-fee/bulk-delete', [FeePaymentController::class, 'bulkDeleteRegistrationFee'])->name('bulk.delete.registration.fee');
+
+    Route::delete('/registration-fee/{feeId}', [FeePaymentController::class, 'deleteRegistrationFee'])->name('delete.registration.fee');

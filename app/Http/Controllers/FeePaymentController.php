@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegistrationFee\RegistrationFeeIdRequest;
 use App\Services\ApiResponseService;
 use App\Services\FeePaymentService;
 use App\Http\Resources\FeeDebtorResource;
@@ -18,6 +19,7 @@ use App\Http\Resources\TuitionFeeResource;
 use App\Http\Resources\TuitionFeeTransacResource;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class FeePaymentController extends Controller
@@ -26,6 +28,13 @@ class FeePaymentController extends Controller
     protected FeePaymentService $feePaymentService;
     public function __construct(FeePaymentService $feePaymentService){
         $this->feePaymentService = $feePaymentService;
+    }
+
+
+    public function getTuitionFeeDetails(Request $request, $feeId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $tuitionFeeDetails = $this->feePaymentService->getTuitionFeeDetails($currentSchool, $feeId);
+        return ApiResponseService::success("Tuition Fee Details Fetched Successfully", $tuitionFeeDetails, null, 200);
     }
     public function payTuitionFees(PayTuitionFeeRequest $request) {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -39,6 +48,17 @@ class FeePaymentController extends Controller
         return ApiResponseService::success("Registration Fees Paid Sucessfully", $payRegistrationFees, null, 201);
     }
 
+    public function getRegistrationFeeTransactionDetails(Request $request, $transactionId){
+       $currentSchool = $request->attributes->get('currentSchool');
+       $transactionDetails = $this->feePaymentService->getRegistrationFeeTransactionDetails($currentSchool, $transactionId);
+       return ApiResponseService::success("Registration Fee Transaction Details Fetched Successfully", $transactionDetails, null, 200);
+    }
+
+    public function deleteRegistrationFeeTransaction(Request $request, $tranctionId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $this->feePaymentService->deleteRegistrationFeeTransaction($currentSchool, $tranctionId);
+        return ApiResponseService::success("Registration Fee Transaction Deleted Successfully", null, null, 200);
+    }
     public function getRegistrationFees(Request $request){
         $currentSchool = $request->attributes->get('currentSchool');
         $registrationFees = $this->feePaymentService->getRegistrationFees($currentSchool);
@@ -156,11 +176,36 @@ class FeePaymentController extends Controller
 
     public function bulkDeleteRegistrationFeeTransactions(RegistrationFeeTransactionIdRequest $request){
        try{
-          $bulkDelete = $this->feePaymentService->bulkDeleteTuitionFeeTransaction($request->transactionIds);
+          $bulkDelete = $this->feePaymentService->bulkDeleteRegistrationFeeTransactions($request->transactionIds);
           return ApiResponseService::success("Transactions Deleted Succesfully", $bulkDelete, null, 200);
        }
        catch(Exception $e){
         return ApiResponseService::error($e->getMessage(), null, 400);
        }
+    }
+
+    public function bulkDeleteRegistrationFee(RegistrationFeeIdRequest $request){
+        try{
+            $currentSchool = $request->attributes->get('currentSchool');
+            $this->feePaymentService->bulkDeleteRegistrationFee($request->registrationFeeIds, $currentSchool);
+            return ApiResponseService::success("Registration Fee Deleted Successfully", null, null, 200);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function deleteRegistrationFee(Request $request, $feeId){
+        try{
+           $currentSchool = $request->attributes->get('currentSchool');
+           $this->feePaymentService->deleteRegistrationFee($feeId, $currentSchool);
+           return ApiResponseService::success("Registration Fee Deleted Successfully", null, null, 200);
+        }
+        catch(ModelNotFoundException $e){
+           return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+        catch(Exception $e){
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 }
