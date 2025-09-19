@@ -14,7 +14,9 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+
 class CreateExamJob implements ShouldQueue
 {
 
@@ -36,7 +38,7 @@ class CreateExamJob implements ShouldQueue
      */
     public function handle(): void
     {
-       $this->createExam($this->semesterDetails, $this->currentSchool);
+        $this->createExam($this->semesterDetails, $this->currentSchool);
     }
 
     public function createExam($semesterDetails, $currentSchool)
@@ -44,7 +46,10 @@ class CreateExamJob implements ShouldQueue
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
             ->find($semesterDetails['specialty_id']);
         $semester = Semester::find($semesterDetails['semester_id']);
-        if ($semester->count == 1) {
+
+        Log::info('semester details: ' . json_encode($semester));
+
+        if (Str::contains($semester->name, 'first')) {
             $examTypes = Examtype::where("semester", "first")
                 ->where("type", '!=', 'resit')
                 ->get();
@@ -62,10 +67,11 @@ class CreateExamJob implements ShouldQueue
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
-
+                $this->createExamCandidate($semesterDetails, $specialty, $examId);
             }
         }
-        if ($semester->count == 2) {
+
+        if (Str::contains($semester->name, 'second')) {
             $examTypes = Examtype::where("semester", "second")
                 ->where("type", '!=', 'resit')
                 ->get();
@@ -88,8 +94,9 @@ class CreateExamJob implements ShouldQueue
         }
     }
 
-    public function createExamCandidate($semesterDetails, $specialty, $examId){
-           $students = Student::where('specialty_id', $specialty->id)
+    public function createExamCandidate($semesterDetails, $specialty, $examId)
+    {
+        $students = Student::where('specialty_id', $specialty->id)
             ->where('level_id', $specialty->level_id)
             ->where('student_batch_id', $semesterDetails['student_batch_id'])
             ->get();
@@ -106,7 +113,7 @@ class CreateExamJob implements ShouldQueue
                 'updated_at' => now(),
             ]);
         }
-       $exam->expected_candidate_number = $students->count();
-       $exam->save();
+        $exam->expected_candidate_number = $students->count();
+        $exam->save();
     }
 }

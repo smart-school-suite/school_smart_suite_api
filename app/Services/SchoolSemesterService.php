@@ -62,7 +62,7 @@ class SchoolSemesterService
              'level' => $specialty->level->name,
              'schoolYear' => $semesterData['school_year']
         ];
-        CreateExamJob::dispatch($semesterData, $currentSchool);
+        //CreateExamJob::dispatch($semesterData, $currentSchool);
         SendNewSemesterAvialableNotificationJob::dispatch(
             $semesterData['specialty_id'],
             $currentSchool->id,
