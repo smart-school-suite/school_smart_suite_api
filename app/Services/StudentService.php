@@ -8,7 +8,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-
+use App\Exceptions\AppException;
 class StudentService
 {
     // Implement your logic here
@@ -97,7 +97,8 @@ class StudentService
         }
     }
     public function getAllDropoutStudents($currentSchool)
-    {
+{
+    try {
         $dropoutStudents = Student::where('school_branch_id', $currentSchool->id)
             ->with([
                 'level',
@@ -107,8 +108,30 @@ class StudentService
             ])
             ->where('dropout_status', true)
             ->get();
+
+        if ($dropoutStudents->isEmpty()) {
+            throw new AppException(
+                "No dropout students were found for this school branch.",
+                404,
+                "No Dropout Students Found",
+                "There are currently no students marked with a dropout status in the system for your school.",
+                null
+            );
+        }
+
         return $dropoutStudents;
+    } catch (AppException $e) {
+        throw $e;
+    } catch (Exception $e) {
+        throw new AppException(
+            "An unexpected error occurred while retrieving dropout students.",
+            500,
+            "Internal Server Error",
+            "A server-side issue prevented the list of dropout students from being retrieved successfully.",
+            null
+        );
     }
+}
     public function reinstateDropoutStudent(string $studentDropoutId, $currentSchool)
     {
         $dropoutStudent = Student::where('school_branch_id', $currentSchool->id)->find($studentDropoutId);

@@ -9,4 +9,4 @@ Route::get('/student/{studentId}', [FeeScheduleController::class, 'getStudentFee
 Route::get('{feeScheduleId}/slots/', [FeeScheduleController::class, 'getFeeScheduleSlots'])->name('fee-schedule-slots.details');
 Route::post('/slot/create/{feeScheduleId}', [FeeScheduleController::class, 'createFeeScheduleSlots'])->name('fee-schedule-slots.create');
 Route::put('/slot/update/{feeScheduleId}', [FeeScheduleController::class, 'updateFeeScheduleSlots'])->name('fee-schedule-slots');
-
+Route::post('/auto-generate', [FeeScheduleController::class, 'autoCreateFeePaymentSchedule'])->name('auto-generate.fee.schedule');

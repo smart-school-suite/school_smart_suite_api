@@ -23,8 +23,8 @@ class AdditionalFeeCategoryController extends Controller
 
     public function deleteAdditionalFeeCategory(Request $request, string $feeCategoryId){
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteAdditionalFeeCategory = $this->additionalFeeCategoryService->deleteAdditionalFeeCategory($currentSchool, $feeCategoryId);
-        return ApiResponseService::success("Additionla Fee Category Deleted Succesfully", $deleteAdditionalFeeCategory, null, 200);
+        $this->additionalFeeCategoryService->deleteAdditionalFeeCategory($currentSchool, $feeCategoryId);
+        return ApiResponseService::success("Additionla Fee Category Deleted Succesfully", null,null, 200);
     }
 
     public function updateAdditionalFeeCategory(UpdateAdditionalFeeCategoryRequest $request, string $feeCategoryId){

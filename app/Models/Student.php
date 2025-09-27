@@ -72,6 +72,9 @@ class Student extends Model
         ];
     }
 
+     public function studentAnnouncement(): HasMany {
+         return $this->hasMany(StudentAnnouncement::class);
+    }
     public function studentFeeSchedule(): HasMany {
         return $this->hasMany(StudentFeeSchedule::class);
     }
@@ -119,10 +122,6 @@ class Student extends Model
 
     public function audience(): MorphMany {
         return $this->morphMany(Audiences::class, 'audienceable');
-    }
-
-    public function announcementTargetUser(): MorphMany {
-        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
     }
 
     public function additionalFees(): HasMany

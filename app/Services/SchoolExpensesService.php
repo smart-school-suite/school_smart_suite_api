@@ -6,9 +6,8 @@ use App\Jobs\StatisticalJobs\FinancialJobs\SchoolExpensesStatJob;
 use App\Models\SchoolExpenses;
 use Illuminate\Support\Facades\DB;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-
+use App\Exceptions\AppException;
 class SchoolExpensesService
 {
     // Implement your logic here
@@ -50,11 +49,35 @@ class SchoolExpensesService
     }
 
     public function getExpenses($currentSchool)
-    {
-        $expensesData = SchoolExpenses::where('school_branch_id', $currentSchool->id)->with(['schoolexpensescategory'])
+{
+    try {
+        $expensesData = SchoolExpenses::where('school_branch_id', $currentSchool->id)
+            ->with(['schoolexpensescategory'])
             ->get();
+
+        if ($expensesData->isEmpty()) {
+            throw new AppException(
+                "No expenses were found for this school branch.",
+                404,
+                "No Expenses Found",
+                "There are no expense records available in the system for your school branch.",
+                null
+            );
+        }
+
         return $expensesData;
+    } catch (AppException $e) {
+        throw $e;
+    } catch (Exception $e) {
+        throw new AppException(
+            "An unexpected error occurred while retrieving expenses.",
+            500,
+            "Internal Server Error",
+            "A server-side issue prevented the list of expenses from being retrieved successfully.",
+            null
+        );
     }
+}
 
     public function getExpensesDetails($expensesId, $currentSchool)
     {

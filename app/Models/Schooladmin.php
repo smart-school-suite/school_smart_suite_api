@@ -8,6 +8,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -66,6 +67,10 @@ class Schooladmin extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function schoolAdminAnnouncement(): HasMany {
+         return $this->hasMany(SchoolAdminAnnouncement::class);
+    }
     public function devices() {
         return $this->morphMany(UserDevices::class, 'devicesable');
     }
@@ -76,10 +81,6 @@ class Schooladmin extends Authenticatable
     public function otps()
     {
         return $this->morphMany(Otp::class, 'otpable');
-    }
-
-      public function announcementTargetUser(): MorphMany {
-        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
     }
 
     public function audience(): MorphMany {

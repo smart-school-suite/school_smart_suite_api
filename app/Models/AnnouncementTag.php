@@ -13,19 +13,10 @@ class AnnouncementTag extends Model
     use HasFactory, GeneratesUuid;
     protected $fillable = [
        'name',
-       'school_branch_id'
     ];
 
     public $incrementing = false;
     public $keyType = 'string';
     public $table = 'tags';
-
-    public function schoolbranch(): BelongsTo {
-        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
-    }
-
-    public function announcement(): HasMany {
-        return $this->hasMany(Announcement::class, 'tag_id');
-    }
 
 }

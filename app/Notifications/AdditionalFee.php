@@ -10,8 +10,10 @@ use Illuminate\Notifications\Notification;
 
 class AdditionalFee extends Notification implements ShouldQueue
 {
-     use Queueable;
+    use Queueable;
+    public $tries = 3;
 
+    public $backoff = [60, 300, 600];
     protected $amount;
     protected $reason;
 

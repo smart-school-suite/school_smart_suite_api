@@ -12,6 +12,9 @@ class SpecialtyAssignedToTeacher extends Notification implements ShouldQueue
 {
      use Queueable;
 
+    public $tries = 3;
+
+    public $backoff = [60, 300, 600];
     protected array $specialties;
 
     public function __construct(array $specialties)

@@ -20,6 +20,7 @@ use App\Notifications\TuitionFeePaid;
 use Illuminate\Support\Facades\Log;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Exceptions\AppException;
 
 class FeePaymentService
 {
@@ -229,17 +230,36 @@ class FeePaymentService
             throw $e;
         }
     }
+
     public function getFeesPaid($currentSchool)
     {
-        $paidFeesData = Feepayment::where('school_branch_id', $currentSchool->id)
-            ->with(['student.level'])
-            ->with(['student.specialty'])
-            ->get();
+        try {
+            $paidFeesData = Feepayment::where('school_branch_id', $currentSchool->id)
+                ->with(['student.level', 'student.specialty'])
+                ->get();
 
-        if ($paidFeesData->isEmpty()) {
-            return ApiResponseService::error('No records found', null, 400);
+            if ($paidFeesData->isEmpty()) {
+                throw new AppException(
+                    "No fee payment records were found for this school branch.",
+                    404,
+                    "No Fee Payments Found",
+                    "There are no records of fees paid in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $paidFeesData;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving fee payment records.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the fee payment data from being retrieved successfully.",
+                null
+            );
         }
-        return $paidFeesData;
     }
     public function updateStudentFeesPayment(array $data, $feeId, $currentSchool)
     {
@@ -292,45 +312,144 @@ class FeePaymentService
     }
     public function getTuitionFeeTransactions($currentSchool)
     {
-        $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
-        ->with(['tuition.student', 'tuition.specialty', 'tuition.level'])->get();
-        return $getTuitionFeeTransactions;
+        try {
+            $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
+                ->with(['tuition.student', 'tuition.specialty', 'tuition.level'])
+                ->get();
+
+            if ($getTuitionFeeTransactions->isEmpty()) {
+                throw new AppException(
+                    "No tuition fee transactions were found for this school branch.",
+                    404,
+                    "No Transactions Found",
+                    "There are no tuition fee transaction records available in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $getTuitionFeeTransactions;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving tuition fee transactions.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the list of transactions from being retrieved successfully.",
+                null
+            );
+        }
     }
     public function getTuitionFees($currentSchool)
     {
-        $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)->with(['student', 'specialty', 'level'])->get();
-        return $tuitionFees;
+        try {
+            $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+                ->with(['student', 'specialty', 'level'])
+                ->get();
+
+            if ($tuitionFees->isEmpty()) {
+                throw new AppException(
+                    "No tuition fee records were found for this school branch.",
+                    404,
+                    "No Tuition Fees Found",
+                    "There are no student tuition fee records available in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $tuitionFees;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving tuition fee records.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the tuition fee data from being retrieved successfully.",
+                null
+            );
+        }
     }
 
-    public function getTuitionFeeDetails($currentSchool, $feeId){
-         $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
-                                   ->with(['student', 'specialty', 'level'])
-                                  ->find($feeId);
+    public function getTuitionFeeDetails($currentSchool, $feeId)
+    {
+        $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+            ->with(['student', 'specialty', 'level'])
+            ->find($feeId);
         return $tuitionFees;
-
     }
     public function getRegistrationFees($currentSchool)
     {
-        return RegistrationFee::where("school_branch_id", $currentSchool->id)->with(['student', 'specialty', 'level'])->get();
+        try {
+            $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
+                ->with(['student', 'specialty', 'level'])
+                ->get();
+
+            if ($registrationFees->isEmpty()) {
+                throw new AppException(
+                    "No registration fees were found for this school branch.",
+                    404,
+                    "No Registration Fees Found",
+                    "There are no student registration fee records available in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $registrationFees;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving registration fee records.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the registration fee data from being retrieved successfully.",
+                null
+            );
+        }
     }
     public function getRegistrationFeeTransactions($currentSchool)
     {
+        try {
+            $transactions = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
+                ->with(['registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
+                ->get();
 
-        $transactions = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
-            ->with(['registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
-            ->get();
-        return $transactions;
+            if ($transactions->isEmpty()) {
+                throw new AppException(
+                    "No registration fee transactions were found for this school branch.",
+                    404,
+                    "No Transactions Found",
+                    "There are no registration fee transaction records available in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $transactions;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving registration fee transactions.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the list of transactions from being retrieved successfully.",
+                null
+            );
+        }
     }
-    public function getRegistrationFeeTransactionDetails($currentSchool, $transactionId){
+    public function getRegistrationFeeTransactionDetails($currentSchool, $transactionId)
+    {
         $transactionDetails = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
-                             ->with(['registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
-                             ->find($transactionId);
+            ->with(['registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
+            ->find($transactionId);
         return $transactionDetails;
     }
 
-    public function deleteRegistrationFeeTransaction($currentSchool, $transactionId){
+    public function deleteRegistrationFeeTransaction($currentSchool, $transactionId)
+    {
         $transaction = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
-                             ->findorFail($transactionId);
+            ->findorFail($transactionId);
         $transaction->delete();
         return true;
     }
@@ -529,30 +648,30 @@ class FeePaymentService
         }
     }
 
- public function deleteRegistrationFee($feeId, $currentSchool)
-{
-    try {
-        DB::beginTransaction();
+    public function deleteRegistrationFee($feeId, $currentSchool)
+    {
+        try {
+            DB::beginTransaction();
 
-        $registrationFee = RegistrationFee::where('school_branch_id', $currentSchool->id)
-            ->where('id', $feeId)
-            ->firstOrFail();
+            $registrationFee = RegistrationFee::where('school_branch_id', $currentSchool->id)
+                ->where('id', $feeId)
+                ->firstOrFail();
 
-        if ($registrationFee->status !== "paid") {
-            throw new Exception("This registration fee has not been paid and cannot be deleted.", 400);
+            if ($registrationFee->status !== "paid") {
+                throw new Exception("This registration fee has not been paid and cannot be deleted.", 400);
+            }
+
+            $registrationFee->delete();
+
+            DB::commit();
+
+            return true;
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            throw new Exception("Registration fee not found.", 404);
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        $registrationFee->delete();
-
-        DB::commit();
-
-        return true;
-    } catch (ModelNotFoundException $e) {
-        DB::rollBack();
-        throw new Exception("Registration fee not found.", 404);
-    } catch (Exception $e) {
-        DB::rollBack();
-        throw $e;
     }
-}
 }

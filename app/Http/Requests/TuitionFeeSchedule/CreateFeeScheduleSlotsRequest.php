@@ -12,16 +12,6 @@ class CreateFeeScheduleSlotsRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize(): bool
-    {
-        // Typically, you'd implement authorization logic here.
-        // For example, check if the authenticated user has permission to create fee schedule slots.
-        // For now, returning true allows all authenticated users to proceed.
-        // If your application requires authorization, uncomment and implement the logic below:
-        // return $this->user()->can('create-fee-schedule-slots');
-
-        return true; // Set to true for development, but implement proper authorization in production
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -40,7 +30,7 @@ class CreateFeeScheduleSlotsRequest extends FormRequest
                 'string',
                 Rule::exists('installments', 'id'),
             ],
-            'fee_schedule_id' => [
+            'slots.*.fee_schedule_id' => [
                 'required',
                 'string',
                 Rule::exists('fee_schedules', 'id'),

@@ -66,6 +66,7 @@ class AnnouncementService
     {
         return Announcement::where("school_branch_id", $currentSchool->id)
             ->with(['announcementLabel', 'announcementTag', 'announcementCategory'])
+            ->where('id', $announcementId)
             ->get();
     }
 

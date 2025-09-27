@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Traits\GeneratesUuid;
 class Announcement extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
         'id',
@@ -22,7 +22,8 @@ class Announcement extends Model
         'reciepient_count',
         'notification_sent_at',
         'label_id',
-        'tag_id',
+        'audience',
+        'tags',
         'school_branch_id'
     ];
 
@@ -36,15 +37,20 @@ class Announcement extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    public function announcementEngagementStat(): HasMany {
+         return $this->hasMany(AnnouncementEngagementStat::class);
+    }
+     public function schoolAdminAnnouncement(): HasMany {
+         return $this->hasMany(SchoolAdminAnnouncement::class);
+    }
+    public function teacherAnnouncement(): HasMany {
+        return $this->hasMany(TeacherAnnouncement::class);
+    }
+    public function studentAnnouncement(): HasMany {
+         return $this->hasMany(StudentAnnouncement::class);
+    }
     public function announcementCategory(): BelongsTo {
         return $this->belongsTo(AnnouncementCategory::class, 'category_id');
-    }
-
-    public function announcementTargetUser(): HasMany {
-        return $this->hasMany(AnnouncementTargetUser::class, 'announcement_id');
-    }
-    public function announcementTag(): BelongsTo {
-        return $this->belongsTo(AnnouncementTag::class, 'tag_id');
     }
 
     public function announcementLabel(): BelongsTo {
@@ -53,14 +59,6 @@ class Announcement extends Model
 
     public function schoolBranch(): BelongsTo {
         return $this->belongsTo(SchoolBranches::class, 'school_branch_id');
-    }
-
-    public function announcementTargetGroup(): HasMany {
-        return $this->hasMany(AnnouncementTargetGroup::class, 'announcement_id');
-    }
-
-    public function announcementPresetGroup(): HasMany {
-        return $this->hasMany(AnnouncementTargetGroup::class, 'announcement_id');
     }
 
 }

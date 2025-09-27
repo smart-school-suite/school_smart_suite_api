@@ -18,7 +18,11 @@ use Carbon\Carbon;
 use App\Jobs\NotificationJobs\SendAdminResitExamCreatedNotificationJob;
 use App\Models\Exams;
 use App\Models\AccessedStudent;
+use App\Models\Schoolbranches;
 use App\Models\Examtype;
+use Faker\Factory as Faker;
+use App\Models\Hall;
+
 class test extends Seeder
 {
     /**
@@ -26,12 +30,25 @@ class test extends Seeder
      */
     public function run(): void
     {
-        $examDetails = Exams::with(['examtype'])->find("3d5d4337-06cb-4e8a-8b9e-90e7ffc87998");
-        $resitExamDetails =  Examtype::where('type', 'resit')
-            ->where('semester', $examDetails->examtype->semester)
-            ->first();
-        $examCandidates = AccessedStudent::where('exam_id', $examDetails->id)->with('student')->get();
-       //SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
-       SendAdminResitExamCreatedNotificationJob::dispatch($examDetails->school_branch_id, $resitExamDetails, $examDetails);
+        $schoolBranch = Schoolbranches::first();
+
+        if (!$schoolBranch) {
+            $this->command->info('No school branches found. Please seed the school_branches table first.');
+            return;
+        }
+
+        $faker = Faker::create();
+
+        foreach (range(1, 100) as $index) {
+            Hall::create([
+                'name' => 'Hall ' . chr(65 + ($index - 1) % 26) . (($index - 1) < 26 ? '' : floor(($index - 1) / 26)),
+                'capacity' => $faker->numberBetween(50, 300),
+                'status' => 'available',
+                'location' => $faker->address,
+                'school_branch_id' => $schoolBranch->id,
+            ]);
+        }
+
+        $this->command->info('100 halls seeded successfully!');
     }
 }

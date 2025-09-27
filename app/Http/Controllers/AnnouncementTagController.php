@@ -18,8 +18,7 @@ class AnnouncementTagController extends Controller
 
    public function createTag(CreateAnnouncementTagRequest $request){
       try{
-          $currentSchool = $request->attributes->get('currentSchool');
-          $createTag = $this->announcementTagService->createTag($request->validated(), $currentSchool);
+          $createTag = $this->announcementTagService->createTag($request->validated());
           return ApiResponseService::success("Announcement Tag Created Successfully", $createTag, null, 201);
       }
       catch(Throwable $e){
@@ -40,8 +39,7 @@ class AnnouncementTagController extends Controller
 
    public function deleteTag(Request $request, $tagId){
       try{
-           $currentSchool = $request->attributes->get('currentSchool');
-           $deleteTag = $this->announcementTagService->deleteTag($tagId, $currentSchool);
+           $deleteTag = $this->announcementTagService->deleteTag($tagId);
            return ApiResponseService::success("Announcement Tag Deleted Successfully", $deleteTag, null, 200);
       }
       catch(Throwable $e){
@@ -51,8 +49,7 @@ class AnnouncementTagController extends Controller
 
    public function getAnnouncementTags(Request $request){
       try{
-         $currentSchool = $request->attributes->get('currentSchool');
-         $getTags = $this->announcementTagService->getTags($currentSchool);
+         $getTags = $this->announcementTagService->getTags();
          return ApiResponseService::success("Get Annoncement Tags", $getTags, null, 200);
       }
       catch(Throwable $e){

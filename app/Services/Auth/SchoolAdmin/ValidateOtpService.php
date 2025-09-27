@@ -8,6 +8,7 @@ use App\Models\Schooladmin;
 use App\Models\SchoolBranchApiKey;
 use Illuminate\Support\Str;
 use Exception;
+use App\Exceptions\AuthException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 class ValidateOtpService
@@ -16,53 +17,31 @@ class ValidateOtpService
    public function verifyOtp(string $tokenHeader, string $otp)
     {
         try {
-
-            if (empty($tokenHeader) || empty($otp)) {
-                throw new Exception("Token header and OTP are required.", 400);
-            }
-
             $otpRecord = OTP::where('otp', $otp)
-                            ->where('token_header', $tokenHeader)
-                            ->first();
+                ->where('token_header', $tokenHeader)
+                ->first();
 
             if (!$otpRecord) {
-                Log::warning('OTP verification failed: Invalid OTP or token header.', [
-                    'token_header_attempt' => $tokenHeader,
-                    'otp_attempt' => $otp,
-                ]);
-                throw new Exception("Invalid OTP or token.", 401);
+                throw new AuthException("Invalid OTP or token.", 401, "Verification Failed", "The provided OTP or token header is incorrect. Please double-check your inputs.");
             }
 
             if ($otpRecord->isExpired()) {
                 $otpRecord->delete();
-                Log::info('OTP verification failed: Expired OTP.', [
-                    'otp_id' => $otpRecord->id,
-                    'actorable_id' => $otpRecord->actorable_id,
-                    'token_header' => $tokenHeader
-                ]);
-                throw new Exception("Expired OTP. Please request a new one.", 401);
+                throw new AuthException("Expired OTP. Please request a new one.", 401, "Expired OTP", "The One-Time Password has expired. Please request a new one to log in.");
             }
 
             $user = Schooladmin::find($otpRecord->actorable_id);
 
             if (!$user) {
-                Log::critical('OTP verification failed: Associated user not found for OTP ID ' . $otpRecord->id, [
-                    'otp_record' => $otpRecord->toArray()
-                ]);
                 $otpRecord->delete();
-                throw new Exception("User associated with OTP not found. Please try logging in again.",  500);
+                throw new AuthException("User associated with OTP not found. Please try logging in again.", 500, "User Not Found", "The user account linked to this OTP could not be located. This issue has been logged.");
             }
 
             $token = $user->createToken('schoolAdminToken')->plainTextToken;
-
             $apiKeyRecord = SchoolBranchApiKey::where("school_branch_id", $user->school_branch_id)->first();
 
             if (!$apiKeyRecord) {
-                Log::critical('API Key not found for school branch ID: ' . $user->school_branch_id, [
-                    'user_id' => $user->id,
-                    'school_branch_id' => $user->school_branch_id
-                ]);
-                throw new Exception("API key configuration error. Please contact support.", 500);
+                throw new AuthException("API key configuration error. Please contact support.", 500, "Configuration Error", "A required API key for your school branch is missing. Please contact your administrator.");
             }
 
             $otpRecord->delete();
@@ -72,23 +51,10 @@ class ValidateOtpService
                 'apiKey' => $apiKeyRecord->api_key
             ];
 
-        } catch (ModelNotFoundException $e) {
-            Log::error("Database record not found during OTP verification: " . $e->getMessage(), [
-                'token_header' => $tokenHeader,
-                'otp' => $otp,
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-             throw new Exception("Verification failed due to missing data. Please try again.", 500);
+        } catch (AuthException $e) {
+            throw $e;
         } catch (Exception $e) {
-            Log::error("An unexpected error occurred during OTP verification: " . $e->getMessage(), [
-                'token_header' => $tokenHeader,
-                'otp' => $otp,
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw new Exception("An unexpected error occurred. Please try again later.", 500);
+            throw new AuthException("An unexpected error occurred. Please try again later.", 500, "Server Error", "An unexpected system error occurred during OTP verification. We are investigating the issue.");
         }
     }
 

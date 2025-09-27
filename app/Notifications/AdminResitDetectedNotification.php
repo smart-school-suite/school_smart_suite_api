@@ -11,6 +11,9 @@ class AdminResitDetectedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+      public $tries = 3;
+
+    public $backoff = [60, 300, 600];
     /**
      * Create a new notification instance.
      */

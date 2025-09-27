@@ -2,309 +2,284 @@
 
 namespace App\Services;
 
-use App\Jobs\EmailNotificationJobs\EmailAnnouncementNotificationJob;
+use App\Jobs\DataCreationJob\CreateAnnouncementReciepientJob;
+use App\Jobs\NotificationJobs\SendAdminAnnouncementScheduleReminderNotiJob;
+use App\Jobs\NotificationJobs\SendAdminScheduledAnnouncementNotiJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\AnnouncementStatJob;
 use App\Models\Announcement;
-use App\Models\AnnouncementAuthor;
-use App\Models\AnnouncementTargetUser;
-use App\Models\Parents;
-use App\Models\PresetAudiences;
+use App\Models\AnnouncementEngagementStat;
+use App\Models\AnnouncementTag;
 use App\Models\Schooladmin;
-use App\Models\SchoolAnnouncementSetting;
-use App\Models\SchoolSetAudienceGroups;
 use App\Models\Student;
 use App\Models\Teacher;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Throwable;
+use App\Exceptions\AppException;
 
 class CreateAnnouncementService
 {
-    /**
-     * Creates a new announcement and assigns target users.
-     * It now dispatches the email notification job with a delay if scheduled.
-     *
-     * @param object $currentSchool The current school branch object (e.g., SchoolBranch model instance).
-     * @param array $announcementData Array containing announcement details and target IDs.
-     * Expected keys for announcementData: 'title', 'content', 'status', 'published_at',
-     * 'expires_at', 'category_id', 'label_id', 'tag_id',
-     * 'parent_Ids' (optional), 'student_Ids' (optional), 'teacher_Ids' (optional),
-     * 'school_admin_Ids' (optional), 'school_set_group_ids' (optional),
-     * 'preset_group_ids' (optional).
-     * @param array $authUserData Array containing authenticated user's ID and type.
-     * Expected keys for authUserData: 'userId', 'userType' (e.g., 'App\Models\Admin').
-     * @return array
-     * @throws Throwable
-     */
-    public function createAnnouncement(object $currentSchool, array $announcementData, array $authUserData): array
+    public function createAnnouncement($currentSchool, $authenticatedUser, $data)
     {
-        $targetUserRecords = [];
+        $recipients = $this->collectRecipients($currentSchool, $data);
+        $tags = $this->getTags($data);
 
-        try {
-            DB::beginTransaction();
-
-            $announcementId = Str::uuid()->toString();
-
-            $userStatus = $announcementData['status'] ?? null;
-            $publishedAtInput = $announcementData['published_at'] ?? now();
-
-            $publishedAt = null; // Initialize publishedAt to null by default
-            $status = 'draft';   // Initialize status to 'draft' by default
-
-            if ($userStatus === 'draft') {
-                $publishedAt = null;
-                $status = 'draft';
-            } else {
-                try {
-                    $publishedAt = Carbon::parse($publishedAtInput);
-                } catch (\Exception $e) {
-                    $publishedAt = now();
-                }
-
-                $status = match (true) {
-                    $publishedAt->isFuture() => 'scheduled',
-                    $publishedAt->lessThanOrEqualTo(now()) => 'active',
-                    default => 'draft', // Fallback for any unexpected case, though Carbon::parse usually handles this
-                };
-            }
-
-            Announcement::create([
-                'id' => $announcementId,
-                'title' => $announcementData['title'],
-                'content' => $announcementData['content'],
-                'status' => $status,
-                'published_at' => $publishedAt,
-                'expires_at' => $announcementData['expires_at'] ?? $this->announcementDefaults($currentSchool),
-                'notification_sent_at' => null,
-                'category_id' => $announcementData['category_id'],
-                'label_id' => $announcementData['label_id'],
-                'tag_id' => $announcementData['tag_id'],
-                'school_branch_id' => $currentSchool->id,
-            ]);
-
-            AnnouncementAuthor::create([
-                'authorable_id' => $authUserData['userId'],
-                'authorable_type' => $authUserData['userType'],
-                'announcement_id' => $announcementId,
-            ]);
-
-
-            $usersForNotification = []; // This array is actually for populating targetUserRecords now.
-
-            $this->addTargets(
-                $currentSchool,
-                $announcementData['parent_ids'] ?? [],
-                Parents::class,
-                $announcementId,
-                $usersForNotification,
-                $targetUserRecords
+        if ($recipients->isEmpty()) {
+            throw new AppException(
+                "No Recipients Found",
+                400,
+                "No Recipients Found",
+                "No valid recipients were found for the selected audience. Please ensure that at least one valid student, teacher, or admin is selected.",
+                null
             );
-            $this->addTargets(
-                $currentSchool,
-                $announcementData['student_ids'] ?? [],
-                Student::class,
-                $announcementId,
-                $usersForNotification,
-                $targetUserRecords
-            );
-            $this->addTargets(
-                $currentSchool,
-                $announcementData['teacher_ids'] ?? [],
-                Teacher::class,
-                $announcementId,
-                $usersForNotification,
-                $targetUserRecords
-            );
-            $this->addTargets(
-                $currentSchool,
-                $announcementData['school_admin_ids'] ?? [],
-                Schooladmin::class,
-                $announcementId,
-                $usersForNotification,
-                $targetUserRecords
-            );
+        }
 
-            if (!empty($announcementData['school_set_group_ids'])) {
-                $groupMembers = SchoolSetAudienceGroups::whereIn('school_set_audience_group_id', $announcementData['school_set_group_ids'])->get();
+        return $this->createAnnouncementContent($currentSchool, $authenticatedUser, $data, $tags, $recipients);
+    }
 
-                foreach ($groupMembers as $groupMember) {
-                    $this->addTargets(
-                        $currentSchool,
-                        [$groupMember->audienceable_id],
-                        $groupMember->audienceable_type,
-                        $announcementId,
-                        $usersForNotification,
-                        $targetUserRecords
-                    );
-                }
-            }
+    protected function getTags(array $data): Collection
+    {
+        if (empty($data['tag_ids'])) {
+            return collect();
+        }
 
-            if (!empty($announcementData['preset_group_ids'])) {
-                $this->processPresetGroupTargets(
-                    $announcementId,
-                    $usersForNotification,
-                    $targetUserRecords,
-                    $announcementData['preset_group_ids'],
-                    $currentSchool
+        $tagIds = collect($data['tag_ids'])->pluck('tag_id')->unique()->toArray();
+        $tags = AnnouncementTag::whereIn("id", $tagIds)->get();
+
+        if ($tags->count() < count($tagIds)) {
+            throw new AppException(
+                "Some Tags Not Found",
+                404,
+                "Some Tags Not Found",
+                "One or more selected tags could not be found. Please check that the tags exist and have not been deleted.",
+                null
+            );
+        }
+
+        return $tags;
+    }
+
+    protected function collectRecipients($currentSchool, array $data): Collection
+    {
+        $recipients = collect();
+
+        if (!empty($data['student_audience'])) {
+            $studentAudienceIds = collect($data['student_audience'])->pluck('student_audience_id')->unique()->toArray();
+            $students = $this->studentAudience($currentSchool, $studentAudienceIds);
+
+            $recipients = $recipients->merge($students);
+        }
+
+        if (!empty($data['school_admin_ids'])) {
+            $adminIds = collect($data['school_admin_ids'])->pluck('school_admin_id')->unique()->toArray();
+            $admins = $this->schoolAdminAudience($currentSchool, $adminIds);
+
+            if ($admins->count() < count($adminIds)) {
+                throw new AppException(
+                    "Some School Admins Not Found",
+                    404,
+                    "Some School Admins Not Found",
+                    "One or more selected school admins could not be found. Please check that the admins exist and have not been deleted.",
+                    null
                 );
             }
 
-            if (!empty($targetUserRecords)) {
-                $uniqueTargetRecords = collect($targetUserRecords)
-                    ->unique(function ($item) {
-                        return $item['actorable_id'] . '_' . $item['actorable_type'];
-                    })
-                    ->values()
-                    ->all();
-                AnnouncementTargetUser::insert($uniqueTargetRecords);
+            $recipients = $recipients->merge($admins);
+        }
+
+        if (!empty($data['teacher_ids'])) {
+            $teacherIds = collect($data['teacher_ids'])->pluck('teacher_id')->unique()->toArray();
+            $teachers = $this->teacherAudience($currentSchool, $teacherIds);
+
+            if ($teachers->count() < count($teacherIds)) {
+                throw new AppException(
+                    "Some Teachers Not Found",
+                    404,
+                    "Some Teachers Not Found",
+                    "One or more selected teachers could not be found. Please check that the teachers exist and have not been deleted.",
+                    null
+                );
             }
 
-            DB::commit();
+            $recipients = $recipients->merge($teachers);
+        }
 
-            if ($status === 'scheduled' || $status === 'active') {
+        return $recipients->unique('id');
+    }
 
-                $delayInSeconds = now()->diffInSeconds($publishedAt, false);
-                if ($delayInSeconds < 0) {
-                    $delayInSeconds = 0;
+    public function createAnnouncementContent($currentSchool, $authenticatedUser, $data, $tags, $recipients)
+    {
+        try {
+            return DB::transaction(function () use ($currentSchool, $authenticatedUser, $data, $tags, $recipients) {
+                $announcementId = Str::uuid()->toString();
+
+                $isDraft = $data['status'] === 'draft';
+                $hasPublishedAt = !empty($data['published_at']);
+                $intendedScheduled = $data['status'] === 'scheduled' || ($hasPublishedAt && Carbon::parse($data['published_at'])->isFuture());
+
+                if ($intendedScheduled && !$hasPublishedAt) {
+                    throw new AppException(
+                        "Published Time Required for Scheduled Announcement",
+                        400,
+                        "Published Time Required",
+                        "You are trying to schedule an announcement, but no published time was provided. Please specify a future date and time.",
+                        null
+                    );
                 }
-                EmailAnnouncementNotificationJob::dispatch($announcementId)
-                    ->delay(Carbon::now()->addSeconds($delayInSeconds));
-            }
 
-            AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
-            return [
-                'annoucement_title' => $announcementData['title'],
-                'announcement_content' => $announcementData['content'],
-                'number_of_recievers' => count($targetUserRecords) // Use targetUserRecords for more accuracy
-            ];
+                $publishedAt = $isDraft ? null : ($hasPublishedAt ? Carbon::parse($data['published_at']) : Carbon::now());
+                $isScheduled = !$isDraft && $hasPublishedAt && $publishedAt->isFuture();
+
+                if (!$isDraft && $hasPublishedAt && $publishedAt->isPast()) {
+                    throw new AppException(
+                        "Published Time Cannot Be in the Past",
+                        400,
+                        "Invalid Published Time",
+                        "The provided published time is in the past. Please provide a future date or leave it blank for immediate publication.",
+                        null
+                    );
+                }
+
+                if ($isScheduled && $publishedAt->diffInDays(Carbon::now()) > 30) {
+                    throw new AppException(
+                        "Scheduled Time Too Far in the Future",
+                        400,
+                        "Scheduled Time Limit Exceeded",
+                        "The scheduled publication time is more than 30 days in the future. Please choose a closer date to avoid long queue delays.",
+                        null
+                    );
+                }
+
+                $status = $isDraft ? 'draft' : ($isScheduled ? 'scheduled' : 'active');
+
+                if ($data['status'] === 'scheduled' && $status !== 'scheduled') {
+                    throw new AppException(
+                        "Invalid Scheduled Configuration",
+                        400,
+                        "Scheduled Announcement Misconfigured",
+                        "You specified a scheduled status, but the provided published time is not in the future or is invalid. Please correct the published time.",
+                        null
+                    );
+                }
+
+                $expiresAt = null;
+                if (!$isDraft) {
+                    if (!empty($data['expires_at'])) {
+                        $expiresAt = Carbon::parse($data['expires_at']);
+                    } else {
+                        $expiresAt = $publishedAt->copy()->addDays(7);
+                    }
+
+                    if ($expiresAt->lte($publishedAt)) {
+                        throw new AppException(
+                            "Expires Time Must Be After Published Time",
+                            400,
+                            "Invalid Expires Time",
+                            "The expiration time must be after the published time. Please adjust the dates accordingly.",
+                            null
+                        );
+                    }
+
+                    if ($expiresAt->diffInDays($publishedAt) > 365) {
+                        throw new AppException(
+                            "Expires Time Too Far in the Future",
+                            400,
+                            "Expires Time Limit Exceeded",
+                            "The expiration time is more than 1 year after publication. Please choose a shorter duration.",
+                            null
+                        );
+                    }
+                }
+
+                $announcementData = [
+                    'id' => $announcementId,
+                    'title' => $data['title'],
+                    'content' => $data['content'],
+                    'status' => $status,
+                    'published_at' => $publishedAt,
+                    'expires_at' => $expiresAt,
+                    'category_id' => $data['category_id'],
+                    'label_id' => $data['label_id'],
+                    'notification_sent_at' => null,
+                    'tags' => json_encode($tags->toArray()),
+                    'audiences' => json_encode(array_filter([
+                        'teachers' => $data['teacher_ids'] ?? null,
+                        'admins' => $data['school_admin_ids'] ?? null,
+                        'students' => $data['student_audience'] ?? null,
+                    ])),
+                    'school_branch_id' => $currentSchool->id,
+                ];
+
+                $announcement = Announcement::create($announcementData);
+
+                $totalStudents = $recipients->whereInstanceOf(Student::class)->count();
+                $totalTeachers = $recipients->whereInstanceOf(Teacher::class)->count();
+                $totalAdmins   = $recipients->whereInstanceOf(Schooladmin::class)->count();
+                $totalRecipients = $totalStudents + $totalTeachers + $totalAdmins;
+
+                AnnouncementEngagementStat::create([
+                    'total_reciepient'     => $totalRecipients,
+                    'total_student'        => $totalStudents,
+                    'total_school_admin'   => $totalAdmins,
+                    'total_teacher'        => $totalTeachers,
+                    'total_seen'           => 0,
+                    'total_unseen'         => $totalRecipients,
+                    'announcement_id'      => $announcementId,
+                    'school_branch_id'     => $currentSchool->id
+                ]);
+
+                if ($status === 'active') {
+                    AnnouncementStatJob::dispatch($announcementId, $currentSchool->id);
+                    CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId);
+                } elseif ($status === 'scheduled') {
+                    AnnouncementStatJob::dispatch($announcementId, $currentSchool->id)
+                        ->delay($publishedAt);
+                    CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId)
+                        ->delay($publishedAt);
+                    SendAdminScheduledAnnouncementNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id);
+                    SendAdminAnnouncementScheduleReminderNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id);
+                }
+
+                return $announcement;
+            });
         } catch (Throwable $e) {
-            DB::rollBack();
-            report($e);
             throw $e;
         }
     }
 
-    /**
-     * Helper method to add target users and prepare for batch insertion.
-     *
-     * @param object $currentSchool The current school branch object.
-     * @param array $ids Array of user IDs to target.
-     * @param string $userType The fully qualified class name of the user model (e.g., `Parents::class`).
-     * @param string $announcementId The ID of the newly created announcement.
-     * @param array $usersForNotification A reference to the array collecting all users for notification (not directly used for dispatch anymore).
-     * @param array $targetUserRecords A reference to the array for batch inserting AnnouncementTargetUser records.
-     * @return void
-     */
-    private function addTargets(
-        object $currentSchool, // Added this to match the calls
-        array $ids,
-        string $userType,
-        string $announcementId,
-        array &$usersForNotification,
-        array &$targetUserRecords
-    ): void {
-        foreach ($ids as $id) {
-            $targetUserRecords[] = [
-                'id' => Str::uuid(), // Ensure UUID for target user records as well
-                'actorable_id' => $id,
-                'actorable_type' => $userType,
-                'announcement_id' => $announcementId,
-                'school_branch_id' => $currentSchool->id, // Make sure this is stored if needed
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-    }
-
-    /**
-     * Processes preset group targets and adds them to the notification and target records.
-     *
-     * @param string $announcementId The ID of the announcement.
-     * @param array $usersForNotification A reference to the array collecting all users for notification (not directly used for dispatch anymore).
-     * @param array $targetUserRecords A reference to the array for batch inserting AnnouncementTargetUser records.
-     * @param array $presetGroupIds Array of preset audience group IDs.
-     * @param object $currentSchool The current school branch object.
-     * @return void
-     */
-    private function processPresetGroupTargets(
-        string $announcementId,
-        array &$usersForNotification,
-        array &$targetUserRecords,
-        array $presetGroupIds,
-        object $currentSchool
-    ): void {
-        $presetTargets = PresetAudiences::whereIn('id', $presetGroupIds)->pluck('target')->toArray();
-
-        foreach ($presetTargets as $presetTarget) {
-            $ids = [];
-            $modelClass = '';
-
-            switch ($presetTarget) {
-                case "school-admins":
-                    $ids = Schooladmin::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray();
-                    $modelClass = Schooladmin::class;
-                    break;
-                case "teachers":
-                    $ids = Teacher::where('school_branch_id', $currentSchool->id)->pluck('id')->toArray();
-                    $modelClass = Teacher::class;
-                    break;
-                case "students":
-                    $ids = Student::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray();
-                    $modelClass = Student::class;
-                    break;
-                case "parents":
-                    $ids = Parents::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray();
-                    $modelClass = Parents::class;
-                    break;
-                case "all-users":
-                    $this->addTargets($currentSchool, Schooladmin::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray(), Schooladmin::class, $announcementId, $usersForNotification, $targetUserRecords);
-                    $this->addTargets($currentSchool, Teacher::where('school_branch_id', $currentSchool->id)->pluck('id')->toArray(), Teacher::class, $announcementId, $usersForNotification, $targetUserRecords);
-                    $this->addTargets($currentSchool, Student::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray(), Student::class, $announcementId, $usersForNotification, $targetUserRecords);
-                    $this->addTargets($currentSchool, Parents::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray(), Parents::class, $announcementId, $usersForNotification, $targetUserRecords);
-                    continue 2;
-                case "level-one-students":
-                case "level-two-students":
-                case "level-three-students":
-                case "bachelor-students":
-                case "masters-one-students":
-                case "masters-two-students":
-                    $levelName = str_replace(['-students', '-one', '-two', '-three'], ['', ' One', ' Two', ' Three'], $presetTarget);
-                    if (str_contains($presetTarget, 'bachelor')) $levelName = "Bachelor's Degree Programs";
-                    if (str_contains($presetTarget, 'masters-one')) $levelName = "Master's Degree One";
-                    if (str_contains($presetTarget, 'masters-two')) $levelName = "Master's Degree Two";
-
-                    $ids = Student::whereHas('level', function ($query) use ($levelName) {
-                        $query->where('name', $levelName);
-                    })->pluck('id')->toArray();
-                    $modelClass = Student::class;
-                    break;
-                default:
-                    Log::warning("Unknown preset audience target: {$presetTarget}");
-                    continue 2;
-            }
-
-            if (!empty($ids) && !empty($modelClass)) {
-                $this->addTargets(
-                    $currentSchool, $ids, $modelClass, $announcementId, $usersForNotification, $targetUserRecords);
-            }
-        }
-    }
-
-    /**
-     * Calculates the default expiration date for an announcement.
-     *
-     * @param object $currentSchool The current school branch object.
-     * @return string The calculated expiration date in 'Y-m-d H:i:s' format.
-     */
-    public function announcementDefaults($currentSchool): string
+    public function studentAudience($currentSchool, $studentAudienceIds)
     {
-        $announcementDefaultSettings = SchoolAnnouncementSetting::with(['announcementSetting'])->where('school_branch_id', $currentSchool->id)->get();
-        // Assuming announcementSetting has a 'title' field now, based on the previous context suggesting 'name'
-        $defaultExpireDate = $announcementDefaultSettings->where('announcementSetting.title', 'Default Expire Time')->first();
-        $expiresAt = Carbon::now()->addDays(intval($defaultExpireDate->value ?? 7));
-        $expiresAtForDB = $expiresAt->toDateTimeString();
-        return $expiresAtForDB;
+        $students = Student::where("school_branch_id", $currentSchool->id)
+            ->whereIn("specialty_id", $studentAudienceIds)
+            ->get();
+
+
+        if ($students->isEmpty() && !empty($studentAudienceIds)) {
+            throw new AppException(
+                "No Students Found for Selected Specialties",
+                404,
+                "No Students Found",
+                "No students were found for the selected specialties. Please ensure the specialties exist and have enrolled students.",
+                null
+            );
+        }
+
+        return $students;
+    }
+
+    public function schoolAdminAudience($currentSchool, $schoolAdminIds)
+    {
+        return Schooladmin::where("school_branch_id", $currentSchool->id)
+            ->whereIn("id", $schoolAdminIds)
+            ->get();
+    }
+
+    public function teacherAudience($currentSchool, $teacherIds)
+    {
+        return Teacher::where("school_branch_id", $currentSchool->id)
+            ->whereIn("id", $teacherIds)
+            ->get();
     }
 }

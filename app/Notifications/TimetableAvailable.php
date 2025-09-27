@@ -11,6 +11,9 @@ class TimetableAvailable extends Notification
 {
      use Queueable;
 
+    public $tries = 3;
+
+    public $backoff = [60, 300, 600];
     protected array $timetableData;
 
     public function __construct(array $timetableData)

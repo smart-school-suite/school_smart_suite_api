@@ -10,8 +10,11 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 
 class TeacherNewSemesterAvailable extends Notification implements ShouldQueue
 {
-      use Queueable;
+    use Queueable;
 
+    public $tries = 3;
+
+    public $backoff = [60, 300, 600];
     protected $semesterData;
 
     public function __construct($semesterData)

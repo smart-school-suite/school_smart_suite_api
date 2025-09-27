@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppException;
 use App\Models\Specialty;
 use App\Models\TeacherSpecailtyPreference;
 use Exception;
@@ -20,7 +21,9 @@ class TeacherSpecailtyPreferenceService
                 'specailty.level:id,name,level'
             ])
             ->get();
-
+        if($preferences->isEmpty()){
+           throw new AppException();
+        }
         $formatted = $preferences->map(function ($preference) {
             $specialty = $preference->specailty;
             $level = $specialty->level;
@@ -44,6 +47,9 @@ class TeacherSpecailtyPreferenceService
             ->where("teacher_id", $teacherId)
             ->pluck("specialty_id");
 
+        if ($assignedSpecialtyIds->isEmpty()) {
+            throw new AppException();
+        }
         $availableSpecialties = Specialty::with('level:id,name,level')
             ->where("school_branch_id", $currentSchool->id)
             ->whereNotIn("id", $assignedSpecialtyIds)
@@ -57,7 +63,9 @@ class TeacherSpecailtyPreferenceService
                     'level' => $specialty->level?->level,
                 ];
             });
-
+        if($availableSpecialties->isEmpty()){
+            throw new AppException();
+        }
         return $availableSpecialties;
     }
 

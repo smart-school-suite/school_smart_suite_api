@@ -25,8 +25,8 @@ class AnnouncementController extends Controller
         try{
             $currentSchool = $request->attributes->get('currentSchool');
             $authenticatedUser = $this->getAuthenticatedUser();
-          $createAnnouncement =   $this->createAnnouncementService->createAnnouncement($currentSchool, $request->validated(), $authenticatedUser);
-            return ApiResponseService::success("Announcement Created Successfully", $createAnnouncement, null, 200);
+             $this->createAnnouncementService->createAnnouncement($currentSchool, $request->validated(), $authenticatedUser);
+            return ApiResponseService::success("Announcement Created Successfully", null, null, 200);
         }
         catch(Throwable $e){
             return ApiResponseService::error($e->getMessage(), null, 500);

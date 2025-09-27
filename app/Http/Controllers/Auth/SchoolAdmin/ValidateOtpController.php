@@ -19,17 +19,9 @@ class ValidateOtpController extends Controller
     }
     public function verifySchoolAdminOtp(OtpRequest $request)
     {
-        try{
-            $token_header = $request->header('OTP_TOKEN_HEADER');
-           $verifyOtp = $this->validateOtpService->verifyOtp($token_header, $request->otp);
-           return ApiResponseService::success("OTP token verified Succesfully", $verifyOtp, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode());
-        }
-        catch(ModelNotFoundException $e){
-            return ApiResponseService::error($e->getMessage(), null, $e->getCode());
-        }
+        $token_header = $request->header('OTP_TOKEN_HEADER');
+        $verifyOtp = $this->validateOtpService->verifyOtp($token_header, $request->otp);
+        return ApiResponseService::success("OTP token verified Succesfully", $verifyOtp, null, 200);
     }
     public function requestNewCode(Request $request)
     {

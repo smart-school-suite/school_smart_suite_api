@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
@@ -23,64 +24,74 @@ return new class extends Migration
         Schema::create('tags', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
         Schema::create('labels', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
-        // Create the 'announcements' table
         Schema::create('announcements', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('title');
             $table->text('content');
-            $table->integer('reciepient_count')->default(0);
             $table->enum('status', ['draft', 'scheduled', 'active', 'expired'])->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
+            $table->json('tags');
+            $table->json('audience');
             $table->timestamps();
         });
 
-        Schema::create('annoucement_author', function (Blueprint $table) {
+        Schema::create('annoucement_authors', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('authorable_id')->nullable();
             $table->string('authorable_type')->nullable();
             $table->timestamps();
         });
 
-        Schema::create('announcement_settings', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('school_announcement_settings', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('value')->nullable();
-            $table->boolean('enabled')->default(true);
-            $table->timestamps();
+        Schema::create('announcement_engagement_stats', function(Blueprint $table) {
+           $table->string('id')->primary();
+           $table->integer('total_reciepient')->default(0);
+           $table->integer('total_student')->default(0);
+           $table->integer('total_school_admin')->default(0);
+           $table->integer('total_parents')->default(0);
+           $table->integer('total_seen')->default(0);
+           $table->integer('total_unseen')->default(0);
+           $table->timestamps();
         });
 
 
-        Schema::create('target_groups', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamps();
+        Schema::create('student_announcements', function(Blueprint $table){
+           $table->string('id')->primary();
+           $table->timestamp('seen_at')->nullable();
+           $table->enum('status', ['unseen', 'seen'])->default('unseen');
+           $table->timestamps();
         });
 
-        Schema::create('target_preset_groups', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamps();
+        Schema::create('teacher_announcements', function(Blueprint $table) {
+           $table->string('id')->primary();
+           $table->timestamp('seen_at')->nullable();
+           $table->enum('status', ['unseen', 'seen'])->default('unseen');
+           $table->timestamps();
         });
 
-        Schema::create('target_users', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamps();
+        Schema::create('school_admin_announcements', function(Blueprint $table){
+           $table->string('id')->primary();
+           $table->timestamp('seen_at')->nullable();
+           $table->enum('status', ['unseen', 'seen'])->default('unseen');
+           $table->timestamps();
         });
+
+
+
+
     }
 
     /**
@@ -88,11 +99,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('target_users');
-        Schema::dropIfExists('target_preset_groups');
-        Schema::dropIfExists('target_groups');
-        Schema::dropIfExists('school_announcement_settings');
-        Schema::dropIfExists('announcement_settings');
         Schema::dropIfExists('annoucement_author');
         Schema::dropIfExists('announcements');
         Schema::dropIfExists('labels');

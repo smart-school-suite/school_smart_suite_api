@@ -3,9 +3,10 @@
 namespace App\Services;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
 class ApiResponseService
 {
-        /**
+    /**
      * Success Response
      *
      * @param string $message
@@ -43,22 +44,31 @@ class ApiResponseService
      * @param string $message
      * @param array|null $errors
      * @param int $statusCode
+     * @param array|null $structuredError (New parameter for structured errors)
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function error(string $message, array $errors = null, int $statusCode = 400)
+    public static function error(string $message, array $errors = null, int $statusCode = 400, array $structuredError = null)
     {
         Log::error($message, [
             'errors' => $errors,
-            'status_code' => $statusCode
+            'status_code' => $statusCode,
+            'structured_error' => $structuredError, // Log the structured error as well
         ]);
 
-        return response()->json([
+        $responseBody = [
             'status' => 'error',
             'message' => $message,
             'data' => null,
             'errors' => $errors,
             'meta' => null
-        ], $statusCode);
+        ];
+
+        // Override the 'errors' key with the structured error if provided
+        if ($structuredError) {
+            $responseBody['errors'] = $structuredError;
+        }
+
+        return response()->json($responseBody, $statusCode);
     }
 
     /**

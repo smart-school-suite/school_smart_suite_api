@@ -7,11 +7,10 @@ use Throwable;
 
 class AnnouncementTagService
 {
-    public function createTag(array $tag, $currentSchool){
+    public function createTag(array $tag ){
           try{
               $tag = AnnouncementTag::create([
                     'name' => $tag['name'],
-                    'school_branch_id' => $currentSchool->id,
               ]);
               return $tag;
           }
@@ -22,7 +21,7 @@ class AnnouncementTagService
 
     public function updateTag(array $tagData, $currentSchool, $tagId){
         try{
-           $tag = AnnouncementTag::where("school_branch_id", $currentSchool->id)->findOrFail($tagId);
+           $tag = AnnouncementTag::findOrFail($tagId);
            $filterData = array_filter($tagData);
            $tag->update($filterData);
            return $tag;
@@ -32,9 +31,9 @@ class AnnouncementTagService
         }
     }
 
-    public function deleteTag($tagId, $currentSchool){
+    public function deleteTag($tagId){
         try{
-            $tag = AnnouncementTag::where("school_branch_id", $currentSchool->id)->findOrFail($tagId);
+            $tag = AnnouncementTag::findOrFail($tagId);
             $tag->delete();
             return $tag;
         }
@@ -43,9 +42,9 @@ class AnnouncementTagService
         }
     }
 
-    public function getTags($currentSchool){
+    public function getTags(){
         try{
-           $tags = AnnouncementTag::where("school_branch_id", $currentSchool->id)->get();
+           $tags = AnnouncementTag::all();
            return $tags;
         }
         catch(Throwable $e){

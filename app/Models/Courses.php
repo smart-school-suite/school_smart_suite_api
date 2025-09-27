@@ -29,6 +29,10 @@ class Courses extends Model
     public $table = 'courses';
     public $incrementing = 'false';
 
+    public function teacherCoursePreference(): HasMany {
+         return $this->hasMany(TeacherCoursePreference::class, 'teacher_id');
+    }
+
     public function resitmarks(): HasMany {
         return $this->hasMany(ResitMarks::class, 'course_id');
     }

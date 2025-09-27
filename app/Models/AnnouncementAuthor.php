@@ -13,7 +13,8 @@ class AnnouncementAuthor extends Model
         'id',
         'authorable_id',
         'authorable_type',
-        'announcement_id'
+        'announcement_id',
+        'school_branch_id'
     ];
 
     public $keyType = 'string';

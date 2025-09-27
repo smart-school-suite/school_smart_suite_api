@@ -60,23 +60,15 @@ class MarksController extends Controller
     }
     public function createCaMark(CreateExamScoreRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        try {
+            $currentSchool = $request->attributes->get('currentSchool');
             $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool);
-            return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
-        }
+            return ApiResponseService::success("Marks Submitted Sucessfully", $results, null, 201);
     }
     public function createExamMark(CreateExamScoreRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        try {
+            $currentSchool = $request->attributes->get('currentSchool');
             $results = $this->addExamScoresService->addExamScores($request->scores_entries, $currentSchool);
             return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
-        }
     }
     public function updateExamMark(UpdateExamScoreRequest $request)
     {

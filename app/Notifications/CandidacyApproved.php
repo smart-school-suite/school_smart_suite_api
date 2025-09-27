@@ -12,6 +12,9 @@ class CandidacyApproved extends Notification
 {
     use Queueable;
 
+      public $tries = 3;
+
+    public $backoff = [60, 300, 600];
     protected $roleName;
     protected $electionName;
 

@@ -69,10 +69,9 @@ class AutoGenExamGradingService
         foreach ($letterGrades as $letterGrade) {
             $grade = $letterGrade->letter_grade;
             if (!isset($gradeRanges[$grade])) {
-                continue; // Skip if the letter grade isn't in the defined ranges
+                continue;
             }
 
-            // Scale the minimum and maximum scores to the provided maxScore
             $minScore = round(($gradeRanges[$grade]['min'] / 100) * $maxScore);
             $maxScoreForGrade = round(($gradeRanges[$grade]['max'] / 100) * $maxScore);
 
@@ -80,12 +79,10 @@ class AutoGenExamGradingService
             if ($grade === 'A+') {
                 $maxScoreForGrade = $maxScore;
             }
-            // Ensure the lowest grade (F) starts at 0
             if ($grade === 'F') {
                 $minScore = 0;
             }
 
-            // Determine grade status (passed/failed, assuming 60% is the passing threshold)
             $currentGradeStatus = ($minScore >= ($maxScore * 0.5)) ? $gradeStatus[0] : $gradeStatus[1];
 
             // Determine resit status based on exam type

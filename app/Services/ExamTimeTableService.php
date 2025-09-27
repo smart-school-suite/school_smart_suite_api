@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppException;
 use App\Jobs\NotificationJobs\SendAdminExamTimetableAvailableNotificationJob;
 use App\Jobs\NotificationJobs\SendExamTimetableAvailableNotificationJob;
 use Illuminate\Support\Facades\DB;
 use App\Models\Examtimetable;
 use App\Models\Exams;
 use App\Models\Schoolbranches;
-use InvalidArgumentException;
 use App\Models\Courses;
 use Illuminate\Support\Str;
 use Exception;
@@ -16,25 +16,25 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+
 class ExamTimeTableService
 {
 
-    /**
-     * Creates exam timetable entries in the database.
-     *
-     * @param array $examTimetableEntries An array of exam timetable entry data.  Already validated!
-     * @param Schoolbranches $currentSchool The current school Branch.
-     * @param string $examId The ID of the exam.
-     * @return array An array of created timetable IDs.
-     * @throws InvalidArgumentException If the input data is invalid.
-     * @throws Exception If an error occurs during the database transaction.
-     */
-    public function createExamTimeTable(array $examTimetableEntries, Schoolbranches $currentSchool, string $examId): array
+    public function createExamTimeTable(array $examTimetableEntries, Schoolbranches $currentSchool, string $examId)
     {
         DB::beginTransaction();
         try {
-            if (empty($examTimetableEntries)) {
-                throw new InvalidArgumentException('Exam timetable data cannot be empty.');
+            $exam = Exams::with(['examtype.semesters', 'level'])
+                ->findOrFail($examId);
+
+            if ($exam->timetable_published === true) {
+                throw new AppException(
+                    "The exam timetable has already been published.",
+                    409,
+                    "Timetable Already Published",
+                    "You cannot create a timetable for an exam that has already been published. Please delete the existing one first if you want to make changes.",
+                    null
+                );
             }
 
             $createdTimetables = [];
@@ -55,244 +55,292 @@ class ExamTimeTableService
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-
                 $createdTimetables[] = $createdTimetableId;
             }
 
-            $exam = Exams::with(['examtype.semesters', 'level'])->findOrFail($examId);
             $exam->timetable_published = true;
             $exam->save();
             DB::commit();
+
             $examData = [
                 'semester' => $exam->examtype->semesters->name,
                 'examName' => $exam->examtype->exam_name,
                 'level' => $exam->level->name,
                 'schoolYear' => $exam->school_year
             ];
+
             SendExamTimetableAvailableNotificationJob::dispatch(
                 $exam->specialty_id,
-                 $currentSchool->id,
-                  $examData
+                $currentSchool->id,
+                $examData
             );
             SendAdminExamTimetableAvailableNotificationJob::dispatch(
                 $currentSchool->id,
                 $examData
             );
+
             return $createdTimetables;
-        } catch (InvalidArgumentException $e) {
-            DB::rollBack();
-            Log::error('Invalid argument in ExamTimetableService::createExamTimeTable: ' . $e->getMessage(), [
-                'examTimetableEntries' => $examTimetableEntries,
-                'currentSchoolId' => $currentSchool->id,
-                'examId' => $examId,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw $e;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
-            Log::error('Exam not found in ExamTimetableService::createExamTimeTable: ' . $e->getMessage(), [
-                'examTimetableEntries' => $examTimetableEntries,
-                'currentSchoolId' => $currentSchool->id,
-                'examId' => $examId,
-                'trace' => $e->getTraceAsString(),
-            ]);
+            throw new AppException(
+                "The exam you are trying to create a timetable for was not found.",
+                404,
+                "Exam Not Found",
+                "We could not find the exam with the provided ID. Please verify the ID and try again.",
+                null
+            );
+        } catch (AppException $e) {
+            DB::rollBack();
             throw $e;
         } catch (Exception $e) {
             DB::rollBack();
-            Log::critical('Error in ExamTimetableService::createExamTimeTable: ' . $e->getMessage(), [
-                'examTimetableEntries' => $examTimetableEntries,
-                'currentSchoolId' => $currentSchool->id,
-                'examId' => $examId,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw new Exception('An error occurred while creating the exam timetable: ' . $e->getMessage()); // Keep original message.
+            throw new AppException(
+                "An unexpected error occurred while creating the exam timetable.",
+                500,
+                "Timetable Creation Error",
+                "A server-side issue prevented the timetable from being created.",
+                null
+            );
         }
     }
-
     public function formatDurationFromTimes(string $startTime, string $endTime): string
-{
-    $start = Carbon::parse($startTime);
-    $end = Carbon::parse($endTime);
+    {
+        $start = Carbon::parse($startTime);
+        $end = Carbon::parse($endTime);
 
-    $diffInMinutes = $start->diffInMinutes($end);
-    $hours = floor($diffInMinutes / 60);
-    $minutes = $diffInMinutes % 60;
+        $diffInMinutes = $start->diffInMinutes($end);
+        $hours = floor($diffInMinutes / 60);
+        $minutes = $diffInMinutes % 60;
 
-    $duration = '';
-    if ($hours > 0) {
-        $duration .= "$hours . h";
+        $duration = '';
+        if ($hours > 0) {
+            $duration .= "$hours . h";
+        }
+        if ($minutes > 0 || $duration === '') {
+            $duration .= "$minutes . m";
+        }
+
+        return trim($duration);
     }
-    if ($minutes > 0 || $duration === '') {
-        $duration .= "$minutes . m";
-    }
-
-    return trim($duration);
-}
-    /**
-     * Deletes a single exam timetable entry.
-     *
-     * @param string $entryId The ID of the exam timetable entry to delete.
-     * @param Schoolbranches $currentSchool The current school Branch.
-     * @return Examtimetable|null The deleted Examtimetable entry, or null on error.
-     */
-    public function deleteTimetableEntry(string $entryId, Schoolbranches $currentSchool): ?Examtimetable
+    public function deleteTimetableEntry(string $entryId, Schoolbranches $currentSchool)
     {
         try {
-            $examTimeTableEntry = Examtimetable::where('school_branch_id', $currentSchool->id)->findOrFail($entryId); // Use findOrFail
+            $examTimeTableEntry = Examtimetable::where('school_branch_id', $currentSchool->id)
+                ->findOrFail($entryId);
             $examTimeTableEntry->delete();
             return $examTimeTableEntry;
         } catch (ModelNotFoundException $e) {
-            Log::error('Exam Time Table Entry Not Found in ExamTimetableService::deleteTimetableEntry: ' . $e->getMessage(), [
-                'entryId' => $entryId,
-                'currentSchoolId' => $currentSchool->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw $e;
+            throw new AppException(
+                "The exam timetable entry you are trying to delete was not found.",
+                404,
+                "Timetable Entry Not Found",
+                "We could not find the timetable entry with the provided ID for this school. It may have already been deleted.",
+                null
+            );
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while deleting the timetable entry.",
+                500,
+                "Deletion Error",
+                "We encountered a server-side issue while attempting to delete the timetable entry. Please try again later.",
+                null
+            );
         }
     }
-
-    /**
-     * Generates the exam timetable data for a given level and specialty.
-     *
-     * @param string $examId The ID of the level.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return array The generated exam timetable data, keyed by date.
-     */
     public function generateExamTimeTable(string $examId, Schoolbranches $currentSchool): array
     {
-        $timetables = Examtimetable::where('school_branch_id', $currentSchool->id)
-            ->where('exam_id', $examId)
-            ->with(['course' => function ($query) {
-                $query->select('id', 'course_title', 'credit', 'course_code');
-            }])
-            ->orderBy('date')
-            ->get(['id', 'course_id', 'date', 'start_time', 'end_time', 'duration']);
+        try {
+            $exam = Exams::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($examId);
 
-        $examTimetable = [];
-
-        foreach ($timetables as $timetable) {
-            $date = $timetable->date;
-
-            if (!isset($examTimetable[$date])) {
-                $examTimetable[$date] = [];
+            if ($exam->timetable_published === false) {
+                throw new AppException(
+                    "The exam timetable has not been published yet.",
+                    404,
+                    "Timetable Not Published",
+                    "The timetable for this exam is not yet available. Please check back later or contact the administrator.",
+                    null
+                );
             }
 
-            $examTimetable[$date][] = [
-                'id' => $timetable->id,
-                'course_title' => $timetable->course->course_title,
-                'credit' => $timetable->course->credit,
-                'course_code' => $timetable->course->course_code,
-                'start_time' => Carbon::parse($timetable->start_time)->format('h:i A'),
-                'end_time' => Carbon::parse($timetable->end_time)->format('h:i A'),
-                'duration' => $timetable->duration,
-            ];
-        }
+            $timetables = Examtimetable::where('school_branch_id', $currentSchool->id)
+                ->where('exam_id', $examId)
+                ->with(['course' => function ($query) {
+                    $query->select('id', 'course_title', 'credit', 'course_code');
+                }])
+                ->orderBy('date')
+                ->get(['id', 'course_id', 'date', 'start_time', 'end_time', 'duration']);
 
-        return array_change_key_case($examTimetable, CASE_LOWER);
+            if ($timetables->isEmpty()) {
+                throw new AppException(
+                    "No timetable entries found for this exam.",
+                    404,
+                    "No Timetable Entries",
+                    "There are no timetable entries available for the specified exam. Please ensure the timetable has been created and published.",
+                    null
+                );
+            }
+
+            $examTimetable = [];
+
+            foreach ($timetables as $timetable) {
+                $date = $timetable->date;
+
+                if (!isset($examTimetable[$date])) {
+                    $examTimetable[$date] = [];
+                }
+
+                $examTimetable[$date][] = [
+                    'id' => $timetable->id,
+                    'course_title' => $timetable->course->course_title,
+                    'credit' => $timetable->course->credit,
+                    'course_code' => $timetable->course->course_code,
+                    'start_time' => Carbon::parse($timetable->start_time)->format('h:i A'),
+                    'end_time' => Carbon::parse($timetable->end_time)->format('h:i A'),
+                    'duration' => $timetable->duration,
+                ];
+            }
+
+            return array_change_key_case($examTimetable, CASE_LOWER);
+        } catch (ModelNotFoundException $e) {
+            throw new AppException(
+                "The specified exam was not found.",
+                404,
+                "Exam Not Found",
+                "We could not find the exam with the provided ID for this school. Please verify the ID and try again.",
+                null
+            );
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while generating the exam timetable.",
+                500,
+                "Timetable Generation Error",
+                "A server-side issue prevented the timetable from being generated successfully.",
+                null
+            );
+        }
     }
-    /**
-     * Prepares exam timetable data for a given exam.
-     *
-     * @param string $examId The ID of the exam.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return array The prepared exam timetable data.
-     */
     public function prepareExamTimeTableData($examId, SchoolBranches $currentSchool): array
     {
         try {
             $exam = Exams::with(['semester:id,name', 'specialty:id,specialty_name', 'level:id,name'])
                 ->where('id', $examId)
                 ->firstOrFail();
+
+            $coursesData = Courses::where('school_branch_id', $currentSchool->id)
+                ->where('specialty_id', $exam->specialty->id)
+                ->where('semester_id', $exam->semester_id)
+                ->where("status", "active")
+                ->get(['id', 'course_title']);
+
+            if ($coursesData->isEmpty()) {
+                throw new AppException(
+                    "No courses were found for this exam's specialty and semester.",
+                    404,
+                    "No Courses Found",
+                    "There are no active courses to prepare a timetable for based on the selected exam's details. Please ensure courses are correctly configured.",
+                    null
+                );
+            }
+
+            $results = [];
+            $levelId = $exam->level->id;
+            $specialtyId = $exam->specialty->id;
+
+            foreach ($coursesData as $course) {
+                $results[] = [
+                    'course_id' => $course->id,
+                    'course_name' => $course->course_title,
+                    'level_id' => $levelId,
+                    'specialty_id' => $specialtyId,
+                    'exam_id' => $examId,
+                ];
+            }
+
+            return $results;
         } catch (ModelNotFoundException $e) {
-            Log::error('Exam Not Found in ExamTimetableService::prepareExamTimeTableData: ' . $e->getMessage(), [
-                'examId' => $examId,
-                'currentSchoolId' => $currentSchool->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw new Exception("Exam Not Found");
+            throw new AppException(
+                "The specified exam was not found.",
+                404,
+                "Exam Not Found",
+                "We could not find the exam with the provided ID for this school. Please verify the ID and try again.",
+                null
+            );
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while preparing the timetable data.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the timetable data from being prepared successfully.",
+                null
+            );
         }
-
-        $coursesData = Courses::where('school_branch_id', $currentSchool->id)
-            ->where('specialty_id', $exam->specialty->id)
-            ->where('semester_id', $exam->semester_id)
-            ->get(['id', 'course_title']);
-
-        $results = [];
-        $levelId = $exam->level->id;
-        $specialtyId = $exam->specialty->id;
-        foreach ($coursesData as $course) {
-            $results[] = [
-                'course_id' => $course->id,
-                'course_name' => $course->course_title,
-                'level_id' => $levelId,
-                'specialty_id' => $specialtyId,
-                'exam_id' => $examId,
-            ];
-        }
-        return $results;
     }
-
-    /**
-     * Deletes all timetable entries for a given exam and school.
-     *
-     * @param string $examId The ID of the exam.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return Collection|null A collection of the deleted Examtimetable entries, or null on error.
-     */
     public function deleteExamTimetable(string $examId, SchoolBranches $currentSchool): ?Collection
     {
         try {
+            $exam = Exams::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($examId);
+
+            if ($exam->timetable_published === false) {
+                throw new AppException(
+                    "The exam timetable has not been published yet.",
+                    409,
+                    "Timetable Not Published",
+                    "The timetable for this exam is not yet available. You can't delete what isn't there.",
+                    null
+                );
+            }
+
             $timetableEntries = Examtimetable::where('school_branch_id', $currentSchool->id)
                 ->where('exam_id', $examId)
                 ->get();
 
-            DB::transaction(function () use ($timetableEntries) {
+            if ($timetableEntries->isEmpty()) {
+                throw new AppException(
+                    "No timetable entries found for this exam.",
+                    404,
+                    "No Timetable Entries",
+                    "There are no timetable entries available to delete for the specified exam.",
+                    null
+                );
+            }
+
+            DB::transaction(function () use ($timetableEntries, $exam) {
                 foreach ($timetableEntries as $entry) {
                     $entry->delete();
                 }
+                $exam->timetable_published = false;
+                $exam->save();
             });
-            $exam = Exams::findOrFail($examId);
-            $exam->timetable_published = false;
-            $exam->save();
+
             return $timetableEntries;
         } catch (ModelNotFoundException $e) {
-            Log::error('Exam not found in ExamTimetableService::deleteExamTimetable: ' . $e->getMessage(), [
-                'examId' => $examId,
-                'currentSchoolId' => $currentSchool->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
-             throw $e;
-        } catch (Exception $e) {
-            Log::critical('Error deleting timetable in ExamTimetableService::deleteExamTimetable: ' . $e->getMessage(), [
-                'examId' => $examId,
-                'currentSchoolId' => $currentSchool->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
+            throw new AppException(
+                "The exam you are trying to delete the timetable for was not found.",
+                404,
+                "Exam Not Found",
+                "We could not find the exam with the provided ID for this school. Please verify the ID and try again.",
+                null
+            );
+        } catch (AppException $e) {
             throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while deleting the exam timetable.",
+                500,
+                "Timetable Deletion Error",
+                "A server-side issue prevented the timetable from being deleted. Please try again later.",
+                null
+            );
         }
     }
-
-    /**
-     * Updates exam timetable entries in the database.
-     *
-     * This method assumes that the input data ($examTimetableEntries) has already been validated
-     * by the controller.  Therefore, it focuses on updating the database efficiently
-     * and handling potential database-related errors.
-     *
-     * @param array $examTimetableEntries An array of exam timetable entry data.
-     * Each element should be an array with the following keys:
-     * 'entry_id', 'course_id', 'exam_id', 'student_batch_id',
-     * 'specialty_id', 'school_year', 'start_time', 'level_id',
-     * 'date', 'end_time'.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return Collection|null A collection of the updated Examtimetable entries, or null on error.
-     * @throws Exception If an error occurs during the database transaction.
-     */
     public function updateExamTimetable(array $examTimetableEntries, SchoolBranches $currentSchool): ?Collection
     {
         try {
             if (empty($examTimetableEntries)) {
-                Log::warning('No exam timetable entries to update in ExamTimetableService::updateExamTimetable.');
                 return collect();
             }
 
@@ -300,20 +348,32 @@ class ExamTimeTableService
 
             DB::transaction(function () use ($examTimetableEntries, $currentSchool, &$updatedTimetables) {
                 foreach ($examTimetableEntries as $entryData) {
-                    $entryId = $entryData['entry_id'];
+                    $entryId = $entryData['entry_id'] ?? null;
+                    if (!$entryId) {
+                        throw new AppException(
+                            "An entry ID is missing from one of the timetable update entries.",
+                            400,
+                            "Invalid Input",
+                            "Each entry must contain a valid 'entry_id' field.",
+                            null
+                        );
+                    }
+
                     $timetableEntry = Examtimetable::where('school_branch_id', $currentSchool->id)
                         ->findOrFail($entryId);
-                    $timetableEntry->fill([
-                        'course_id' => $entryData['course_id'],
-                        'exam_id' => $entryData['exam_id'],
-                        'student_batch_id' => $entryData['student_batch_id'],
-                        'specialty_id' => $entryData['specialty_id'],
-                        'level_id' => $entryData['level_id'],
-                        'date' => $entryData['date'],
-                        'start_time' => $entryData['start_time'],
-                        'end_time' => $entryData['end_time'],
-                    ]);
 
+                    $fillableData = collect($entryData)->except(['entry_id'])->toArray();
+                    if (empty($fillableData)) {
+                        throw new AppException(
+                            "No valid data was provided for one of the entries to be updated.",
+                            400,
+                            "No Data Provided",
+                            "The entry for ID '{$entryId}' did not contain any valid fields to update.",
+                            null
+                        );
+                    }
+
+                    $timetableEntry->fill($fillableData);
                     $timetableEntry->save();
                     $updatedTimetables->push($timetableEntry);
                 }
@@ -321,19 +381,23 @@ class ExamTimeTableService
 
             return $updatedTimetables;
         } catch (ModelNotFoundException $e) {
-            Log::error('One or more timetable entries not found in ExamTimetableService::updateExamTimetable: ' . $e->getMessage(), [
-                'examTimetableEntries' => $examTimetableEntries,
-                'currentSchoolId' => $currentSchool->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
+            throw new AppException(
+                "One or more timetable entries you tried to update were not found.",
+                404,
+                "Timetable Entry Not Found",
+                "We could not find a timetable entry for one of the provided IDs. Please check the list and try again.",
+                null
+            );
+        } catch (AppException $e) {
             throw $e;
         } catch (Exception $e) {
-            Log::critical('Error updating exam timetable entries in ExamTimetableService::updateExamTimetable: ' . $e->getMessage(), [
-                'examTimetableEntries' => $examTimetableEntries,
-                'currentSchoolId' => $currentSchool->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw new Exception('Failed to update exam timetable entries: ' . $e->getMessage());
+            throw new AppException(
+                "An unexpected error occurred while updating exam timetable entries in bulk.",
+                500,
+                "Bulk Update Error",
+                "A server-side issue prevented the bulk update from completing successfully.",
+                null
+            );
         }
     }
 }

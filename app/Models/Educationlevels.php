@@ -20,6 +20,10 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'education_levels';
 
+
+    public function specialtyHall(): HasMany {
+         return $this->hasMany(SpecialtyHall::class);
+    }
     public function examCandidate(): HasMany {
          return $this->hasMany(AccessedStudent::class);
     }

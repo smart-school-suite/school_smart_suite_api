@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-use Illuminate\Support\Facades\Log;
+use App\Exceptions\AppException;
 
 class StudentAdditionalFeeService
 {
@@ -63,8 +63,34 @@ class StudentAdditionalFeeService
 
     public function getStudentAdditionalFees(string $studentId, $currentSchool)
     {
-        $studentAdditionFees = AdditionalFees::where("school_branch_id", $currentSchool->id)->where("student_id", $studentId)->with(['student', 'specialty', 'level', 'feeCategory'])->get();
-        return $studentAdditionFees;
+        try {
+            $studentAdditionFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+                ->where("student_id", $studentId)
+                ->with(['student', 'specialty', 'level', 'feeCategory'])
+                ->get();
+
+            if ($studentAdditionFees->isEmpty()) {
+                throw new AppException(
+                    "No additional fees were found for this student.",
+                    404,
+                    "No Additional Fees Found",
+                    "There are no additional fee records available for the specified student in the system.",
+                    null
+                );
+            }
+
+            return $studentAdditionFees;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving student additional fees.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the additional fee data from being retrieved successfully.",
+                null
+            );
+        }
     }
     public function getAdditionalFeeDetails($currentSchool, string $feeId)
     {
@@ -74,9 +100,33 @@ class StudentAdditionalFeeService
     }
     public function getAdditionalFees($currentSchool)
     {
-        $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
-            ->with(['student', 'specialty', 'level', 'feeCategory'])->get();
-        return $additionalFees;
+        try {
+            $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+                ->with(['student', 'specialty', 'level', 'feeCategory'])
+                ->get();
+
+            if ($additionalFees->isEmpty()) {
+                throw new AppException(
+                    "No additional fees were found for this school branch.",
+                    404,
+                    "No Additional Fees Found",
+                    "There are no additional fee records available in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $additionalFees;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving additional fees.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the list of additional fees from being retrieved successfully.",
+                null
+            );
+        }
     }
     public function payAdditionalFees(array $additionalFeesData,  $currentSchool): AdditionalFeeTransactions
     {
@@ -179,9 +229,33 @@ class StudentAdditionalFeeService
     }
     public function getAdditionalFeesTransactions($currentSchool)
     {
-        $getAdditionalFeesTransactions = AdditionalFeeTransactions::where("school_branch_id", $currentSchool->id)
-            ->with(['additionFee.feeCategory', 'additionFee.student.specialty', 'additionFee.student.specialty.level'])->get();
-        return $getAdditionalFeesTransactions;
+        try {
+            $getAdditionalFeesTransactions = AdditionalFeeTransactions::where("school_branch_id", $currentSchool->id)
+                ->with(['additionFee.feeCategory', 'additionFee.student.specialty', 'additionFee.student.specialty.level'])
+                ->get();
+
+            if ($getAdditionalFeesTransactions->isEmpty()) {
+                throw new AppException(
+                    "No additional fees transactions were found for this school branch.",
+                    404,
+                    "No Transactions Found",
+                    "There are no records of additional fee transactions available in the system for your school branch.",
+                    null
+                );
+            }
+
+            return $getAdditionalFeesTransactions;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving additional fee transactions.",
+                500,
+                "Internal Server Error",
+                "A server-side issue prevented the list of transactions from being retrieved successfully.",
+                null
+            );
+        }
     }
     public function deleteTransaction($transactionId, $currentSchool)
     {
@@ -199,7 +273,7 @@ class StudentAdditionalFeeService
             DB::commit();
             return $transaction;
         } catch (Exception $e) {
-            DB::rollBack(); // Rollback transaction on error
+            DB::rollBack();
             return ApiResponseService::error("An error occurred while deleting the transaction: " . $e->getMessage(), null, 500);
         }
     }

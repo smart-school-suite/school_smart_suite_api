@@ -1,11 +1,14 @@
 <?php
 
+use App\Exceptions\AppException;
+use App\Exceptions\AuthException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Http\Request;
+use App\Services\ApiResponseService;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
@@ -241,5 +244,24 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (AuthException $e, Request $request){
+               if ($request->expectsJson()) {
+                $structuredError = [
+                    'title' => $e->getTitle(),
+                    'description' => $e->getDescription(),
+                    'path' => null,
+                ];
+                return ApiResponseService::error($e->getMessage(), null, $e->getCode(), $structuredError);
+            }
+        });
+      $exceptions->render(function (AppException $e, Request $request) {
+           if ($request->expectsJson()) {
+                $structuredError = [
+                    'title' => $e->getTitle(),
+                    'description' => $e->getDescription(),
+                    'path' => $e->getPath(),
+                ];
+                return ApiResponseService::error($e->getMessage(), null, $e->getCode(), $structuredError);
+            }
+      });
     })->create();

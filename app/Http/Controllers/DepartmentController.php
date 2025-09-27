@@ -65,38 +65,22 @@ class DepartmentController extends Controller
     }
     public function bulkDeactivateDepartment(ValidateDepartmentIdRequest $request)
     {
-        try {
-            $bulkDeactivateDepartment = $this->departmentService->bulkDeactivateDepartment($request->departmentIds);
-            return ApiResponseService::success("Department Deactivated Succesfully", $bulkDeactivateDepartment, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $bulkDeactivateDepartment = $this->departmentService->bulkDeactivateDepartment($request->departmentIds);
+        return ApiResponseService::success("Department Deactivated Succesfully", $bulkDeactivateDepartment, null, 200);
     }
     public function bulkActivateDepartment(ValidateDepartmentIdRequest $request)
     {
-        try {
-            $bulkActivateDepartment = $this->departmentService->bulkActivateDepartment($request->departmentIds);
-            return ApiResponseService::success("Departments Activated Succesfully", $bulkActivateDepartment, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $bulkActivateDepartment = $this->departmentService->bulkActivateDepartment($request->departmentIds);
+        return ApiResponseService::success("Departments Activated Succesfully", $bulkActivateDepartment, null, 200);
     }
-    public function bulkDeleteDepartment(ValidateDepartmentIdRequest $request){
-        try{
-           $bulkDeleteDepartment = $this->departmentService->bulkDeleteDepartment($request->departmentIds);
-           return ApiResponseService::success("Bulk Department Deleted Succesfully", $bulkDeleteDepartment, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+    public function bulkDeleteDepartment(ValidateDepartmentIdRequest $request)
+    {
+        $bulkDeleteDepartment = $this->departmentService->bulkDeleteDepartment($request->departmentIds);
+        return ApiResponseService::success("Bulk Department Deleted Succesfully", $bulkDeleteDepartment, null, 200);
     }
-    public function bulkUpdateDepartment(BulkUpdateDepartmentRequest $request){
-        try{
-           $bulkUpdateDepartment = $this->departmentService->bulkUpdateDepartment($request->departments);
-           return ApiResponseService::success("Departments Updated Succesfully", $bulkUpdateDepartment, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+    public function bulkUpdateDepartment(BulkUpdateDepartmentRequest $request)
+    {
+        $bulkUpdateDepartment = $this->departmentService->bulkUpdateDepartment($request->departments);
+        return ApiResponseService::success("Departments Updated Succesfully", $bulkUpdateDepartment, null, 200);
     }
 }

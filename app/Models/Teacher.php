@@ -63,14 +63,15 @@ class Teacher extends Model
         ];
     }
 
+    public function teacherAnnouncement(): HasMany {
+         return $this->hasMany(TeacherAnnouncement::class);
+    }
+    public function teacherCoursePreference(): HasMany {
+         return $this->hasMany(TeacherCoursePreference::class, 'teacher_id');
+    }
     public function otp()
     {
         return $this->morphMany(Otp::class, 'actorable');
-    }
-
-    public function announcementTargetUser(): MorphMany
-    {
-        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
     }
 
     public function instructorAvailability(): HasMany {

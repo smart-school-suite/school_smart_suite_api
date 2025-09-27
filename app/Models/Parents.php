@@ -80,10 +80,6 @@ class Parents extends Model
     {
         return $this->hasMany(Student::class, 'guardian_id');
     }
-    public function announcementTargetUser(): MorphMany
-    {
-        return $this->morphMany(AnnouncementTargetUser::class, 'actorable');
-    }
     protected static function boot()
     {
         parent::boot();

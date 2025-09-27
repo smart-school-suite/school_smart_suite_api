@@ -18,9 +18,16 @@ class FeeScheduleResource extends JsonResource
             'id' => $this->id,
             'config_status' => $this->config_status,
             'status' => $this->status,
+            'specialty_id' => $this->specialty->id,
             'specialty_name' => $this->specialty->specialty_name,
             'level_name' => $this->specialty->level->name,
-            'semester' => $this->schoolSemester->semester->name
+            'level_id' => $this->specialty->level_id,
+            'semester' => $this->schoolSemester->semester->name,
+            'tuition_fee' => $this->specialty->school_fee,
+            'school_semester_id' => $this->schoolSemester->id,
+            'start_date' => $this->schoolSemester->start_date,
+            'end_date' => $this->schoolSemester->end_date,
+            'student_batch_id' => $this->schoolSemester->student_batch_id
         ];
     }
 }

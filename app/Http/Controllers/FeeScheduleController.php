@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TuitionFeeSchedule\AutoCreateFeePaymentScheduleRequest;
 use App\Http\Requests\TuitionFeeSchedule\CreateFeeScheduleSlotsRequest;
 use App\Http\Requests\TuitionFeeSchedule\UpdateFeeScheduleSlotsRequest;
 use App\Http\Resources\FeeScheduleResource;
@@ -22,6 +23,12 @@ class FeeScheduleController extends Controller
         $this->feeScheduleSlotService = $feeScheduleSlotService;
     }
 
+    public function autoCreateFeePaymentSchedule(AutoCreateFeePaymentScheduleRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $feeSchedule = $this->feeScheduleService->autoCreateFeePaymentSchedule($currentSchool, $request->validated());
+        return ApiResponseService::success("Shedule Generated Successfully", $feeSchedule, null, 200);
+
+    }
     public function getFeeSchedule(Request $request){
          $currentSchool = $request->attributes->get('currentSchool');
          $feeSchedule = $this->feeScheduleService->getFeeSchedule($currentSchool);

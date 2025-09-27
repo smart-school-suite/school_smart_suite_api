@@ -11,6 +11,9 @@ use Illuminate\Notifications\Notification;
 class ElectionConcluded extends Notification implements ShouldQueue
 {
     use Queueable;
+      public $tries = 3;
+
+    public $backoff = [60, 300, 600];
 
        protected $electionName;
 

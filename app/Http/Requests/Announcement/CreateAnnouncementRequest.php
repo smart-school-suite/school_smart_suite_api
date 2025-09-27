@@ -3,13 +3,10 @@
 namespace App\Http\Requests\Announcement;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class CreateAnnouncementRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     /**
      * Get the validation rules that apply to the request.
      *
@@ -17,7 +14,6 @@ class CreateAnnouncementRequest extends FormRequest
      */
     public function rules(): array
     {
-
         return [
             'title' => 'required|string|max:150',
             'content' => 'required|string|max:5000',
@@ -27,95 +23,53 @@ class CreateAnnouncementRequest extends FormRequest
             'category_id' => ['required', 'string', 'exists:announcement_categories,id'],
             'label_id' => ['required', 'string', 'exists:labels,id'],
             'tag_id' => ['required', 'string', 'exists:tags,id'],
-            'parent_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'parent_ids.*' => [
-                'string',
-                Rule::exists('parents', 'id'),
-            ],
+            'tag_ids' => 'required|array',
+            'tag_ids.*.tag_id' => 'string|exists:tags,id',
 
-            'school_admin_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'school_admin_ids.*' => [
-                'string',
-                Rule::exists('school_admins', 'id'),
-            ],
+            'teacher_ids' => 'nullable|array',
+            'teacher_ids.*.teacher_id' => 'required|string|exists:teacher,id',
+            'school_admin_ids' => 'nullable|array',
+            'school_admin_ids.*.school_admin_id' => 'required|string|exists:school_admin,id',
 
-            'student_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'student_ids.*' => [
-                'string',
-                Rule::exists('student', 'id'),
-            ],
-
-            'teacher_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'teacher_ids.*' => [
-                'string',
-                Rule::exists('teachers', 'id'),
-            ],
-
-            'preset_group_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'preset_group_ids.*' => [
-                'string',
-                Rule::exists('preset_audiences', 'id'),
-            ],
-
-            'school_set_group_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'school_set_group_ids.*' => [
-                'string',
-                Rule::exists('school_set_audience_groups', 'id'),
-            ],
+            'student_audience' => 'nullable|array',
+            'student_audience.*.student_audience_id' => 'required|string|exists:specialty,id',
         ];
     }
 
     /**
-     * Configure the validator instance.
+     * Configure the validator instance for custom checks.
      *
      * @param  \Illuminate\Validation\Validator  $validator
      * @return void
      */
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function ($validator) {
-            $allTargetFields = [
-                'parent_ids',
-                'school_admin_ids',
-                'student_ids',
-                'teacher_ids',
-                'preset_group_ids',
-                'school_set_group_ids',
-            ];
+        $validator->after(function (Validator $validator) {
+            $data = $this->all();
 
-            $oneFieldIsPresentAndNotEmpty = false;
-            foreach ($allTargetFields as $field) {
-                // Check if the field exists in the request and is not an empty array or null.
-                // For 'array' fields, `empty()` correctly checks if the array is empty.
-                if ($this->has($field) && !empty($this->input($field))) {
-                    $oneFieldIsPresentAndNotEmpty = true;
-                    break;
-                }
-            }
-
-            // If none of the target audience fields are present or they are all empty, add an error.
-            if (!$oneFieldIsPresentAndNotEmpty) {
-                $validator->errors()->add('target_audience', 'At least one target audience (parents, school admins, students, teachers, preset groups, or school set groups) must be selected.');
+            $hasTeacherAudience = !empty($data['teacher_ids']);
+            $hasSchoolAdminAudience = !empty($data['school_admin_ids']);
+            // Parent Audience check removed
+            $hasStudentAudience = !empty($data['student_audience']);
+            if (!$hasTeacherAudience && !$hasSchoolAdminAudience && !$hasStudentAudience) {
+                $validator->errors()->add(
+                    'audience',
+                    'You must select at least one recipient audience (Teachers, School Admins, or Students) for the announcement.'
+                );
             }
         });
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'audience' => 'Recipient Audience',
+        ];
     }
 
     /**
@@ -126,11 +80,8 @@ class CreateAnnouncementRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // The 'required_without_all' message is now replaced by the custom message from withValidator.
-            'target_audience.required_without_all' => 'At least one target audience (parents, school admins, students, teachers, preset groups, or school set groups) must be selected.',
-            'published_at.after_or_equal' => 'The :attribute must be today\'s date or a future date.',
-            'expires_at.after_or_equal' => 'The :attribute must be after or equal to the published date.',
-            'date_format' => 'The :attribute is not a valid date format. Please use YYYY-MM-DD HH:MM:SS.',
+            // Custom message for the collective audience check, updated
+            'audience.required' => 'The **Recipient Audience** field is required. You must select at least one of the available recipient groups (Teachers, School Admins, or Students).'
         ];
     }
 }

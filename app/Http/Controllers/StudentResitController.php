@@ -89,7 +89,7 @@ class StudentResitController extends Controller
     public function getAllResits(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getStudentResits = $this->studentResitService->getStudentResits($currentSchool);
+        $getStudentResits = $this->studentResitService->getResitableCourses($currentSchool);
         return ApiResponseService::success("Student Resit Records Fetched Sucessfully", ResitResource::collection($getStudentResits), null, 200);
     }
     public function getResitDetails(Request $request)

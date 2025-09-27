@@ -36,7 +36,7 @@ class ResitExamController extends Controller
     public function getAllResitExams(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $resitExams = $this->resitExamService->getAllResitExamsBySchoolBranch($currentSchool);
+        $resitExams = $this->resitExamService->getAllResitExams($currentSchool);
         return ApiResponseService::success("Resit Exams Fetched Successfully", ResitExamResource::collection($resitExams), null, 200);
     }
 

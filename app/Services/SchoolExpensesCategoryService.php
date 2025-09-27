@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Models\Schoolexpensescategory;
-
+use App\Exceptions\AppException;
+use Exception;
 class SchoolExpensesCategoryService
 {
     // Implement your logic here
@@ -36,9 +37,33 @@ class SchoolExpensesCategoryService
         $schoolExpensesCategoryExists->delete();
         return $schoolExpensesCategoryExists;
     }
+
     public function getSchoolCategoryExpenses($currentSchool)
-    {
+{
+    try {
         $schoolExpenses = Schoolexpensescategory::where("school_branch_id", $currentSchool->id)->get();
+
+        if ($schoolExpenses->isEmpty()) {
+            throw new AppException(
+                "No school expenses categories were found for this school branch.",
+                404,
+                "No Categories Found",
+                "There are no expense categories configured in the system for your school branch.",
+                null
+            );
+        }
+
         return $schoolExpenses;
+    } catch (AppException $e) {
+        throw $e;
+    } catch (Exception $e) {
+        throw new AppException(
+            "An unexpected error occurred while retrieving school expense categories.",
+            500,
+            "Internal Server Error",
+            "A server-side issue prevented the expense categories from being retrieved successfully.",
+            null
+        );
     }
+}
 }

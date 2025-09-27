@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Exception;
 use Throwable;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
+use App\Exceptions\AppException;
 class AddGradesService
 {
     public function makeGradeForExam(array $grades, $currentSchool)
@@ -34,8 +34,18 @@ class AddGradesService
                 $insertedGrades[] = $newGrade;
             }
             $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $grades[0]['grades_category_id']) // Corrected
+                ->where("grades_category_id", $grades[0]['grades_category_id'])
                 ->first();
+
+            if(!$schoolGradesConfig){
+               throw new AppException(
+                "School Grades Configuration Not Found",
+                404,
+                "Configuration Not Found",
+                "The specified school grades configuration could not be found. Please ensure the configuration exists before adding grades.",
+                null
+               );
+            }
 
             if ($schoolGradesConfig) {
                 $schoolGradesConfig->isgrades_configured = true;

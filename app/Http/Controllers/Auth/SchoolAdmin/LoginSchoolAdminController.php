@@ -18,13 +18,7 @@ class LoginSchoolAdminController extends Controller
     }
     public function loginShoolAdmin(LoginSchoolAdminRequest $request)
     {
-        try{
             $loginSchoolAdmin = $this->loginSchoolAdminService->loginSchoolAdmin($request->validated());
             return ApiResponseService::success("OTP sent successfully to your email", $loginSchoolAdmin, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-
     }
 }

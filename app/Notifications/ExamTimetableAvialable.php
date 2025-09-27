@@ -12,6 +12,9 @@ class ExamTimetableAvialable extends Notification implements ShouldQueue
 {
      use Queueable;
 
+       public $tries = 3;
+
+    public $backoff = [60, 300, 600];
     protected  array $examData;
 
     public function __construct(array $examData)

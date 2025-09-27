@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppException;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Exams;
 use App\Models\Student;
 use App\Models\StudentResults;
+use Exception;
 
 class StudentResultService
 {
@@ -21,13 +23,13 @@ class StudentResultService
         return $examResults;
     }
 
-    public function getResultDetails($currentSchool, $resultId){
+    public function getResultDetails($currentSchool, $resultId)
+    {
         $examResults = StudentResults::where("school_branch_id", $currentSchool->id)
-                           ->with(['student', 'specialty', 'level', 'exam.examtype'])
-                           ->where('id', $resultId)
-                           ->first();
+            ->with(['student', 'specialty', 'level', 'exam.examtype'])
+            ->where('id', $resultId)
+            ->first();
         return $examResults;
-
     }
 
     public function getExamStandings($examId, $currentSchool)
@@ -100,9 +102,32 @@ class StudentResultService
 
     public function getAllStudentResults($currentSchool)
     {
-        $results = StudentResults::where("school_branch_id", $currentSchool->id)
-            ->with(['specialty', 'exam.examtype', 'level', 'student'])
-            ->get();
-        return $results;
+        try {
+            $results = StudentResults::where("school_branch_id", $currentSchool->id)
+                ->with(['specialty', 'exam.examtype', 'level', 'student'])
+                ->get();
+
+            if ($results->isEmpty()) {
+                throw new AppException(
+                    "No student results were found for this school branch.",
+                    404,
+                    "No Results Found",
+                    "The system could not find any student results. This may be because results have not been uploaded yet.",
+                    null
+                );
+            }
+
+            return $results;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new AppException(
+                "An unexpected error occurred while retrieving student results.",
+                500,
+                "Results Retrieval Error",
+                "A server-side issue prevented the results from being retrieved. Please try again later.",
+                null
+            );
+        }
     }
 }

@@ -35,17 +35,13 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = 'false';
 
+
+    public function halls(): HasMany {
+        return $this->hasMany(Hall::class);
+    }
     public function studentGradDates(): HasMany
     {
         return $this->hasMany(StudentBatchGradeDates::class);
-    }
-
-    public function announcementTargetGroup(): HasMany {
-        return $this->hasMany(AnnouncementTargetGroup::class, 'school_branch_id');
-    }
-
-    public function announcementTag(): HasMany {
-        return $this->hasMany(AnnouncementTag::class, 'school_branch_id');
     }
 
     public function announcementCategory(): HasMany {

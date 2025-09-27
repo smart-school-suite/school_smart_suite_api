@@ -17,13 +17,7 @@ class UpdateSchoolAdminProfileController extends Controller
     }
     public function UpdateSchoolAdminProfile(UpdateSchoolAdminRequest $request){
          $currentSchool = $request->attributes->get('currentSchool');
-         try{
             $this->updateSchoolAdminProfileService->updateSchoolAdminProfile($request->validated(), $currentSchool);
             return ApiResponseService::success("School Admin Profile Updated Successfully", null, null, 200);
-         }
-         catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-         }
-
     }
 }
