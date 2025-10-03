@@ -6,6 +6,7 @@ use App\Models\Announcement;
 use App\Notifications\ScheduledAnnouncementNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class SendAdminScheduledAnnouncementNotiJob implements ShouldQueue
 {
@@ -30,7 +31,6 @@ class SendAdminScheduledAnnouncementNotiJob implements ShouldQueue
     {
         $announcement = Announcement::where("school_branch_id", $this->schoolBranchId)
                                   ->find($this->announcementId);
-
-        $this->author->notify(new ScheduledAnnouncementNotification($announcement));
+        $this->author['authUser']->notify(new ScheduledAnnouncementNotification($announcement));
     }
 }

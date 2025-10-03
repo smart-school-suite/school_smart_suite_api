@@ -10,6 +10,7 @@ class TeacherAnnouncement extends Model
 {
     use HasFactory, GeneratesUuid;
     protected $fillable = [
+        'id',
         'teacher_id',
         'announcement_id',
         'school_branch_id',

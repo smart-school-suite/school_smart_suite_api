@@ -17,12 +17,10 @@ class CreateAnnouncementRequest extends FormRequest
         return [
             'title' => 'required|string|max:150',
             'content' => 'required|string|max:5000',
-            'status' => 'nullable|string|in:draft,published',
+            'status' => 'nullable|string|in:draft,published,scheduled,active',
             'published_at' => 'nullable|date_format:Y-m-d H:i|after_or_equal:today',
-            'expires_at' => 'nullable|date_format:Y-m-d H:i|after_or_equal:published_at',
             'category_id' => ['required', 'string', 'exists:announcement_categories,id'],
             'label_id' => ['required', 'string', 'exists:labels,id'],
-            'tag_id' => ['required', 'string', 'exists:tags,id'],
             'tag_ids' => 'required|array',
             'tag_ids.*.tag_id' => 'string|exists:tags,id',
 

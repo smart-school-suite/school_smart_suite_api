@@ -891,10 +891,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('tags', function (Blueprint $table) {
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-        });
 
         Schema::table('announcements', function (Blueprint $table) {
             $table->string('category_id')->nullable()->index();
@@ -924,7 +920,7 @@ return new class extends Migration
            $table->string('student_id')->index();
            $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
            $table->string('announcement_id')->index();
-           $table->foreign('announcement_id')->references('id')->on('student')->onDelete('cascade');
+           $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
            $table->string('school_branch_id')->index();
            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
@@ -933,16 +929,16 @@ return new class extends Migration
            $table->string('teacher_id')->index();
            $table->foreign('teacher_id')->references('id')->on('teacher')->onDelete('cascade');
            $table->string('announcement_id')->index();
-           $table->foreign('announcement_id')->references('id')->on('student')->onDelete('cascade');
+           $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
            $table->string('school_branch_id')->index();
            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('school_admin_announcements', function(Blueprint $table){
-           $table->string('teacher_id')->index();
-           $table->foreign('teacher_id')->references('id')->on('teacher')->onDelete('cascade');
+           $table->string('school_admin_id')->index();
+           $table->foreign('school_admin_id')->references('id')->on('school_admin')->onDelete('cascade');
            $table->string('announcement_id')->index();
-           $table->foreign('announcement_id')->references('id')->on('student')->onDelete('cascade');
+           $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
            $table->string('school_branch_id')->index();
            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
@@ -1151,6 +1147,42 @@ return new class extends Migration
             $table->dropColumn('school_branch_id');
             $table->dropColumn('label_id');
         });
+
+       Schema::table('announcement_engagement_stats', function(Blueprint $table) {
+           $table->dropForeign(['announcement_id']);
+           $table->dropForeign(['school_branch_id']);
+            $table->dropColumn('school_branch_id');
+             $table->dropColumn('announcement_id');
+        });
+
+
+        Schema::table('student_announcements', function(Blueprint $table){
+           $table->dropForeign(['student_id']);
+           $table->dropForeign(['announcement_id']);
+           $table->dropForeign(['school_branch_id']);
+           $table->dropColumn('school_branch_id');
+             $table->dropColumn('announcement_id');
+             $table->dropColumn('student_id');
+        });
+
+        Schema::table('teacher_announcements', function(Blueprint $table) {
+            $table->dropForeign(['teacher_id']);
+           $table->dropForeign(['announcement_id']);
+           $table->dropForeign(['school_branch_id']);
+           $table->dropColumn('school_branch_id');
+             $table->dropColumn('announcement_id');
+             $table->dropColumn('teacher_id');
+        });
+
+        Schema::table('school_admin_announcements', function(Blueprint $table){
+            $table->dropForeign(['school_admin_id']);
+           $table->dropForeign(['announcement_id']);
+           $table->dropForeign(['school_branch_id']);
+            $table->dropColumn('school_branch_id');
+             $table->dropColumn('announcement_id');
+             $table->dropColumn('school_admin_id');
+        });
+
 
         Schema::table('election_stats', function (Blueprint $table) {
             $table->dropForeign(['stat_type_id']);
@@ -1362,20 +1394,12 @@ return new class extends Migration
             $table->dropColumn('school_branch_id');
         });
 
-        Schema::table('tags', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropColumn('school_branch_id');
-        });
-
         Schema::table('announcements', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
             $table->dropColumn('category_id');
 
             $table->dropForeign(['label_id']);
             $table->dropColumn('label_id');
-
-            $table->dropForeign(['tag_id']);
-            $table->dropColumn('tag_id');
 
             $table->dropForeign(['school_branch_id']);
             $table->dropColumn('school_branch_id');
@@ -1385,42 +1409,6 @@ return new class extends Migration
             $table->dropColumn('announcement_id');
         });
 
-        Schema::table('school_announcement_settings', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropForeign(['announcement_setting_id']);
-
-            $table->dropColumn('school_branch_id');
-            $table->dropColumn('announcement_setting_id');
-        });
-        Schema::table('target_groups', function (Blueprint $table) {
-            $table->dropForeign(['school_set_audience_group_id']);
-            $table->dropForeign(['announcement_id']);
-            $table->dropForeign(['school_branch_id']);
-
-            $table->dropColumn('school_set_audience_group_id');
-            $table->dropColumn('announcement_id');
-            $table->dropColumn('school_branch_id');
-        });
-
-        Schema::table('target_preset_groups', function (Blueprint $table) {
-            $table->dropForeign(['preset_group_id']);
-            $table->dropForeign(['announcement_id']);
-            $table->dropForeign(['school_branch_id']);
-
-            $table->dropColumn('preset_group_id');
-            $table->dropColumn('announcement_id');
-            $table->dropColumn('school_branch_id');
-        });
-
-        Schema::table('target_users', function (Blueprint $table) {
-            $table->dropForeign(['announcement_id']);
-            $table->dropForeign(['school_branch_id']);
-
-            $table->dropColumn('actorable_type');
-            $table->dropColumn('actorable_id');
-            $table->dropColumn('announcement_id');
-            $table->dropColumn('school_branch_id');
-        });
         Schema::table('event_tags', function (Blueprint $table) {
             $table->dropForeign(['school_branch_id']);
             $table->dropColumn('school_branch_id');

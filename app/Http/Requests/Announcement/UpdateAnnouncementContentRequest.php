@@ -19,10 +19,11 @@ class UpdateAnnouncementContentRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|nullable|string|max:150',
-            "content" => 'sometimes|nullable|string|max:5000',
+            "content" => 'sometimes|nullable|string|max:1000',
             'category_id' => ['sometimes', 'nullable', 'exists:announcement_categories,id'],
             'label_id' => ['sometimes','nullable', 'string', 'exists:labels,id'],
-            'tag_id' => ['sometimes', 'nullable', 'string', 'exists:tags,id'],
+            'tag_ids' => 'nullable|sometimes|array',
+            'tag_ids.*.tag_id' => 'nullable|sometimes|string|exists:tags,id',
         ];
     }
 }

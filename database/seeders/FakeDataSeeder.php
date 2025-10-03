@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Faker\Factory as Faker;
 use Illuminate\Support\Facades\Hash;
+use App\Models\AnnouncementTag;
 
 class FakeDataSeeder extends Seeder
 {
@@ -27,15 +28,16 @@ class FakeDataSeeder extends Seeder
     public function run(): void
     {
 
-          $this->seedParent();
-          $this->seedStudentBatch();
-          $this->seedDepartment();
-          $this->seedSpecialty();
-          $this->seedTeacher();
-          $this->seedCourse();
-          $this->seedStudent();
-          $this->seedStudentFees();
-          $this->seedSchoolAdmin();
+        $this->seedParent();
+        $this->seedStudentBatch();
+        $this->seedDepartment();
+        $this->seedSpecialty();
+        $this->seedTeacher();
+        $this->seedCourse();
+        $this->seedStudent();
+        $this->seedStudentFees();
+        $this->seedSchoolAdmin();
+        $this->seedAnnouncementTags();
     }
 
     public function seedDepartment()
@@ -496,7 +498,8 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No Fees to insert.");
         }
     }
-    public function seedSchoolAdmin(){
+    public function seedSchoolAdmin()
+    {
         $faker = Faker::create();
         $schoolBranch = Schoolbranches::first();
         $timestamp = now();
@@ -525,6 +528,217 @@ class FakeDataSeeder extends Seeder
             $this->command->info("200 School Admins Inserted Successfully");
         } else {
             $this->command->info("No School Admins To Insert");
+        }
+    }
+
+    public function seedAnnouncementTags()
+    {
+        $announcementTags = [
+            'school update',
+            'policy change',
+            'important info',
+            'school rules',
+            'new policy',
+            'daily notice',
+            'weekly update',
+            'reminder',
+            'staff notice',
+            'general info',
+            'student notice',
+            'urgent update',
+            'schedule change',
+            'parent notice',
+            'bulletin',
+            'orientation',
+            'staff meeting',
+            'guidelines',
+            'regulations',
+            'general alert',
+            'curriculum',
+            'syllabus update',
+            'course info',
+            'assignment notice',
+            'project work',
+            'study materials',
+            'class notes',
+            'reading list',
+            'new subject',
+            'curriculum change',
+            'lesson plan',
+            'tutorials',
+            'class update',
+            'learning resources',
+            'academic calendar',
+            'academic deadline',
+            'exam prep',
+            'study guide',
+            'extra class',
+            'course announcement',
+            'exam timetable',
+            'test schedule',
+            'midterm exams',
+            'final exams',
+            'quiz dates',
+            'mock exams',
+            'exam routine',
+            'exam hall allocation',
+            'assessment',
+            'oral exams',
+            'exam guidelines',
+            'time table change',
+            'exam venue',
+            'lab exams',
+            'exam deadlines',
+            'exam slots',
+            'exam notification',
+            'exam start date',
+            'resit exams',
+            'exam plan',
+            'exam results',
+            'grading system',
+            'report card',
+            'GPA update',
+            'marks release',
+            'assessment results',
+            'rank list',
+            'result sheet',
+            'result publication',
+            'results deadline',
+            'grading notice',
+            'progress report',
+            'transcript',
+            'performance update',
+            'semester results',
+            'exam scores',
+            'evaluation',
+            'student ranking',
+            'grade review',
+            'academic results',
+            'school event',
+            'annual day',
+            'cultural fest',
+            'debate competition',
+            'science fair',
+            'art exhibition',
+            'literary week',
+            'career fair',
+            'speech contest',
+            'music concert',
+            'drama club',
+            'dance performance',
+            'guest lecture',
+            'school trip',
+            'seminar',
+            'workshop',
+            'talent show',
+            'cultural event',
+            'fun fair',
+            'parents day',
+            'football match',
+            'basketball',
+            'athletics',
+            'inter-school sports',
+            'cricket match',
+            'sports day',
+            'volleyball',
+            'badminton',
+            'tennis tournament',
+            'swimming competition',
+            'table tennis',
+            'track and field',
+            'marathon',
+            'sports trials',
+            'chess competition',
+            'rugby match',
+            'sports training',
+            'fitness test',
+            'sports camp',
+            'sports result',
+            'holiday notice',
+            'public holiday',
+            'school closure',
+            'semester break',
+            'midterm break',
+            'summer vacation',
+            'winter holiday',
+            'holiday extension',
+            'holiday resumption',
+            'long weekend',
+            'school reopening',
+            'independence day',
+            'national holiday',
+            'holiday schedule',
+            'festive break',
+            'holiday calendar',
+            'official leave',
+            'holiday event',
+            'school off day',
+            'special holiday',
+            'fee notice',
+            'admission update',
+            'staff recruitment',
+            'parent meeting',
+            'policy update',
+            'staff transfer',
+            'school board',
+            'infrastructure update',
+            'budget notice',
+            'donation drive',
+            'maintenance notice',
+            'transport notice',
+            'canteen update',
+            'school facilities',
+            'scholarship',
+            'uniform update',
+            'security notice',
+            'library notice',
+            'staff training',
+            'management update',
+            'weather alert',
+            'storm warning',
+            'pandemic update',
+            'safety notice',
+            'fire drill',
+            'health emergency',
+            'school lockdown',
+            'power outage',
+            'water shortage',
+            'road closure',
+            'accident alert',
+            'earthquake drill',
+            'safety protocol',
+            'medical emergency',
+            'emergency closure',
+            'flood alert',
+            'security alert',
+            'evacuation',
+            'emergency meeting',
+            'urgent alert',
+            'science club',
+            'literature club',
+            'music club',
+            'drama club',
+            'debate club',
+            'robotics club',
+            'coding club',
+            'arts club',
+            'dance club',
+            'environment club',
+            'chess club',
+            'photography club',
+            'film club',
+            'language club',
+            'cultural society',
+            'history club',
+            'mathematics club',
+            'volunteer group',
+            'student council',
+            'youth forum',
+        ];
+        foreach($announcementTags as $tag){
+             AnnouncementTag::create([
+                  'name' => $tag
+             ]);
         }
     }
 }

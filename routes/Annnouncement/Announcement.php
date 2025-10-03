@@ -8,3 +8,6 @@ Route::get('/{status}', [AnnouncementController::class, 'getAnnouncementByState'
 Route::put('/update-content/{announcementId}', [AnnouncementController::class, 'updateAnnouncementContent'])->name('announcement.update.content');
 Route::delete('/delete/{announcementId}', [AnnouncementController::class, 'deleteAnnouncement'])->name('announcement.delete');
 Route::get('/details/{announcementId}', [AnnouncementController::class, 'getAnnouncementDetails'])->name('announcement.get.details');
+Route::get('engagement-stats/{announcementId}', [AnnouncementController::class, 'getAnnouncementEngagementOverview'])->name('get.anouncement.engagement.stats');
+Route::get('read-uread/list/{announcementId}', [AnnouncementController::class, 'getAnnouncementReadUnreadList'])->name('get.announcement.read.unread.list');
+Route::put('/daft/update', [AnnouncementController::class, 'updateAnnouncementDraft'])->name("draft.announcement.update");

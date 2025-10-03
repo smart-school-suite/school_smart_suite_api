@@ -42,7 +42,7 @@ class AnnouncementStatService
 
 
         $announcementData = Announcement::where("school_branch_id", $currentSchool->id)
-            ->with(['announcementLabel', 'announcementTag', 'announcementCategory'])
+            ->with(['announcementLabel', 'announcementCategory'])
             ->whereYear('created_at', $year)
             ->get();
 

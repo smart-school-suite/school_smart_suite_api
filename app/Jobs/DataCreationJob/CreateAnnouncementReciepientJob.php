@@ -16,6 +16,7 @@ use App\Models\Teacher;
 use App\Models\Schooladmin;
 use App\Models\Announcement;
 use App\Notifications\AnnouncementNotification;
+use Illuminate\Support\Str;
 
 class CreateAnnouncementReciepientJob implements ShouldQueue
 {
@@ -41,11 +42,15 @@ class CreateAnnouncementReciepientJob implements ShouldQueue
             ->with(['announcementCategory', 'announcementLabel'])
             ->firstOrFail();
 
+        $announcement->status = 'active';
+        $announcement->save();
+
         if ($groupedRecipients->has(Student::class)) {
             $students = $groupedRecipients->get(Student::class);
 
             $studentData = $students->map(function ($student) {
                 return [
+                    'id' => Str::uuid(),
                     'announcement_id' => $this->announcementId,
                     'student_id' => $student->id,
                     'school_branch_id' => $this->schoolBranchId,
@@ -64,6 +69,7 @@ class CreateAnnouncementReciepientJob implements ShouldQueue
 
             $teacherData = $teachers->map(function ($teacher) {
                 return [
+                    'id' => Str::uuid(),
                     'announcement_id' => $this->announcementId,
                     'teacher_id' => $teacher->id,
                     'school_branch_id' => $this->schoolBranchId,
@@ -82,6 +88,7 @@ class CreateAnnouncementReciepientJob implements ShouldQueue
 
             $adminData = $admins->map(function ($admin) {
                 return [
+                    'id' => Str::uuid(),
                     'announcement_id' => $this->announcementId,
                     'school_admin_id' => $admin->id,
                     'school_branch_id' => $this->schoolBranchId,

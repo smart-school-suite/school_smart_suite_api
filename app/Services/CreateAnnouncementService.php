@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Throwable;
 use App\Exceptions\AppException;
+use App\Jobs\DataCleanupJobs\UpdateAnnouncementStatusJob;
 
 class CreateAnnouncementService
 {
@@ -64,11 +65,9 @@ class CreateAnnouncementService
     protected function collectRecipients($currentSchool, array $data): Collection
     {
         $recipients = collect();
-
         if (!empty($data['student_audience'])) {
             $studentAudienceIds = collect($data['student_audience'])->pluck('student_audience_id')->unique()->toArray();
             $students = $this->studentAudience($currentSchool, $studentAudienceIds);
-
             $recipients = $recipients->merge($students);
         }
 
@@ -164,34 +163,7 @@ class CreateAnnouncementService
                     );
                 }
 
-                $expiresAt = null;
-                if (!$isDraft) {
-                    if (!empty($data['expires_at'])) {
-                        $expiresAt = Carbon::parse($data['expires_at']);
-                    } else {
-                        $expiresAt = $publishedAt->copy()->addDays(7);
-                    }
-
-                    if ($expiresAt->lte($publishedAt)) {
-                        throw new AppException(
-                            "Expires Time Must Be After Published Time",
-                            400,
-                            "Invalid Expires Time",
-                            "The expiration time must be after the published time. Please adjust the dates accordingly.",
-                            null
-                        );
-                    }
-
-                    if ($expiresAt->diffInDays($publishedAt) > 365) {
-                        throw new AppException(
-                            "Expires Time Too Far in the Future",
-                            400,
-                            "Expires Time Limit Exceeded",
-                            "The expiration time is more than 1 year after publication. Please choose a shorter duration.",
-                            null
-                        );
-                    }
-                }
+                $expiresAt = $isDraft ? null : $publishedAt->copy()->addDays(7);
 
                 $announcementData = [
                     'id' => $announcementId,
@@ -204,7 +176,7 @@ class CreateAnnouncementService
                     'label_id' => $data['label_id'],
                     'notification_sent_at' => null,
                     'tags' => json_encode($tags->toArray()),
-                    'audiences' => json_encode(array_filter([
+                    'audience' => json_encode(array_filter([
                         'teachers' => $data['teacher_ids'] ?? null,
                         'admins' => $data['school_admin_ids'] ?? null,
                         'students' => $data['student_audience'] ?? null,
@@ -216,30 +188,35 @@ class CreateAnnouncementService
 
                 $totalStudents = $recipients->whereInstanceOf(Student::class)->count();
                 $totalTeachers = $recipients->whereInstanceOf(Teacher::class)->count();
-                $totalAdmins   = $recipients->whereInstanceOf(Schooladmin::class)->count();
+                $totalAdmins = $recipients->whereInstanceOf(Schooladmin::class)->count();
                 $totalRecipients = $totalStudents + $totalTeachers + $totalAdmins;
 
                 AnnouncementEngagementStat::create([
-                    'total_reciepient'     => $totalRecipients,
-                    'total_student'        => $totalStudents,
-                    'total_school_admin'   => $totalAdmins,
-                    'total_teacher'        => $totalTeachers,
-                    'total_seen'           => 0,
-                    'total_unseen'         => $totalRecipients,
-                    'announcement_id'      => $announcementId,
-                    'school_branch_id'     => $currentSchool->id
+                    'total_reciepient' => $totalRecipients,
+                    'total_student' => $totalStudents,
+                    'total_school_admin' => $totalAdmins,
+                    'total_teacher' => $totalTeachers,
+                    'total_seen' => 0,
+                    'total_unseen' => $totalRecipients,
+                    'announcement_id' => $announcementId,
+                    'school_branch_id' => $currentSchool->id
                 ]);
 
                 if ($status === 'active') {
-                    AnnouncementStatJob::dispatch($announcementId, $currentSchool->id);
+                    AnnouncementStatJob::dispatch( $currentSchool->id, $announcementId);
                     CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId);
+                    UpdateAnnouncementStatusJob::dispatch($announcementId, $currentSchool->id)->delay($expiresAt);
                 } elseif ($status === 'scheduled') {
-                    AnnouncementStatJob::dispatch($announcementId, $currentSchool->id)
-                        ->delay($publishedAt);
-                    CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId)
-                        ->delay($publishedAt);
-                    SendAdminScheduledAnnouncementNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id);
-                    SendAdminAnnouncementScheduleReminderNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id);
+                      AnnouncementStatJob::dispatch( $currentSchool->id, $announcementId);
+                        CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId)
+                            ->delay($publishedAt);
+                        SendAdminScheduledAnnouncementNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id);
+                        if($publishedAt->greaterThan(now()->addMinutes(10))){
+                           SendAdminAnnouncementScheduleReminderNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id)
+                           ->delay($publishedAt->copy()->subMinutes(5));
+                        }
+                        UpdateAnnouncementStatusJob::dispatch($announcementId, $currentSchool->id)->delay($expiresAt);
+
                 }
 
                 return $announcement;
@@ -249,12 +226,11 @@ class CreateAnnouncementService
         }
     }
 
-    public function studentAudience($currentSchool, $studentAudienceIds)
+    private function studentAudience($currentSchool, $studentAudienceIds)
     {
         $students = Student::where("school_branch_id", $currentSchool->id)
             ->whereIn("specialty_id", $studentAudienceIds)
             ->get();
-
 
         if ($students->isEmpty() && !empty($studentAudienceIds)) {
             throw new AppException(
@@ -269,14 +245,14 @@ class CreateAnnouncementService
         return $students;
     }
 
-    public function schoolAdminAudience($currentSchool, $schoolAdminIds)
+    private function schoolAdminAudience($currentSchool, $schoolAdminIds)
     {
         return Schooladmin::where("school_branch_id", $currentSchool->id)
             ->whereIn("id", $schoolAdminIds)
             ->get();
     }
 
-    public function teacherAudience($currentSchool, $teacherIds)
+    private function teacherAudience($currentSchool, $teacherIds)
     {
         return Teacher::where("school_branch_id", $currentSchool->id)
             ->whereIn("id", $teacherIds)

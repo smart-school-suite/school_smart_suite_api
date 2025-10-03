@@ -29,7 +29,7 @@ class SendAdminAnnouncementScheduleReminderNotiJob implements ShouldQueue
     {
        $announcement = Announcement::where("school_branch_id", $this->schoolBranchId)
                        ->find($this->announcementId);
-       $this->author->notify(new ScheduledAnnouncementReminderNotification($announcement));
+       $this->author['authUser']->notify(new ScheduledAnnouncementReminderNotification($announcement));
 
     }
 }

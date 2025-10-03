@@ -33,6 +33,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->text('description')->nullable();
             $table->boolean('status')->default(true);
+            $table->string('icon');
+            $table->json('color');
             $table->timestamps();
         });
 
@@ -61,7 +63,7 @@ return new class extends Migration
            $table->integer('total_reciepient')->default(0);
            $table->integer('total_student')->default(0);
            $table->integer('total_school_admin')->default(0);
-           $table->integer('total_parents')->default(0);
+           $table->integer('total_teacher')->default(0);
            $table->integer('total_seen')->default(0);
            $table->integer('total_unseen')->default(0);
            $table->timestamps();
