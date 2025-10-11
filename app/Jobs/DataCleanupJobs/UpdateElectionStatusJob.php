@@ -8,133 +8,144 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon; // Explicitly import Carbon for clarity
-
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use Exception;
 class UpdateElectionStatusJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * The ID of the election.
-     *
-     * @var string
-     */
     protected string $electionId;
-
-    /**
-     * The ID of the school branch.
-     *
-     * @var string
-     */
     protected string $schoolBranchId;
 
-    /**
-     * Create a new job instance.
-     *
-     * @param string $electionId The ID of the election to update.
-     * @param string $schoolBranchId The ID of the school branch the election belongs to.
-     */
     public function __construct(string $electionId, string $schoolBranchId)
     {
         $this->electionId = $electionId;
         $this->schoolBranchId = $schoolBranchId;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-        $election = Elections::where("school_branch_id", $this->schoolBranchId)->find($this->electionId);
+        try {
+            // Validate input
+            if (empty($this->electionId) || empty($this->schoolBranchId)) {
+                throw new InvalidArgumentException('Election ID and School Branch ID cannot be empty');
+            }
 
-        if (!$election) {
-            return;
+            // Fetch election with specific columns to optimize query
+            $election = Elections::where('school_branch_id', $this->schoolBranchId)
+                ->select([
+                    'id',
+                    'school_branch_id',
+                    'application_start',
+                    'application_end',
+                    'voting_start',
+                    'voting_end'
+                ])
+                ->find($this->electionId);
+
+            if (!$election) {
+                Log::warning('Election not found', [
+                    'election_id' => $this->electionId,
+                    'school_branch_id' => $this->schoolBranchId
+                ]);
+                return;
+            }
+
+            $currentTime = Carbon::now();
+
+            $applicationStatus = $this->determineApplicationStatus($election, $currentTime);
+            $votingStatus = $this->determineVotingStatus($election, $currentTime);
+            $overallStatus = $this->determineOverallStatus($applicationStatus, $votingStatus);
+
+            if (
+                $election->application_status !== $applicationStatus ||
+                $election->voting_status !== $votingStatus ||
+                $election->status !== $overallStatus
+            ) {
+                $election->update([
+                    'application_status' => $applicationStatus,
+                    'voting_status' => $votingStatus,
+                    'status' => $overallStatus,
+                    'updated_at' => $currentTime
+                ]);
+
+                Log::info('Election status updated', [
+                    'election_id' => $this->electionId,
+                    'application_status' => $applicationStatus,
+                    'voting_status' => $votingStatus,
+                    'overall_status' => $overallStatus
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to update election status', [
+                'election_id' => $this->electionId,
+                'school_branch_id' => $this->schoolBranchId,
+                'error' => $e->getMessage()
+            ]);
+            $this->fail($e);
         }
-
-        $currentTime = Carbon::now();
-
-        $applicationStatus = $this->determineApplicationStatus($election, $currentTime);
-
-        $votingStatus = $this->determineVotingStatus($election, $currentTime);
-
-        $overallStatus = $this->determineOverallStatus($applicationStatus, $votingStatus);
-
-
-        $election->update([
-            'application_status' => $applicationStatus,
-            'voting_status' => $votingStatus,
-            'status' => $overallStatus,
-        ]);
     }
 
-    /**
-     * Determines the application status of an election.
-     *
-     * @param Elections $election The election model instance.
-     * @param Carbon $currentTime The current Carbon instance.
-     * @return string 'upcoming', 'ongoing', or 'ended'.
-     */
     private function determineApplicationStatus(Elections $election, Carbon $currentTime): string
     {
+        try {
+            $applicationStart = Carbon::parse($election->application_start);
+            $applicationEnd = Carbon::parse($election->application_end);
 
-        if ($election->application_end->lt($currentTime)) {
-            return 'ended';
+            if ($applicationEnd->isPast()) {
+                return 'ended';
+            }
+
+            if ($applicationStart->isFuture()) {
+                return 'pending';
+            }
+
+            return 'ongoing';
+        } catch (Exception $e) {
+            Log::error('Error determining application status', [
+                'election_id' => $this->electionId,
+                'error' => $e->getMessage()
+            ]);
+            return 'pending';
         }
-
-        if ($election->application_start->gt($currentTime)) {
-            return 'upcoming';
-        }
-
-        return 'ongoing';
     }
 
-    /**
-     * Determines the voting status of an election.
-     *
-     * @param Elections $election The election model instance.
-     * @param Carbon $currentTime The current Carbon instance.
-     * @return string 'upcoming', 'ongoing', or 'ended'.
-     */
     private function determineVotingStatus(Elections $election, Carbon $currentTime): string
     {
-        if ($election->voting_end->lt($currentTime)) {
-            return 'ended';
-        }
+        try {
+            $votingStart = Carbon::parse($election->voting_start);
+            $votingEnd = Carbon::parse($election->voting_end);
 
-        if ($election->voting_start->gt($currentTime)) {
-            return 'upcoming';
-        }
+            if ($votingEnd->isPast()) {
+                return 'ended';
+            }
 
-        return 'ongoing';
+            if ($votingStart->isFuture()) {
+                return 'pending';
+            }
+
+            return 'ongoing';
+        } catch (Exception $e) {
+            return 'pending';
+        }
     }
 
-    /**
-     * Determines the overall election status based on application and voting statuses.
-     *
-     * @param string $applicationStatus The determined application status.
-     * @param string $votingStatus The determined voting status.
-     * @return string 'upcoming', 'ongoing', 'finished', or 'pending'.
-     */
     private function determineOverallStatus(string $applicationStatus, string $votingStatus): string
     {
         if ($votingStatus === 'ongoing') {
             return 'ongoing';
         }
 
-        if ($votingStatus === 'ended' && $applicationStatus === 'ended') {
+        if ($applicationStatus === 'pending' || $applicationStatus === 'ongoing') {
+            return 'upcoming';
+        }
+
+        if ($applicationStatus === 'ended' && $votingStatus === 'ended') {
             return 'finished';
         }
 
-        if ($applicationStatus === 'ongoing') {
-            return 'pending';
-        }
-
-        if ($votingStatus === 'upcoming') {
-            return 'upcoming';
-        }
-        if ($applicationStatus === 'upcoming') {
-            return 'upcoming';
-        }
-        return 'pending';
+        return 'upcoming';
     }
 }

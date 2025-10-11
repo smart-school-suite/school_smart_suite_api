@@ -20,7 +20,7 @@ return new class extends Migration
             $table->enum('voting_status', ['ongoing', 'ended', 'pending'])->default('pending');
             $table->enum('application_status', ['ongoing', 'ended', 'pending'])->default('pending');
             $table->string('school_year')->nullable();
-            $table->enum('status', ['pending', 'ongoing', 'finished'])->default('pending');
+            $table->enum('status', ['upcoming', 'ongoing', 'finished'])->default('upcoming');
             $table->boolean('is_results_published')->default(false);
             $table->timestamps();
         });

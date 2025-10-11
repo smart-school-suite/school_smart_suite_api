@@ -99,75 +99,32 @@ class ElectionStatService
         return $stats;
     }
 
-    /**
-     * Retrieves the total vote count from pre-calculated stats.
-     * Assumes $electionVoteStatData is a collection that might have multiple entries for the same KPI for different years.
-     * If you need the *current year's* vote count, you'd typically filter by year again or ensure the passed collection is already filtered.
-     * For a single value, it usually means fetching for the current year.
-     *
-     * @param \Illuminate\Support\Collection $electionVoteStatData
-     * @param int $voteCountKpiId
-     * @return int
-     */
     public function electionVoteNumbers($electionVoteStatData, $voteCountKpiId)
     {
 
         return $electionVoteStatData->where("stat_type_id", $voteCountKpiId)->sum('integer_value');
     }
-
-    /**
-     * Retrieves the total election count for the current year from pre-calculated stats.
-     *
-     * @param \Illuminate\Support\Collection $electionStatData
-     * @param int $electionCountKpiId
-     * @return int
-     */
     public function electionCount($electionStatData, $electionCountKpiId)
     {
 
         return $electionStatData->where("stat_type_id", $electionCountKpiId)->sum('integer_value');
     }
 
-    /**
-     * Returns the total count of election roles.
-     *
-     * @param \Illuminate\Database\Eloquent\Collection $electionRoleData
-     * @return int
-     */
     public function totalElectionRoleCount($electionRoleData)
     {
         return $electionRoleData->count();
     }
 
-    /**
-     * Retrieves the top 5 upcoming elections.
-     *
-     * @param \Illuminate\Database\Eloquent\Collection $elections
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
     public function upcomingElectionData($elections)
     {
-        return $elections->where("status", "pending")->sortBy('start_date')->take(5)->values(); // Sort by date for proper "upcoming"
+        return $elections->where("status", "upcoming")->sortBy('start_date')->take(5)->values();
     }
 
-    /**
-     * Retrieves the top 5 live/ongoing elections.
-     *
-     * @param \Illuminate\Database\Eloquent\Collection $elections
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
     public function getLiveElections($elections)
     {
-        return $elections->where("status", "ongoing")->sortByDesc('created_at')->take(5)->values(); // Or sortBy('start_date')
+        return $elections->where("status", "ongoing")->sortByDesc('created_at')
+        ->take(5)->values();
     }
-
-    /**
-     * Calculates the total number of applications over time for the specified KPI.
-     *
-     * @param \Illuminate\Support\Collection $electionApplicationData
-     * @param int $applicationCountKpiId
-     * @return array
-     */
     public function totalNumberOfApplications($electionApplicationData, $applicationCountKpiId)
     {
         $filteredData = $electionApplicationData->where("stat_type_id", $applicationCountKpiId);
@@ -188,13 +145,6 @@ class ElectionStatService
         return $applicationOverYears;
     }
 
-    /**
-     * Calculates the total number of votes over time for the specified KPI.
-     *
-     * @param \Illuminate\Support\Collection $electionVoteStatData
-     * @param int $voteCountKpiId
-     * @return array
-     */
     public function totalNumberOfVotesOverTime($electionVoteStatData, $voteCountKpiId)
     {
         $filteredData = $electionVoteStatData->where("stat_type_id", $voteCountKpiId);
@@ -215,13 +165,6 @@ class ElectionStatService
         return $voteOverYears;
     }
 
-    /**
-     * Calculates the total number of rejected applications over time for the specified KPI.
-     *
-     * @param \Illuminate\Support\Collection $electionApplicationData
-     * @param int $applicationRejectionCountKpiId
-     * @return array
-     */
     public function totalRejectedApplicationsOverTime($electionApplicationData, $applicationRejectionCountKpiId)
     {
         $filteredData = $electionApplicationData->where("stat_type_id", $applicationRejectionCountKpiId);
@@ -242,13 +185,6 @@ class ElectionStatService
         return $data;
     }
 
-    /**
-     * Calculates the total number of accepted applications over time for the specified KPI.
-     *
-     * @param \Illuminate\Support\Collection $electionApplicationData
-     * @param int $electionAcceptanceCountKpiId
-     * @return array
-     */
     public function totalAcceptedApplicationsOverTime($electionApplicationData, $electionAcceptanceCountKpiId)
     {
         $filteredData = $electionApplicationData->where("stat_type_id", $electionAcceptanceCountKpiId);
@@ -269,13 +205,6 @@ class ElectionStatService
         return $data;
     }
 
-    /**
-     * Gets the count of elections by their type for the current year.
-     *
-     * @param \Illuminate\Support\Collection $electionStatData
-     * @param int $electionTypeCountKpiId
-     * @return array
-     */
     public function getElectionTypeCounts($electionStatData, $electionTypeCountKpiId)
     {
         $electionTypeStats = $electionStatData->where("stat_type_id", $electionTypeCountKpiId);

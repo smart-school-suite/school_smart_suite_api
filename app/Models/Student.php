@@ -189,6 +189,14 @@ class Student extends Model
     }
 
 
+    public function vote(){
+         return $this->morphMany(ElectionVotes::class, 'votable');
+    }
+
+    public function voteStatus(){
+         return $this->morphMany(VoterStatus::class, 'votableStatus');
+    }
+
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);

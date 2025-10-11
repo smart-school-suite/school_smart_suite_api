@@ -18,7 +18,7 @@ class AnnouncementSeeder extends Seeder
                 'label' => 'important',
                 'icon' => 'fluent:important-20-filled',
                 'color' => [
-                    'color_light' => '#f6d091',
+                    'color_light' => '#fcf1d8',
                     'color_thick' => '#e6751a'
                 ],
             ],
@@ -26,7 +26,7 @@ class AnnouncementSeeder extends Seeder
                 'label' => 'urgent',
                 'icon' => 'fluent:alert-urgent-24-filled',
                 'color' => [
-                    'color_light' => '#f8d1d0',
+                    'color_light' => '#fbe6e5',
                     'color_thick' => '#d9534f'
                 ],
             ],
@@ -34,7 +34,7 @@ class AnnouncementSeeder extends Seeder
                 'label' => 'info',
                 'icon' => "material-symbols:info-rounded",
                 'color' => [
-                    'color_light' => '#d0d7ff',
+                    'color_light' => '#dfe5ff',
                     'color_thick' => '#4345ff'
                 ],
             ],
@@ -42,7 +42,7 @@ class AnnouncementSeeder extends Seeder
                 'label' => 'all',
                 'icon' => "mage:dashboard-fill",
                 'color' => [
-                    'color_light' => '#bae7fd',
+                    'color_light' => '#e0f2fe',
                     'color_thick' => '#0ea7e9'
                 ]
             ]

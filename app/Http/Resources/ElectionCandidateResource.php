@@ -17,15 +17,15 @@ class ElectionCandidateResource extends JsonResource
         return [
             'id' => $this->id,
             'student_name' => $this->student->name ?? null,
+            'specialty' => $this->student->specialty->specialty_name,
+            'level_name' => $this->student->specialty->level->name,
+            'election_role' => $this->electionRole->name,
             'election_application_id' => $this->electionApplication->id,
-            'isApproved' => $this->electionApplication->isApproved,
+            'status' => $this->isActive ? 'active' : 'inactive',
             'manifesto' => $this->electionApplication->manifesto,
             'personal_vision' => $this->electionApplication->personal_vision,
             'commitment_statement' => $this->electionApplication->commitment_statement,
-            'isActive' => $this->isActive,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-
+            'election_type' => $this->electionRole->electionType->election_title
         ];
     }
 }

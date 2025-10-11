@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Election;
+namespace App\Http\Requests\ElectionCandidate;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateVoteRequest extends FormRequest
+class ElectionCandidateIdRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -18,9 +18,8 @@ class CreateVoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'candidate_id' => 'required|string|exists:election_candidates,id',
-            'election_id' => 'required|string|exists:elections,id',
-            'position_id' => 'required|string|exists:election_roles,id'
+            'candidateIds' => 'required|array',
+            'candidateIds.*.candidate_id' => 'required|string|exists:election_candidates,id'
         ];
     }
 }

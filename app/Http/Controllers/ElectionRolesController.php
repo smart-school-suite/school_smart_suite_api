@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\ElectionRole\CreateElectionRoleRequest;
 use App\Http\Requests\ElectionRole\UpdateElectionRoleRequest;
 use App\Http\Requests\ElectionRole\BulkUpdateElectionRoleRequest;
+use App\Http\Resources\ElectionRoleResource;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ElectionRolesController extends Controller
 {
@@ -41,17 +43,17 @@ class ElectionRolesController extends Controller
         return ApiResponseService::success("Election Role Deleted Sucessfully", $deleteElectionRole, null, 200);
     }
 
-    public function getElectionRoles(Request $request, string $electionId)
+    public function getElectionRolesByElectionId(Request $request, string $electionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $electionResults = $this->electionRolesService->getElectionRole($currentSchool, $electionId);
+        $electionResults = $this->electionRolesService->getElectionRoles($currentSchool, $electionId);
         return ApiResponseService::success('Election Roles Fetched Sucessfully', $electionResults, null, 200);
     }
 
     public function getAllElectionRoles(Request $request){
         $currentSchool = $request->attributes->get("currentSchool");
         $electionRoles = $this->electionRolesService->getAllElectionRoles($currentSchool);
-        return ApiResponseService::success('Election Roles Fetched Succesfully', $electionRoles, null, 200);
+        return ApiResponseService::success('Election Roles Fetched Succesfully', ElectionRoleResource::collection($electionRoles), null, 200);
     }
 
     public function bulkDeleteRole(ElectionRoleIdRequest $request){

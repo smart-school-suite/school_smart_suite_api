@@ -6,8 +6,9 @@ use App\Models\ElectionRoles;
 use App\Models\Elections;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
-
+use Illuminate\Support\Str;
 class ElectionRolesService
 {
     // Implement your logic here
@@ -15,6 +16,7 @@ class ElectionRolesService
     public function createElectionRole(array $data, $currentSchool)
     {
         DB::beginTransaction();
+
         $electionRole = new ElectionRoles();
         $electionRole->name = $data["name"];
         $electionRole->description = $data["description"];
@@ -22,6 +24,7 @@ class ElectionRolesService
         $electionRole->school_branch_id = $currentSchool->id;
         $electionRole->save();
         Role::create([
+            'uuid' =>  Str::uuid(),
             'name' => $data["name"],
             'guard_name' => 'student',
             'school_branch_id' => $currentSchool->id,
@@ -105,7 +108,7 @@ class ElectionRolesService
             throw $e;
         }
     }
-    public function getElectionRole($currentSchool, $electionId)
+    public function getElectionRoles($currentSchool, $electionId)
     {
         $election = Elections::findOrFail($electionId);
         $electionRoles = ElectionRoles::where('school_branch_id', $currentSchool->id)

@@ -113,9 +113,11 @@ class ElectionService
         $election->delete();
         return $election;
     }
-    public function fetchElections($currentSchool)
+    public function getElections($currentSchool)
     {
-        $elections = Elections::where('school_branch_id', $currentSchool->id)->get();
+        $elections = Elections::where('school_branch_id', $currentSchool->id)
+                                ->with(['electionType'])
+                                ->get();
         return $elections;
     }
     public function upcomingElectionByStudent($currentSchool, $studentId)
@@ -145,10 +147,17 @@ class ElectionService
 
         return $eligibleElections;
     }
-    public function getElectionCandidates(string $electionId, $currentSchool)
+    public function getElectionCandidatesByElection(string $electionId, $currentSchool)
     {
         $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
             ->where("election_id", $electionId)
+            ->with(['student', 'electionApplication'])
+            ->get();
+        return $getElectionCandidates;
+    }
+
+    public function getElectionCandidates($currentSchool){
+        $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
             ->with(['student', 'electionApplication'])
             ->get();
         return $getElectionCandidates;
@@ -213,6 +222,9 @@ class ElectionService
     }
     public function createElectionType($electionTypeData, $currentSchool)
     {
+         $existingType = ElectionType::where("school_branch_id", $currentSchool->id)
+                        ->where("election_title", $electionTypeData['election_title'])
+                        ->exists();
         $electionType = ElectionType::create([
             'election_title' => $electionTypeData['election_title'],
             'description' => $electionTypeData['description'],

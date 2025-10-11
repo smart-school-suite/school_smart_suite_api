@@ -289,6 +289,7 @@ class StatTypeSeeder extends Seeder
             ['name' => 'Election Role Winner by Specialty', 'program_name' => 'election_role_winner_by_specialty'],
             ['name' => 'Election Role Winner by Male Gender', 'program_name' => 'election_role_winner_by_male_gender'],
             ['name' => 'Election Role Winner by Female Gender', 'program_name' => 'election_role_Winner_by_female_gender'],
+            ['name' => 'Total Vote Count', 'program_name' => 'total_vote_count'],
             ['name' => 'Total Number of Specialties', 'program_name' => 'total_number_of_specialties'],
             ['name' => 'Registered Students Count Over Time', 'program_name' => 'registered_students_count_over_time'],
             ['name' => 'Female Registered Students Over Time', 'program_name' => 'female_registered_student_count_over_time'],

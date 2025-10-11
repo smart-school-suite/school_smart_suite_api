@@ -12,6 +12,7 @@ use App\Http\Requests\Election\AddElectionParticipantsRequest;
 use App\Http\Requests\Election\CreateVoteRequest;
 use App\Http\Requests\Election\ElectionIdRequest;
 use App\Http\Resources\ElectionCandidateResource;
+use App\Http\Resources\ElectionResource;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ElectionService;
 use App\Services\VoteService;
@@ -40,7 +41,7 @@ class ElectionsController extends Controller
     public function getElectionDetails(Request $request, $electionId){
        $currentSchool = $request->attributes->get("currentSchool");
        $electionDetails = $this->electionService->getElectionDetails($currentSchool, $electionId);
-       return $electionDetails;
+       return ApiResponseService::success("Election Details Fetched Successfully", $electionDetails, null, 200);
     }
     public function deleteElection(Request $request, $electionId)
     {
@@ -52,8 +53,8 @@ class ElectionsController extends Controller
     public function getElections(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $elections = $this->electionService->fetchElections($currentSchool);
-        return ApiResponseService::success('Election fetched Sucessfully', $elections, null, 200);
+        $elections = $this->electionService->getElections($currentSchool);
+        return ApiResponseService::success('Election fetched Sucessfully', ElectionResource::collection($elections), null, 200);
     }
 
     public function updateElection(UpdateElectionRequest $request, $electionId)
@@ -70,11 +71,17 @@ class ElectionsController extends Controller
         return ApiResponseService::success('Voted Casted Succfully', $castVote, null, 200);
     }
 
-    public function getElectionCandidates(Request $request, $electionId)
+    public function getElectionCandidatesByElection(Request $request, $electionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getElectionCandidates = $this->electionService->getElectionCandidates($electionId, $currentSchool);
+        $getElectionCandidates = $this->electionService->getElectionCandidatesByElection($electionId, $currentSchool);
         return ApiResponseService::success("Election Candidates Retrieved Successfully", ElectionCandidateResource::collection($getElectionCandidates), null, 200);
+    }
+
+    public function getElectionCandidates(Request $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $getElectionCadidates = $this->electionService->getElectionCandidates($currentSchool);
+        return ApiResponseService::success("Election Candidates Fetched Successfuly", $getElectionCadidates, null, 200);
     }
 
 

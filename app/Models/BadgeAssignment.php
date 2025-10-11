@@ -17,7 +17,7 @@ class BadgeAssignment extends Model
 
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $table = 'badge_assignments';
+    protected $table = 'user_batches';
 
      public function badge()
     {

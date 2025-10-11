@@ -35,20 +35,20 @@ class AdminApplicationApproved extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['broadcast', 'database'];
     }
 
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->subject('Candidate Application Approved')
-            ->greeting("Hello Admin,")
-            ->line("The application of {$this->studentName} for the role of {$this->roleName} in the {$this->electionName} has been approved.")
-            ->line('Keep track of all candidate activities from the admin panel.');
-    }
+   // public function toMail(object $notifiable): MailMessage
+   // {
+     //   return (new MailMessage)
+       //     ->subject('Candidate Application Approved')
+         //   ->greeting("Hello Admin,")
+           // ->line("The application of {$this->studentName} for the role of {$this->roleName} in the {$this->electionName} has been approved.")
+           // ->line('Keep track of all candidate activities from the admin panel.');
+   // }
 
     /**
      * Get the array representation of the notification.

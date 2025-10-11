@@ -15,6 +15,9 @@ use App\Notifications\CandidacyApproved;
 use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use App\Exceptions\AppException;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ElectionApplicationService
 {
@@ -78,11 +81,29 @@ class ElectionApplicationService
     public function deleteApplication(string $application_id)
     {
         $applcationExists = ElectionApplication::find($application_id);
-        if (!$applcationExists) {
-            return ApiResponseService::error("Application not found", null, 404);
+
+        if (is_null($applcationExists)) {
+            throw new AppException(
+                "Application not found for deletion",
+                404,
+                "Application Missing",
+                "The election application with ID $application_id could not be found.",
+                "/elections/applications"
+            );
         }
-        $applcationExists->delete();
-        return $applcationExists;
+
+        try {
+            $applcationExists->delete();
+            return $applcationExists;
+        } catch (Throwable $e) {
+            throw new AppException(
+                "Failed to delete application",
+                500,
+                "Deletion Error",
+                "An unexpected error occurred while attempting to delete the application.",
+                "/elections/applications"
+            );
+        }
     }
     public function bulkDeleteApplication($applicationIds)
     {
@@ -101,103 +122,192 @@ class ElectionApplicationService
             throw $e;
         }
     }
+
     public function approveApplication(string $applicationId, $currentSchool)
     {
         try {
-            DB::beginTransaction();
             $applicationData = [];
+            DB::beginTransaction();
+
             $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
-                          ->with(['election.electionType', 'electionRole', 'student'])
-                          ->find($applicationId);
-            if (!$application) {
-                return ApiResponseService::error("Application not found", null, 404);
+                ->with(['election.electionType', 'electionRole', 'student'])
+                ->find($applicationId);
+
+            if (is_null($application)) {
+                DB::rollBack();
+                throw new AppException(
+                    "Application not found",
+                    404,
+                    "Application Missing",
+                    "The election application with ID $applicationId could not be found for this school branch.",
+                    "/elections/applications"
+                );
             }
-            $application->application_status = "approved";
-            $application->save();
-            $randomId = Str::uuid()->toString();
-            ElectionCandidates::create([
-                'id' => $randomId,
-                "election_status" => "pending",
-                "isActive" => true,
-                "application_id" => $applicationId,
-                "election_role_id" => $application->election_role_id,
-                "school_branch_id" => $currentSchool->id,
-                'election_id' => $application->election_id,
-                "student_id" => $application->student_id
+
+            if ($application->application_status === 'approved') {
+                DB::rollBack();
+                throw new AppException(
+                    "Application is already approved",
+                    409,
+                    "Duplicate Approval",
+                    "The election application with ID $applicationId has already been approved.",
+                    "/elections/applications"
+                );
+            }
+
+            // Approve the application
+            $application->update([
+                'application_status' => 'approved',
             ]);
+
+            // Create candidate and result entries
+            $candidateId = Str::uuid()->toString();
+
+            ElectionCandidates::create([
+                'id' => $candidateId,
+                'election_status' => 'pending',
+                'isActive' => true,
+                'application_id' => $application->id,
+                'election_role_id' => $application->election_role_id,
+                'school_branch_id' => $currentSchool->id,
+                'election_id' => $application->election_id,
+                'student_id' => $application->student_id,
+            ]);
+
             ElectionResults::create([
                 'vote_count' => 0,
                 'election_id' => $application->election_id,
                 'position_id' => $application->election_role_id,
-                'candidate_id' => $randomId,
-                'school_branch_id' => $currentSchool->id
+                'candidate_id' => $candidateId,
+                'school_branch_id' => $currentSchool->id,
             ]);
 
             DB::commit();
+
             $applicationData[] = [
-                    'election' => Elections::with(['electionTypes'])->find($application->election_id),
-                    'student' => Student::find($application->student_id),
-                    'electionRole' => ElectionRoles::find($application->election_role_id)
+                'student_id' => $application->student_id,
+                'application_id' => $application->id,
             ];
-            $student = Student::where("school_branch_id", $currentSchool->id)->find($application->student_id);
-            $student->notify(new CandidacyApproved(
-                    $application->electionRole->name,
-                $application->election->electionType->election_name,
-                ));
+
+            // Dispatch notifications
+            $student = Student::where("school_branch_id", $currentSchool->id)
+                ->find($application->student_id);
+
+            if ($student) {
+                $application->loadMissing(['election.electionType', 'electionRole']);
+                SendCandidacyApprovedNotification::dispatch($applicationData, $currentSchool->id);
+            }
+
             SendAdminApplicationApprovedNotification::dispatch($applicationData, $currentSchool->id);
+
             return $application;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
-            throw $e;
+
+            if ($e instanceof AppException) {
+                throw $e;
+            }
+
+            throw new AppException(
+                "Failed to approve application",
+                500,
+                "Approval Error",
+                "An unexpected error occurred during the application approval and candidate creation process.",
+                "/elections/applications"
+            );
         }
     }
-    public function bulkApproveApplication($applicationIds, $currentSchool)
+
+    public function bulkApproveApplication(array $applicationIds, $currentSchool)
     {
-        $result = [];
         try {
             DB::beginTransaction();
-            $applicationData = [];
-            foreach ($applicationIds as $applicationId) {
-                $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
-                    ->find($applicationId['election_application_id']);
-                if (!$application) {
-                    return ApiResponseService::error("Application not found", null, 404);
+
+            $approvedApplications = [];
+            $applicationDataList = [];
+
+            foreach ($applicationIds as $item) {
+                $applicationId = $item['election_application_id'] ?? null;
+
+                if (!$applicationId) {
+                    continue; // skip invalid entries
                 }
-                $application->application_status = "approved";
-                $application->save();
-                $randomId = Str::uuid()->toString();
+
+                $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
+                    ->with(['election.electionType', 'electionRole', 'student'])
+                    ->find($applicationId);
+
+                if (!$application) {
+                    // Skip missing applications but don’t break the entire loop
+                    continue;
+                }
+
+                if ($application->application_status === 'approved') {
+                    // Skip already approved ones
+                    continue;
+                }
+
+                // Approve application
+                $application->update(['application_status' => 'approved']);
+
+                // Create Candidate & Result
+                $candidateId = Str::uuid()->toString();
+
                 ElectionCandidates::create([
-                    'id' => $randomId,
-                    "election_status" => "pending",
-                    "isActive" => true,
-                    "application_id" => $applicationId['election_application_id'],
-                    "election_role_id" => $application->election_role_id,
-                    "election_id" => $application->election_id,
-                    "school_branch_id" => $currentSchool->id,
-                    "student_id" => $application->student_id
+                    'id' => $candidateId,
+                    'election_status' => 'pending',
+                    'isActive' => true,
+                    'application_id' => $application->id,
+                    'election_role_id' => $application->election_role_id,
+                    'election_id' => $application->election_id,
+                    'school_branch_id' => $currentSchool->id,
+                    'student_id' => $application->student_id,
                 ]);
+
                 ElectionResults::create([
                     'vote_count' => 0,
                     'election_id' => $application->election_id,
                     'position_id' => $application->election_role_id,
-                    'candidate_id' => $randomId,
-                    'school_branch_id' => $currentSchool->id
+                    'candidate_id' => $candidateId,
+                    'school_branch_id' => $currentSchool->id,
                 ]);
-                $applicationData[] = [
-                    'election' => Elections::with(['electionTypes'])->find($application->election_id),
-                    'student' => Student::find($application->student_id),
-                    'electionRole' => ElectionRoles::find($application->election_role_id)
+
+                $applicationDataList[] = [
+                    'student_id' => $application->student_id,
+                    'application_id' => $application->id,
                 ];
-                $result[] = $application;
+
+                $approvedApplications[] = $application;
             }
+
             DB::commit();
-            SendCandidacyApprovedNotification::dispatch($applicationData);
-            SendAdminApplicationApprovedNotification::dispatch($applicationData, $currentSchool->id);
-            return $result;
-        } catch (Exception $e) {
+
+            if (!empty($applicationDataList)) {
+                SendCandidacyApprovedNotification::dispatch($applicationDataList, $currentSchool->id);
+                SendAdminApplicationApprovedNotification::dispatch($applicationDataList, $currentSchool->id);
+            }
+
+            return $approvedApplications;
+        } catch (Throwable $e) {
             DB::rollBack();
-            throw $e;
+
+            throw new AppException(
+                "Bulk approval failed",
+                500,
+                "Bulk Approval Error",
+                "An unexpected error occurred while processing multiple election applications.",
+                "/elections/applications/bulk"
+            );
         }
+    }
+
+
+    public function getApplicationDetails($applicationId, $currentSchool)
+    {
+        $application = ElectionApplication::where('school_branch_id', $currentSchool->id)
+            ->with(['student.specialty.level', 'election', 'electionRole'])
+            ->find($applicationId);
+        return $application;
     }
     public function getApplications(string $electionId, $currentSchool)
     {
@@ -210,15 +320,26 @@ class ElectionApplicationService
     public function getAllApplications($currentSchool)
     {
         $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
-            ->with(['student.level', 'election', 'electionRole'])
+            ->with(['student', 'election.electionType', 'electionRole'])
             ->get();
+
+        if ($application->isEmpty()) {
+            throw new AppException(
+                "No election applications found",
+                404,
+                "Applications Missing",
+                "There are no election applications available for this school branch.",
+                "/elections/applications"
+            );
+        }
+
         return $application;
     }
-    public function getMyApplications($currentSchool, $studentId){
+    public function getMyApplications($currentSchool, $studentId)
+    {
         $studentApplications = ElectionApplication::where("school_branch_id", $currentSchool->id)
-                                                     ->where("student_id", $studentId)
-                                                     ->get();
+            ->where("student_id", $studentId)
+            ->get();
         return $studentApplications;
-
     }
 }

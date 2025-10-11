@@ -11,6 +11,11 @@ class ElectionResultsService
     // Implement your logic here
       public function fetchElectionResults($electionId, $currentSchool)
     {
+        $election = Elections::where("school_branch_id", $currentSchool->id)
+                            ->find($electionId);
+        if($election->status == "finished"){
+
+        }
         $electionResults = ElectionResults::where('school_branch_id', $currentSchool->id)
             ->where('election_id', $electionId)
             ->with([

@@ -68,6 +68,14 @@ class Schooladmin extends Authenticatable
         ];
     }
 
+    public function vote(){
+         return $this->morphMany(ElectionVotes::class, 'votable');
+    }
+
+    public function voteStatus(){
+         return $this->morphMany(VoterStatus::class, 'votableStatus');
+    }
+
     public function schoolAdminAnnouncement(): HasMany {
          return $this->hasMany(SchoolAdminAnnouncement::class);
     }

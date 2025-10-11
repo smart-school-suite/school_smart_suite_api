@@ -10,7 +10,6 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use App\Models\ElectionResults;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log; // Don't forget to import the Log facade
 
 class VoteCastEvent implements ShouldBroadcast
 {

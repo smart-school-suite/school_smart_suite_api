@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ElectionVotes extends Model
 {
@@ -15,7 +16,8 @@ class ElectionVotes extends Model
         "school_branch_id",
         "election_id",
         "candidate_id",
-        "student_id",
+        "votable_type",
+        "votable_id",
         "position_id",
         "voted_at"
     ];
@@ -26,6 +28,9 @@ class ElectionVotes extends Model
 
     public $keyType = "string";
 
+    public function votable(): MorphTo {
+         return $this->morphTo();
+    }
     public function schoolbranches(): BelongsTo {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }

@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('election_votes', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->timestamp('voted_at');
+            $table->string('votable_type');
+            $table->string('votable_id');
             $table->timestamps();
         });
     }

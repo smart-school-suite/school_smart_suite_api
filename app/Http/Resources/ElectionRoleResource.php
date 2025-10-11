@@ -18,7 +18,8 @@ class ElectionRoleResource extends JsonResource
             'id' => $this->id,
             'role_title' => $this->name,
             'description' => $this->description,
-            'election_name' => $this->election,
+            'status' => $this->status,
+            'election_type_name' => $this->electionType->election_title
         ];
     }
 }

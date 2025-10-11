@@ -305,12 +305,20 @@ return new class extends Migration
             $table->foreign('election_id')->references('id')->on('elections');
             $table->string('candidate_id');
             $table->foreign('candidate_id')->references('id')->on('election_candidates');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('student');
             $table->string('position_id');
             $table->foreign('position_id')->references('id')->on('election_roles');
         });
 
+         Schema::table('voter_status', function (Blueprint $table) {
+            $table->string('election_id')->index();
+            $table->foreign('election_id')->references('id')->on('elections');
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('candidate_id');
+            $table->foreign('candidate_id')->references('id')->on('election_candidates');
+            $table->string('position_id');
+            $table->foreign('position_id')->references('id')->on('election_roles');
+        });
         Schema::table('past_election_winners', function (Blueprint $table) {
             $table->string('election_type_id');
             $table->foreign('election_type_id')->references('id')->on('election_type');

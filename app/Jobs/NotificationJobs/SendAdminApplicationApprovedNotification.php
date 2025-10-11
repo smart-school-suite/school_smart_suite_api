@@ -2,6 +2,7 @@
 
 namespace App\Jobs\NotificationJobs;
 
+use App\Models\ElectionApplication;
 use App\Notifications\AdminApplicationApproved;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -10,44 +11,59 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Schooladmin;
 use App\Models\PermissionCategory;
-
+use Illuminate\Support\Facades\Notification;
 
 class SendAdminApplicationApprovedNotification implements ShouldQueue
 {
-     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
     public $tries = 3;
-    protected $applicationData;
-    protected $schoolBranchId;
+
+    protected array $applicationData;
+    protected string $schoolBranchId;
+
     public function __construct(array $applicationData, string $schoolBranchId)
     {
         $this->applicationData = $applicationData;
         $this->schoolBranchId = $schoolBranchId;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-
         $schoolAdminsToNotify = $this->getAuthorizedAdmins($this->schoolBranchId);
-        if($schoolAdminsToNotify->isNotEmpty()){
-            foreach($this->applicationData as $application){
-                $application['student']->notify(new AdminApplicationApproved(
-                    $application['student']->name,
-                     $application['electionRole']->name,
-                      $application['election']->electionType->election_title
-                ));
+
+        if ($schoolAdminsToNotify->isEmpty()) {
+            return;
+        }
+
+        foreach ($this->applicationData as $application) {
+            $applicationId = $application['application_id'] ?? null;
+            if (!$applicationId) {
+                continue;
             }
+
+            $applicationModel = ElectionApplication::where("school_branch_id", $this->schoolBranchId)
+                ->with(['election.electionType', 'electionRole', 'student'])
+                ->find($applicationId);
+
+            if (!$applicationModel || !$applicationModel->student) {
+                continue;
+            }
+
+            Notification::send(
+                $schoolAdminsToNotify,
+                new AdminApplicationApproved(
+                    $applicationModel->student->name,
+                    $applicationModel->electionRole->name,
+                    $applicationModel->election->electionType->election_title
+                )
+            );
         }
     }
 
-    private function getAuthorizedAdmins($schoolBranchId){
-                $electionPermissionNames = PermissionCategory::with('permission')
+    private function getAuthorizedAdmins(string $schoolBranchId)
+    {
+        $electionPermissionNames = PermissionCategory::with('permission')
             ->where('title', 'Election Manager')
             ->first()
             ?->permission
@@ -60,6 +76,6 @@ class SendAdminApplicationApprovedNotification implements ShouldQueue
 
         return Schooladmin::where('school_branch_id', $schoolBranchId)
             ->get()
-            ->filter(fn ($admin) => $admin->hasAnyPermission($electionPermissionNames));
+            ->filter(fn($admin) => $admin->hasAnyPermission($electionPermissionNames));
     }
 }
