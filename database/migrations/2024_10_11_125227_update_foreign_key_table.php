@@ -328,9 +328,13 @@ return new class extends Migration
             $table->foreign('student_id')->references('id')->on('student');
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('election_id')->index();
+            $table->foreign('election_id')->references('id')->on('elections');
         });
 
         Schema::table('current_election_winners', function (Blueprint $table) {
+            $table->string('election_id')->index();
+            $table->foreign('election_id')->references('id')->on('elections');
             $table->string('election_type_id');
             $table->foreign('election_type_id')->references('id')->on('election_type');
             $table->string('election_role_id');
@@ -966,43 +970,16 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->string('event_category_id')->index();
             $table->foreign("event_category_id")->references('id')->on("event_categories");
-            $table->string('tag_id')->nullable();
-            $table->foreign("tag_id")->references("id")->on("event_tags");
         });
 
-        Schema::table('event_author', function (Blueprint $table) {
+        Schema::table('event_authors', function (Blueprint $table) {
             $table->string('event_id')->index();
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('school_event_settings', function (Blueprint $table) {
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-            $table->string('event_setting_id')->index();
-            $table->foreign('event_setting_id')->references('id')->on('event_settings');
-        });
-
-        Schema::table('ev_inv_custom_groups', function (Blueprint $table) {
-            $table->string('school_set_audience_group_id')->index();
-            $table->foreign('school_set_audience_group_id')->references('id')->on('school_set_audience_groups')->onDelete('cascade');
-            $table->string('event_id')->index();
-            $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-        });
-
-        Schema::table('ev_inv_preset_groups', function (Blueprint $table) {
-            $table->string('preset_group_id')->index();
-            $table->foreign('preset_group_id')->references('id')->on('preset_audiences')->onDelete('cascade');
-            $table->string('event_id')->index();
-            $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-        });
-
-        Schema::table('ev_inv_members', function (Blueprint $table) {
+        Schema::table('event_like_statuses', function (Blueprint $table) {
             $table->string('event_id')->index();
             $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
             $table->string('school_branch_id')->index();

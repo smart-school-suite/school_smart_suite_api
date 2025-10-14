@@ -5,7 +5,11 @@ namespace App\Services\Election;
 use App\Exceptions\AppException;
 use App\Models\Elections;
 use App\Models\ElectionResults;
+use App\Models\PastElectionWinners;
+use App\Models\CurrentElectionWinners;
+use App\Http\Resources\ElectionResultResource;
 use App\Models\VoterStatus;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ElectionResultService
 {
@@ -123,15 +127,15 @@ class ElectionResultService
             );
         }
 
-       // if ($election->status == "not_started") {
-           // throw new AppException(
-             //   "Election has not yet started",
-               // 403,
-               // "Live Results Unavailable",
-                //"The election with ID $electionId has not yet begun.",
-                //"/elections/" . $electionId
-            //);
-       // }
+        if ($election->status == "ongoing") {
+            throw new AppException(
+                "Election has not yet started",
+                403,
+                "Live Results Unavailable",
+                "The election with ID $electionId has not yet begun.",
+                "/elections/" . $electionId
+            );
+        }
 
 
         $liveResults = ElectionResults::where('school_branch_id', $currentSchool->id)
@@ -146,15 +150,15 @@ class ElectionResultService
             ->orderByDesc('vote_count')
             ->get();
 
-       // if ($liveResults->isEmpty() && $election->status === 'finished') {
-         //   throw new AppException(
-           //     "No results found for this election",
-             //   404,
-               // "Results Missing",
-               // "The election has finished, but no results records were generated or found.",
-               // "/elections/" . $electionId
-            //);
-       // }
+        if ($liveResults->isEmpty() && $election->status === 'finished') {
+            throw new AppException(
+                "No results found for this election",
+                404,
+                "Results Missing",
+                "The election has finished, but no results records were generated or found.",
+                "/elections/" . $electionId
+            );
+        }
 
         $userVotes = VoterStatus::where("school_branch_id", $currentSchool->id)
             ->where("election_id", $electionId)
@@ -202,6 +206,106 @@ class ElectionResultService
         return [
             'election' => $election->load(['electionType']),
             'election_result' => $finalResults
+        ];
+    }
+
+    public function getPastElectionResults($electionId, $currentSchool)
+    {
+        try {
+            $election = Elections::where("school_branch_id", $currentSchool->id)
+                ->with(['electionType'])
+                ->findOrFail($electionId);
+        } catch (ModelNotFoundException $e) {
+            throw new AppException(
+                "Election not found",
+                404,
+                "Election Missing",
+                "The election with ID $electionId could not be found in this school branch to retrieve its past results.",
+                "/elections"
+            );
+        }
+
+        if ($election->status !== "finished") {
+            throw new AppException(
+                "Election results not available",
+                403,
+                "Election Not Finished",
+                "The election with ID $electionId is not yet marked as 'finished', so results are not available.",
+                "/elections/" . $electionId
+            );
+        }
+
+        $electionWinners = PastElectionWinners::where("school_branch_id", $currentSchool->id)
+            ->where("election_id", $electionId)
+            ->with(['student.specialty.level', 'electionRole', 'electionType', 'election'])
+            ->get();
+
+        if ($electionWinners->isEmpty()) {
+            $electionWinners = CurrentElectionWinners::where("school_branch_id", $currentSchool->id)
+                ->where("election_id", $electionId)
+                ->with(['student.specialty.level', 'electionRole', 'electionType', 'election'])
+                ->get();
+        }
+
+        if ($electionWinners->isEmpty()) {
+            throw new AppException(
+                "No election results found",
+                404,
+                "Results Missing",
+                "The election with ID $electionId is finished, but no winner records were found in either the past or current tables.",
+                "/elections/" . $electionId . "/results"
+            );
+        }
+
+        return [
+            'election' => $election,
+            'election_results' => ElectionResultResource::collection($electionWinners)
+        ];
+    }
+    public function getCurrentElectionWinners($electionId, $currentSchool)
+    {
+        try {
+            $election = Elections::where("school_branch_id", $currentSchool->id)
+                ->with(['electionType'])
+                ->findOrFail($electionId);
+        } catch (ModelNotFoundException $e) {
+            throw new AppException(
+                "Election not found",
+                404,
+                "Election Missing",
+                "The election with ID $electionId could not be found in this school branch to retrieve current winners.",
+                "/elections"
+            );
+        }
+
+        if ($election->status !== "finished") {
+            throw new AppException(
+                "Election results not finalized",
+                403,
+                "Election Not Finished",
+                "The {$election->school_year}, {$election->electionType->election_title} election is not yet marked as 'finished', so current winners are not finalized or available.",
+                "/elections/" . $electionId
+            );
+        }
+
+        $currentElectionWinners = CurrentElectionWinners::where("school_branch_id", $currentSchool->id)
+            ->where("election_id", $electionId)
+            ->with(['student.specialty.level', 'electionRole', 'electionType', 'election'])
+            ->get();
+
+        if ($currentElectionWinners->isEmpty()) {
+            throw new AppException(
+                "No current election winners found",
+                404,
+                "Winners Missing",
+                "The {$election->school_year}, {$election->electionType->election_title} election is finished, but no current winner records were found.",
+                "/elections/" . $electionId . "/winners"
+            );
+        }
+
+        return [
+            'elections' => $election,
+            'election_winners' => ElectionResultResource::collection($currentElectionWinners)
         ];
     }
 }

@@ -51,4 +51,10 @@ class ElectionController extends Controller
         $updateElection = $this->electionService->updateElection($request->validated(), $currentSchool, $electionId);
         return ApiResponseService::success("Election Updated Successfully", $updateElection, null, 200);
     }
+
+    public function getPastElections(Request $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $pastElectionResults = $this->electionService->getPastElection($currentSchool);
+         return ApiResponseService::success("Past Elections Fetched Successfully", ElectionResource::collection( $pastElectionResults), null, 200);
+    }
 }

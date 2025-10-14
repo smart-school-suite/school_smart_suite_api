@@ -103,4 +103,5 @@ class ElectionRoleController extends Controller
           $electionRoleDetails = $this->electionRoleService->getElectionRoleDetails($electionRoleId, $currentSchool);
           return ApiResponseService::success("Election Role Details Fetched Successfully", $electionRoleDetails, null, 200);
     }
+
 }

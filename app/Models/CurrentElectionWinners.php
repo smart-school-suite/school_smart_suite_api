@@ -15,9 +15,13 @@ class CurrentElectionWinners extends Model
         'election_type_id',
         'election_role_id',
         'student_id',
-        'school_branch_id'
+        'school_branch_id',
+        'election_id'
     ];
 
+    public function election(): BelongsTo {
+         return $this->belongsTo(Elections::class, 'election_id');
+    }
     public function electionType(): BelongsTo {
         return $this->belongsTo(ElectionType::class, 'election_type_id');
     }

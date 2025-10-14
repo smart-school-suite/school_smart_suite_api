@@ -28,6 +28,18 @@ class ElectionResultController extends Controller
         $electionResults = $this->electionResultService->getLiveElectionResults($electionId, $currentSchool, $this->getAuthenticatedUser());
         return ApiResponseService::success("Live Election Results Fetched Successfully", $electionResults, null, 200);
     }
+
+    public function getPastElectionResult(Request $request, $electionId){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $pastElectionResult = $this->electionResultService->getPastElectionResults($electionId, $currentSchool);
+         return ApiResponseService::success("Past Election Results Fetched Successfully", $pastElectionResult, null, 200);
+    }
+
+    public function getCurrentElectionResult(Request $request, $electionId){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $currentElectionResult = $this->electionResultService->getCurrentElectionWinners($electionId, $currentSchool);
+         return ApiResponseService::success("Current Election Results Fetched Successfully", $currentElectionResult, null, 200);
+    }
     private function getAuthenticatedUser()
     {
         $user = Auth::user();

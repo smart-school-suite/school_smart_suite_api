@@ -16,13 +16,17 @@ class ElectionResultResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'votes' => $this->votes,
-            'election_status' => $this->election_status,
-            'election_role' => $this->ElectionRoles->name,
-            'election' => $this->Elections->name,
-            'student_id' => $this->electionCandidate->student->name,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'student_name' => $this->student->name ?? null,
+            'profile_picture' => $this->student->profile_picture ?? null,
+            'specialty_name' => $this->student->specialty->specialty_name ?? null,
+            'level_name' => $this->student->specialty->level->name ?? null,
+            'level' => $this->student->specialty->level->level ?? null,
+            'election_role' => $this->electionRole->name ?? null,
+            'election_role_id' => $this->electionRole->id ?? null,
+            'election_name' => $this->electionType->election_title ?? null,
+            'election_id' => $this->election_id ?? null,
+            'school_year' => $this->election->school_year ?? null,
+            'vote_count' => $this->total_votes ?? null
         ];
     }
 }

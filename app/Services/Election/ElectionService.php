@@ -184,6 +184,7 @@ class ElectionService
     public function getElections($currentSchool)
     {
         $elections = Elections::where('school_branch_id', $currentSchool->id)
+             ->where("status", "!=", "finished")
             ->with(['electionType'])
             ->get();
 
@@ -369,5 +370,24 @@ class ElectionService
         }
 
         return $eligibleElections;
+    }
+    public function getPastElection($currentSchool)
+    {
+        $pastElections = Elections::where("school_branch_id", $currentSchool->id)
+            ->where("status", "finished")
+            ->with(['electionType'])
+            ->get();
+
+        if ($pastElections->isEmpty()) {
+            throw new AppException(
+                "No past elections found",
+                404,
+                "Past Elections Missing",
+                "There are no elections marked as 'finished' for this school branch.",
+                "/elections/past"
+            );
+        }
+
+        return $pastElections;
     }
 }

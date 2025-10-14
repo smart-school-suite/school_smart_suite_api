@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Jobs\DataCleanupJobs\UpdateElectionResultStatus;
 use Illuminate\Database\Seeder;
+use App\Models\CurrentElectionWinners;
 
 use Illuminate\Support\Facades\DB;
 

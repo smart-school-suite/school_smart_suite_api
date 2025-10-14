@@ -72,7 +72,7 @@ class ElectionTypeController extends Controller
 
     public function getElectionTypeDetails(Request $request, $electionTypeId){
         $currentSchool = $request->attributes->get("currentSchool");
-        $this->electionTypeService->getElectionTypeDetails($electionTypeId, $currentSchool);
-        return ApiResponseService::success("Election Type Details Fetched Successfully", null, null, 200);
+       $details =  $this->electionTypeService->getElectionTypeDetails($electionTypeId, $currentSchool);
+        return ApiResponseService::success("Election Type Details Fetched Successfully", $details, null, 200);
     }
 }

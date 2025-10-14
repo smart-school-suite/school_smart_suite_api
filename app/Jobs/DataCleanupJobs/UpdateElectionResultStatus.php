@@ -21,7 +21,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use App\Models\PermissionCategory;
 use App\Models\Schooladmin;
-
+use App\Notifications\AdminElectionTransition;
+use Illuminate\Support\Facades\Notification;
 class UpdateElectionResultStatus implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -51,14 +52,18 @@ class UpdateElectionResultStatus implements ShouldQueue
         $electionWinners = $this->processElectionResults($electionResults);
 
         DB::transaction(function () use ($electionWinners, $electionDetails) {
-            $this->transitionCurrentWinnersToPast($electionDetails->election_type_id, $this->schoolBranchId);
+            $this->transitionCurrentWinnersToPast($electionDetails, $this->schoolBranchId);
             $this->assignNewWinnerRolesAndBadges(
                 $electionWinners,
-                $electionDetails->election_type_id,
+                $electionDetails,
                 $this->schoolBranchId
             );
             $this->notifyWinners($electionWinners, $electionDetails->electionType->election_title);
         });
+
+        $schoolAdminsToNotify = $this->getElectionManagers($this->schoolBranchId);
+        Notification::send($schoolAdminsToNotify, new AdminElectionTransition($electionDetails->electionType->election_title));
+
     }
 
     private function processElectionResults(Collection $allElectionResults): Collection
@@ -89,11 +94,11 @@ class UpdateElectionResultStatus implements ShouldQueue
         return $newWinners;
     }
 
-    private function transitionCurrentWinnersToPast(string $electionTypeId, string $schoolBranchId): void
+    private function transitionCurrentWinnersToPast($electionDetails, string $schoolBranchId): void
     {
         $currentWinners = CurrentElectionWinners::query()
             ->where('school_branch_id', $schoolBranchId)
-            ->where('election_type_id', $electionTypeId)
+            ->where('election_type_id', $electionDetails->election_type_id)
             ->with(['student', 'electionRole'])
             ->get();
 
@@ -134,9 +139,9 @@ class UpdateElectionResultStatus implements ShouldQueue
                 'total_votes' => $winner->total_votes,
                 'election_type_id' => $winner->election_type_id,
                 'election_role_id' => $winner->election_role_id,
+                'election_id' => $electionDetails->id,
                 'student_id' => $winner->student->id,
                 'school_branch_id' => $winner->school_branch_id,
-                'year' => now()->year,
             ]);
 
             $winner->delete();
@@ -145,7 +150,7 @@ class UpdateElectionResultStatus implements ShouldQueue
 
     private function assignNewWinnerRolesAndBadges(
         Collection $newWinnersElectionResults,
-        string $electionTypeId,
+        $electionDetails,
         string $schoolBranchId
     ): void {
         $goldBadge = Badge::where('name', 'Golden')->first();
@@ -181,11 +186,11 @@ class UpdateElectionResultStatus implements ShouldQueue
 
             CurrentElectionWinners::create([
                 'total_votes' => $winnerResult->vote_count,
-                'election_type_id' => $electionTypeId,
+                'election_type_id' => $electionDetails->election_type_id,
                 'election_role_id' => $electionRole->id,
                 'student_id' => $student->id,
                 'school_branch_id' => $schoolBranchId,
-                'election_id' => $this->electionId,
+                'election_id' => $electionDetails->id,
             ]);
         }
     }

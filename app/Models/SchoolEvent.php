@@ -20,25 +20,21 @@ class SchoolEvent extends Model
         'organizer',
         'location',
         'likes',
+        'invitee_count',
         'status',
         'start_date',
-        'invitee_count',
         'end_date',
         'published_at',
         'notification_sent_at',
         'expires_at',
         'school_branch_id',
         'event_category_id',
-        'tag_id'
+        'tags'
     ];
 
     public $incrementing = 'false';
     public $table = 'school_events';
     public $keyType = 'string';
-
-    public function eventTag(): BelongsTo {
-        return $this->belongsTo(EventTag::class, 'tag_id');
-    }
 
     public function eventCategory(): BelongsTo {
         return $this->belongsTo(EventCategory::class, 'event_category_id');

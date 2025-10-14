@@ -31,11 +31,14 @@ use App\Http\Controllers\Election\ElectionResultController;
         ->name('elections.results.show');
     Route::get('/{electionId}/live-results', [ElectionResultController::class, 'getLiveElectionResults'])->name("get.live.election.results");
 
+    Route::get('/{electionId}/past-results', [ElectionResultController::class, 'getPastElectionResult'])->name("get.past.election.results");
+    Route::get('/{electionId}/current-result', [ElectionResultController::class, 'getCurrentElectionResult'])->name("get.current.election-results");
 
     Route::get('/student/{studentId}/upcoming-elections', [ElectionController::class, 'getStudentElections'])
         ->name('upcoming-elections.student.get');
     Route::get('/election/{electionId}', [ElectionController::class, 'getElectionDetails'])->name('get.election-details');
 
+    Route::get('/past', [ElectionController::class, 'getPastElections'])->name("get.past.elections");
         Route::middleware(['permission:schoolAdmin.election.view.past.winners'])->get('/past-election-winners', [ElectionController::class, 'getPastElectionWinners'])
         ->name('elections.winners.past');
     Route::middleware(['permission:schoolAdmin.election.view.winners.current'])->get('/current-election-winners', [ElectionController::class, 'getCurrentElectionWinners'])
