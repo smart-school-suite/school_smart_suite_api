@@ -65,4 +65,12 @@ class SchoolEventNotification extends Notification
             'body' => "You're invited to {$this->schoolEvent->title}, organized by {$this->schoolEvent->organizer}",
         ]);
     }
+
+     public function toArray($notifiable): array
+    {
+        return [
+           'title' => 'New Event Avialable',
+            'body' => "You're invited to {$this->schoolEvent->title}, organized by {$this->schoolEvent->organizer}",
+        ];
+    }
 }

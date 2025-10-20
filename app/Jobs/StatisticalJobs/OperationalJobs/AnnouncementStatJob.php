@@ -89,7 +89,7 @@ class AnnouncementStatJob implements ShouldQueue
                     $month,
                     $this->schoolBranchId,
                     $announcementTypeKpi,
-                    $announcement->lable_id
+                    $announcement->label_id
                 );
             } else {
                 Log::info("Announcement '{$this->announcementId}' has no label ID. Skipping announcement count by type.");
@@ -115,7 +115,7 @@ class AnnouncementStatJob implements ShouldQueue
         int $month,
         string $schoolBranchId,
         StatTypes $kpi,
-        ?string $labelId = null
+        ?string $labelId
     ): void {
 
         $matchCriteria = [

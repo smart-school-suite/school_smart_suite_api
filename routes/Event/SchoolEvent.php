@@ -1,16 +1,21 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EventsController;
+use App\Http\Controllers\SchoolEvent\SchoolEventController;
 
-// Create a new school event
-Route::middleware(['permission:schoolAdmin.event.create'])->post('/create', [EventsController::class, 'createSchoolEvent'])
+
+Route::middleware(['permission:schoolAdmin.event.create'])->post('/create', [SchoolEventController::class, 'createSchoolEvent'])
     ->name('school-event.store');
-
-Route::get('/', [EventsController::class, 'getSchoolEvents'])->name("school-event.index");
-Route::patch('/update/content/{eventId}', [EventsController::class, 'updateSchoolEventContent'])->name("school-event.update");
-Route::get('/{categoryId}', [EventsController::class, 'getSchoolEventByCategory'])->name("school-event.category");
-Route::delete('/delete/{eventId}', [EventsController::class, 'deleteSchoolEvent'])->name("school-event.delete");
-Route::get('/details/{eventId}', [EventsController::class, 'getSchoolEventDetails'])->name("school-event.details");
-Route::get('/status/{status}', [EventsController::class, 'getSchoolEventByStatus'])->name('school-event.status');
-Route::patch('/draft/status/update/{eventId}', [EventsController::class, 'updateSchoolEventStatus'])->name('school-event.draft.status.update');
+Route::get('/', [SchoolEventController::class, 'getSchoolEvents'])->name("get.school-events");
+Route::post('/{schoolEventId}/like', [SchoolEventController::class, 'likeSchoolEvent'])->name("like.school.event");
+Route::get('/event-category/{eventCategoryId}', [SchoolEventController::class, 'getSchoolEventByCategory'])->name('get.school.events.by.category');
+Route::get('/expired', [SchoolEventController::class, 'getExpiredSchoolEvents'])->name("get.expired.school-events");
+Route::patch('/update/content/{schoolEventId}', [SchoolEventController::class, 'updateSchoolEventContent'])->name("school-event.update");
+Route::delete('/{eventCategoryId}', [SchoolEventController::class, 'deleteSchoolEventContent'])->name("school-event.delete");
+Route::patch('/draft/update', [SchoolEventController::class, 'updateDraftSchoolEvent'])->name('school-event.draft.status.update');
+Route::get('details/{eventCategoryId}', [SchoolEventController::class, 'getSchoolEventDetails'])->name("school-event.details");
+Route::get('/expired/event-category/{eventCategoryId}', [SchoolEventController::class, 'getExpiredSchoolEventsByCategory'])->name("get.expired.school.events.by.category");
+Route::get('/scheduled/event-category/{eventCategoryId}', [SchoolEventController::class, 'getScheduledSchoolEventsByCategory'])->name("get.scheduled.school.events.by.category");
+Route::get('/scheduled', [SchoolEventController::class, 'getScheduledSchoolEvents'])->name("get.scheduled.school.events");
+Route::get('/draft', [SchoolEventController::class, 'getDraftSchoolEvents'])->name("get.draft.school-events");
+Route::get('/draft/event-category/{eventCategoryId}', [SchoolEventController::class, 'getDraftSchoolEventsByCategory'])->name("get.draft.school.events.by.category");

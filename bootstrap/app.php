@@ -214,12 +214,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement-category')
                 ->group(base_path('routes/Annnouncement/AnnouncementCategory.php'));
 
-            Route::middleware(['auth:sanctum'])->prefix('api/v1/announcement-setting')
-                ->group(base_path('routes/Annnouncement/AnnouncementSetting.php'));
-
-             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-announcement-setting')
-                ->group(base_path('routes/Annnouncement/SchoolAnnouncementSetting.php'));
-
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement')
              ->group(base_path('routes/Annnouncement/Announcement.php'));
 
@@ -228,12 +222,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/event-tag')
               ->group(base_path('routes/Event/SchoolEventTag.php'));
-
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/event-setting')
-             ->group(base_path('routes/Event/EventSetting.php'));
-
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-event-setting')
-            ->group(base_path('routes/Event/SchoolEventSetting.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/fee-installment')
             ->group(base_path('routes/FeeInstallment/FeeInstallment.php'));

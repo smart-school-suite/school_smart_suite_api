@@ -29,7 +29,9 @@ class SchoolEvent extends Model
         'expires_at',
         'school_branch_id',
         'event_category_id',
-        'tags'
+        'tags',
+        'visibility_status',
+        'audience'
     ];
 
     public $incrementing = 'false';

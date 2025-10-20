@@ -7,50 +7,30 @@ use Throwable;
 
 class EventTagService
 {
-   public function createEventTag($tagData, $currentSchool){
-       try{
-            $tag = EventTag::create([
-                 'name' => $tagData['name'],
-                 'school_branch_id' => $currentSchool->id
+   public function createEventTag($tagData){
+       $tag = EventTag::create([
+                 'name' => $tagData['name']
              ]);
             return $tag;
-       }
-       catch(Throwable $e){
-          throw $e;
-       }
    }
 
-   public function getTags($currentSchool){
-      try{
-         $tags = EventTag::where("school_branch_id", $currentSchool->id)->get();
+   public function getTags(){
+         $tags = EventTag::all();
          return $tags;
-      }
-      catch(Throwable $e){
-        throw $e;
-      }
    }
 
-   public function deleteTag($currentSchool, $tagId){
-      try{
-         $tag = EventTag::where("school_branch_id", $currentSchool->id)->findOrFail($tagId);
+   public function deleteTag( $tagId){
+         $tag = EventTag::findOrFail($tagId);
          $tag->delete();
          return $tag;
-      }
-      catch(Throwable $e){
-        throw $e;
-      }
+
    }
 
-   public function updateTag($tagData, $currentSchool, $tagId){
-      try{
-         $tag = EventTag::where("school_branch_id", $currentSchool->id)->findOrFail($tagId);
+   public function updateTag($tagData, $tagId){
+      $tag = EventTag::findOrFail($tagId);
          $cleanData = array_filter($tagData);
          $tag->update($cleanData);
          return $tag;
-      }
-      catch(Throwable $e){
-        throw $e;
-      }
    }
 
 

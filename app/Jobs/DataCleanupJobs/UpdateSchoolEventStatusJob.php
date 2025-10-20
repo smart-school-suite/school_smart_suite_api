@@ -6,7 +6,6 @@ use App\Models\SchoolEvent;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-
 class UpdateSchoolEventStatusJob implements ShouldQueue
 {
     use Queueable;
@@ -15,10 +14,13 @@ class UpdateSchoolEventStatusJob implements ShouldQueue
     protected string $schoolEventId;
     protected string $schoolBranchId;
 
-    public function __construct(string $schoolEventId, string $schoolBranchId)
+    protected $authenticatedUser;
+
+    public function __construct(string $schoolEventId, string $schoolBranchId, $authenticatedUser)
     {
         $this->schoolEventId = $schoolEventId;
         $this->schoolBranchId = $schoolBranchId;
+        $this->authenticatedUser = $authenticatedUser;
     }
 
     public function handle(): void

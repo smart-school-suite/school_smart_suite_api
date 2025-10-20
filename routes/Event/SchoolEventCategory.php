@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EventCategoryController;
+use App\Http\Controllers\SchoolEvent\SchoolEventCategoryController;
 
-Route::post("/create", [EventCategoryController::class, 'createCategory'])->name("event-category.create");
-Route::put("/update/{categoryId}", [EventCategoryController::class, 'updateCategory'])->name("event-category.update");
-Route::delete("/delete/{categoryId}", [EventCategoryController::class, 'deleteCategory'])->name("event-category.delete");
-Route::get("/{status}", [EventCategoryController::class, 'getCategoryByStatus'])->name("event-category.status");
-Route::get("/", [EventCategoryController::class, 'getAllCategories'])->name("event-category.index");
-Route::post("/deactivate/{categoryId}", [EventCategoryController::class, 'deactivateCategory'])->name("event-category.deactivate");
-Route::post("/activate/{categoryId}", [EventCategoryController::class, 'activateCategory'])->name("event-category.activate");
-
+Route::post("/create", [SchoolEventCategoryController::class, 'createSchoolEventCategory'])->name("event-category.create");
+Route::put("/update/{eventCategoryId}", [SchoolEventCategoryController::class, 'updateSchoolEventCagory'])->name("event-category.update");
+Route::delete("/delete/{eventCategoryId}", [SchoolEventCategoryController::class, 'deleteSchoolEventCategory'])->name("event-category.delete");
+Route::get("/", [SchoolEventCategoryController::class, 'getSchoolEventCategory'])->name("event-category.index");
+Route::post("/deactivate/{eventCategoryId}", [SchoolEventCategoryController::class, 'deactivateSchoolEventCategory'])->name("event-category.deactivate");
+Route::post("/activate/{eventCategoryId}", [SchoolEventCategoryController::class, 'activateSchoolEventCategory'])->name("event-category.activate");
+Route::get("/active", [SchoolEventCategoryController::class, 'getActiveSchoolEventCategory'])->name("get.active.event.category");
+Route::get("/details/{eventCategoryId}", [SchoolEventCategoryController::class, 'getSchoolEventCategoryDetails'])->name("get.school.event.category.details");

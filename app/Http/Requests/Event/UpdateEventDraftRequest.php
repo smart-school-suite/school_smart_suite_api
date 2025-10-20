@@ -18,39 +18,29 @@ class UpdateEventDraftRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
+            'title' => 'required|string|max:200',
+            'school_event_id' => 'required|string|exists:school_events,id',
+            'description' => 'required|string|max:5000',
+            'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,bmp|max:2048',
+            'organizer' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
             'status' => ['required', 'string', Rule::in(['active', 'scheduled'])],
+            'start_date' => 'required|date_format:Y-m-d H:i',
+            'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
             'published_at' => 'nullable|date_format:Y-m-d H:i',
+            'tag_ids' => 'required|array',
+            'tag_ids.*.tag_id' => 'string|exists:event_tags,id',
+            'event_category_id' => 'string|required|exists:event_categories,id',
+            'teacher_ids' => 'nullable|array',
+            'teacher_ids.*.teacher_id' => 'required|string|exists:teacher,id',
+            'school_admin_ids' => 'nullable|array',
+            'school_admin_ids.*.school_admin_id' => 'required|string|exists:school_admin,id',
+            'student_audience' => 'nullable|array',
+            'student_audience.*.student_audience_id' => 'required|string|exists:specialty,id',
         ];
-
-                switch ($this->input('status')) {
-            case 'active':
-                $rules = array_merge($rules, [
-                    'published_at' => 'nullable',
-                ]);
-                break;
-
-            case 'scheduled':
-                $rules = array_merge($rules, [
-                    'published_at' => 'required|date_format:Y-m-d H:i|after:now'
-                ]);
-                break;
-        }
-         return $rules;
+        return $rules;
 
     }
 
-    /**
-     * Get the error messages for the defined validation rules.
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        $todaysDate = now();
-        return [
-            'published_at.after_or_equal' => "The :attribute must be today's date:  $todaysDate or a future date.",
-            'published_at.after' => 'The :attribute must be a future date and time for scheduled events.',
-            'date_format' => 'The :attribute is not a valid date format. Please use YYYY-MM-DD HH:MM.',
-        ];
-    }
+
 }
