@@ -16,6 +16,6 @@ class ChangePasswordController extends Controller
     }
     public function changeStudentPassword(ChangePasswordRequest $request)
     {
-        $this->changeStudentPasswordService->changeSchoolAdminPassword($request->validated());
+        $this->changeStudentPasswordService->changeStudentPassword($request->validated());
     }
 }

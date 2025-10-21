@@ -4,7 +4,6 @@ namespace App\Services\Auth\Student;
 
 use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
 use App\Jobs\NotificationJobs\SendAdminStudentCreatedNotificationJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\RegistrationFeeStatJob;
 use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeeStatJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\StudentRegistrationStatsJob;
 use App\Models\Specialty;
@@ -13,20 +12,53 @@ use App\Models\TuitionFees;
 use App\Models\RegistrationFee;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Exceptions\AuthException;
+use App\Exceptions\AppException;
 
 class CreateStudentService
 {
     public function createStudent($studentData, $currentSchool)
     {
         try {
+
             $specialty = Specialty::where('school_branch_id', $currentSchool->id)
                 ->with(['level'])
                 ->findOrFail($studentData["specialty_id"]);
 
+
+            if (Student::where('email', $studentData['email'])
+                ->where('school_branch_id', $currentSchool->id)
+                ->exists()
+            ) {
+
+                throw new AuthException(
+                    "This student email address is already registered at this school branch.",
+                    409,
+                    "Student Email Already Exists 📧",
+                    "The email '{$studentData['email']}' is already associated with a student account in your school branch. Please use a different email or check the existing account."
+                );
+            }
+
+            if (Student::where('name', $studentData['name'])
+                ->where('school_branch_id', $currentSchool->id)
+                ->exists()
+            ) {
+
+                throw new AppException(
+                    "A student with the name '{$studentData['name']}' already exists at this school branch.",
+                    409,
+                    "Duplicate Student Name 📛",
+                    "A student with the exact name '{$studentData['name']}' is already registered at this school. Please ensure you are not creating a duplicate or consider adding a middle initial or suffix for differentiation.",
+                    null
+                );
+            }
+
+            DB::beginTransaction();
+
             $password = $this->generateRandomPassword();
             $randomId = Str::uuid()->toString();
+
             $student = new Student();
             $student->id = $randomId;
             $student->name = $studentData["name"];
@@ -43,6 +75,8 @@ class CreateStudentService
             $student->school_branch_id = $currentSchool->id;
             $student->password = Hash::make($password);
             $student->save();
+            $student->assignRole('student');
+
             $registrationFeeId = Str::uuid();
             RegistrationFee::create([
                 'id' => $registrationFeeId,
@@ -53,6 +87,7 @@ class CreateStudentService
                 'status' => "not paid",
                 'student_id' => $randomId,
             ]);
+
             $tuitionFeeId = Str::uuid();
             TuitionFees::create([
                 'id' => $tuitionFeeId,
@@ -64,24 +99,41 @@ class CreateStudentService
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $randomId,
             ]);
-            $student->assignRole('student');
-            SendPasswordVaiMailJob::dispatch( $password, $studentData["email"]);
+
+            DB::commit();
+
+            SendPasswordVaiMailJob::dispatch($password, $studentData["email"]);
             TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
             StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
             SendAdminStudentCreatedNotificationJob::dispatch(
                 $specialty->specialty_name,
-                 $studentData["name"],
-                 $specialty->level->name,
-                 $currentSchool->id
+                $studentData["name"],
+                $specialty->level->name,
+                $currentSchool->id
             );
-            return $student;
-        } catch (QueryException $e) {
 
-            Log::error($e->getMessage());
+            return $student;
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            throw new AppException(
+                "The specified specialty ID '{$studentData["specialty_id"]}' was not found.",
+                404,
+                "Specialty Not Found 🧩",
+                "The requested subject or specialty (ID: {$studentData["specialty_id"]}) does not exist or is not available at your school branch.",
+                null
+            );
+        } catch (AuthException | AppException $e) {
+            DB::rollBack();
             throw $e;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            throw $e;
+            DB::rollBack();
+            throw new AppException(
+                "A fatal system error occurred during student registration: " . $e->getMessage(),
+                500,
+                "Registration Failed Due to System Error 🛑",
+                "We were unable to complete the student registration due to an unexpected system issue. The attempt has been rolled back. Please try again or contact support.",
+                null
+            );
         }
     }
 

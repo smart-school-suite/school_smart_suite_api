@@ -7,35 +7,58 @@ use App\Models\Student;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use App\Services\ApiResponseService;
 use App\Models\OTP;
+use App\Exceptions\AppException;
+
 class LoginStudentService
 {
-    // Implement your logic here
     public function loginStudent($loginData)
     {
         $user = Student::where('email', $loginData['email'])->first();
 
         if (!$user || !Hash::check($loginData['password'], $user->password)) {
-            return ApiResponseService::error("The provided Credentials Incorrect", null, 400);
+            throw new AppException(
+                "Student login failed for email '{$loginData['email']}': Invalid email or password.",
+                401,
+                "Incorrect Credentials 🛑",
+                "The student ID (email address) or password you entered is incorrect. Please double-check your credentials and try again.",
+                null
+            );
+        }
+
+        if (!$user->is_active) {
+            throw new AppException(
+                "Student account with email '{$loginData['email']}' is currently inactive.",
+                403,
+                "Account Inactive 🎓",
+                "Your student account is currently inactive. Please contact the school administration for assistance.",
+                null
+            );
         }
 
         $otp = Str::random(6);
-
         $otp_header = Str::random(24);
-
         $expiresAt = Carbon::now()->addMinutes(5);
 
-        OTP::create([
-            'token_header' => $otp_header,
-            'actorable_id' => $user->id,
-            'actorable_type' => Student::class,
-            'otp' => $otp,
-            'expires_at' => $expiresAt,
-        ]);
+        try {
+            OTP::create([
+                'token_header' => $otp_header,
+                'actorable_id' => $user->id,
+                'actorable_type' => Student::class,
+                'otp' => $otp,
+                'expires_at' => $expiresAt,
+            ]);
+        } catch (\Exception $e) {
+            throw new AppException(
+                "Failed to create OTP record during student login. Error: " . $e->getMessage(),
+                500,
+                "Login System Error 🚨",
+                "A system error occurred while generating your one-time code. Please try logging in again in a moment.",
+                null
+            );
+        }
 
         SendOTPViaEmailJob::dispatch($loginData['email'], $otp);
         return ['otp_token_header' => $otp_header];
-
     }
 }
