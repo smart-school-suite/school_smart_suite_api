@@ -9,18 +9,40 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Exceptions\AuthException;
+use App\Exceptions\AppException;
 
 class CreateTeacherService
 {
-    // Implement your logic here
     public function createInstructor($teacherData, $currentSchool)
     {
         try {
+            if (Teacher::where('email', $teacherData['email'])->where('school_branch_id', $currentSchool->id)->exists()) {
+                throw new AuthException(
+                    "This email address is already in use at this school branch.",
+                    409,
+                    "Email Already Exists",
+                    "The email '{$teacherData['email']}' is already associated with an account in your school branch. Please use a different email or check the existing account."
+                );
+            }
+
+            if (Teacher::where('name', $teacherData['name'])->where('school_branch_id', $currentSchool->id)->exists()) {
+                throw new AppException(
+                    "A teacher with the name '{$teacherData['name']}' already exists at this school branch.",
+                    409,
+                    "Duplicate Teacher Name 📛",
+                    "A teacher with the exact name '{$teacherData['name']}' is already registered at this school. Please ensure you are not creating a duplicate or consider adding a middle initial or suffix to differentiate the record.",
+                    null
+                );
+            }
+
             DB::beginTransaction();
+
             $password = $this->generateRandomPassword();
             $instructor = new Teacher();
             $instructorId = Str::uuid();
             $instructor->id = $instructorId;
+
             $instructor->name = $teacherData["name"];
             $instructor->email = $teacherData["email"];
             $instructor->first_name = $teacherData['first_name'];
@@ -32,13 +54,25 @@ class CreateTeacherService
             $instructor->school_branch_id = $currentSchool->id;
             $instructor->save();
             $instructor->assignRole('teacher');
+
             DB::commit();
+
             SendPasswordVaiMailJob::dispatch($password, $teacherData['email']);
             TeacherRegistrationStatsJob::dispatch($instructorId, $currentSchool->id);
+
             return $instructor;
-        } catch (Exception $e) {
+        } catch (AuthException | AppException $e) {
             DB::rollBack();
             throw $e;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new AppException(
+                "Failed to create the instructor record: " . $e->getMessage(),
+                500,
+                "Instructor Creation Failed 🛑",
+                "We were unable to create the new instructor account due to a system error. The operation has been rolled back. Please ensure all required fields are correct and try again, or contact support.",
+                null
+            );
         }
     }
     private function generateRandomPassword($length = 10)

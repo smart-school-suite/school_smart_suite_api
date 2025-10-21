@@ -6,6 +6,7 @@ use App\Jobs\DataCleanupJobs\CleanSchoolEventData;
 use App\Jobs\DataCleanupJobs\UpdateSchoolEventStatusJob;
 use App\Jobs\DataCreationJob\CreateSchoolEventLikeStatusJob;
 use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
+use App\Jobs\NotificationJobs\SendAdminScheduledSchoolEventNotiJob;
 use App\Models\EventTag;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
@@ -165,6 +166,7 @@ class CreateEventService
                 UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEventId);
                 CleanSchoolEventData::dispatch($schoolEventId, $currentSchool->id)->delay($endDate);
             } elseif ($status === 'scheduled') {
+                SendAdminScheduledSchoolEventNotiJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id);
                 CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEventId)->delay($publishedAt);
                 UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser)->delay($startDate);
                 UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser)->delay($endDate);

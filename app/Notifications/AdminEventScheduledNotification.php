@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\SchoolEvent;
+use Carbon\Carbon;
 
 class AdminEventScheduledNotification extends Notification implements ShouldQueue
 {
@@ -22,6 +23,7 @@ class AdminEventScheduledNotification extends Notification implements ShouldQueu
      */
     public function __construct(SchoolEvent $schoolEvent)
     {
+        // The SchoolEvent model should have 'published_at', 'start_date', and 'end_date' in its $casts array.
         $this->schoolEvent = $schoolEvent;
     }
 
@@ -38,13 +40,30 @@ class AdminEventScheduledNotification extends Notification implements ShouldQueu
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $publishedAtRaw = $this->schoolEvent->published_at;
+        $publishedAt = $publishedAtRaw
+            ? Carbon::parse($publishedAtRaw)->format('F j, Y, g:i A')
+            : 'Immediately';
+
+        $startDateRaw = $this->schoolEvent->start_date;
+        $startDate = $startDateRaw
+            ? Carbon::parse($startDateRaw)->format('F j, Y, g:i A')
+            : 'N/A';
+
+        $endDateRaw = $this->schoolEvent->end_date;
+        $endDate = $endDateRaw
+            ? Carbon::parse($endDateRaw)->format('F j, Y, g:i A')
+            : 'N/A';
+
         return (new MailMessage)
             ->subject('Event Scheduled Successfully: ' . $this->schoolEvent->title)
             ->greeting("Hello {$notifiable->name},")
-            ->line("Your school event {$this->schoolEvent->title} has been successfully scheduled to be published at {$this->schoolEvent->published_at->format('F j, Y, g:i A')}")
-            ->line('📅 **Start Date:** ' . $this->schoolEvent->start_date->format('F j, Y, g:i A'))
-            ->line('🏁 **End Date:** ' . $this->schoolEvent->end_date->format('F j, Y, g:i A'))
+            ->line("Your school event **{$this->schoolEvent->title}** has been successfully scheduled to be published at **{$publishedAt}**.")
+
+            ->line('📅 **Start Date:** ' . $startDate)
+            ->line('🏁 **End Date:** ' . $endDate)
             ->line('📍 **Location:** ' . ($this->schoolEvent->location ?? 'Not specified'))
+
             ->action('View Event Details', url('/school-events/' . $this->schoolEvent->id))
             ->line('Thank you for organizing events with Smart School Suite!');
     }
@@ -54,10 +73,15 @@ class AdminEventScheduledNotification extends Notification implements ShouldQueu
      */
     public function toArray(object $notifiable): array
     {
+        $publishedAtRaw = $this->schoolEvent->published_at;
+        $publishedAt = $publishedAtRaw
+            ? Carbon::parse($publishedAtRaw)->format('F j, Y, g:i A')
+            : 'N/A';
+
         return [
             'type' => 'school_events',
             'title' => 'Event Scheduled Successfully',
-            'description' => "Your school event {$this->schoolEvent->title} has been successfully scheduled to be published at {$this->schoolEvent->published_at->format('F j, Y, g:i A')}",
+            'body' => "Your school event {$this->schoolEvent->title} has been successfully scheduled to be published at {$publishedAt}.",
         ];
     }
 }

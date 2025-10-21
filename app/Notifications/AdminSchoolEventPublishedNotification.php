@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\SchoolEvent;
-
+use Carbon\Carbon;
 class AdminSchoolEventPublishedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -38,12 +38,24 @@ class AdminSchoolEventPublishedNotification extends Notification implements Shou
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $startDateRaw = $this->schoolEvent->start_date;
+        $startDate = $startDateRaw
+            ? Carbon::parse($startDateRaw)->format('F j, Y, g:i A')
+            : 'N/A';
+
+        $endDateRaw = $this->schoolEvent->end_date;
+        $endDate = $endDateRaw
+            ? Carbon::parse($endDateRaw)->format('F j, Y, g:i A')
+            : 'N/A';
+
         return (new MailMessage)
             ->subject('Your Event is Now Published: ' . $this->schoolEvent->title)
-            ->greeting("Hello {$notifiable->name}")
+            ->greeting("Hello {$notifiable->name},")
             ->line("Your event **{$this->schoolEvent->title}** has been successfully published and is now visible to all invitees.")
-            ->line('📅 **Start Date:** ' . $this->schoolEvent->start_date->format('F j, Y, g:i A'))
-            ->line('🏁 **End Date:** ' . $this->schoolEvent->end_date->format('F j, Y, g:i A'))
+
+            ->line('📅 **Start Date:** ' . $startDate)
+            ->line('🏁 **End Date:** ' . $endDate)
+
             ->line('📍 **Location:** ' . ($this->schoolEvent->location ?? 'Not specified'))
             ->action('View Published Event', url('/school-events/' . $this->schoolEvent->id))
             ->line('Thank you for organizing events with Smart School Suite!');
@@ -54,10 +66,11 @@ class AdminSchoolEventPublishedNotification extends Notification implements Shou
      */
     public function toArray(object $notifiable): array
     {
+
         return [
+            'type' => 'school_events',
             'title' => 'Event Published Successfully',
-            'description' => "Your event '{$this->schoolEvent->title}' is now published and visible to all invitees.",
-            'event_id' => $this->schoolEvent->id,
+            'body' => "Your event '{$this->schoolEvent->title}' is now published and visible to all invitees.",
         ];
     }
 }
