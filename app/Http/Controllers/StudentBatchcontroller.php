@@ -25,6 +25,11 @@ class StudentBatchcontroller extends Controller
     {
         $this->studentBatchService = $studentBatchService;
     }
+    public function getStudentBatchDetails(Request $request, $batchId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $batchDetails = $this->studentBatchService->getStudentBatchDetails($batchId, $currentSchool);
+        return ApiResponseService::success("Student Batch Details Fetched Successfully", $batchDetails, null, 200);
+    }
     public function createStudentBatch(CreateStudentBatchRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');

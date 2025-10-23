@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\ExamEvaluation;
 
 use App\Jobs\DataCreationJob\CreateResitExamJob;
 use App\Jobs\NotificationJobs\SendExamResultsReleasedNotificationJob;
@@ -20,7 +20,7 @@ use App\Models\Studentresit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
-class AddExamScoresService
+class AddExamScoreService
 {
     public function addExamScores(array $studentScores, $currentSchool): array
     {
@@ -33,6 +33,7 @@ class AddExamScoresService
             foreach ($studentScores as $scoreData) {
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
                 $targetStudent = $student;
+                Log::info($scoreData['exam_id']);
                 $exam = Exams::with('examtype')->findOrFail($scoreData['exam_id']);
                 $examDetails = $exam;
 
@@ -81,7 +82,7 @@ class AddExamScoresService
             $allStudentsEvaluated = $this->updateEvaluatedStudentCount($examDetails);
             DB::commit();
             StudentExamStatsJob::dispatch($examDetails, $targetStudent);
-             if ($allStudentsEvaluated) {
+            if ($allStudentsEvaluated) {
                 CreateResitExamJob::dispatch($examDetails);
                 ExamStatsJob::dispatch($examDetails);
                 $this->sendExamResultsNotification($examDetails);
@@ -124,7 +125,7 @@ class AddExamScoresService
             'course_credit' => $course->credit,
         ];
     }
-     private function updateEvaluatedStudentCount(Exams $exam): bool
+    private function updateEvaluatedStudentCount(Exams $exam): bool
     {
         $exam->increment('evaluated_candidate_number');
         $exam->refresh();
@@ -316,7 +317,7 @@ class AddExamScoresService
 
     private function determineExamResultsStatus(Collection $marks): array
     {
-        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
+        $failedCourses = $marks->filter(fn($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
 
         if ($failedCourses->isEmpty()) {
             return [
@@ -333,10 +334,10 @@ class AddExamScoresService
         ];
     }
 
-    private function sendExamResultsNotification(Exams $exam){
+    private function sendExamResultsNotification(Exams $exam)
+    {
         $examDetails = Exams::with('specialty', 'level', 'examtype')->find($exam->id);
         $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
         SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
     }
-
 }

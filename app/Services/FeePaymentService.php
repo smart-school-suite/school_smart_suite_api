@@ -230,7 +230,6 @@ class FeePaymentService
             throw $e;
         }
     }
-
     public function getFeesPaid($currentSchool)
     {
         try {
@@ -370,7 +369,6 @@ class FeePaymentService
             );
         }
     }
-
     public function getTuitionFeeDetails($currentSchool, $feeId)
     {
         $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
@@ -445,7 +443,6 @@ class FeePaymentService
             ->find($transactionId);
         return $transactionDetails;
     }
-
     public function deleteRegistrationFeeTransaction($currentSchool, $transactionId)
     {
         $transaction = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
@@ -647,7 +644,6 @@ class FeePaymentService
             throw $e;
         }
     }
-
     public function deleteRegistrationFee($feeId, $currentSchool)
     {
         try {

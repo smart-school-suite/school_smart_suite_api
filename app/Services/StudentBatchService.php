@@ -9,7 +9,11 @@ use Exception;
 
 class StudentBatchService
 {
-    // Implement your logic here
+    public function getStudentBatchDetails($batchId, $currentSchool){
+         $studentBatch = Studentbatch::where("school_branch_id", $currentSchool->id)
+                              ->find($batchId);
+         return $studentBatch;
+    }
     public function createStudentBatch(array $data, $currentSchool)
     {
         $newBatch = new Studentbatch();

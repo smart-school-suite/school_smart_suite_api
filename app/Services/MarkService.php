@@ -13,7 +13,6 @@ use App\Models\Grades;
 use App\Models\StudentResults;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
-use Throwable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class MarkService
@@ -58,7 +57,6 @@ class MarkService
             );
         }
     }
-
     public function getCaMarksByExamCandidate(string $candidateId, $currentSchool)
     {
         try {
@@ -143,7 +141,6 @@ class MarkService
             );
         }
     }
-
     public function getExamMarksByExamCandidate(string $candidateId, $currentSchool)
     {
         try {

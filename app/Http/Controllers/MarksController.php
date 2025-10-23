@@ -9,7 +9,7 @@ use App\Models\Examtimetable;
 use App\Services\AddExamScoresService;
 use App\Http\Requests\ExamScore\CreateExamScoreRequest;
 use App\Http\Requests\ExamScore\UpdateExamScoreRequest;
-use App\Services\AddCaScoresService;
+use App\Services\CAEvaluation\AddCaScoresService;
 use App\Services\UpdateExamScoreService;
 use App\Services\UpdateCaScoreService;
 use App\Services\MarkService;
@@ -38,37 +38,37 @@ class MarksController extends Controller
         $this->updateExamScoreService = $updateExamScoreService;
         $this->markService = $markService;
     }
-    public function getExamMarksByCandidate(Request $request, $candidateId){
-        try{
+    public function getExamMarksByCandidate(Request $request, $candidateId)
+    {
+        try {
             $currentSchool = $request->attributes->get('currentSchool');
             $examResults = $this->markService->getExamMarksByExamCandidate($candidateId, $currentSchool);
             return ApiResponseService::success("Exam Marks Fetched Successfully", $examResults, null, 200);
-        }
-        catch(Throwable $e){
-             return ApiResponseService::error($e->getMessage(), null, 400);
+        } catch (Throwable $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function getCaMarksByExamCandidate(Request $request, $candidateId){
-        try{
+    public function getCaMarksByExamCandidate(Request $request, $candidateId)
+    {
+        try {
             $currentSchool = $request->attributes->get('currentSchool');
             $examResults = $this->markService->getCaMarksByExamCandidate($candidateId, $currentSchool);
             return ApiResponseService::success("CA Marks Fetched Successfully", $examResults, null, 200);
-        }
-        catch(Throwable $e){
-             return ApiResponseService::error($e->getMessage(), null, 400);
+        } catch (Throwable $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
     public function createCaMark(CreateExamScoreRequest $request)
     {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool);
-            return ApiResponseService::success("Marks Submitted Sucessfully", $results, null, 201);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool);
+        return ApiResponseService::success("Marks Submitted Sucessfully", $results, null, 201);
     }
     public function createExamMark(CreateExamScoreRequest $request)
     {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $results = $this->addExamScoresService->addExamScores($request->scores_entries, $currentSchool);
-            return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $results = $this->addExamScoresService->addExamScores($request->scores_entries, $currentSchool);
+        return ApiResponseService::success("MarkS Submitted Sucessfully", $results, null, 201);
     }
     public function updateExamMark(UpdateExamScoreRequest $request)
     {
@@ -117,21 +117,24 @@ class MarksController extends Controller
         $markDetails = $this->markService->getScoreDetails($currentSchool, $markId);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $markDetails, null, 200);
     }
-    public function prepareCaResultsByExam(Request $request){
+    public function prepareCaResultsByExam(Request $request)
+    {
         $currentSchool = $request->attributes->get("currentSchool");
         $examId = $request->route("examId");
         $studentId = $request->route("studentId");
         $prepareCaResults = $this->markService->prepareCaDataByExam($currentSchool, $studentId, $examId);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareCaResults, null, 200);
     }
-    public function prepareCaData(Request $request){
+    public function prepareCaData(Request $request)
+    {
         $currentSchool = $request->attributes->get("currentSchool");
         $examId = $request->route("examId");
         $studentId = $request->route("studentId");
         $prepareCaResults = $this->markService->prepareCaData($currentSchool, $studentId, $examId);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareCaResults, null, 200);
     }
-    public function prepareExamData(Request $request){
+    public function prepareExamData(Request $request)
+    {
         $currentSchool = $request->attributes->get("currentSchool");
         $examId = $request->route("examId");
         $studentId = $request->route("studentId");
@@ -190,28 +193,20 @@ class MarksController extends Controller
         ], 200);
     }
 
-    public function getCaEvaluationHelperData(Request $request){
+    public function getCaEvaluationHelperData(Request $request)
+    {
         $currentSchool = $request->attributes->get("currentSchool");
         $examId = $request->route("examId");
-        try{
-             $evaluationData = $this->markService->getCaExamEvaluationHelperData($currentSchool, $examId);
-             return ApiResponseService::success("CA Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $evaluationData = $this->markService->getCaExamEvaluationHelperData($currentSchool, $examId);
+        return ApiResponseService::success("CA Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
     }
 
-    public function getExamEvaluationHelperData(Request $request){
+    public function getExamEvaluationHelperData(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $examId = $request->route('examId');
         $studentId = $request->route("studentId");
-        try{
-            $evaluationData = $this->markService->getExamEvaluationHelperData($currentSchool, $examId, $studentId);
-            return ApiResponseService::success("Exam Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
-        }
-        catch(Exception $e){
-           return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $evaluationData = $this->markService->getExamEvaluationHelperData($currentSchool, $examId, $studentId);
+        return ApiResponseService::success("Exam Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
     }
 }

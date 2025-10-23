@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('exams', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->decimal('weighted_mark', 6, 2);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->decimal('weighted_mark', 6, 2)->nullable();
             $table->string('school_year');
             $table->boolean('timetable_published')->default(false);
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');

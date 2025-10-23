@@ -59,8 +59,6 @@ class StudentAdditionalFeeService
         $additionalFee->update($removedEmptyInputs);
         return $additionalFee;
     }
-
-
     public function getStudentAdditionalFees(string $studentId, $currentSchool)
     {
         try {
@@ -487,7 +485,6 @@ class StudentAdditionalFeeService
             throw $e;
         }
     }
-
     public function bulkUpdateStudentAdditionalFees($additionalFees, $currentSchool)
     {
         try {

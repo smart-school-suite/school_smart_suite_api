@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Grade;
 
 use App\Exceptions\AppException;
 use App\Models\Grades;
@@ -11,9 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class GradesService
+class ExamGradeService
 {
-    // Implement your logic here
     public function getExamGrades($currentSchool)
     {
         $gradesData = Grades::where('school_branch_id', $currentSchool->id)

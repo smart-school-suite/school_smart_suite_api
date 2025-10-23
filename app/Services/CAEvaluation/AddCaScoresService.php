@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\CAEvaluation;
 
 use App\Jobs\NotificationJobs\SendExamResultsReleasedNotificationJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\StudentCaStatsJob;
@@ -32,11 +32,11 @@ class AddCaScoresService
             foreach ($studentScores as $scoreData) {
 
                 $accessedStudent = AccessedStudent::findOrFail($scoreData['accessment_id']);
-                if(!$accessedStudent->grades_submitted == true) {
+                if($accessedStudent->grades_submitted === true) {
                     throw new AppException(
                         "The CA Exam Candidate Already Accessed.",
                         400,
-                        "CA Exam Candidate Already Accessed",
+                        "CA Exam  Candidate Already Accessed",
                         "The CA Exam Candidate Has Already Been Accessed You Can Not Submit Scores Again",
                         "/accessed-students"
                     );

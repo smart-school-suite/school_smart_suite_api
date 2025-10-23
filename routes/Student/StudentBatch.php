@@ -53,3 +53,5 @@ use App\Http\Controllers\StudentBatchcontroller;
     // Bulk assign graduation dates to batches (by specialty)
     Route::middleware(['permission:schoolAdmin.student.batch.create.graduation.dates'])->post('/bulk-assign-graduation-dates', [StudentBatchController::class, 'bulkAssignGradDateBySpecialty'])
         ->name('student-batches.bulk-assign-graduation-dates');
+
+    Route::get('/details/{batchId}', [StudentBatchcontroller::class, 'getStudentBatchDetails'])->name("get.student.batch.details");

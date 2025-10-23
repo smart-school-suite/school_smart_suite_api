@@ -26,11 +26,11 @@ class CreateExamJob implements ShouldQueue
      * Create a new job instance.
      */
     protected $semesterDetails;
-    protected $currentSchool;
-    public function __construct($semesterDetails, $currentSchool)
+    protected $schoolBranchId;
+    public function __construct($semesterDetails, $schoolBranchId)
     {
         $this->semesterDetails = $semesterDetails;
-        $this->currentSchool = $currentSchool;
+        $this->schoolBranchId = $schoolBranchId;
     }
 
     /**
@@ -38,62 +38,82 @@ class CreateExamJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->createExam($this->semesterDetails, $this->currentSchool);
+        $this->createExam($this->semesterDetails, $this->schoolBranchId);
     }
-
-    public function createExam($semesterDetails, $currentSchool)
+    public function createExam($semesterDetails, $schoolBranchId)
     {
-        $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+        $specialty = Specialty::where("school_branch_id", $schoolBranchId)
             ->find($semesterDetails['specialty_id']);
         $semester = Semester::find($semesterDetails['semester_id']);
 
-        Log::info('semester details: ' . json_encode($semester));
+        $semesterName = strtolower(trim($semester->name));
 
-        if (Str::contains($semester->name, 'first')) {
+        if (Str::contains($semesterName, 'first') && !Str::contains($semesterName, 'second')) {
             $examTypes = Examtype::where("semester", "first")
                 ->where("type", '!=', 'resit')
                 ->get();
             foreach ($examTypes as $examType) {
-                $examId = Str::uuid();
-                DB::table('exams')->insert([
-                    'id' => $examId,
-                    'school_branch_id' => $currentSchool->id,
-                    'exam_type_id' => $examType->id,
-                    'level_id' => $specialty->level_id,
-                    'semester_id' => $semesterDetails['semester_id'],
-                    'school_year' => $semesterDetails['school_year'],
-                    'specialty_id' => $specialty->id,
-                    'student_batch_id' => $semesterDetails['student_batch_id'],
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-                $this->createExamCandidate($semesterDetails, $specialty, $examId);
-            }
-        }
+                $exists = DB::table('exams')
+                    ->where('exam_type_id', $examType->id)
+                    ->where('semester_id', $semesterDetails['semester_id'])
+                    ->where('specialty_id', $specialty->id)
+                    ->where('school_year', $semesterDetails['school_year'])
+                    ->exists();
 
-        if (Str::contains($semester->name, 'second')) {
+                if (!$exists) {
+                    $examId = Str::uuid();
+                    DB::table('exams')->insert([
+                        'id' => $examId,
+                        'school_branch_id' => $schoolBranchId,
+                        'exam_type_id' => $examType->id,
+                        'level_id' => $specialty->level_id,
+                        'semester_id' => $semesterDetails['semester_id'],
+                        'school_year' => $semesterDetails['school_year'],
+                        'specialty_id' => $specialty->id,
+                        'student_batch_id' => $semesterDetails['student_batch_id'],
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    $this->createExamCandidate($semesterDetails, $specialty, $examId);
+                } else {
+                    Log::warning("Exam already exists for exam_type_id: {$examType->id}, semester_id: {$semesterDetails['semester_id']}");
+                }
+            }
+        } elseif (Str::contains($semesterName, 'second')) {
             $examTypes = Examtype::where("semester", "second")
                 ->where("type", '!=', 'resit')
                 ->get();
             foreach ($examTypes as $examType) {
-                $examId = Str::uuid();
-                DB::table('exams')->insert([
-                    'id' => $examId,
-                    'school_branch_id' => $currentSchool->id,
-                    'exam_type_id' => $examType->id,
-                    'level_id' => $specialty->level_id,
-                    'semester_id' => $semesterDetails['semester_id'],
-                    'school_year' => $semesterDetails['school_year'],
-                    'specialty_id' => $specialty->id,
-                    'student_batch_id' => $semesterDetails['student_batch_id'],
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-                $this->createExamCandidate($semesterDetails, $specialty, $examId);
+                $exists = DB::table('exams')
+                    ->where('exam_type_id', $examType->id)
+                    ->where('semester_id', $semesterDetails['semester_id'])
+                    ->where('specialty_id', $specialty->id)
+                    ->where('school_year', $semesterDetails['school_year'])
+                    ->exists();
+
+                if (!$exists) {
+                    $examId = Str::uuid();
+                    DB::table('exams')->insert([
+                        'id' => $examId,
+                        'school_branch_id' => $schoolBranchId,
+                        'exam_type_id' => $examType->id,
+                        'level_id' => $specialty->level_id,
+                        'semester_id' => $semesterDetails['semester_id'],
+                        'school_year' => $semesterDetails['school_year'],
+                        'specialty_id' => $specialty->id,
+                        'student_batch_id' => $semesterDetails['student_batch_id'],
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    $this->createExamCandidate($semesterDetails, $specialty, $examId);
+                } else {
+                    Log::warning("Exam already exists for exam_type_id: {$examType->id}, semester_id: {$semesterDetails['semester_id']}");
+                }
             }
+        } else {
+            Log::error("Unexpected semester name: {$semester->name}");
         }
     }
-
     public function createExamCandidate($semesterDetails, $specialty, $examId)
     {
         $students = Student::where('specialty_id', $specialty->id)
