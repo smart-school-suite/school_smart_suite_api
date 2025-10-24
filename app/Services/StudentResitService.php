@@ -210,88 +210,104 @@ class StudentResitService
         }
     }
 
+
     public function getResitEvaluationHelperData($currentSchool, $resitExamId, $candidateId)
-{
-    try {
-        // --- 1. Find Resit Exam ---
-        $resitExam = ResitExam::find($resitExamId);
-        if (!$resitExam) {
+    {
+        try {
+            $resitExam = ResitExam::find($resitExamId);
+            if (!$resitExam) {
+                throw new AppException(
+                    "Resit Exam ID '{$resitExamId}' not found.",
+                    404,
+                    "Exam Not Found 🔎",
+                    "The specified resit exam record could not be found.",
+                    null
+                );
+            }
+
+            $resitCandidate = ResitCandidates::with('student')->find($candidateId);
+            if (!$resitCandidate) {
+                throw new AppException(
+                    "Resit Candidate ID '{$candidateId}' not found.",
+                    404,
+                    "Candidate Not Found 👤",
+                    "The specified resit candidate record could not be found.",
+                    null
+                );
+            }
+
+            $resitCoursesIds = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
+                ->where("resit_exam_id", $resitExamId)
+                ->pluck('course_id');
+
+            if ($resitCoursesIds->isEmpty()) {
+                throw new AppException(
+                    "The resit exam timetable has not been created.",
+                    404,
+                    "Timetable Missing 📅",
+                    "The resit exam schedule is empty. Please create the resit timetable first.",
+                    null
+                );
+            }
+
+            if (is_null($resitExam->grades_category_id)) {
+                throw new AppException(
+                    "The grading scale category has not been linked to this resit exam.",
+                    400,
+                    "Grading Scale Category Missing 🏷️",
+                    "Please add the grading scale category ID to the resit exam configuration.",
+                    null
+                );
+            }
+
+            $studentResits = Studentresit::where("school_branch_id", $currentSchool->id)
+                ->whereIn("course_id", $resitCoursesIds)
+                ->where("student_id", $resitCandidate->student_id)
+                ->with(['courses', 'level', 'specialty', 'student'])
+                ->get();
+
+            if ($studentResits->isEmpty()) {
+                throw new AppException(
+                    "No eligible resit records found for student ID '{$resitCandidate->student_id}' in the current exam scope.",
+                    404,
+                    "Student Resits Missing 📄",
+                    "The student has no courses eligible for resit evaluation within the scope of this exam.",
+                    null
+                );
+            }
+
+            $examGrading = Grades::where("school_branch_id", $currentSchool->id)
+                ->where("grades_category_id", $resitExam->grades_category_id)
+                ->with('lettergrade')
+                ->get();
+
+            if ($examGrading->isEmpty()) {
+                throw new AppException(
+                    "The grade scale has not been configured.",
+                    404,
+                    "Grading Configuration Missing ⚙️",
+                    "The grading scale associated with the exam category is empty. Please configure the grade scale.",
+                    null
+                );
+            }
+
+            return [
+                'course_data' => $studentResits->pluck('courses')->unique('id')->values(),
+                'student_data' => $resitCandidate->student,
+                'exam_grading' => $examGrading
+            ];
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Throwable $e) {
             throw new AppException(
-                "Resit Exam ID '{$resitExamId}' not found.",
-                404,
-                "Exam Not Found 🔎",
-                "The specified resit exam record could not be found.",
+                "An unexpected system error occurred while fetching resit evaluation data. Error: " . $e->getMessage(),
+                500,
+                "Data Fetching Failed 🛑",
+                "An unknown system error prevented the retrieval of the resit evaluation data. Please contact support.",
                 null
             );
         }
-
-        // --- 2. Find Resit Candidate ---
-        $resitCandidate = ResitCandidates::with('student')->find($candidateId);
-        if (!$resitCandidate) {
-            throw new AppException(
-                "Resit Candidate ID '{$candidateId}' not found.",
-                404,
-                "Candidate Not Found 👤",
-                "The specified resit candidate record could not be found.",
-                null
-            );
-        }
-
-        $resitCoursesIds = Resitexamtimetable::where("school_branch_id", $currentSchool->id)
-            ->where("resit_exam_id", $resitExamId)
-            ->pluck('course_id');
-
-        if ($resitCoursesIds->isEmpty()) {
-             throw new AppException(
-                "No courses found in the resit exam timetable for Resit Exam ID '{$resitExamId}'.",
-                404,
-                "No Courses Scheduled 📅",
-                "The resit exam schedule does not contain any courses to evaluate.",
-                null
-            );
-        }
-
-        // --- 4. Get Student Resit Records ---
-        $studentResits = Studentresit::where("school_branch_id", $currentSchool->id)
-            ->whereIn("course_id", $resitCoursesIds)
-            ->where("student_id", $resitCandidate->student_id)
-            ->with(['courses', 'level', 'specialty', 'student'])
-            ->get();
-
-        if ($studentResits->isEmpty()) {
-            throw new AppException(
-                "No eligible resit records found for student ID '{$resitCandidate->student_id}' in the current exam scope.",
-                404,
-                "Student Resits Missing 📄",
-                "The student has no courses eligible for resit evaluation within the scope of this exam.",
-                null
-            );
-        }
-
-        $examGrading = Grades::where("school_branch_id", $currentSchool->id)
-            ->where("grades_category_id", $resitExam->grades_category_id)
-            ->with('lettergrade')
-            ->get();
-
-
-        return [
-            'course_data' => $studentResits->pluck('courses')->unique('id')->values(),
-            'student_data' => $resitCandidate->student,
-            'exam_grading' => $examGrading
-        ];
-
-    } catch (AppException $e) {
-        throw $e;
-    } catch (Throwable $e) {
-        throw new AppException(
-            "An unexpected system error occurred while fetching resit evaluation data. Error: " . $e->getMessage(),
-            500,
-            "Data Fetching Failed 🛑",
-            "An unknown system error prevented the retrieval of the resit evaluation data. Please contact support.",
-            null
-        );
     }
-}
 
     public function getResitScoresByCandidate($currentSchool, $candidateId)
     {

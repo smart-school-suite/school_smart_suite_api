@@ -27,5 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RateCardSeeder::class);
         $this->call(ExamTypeSeeder::class);
         $this->call(GradeCategorySeeder::class);
+        $this->call(SettingCategorySeeder::class);
+        $this->call(SettingDefinationSeeder::class);
     }
 }

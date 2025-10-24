@@ -15,10 +15,6 @@ return new class extends Migration
             $table->string('id');
             $table->string('votable_id');
             $table->string('votable_type');
-            $table->string('election_id');
-            $table->foreign('election_id')->references('id')->on('elections');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->boolean('status')->default(false);
             $table->timestamps();
         });

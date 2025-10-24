@@ -126,4 +126,9 @@ class Schoolbranches extends Model
     {
         return $this->hasMany(Teacher::class);
     }
+
+
+    public function schoolBranchSetting(): HasMany {
+         return $this->hasMany(SchoolBranchSetting::class);
+    }
 }

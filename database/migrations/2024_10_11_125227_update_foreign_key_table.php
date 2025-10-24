@@ -11,6 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::table('setting_definations', function (Blueprint $table) {
+             $table->string('setting_category_id');
+             $table->foreign('setting_category_id')->references('id')->on("setting_categories");
+        });
+
+        Schema::table('school_branch_settings', function (Blueprint $table) {
+             $table->string('setting_defination_id');
+             $table->foreign('setting_defination_id')->references('id')->on("setting_definations");
+             $table->string('school_branch_id');
+             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
          Schema::table('specialty_halls', function (Blueprint $table) {
             $table->string('hall_id');
             $table->foreign('hall_id')->references('id')->on('halls');
@@ -1026,17 +1038,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('school_branch_app_settings', function (Blueprint $table) {
-            $table->string('app_settings_id')->index();
-            $table->foreign('app_settings_id')->references('id')->on('app_settings');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-        });
-
-        Schema::table('app_settings', function (Blueprint $table) {
-            $table->string('setting_category_id');
-            $table->foreign('setting_category_id')->references('id')->on('setting_categories');
-        });
 
         Schema::table('user_batches', function (Blueprint $table) {
             $table->string('batch_id');
@@ -1045,6 +1046,16 @@ return new class extends Migration
     }
     public function down(): void
     {
+         Schema::table('setting_definations', function (Blueprint $table) {
+            $table->dropForeign(['setting_category_id']);
+            $table->dropColumn(['setting_category_id']);
+        });
+        Schema::table('school_branch_settings', function (Blueprint $table) {
+             $table->dropForeign(['school_branch_id']);
+             $table->dropForeign(['setting_defination_id']);
+             $table->dropColumn(['school_branch_id']);
+             $table->dropColumn(['setting_defination_id']);
+        });
 
         Schema::table('specialty_halls', function (Blueprint $table) {
             $table->dropForeign(['hall_id']);
@@ -1364,16 +1375,6 @@ return new class extends Migration
             $table->dropColumn('permission_category_id');
         });
 
-        Schema::table('audiences', function (Blueprint $table) {
-            $table->dropForeign(['school_set_audience_group_id']);
-            $table->dropColumn('school_set_audience_group_id');
-        });
-
-        Schema::table('school_set_audience_groups', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropColumn('school_branch_id');
-        });
-
         Schema::table('announcement_categories', function (Blueprint $table) {
             $table->dropForeign(['school_branch_id']);
             $table->dropColumn('school_branch_id');
@@ -1420,12 +1421,6 @@ return new class extends Migration
             $table->dropColumn('school_branch_id');
         });
 
-        Schema::table('school_event_settings', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropForeign(['event_setting_id']);
-            $table->dropColumn('school_branch_id');
-            $table->dropColumn('event_setting_id');
-        });
 
         Schema::table('ev_inv_custom_groups', function (Blueprint $table) {
             $table->dropForeign(['school_set_audience_group_id']);
@@ -1479,16 +1474,6 @@ return new class extends Migration
             $table->dropColumn(['student_id', 'level_id', 'specialty_id', 'fee_schedule_slot_id', 'fee_schedule_id', 'school_branch_id']);
         });
 
-        Schema::table('school_branch_app_settings', function (Blueprint $table) {
-            $table->dropForeign(['app_settings_id']);
-            $table->dropForeign(['school_branch_id']);
-            $table->dropColumn(['app_settings_id', 'school_branch_id']);
-        });
-
-        Schema::table('app_settings', function (Blueprint $table) {
-            $table->dropForeign(['setting_category_id']);
-            $table->dropColumn(['setting_category_id']);
-        });
 
         Schema::table('school_expenses_stats', function (Blueprint $table) {
             $table->dropForeign(['stat_type_id']);

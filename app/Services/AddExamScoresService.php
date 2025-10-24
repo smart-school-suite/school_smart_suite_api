@@ -16,6 +16,7 @@ use App\Models\Marks;
 use App\Models\Examtype;
 use App\Models\Courses;
 use App\Models\AccessedStudent;
+use App\Models\SchoolBranchSetting;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -81,7 +82,7 @@ class AddExamScoresService
             $allStudentsEvaluated = $this->updateEvaluatedStudentCount($examDetails);
             DB::commit();
             StudentExamStatsJob::dispatch($examDetails, $targetStudent);
-             if ($allStudentsEvaluated) {
+            if ($allStudentsEvaluated) {
                 CreateResitExamJob::dispatch($examDetails);
                 ExamStatsJob::dispatch($examDetails);
                 $this->sendExamResultsNotification($examDetails);
@@ -124,7 +125,7 @@ class AddExamScoresService
             'course_credit' => $course->credit,
         ];
     }
-     private function updateEvaluatedStudentCount(Exams $exam): bool
+    private function updateEvaluatedStudentCount(Exams $exam): bool
     {
         $exam->increment('evaluated_candidate_number');
         $exam->refresh();
@@ -247,6 +248,7 @@ class AddExamScoresService
     private function createResitableCourse(string $courseId, string $examId, Student $student, string $schoolId): void
     {
 
+
         if (!Studentresit::where("student_id", $student->id)
             ->where("level_id", $student->level_id)
             ->where("specialty_id", $student->specialty_id)
@@ -261,6 +263,39 @@ class AddExamScoresService
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
             ]);
+        }
+    }
+
+    protected function determineResitFee($student, $schoolBranchId)
+    {
+        $settings = SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
+            ->whereHas('settingDefination', function ($query) {
+                $query->whereHas('settingCategory', function ($query) {
+                    $query->where('name', "Resit Settings");
+                });
+            })
+            ->with(['settingDefination' => function ($query) {
+                $query->with('settingCategory');
+            }])
+            ->get();
+
+        $generalResitBilling = $settings->first(function ($setting) {
+            return $setting->settingDefination && $setting->settingDefination->key === "resitFee.generalBilling";
+        });
+        if ($generalResitBilling->value == true) {
+            $generalResitBillingFee = $settings->first(function ($setting) {
+                return $setting->settingDefination && $setting->settingDefination->key === "resitFee.generalBillingFee";
+            });
+            return $generalResitBillingFee->value;
+        }
+        $levelResitBilling = $settings->first(function ($setting) {
+            return $setting->settingDefination && $setting->settingDefination->key === "resitFee.levelBilling";
+        });
+        if($levelResitBilling){
+             $levelResitBillingFee = $settings->first(function ($setting) {
+                return $setting->settingDefination && $setting->settingDefination->key === "resitFee.levelBillingFee";
+            });
+
         }
     }
 
@@ -316,7 +351,7 @@ class AddExamScoresService
 
     private function determineExamResultsStatus(Collection $marks): array
     {
-        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
+        $failedCourses = $marks->filter(fn($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
 
         if ($failedCourses->isEmpty()) {
             return [
@@ -333,10 +368,10 @@ class AddExamScoresService
         ];
     }
 
-    private function sendExamResultsNotification(Exams $exam){
+    private function sendExamResultsNotification(Exams $exam)
+    {
         $examDetails = Exams::with('specialty', 'level', 'examtype')->find($exam->id);
         $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
         SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
     }
-
 }

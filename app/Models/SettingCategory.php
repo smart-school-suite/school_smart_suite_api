@@ -3,22 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class SettingCategory extends Model
 {
     use GeneratesUuid;
     protected $fillable = [
-       'status',
-       'title'
+       'name',
+       'decription'
     ];
 
     public $table = 'setting_categories';
     public $incrementing = 'false';
     public $keyType = 'string';
 
-    public function appSetting(): HasMany {
-        return $this->hasMany(AppSetting::class);
+    public function settingDefination(): HasMany {
+         return $this->hasMany(SettingDefination::class);
     }
 
 }
