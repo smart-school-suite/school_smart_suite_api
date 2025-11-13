@@ -22,6 +22,8 @@ class SchoolBranchSettingService
                     return [
                         'id' => $setting->id,
                         'data_type' => $setting->settingDefination->data_type,
+                        'key' => $setting->settingDefination->key,
+                        'category_key' => $setting->settingDefination->settingCategory->key,
                         'value' => $setting->value,
                         'name' => $setting->settingDefination->name,
                         'description' => $setting->settingDefination->description,
@@ -31,5 +33,12 @@ class SchoolBranchSettingService
         })->values()->toArray();
 
         return $groupedSettings;
+    }
+
+    public function getSchoolBranchSettingDetails($currentSchool, $schoolBranchSettingId){
+         $schoolBranchSettings = SchoolBranchSetting::where("school_branch_id", $currentSchool->id)
+            ->with(['settingDefination.settingCategory'])
+            ->find($schoolBranchSettingId);
+        return $schoolBranchSettings;
     }
 }

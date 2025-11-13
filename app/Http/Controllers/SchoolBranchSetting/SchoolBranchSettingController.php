@@ -3,18 +3,42 @@
 namespace App\Http\Controllers\SchoolBranchSetting;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SchoolBranchSetting\UpdateSchoolBranchSettingRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
-use App\Models\SchoolBranchSetting;
 use App\Services\SchoolBranchSetting\SchoolBranchSettingService;
-
+use App\Services\SchoolBranchSetting\ExamSettingService;
+use App\Services\SchoolBranchSetting\ElectionSettingService;
+use App\Services\SchoolBranchSetting\PromotionSettingService;
+use App\Services\SchoolBranchSetting\GradeSettingService;
+use App\Services\SchoolBranchSetting\ResitSettingService;
+use App\Services\SchoolBranchSetting\TimetableSettingService;
 class SchoolBranchSettingController extends Controller
 {
     protected SchoolBranchSettingService $schoolBranchSettingService;
-
-    public function __construct(SchoolBranchSettingService $schoolBranchSettingService)
+    protected ExamSettingService $examSettingService;
+    protected ElectionSettingService $electionSettingService;
+    protected PromotionSettingService $promotionSettingService;
+    protected GradeSettingService $gradeSettingService;
+    protected ResitSettingService $resitSettingService;
+    protected TimetableSettingService $timetableSettingService;
+    public function __construct(
+        SchoolBranchSettingService $schoolBranchSettingService,
+         ExamSettingService $examSettingService,
+         ElectionSettingService $electionSettingService,
+         PromotionSettingService $promotionSettingService,
+         GradeSettingService $gradeSettingService,
+         ResitSettingService $resitSettingService,
+         TimetableSettingService $timetableSettingService
+        )
     {
         $this->schoolBranchSettingService = $schoolBranchSettingService;
+        $this->examSettingService = $examSettingService;
+        $this->electionSettingService = $electionSettingService;
+        $this->promotionSettingService = $promotionSettingService;
+        $this->gradeSettingService = $gradeSettingService;
+        $this->resitSettingService = $resitSettingService;
+        $this->timetableSettingService = $timetableSettingService;
     }
 
     public function getSchoolBranchSetting(Request $request)
@@ -24,57 +48,46 @@ class SchoolBranchSettingController extends Controller
         return ApiResponseService::success("School Branch Setting Fetched Successfully", $schoolBranchSetting, null, 200);
     }
 
-   public function testSettingController(Request $request)
-{
-    // Get current school from request attributes
-    $currentSchool = $request->attributes->get('currentSchool');
-
-    // Validate currentSchool
-    if (!$currentSchool || !isset($currentSchool->id)) {
-        return response()->json(['error' => 'School not found'], 404);
+    public function getSchoolBranchSettingDetails(Request $request, $schoolBranchSettingId){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $schoolBranchSettingDetails = $this->schoolBranchSettingService->getSchoolBranchSettingDetails($currentSchool, $schoolBranchSettingId);
+         return ApiResponseService::success("School Branch Setting Details Fetched Successfully", $schoolBranchSettingDetails, null, 200);
     }
 
-    // Get key and categoryName from request, with defaults
-    $key = $request->input('key', 'resitFee.levelBilling');
-    $categoryName = "Resit Settings";
-
-    // Query the settings collection
-    $settings = SchoolBranchSetting::where('school_branch_id', $currentSchool->id)
-        ->whereHas('settingDefination', function ($query) use ($categoryName) {
-            $query->whereHas('settingCategory', function ($query) use ($categoryName) {
-                $query->where('name', $categoryName);
-            });
-        })
-        ->with(['settingDefination' => function ($query) {
-            $query->with('settingCategory'); // Ensure settingCategory is loaded
-        }])
-        ->get();
-    //resitFee.generalBilling
-    //resitFee.levelBilling
-    // Filter the collection for the specific key
-    $setting = $settings->first(function ($setting) {
-        return $setting->settingDefination && $setting->settingDefination->key === "resitFee.generalBilling";
-    });
-    $settingTwo = $settings->first(function ($setting) {
-        return $setting->settingDefination && $setting->settingDefination->key === "resitFee.generalBillingFee";
-    });
-
-    // Return 404 if no setting is found
-    if (!$setting) {
-        return response()->json(['error' => 'Setting not found for the specified key and category'], 404);
+    public function updateExamSetting(UpdateSchoolBranchSettingRequest $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $this->examSettingService->updateExamSetting($currentSchool, $request->validated());
+         return ApiResponseService::success("Exam Setting Updated Successfully", null, null, 200);
     }
 
-    // Format the response
-    $response = [
-        'data_type' => $setting->settingDefination->data_type ?? null,
-        'value' => $setting->value ?? null,
-        'name' => $setting->settingDefination->name ?? null,
-        'description' => $setting->settingDefination->description ?? null,
-    ];
+    public function updateElectionSetting(UpdateSchoolBranchSettingRequest $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $this->electionSettingService->updateElectionSetting($currentSchool, $request->validated());
+         return ApiResponseService::success("Election Setting Updated Successfully", null, null, 200);
+    }
 
-    return response()->json([
-        'setting_one' => $setting,
-        'setting_two' => $settingTwo->value
-    ]);
-}
+    public function updatePromotionSetting(UpdateSchoolBranchSettingRequest $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $this->promotionSettingService->updatePromotionSetting($currentSchool, $request->validated());
+         return ApiResponseService::success("Student Promotion Setting Updated Successfully", null, null, 200);
+    }
+
+    public function updateGradeSetting(UpdateSchoolBranchSettingRequest $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $this->gradeSettingService->updateGradeSetting($currentSchool, $request->validated());
+         return ApiResponseService::success("Grade Setting Updated Successfully", null, null, 200);
+    }
+
+    public function updateResitSetting(UpdateSchoolBranchSettingRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $this->resitSettingService->updateResitSetting($currentSchool, $request->validated());
+        return ApiResponseService::success("Resit Setting Updated Successfully", null, null, 200);
+    }
+
+    public function updateTimetableSetting(UpdateSchoolBranchSettingRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $this->resitSettingService->updateResitSetting($currentSchool, $request->validated());
+        return ApiResponseService::success("Timetable Setting Updated Successfully", null, null, 200);
+    }
+
 }

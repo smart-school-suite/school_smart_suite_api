@@ -17,19 +17,41 @@ class SettingCategorySeeder extends Seeder
     public function createSettingCategories()
     {
         $data = [
-            'Additional Fee Settings',
-            'Exam Settings',
-            'Resit Settings',
-            'Time-table Settings',
-            'Student Promotion Setting',
-            'Grade Settings',
-            'Election Tie Breaker Setting',
+            [
+                'name' => 'Additional Fee Settings',
+                'key' => 'setting.category.additionalFee'
+            ],
+            [
+                'name' => 'Exam Settings',
+                'key' => 'setting.category.exam'
+            ],
+            [
+                'name' => 'Resit Settings',
+                'key' => 'setting.category.resit'
+            ],
+            [
+                'name' => 'Time-table Settings',
+                'key' => 'setting.category.timetable'
+            ],
+            [
+                'name' => 'Student Promotion Setting',
+                'key' => 'setting.category.promotion'
+            ],
+            [
+                'name' => 'Grade Settings',
+                'key' => 'setting.category.grade'
+            ],
+            [
+                'name' => 'Election Tie Breaker Setting',
+                'key' => 'setting.category.election.tie.breaker'
+            ]
 
         ];
 
         foreach ($data as $setting) {
             SettingCategory::create([
-                'name' => $setting
+                'name' => $setting['name'],
+                'key' => $setting['key'],
             ]);
         }
     }

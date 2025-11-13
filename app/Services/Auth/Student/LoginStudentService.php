@@ -26,17 +26,17 @@ class LoginStudentService
             );
         }
 
-        if (!$user->is_active) {
-            throw new AppException(
-                "Student account with email '{$loginData['email']}' is currently inactive.",
+       if ($user->deactivated == true) {
+          throw new AppException(
+                "Student account with email '{$loginData['email']}' is currently Deactivated.",
                 403,
-                "Account Inactive 🎓",
-                "Your student account is currently inactive. Please contact the school administration for assistance.",
-                null
-            );
+                "Account Deactivated 🎓",
+              "Your student account is currently Deactivated. Please contact the school administration for assistance.",
+             null
+           );
         }
 
-        $otp = Str::random(6);
+        $otp = random_int(100000, 999999);
         $otp_header = Str::random(24);
         $expiresAt = Carbon::now()->addMinutes(5);
 

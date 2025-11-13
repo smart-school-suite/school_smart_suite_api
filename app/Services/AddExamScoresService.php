@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppException;
 use App\Jobs\DataCreationJob\CreateResitExamJob;
 use App\Jobs\NotificationJobs\SendExamResultsReleasedNotificationJob;
 use App\Jobs\StatisticalJobs\AcademicJobs\ExamStatsJob;
@@ -262,41 +263,34 @@ class AddExamScoresService
                 'exam_id' => $examId,
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
+                'resit_fee' => $this->determineResitFee($student, $schoolId)
             ]);
         }
     }
 
     protected function determineResitFee($student, $schoolBranchId)
     {
-        $settings = SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
-            ->whereHas('settingDefination', function ($query) {
-                $query->whereHas('settingCategory', function ($query) {
-                    $query->where('name', "Resit Settings");
-                });
-            })
-            ->with(['settingDefination' => function ($query) {
-                $query->with('settingCategory');
-            }])
-            ->get();
+       $generalBillingStatus = $this->getSettingByKey($schoolBranchId, "resitFee.generalBilling");
+       $levelBillingStatus = $this->getSettingByKey($schoolBranchId, "resitFee.levelBilling");
+       if($generalBillingStatus->value == true){
+          $generalBillingFee = $this->getSettingByKey($schoolBranchId, "resitFee.generalBillingFee");
+          return $generalBillingFee->value;
+       }
+       if($levelBillingStatus->value == true){
+          $levelBillingFees = $this->getSettingByKey($schoolBranchId, "resitFee.levelBillingFee");
+          $collectBillingFee = collect($levelBillingFees->value);
+          $resitFee  = $collectBillingFee->where("level_id", $student->level_id)->pluck('price');
+          if(!$resitFee){
+             throw new AppException(
+                 "Level Billing Missing",
+                 409,
+                 "Level Billing Misconfiguration",
+                 "The Level Billing For this level has not been properly configured ensure that this level has a resit fee"
+             );
+          }
+          return $resitFee;
+       }
 
-        $generalResitBilling = $settings->first(function ($setting) {
-            return $setting->settingDefination && $setting->settingDefination->key === "resitFee.generalBilling";
-        });
-        if ($generalResitBilling->value == true) {
-            $generalResitBillingFee = $settings->first(function ($setting) {
-                return $setting->settingDefination && $setting->settingDefination->key === "resitFee.generalBillingFee";
-            });
-            return $generalResitBillingFee->value;
-        }
-        $levelResitBilling = $settings->first(function ($setting) {
-            return $setting->settingDefination && $setting->settingDefination->key === "resitFee.levelBilling";
-        });
-        if($levelResitBilling){
-             $levelResitBillingFee = $settings->first(function ($setting) {
-                return $setting->settingDefination && $setting->settingDefination->key === "resitFee.levelBillingFee";
-            });
-
-        }
     }
 
     private function updateAccessedStudent(object $accessedStudent): void
@@ -373,5 +367,12 @@ class AddExamScoresService
         $examDetails = Exams::with('specialty', 'level', 'examtype')->find($exam->id);
         $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
         SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
+    }
+
+    private function getSettingByKey($schoolBranchId, $key)
+    {
+        return SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
+            ->whereHas('settingDefination', fn($query) => $query->where("key", $key))
+            ->first();
     }
 }

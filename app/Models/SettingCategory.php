@@ -11,7 +11,8 @@ class SettingCategory extends Model
     use GeneratesUuid;
     protected $fillable = [
        'name',
-       'decription'
+       'decription',
+       'key'
     ];
 
     public $table = 'setting_categories';

@@ -36,7 +36,7 @@ class LoginSchoolAdminService
                 throw new AuthException("The password you entered is incorrect.", 401, "Authentication Failed", "The password you provided does not match our records.");
             }
 
-            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = random_int(100000, 999999);
             $otp_header = Str::random(200);
             $expiresAt = Carbon::now()->addMinutes(config('auth.otp_expiry_minutes', 5));
 
@@ -48,7 +48,6 @@ class LoginSchoolAdminService
                 'expires_at' => $expiresAt,
             ]);
 
-            // Dispatch job to send OTP
             SendOTPViaEmailJob::dispatch($user->email, $otp);
 
             return ['otp_token_header' => $otp_header];

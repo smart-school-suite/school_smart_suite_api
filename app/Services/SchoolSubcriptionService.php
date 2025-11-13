@@ -15,6 +15,8 @@ use Carbon\Carbon;
 use Exception;
 use Throwable;
 use Illuminate\Support\Facades\DB;
+use App\Models\SettingDefination;
+use App\Models\SchoolBranchSetting;
 
 class SchoolSubcriptionService
 {
@@ -102,6 +104,7 @@ class SchoolSubcriptionService
                 ]);
 
                 $this->createGradesCategory($schoolBranchId);
+                $this->createSchoolBranchSetting($schoolBranchId);
 
             });
 
@@ -112,6 +115,17 @@ class SchoolSubcriptionService
         } catch (Throwable $e) {
             throw $e;
         }
+    }
+
+    protected function createSchoolBranchSetting($schoolBranchId){
+        $settingDefs = SettingDefination::all();
+         foreach($settingDefs as $settingDef){
+            SchoolBranchSetting::create([
+                 'school_branch_id' => $schoolBranchId,
+                 'setting_defination_id' => $settingDef->id,
+                 'value' => $settingDef->default_value
+            ]);
+         }
     }
 
     /**

@@ -389,9 +389,6 @@ class CreateEventService
                     $delayInSeconds = 0;
                 }
             }
-
-            Log::info("Dispatching SendEventEmailNotificationJob for Event ID: {$eventId} with delay: {$delayInSeconds} seconds.");
-
             EmailEventNotificationJob::dispatch($eventId)
                 ->delay(now()->addSeconds($delayInSeconds));
         }

@@ -174,7 +174,7 @@ class SettingDefinationSeeder extends Seeder
                 'label' => 'Auto Create Exam',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => "Corresponding Exams Within the semester will be automatically created"
+                'description' => "Automatically generate exams when a new semester is created for seamless planning"
             ]
         ];
         $settingCategoryName = 'Exam Settings';
