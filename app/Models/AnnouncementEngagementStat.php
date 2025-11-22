@@ -23,6 +23,14 @@ class AnnouncementEngagementStat extends Model
         'school_branch_id'
     ];
 
+    protected $cast = [
+        'total_reciepient' => 'integer',
+        'total_student' => 'integer',
+        'total_school_admin' => 'integer',
+        'total_teacher' => 'integer',
+        'total_seen' => 'integer',
+        'total_unseen' => 'integer',
+    ];
     public $table = 'announcement_engagement_stats';
 
     public $incrementing = false;

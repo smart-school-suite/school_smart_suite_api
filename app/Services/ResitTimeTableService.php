@@ -233,7 +233,7 @@ class ResitTimeTableService
             );
         }
     }
-    public function updateResitTimetable(array $entries, object $currentSchool, string $resitExamId): Collection
+    public function updateResitTimetable(array $entries, object $currentSchool, string $resitExamId)
     {
         DB::beginTransaction();
         try {

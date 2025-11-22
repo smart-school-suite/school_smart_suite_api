@@ -21,9 +21,9 @@ class CreateTuitionFeeWaiverRequest extends FormRequest
             'start_date' => 'required|date',
          'end_date' => 'required|date',
          'description' => 'required|string',
-         'specialty_id' => 'required|string|exists:specialty,id',
-         'level_id' => 'required|string|exists:education_levels,id',
-         'student_id' => 'required|string|exists:student,id'
+         'specialty_id' => 'required|string|exists:specialties,id',
+         'level_id' => 'required|string|exists:levels,id',
+         'student_id' => 'required|string|exists:students,id'
         ];
     }
 }

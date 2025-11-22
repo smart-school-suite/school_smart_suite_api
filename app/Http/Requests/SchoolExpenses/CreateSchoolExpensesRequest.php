@@ -20,7 +20,7 @@ class CreateSchoolExpensesRequest extends FormRequest
     public function rules()
     {
         return [
-            'expenses_category_id' => 'required|string',
+            'expenses_category_id' => 'required|string|exists:expense_categories,id',
             'date' => 'required|date',
             'amount' => 'required',
             'description' => 'sometimes|string'

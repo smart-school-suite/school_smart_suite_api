@@ -26,14 +26,14 @@ class Examtimetable extends Model
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
+        'start_time' => 'string',
+        'end_time' => 'string',
         'duration' => 'string',
     ];
 
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'examtimetable';
+    public $table = 'exam_timetable_slots';
 
     public function course(): BelongsTo {
         return $this->belongsTo(Courses::class, 'course_id');

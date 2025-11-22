@@ -21,7 +21,7 @@ class BulkUpdateStudentRequest extends FormRequest
     {
         return [
             'students' => 'required|array',
-            'students.*.student_id' => 'required|string|exists:student,id',
+            'students.*.student_id' => 'required|string|exists:students,id',
             'students.*.email' => 'sometimes|nullable|email',
             'students.*.first_name' => 'sometimes|nullable|string',
             'students.*.last_name' => 'sometimes|nullable|string',

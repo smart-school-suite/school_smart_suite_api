@@ -21,7 +21,7 @@ class BulkUpdateTeacherRequest extends FormRequest
     {
         return [
             'teachers' => 'required|array',
-            'teachers.*.id' => 'required|string|exists:teacher,id',
+            'teachers.*.id' => 'required|string|exists:teachers,id',
             'teachers.*.first_name' => 'sometimes|nullable|string',
             'teachers.*.last_name' => 'sometimes|nullable|string',
             'teachers.*.name' => 'sometimes|nullable|string',

@@ -25,7 +25,7 @@ class BulkUpdateCourseRequest extends FormRequest
             'courses.*.course_code' => 'sometimes|nullable|string',
             'courses.*.course_title' => 'sometimes|nullable|string',
             'courses.*.description' => 'sometimes|nullable|string',
-            'courses.*.specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
+            'courses.*.specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
             'courses.*.credit' => 'sometimes|nullable|integer',
             'courses.*.semester_id' => 'sometimes|nullable|string|exists:semesters,id',
         ];

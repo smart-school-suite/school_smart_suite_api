@@ -114,6 +114,21 @@ class CoursesController extends Controller
         return ApiResponseService::success("Active Courses Fetched Successfully", $activeCourses, null, 200);
     }
 
+    public function getAllCoursesByStudentId(Request $request, $studentId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $courses = $this->courseService->getAllCoursesByStudentId($currentSchool, $studentId);
+        return ApiResponseService::success("Course Fetched Successfully", $courses, null, 200);
+    }
+
+    public function getCoursesByStudentIdSemesterId(Request $request){
+        $studentId = $request->route("studentId");
+        $semesterId = $request->route("semesterId");
+         $currentSchool = $request->attributes->get("currentSchool");
+        $courses = $this->courseService->getCoursesByStudentIdSemesterId($currentSchool, $studentId, $semesterId);
+        return ApiResponseService::success("Course Fetched Successfully", $courses, null, 200);
+
+    }
+
     public function getCoursesBySpecialtySemester(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");

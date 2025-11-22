@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('exam_type', function (Blueprint $table) {
+        Schema::create('exam_types', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('exam_name');
             $table->string('semester'); // first , second, third, fourth, fifth
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('exam_type');
+        Schema::dropIfExists('exam_types');
     }
 };

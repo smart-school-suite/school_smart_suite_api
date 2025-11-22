@@ -69,7 +69,7 @@ class StarterPackSeeder extends Seeder
 
 
             if (!empty($education_levels)) {
-                DB::table('education_levels')->insert($education_levels);
+                DB::table('levels')->insert($education_levels);
                 Log::info('Inserted Education levels: ' . count($education_levels) . ' entries.');
             } else {
                 Log::warning('No Education levels to insert.');

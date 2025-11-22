@@ -23,8 +23,12 @@ class Specialty extends Model
         'school_branch_id',
     ];
 
+    protected $cast = [
+         'school_fee' => 'decimal:2',
+         'registration_fee' => 'decimal:2'
+    ];
     public $keyType = 'string';
-    public $table = 'specialty';
+    public $table = 'specialties';
     public $incrementing = 'false';
 
 
@@ -33,10 +37,6 @@ class Specialty extends Model
     }
     public function examCandidate(): HasMany {
          return $this->hasMany(AccessedStudent::class);
-    }
-    public function studentGradDates(): HasMany
-    {
-        return $this->hasMany(StudentBatchGradeDates::class);
     }
      public function instructorAvailability(): HasMany {
         return $this->hasMany(InstructorAvailability::class);
@@ -82,10 +82,6 @@ class Specialty extends Model
     public function feePaymentSchedule(): HasMany
     {
         return $this->hasMany(FeePaymentSchedule::class, 'specialty_id');
-    }
-    public function hos()
-    {
-        return $this->hasMany(HOS::class, 'specialty_id');
     }
     public function registrationFee(): HasMany
     {

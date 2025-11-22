@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('schoolbranch_apikey', function (Blueprint $table) {
+        Schema::create('school_branch_api_keys', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('api_key')->unique();
             $table->integer('current_num_school_admins')->default(1);
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('schoolbranch_apikey');
+        Schema::dropIfExists('school_branch_api_keys');
     }
 };

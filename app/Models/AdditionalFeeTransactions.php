@@ -19,6 +19,9 @@ class AdditionalFeeTransactions extends Model
         'school_branch_id'
     ];
 
+    protected $cast = [
+         'amount' => 'decimal:2'
+    ];
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'additional_fee_transactions';

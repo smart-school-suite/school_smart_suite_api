@@ -20,6 +20,10 @@ class SchoolExpenses extends Model
         'description'
     ];
 
+    protected $cast = [
+         'amount' => 'decimal:2',
+         'date' => 'date'
+    ];
     public $incrementing = 'false';
     public $keyType = 'string';
     public $table = 'school_expenses';

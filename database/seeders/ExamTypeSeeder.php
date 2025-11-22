@@ -43,6 +43,7 @@ class ExamTypeSeeder extends Seeder
                         "program_name" => $data[2],
                         "semester" => $data[3],
                         "type" => $data[4],
+                        "description" =>  $data[5],
                         'semester_id' => Semester::where('count', $data[5])->first()->id,
                         'created_at' => $timestamp,
                         'updated_at' => $timestamp
@@ -55,7 +56,7 @@ class ExamTypeSeeder extends Seeder
             Log::info('Exam Type Array: ', $exam_type);
 
             if (!empty($exam_type)) {
-                DB::table('exam_type')->insert($exam_type);
+                DB::table('exam_types')->insert($exam_type);
                 Log::info('Inserted Exam Types: ' . count($exam_type) . ' entries.');
             } else {
                 Log::warning('No Exam types to insert.');

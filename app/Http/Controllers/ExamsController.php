@@ -104,4 +104,46 @@ class ExamsController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
+
+    public function getAllExamsByStudentId(Request $request, $studentId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $exams = $this->examService->getAllExamsByStudentId($currentSchool, $studentId);
+        return ApiResponseService::success("Exams Fetched Successfully", $exams, null, 200);
+    }
+
+    public function getAllExamsByStudentIdSemesterId(Request $request)
+    {
+        $studentId = $request->route("studentId");
+        $semesterId = $request->route("semesterId");
+        $currentSchool = $request->attributes->get('currentSchool');
+        $exams = $this->examService->getExamsByStudentIdSemesterId($currentSchool, $studentId, $semesterId);
+        return ApiResponseService::success("Exams Fetched Successfully", $exams, null, 200);
+    }
+
+    public function getExamGradeScale(Request $request, $examId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $examGradeScale = $this->examService->getExamGradeScale($examId, $currentSchool);
+        return ApiResponseService::success("Exam Grade Scale Fetched Successfully", $examGradeScale, null, 200);
+    }
+
+    public function getStudentUpcomingExams(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authStudent = $this->resolveUser();
+        $upcomingExams = $this->examService->getUpcomingExams($currentSchool, $authStudent);
+        return ApiResponseService::success("Upcoming Exams Fetched Successfully", $upcomingExams, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

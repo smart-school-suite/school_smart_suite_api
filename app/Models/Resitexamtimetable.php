@@ -28,11 +28,12 @@ class Resitexamtimetable extends Model
           'start_time' => 'datetime',
           'end_time' => 'datetime',
           'duration' => 'string',
+          'date' => 'date'
       ];
 
       public $keyType = 'string';
       public $incrementing = 'false';
-      public $table = 'resit_examtimetable';
+      public $table = 'resit_exam_timetable_slots';
 
       public function resitExam()
       {

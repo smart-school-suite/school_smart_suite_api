@@ -21,9 +21,9 @@ class UpdateElectionApplicationRequest extends FormRequest
             'manifesto' => 'sometimes|string',
             'personal_vision' => 'sometimes|string',
             'commitment_statement' => 'sometimes|string',
-            'election_id' => 'sometimes|string',
-            'election_role_id' => 'sometimes|string',
-            'student_id' => 'sometimes|string',
+            'election_id' => 'sometimes|string|exists:elections,id',
+            'election_role_id' => 'sometimes|string|exists:election_roles,id',
+            'student_id' => 'sometimes|string|exists:students,id',
         ];
     }
 }

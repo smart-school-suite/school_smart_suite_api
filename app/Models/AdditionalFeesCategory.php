@@ -18,7 +18,7 @@ class AdditionalFeesCategory extends Model
      ];
 
      public $incrementing = 'false';
-     public $table = 'additional_fee_category';
+     public $table = 'additional_fee_categories';
      public $keyType = 'string';
 
      public function additionalFees(): HasMany {

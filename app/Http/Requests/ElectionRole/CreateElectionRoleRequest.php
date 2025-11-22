@@ -21,7 +21,7 @@ class CreateElectionRoleRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'election_type_id' => 'required|string|required|string|exists:election_type,id',
+            'election_type_id' => 'required|string|required|string|exists:election_types,id',
             'description' => 'required|string'
         ];
     }

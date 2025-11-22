@@ -19,7 +19,7 @@ class SpecialtyIdRequest extends FormRequest
     {
         return [
             'specialtyIds' => 'required|array',
-            "specialtyIds.*.specialty_id" => 'required|string|exists:specialty,id'
+            "specialtyIds.*.specialty_id" => 'required|string|exists:specialties,id'
         ];
     }
 }

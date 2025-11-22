@@ -21,9 +21,9 @@ class CreateApplicationRequest extends FormRequest
             'manifesto' => 'required|string',
             'personal_vision' => 'required|string',
             'commitment_statement' => 'required|string',
-            'election_id' => 'required|string',
-            'election_role_id' => 'required|string',
-            'student_id' => 'required|string',
+            'election_id' => 'required|string|exists:elections,id',
+            'election_role_id' => 'required|string|exists:election_roles,id',
+            'student_id' => 'required|string|exists:students,id',
         ];
     }
 }

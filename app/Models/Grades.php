@@ -22,9 +22,14 @@ class Grades extends Model
         'grades_category_id'
     ];
 
+    protected $cast = [
+        'grade_points' => 'decimal:2',
+        'minimum_score' => 'decimal:2',
+        'maximum_score' => 'decimal:2',
+    ];
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'grades';
+    public $table = 'grade_scales';
 
     public function exam() : BelongsTo {
         return $this->belongsTo(Exams::class, 'exam_id');

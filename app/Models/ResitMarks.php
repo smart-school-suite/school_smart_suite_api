@@ -27,6 +27,9 @@ class ResitMarks extends Model
         'gratification',
     ];
 
+    protected $cast = [
+        'score' => 'decimal:2',
+    ];
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'resit_marks';

@@ -22,8 +22,8 @@ class BulkUpdateSchoolExpensesRequest extends FormRequest
     {
         return [
             'school_expenses' => 'required|array',
-            'school_expenses.*.expense_id' => 'required|string|exists:school_expenses,id',
-            'school_expenses.*.expenses_category_id' => 'sometimes|nullable|string|exists:school_expenses_category,id',
+            'school_expenses.*.expense_id' => 'required|string|exists:expense_categories,id',
+            'school_expenses.*.expenses_category_id' => 'sometimes|nullable|string|exists:expense_categories,id',
             'school_expenses.*.date' => 'sometimes|nullable|date',
             'school_expenses.*.amount' => 'sometimes|nullable|required',
             'school_expenses.*.description' => 'sometimes|nullable|string'

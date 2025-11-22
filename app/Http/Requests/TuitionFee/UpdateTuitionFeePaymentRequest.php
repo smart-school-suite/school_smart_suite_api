@@ -20,7 +20,7 @@ class UpdateTuitionFeePaymentRequest extends FormRequest
         return [
            'fee_name' => 'sometimes|string',
            'amount' => 'sometimes',
-           'student_id' => 'sometimes|string'
+           'student_id' => 'sometimes|string|exists:students,id'
         ];
     }
 }

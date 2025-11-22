@@ -35,7 +35,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('student_fee_schedule', function(Blueprint $table){
+        Schema::create('student_fee_schedules', function(Blueprint $table){
            $table->string('id')->primary();
            $table->decimal('expected_amount', 15, 2);
            $table->enum('status', ['paid', 'unpaid'])->default('unpaid');
@@ -51,7 +51,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('fee_schedules');
         Schema::dropIfExists('fee_schedule_slots');
-        Schema::dropIfExists('student_fee_schedule');
+        Schema::dropIfExists('student_fee_schedules');
         Schema::dropIfExists('installments');
 
     }

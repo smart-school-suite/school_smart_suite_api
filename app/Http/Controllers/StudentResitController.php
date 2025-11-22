@@ -132,15 +132,15 @@ class StudentResitController extends Controller
         return ApiResponseService::success("Resit Evaluation Helper Data Fetched Successfully", $prepareResitData, null, 200);
     }
 
-    public function getResitScoresByCandidate(Request $request){
-        try{
+    public function getResitScoresByCandidate(Request $request)
+    {
+        try {
             $candidateId = $request->route('candidateId');
-           $currentSchool = $request->attributes->get("currentSchool");
-           $resitScores = $this->studentResitService->getResitScoresByCandidate($currentSchool, $candidateId);
-           return ApiResponseService::success("Resit Scores Fetched Successfully", $resitScores, null, 200);
-        }
-        catch(Exception $e){
-             return  ApiResponseService::error($e->getMessage(), null, 400);
+            $currentSchool = $request->attributes->get("currentSchool");
+            $resitScores = $this->studentResitService->getResitScoresByCandidate($currentSchool, $candidateId);
+            return ApiResponseService::success("Resit Scores Fetched Successfully", $resitScores, null, 200);
+        } catch (Exception $e) {
+            return  ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
     public function bulkDeleteStudentResit(StudentResitIdRequest $request)
@@ -156,7 +156,7 @@ class StudentResitController extends Controller
     {
         try {
             $currentSchool = $request->attributes->get("currentSchool");
-            $bulkPayStudentResit = $this->studentResitService->bulkPayStudentResit( $request->paymentData, $currentSchool);
+            $bulkPayStudentResit = $this->studentResitService->bulkPayStudentResit($request->paymentData, $currentSchool);
             return ApiResponseService::success("Student Resit Paid Succesfully", $bulkPayStudentResit, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
@@ -203,4 +203,26 @@ class StudentResitController extends Controller
         return ApiResponseService::success("Resit Exams Fetched Successfully", $getResitExams, null, 200);
     }
 
+    public function getResitStudentId(Request $request, $studentId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $studentResits = $this->studentResitService->getResitStudentId($currentSchool, $studentId);
+        return ApiResponseService::success("Student Resits Fetched Successfully", $studentResits, null, 200);
+    }
+
+    public function getResitStudentIdSemesterId(Request $request)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $studentId = $request->route("studentId");
+        $semesterId = $request->route("semesterId");
+        $studentResits = $this->studentResitService->getResitStudentIdSemesterId($currentSchool, $studentId, $semesterId);
+        return ApiResponseService::success("Student Resits Fetched Successfully", $studentResits, null, 200);
+    }
+
+    public function getResitStudentIdCarryOver(Request $request, $studentId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $studentResits = $this->studentResitService->getResitStudentIdCarryOver($currentSchool, $studentId);
+        return ApiResponseService::success("Student Carry Overs Fetched Succesfully", $studentResits, null, 200);
+    }
 }

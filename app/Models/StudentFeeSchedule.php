@@ -23,7 +23,7 @@ class StudentFeeSchedule extends Model
          'specialty_id'
     ];
 
-    public $table = 'student_fee_schedule';
+    public $table = 'student_fee_schedules';
     public $incrementing = 'false';
     public $keyType = 'string';
 

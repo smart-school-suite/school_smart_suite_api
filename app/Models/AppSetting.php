@@ -21,10 +21,6 @@ class AppSetting extends Model
     public $table = 'app_settings';
     public $incrementing = 'false';
 
-    public function schoolBranchAppSetting(): HasMany {
-        return $this->hasMany(SchoolBranchAppSetting::class);
-    }
-
     public function settingCategory(): BelongsTo {
         return $this->belongsTo(SettingCategory::class, 'setting_category_id');
     }

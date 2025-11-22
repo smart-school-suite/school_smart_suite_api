@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_batch', function (Blueprint $table) {
+        Schema::create('student_batches', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('inactive');
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_batch');
+        Schema::dropIfExists('student_batches');
     }
 };

@@ -18,9 +18,9 @@ class StudentPromotionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'level_id' => 'required|string',
-            'specialty_id' => 'required|string',
-            'student_id' => 'required|string'
+            'level_id' => 'required|string|exists:levels,id',
+            'specialty_id' => 'required|string|exists:specialties,id',
+            'student_id' => 'required|string|exists:students,id'
         ];
     }
 }

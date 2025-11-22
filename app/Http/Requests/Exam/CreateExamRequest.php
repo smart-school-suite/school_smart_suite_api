@@ -21,7 +21,7 @@ class CreateExamRequest extends FormRequest
         return [
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-            'exam_type_id' => 'required|string|exists:exam_type,id',
+            'exam_type_id' => 'required|string|exists:exam_types,id',
             'weighted_mark' => [
                 'required',
                 'numeric',
@@ -30,8 +30,8 @@ class CreateExamRequest extends FormRequest
                 'max:999.99'
             ],
             'school_year' => 'required|string',
-            'specialty_id' => 'required|string|exists:specialty,id',
-            'student_batch_id' => 'required|string|exists:student_batch,id'
+            'specialty_id' => 'required|string|exists:specialties,id',
+            'student_batch_id' => 'required|string|exists:student_batches,id'
         ];
     }
 }

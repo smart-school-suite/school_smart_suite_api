@@ -62,8 +62,8 @@ class TimeTableController extends Controller
         try {
             $result = $this->createSpecailtyTimeTableService->createTimetableByAvailability(
                 $request->scheduleEntries,
-                 $currentSchool
-                );
+                $currentSchool
+            );
             return ApiResponseService::success("Timetable Created Successfully", $result, null, Response::HTTP_CREATED);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
@@ -82,8 +82,8 @@ class TimeTableController extends Controller
         try {
             $result = $this->createSpecailtyTimeTableService->createTimetable(
                 $request->scheduleEntries,
-                 $currentSchool
-                );
+                $currentSchool
+            );
             return ApiResponseService::success("Timetable Created Successfully", $result, null, Response::HTTP_CREATED);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
@@ -202,5 +202,24 @@ class TimeTableController extends Controller
         $semesterId = $request->route("semesterId");
         $getInstructorAvailability = $this->specailtyTimeTableService->getInstructorAvailability($specialtyId, $semesterId,  $currentSchool,);
         return ApiResponseService::success("Instructor Availability Data Fetched Sucessfully", $getInstructorAvailability, null, Response::HTTP_OK);
+    }
+
+    public function getTimetableStudent(Request $request)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $authStudent = $this->resolveUser();
+        $timetable = $this->specailtyTimeTableService->getStudentTimetable($currentSchool, $authStudent);
+        return ApiResponseService::success("Timetable Fetched Successfully", null, $timetable, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

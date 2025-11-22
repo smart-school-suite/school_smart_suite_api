@@ -28,3 +28,4 @@ Route::middleware(['permission:schoolAdmin.exam.timetable.delete'])->delete('/ex
     ->name('exams.timetable.destroy');
 
 Route::post('/auto-gen-timetable', [ExamTimeTableController::class, 'autoGenExamTimetable'])->name('auto-gen.exam-timetable');
+Route::get('/student/{studentId}/exam/{examId}/timetable', [ExamTimeTableController::class, 'getExamTimetableStudentIdExamId'])->name('get.exam-timetable.studentid.examid');

@@ -8,6 +8,7 @@ use App\Models\Teacher;
 use App\Models\UserDevices;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -45,6 +46,7 @@ class NotificationService
 
     public function getNotifications($user)
     {
+        Log::info('Getting notifications for user: ' . get_class($user) . ' with ID: ' . $user->id);
         return [
             'unread' => $user->unreadNotifications,
             'read' => $user->readNotifications

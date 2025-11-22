@@ -23,7 +23,7 @@ class BulkUpdateExamRequest extends FormRequest
             'exams.*.exam_id' => 'required|string|exists:exams,id',
             'exams.*.start_date' => 'sometimes|nullable|date',
             'exams.*.end_date' => 'sometimes|nullable|date',
-            'exams.*.exam_type_id' => 'sometimes|nullable|string|exists:exam_type,id',
+            'exams.*.exam_type_id' => 'sometimes|nullable|string|exists:exam_types,id',
             'exams.*.weighted_mark' =>  [
                 'sometimes',
                 'nullable',

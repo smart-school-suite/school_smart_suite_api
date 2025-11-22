@@ -26,6 +26,10 @@ class Marks extends Model
         'student_batch_id'
     ];
 
+    protected $cast = [
+         'score' => 'decimal:2',
+         'grade_points' => 'decimal:2'
+    ];
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'marks';

@@ -137,7 +137,7 @@ class SpecialtyService
     public function getSpecialties($currentSchool)
     {
         $specialtyData = Specialty::where("school_branch_id", $currentSchool->id)
-            ->with(['level', 'hos.hosable'])
+            ->with(['level'])
             ->get();
 
         if ($specialtyData->isEmpty()) {
@@ -156,7 +156,7 @@ class SpecialtyService
     public function getSpecailtyDetails($currentSchool, $specialtyId)
     {
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
-            ->with(['level', 'department', 'hos.hosable'])
+            ->with(['level', 'department'])
             ->find($specialtyId);
 
         if (!$specialty) {

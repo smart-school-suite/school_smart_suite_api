@@ -29,7 +29,16 @@ class Exams extends Model
         'expected_candidate_number',
         'evaluated_candidate_number',
         'student_batch_id',
-        'grades_category_id'
+        'grades_category_id',
+        'result_published'
+    ];
+
+    protected $cast = [
+         'start_date' => 'date',
+        'end_date' => 'date',
+        'weighted_mark' => 'decimal:2',
+        'expected_candidate_number' => 'integer',
+        'evaluated_candidate_number' => 'integer',
     ];
 
     public $keyType = 'string';

@@ -21,13 +21,9 @@ class Department extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'department';
+    public $table = 'departments';
     public $incrementing = 'false';
 
-     public function hods()
-    {
-        return $this->hasMany(HOD::class, 'department_id');
-    }
     public function courses(): HasMany {
        return $this->hasMany(Courses::class);
     }

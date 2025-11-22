@@ -21,10 +21,10 @@ class UpdateSpecialtyRequest extends FormRequest
     {
         return [
             'specialty_name' => 'sometimes|nullable|string',
-            'department_id' => 'sometimes|nullable|string',
+            'department_id' => 'sometimes|nullable|string|exists:departments,id',
             'registration_fee' => 'sometimes|nullable|decimal:0, 2',
             'school_fee' => 'sometimes|nullable|decimal:0, 2',
-            'level_id' => 'sometimes|nullable|string|exists:education_levels,id',
+            'level_id' => 'sometimes|nullable|string|exists:levels,id',
             'description' => 'sometimes|nullable|string'
         ];
     }

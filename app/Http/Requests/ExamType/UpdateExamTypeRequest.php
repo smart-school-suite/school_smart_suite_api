@@ -20,7 +20,7 @@ class UpdateExamTypeRequest extends FormRequest
     public function rules()
     {
         return [
-            'semester_id' => 'sometimes|string',
+            'semester_id' => 'sometimes|string|exists:semesters,id',
             'exam_name' => 'sometimes|string',
             'status' => 'sometimes|string|in:active,inactive',
             'program_name' => 'sometimes|string',

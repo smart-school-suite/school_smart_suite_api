@@ -19,7 +19,7 @@ class TeacherIdRequest extends FormRequest
     {
         return [
             'teacherIds' => 'required|array',
-            'teacherIds.*.teacher_id' => 'required|string|exists:teacher,id'
+            'teacherIds.*.teacher_id' => 'required|string|exists:teachers,id'
         ];
     }
 }

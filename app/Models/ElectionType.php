@@ -33,7 +33,7 @@ class ElectionType extends Model
       return $this->hasMany(ElectionRoles::class );
    }
     public $incrementing = 'false';
-    public $table = 'election_type';
+    public $table = 'election_types';
     public $keyType = 'string';
 
 }

@@ -21,28 +21,30 @@ class AnnouncementController extends Controller
     protected AnnouncementService $announcementService;
     protected UpdateAnnouncementDraftService $updateAnnouncementDraftService;
     public function __construct(
-    CreateAnnouncementService $createAnnouncementService,
-    AnnouncementService $announcementService,
-    UpdateAnnouncementDraftService $updateAnnouncementDraftService
-    )
-    {
+        CreateAnnouncementService $createAnnouncementService,
+        AnnouncementService $announcementService,
+        UpdateAnnouncementDraftService $updateAnnouncementDraftService
+    ) {
         $this->createAnnouncementService = $createAnnouncementService;
         $this->announcementService = $announcementService;
         $this->updateAnnouncementDraftService = $updateAnnouncementDraftService;
     }
 
-    public function updateAnnouncementDraft(UpdateDraftAnnouncement $request){
-       $currentSchool = $request->attributes->get('currentSchool');
-       $authenticatedUser = $this->getAuthenticatedUser();
-       $this->updateAnnouncementDraftService->updateDraftAnnouncement($currentSchool, $authenticatedUser,$request->validated());
-       return ApiResponseService::success("Announcement Draft Updated Successfully", null, null, 200);
+    public function updateAnnouncementDraft(UpdateDraftAnnouncement $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authenticatedUser = $this->getAuthenticatedUser();
+        $this->updateAnnouncementDraftService->updateDraftAnnouncement($currentSchool, $authenticatedUser, $request->validated());
+        return ApiResponseService::success("Announcement Draft Updated Successfully", null, null, 200);
     }
-    public function getAnnouncementEngagementOverview(Request $request, $announcementId){
-         $currentSchool = $request->attributes->get('currentSchool');
+    public function getAnnouncementEngagementOverview(Request $request, $announcementId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
         $engagementStats = $this->announcementService->getAnnouncementEngagementOverview($currentSchool, $announcementId);
         return ApiResponseService::success("Annoucement Engagement Stats Fetched Successfully", $engagementStats, null, 200);
     }
-    public function getAnnouncementReadUnreadList(Request $request, $announcementId){
+    public function getAnnouncementReadUnreadList(Request $request, $announcementId)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $list = $this->announcementService->getAnnouncementReadUnreadList($currentSchool, $announcementId);
         return ApiResponseService::success("Announcement List Fetched Successfully", $list, null, 200);
@@ -77,6 +79,21 @@ class AnnouncementController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $getAnnouncement = $this->announcementService->getAnnoucementsByState($currentSchool, $status);
         return ApiResponseService::success("Announcement Fetched Successfully", AnnouncementResource::collection($getAnnouncement), null, 200);
+    }
+
+    public function getAllStudentAnnouncement(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authenticatedUser = $this->getAuthenticatedUser();
+        $announcements = $this->announcementService->getAllStudentAnnouncements($currentSchool, $authenticatedUser['authUser']);
+        return ApiResponseService::success("Student Announcements Fetched Successfully", $announcements, null, 200);
+    }
+
+    public function getAllStudentAnnouncementLabelId(Request $request, $labelId){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authenticatedUser = $this->getAuthenticatedUser();
+        $announcements = $this->announcementService->getStudentAnnouncementLabelId($currentSchool, $authenticatedUser['authUser'], $labelId);
+        return ApiResponseService::success("Student Announcements Fetched Successfully", $announcements, null, 200);
     }
     private function getAuthenticatedUser()
     {

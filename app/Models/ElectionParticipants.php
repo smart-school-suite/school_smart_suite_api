@@ -20,7 +20,9 @@ class ElectionParticipants extends Model
     public function Specialty() : BelongsTo {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
-
+    public function election(): BelongsTo {
+         return $this->belongsTo(Elections::class, 'election_id');
+    }
     public function level(): BelongsTo {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }

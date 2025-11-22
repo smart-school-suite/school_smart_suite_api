@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('grades_category', function (Blueprint $table) {
+        Schema::create('grade_scale_categories', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('title');
             $table->enum('status', ['active', 'inactive']);
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('grades_category');
+        Schema::dropIfExists('grade_scale_categories');
     }
 };

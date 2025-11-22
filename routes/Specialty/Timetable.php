@@ -43,3 +43,5 @@ Route::middleware(['permission:schoolAdmin.specialty.timetable.avialability.view
 Route::post('/timetable-automatic/{schoolSemesterId}', [AutomaticTimetableController::class, 'generateTimetable'])->name('automatic-generate.timetable');
 
 Route::get('/ai-generate-timetable/{schoolSemesterId}', [AIGenTimetableController::class, 'generateTimetable'])->name('ai-generate.timetable');
+
+Route::get('/student', [TimeTableController::class, 'getTimetableStudent'])->name('get.student.timetable');

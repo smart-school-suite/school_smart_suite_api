@@ -2,15 +2,24 @@
 
 namespace Database\Seeders;
 
+use App\Models\Schooladmin;
 use App\Models\Schoolbranches;
 use Illuminate\Database\Seeder;
 use App\Models\SettingDefination;
 use App\Models\SchoolBranchSetting;
 use App\Models\SettingCategory;
+use Illuminate\Support\Facades\Hash;
+
 class test extends Seeder
 {
     public function run(): void {
-             $data = [
+       $schoolAdmin = Schooladmin::where("email", "chongongprecious@gmail.com")->first();
+       $schoolAdmin->password = Hash::make("Keron484$");
+       $schoolAdmin->save();
+    }
+
+    public function electionSettingSeeder(){
+                 $data = [
             [
                 'name' => 'Additional Fee Settings',
                 'key' => 'setting.category.additionalFee'

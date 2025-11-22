@@ -143,61 +143,6 @@ class StudentBatchService
             throw $e;
         }
     }
-    public function assignGradDatesBySpecialty($currentSchool, array $gradDates)
-    {
-        $result = [];
-
-        foreach ($gradDates as $gradDate) {
-
-            $graduationDate = new StudentBatchGradeDates();
-            $graduationDate->graduation_date = $gradDate['graduation_date'];
-            $graduationDate->specialty_id = $gradDate['specialty_id'];
-            $graduationDate->level_id = $gradDate['level_id'];
-            $graduationDate->student_batch_id = $gradDate['student_batch_id'];
-            $graduationDate->school_branch_id = $currentSchool->id;
-            $graduationDate->save();
-            $result[] = [
-                'graduation_date' => $graduationDate->graduation_date,
-                'specialty_id' => $graduationDate->specialty_id,
-                'level_id' => $graduationDate->level_id,
-                'student_batch_id' => $graduationDate->student_batch_id,
-            ];
-        }
-
-        return $result;
-    }
-
-    public function bulkAssignGradeDatesBySpecailty($gradDatesList, $currentSchool){
-        $result = [];
-        try{
-           DB::beginTransaction();
-           foreach($gradDatesList as $gradDate){
-            $graduationDate = new StudentBatchGradeDates();
-            $graduationDate->graduation_date = $gradDate['graduation_date'];
-            $graduationDate->specialty_id = $gradDate['specialty_id'];
-            $graduationDate->level_id = $gradDate['level_id'];
-            $graduationDate->student_batch_id = $gradDate['student_batch_id'];
-            $graduationDate->school_branch_id = $currentSchool->id;
-            $graduationDate->save();
-            $result[] = [
-                 $graduationDate
-            ];
-           }
-           DB::commit();
-           return $result;
-        }
-        catch(Exception $e){
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function getGradeDateListByBatch($currentSchool, $batchId)
-    {
-        $gradeDates = StudentBatchGradeDates::where("school_branch_id", $currentSchool->id)
-            ->with(['specialty', 'studentBatch', 'level'])
-            ->where("student_batch_id", $batchId)->get();
-        return $gradeDates;
-    }
 
 
 }

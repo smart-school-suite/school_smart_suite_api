@@ -20,7 +20,7 @@ class CreateElectionRequest extends FormRequest
     public function rules()
     {
         return [
-            'election_type_id' => 'required|string|exists:election_type,id',
+            'election_type_id' => 'required|string|exists:election_types,id',
             'application_start' => 'required|date_format:Y-m-d H:i|after_or_equal:now',
             'application_end' => 'required|date_format:Y-m-d H:i|after:application_start',
             'voting_start' => 'required|date_format:Y-m-d H:i|after_or_equal:application_end',

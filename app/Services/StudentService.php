@@ -293,4 +293,11 @@ class StudentService
             throw $e;
         }
     }
+
+    public function getStudentProfileDetails($currentSchool, $studentId){
+        $student = Student::where("school_branch_id", $currentSchool->id)
+                            ->with(['department', 'specialty', 'guardian', 'level', 'schoolbranches'])
+                            ->find($studentId);
+        return $student;
+    }
 }

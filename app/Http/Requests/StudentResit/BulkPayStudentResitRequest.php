@@ -16,7 +16,7 @@ class BulkPayStudentResitRequest extends FormRequest
     {
         return [
             "paymentData" => 'required|array',
-            "paymentData.*.resit_id" => 'required|string|exists:student_resit,id',
+            "paymentData.*.resit_id" => 'required|string|exists:student_resits,id',
             'paymentData.*.amount' => 'required',
             'paymentData.*.payment_method' => 'required|string'
         ];

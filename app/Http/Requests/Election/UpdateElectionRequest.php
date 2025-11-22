@@ -20,7 +20,7 @@ class UpdateElectionRequest extends FormRequest
     public function rules()
     {
         return [
-            'election_type_id' => 'sometimes|nullable|string|exists:election_type,id',
+            'election_type_id' => 'sometimes|nullable|string|exists:election_types,id',
             'application_start' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:now',
             'application_end' => 'sometimes|nullable|date_format:Y-m-d H:i|after:application_start',
             'voting_start' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:application_end',

@@ -28,7 +28,7 @@ class SchoolAdminPasswordResetService
                 throw new AuthException("We couldn't find a user with that email address.", 404, "User Not Found", "The email you entered does not match any registered account. Please check for typos or register a new account.");
             }
 
-            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = random_int(100000, 999999);
             $otp_header = Str::random(200);
             $expiresAt = Carbon::now()->addMinutes(config('auth.otp_expiry_minutes', 5));
 

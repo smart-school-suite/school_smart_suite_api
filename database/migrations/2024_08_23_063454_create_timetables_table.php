@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('timetables', function (Blueprint $table) {
+        Schema::create('timetable_slots', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('day_of_week');
             $table->time('start_time');
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('timetables');
+        Schema::dropIfExists('timetable_slots');
     }
 };

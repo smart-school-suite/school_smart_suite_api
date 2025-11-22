@@ -9,10 +9,7 @@ use App\Http\Requests\Department\CreateDepartmentRequest;
 use App\Http\Requests\Department\UpdateDepartmentRequest;
 use App\Http\Requests\Department\BulkUpdateDepartmentRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Department\ValidateDepartmentIdRequest;
-use Illuminate\Support\Facades\Log;
-use Exception;
 use Illuminate\Http\Request;
 
 class DepartmentController extends Controller

@@ -24,6 +24,11 @@ class SchoolSemester extends Model
         'student_batch_id'
     ];
 
+    protected $cast = [
+         'start_date' => 'date',
+         'end_date' => 'date'
+    ];
+
     public $incrementing = 'false';
     public $table = 'school_semesters';
     public $keyType = 'string';

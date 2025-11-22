@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('school_grades_config', function (Blueprint $table) {
+        Schema::create('school_grade_scale_categories', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->boolean('isgrades_configured')->default(false);
             $table->decimal('max_score', 5, 2)->nullable();
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('school_grades_config');
+        Schema::dropIfExists('school_grade_scale_categories');
     }
 };

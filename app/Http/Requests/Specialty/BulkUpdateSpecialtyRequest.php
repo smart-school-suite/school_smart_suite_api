@@ -21,12 +21,12 @@ class BulkUpdateSpecialtyRequest extends FormRequest
     {
         return [
             'specialties' => 'required|array',
-            'specialties.*.id' => 'required|string|exists:specialty,id',
+            'specialties.*.id' => 'required|string|exists:specialties,id',
             'specialties.*.specialty_name' => 'sometimes|nullable|string',
             'specialties.*.registration_fee' => 'sometimes|nullable',
             'specialties.*.school_fee' => 'sometimes|nullable',
-            'specialties.*.level_id' => 'sometimes|nullable|string|exists:education_levels,id',
-            'specialties.*.department_id' => 'sometimes|nullable|string|exists:department,id',
+            'specialties.*.level_id' => 'sometimes|nullable|string|exists:levels,id',
+            'specialties.*.department_id' => 'sometimes|nullable|string|exists:departments,id',
             'specialties.*.description' => 'sometimes|nullable|string',
         ];
     }

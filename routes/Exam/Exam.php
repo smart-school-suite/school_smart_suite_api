@@ -46,3 +46,9 @@ Route::middleware(['permission:schoolAdmin.exam.update'])->patch('/bulk-update',
 // Bulk add grading configurations to exams
 Route::middleware(['permission:schoolAdmin.exam.add.grade.config'])->post('/bulk-add-grading-configs', [ExamsController::class, 'bulkAddExamGrading'])
     ->name('exams.grading-configs.bulk-store');
+
+
+Route::get('/student/{studentId}/exams-all', [ExamsController::class, 'getAllExamsByStudentId'])->name("get.all.exams.by.studentId");
+Route::get('/student/{studentId}/semester/{semesterId}', [ExamsController::class, "getAllExamsByStudentIdSemesterId"])->name("get.exams.by.studentId.semesteId");
+Route::get('/{examId}/grade-scale', [ExamsController::class, 'getExamGradeScale'])->name('get.exams.grade-scale');
+Route::get('/upcoming/student', [ExamsController::class, 'getStudentUpcomingExams'])->name('get.student.upcoming.exams');

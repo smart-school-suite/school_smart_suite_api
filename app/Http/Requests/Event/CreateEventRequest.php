@@ -34,12 +34,12 @@ class CreateEventRequest extends FormRequest
             'tag_ids.*.tag_id' => 'string|exists:event_tags,id',
             'event_category_id' => 'string|required|exists:event_categories,id',
             'teacher_ids' => 'nullable|array',
-            'teacher_ids.*.teacher_id' => 'required|string|exists:teacher,id',
+            'teacher_ids.*.teacher_id' => 'required|string|exists:teachers,id',
             'school_admin_ids' => 'nullable|array',
-            'school_admin_ids.*.school_admin_id' => 'required|string|exists:school_admin,id',
+            'school_admin_ids.*.school_admin_id' => 'required|string|exists:school_admins,id',
 
             'student_audience' => 'nullable|array',
-            'student_audience.*.student_audience_id' => 'required|string|exists:specialty,id',
+            'student_audience.*.student_audience_id' => 'required|string|exists:specialties,id',
 
         ];
 

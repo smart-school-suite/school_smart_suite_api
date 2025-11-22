@@ -19,7 +19,7 @@ class GradesCategory extends Model
 
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'grades_category';
+    public $table = 'grade_scale_categories';
 
     public function schoolGradesConfig() : HasMany {
          return $this->hasMany(SchoolGradesConfig::class);

@@ -18,7 +18,7 @@ class PayResitFeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_resit_id' => 'required|string|exists:student_resit,id',
+            'student_resit_id' => 'required|string|exists:student_resits,id',
             'payment_method' => 'required|string',
             'amount' => 'required'
         ];

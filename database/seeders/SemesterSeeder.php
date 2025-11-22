@@ -20,7 +20,6 @@ class SemesterSeeder extends Seeder
 
       private function createSemesters(): void
     {
-        Log::info('Semester seeder has started.');
         $timestamp = now();
         $filePath = public_path("data/semesters.csv");
         if (!file_exists($filePath) || !is_readable($filePath)) {
@@ -51,12 +50,9 @@ class SemesterSeeder extends Seeder
 
             fclose($handle);
 
-            Log::info('Semester Array: ', $semesters);
-
 
             if (!empty($semesters)) {
                 DB::table('semesters')->insert($semesters);
-                Log::info('Inserted semesters: ' . count($semesters) . ' entries.');
             } else {
                 Log::warning('No semesters to insert.');
             }

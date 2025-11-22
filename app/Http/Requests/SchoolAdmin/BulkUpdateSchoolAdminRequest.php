@@ -21,7 +21,7 @@ class BulkUpdateSchoolAdminRequest extends FormRequest
     {
         return [
             'school_admins' => 'required|array',
-            'school_admins.*.id' => 'required|string|exists:school_admin,id',
+            'school_admins.*.id' => 'required|string|exists:school_admins,id',
             'school_admins.*.email' => 'sometimes|nullable|email',
             'school_admins.*.name' => 'sometimes|nullable|string',
             'school_admins.*.first_name' => 'sometimes|nullable|string',

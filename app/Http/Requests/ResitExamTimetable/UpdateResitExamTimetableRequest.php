@@ -20,7 +20,7 @@ class UpdateResitExamTimetableRequest extends FormRequest
         return [
             'entries' => ['required', 'array'],
             'entries.*.course_id' => 'required|exists:courses,id',
-            'entries.*.entry_id' => 'required|exists:resit_examtimetable,id',
+            'entries.*.entry_id' => 'required|exists:resit_exam_timetable_slots,id',
             'entries.*.start_time' => 'required|date_format:H:i',
             'entries.*.date' => 'required|date|after_or_equal:today',
             'entries.*.end_time' => 'required|date_format:H:i|after:entries.*.start_time',

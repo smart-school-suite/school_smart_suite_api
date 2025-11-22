@@ -21,7 +21,7 @@ class CreateTuitionFeeScheduleRequest extends FormRequest
             'feeschedule' => 'required|array',
             'feeschedule.*.amount' => 'required|integer',
             'feeschedule.*.title' => 'required|string',
-            'feeschedule.*.specialty_id' => 'required|string|exists:specialty,id',
+            'feeschedule.*.specialty_id' => 'required|string|exists:specialties,id',
             'feeschedule.*.deadline_date' => 'required|date'
         ];
     }

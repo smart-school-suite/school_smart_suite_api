@@ -21,7 +21,7 @@ class SchoolBranchApiKey extends Model
     ];
 
     public $incrementing = 'false';
-    public $table = 'schoolbranch_apikey';
+    public $table = 'school_branch_api_keys';
     public $keyType = 'string';
 
     public function schoolBranch(): BelongsTo {

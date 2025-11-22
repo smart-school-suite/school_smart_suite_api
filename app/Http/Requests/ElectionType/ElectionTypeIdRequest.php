@@ -16,7 +16,7 @@ class ElectionTypeIdRequest extends FormRequest
     {
         return [
             'electionTypeIds' => 'required|array',
-            'electionTypeIds.*.election_type_id' => 'required|string|exists:election_type,id'
+            'electionTypeIds.*.election_type_id' => 'required|string|exists:election_types,id'
         ];
     }
 }

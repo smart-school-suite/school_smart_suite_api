@@ -19,7 +19,7 @@ class ElectionApplicationIdRequest extends FormRequest
     {
         return [
             'electionApplicationIds' => 'required|array',
-            "electionApplicationIds.*.election_application_id" => 'required|string|exists:election_application,id'
+            "electionApplicationIds.*.election_application_id" => 'required|string|exists:election_applications,id'
         ];
     }
 }

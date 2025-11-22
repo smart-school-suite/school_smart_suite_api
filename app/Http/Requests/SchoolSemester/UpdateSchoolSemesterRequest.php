@@ -24,8 +24,8 @@ class UpdateSchoolSemesterRequest extends FormRequest
             'end_date' => 'sometimes|nullable|date|after:start_date',
             'school_year' => 'sometimes|nullable|string',
             'semester_id' => 'sometimes|nullable|string|exists:semesters,id',
-            'specialty_id' => 'sometimes|nullable|string|exists:specialty,id',
-            'student_batch_id' => 'sometimes|nullable|exists:student_batch,id'
+            'specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
+            'student_batch_id' => 'sometimes|nullable|exists:student_batches,id'
         ];
     }
 }

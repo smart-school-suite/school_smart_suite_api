@@ -147,4 +147,12 @@ class ExamTimeTableController extends Controller
             return ApiResponseService::error("Exam Not Found", null, Response::HTTP_NOT_FOUND);
         }
     }
+
+    public function getExamTimetableStudentIdExamId(Request $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+            $studentId = $request->route('studentId');
+            $examId = $request->route('examId');
+            $examTimetable = $this->examTimeTableService->getExamTimetableStudentIdExamId($currentSchool, $studentId, $examId);
+            return ApiResponseService::success("Exam Timetable Fetched Successfully", $examTimetable, null, 200);
+    }
 }

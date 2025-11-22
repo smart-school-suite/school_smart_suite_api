@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Requests\PresetAudience;
+namespace App\Http\Requests\Hall;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePresetAudience extends FormRequest
+class UpdateHallRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -18,9 +17,9 @@ class CreatePresetAudience extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'target' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
+            'name' => 'nullable|string|max:150',
+            'capacity' => 'nullable|integer|max:5000',
+            'location' => 'nullable|string|max:200'
         ];
     }
 }

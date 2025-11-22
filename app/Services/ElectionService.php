@@ -120,33 +120,42 @@ class ElectionService
                                 ->get();
         return $elections;
     }
-    public function upcomingElectionByStudent($currentSchool, $studentId)
-    {
-        $student = Student::where('school_branch_id', $currentSchool->id)
-            ->find($studentId);
+public function upcomingElectionByStudent($currentSchool, $student)
+{
+    $now = Carbon::now();
+    $elections = ElectionParticipants::where('school_branch_id', $currentSchool->id)
+        ->where('specialty_id', $student->specialty_id)
+        ->where('level_id', $student->level_id)
+        ->with(['election.electionType'])
+        ->get()
+        ->pluck('election')
+        ->filter(function ($election) use ($now) {
+            return $election->application_end >= $now || $election->voting_end >= $now;
+        })
+        ->unique('id')
+        ->values();
 
-        if (!$student) {
-            return collect();
+    $formatted = $elections->map(function ($election) use ($now) {
+        $applicationOpen = $now->between($election->application_start, $election->application_end);
+        $votingOpen      = $now->between($election->voting_start, $election->voting_end);
+
+        if (!$applicationOpen && !$votingOpen) {
+            return null;
         }
-        $upcomingElections = Elections::where('school_branch_id', $currentSchool->id)
-            ->where('voting_start', '<=', now())
-            ->where('voting_end', '>=', now())
-            ->where('status', 'pending')
-            ->with(['electionType'])
-            ->get();
 
-        $eligibleElections = $upcomingElections->filter(function ($election) use ($student, $currentSchool) {
-            $isParticipantEligible = ElectionParticipants::where('election_id', $election->id)
-                ->where('school_branch_id', $currentSchool->id)
-                ->where('specialty_id', $student->specialty_id)
-                ->where('level_id', $student->level_id)
-                ->exists();
+        return [
+            "election_name"          => $election->electionType?->election_title ?? "Untitled Election",
+            "application_start_date"   => $election->application_start?->format('Y-m-d'),
+            "application_end_date"   => $election->application_end?->format('Y-m-d'),
+            "election_id"            => $election->id,
+            "description"            => $election->electionType?->description ?? "No description available",
+            "vote"                   => $votingOpen,
+            "application"            => $applicationOpen
+        ];
+    })->filter()->values();
 
-            return $isParticipantEligible;
-        });
-
-        return $eligibleElections;
-    }
+    return $formatted;
+}
     public function getElectionCandidatesByElection(string $electionId, $currentSchool)
     {
         $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)

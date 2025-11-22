@@ -1,8 +1,8 @@
-id,exam_name,program_name,semester,type,count
-x3vndseMZxEs,Second Semester Exam,SSE,second,exam,2
-wp1EMj9cOlDM,Second Semester CA (Continous Accessment),SSC,second,ca,2
+id,exam_name,program_name,semester,type,count,description
+x3vndseMZxEs,Second Semester Exam,SSE,second,exam,2,The final major exam of the entire academic session, usually written in May/June or June/July. Covers only second-semester topics, but your result here combines with everything else to determine if you pass or move to the next class/level. Typically 60–70%. Clear this and you’re done for the year – no more tension!
+wp1EMj9cOlDM,Second Semester CA (Continous Accessment),SSC,second,ca,2,Just like first semester CA, but for the second half of the session (January/February to May/June). All your tests, assignments, quizzes, practicals, and attendance during this period count here. Still 30–40% of your final grade. Many students use this semester to boost subjects they were weak in earlier.
 lxPYU0y1C7PV,Second Semester Resit,SSR,second,resit,2
 djvSXYmqOGxb,First Semester Resit,FSR,first,resit,1
-vdVOlzfdZgAp,First Semester CA (Continous Accessment),FSC,first,ca,1
-ZL7a9zVhavky,First Semester Exam,FSE,first,exam,1
+vdVOlzfdZgAp,First Semester CA (Continous Accessment),FSC,first,ca,1,This is your day-to-day score throughout the first semester (usually August/September to December). It includes quizzes, class tests, assignments, projects, attendance, and participation. In most schools, CA is worth 30–40% of your total grade for each subject. Staying consistent here reduces the pressure on the final exam and keeps your GP high from the start!
+ZL7a9zVhavky,First Semester Exam,FSE,first,exam,1,The main written exam taken at the end of first semester (November/December/January). It tests everything you’ve been taught from the beginning of the session till that point. Usually carries 60–70% of your total grade per subject. Doing well here locks in a strong foundation for the year.
 

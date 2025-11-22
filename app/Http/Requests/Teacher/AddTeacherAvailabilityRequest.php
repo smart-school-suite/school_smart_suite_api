@@ -26,7 +26,7 @@ class AddTeacherAvailabilityRequest extends FormRequest
             'availability_slots.*.teacher_id' => [
                 'required',
                 'string',
-                'exists:teacher,id',
+                'exists:teachers,id',
             ],
             'availability_slots.*.day_of_week' => 'required|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'availability_slots.*.start_time' => 'required|date_format:H:i',

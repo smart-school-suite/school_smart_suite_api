@@ -61,5 +61,8 @@ class Elections extends Model
          return $this->hasMany(ElectionVotes::class);
     }
 
+    public function electionParticipants(): HasMany {
+         return $this->hasMany(ElectionParticipants::class);
+    }
 
 }

@@ -27,15 +27,15 @@ class UpdateTimetableByTeacherAvailability extends FormRequest
                 new TeacherAvailableRule($this->scheduleEntries),
                 new UpdateTimeTableSlotAvailableRule($this->scheduleEntries)
             ],
-            'scheduleEntries.*.entry_id' => 'required|string|exists:timetables,id',
-            'scheduleEntries.*.teacher_id' => 'required|string|exists:teacher,id',
+            'scheduleEntries.*.entry_id' => 'required|string|exists:timetable_slots,id',
+            'scheduleEntries.*.teacher_id' => 'required|string|exists:teachers,id',
             'scheduleEntries.*.course_id' => 'required|exists:courses,id',
             'scheduleEntries.*.day_of_week' => 'required|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'scheduleEntries.*.start_time' => 'required|date_format:H:i',
-            'scheduleEntries.*.specialty_id' => 'required|string|exists:specialty,id',
-            'scheduleEntries.*.level_id' => 'required|string|exists:education_levels,id',
+            'scheduleEntries.*.specialty_id' => 'required|string|exists:specialties,id',
+            'scheduleEntries.*.level_id' => 'required|string|exists:levels,id',
             'scheduleEntries.*.semester_id' => 'required|string|exists:school_semesters,id',
-            'scheduleEntries.*.student_batch_id' => 'required|string|exists:student_batch,id',
+            'scheduleEntries.*.student_batch_id' => 'required|string|exists:student_batches,id',
             'scheduleEntries.*.end_time' => 'required|date_format:H:i|after:start_time',
         ];
     }

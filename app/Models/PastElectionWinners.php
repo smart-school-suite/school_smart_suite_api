@@ -20,6 +20,9 @@ class PastElectionWinners extends Model
         'school_branch_id'
     ];
 
+    protected $cast = [
+         'total_votes' => 'integer'
+    ];
     public $table = 'past_election_winners';
     public $incrementing = 'false';
     public $keyType = 'string';

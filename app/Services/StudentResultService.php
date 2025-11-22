@@ -18,7 +18,7 @@ class StudentResultService
         $examResults = StudentResults::where("school_branch_id", $currentSchool->id)
             ->where("exam_id", $examId)
             ->where("student_id", $studentId)
-            ->with(['student', 'specialty', 'level', 'exam'])
+            ->with(['student', 'specialty', 'level', 'exam.examtype'])
             ->get();
         return $examResults;
     }

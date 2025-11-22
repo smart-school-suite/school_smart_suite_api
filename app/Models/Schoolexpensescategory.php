@@ -16,7 +16,7 @@ class Schoolexpensescategory extends Model
       'name'
     ];
 
-    public $table = 'school_expenses_category';
+    public $table = 'expense_categories';
     public $incrementing = 'false';
     public $keyType = 'string';
 

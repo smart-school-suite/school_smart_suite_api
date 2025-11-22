@@ -17,6 +17,9 @@ class Feepayment extends Model
         'amount'
     ];
 
+    protected $cast = [
+        'amount' => 'decimal:2'
+    ];
     public $keyType = 'string';
     public $table = 'fee_payment_transactions';
     public $incrementing = 'false';

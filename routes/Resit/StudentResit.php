@@ -87,3 +87,7 @@ Route::middleware(['permission:schoolAdmin.studentResits.view.eligable.student.r
 ->name('students.eligible-resit-exams');
 
 Route::get('resit-scores/candidate/{candidateId}', [StudentResitController::class, "getResitScoresByCandidate"])->name("get.resit.scores.by.candidate");
+
+Route::get("student/{studentId}/resits", [StudentResitController::class, "getResitStudentId"])->name("get.student.resits");
+Route::get("student/{studentId}/semester/{semesterId}/resits", [StudentResitController::class, "getResitStudentIdSemesterId"])->name("get.student.resit.by.semester");
+Route::get("/student/{studentId}/carry-overs", [StudentResitController::class, "getResitStudentIdCarryOver"])->name("get.student.carryovers");

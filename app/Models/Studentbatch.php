@@ -20,16 +20,12 @@ class Studentbatch extends Model
     ];
 
     public $incrementing = 'false';
-    public $table = 'student_batch';
+    public $table = 'student_batches';
     public $keyType = 'string';
 
     public function resitResults(): HasMany
     {
         return $this->hasMany(ResitResults::class);
-    }
-    public function studentGradDates(): HasMany
-    {
-        return $this->hasMany(StudentBatchGradeDates::class);
     }
     public function schoolBranch(): HasMany
     {

@@ -18,7 +18,7 @@ class AnnouncementAuthor extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'annoucement_author';
+    public $table = 'annoucement_authors';
     public $incrementing = false;
 
     public function announcement()

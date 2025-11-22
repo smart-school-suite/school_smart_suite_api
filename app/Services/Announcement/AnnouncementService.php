@@ -11,6 +11,7 @@ use App\Exceptions\AppException;
 use App\Models\StudentAnnouncement;
 use App\Models\TeacherAnnouncement;
 use App\Models\SchoolAdminAnnouncement;
+use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AnnouncementService
@@ -201,5 +202,49 @@ class AnnouncementService
         }
 
         return $tags;
+    }
+
+    public function getAllStudentAnnouncements($currentSchool, $student)
+    {
+        $student = Student::where("school_branch_id", $currentSchool->id)
+            ->find($student->id);
+        if (!$student) {
+            throw new AppException(
+                "Student Not Found",
+                404,
+                "Student Not Found",
+                "Student Not Found the student might have been deleted please verify and try again"
+            );
+        }
+        $announcements = StudentAnnouncement::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->with(['announcement.announcementCategory', 'announcement.announcementLabel'])
+            ->get();
+        return $announcements->sortBy('announcement.created_at')->values();
+    }
+
+    public function getStudentAnnouncementLabelId($currentSchool, $student, $labelId)
+    {
+        $student = Student::where("school_branch_id", $currentSchool->id)
+            ->find($student->id);
+
+        if (!$student) {
+            throw new AppException(
+                "Student Not Found",
+                404,
+                "Student Not Found",
+                "Student Not Found the student might have been deleted please verify and try again"
+            );
+        }
+
+        $announcements = StudentAnnouncement::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->whereHas('announcement.announcementLabel', function ($query) use ($labelId) {
+                $query->where("label_id", $labelId);
+            })
+            ->with(['announcement.announcementCategory'])
+            ->get();
+
+        return $announcements->sortBy('announcement.created_at')->values();
     }
 }

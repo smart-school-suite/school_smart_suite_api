@@ -9,11 +9,6 @@ use App\Http\Controllers\StudentBatchcontroller;
     // Get all student batches
     Route::middleware(['permission:schoolAdmin.student.batch.view'])->get('/', [StudentBatchController::class, 'getStudentBatch'])
         ->name('student-batches.index');
-
-    // Get graduation dates for a specific batch
-    Route::middleware(['permission:schoolAdmin.student.batch.view.graduation.dates'])->get('/{batchId}/graduation-dates', [StudentBatchController::class, 'getGraduationDatesByBatch'])
-        ->name('student-batches.graduation-dates.index');
-
     // Update a specific student batch
     Route::middleware(['permission:schoolAdmin.student.batch.update'])->put('/{batchId}', [StudentBatchController::class, 'updateStudentBatch'])
         ->name('student-batches.update');
@@ -49,9 +44,5 @@ use App\Http\Controllers\StudentBatchcontroller;
     // Bulk update student batches
     Route::middleware(['permission:schoolAdmin.student.batch.update'])->patch('/bulk-update', [StudentBatchController::class, 'bulkUpdateStudentBatch'])
         ->name('student-batches.bulk-update');
-
-    // Bulk assign graduation dates to batches (by specialty)
-    Route::middleware(['permission:schoolAdmin.student.batch.create.graduation.dates'])->post('/bulk-assign-graduation-dates', [StudentBatchController::class, 'bulkAssignGradDateBySpecialty'])
-        ->name('student-batches.bulk-assign-graduation-dates');
 
     Route::get('/details/{batchId}', [StudentBatchcontroller::class, 'getStudentBatchDetails'])->name("get.student.batch.details");

@@ -23,7 +23,7 @@ class BulkUpdateGradesCategoryRequest extends FormRequest
         return [
             'grades_category' => 'required|array',
             'grades_category.*.status' => 'sometimes|nullable|string',
-            'grades_category.*.id' => 'required|exists:grades_category,id',
+            'grades_category.*.id' => 'required|exists:grades_categories,id',
             'grades_category.*.title' => 'sometimes|string|max:255',
         ];
     }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('examtimetable', function (Blueprint $table) {
+        Schema::create('exam_timetable_slots', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->date('date');
             $table->time('start_time');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('examtimetable');
+        Schema::dropIfExists('exam_timetable_slots');
     }
 };

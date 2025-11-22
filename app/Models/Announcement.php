@@ -29,6 +29,9 @@ class Announcement extends Model
     protected $casts = [
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
+        'audience' => 'json',
+        'tags' => 'json',
+        'reciepient_count' => 'integer'
     ];
 
     public $table = 'announcements';

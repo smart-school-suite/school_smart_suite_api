@@ -18,7 +18,7 @@ class StudentBatchIdRequest extends FormRequest
     {
         return [
             'studentBatchIds' => 'required|array',
-            'studentBatchIds.*.student_batch_id' => 'required|exists:student_batch,id'
+            'studentBatchIds.*.student_batch_id' => 'required|exists:student_batches,id'
         ];
     }
 }

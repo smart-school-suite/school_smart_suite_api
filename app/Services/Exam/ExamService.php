@@ -16,6 +16,7 @@ use App\Models\Specialty;
 use Carbon\Carbon;
 use Exception;
 use App\Exceptions\AppException;
+use App\Models\ResitExam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -72,6 +73,7 @@ class ExamService
             $exam->school_year = $data["school_year"];
             $exam->specialty_id = $specialty->id;
             $exam->student_batch_id = $data["student_batch_id"];
+            $exam->result_released = false;
             $exam->save();
             $examData =  [
                 'specialty' => $specialty->specialty_name,
@@ -420,5 +422,70 @@ class ExamService
                 null
             );
         }
+    }
+
+
+
+    public function getUpcomingExams($currentSchool, $student)
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
+            ->find($student->id);
+
+        if (!$student) {
+            throw new AppException(
+                "Student Not Found",
+                404,
+                "Student Not Found",
+                "Student Not Found. Please check to ensure that the student has not been accidentally deleted or dropped."
+            );
+        }
+
+        $now = Carbon::now();
+
+
+        $regularExams = Exams::where('school_branch_id', $currentSchool->id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->where('end_date', '>=', $now)
+            ->with(['examtype', 'semester'])
+            ->select('id', 'exam_type_id', 'start_date', 'end_date', 'timetable_published', 'semester_id')
+            ->get();
+
+        $resitExams = ResitExam::where('school_branch_id', $currentSchool->id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->where('end_date', '>=', $now)
+            ->with(['examtype', 'semester'])
+            ->select('id', 'exam_type_id', 'start_date', 'end_date', 'timetable_published', 'semester_id')
+            ->get();
+
+        $allUpcoming = collect();
+
+        $regularExams->each(function ($exam) use ($allUpcoming) {
+            $allUpcoming->push([
+                "exam_id"            => $exam->id,
+                "exam_name"          => $exam->examtype?->exam_name ?? "Upcoming Exam",
+                'description'        => $exam->examtype?->description ?? null,
+                "semester"           => $exam->semester?->name ?? "Unknown Semester",
+                "start_date"         => $exam->start_date?->format('Y-m-d'),
+                "end_date"           => $exam->end_date?->format('Y-m-d'),
+                "timetable_published" => (bool) $exam->timetable_published,
+            ]);
+        });
+
+        $resitExams->each(function ($exam) use ($allUpcoming) {
+            $allUpcoming->push([
+                "exam_id"            => $exam->id,
+                "exam_name"          => $exam->examtype?->exam_name ?? "Resit Exam",
+                'description'        => $exam->examtype?->description ?? null,
+                "semester"           => $exam->semester?->name ?? "Unknown Semester",
+                "start_date"         => $exam->start_date?->format('Y-m-d'),
+                "end_date"           => $exam->end_date?->format('Y-m-d'),
+                "timetable_published" => (bool) $exam->timetable_published,
+            ]);
+        });
+
+        $sorted = $allUpcoming->sortBy('start_date')->values();
+        return $sorted;
     }
 }

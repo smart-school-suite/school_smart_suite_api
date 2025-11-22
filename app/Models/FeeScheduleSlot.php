@@ -20,6 +20,11 @@ class FeeScheduleSlot extends Model
         'fee_schedule_id'
     ];
 
+    protected $cast = [
+         'due_date' => 'date',
+         'amount' => 'decimal:2',
+         'fee_percentage' => 'decimal:2'
+    ];
     public $incrementing = 'false';
     public $keyType = 'string';
     public $table = 'fee_schedule_slots';

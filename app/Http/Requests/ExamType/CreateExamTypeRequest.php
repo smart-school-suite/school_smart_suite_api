@@ -19,7 +19,7 @@ class CreateExamTypeRequest extends FormRequest
     public function rules()
     {
         return [
-            'semester_id' => 'required|string',
+            'semester_id' => 'required|string|exists:semesters,id',
            'exam_name' => 'required|string',
            'program_name' => 'required|string',
         ];

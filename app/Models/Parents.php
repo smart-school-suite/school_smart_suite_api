@@ -64,17 +64,9 @@ class Parents extends Model
         return $this->belongsTo(Parents::class);
     }
 
-    public function audience(): MorphMany
-    {
-        return $this->morphMany(Audiences::class, 'audienceable');
-    }
     public function schoolbranches(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class);
-    }
-
-    public function eventInvitedMember(): MorphMany {
-        return $this->morphMany(EventInvitedMember::class, 'actorable');
     }
     public function student(): HasMany
     {

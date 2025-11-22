@@ -52,7 +52,7 @@ class Teacher extends Model
      */
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'teacher';
+    public $table = 'teachers';
     protected $authTokenColumn = 'token';
 
     protected function casts(): array
@@ -94,14 +94,6 @@ class Teacher extends Model
         return $this->morphMany(PasswordResetToken::class, 'actorable');
     }
 
-    public function eventInvitedMember(): MorphMany {
-        return $this->morphMany(EventInvitedMember::class, 'actorable');
-    }
-    public function audience(): MorphMany
-    {
-        return $this->morphMany(Audiences::class, 'audienceable');
-    }
-
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
@@ -124,11 +116,6 @@ class Teacher extends Model
     public function instructoravailabilitySlots(): HasMany
     {
         return $this->hasMany(InstructorAvailabilitySlot::class);
-    }
-
-    public function hod()
-    {
-        return $this->morphMany(Hod::class, 'hodable');
     }
     public function timetable(): HasMany
     {

@@ -24,6 +24,12 @@ class StudentController extends Controller
     {
         $this->studentService = $studentService;
     }
+
+    public function getStudentProfileDetails(Request $request, $studentId){
+          $currentSchool = $request->attributes->get('currentSchool');
+          $profileDetails = $this->studentService->getStudentProfileDetails($currentSchool, $studentId);
+          return ApiResponseService::success("Student Profile Details Fetched Successfully", $profileDetails, null, 200);
+    }
     public function getStudents(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');

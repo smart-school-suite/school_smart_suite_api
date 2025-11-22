@@ -20,11 +20,11 @@ class UpdateExamTimetableRequest extends FormRequest
 
         return [
             'entries' => 'required|array',
-            'entries.*.entry_id'> 'required|exists:examtimetable,id',
+            'entries.*.entry_id'> 'required|exists:exam_timetable_slots,id',
             'entries.*.course_id' => 'required|exists:courses,id',
             'entries.*.exam_id' => 'required|exists:exams,id',
             'entries.*.student_batch_id' => 'required|exists:student_batch,id',
-            'entries.*.specialty_id' => 'required|exists:specialty,id',
+            'entries.*.specialty_id' => 'required|exists:specialties,id',
             'entries.*.start_time' => 'required|date_format:H:i',
             'entries.*.level_id' => 'required|exists:education_levels,id',
             'entries.*.date' => 'required|date|after_or_equal:today',

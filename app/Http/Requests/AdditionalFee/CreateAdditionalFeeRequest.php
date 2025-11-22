@@ -27,7 +27,7 @@ class CreateAdditionalFeeRequest extends FormRequest
                 'regex:/^\d{1,6}(\.\d{1,2})?$/',
                 'min:0',
             ],
-           'additionalfee_category_id' => 'required|string|exists:additional_fee_category,id',
+           'additionalfee_category_id' => 'required|string|exists:additional_fee_categories,id',
            'student_id' => 'required|string|exists:student,id'
         ];
     }

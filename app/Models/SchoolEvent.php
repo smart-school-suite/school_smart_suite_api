@@ -34,6 +34,12 @@ class SchoolEvent extends Model
         'audience'
     ];
 
+    protected $cast = [
+         'likes' => 'integer',
+         'invitee_count' => 'integer',
+         'tags' => 'json',
+         'audience' => 'json'
+    ];
     public $incrementing = 'false';
     public $table = 'school_events';
     public $keyType = 'string';
@@ -44,18 +50,6 @@ class SchoolEvent extends Model
 
     public function schoolBranch(): BelongsTo {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
-    }
-
-    public function EventInvitedCustomGroup(): HasMany {
-        return $this->hasMany(EventInvitedCustomGroups::class, 'event_id');
-    }
-
-    public function EventInvitedPresetGroup(): HasMany {
-        return $this->hasMany(EventInvitedPresetGroup::class, 'preset_group_id');
-    }
-
-    public function EventInvitedMember(): HasMany {
-        return $this->hasMany(EventInvitedMember::class, 'event_id');
     }
 
     public function EventAuthor(): HasMany {

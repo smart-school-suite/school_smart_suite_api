@@ -337,7 +337,7 @@ class ExamTimeTableService
             );
         }
     }
-    public function updateExamTimetable(array $examTimetableEntries, SchoolBranches $currentSchool): ?Collection
+    public function updateExamTimetable(array $examTimetableEntries, SchoolBranches $currentSchool)
     {
         try {
             if (empty($examTimetableEntries)) {
@@ -399,5 +399,76 @@ class ExamTimeTableService
                 null
             );
         }
+    }
+
+
+
+    public function getExamTimetableStudentIdExamId($currentSchool, $studentId, $examId)
+    {
+        $timetableEntries = Examtimetable::where('school_branch_id', $currentSchool->id)
+            ->where('exam_id', $examId)
+            ->with([
+                'course',
+                'exam.examtype',
+                'exam.semester',
+                'exam.level',
+                'exam.specialty'
+            ])
+            ->get();
+
+        if ($timetableEntries->isEmpty()) {
+            return response()->json([
+                "exam"  => null,
+                "slots" => []
+            ]);
+        }
+
+        $exam = $timetableEntries->first()->exam;
+
+        $slots = $timetableEntries->map(function ($entry) {
+       $start = Carbon::parse($entry->start_time);
+       $end = Carbon::parse($entry->end_time);
+
+            $duration = "N/A";
+            if ($start && $end && $end > $start) {
+                $diff = $start->diff($end);
+                $hours = $diff->h;
+                $mins  = $diff->i;
+
+                if ($hours > 0) {
+                    $duration = $mins > 0 ? "{$hours}h {$mins}min" : "{$hours}h";
+                } else {
+                    $duration = "{$mins}min";
+                }
+            }
+
+            return [
+                "id"              => $entry->id,
+                "course_title"    => $entry->course?->course_title ?? "N/A",
+                "course_code"     => $entry->course?->course_code ?? "N/A",
+                "course_credit"   => $entry->course?->credit ?? 0,
+                "duration"        => $duration,
+                "date"            => $entry->date,
+                "start_time"      => Carbon::parse($entry->start_time)->format('H:i'),
+                "end_time"        => Carbon::parse($entry->end_time)->format('H:i'),
+            ];
+        })
+            ->sortBy('date')
+            ->sortBy('start_time')
+            ->values();
+
+        return [
+            "exam" => [
+                "exam_id"             => $exam->id,
+                "exam_name"           => $exam->examtype?->exam_name ?? "Exam",
+                "semester"            => $exam->semester?->name ?? "Unknown Semester",
+                "semester_id"         => $exam->semester_id,
+                "level_name"          => $exam->level?->name ?? "N/A",
+                "specialty_name"      => $exam->specialty?->specialty_name ?? "N/A",
+                "timetable_published" => (bool) $exam->timetable_published,
+                "result_published"    => (bool) $exam->result_published,
+            ],
+            "slots" => $slots
+        ];
     }
 }

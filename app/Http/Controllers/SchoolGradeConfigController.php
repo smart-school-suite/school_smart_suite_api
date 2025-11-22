@@ -27,7 +27,4 @@ class SchoolGradeConfigController extends Controller
         return ApiResponseService::success("Grading By School Grade Config Fetched Successfully", $gradingBySchoolGradeConfig, null, 200);
     }
 
-    public function createGradingBySchoolGradeConfig(Request $request){
-
-    }
 }

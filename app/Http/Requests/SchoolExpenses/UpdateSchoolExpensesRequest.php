@@ -20,7 +20,7 @@ class UpdateSchoolExpensesRequest extends FormRequest
     public function rules()
     {
         return [
-            'expenses_category_id' => 'sometimes|nullable|string|exists:school_expenses_category,id',
+            'expenses_category_id' => 'sometimes|nullable|string|exists:expense_categories,id',
             'date' => 'sometimes|nullable|date',
             'amount' => 'sometimes|nullable',
             'description' => 'sometimes|nullable|string'

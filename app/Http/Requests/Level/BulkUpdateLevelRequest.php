@@ -25,7 +25,7 @@ class BulkUpdateLevelRequest extends FormRequest
     {
         return [
             'levels' => 'required|array',
-            'levels.*.level_id' => 'required|string|exists:education_levels,id',
+            'levels.*.level_id' => 'required|string|exists:levels,id',
             'levels.*.name' => 'sometimes|string',
             'levels.*.level' => 'sometimes|string',
             'levels.*.program_name' => 'sometimes|string'

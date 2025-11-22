@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('teacher_specailty_preference', function (Blueprint $table) {
+        Schema::create('teacher_specialty_preferences', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->timestamps();
         });
@@ -22,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('teacher_specailty_preference');
+        Schema::dropIfExists('teacher_specialty_preferences');
     }
 };

@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\OtpRequest;
 use App\Http\Requests\Auth\ChangePasswordUnAuthenticatedRequest;
 use App\Http\Requests\Auth\PasswordResetRequest;
 use App\Services\Auth\Student\ResetStudentPasswordService;
+use Illuminate\Support\Facades\Log;
 
 class ResetPasswordController extends Controller
 {
@@ -24,13 +25,14 @@ class ResetPasswordController extends Controller
     }
     public function verifyStudentOtp(OtpRequest $request)
     {
-        $token_header = $request->header('otp-token-header');
+        $token_header = $request->header('OTP-TOKEN-HEADER');
         $verifyOtp = $this->resetStudentPasswordService->verifyOtp($request->otp, $token_header);
         return ApiResponseService::success("OTP verified Succesfully", $verifyOtp, null, 200);
     }
     public function changeStudentPasswordUnAuthenticated(ChangePasswordUnAuthenticatedRequest $request)
     {
-        $passwordResetToken = $request->header('password-reset-token');
+        Log::info('All Headers: ' . json_encode($request->headers->all()));
+        $passwordResetToken = $request->header('PASSWORD-RESET-TOKEN');
         $this->resetStudentPasswordService->changeStudentPasswordUnAuthenticated($request->validated(), $passwordResetToken);
     }
 }

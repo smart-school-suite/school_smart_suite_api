@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('name');
             $table->integer('capacity');
+            $table->enum("type", ["lab", "lecture"]);
+            $table->boolean('is_exam_hall')->default(true);
             $table->enum('status', ['available', 'unavailable'])->default('available');
             $table->string('location')->nullable();
             $table->timestamps();

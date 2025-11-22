@@ -34,7 +34,7 @@ use App\Http\Controllers\Election\ElectionResultController;
     Route::get('/{electionId}/past-results', [ElectionResultController::class, 'getPastElectionResult'])->name("get.past.election.results");
     Route::get('/{electionId}/current-result', [ElectionResultController::class, 'getCurrentElectionResult'])->name("get.current.election-results");
 
-    Route::get('/student/{studentId}/upcoming-elections', [ElectionController::class, 'getStudentElections'])
+    Route::get('/student/upcoming-elections', [ElectionController::class, 'getStudentElections'])
         ->name('upcoming-elections.student.get');
     Route::get('/election/{electionId}', [ElectionController::class, 'getElectionDetails'])->name('get.election-details');
 

@@ -31,6 +31,10 @@ class Schoolbranches extends Model
         'max_gpa'
     ];
 
+    protected $cast = [
+        'semester_count' => 'integer',
+        'max_gpa' => 'decimal:2'
+    ];
     public $keyType = 'string';
     public $table = 'school_branches';
     public $incrementing = 'false';
@@ -39,11 +43,6 @@ class Schoolbranches extends Model
     public function halls(): HasMany {
         return $this->hasMany(Hall::class);
     }
-    public function studentGradDates(): HasMany
-    {
-        return $this->hasMany(StudentBatchGradeDates::class);
-    }
-
     public function announcementCategory(): HasMany {
         return $this->hasMany(AnnouncementCategory::class, 'school_branch_id');
     }
@@ -76,10 +75,6 @@ class Schoolbranches extends Model
     public function department(): HasMany
     {
         return $this->hasMany(Department::class);
-    }
-
-    public function schoolEventSetting(): HasMany {
-        return $this->hasMany(SchoolEventSetting::class, 'school_branch_id');
     }
 
     public function exams(): HasMany

@@ -20,7 +20,7 @@ class StudentIdRequest extends FormRequest
     {
         return [
           'studentIds' => 'required|array',
-          "studentIds.*.student_id" => "required|string|exists:student,id"
+          "studentIds.*.student_id" => "required|string|exists:students,id"
         ];
     }
 }

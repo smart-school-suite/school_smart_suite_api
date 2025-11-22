@@ -25,7 +25,7 @@ class BulkUpdateAdditionalFeeCategoryRequest extends FormRequest
     {
         return [
              'fee_category' => 'required|array',
-             'fee_category.*.id' => 'required|string|exists:additional_fee_category,id',
+             'fee_category.*.id' => 'required|string|exists:additional_fee_categories,id',
              'fee_category.*.title' => 'sometimes|nullable|string',
              'fee_category.*.status' => 'sometimes|nullable|in:active,inactive'
         ];

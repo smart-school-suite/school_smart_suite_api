@@ -16,33 +16,19 @@ use Throwable;
 
 class EventsController extends Controller
 {
-    protected CreateEventService $createEventService;
     protected SchoolEventService $schoolEventService;
     protected UpdateEventDraftStatusService $updateEventDraftStatusService;
     public function __construct(
-        CreateEventService $createEventService,
+
          SchoolEventService $schoolEventService,
          UpdateEventDraftStatusService $updateEventDraftStatusService
 
         )
     {
-        $this->createEventService = $createEventService;
         $this->schoolEventService = $schoolEventService;
         $this->updateEventDraftStatusService = $updateEventDraftStatusService;
     }
 
-    public function createSchoolEvent(CreateEventRequest $request)
-    {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $authenticatedUser = $this->getAuthenticatedUser();
-            $eventBackgroundImg = $request->file('background_image');
-            $createSchoolEvent = $this->createEventService->createEvent($request->validated(), $currentSchool, $authenticatedUser, $eventBackgroundImg);
-            return ApiResponseService::success("School Event Created Successfully", $createSchoolEvent, null, 201);
-        } catch (Throwable $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
-        }
-    }
 
     private function getAuthenticatedUser()
     {

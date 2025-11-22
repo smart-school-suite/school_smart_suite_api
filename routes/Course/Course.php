@@ -15,8 +15,8 @@ Route::middleware(['permission:schoolAdmin.course.view'])->get('/courses', [Cour
 Route::middleware(['permission:schoolAdmin.course.view.active'])->get('/active', [CoursesController::class, 'getActiveCourses'])
     ->name('courses.active');
 
-// Get details of a specific course
-Route::middleware(['permission:schoolAdmin.course.show'])->get('/{courseId}', [CoursesController::class, 'getCourseDetails'])
+// Get details of a specific course middleware(['permission:schoolAdmin.course.show'])->
+Route::get('/{courseId}', [CoursesController::class, 'getCourseDetails'])
     ->name('courses.show');
 
 
@@ -59,5 +59,8 @@ Route::middleware(['permission:schoolAdmin.course.activate'])->post('/bulk-activ
 // Bulk deactivate courses
 Route::middleware(['permission:schoolAdmin.course.deactivate'])->post('/bulk-deactivate', [CoursesController::class, 'bulkDeactivateCourse'])
     ->name('courses.bulk-deactivate');
+
+Route::get('/student/{studentId}', [CoursesController::class, "getAllCoursesByStudentId"])->name("get.courses.by.studentId");
+Route::get('/semester/{semesterId}/student/{studentId}', [CoursesController::class, "getCoursesByStudentIdSemesterId"])->name("get.courses.by.semester.student");
 Route::get('/specialty/{specialtyId}/semester/{semesterId}', [CoursesController::class, 'getCoursesBySpecialtySemester'])
     ->name('courses.by-specialty-semester');

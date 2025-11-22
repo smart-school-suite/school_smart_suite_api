@@ -24,18 +24,24 @@ class Timetable extends Model
         'start_time',
         'end_time',
         'semester_id',
+        'break',
+        'hall_id',
         'student_batch_id'
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'break' => 'boolean'
     ];
 
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'timetables';
+    public $table = 'timetable_slots';
 
+    public function hall(): BelongsTo {
+         return $this->belongsTo(Hall::class, 'hall_id');
+    }
     public function specialty(): BelongsTo {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }

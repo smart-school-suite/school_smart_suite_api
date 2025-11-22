@@ -27,7 +27,7 @@ class Studentresit extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'student_resit';
+    public $table = 'student_resits';
     public $incrementing = 'false';
 
     public function studentResitTransactions(): HasMany

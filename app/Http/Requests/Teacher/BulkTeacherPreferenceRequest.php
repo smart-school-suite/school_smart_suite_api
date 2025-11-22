@@ -15,9 +15,9 @@ class BulkTeacherPreferenceRequest extends FormRequest
     {
         return [
             'teacherIds' => 'required|array',
-            'teacherIds.*.teacher_id' => 'required|string|exists:teacher,id',
+            'teacherIds.*.teacher_id' => 'required|string|exists:teachers,id',
             'specialtyIds' => 'required|array',
-            'specialtyIds.*.specialty_id' => 'required|string|exists:specialty,id'
+            'specialtyIds.*.specialty_id' => 'required|string|exists:specialties,id'
         ];
     }
 }

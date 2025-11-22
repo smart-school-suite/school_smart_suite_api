@@ -19,8 +19,8 @@ class RemoveSpecialtyPreferenceRequest extends FormRequest
     {
         return [
             'specialty_preferences' => ['required', 'array'],
-            'specialty_preferences.*.preference_id' => 'exists:teacher_specailty_preference,id',
-            'specialty_preferences.*.teacher_id' => 'exists:teacher,id'
+            'specialty_preferences.*.preference_id' => 'exists:teacher_specialty_preferences,id',
+            'specialty_preferences.*.teacher_id' => 'exists:teachers,id'
         ];
     }
 }

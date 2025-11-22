@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppException;
 use App\Models\Timetable;
 use App\Models\Specialty;
+use App\Models\Student;
 use App\Models\Schoolbranches;
 use App\Models\InstructorAvailabilitySlot;
 use App\Models\SchoolSemester;
@@ -11,6 +13,7 @@ use App\Models\TeacherSpecailtyPreference;
 use Carbon\Carbon;
 use illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -352,4 +355,103 @@ class SpecailtyTimeTableService
             throw new Exception('Failed to retrieve timetable details');
         }
     }
+
+
+public function getStudentTimetable($currentSchool, $student)
+{
+    $student = Student::where('school_branch_id', $currentSchool->id)
+                     ->findOrFail($student->id);
+
+    $now = Carbon::today();
+
+    $activeSemester = SchoolSemester::where('school_branch_id', $currentSchool->id)
+        ->where('student_batch_id', $student->student_batch_id)
+        ->where('specialty_id', $student->specialty_id)
+        ->where('start_date', '<=', $now)
+        ->where('end_date', '>=', $now)
+        ->with(['semester'])
+        ->firstOrFail();
+
+    $slots = Timetable::where('school_branch_id', $currentSchool->id)
+        ->where('specialty_id', $student->specialty_id)
+        ->where('level_id', $student->level_id)
+        ->where('student_batch_id', $student->student_batch_id)
+        ->where('semester_id', $activeSemester->semester_id)
+        ->with(['course', 'teacher', 'hall'])
+        ->orderBy('day_of_week')
+        ->orderBy('start_time')
+        ->get();
+
+    if ($slots->isEmpty()) {
+        throw new AppException("Timetable not available", 404);
+    }
+
+    $grouped = $slots->groupBy(fn($slot) => strtolower($slot->day_of_week));
+
+    $daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+    $timetable = collect();
+
+    foreach ($daysOrder as $day) {
+        $daySlots = $grouped->get($day, collect());
+
+        if ($daySlots->isEmpty()) continue;
+
+        $formattedSlots = $daySlots->map(function ($slot) {
+            $start = Carbon::createFromFormat('H:i', $slot->start_time);
+            $end   = Carbon::createFromFormat('H:i', $slot->end_time);
+            $diff   = $start->diff($end);
+
+            $hours = $diff->h;
+            $mins  = $diff->i;
+            $duration = $hours > 0
+                ? "{$hours}h" . ($mins > 0 ? " {$mins}min" : "")
+                : "{$mins}min";
+
+            if ($slot->break) {
+                return [
+                    "slot_id"    => $slot->id,
+                    "start_time" => substr($slot->start_time, 0, 5),
+                    "end_time"   => substr($slot->end_time, 0, 5),
+                    "break"      => true,
+                    "name"       => "Break",
+                    "duration"    => $duration,
+                    "day"        => $slot->day_of_week
+                ];
+            }
+
+            // Regular class
+            return [
+                "slot_id"        => $slot->id,
+                "start_time"     => substr($slot->start_time, 0, 5),
+                "end_time"       => substr($slot->end_time, 0, 5),
+                "course_id"      => $slot->course_id,
+                "course_name"    => $slot->course?->course_title ?? "Free Period",
+                "course_credit"  => $slot->course?->credit ?? 0,
+                "course_code"    => $slot->course?->course_code ?? "N/A",
+                "teacher_name"   => $slot->teacher?->name ?? "Not Assigned",
+                "teacher_id"     => $slot->teacher_id,
+                "teacher_avatar" => $slot->teacher?->profile_picture ?? null,
+                "hall_id"        => $slot->hall_id,
+                "hall_name"      => $slot->hall?->name ?? "TBA",
+                "duration"       => $duration,
+                "day"           => strtolower($slot->day_of_week)
+            ];
+        })->values();
+
+        $timetable->push([
+            "day"         => $day,
+            "scheduleId"  => Str::uuid(),
+            "slots"       => $formattedSlots
+        ]);
+    }
+
+    return [
+        "timetable_name"   => "{$activeSemester->semester?->name } Timetable" ?? "Current Semester",
+        "semster_id" => $activeSemester->semester?->id,
+        "specialty"  => $student->specialty?->specialty_name ?? "N/A",
+        "level"     => $student->level?->name ?? "N/A",
+        'timetable' => $timetable
+    ];
+}
 }

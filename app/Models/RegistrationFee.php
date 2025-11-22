@@ -21,11 +21,16 @@ class RegistrationFee extends Model
         'level_id'
     ];
 
+    protected $cast = [
+        'amount' => 'decimal:2'
+    ];
+
     public $incrementing = 'false';
     public $table = 'registration_fees';
     public $keyType = 'string';
 
-    public function registrationFeeTransactions() : HasMany {
+    public function registrationFeeTransactions(): HasMany
+    {
         return $this->hasMany(RegistrationFeeTransactions::class, 'registrationfee_id');
     }
     public function student()

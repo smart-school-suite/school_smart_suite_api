@@ -10,7 +10,7 @@ class StudentAnnouncement extends Model
 {
      use HasFactory, GeneratesUuid;
     protected $fillable = [
-        'id',
+       'id',
        'announcement_id',
        'student_id',
        'school_branch_id',

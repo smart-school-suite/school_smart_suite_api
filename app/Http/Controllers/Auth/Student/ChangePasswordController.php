@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Auth\Student\ChangeStudentPasswordService;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ChangePasswordController extends Controller
 {

@@ -24,7 +24,7 @@ class Examtype extends Model
 
     public $incrementing = 'false';
     public $keyType = 'string';
-    public $table = 'exam_type';
+    public $table = 'exam_types';
 
     public function examResit(): HasMany {
         return $this->hasMany(ResitExam::class);

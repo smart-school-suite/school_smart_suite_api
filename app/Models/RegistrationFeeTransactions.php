@@ -19,6 +19,10 @@ class RegistrationFeeTransactions extends Model
         'transaction_id',
     ];
 
+    protected $cast = [
+        'amount' => 'decimal:2'
+    ];
+
     public $table = "registration_fee_transactions";
     public $incrementing = 'false';
     public $keyType = 'string';

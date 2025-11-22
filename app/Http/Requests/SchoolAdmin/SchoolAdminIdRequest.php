@@ -18,7 +18,7 @@ class SchoolAdminIdRequest extends FormRequest
     {
         return [
             'schoolAdminIds' => 'required|array',
-            'schoolAdminIds.*.school_admin_id' => 'required|string|exists:school_admin,id',
+            'schoolAdminIds.*.school_admin_id' => 'required|string|exists:school_admins,id',
         ];
     }
 }

@@ -22,27 +22,38 @@ class ResitResults extends Model
         'student_batch_id',
         'failed_exam_id',
         'score_details',
-        'scores',
         'exam_status'
+    ];
+
+    protected $cast = [
+        'former_exam_gpa' => 'decimal:2',
+        'new_exam_gpa' => 'decimal:2',
+        'new_ca_gpa' => 'decimals:2',
+        'former_ca_gpa' => 'decimal:2',
+        'score_details' => 'json',
     ];
     public $incrementing = 'false';
     public $keyType = 'string';
     public $table = 'resit_results';
-    public function student(){
+    public function student()
+    {
         return $this->belongsTo(Student::class, 'student_id');
     }
-    public function specialty(){
+    public function specialty()
+    {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
-    public function level() {
-        return $this->belongsTo(Educationlevels::class , 'level_id');
+    public function level()
+    {
+        return $this->belongsTo(Educationlevels::class, 'level_id');
     }
 
     public function resitExam()
     {
         return $this->belongsTo(ResitExam::class, 'resit_exam_id');
     }
-    public function studentBatch() {
-        return $this->belongsTo(StudentBatch::class , 'student_batch_id');
+    public function studentBatch()
+    {
+        return $this->belongsTo(StudentBatch::class, 'student_batch_id');
     }
 }

@@ -18,7 +18,7 @@ class StudentResitIdRequest extends FormRequest
     {
         return [
            "resitIds" => 'required|array',
-           "resitIds.*.resit_id" => 'required|string|exists:student_resit,id',
+           "resitIds.*.resit_id" => 'required|string|exists:student_resits,id',
         ];
     }
 }

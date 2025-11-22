@@ -21,7 +21,7 @@ class BulkAddResitExamGradingRequest extends FormRequest
         return [
             'exam_grading' => 'required|array',
             'exam_grading.*.resit_exam_id' => 'required|exists:resit_exams,id',
-            'exam_grading.*.grades_config_Id' => 'required|exists:school_grades_config,id'
+            'exam_grading.*.grades_config_Id' => 'required|exists:school_grade_scale_categories,id'
         ];
     }
 }

@@ -71,18 +71,6 @@ class StudentBatchcontroller extends Controller
         return ApiResponseService::success("Student Batch Deactivated Succesfully", $DeactivateStudentBatch, null, 200);
     }
 
-    public function assignGradDatesBySpecialty(AddGraduationDateRequest $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $assignGraduationDates = $this->studentBatchService->assignGradDatesBySpecialty($currentSchool, $request->graduation_dates);
-        return ApiResponseService::success("Graduation Dates for student batches set successfully", $assignGraduationDates, null, 200);
-    }
-
-    public function getGraduationDatesByBatch(Request $request, $batchId){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getGraduationDatesByBatch = $this->studentBatchService->getGradeDateListByBatch($currentSchool, $batchId);
-        return ApiResponseService::success("Graduation Dates Fetched Successfully",  GraduationBatchDateResource::collection($getGraduationDatesByBatch), null, 200);
-    }
-
     public function bulkDeleteStudentBatch(StudentBatchIdRequest $request){
          try{
            $bulkDeleteBatch = $this->studentBatchService->bulkDeleteStudentBatch($request->studentBatchIds);
@@ -117,17 +105,6 @@ class StudentBatchcontroller extends Controller
         try{
             $bulkUpdateBatch = $this->studentBatchService->bulkUpdateStudentBatch($request->student_batches);
             return ApiResponseService::success("Student Batch Updated Successfully", $bulkUpdateBatch, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-
-    public function bulkAssignGradDateBySpecialty(BulkAddGraduationDateRequest $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        try{
-           $assignGradDates = $this->studentBatchService->bulkAssignGradeDatesBySpecailty($request->grad_dates, $currentSchool);
-           return ApiResponseService::success("Student Graduation Dates Set Succesfully", $assignGradDates, null, 200);
         }
         catch(Exception $e){
             return ApiResponseService::error($e->getMessage(), null, 400);

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('weighted_mark', 6, 2)->nullable();
             $table->string('school_year');
             $table->boolean('timetable_published')->default(false);
+            $table->boolean('result_released')->default(false);
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
             $table->integer('expected_candidate_number')->default(0);
             $table->integer('evaluated_candidate_number')->default(0);

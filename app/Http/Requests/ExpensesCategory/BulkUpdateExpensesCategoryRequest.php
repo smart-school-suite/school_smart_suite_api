@@ -21,7 +21,7 @@ class BulkUpdateExpensesCategoryRequest extends FormRequest
     {
         return [
              'category_expenses' => 'required|array',
-             'category_expenses.*.category_id' => 'required|string|exists:table,column',
+             'category_expenses.*.category_id' => 'required|string|exists:expense_categories,id',
              "category_expenses.*.status" => 'sometimes|nullable|in:active,inactive'
         ];
     }

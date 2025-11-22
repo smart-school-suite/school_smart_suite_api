@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('election_application', function (Blueprint $table) {
+        Schema::create('election_applications', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->text('manifesto');
             $table->text('personal_vision');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('election_application');
+        Schema::dropIfExists('election_applications');
     }
 };

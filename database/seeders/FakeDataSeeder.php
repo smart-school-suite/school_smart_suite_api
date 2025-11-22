@@ -82,7 +82,7 @@ class FakeDataSeeder extends Seeder
         }
 
         if (!empty($departmentData)) {
-            DB::table('department')->insert($departmentData);
+            DB::table('departments')->insert($departmentData);
             $this->command->info("20 Departments Inserted Successfully");
         } else {
             $this->command->info("No Departments To Insert");
@@ -226,7 +226,7 @@ class FakeDataSeeder extends Seeder
         if (!empty($specialties)) {
             $chunks = array_chunk($specialties, 1000);
             foreach ($chunks as $chunk) {
-                DB::table('specialty')->insert($chunk);
+                DB::table('specialties')->insert($chunk);
             }
             $this->command->info("Specialties inserted successfully.");
         } else {
@@ -266,7 +266,7 @@ class FakeDataSeeder extends Seeder
         }
 
         if (!empty($teachers)) {
-            DB::table('teacher')->insert($teachers);
+            DB::table('teachers')->insert($teachers);
             $this->command->info("100 Teachers Inserted Successfully");
         } else {
             $this->command->info("No Teachers To Insert");
@@ -428,7 +428,7 @@ class FakeDataSeeder extends Seeder
         if (!empty($students)) {
             $chunks = array_chunk($students, 1000);
             foreach ($chunks as $chunk) {
-                DB::table('student')->insert($chunk);
+                DB::table('students')->insert($chunk);
             }
             $this->command->info("Student inserted successfully.");
         } else {
@@ -524,7 +524,7 @@ class FakeDataSeeder extends Seeder
         }
 
         if (!empty($schoolAdmins)) {
-            DB::table('school_admin')->insert($schoolAdmins);
+            DB::table('school_admins')->insert($schoolAdmins);
             $this->command->info("200 School Admins Inserted Successfully");
         } else {
             $this->command->info("No School Admins To Insert");

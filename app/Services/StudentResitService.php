@@ -39,7 +39,6 @@ class StudentResitService
         $studentResitExists->delete();
         return $studentResitExists;
     }
-
     public function getResitableCourses($currentSchool)
     {
         try {
@@ -209,8 +208,6 @@ class StudentResitService
             throw $e;
         }
     }
-
-
     public function getResitEvaluationHelperData($currentSchool, $resitExamId, $candidateId)
     {
         try {
@@ -308,7 +305,6 @@ class StudentResitService
             );
         }
     }
-
     public function getResitScoresByCandidate($currentSchool, $candidateId)
     {
         try {
@@ -518,5 +514,162 @@ class StudentResitService
         }
 
         return $eligibleResitExams->unique('id')->values();
+    }
+    public function getResitStudentId($currentSchool, $studentId)
+    {
+        $studentResits = StudentResit::where('school_branch_id', $currentSchool->id)
+            ->where('student_id', $studentId)
+            ->with([
+                'courses',
+                'level',
+                'specialty',
+                'exam.examtype',
+                'exam.semester'
+            ])
+            ->get();
+
+        if ($studentResits->isEmpty()) {
+            return [];
+        }
+
+        $carryOverResits = $studentResits->where('iscarry_over', true);
+        $regularResits   = $studentResits->where('iscarry_over', '!=', true);
+
+        $result = collect();
+
+        if ($carryOverResits->isNotEmpty()) {
+            $result->push([
+                "type"    => "Carry Over",
+                "typeId"  => Str::uuid(),
+                "resits"  => $carryOverResits->map(function ($resit) {
+                    return [
+                        "id"              => $resit->id,
+                        "course_title"    => $resit->courses?->course_title ?? "N/A",
+                        "course_code"   => $resit->courses?->course_code ?? "N/A",
+                        "amount"          => (int) $resit->resit_fee,
+                        "course_credit"   => (int) $resit->courses?->credit ?? 0,
+                        "specialty_name"  => $resit->specialty?->specialty_name ?? "N/A",
+                        "level_name"      => $resit->level?->name ?? "N/A",
+                        "attempts"        => (int) $resit->attempt_number,
+                        "exam_name"       => $resit->exam?->examtype?->exam_name ?? "Resit Exam",
+                        "payment_status"  => $resit->paid_status
+                    ];
+                })->values()
+            ]);
+        }
+
+        $groupedBySemester = $regularResits->groupBy(function ($resit) {
+            return $resit->exam?->semester?->name ?? 'Unknown Semester';
+        });
+
+        foreach ($groupedBySemester as $semesterName => $resits) {
+            $result->push([
+                "type"   => $semesterName . " Resit",
+                "typeId" => Str::uuid(),
+                "resits" => $resits->map(function ($resit) {
+                    return [
+                        "id"              => $resit->id,
+                        "course_title"    => $resit->courses?->course_title ?? "N/A",
+                        "course_code"   => $resit->courses?->course_code ?? "N/A",
+                        "amount"          => (int) $resit->resit_fee,
+                        "course_credit"   => (int) $resit->courses?->credit ?? 0,
+                        "specialty_name"  => $resit->specialty?->specialty_name ?? "N/A",
+                        "level_name"      => $resit->level?->name ?? "N/A",
+                        "attempts"        => (int) $resit->attempt_number,
+                        "exam_name"       => $resit->exam?->examtype?->exam_name ?? "Resit Exam",
+                        "payment_status"  => $resit->paid_status
+                    ];
+                })->values()
+            ]);
+        }
+
+        return $result->values()->all();
+    }
+
+
+    public function getResitStudentIdSemesterId($currentSchool, $studentId, $semesterId)
+    {
+        $studentResits = StudentResit::where('school_branch_id', $currentSchool->id)
+            ->where('student_id', $studentId)
+            ->whereHas('exam', function ($query) use ($semesterId) {
+                $query->where('semester_id', $semesterId);
+            })
+            ->with([
+                'courses',
+                'level',
+                'specialty',
+                'exam.examtype',
+                'exam.semester'
+            ])
+            ->get();
+
+        if ($studentResits->isEmpty()) {
+            return [];
+        }
+
+        $semesterName = $studentResits->first()->exam?->semester?->name ?? "Semester";
+
+        return [
+            "type"   => $semesterName . " Resit",
+            "typeId" => Str::uuid(),
+            "resits" => $studentResits->map(function ($resit) {
+                return [
+                    "id"              => $resit->id,
+                    "course_title"    => $resit->courses?->course_title ?? "Unknown Course",
+                    "amount"          => (int) $resit->resit_fee,
+                    "course_code"   => $resit->courses?->course_code ?? "N/A",
+                    "course_credit"   => (int) $resit->courses?->credit ?? 0,
+                    "specialty_name"  => $resit->specialty?->specialty_name ?? "N/A",
+                    "level_name"      => $resit->level?->name ?? "N/A",
+                    "attempts"        => (int) $resit->attempt_number,
+                    "exam_name"       => $resit->exam?->examtype?->exam_name ?? "Resit Exam",
+                    "payment_status"  => $resit->paid_status
+                ];
+            })->values()->all()
+        ];
+    }
+
+
+    public function getResitStudentIdCarryOver($currentSchool, $studentId)
+    {
+        $carryOverResits = StudentResit::where('school_branch_id', $currentSchool->id)
+            ->where('student_id', $studentId)
+            ->where('iscarry_over', true)
+            ->with([
+                'courses',
+                'level',
+                'specialty',
+                'exam.examtype',
+                'exam.semester'
+            ])
+            ->get();
+
+
+        $grouped = $carryOverResits->groupBy(function ($resit) {
+            return $resit->exam?->semester?->name ?? 'Unknown Semester';
+        });
+
+        $result = $grouped->map(function ($resits, $semesterName) {
+            return [
+                "type"   => $semesterName . " Carry Over",
+                "typeId" => Str::uuid(),
+                "resits" => $resits->map(function ($resit) {
+                    return [
+                        "id"              => $resit->id,
+                        "course_title"    => $resit->courses?->course_title ?? "N/A",
+                        "amount"          => (int) $resit->resit_fee,
+                        "course_code"   => $resit->courses?->course_code ?? "N/A",
+                        "course_credit"   => (int) $resit->courses?->credit ?? 0,
+                        "specialty_name"  => $resit->specialty?->specialty_name ?? "N/A",
+                        "level_name"      => $resit->level?->name ?? "N/A",
+                        "attempts"        => (int) $resit->attempt_number,
+                        "exam_name"       => $resit->exam?->examtype?->exam_name ?? "Carry Over Exam",
+                        "payment_status"  => $resit->paid_status
+                    ];
+                })->values()->all()
+            ];
+        })->values();
+
+        return $result;
     }
 }

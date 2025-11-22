@@ -38,7 +38,7 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
         ->name('student.logout');
 
     // Get authenticated student details
-    Route::get('/me', [GetAuthStudentController::class, 'getAuthStudent'])
+        Route::get('/me', [GetAuthStudentController::class, 'getAuthStudent'])
         ->name('student.me');
 
     // Change Password (authenticated)

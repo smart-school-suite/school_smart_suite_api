@@ -18,7 +18,7 @@ class CreateSchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'country_id' => 'required|string',
+            'country_id' => 'required|string|exists:countries,id',
             'name' => 'required|string',
             'motor' => 'required',
             'type' => 'required|string',

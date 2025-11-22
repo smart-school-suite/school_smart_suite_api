@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fee_waiver', function (Blueprint $table) {
+        Schema::create('fee_waivers', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->date('start_date');
             $table->date('end_date');
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fee_waiver');
+        Schema::dropIfExists('fee_waivers');
     }
 };

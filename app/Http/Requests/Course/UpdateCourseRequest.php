@@ -22,10 +22,10 @@ class UpdateCourseRequest extends FormRequest
         return [
             'course_code' => 'sometimes|nullable|string',
             'course_title' => 'sometimes|nullable|string',
-            'specialty_id' => 'sometimes|nullable|string',
+            'specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
             'description' => 'sometimes|nullable|string',
             'credit' => 'sometimes|nullable|integer',
-            'semester_id' => 'sometimes|nullable|string'
+            'semester_id' => 'sometimes|nullable|string|exists:semesters,id'
         ];
     }
 }

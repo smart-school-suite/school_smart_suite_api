@@ -19,9 +19,9 @@ class AddElectionParticipantsRequest extends FormRequest
     {
         return [
             'election_participants' => 'required|array',
-           'election_participants.*.specialty_id' => 'required|exists:specialty,id',
+           'election_participants.*.specialty_id' => 'required|exists:specialties,id',
            'election_participants.*.election_id' => 'required|exists:elections,id',
-           'election_participants.*.level_id' => 'required|exists:education_levels,id'
+           'election_participants.*.level_id' => 'required|exists:levels,id'
         ];
     }
 }

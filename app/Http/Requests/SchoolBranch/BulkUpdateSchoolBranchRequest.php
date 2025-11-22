@@ -23,7 +23,7 @@ class BulkUpdateSchoolBranchRequest extends FormRequest
         return [
             'school_branch' => 'required|array',
             'school_branch.*.id' => 'required|string|exists:school_branches,id',
-            'school_branch.*.school_id' => 'sometimes|required|string',
+            'school_branch.*.school_id' => 'sometimes|required|string|exists:schools,id',
             'school_branch.*.branch_name' => 'sometimes|required|string',
             'school_branch.*.address' => 'sometimes|required|string',
             'school_branch.*.city' => 'sometimes|required|string',

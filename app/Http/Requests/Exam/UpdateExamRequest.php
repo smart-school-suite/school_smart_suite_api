@@ -22,7 +22,7 @@ class UpdateExamRequest extends FormRequest
         return [
             'start_date' => 'sometimes|nullable|date',
             'end_date' => 'sometimes|nullable|date',
-            'exam_type_id' => 'sometimes|nullable|string|exists:exam_type,id',
+            'exam_type_id' => 'sometimes|nullable|string|exists:exam_types,id',
             'weighted_mark' => [
                 'sometimes',
                 'nullable',

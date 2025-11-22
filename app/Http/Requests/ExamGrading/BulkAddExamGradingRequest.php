@@ -20,7 +20,7 @@ class BulkAddExamGradingRequest extends FormRequest
         return [
             'exam_grading' => 'required|array',
             'exam_grading.*.exam_id' => 'required|string|exists:exams,id',
-            'exam_grading.*.grades_config_Id' => 'required|string|exists:school_grades_config,id'
+            'exam_grading.*.grades_config_Id' => 'required|string|exists:school_grade_scale_categories,id'
         ];
     }
 }

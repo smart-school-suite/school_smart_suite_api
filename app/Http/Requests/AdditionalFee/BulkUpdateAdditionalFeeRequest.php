@@ -30,7 +30,7 @@ class BulkUpdateAdditionalFeeRequest extends FormRequest
                 'regex:/^\d{1,6}(\.\d{1,2})?$/',
                 'min:0',
             ],
-            'additional_fee.*.additionalfee_category_id' => 'sometimes|nullable|string|exists:additional_fee_category,id'
+            'additional_fee.*.additionalfee_category_id' => 'sometimes|nullable|string|exists:additional_fee_categories,id'
         ];
     }
 }

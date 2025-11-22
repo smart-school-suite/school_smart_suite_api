@@ -26,7 +26,7 @@ class ElectionApplication extends Model
 
     public $incrementing = 'false';
 
-    public $table = 'election_application';
+    public $table = 'election_applications';
 
     public $keyType = 'string';
 

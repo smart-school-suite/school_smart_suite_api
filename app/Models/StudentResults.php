@@ -23,6 +23,11 @@ class StudentResults extends Model
         'scores'
     ];
 
+    protected $cast = [
+         'gpa' => 'decimal:2',
+         'score_details' => 'json',
+         'total_score' => 'decimal:2'
+    ];
     public $incrementing = 'false';
     public $keyType = 'string';
     public $table = 'student_results';

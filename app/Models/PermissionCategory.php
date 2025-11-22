@@ -17,7 +17,7 @@ class PermissionCategory extends Model
     ];
 
     public $incrementing = 'false';
-    public $table = 'permission_category';
+    public $table = 'permission_categories';
     public $keyType = 'string';
 
     public function permission(): HasMany {

@@ -20,7 +20,7 @@ class ValidateDepartmentIdRequest extends FormRequest
     {
         return [
            "departmentIds" => "required|array",
-           "departmentIds.*.department_id" => "required|string|exists:department,id"
+           "departmentIds.*.department_id" => "required|string|exists:departments,id"
         ];
     }
 }

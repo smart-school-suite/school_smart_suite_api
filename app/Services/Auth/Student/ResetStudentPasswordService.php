@@ -30,7 +30,7 @@ class ResetStudentPasswordService
             );
         }
 
-        $otp = Str::random(6);
+        $otp = random_int(100000, 999999);
         $otp_header = Str::random(24);
         $expiresAt = Carbon::now()->addMinutes(5);
 

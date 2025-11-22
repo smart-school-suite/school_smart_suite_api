@@ -19,8 +19,8 @@ class BulkConfigureByOtherGradesRequest extends FormRequest
     {
         return [
             'configIds' => 'required|array',
-            'configIds.*.grade_config_id' => 'required|string|exists:school_grades_config,id',
-            'target_config_id' => 'required|string|exists:school_grades_config,id'
+            'configIds.*.grade_config_id' => 'required|string|exists:school_grade_scale_categories,id',
+            'target_config_id' => 'required|string|exists:school_grade_scale_categories,id'
         ];
     }
 }

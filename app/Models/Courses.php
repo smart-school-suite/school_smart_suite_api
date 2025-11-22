@@ -25,6 +25,9 @@ class Courses extends Model
        'level_id',
     ];
 
+    protected $cast = [
+         'credit' => 'integer',
+    ];
     public $keyType = 'string';
     public $table = 'courses';
     public $incrementing = 'false';

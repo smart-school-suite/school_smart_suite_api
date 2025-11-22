@@ -38,10 +38,11 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Created Sucessfully", $election, null, 201);
     }
 
-    public function getElectionDetails(Request $request, $electionId){
-       $currentSchool = $request->attributes->get("currentSchool");
-       $electionDetails = $this->electionService->getElectionDetails($currentSchool, $electionId);
-       return ApiResponseService::success("Election Details Fetched Successfully", $electionDetails, null, 200);
+    public function getElectionDetails(Request $request, $electionId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $electionDetails = $this->electionService->getElectionDetails($currentSchool, $electionId);
+        return ApiResponseService::success("Election Details Fetched Successfully", $electionDetails, null, 200);
     }
     public function deleteElection(Request $request, $electionId)
     {
@@ -78,7 +79,8 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Candidates Retrieved Successfully", ElectionCandidateResource::collection($getElectionCandidates), null, 200);
     }
 
-    public function getElectionCandidates(Request $request){
+    public function getElectionCandidates(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $getElectionCadidates = $this->electionService->getElectionCandidates($currentSchool);
         return ApiResponseService::success("Election Candidates Fetched Successfuly", $getElectionCadidates, null, 200);
@@ -125,77 +127,93 @@ class ElectionsController extends Controller
         return ApiResponseService::success("Election Type Created Successfully", $createElectionType, null, 200);
     }
 
-    public function updateElectionType(UpdateElectionTypeRequest $request, $electionTypeId){
+    public function updateElectionType(UpdateElectionTypeRequest $request, $electionTypeId)
+    {
         $updateElectionType = $this->electionService->UpdateElectionType($request->all(), $electionTypeId);
         return ApiResponseService::success("Election Type Updated Successfully", $updateElectionType, null, 200);
     }
 
-    public function deleteElectionType($electionTypeId){
+    public function deleteElectionType($electionTypeId)
+    {
         $deleteElectionType = $this->electionService->deleteElectionType($electionTypeId);
         return $deleteElectionType;
     }
 
-    public function getCurrentElectionWinners(Request $request){
+    public function getCurrentElectionWinners(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $electionWinners = $this->electionService->getCurrentElectionWinners($currentSchool);
         return ApiResponseService::success("Current Election Winners Fetched Successfully", $electionWinners, null, 200);
     }
 
-    public function addAllowedParticipantsByOtherElection(Request $request){
+    public function addAllowedParticipantsByOtherElection(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $targetElectionId = $request->route('targetElectionId');
         $electionId = $request->route('electionId');
-        try{
+        try {
             $addAllowedParticipants = $this->electionService->addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId);
             return ApiResponseService::success("Allowed Participants Added Successfully", $addAllowedParticipants, null, 200);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function getAllowedParticipants(Request $request, $electionId){
+    public function getAllowedParticipants(Request $request, $electionId)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $allowedParticipants = $this->electionService->getAllowedElectionParticipants($currentSchool, $electionId);
         return ApiResponseService::success("Allowed Participants Fetched Successfully", $allowedParticipants, null, 200);
     }
 
-    public function addAllowedParticipants(AddElectionParticipantsRequest $request){
+    public function addAllowedParticipants(AddElectionParticipantsRequest $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        try{
+        try {
             $addAllowedParticipants = $this->electionService->addAllowedElectionParticipants($request->election_participants, $currentSchool);
             return ApiResponseService::success("Allowed Election Participants Added Successfully", $addAllowedParticipants, null, 200);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkDeleteElection(ElectionIdRequest $request){
+    public function bulkDeleteElection(ElectionIdRequest $request)
+    {
 
-        try{
-        $bulkDeleteElection = $this->electionService->bulkDeleteElection($request->electionIds);
-        return ApiResponseService::success("Elections Deleted Successfully", $bulkDeleteElection, null, 200);
-        }
-        catch(Exception $e){
+        try {
+            $bulkDeleteElection = $this->electionService->bulkDeleteElection($request->electionIds);
+            return ApiResponseService::success("Elections Deleted Successfully", $bulkDeleteElection, null, 200);
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkUpdateElection(BulkUpdateElectionRequest $request){
-       try{
-          $bulkUpdateElection = $this->electionService->bulkUpdateElection($request->elections);
-          return ApiResponseService::success("Election Updated Successfully", $bulkUpdateElection, null, 200);
-       }
-       catch(Exception $e){
-        return ApiResponseService::error($e->getMessage(), null, 400);
-       }
+    public function bulkUpdateElection(BulkUpdateElectionRequest $request)
+    {
+        try {
+            $bulkUpdateElection = $this->electionService->bulkUpdateElection($request->elections);
+            return ApiResponseService::success("Election Updated Successfully", $bulkUpdateElection, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
     }
 
-    public function getUpcomingElectionsByStudent(Request $request, $studentId){
+    public function getUpcomingElectionsByStudent(Request $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        $elections = $this->electionService->upcomingElectionByStudent($currentSchool, $studentId);
+        $student = $this->resolveUser();
+        $elections = $this->electionService->upcomingElectionByStudent($currentSchool, $student);
         return ApiResponseService::success("Upcoming Elections Fetched Successfully", $elections, null, 200);
     }
 
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

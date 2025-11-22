@@ -21,7 +21,7 @@ class TeacherSpecailtyPreference extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'teacher_specailty_preference';
+    public $table = 'teacher_specialty_preferences';
     public $incrementing = 'false';
 
     public function teacher(): BelongsTo {

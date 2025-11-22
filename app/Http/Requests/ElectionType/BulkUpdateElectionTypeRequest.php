@@ -21,7 +21,7 @@ class BulkUpdateElectionTypeRequest extends FormRequest
     {
         return [
             'election_types' => 'required|array',
-            'election_types.*.election_type_id' => 'required|string|exists:election_type,id',
+            'election_types.*.election_type_id' => 'required|string|exists:election_types,id',
             'election_types.*.status' => 'sometimes|nullable|string',
             'election_types.*.election_title' => 'sometimes|nullable|string',
             'election_types.*.description' => 'sometimes|nullable|string'

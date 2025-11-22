@@ -19,7 +19,7 @@ class BulkAddStudentDropoutRequest extends FormRequest
     {
         return [
             'dropout_list' => 'required|array',
-            'dropout_list.*.student_id' => 'required|string|exists:student,id',
+            'dropout_list.*.student_id' => 'required|string|exists:students,id',
            //'dropout_list.*.reason' => 'required|string'
         ];
     }

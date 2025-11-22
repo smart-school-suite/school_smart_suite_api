@@ -1,15 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Hod;
+namespace App\Http\Requests\Hall;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class BulkRemoveHodRequest extends FormRequest
+class CreateHallRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -18,8 +14,9 @@ class BulkRemoveHodRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hods' => 'required|array',
-            'hods.*.hod_id' => 'exists:hod,id'
+            'name' => 'required|string|max:150',
+            'capacity' => 'required|integer|max:5000',
+            'location' => 'required|string|max:200'
         ];
     }
 }

@@ -20,7 +20,7 @@ class ElectionRoles extends Model
     ];
 
     public $keyType = "string";
-    public $incrementing = false;
+    public $incrementing = 'false';
 
     public $table = "election_roles";
 

@@ -58,10 +58,12 @@ use App\Http\Controllers\StudentController;
     Route::middleware(['permission:schoolAdmin.student.delete.student'])->delete('/{studentId}', [StudentController::class, 'deleteStudent'])
         ->name('students.destroy');
 
-    Route::post('/student/avatar/upload', [StudentController::class, 'uploadProfilePicture'])
+    Route::post('/avatar/upload', [StudentController::class, 'uploadProfilePicture'])
     ->name('student.avatar.upload');
 
-    Route::delete('/student/avatar/delete', [StudentController::class, 'deleteProfilePicture'])
+    Route::delete('/avatar/delete', [StudentController::class, 'deleteProfilePicture'])
     ->name('student.avatar.delete');
+
+    Route::get('/{studentId}/profile', [StudentController::class, 'getStudentProfileDetails'])->name('get.student.profile.details');
 
     Route::post('/bulk-reinstate/dropout', [StudentController::class, "bulkReinstateDropedOutStudent"])->name("Bulk.reinstate.dropdout.student");

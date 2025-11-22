@@ -12,61 +12,75 @@ class ResitExam extends Model
 {
     use HasFactory, GeneratesUuid;
     protected $fillable = [
-       'start_date',
-       'end_date',
-       'weighted_mark',
-       'timetable_published',
-       'status',
-       'grading_added',
-       'expected_candidate_number',
-       'evaluated_candidate_number',
-       'school_branch_id',
-       'exam_type_id',
-       'reference_exam_id',
-       'school_year',
-       'semester_id',
-       'level_id',
-       'specialty_id',
-       'grades_category_id'
+        'start_date',
+        'end_date',
+        'weighted_mark',
+        'timetable_published',
+        'status',
+        'grading_added',
+        'expected_candidate_number',
+        'evaluated_candidate_number',
+        'school_branch_id',
+        'exam_type_id',
+        'reference_exam_id',
+        'school_year',
+        'semester_id',
+        'level_id',
+        'specialty_id',
+        'grades_category_id'
     ];
 
+    protected $cast = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'weighted_mark' => 'decimal:2',
+    ];
     public $incrementing = 'false';
     public $table = 'resit_exams';
     public $keyType = 'string';
 
-    public function resitMarks(): HasMany {
+    public function resitMarks(): HasMany
+    {
         return $this->hasMany(ResitMarks::class, 'resit_exam_id');
     }
-    public function resitExamTimetable(): BelongsTo {
+    public function resitExamTimetable(): BelongsTo
+    {
         return $this->belongsTo(Resitexamtimetable::class, 'resit_exam_id');
     }
-    public function schoolBranch(): BelongsTo {
+    public function schoolBranch(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
-    public function resitResults(): HasMany {
+    public function resitResults(): HasMany
+    {
         return $this->hasMany(ResitResults::class, 'resit_exam_id');
     }
-    public function resitCandidates(): HasMany {
+    public function resitCandidates(): HasMany
+    {
         return $this->hasMany(ResitCandidates::class, 'resit_exam_id');
     }
-    public function exam(): BelongsTo {
+    public function exam(): BelongsTo
+    {
         return $this->belongsTo(Exams::class, 'reference_exam_id');
     }
-    public function examType(): BelongsTo {
+    public function examType(): BelongsTo
+    {
         return $this->belongsTo(Examtype::class, 'exam_type_id');
     }
-    public function level(): BelongsTo {
+    public function level(): BelongsTo
+    {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
-    public function specialty(): BelongsTo {
+    public function specialty(): BelongsTo
+    {
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
-    public function gradesCategory(): BelongsTo {
+    public function gradesCategory(): BelongsTo
+    {
         return $this->belongsTo(GradesCategory::class, 'grades_category_id');
     }
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class, 'semester_id');
     }
-
 }

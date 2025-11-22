@@ -55,7 +55,7 @@ class Student extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'student';
+    public $table = 'students';
     public $incrementing = 'false';
     protected $authTokenColumn = 'token';
 
@@ -120,10 +120,6 @@ class Student extends Model
         return $this->morphMany(Otp::class, 'actorable');
     }
 
-    public function audience(): MorphMany {
-        return $this->morphMany(Audiences::class, 'audienceable');
-    }
-
     public function additionalFees(): HasMany
     {
         return $this->hasMany(AdditionalFees::class, 'student_id');
@@ -141,10 +137,6 @@ class Student extends Model
     public function otps()
     {
         return $this->morphMany(Otp::class, 'otpable');
-    }
-
-    public function eventInvitedMember(): MorphMany {
-        return $this->morphMany(EventInvitedMember::class, 'actorable');
     }
     public function electionVotes(): HasMany
     {

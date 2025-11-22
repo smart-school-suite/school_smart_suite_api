@@ -21,11 +21,11 @@ class CreateExamTimetableRequest extends FormRequest
             'entries' => ['required', 'array', new ExamTimetableRule($this->entries)],
             'entries.*.course_id' => 'required|exists:courses,id',
             'entries.*.exam_id' => 'required|exists:exams,id',
-            'entries.*.student_batch_id' => 'required|exists:student_batch,id',
-            'entries.*.specialty_id' => 'required|exists:specialty,id',
+            'entries.*.student_batch_id' => 'required|exists:student_batches,id',
+            'entries.*.specialty_id' => 'required|exists:specialties,id',
             'entries.*.school_year' => 'required|string',
             'entries.*.start_time' => 'required|date_format:H:i',
-            'entries.*.level_id' => 'required|exists:education_levels,id',
+            'entries.*.level_id' => 'required|exists:levels,id',
             'entries.*.date' => 'required|date',//revalidate later
             'entries.*.end_time' => 'required|date_format:H:i|after:entries.*.start_time',
         ];

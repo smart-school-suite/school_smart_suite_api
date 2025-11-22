@@ -23,9 +23,9 @@ class CreateResitTimetableRequest extends FormRequest
             'entries.*.course_id' => 'required|exists:courses,id',
             'entries.*.resit_exam_id' => 'required|exists:resit_exams,id',
             //'entries.*.student_batch_id' => 'required|exists:student_batch,id',
-            'entries.*.specialty_id' => 'required|exists:specialty,id',
+            'entries.*.specialty_id' => 'required|exists:specialties,id',
             'entries.*.start_time' => 'required|date_format:H:i',
-            'entries.*.level_id' => 'required|exists:education_levels,id',
+            'entries.*.level_id' => 'required|exists:levels,id',
             'entries.*.date' => 'required|date|after_or_equal:today',
             'entries.*.end_time' => 'required|date_format:H:i|after:entries.*.start_time',
         ];

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('election_type', function (Blueprint $table) {
+        Schema::create('election_types', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('election_title');
             $table->enum('status', ['active', 'inactive'])->default('active');
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('election_type');
+        Schema::dropIfExists('election_types');
     }
 };

@@ -20,6 +20,15 @@ class FeeWaiver extends Model
          'student_id'
     ];
 
+    protected $cast = [
+         'start_date' => 'date',
+         'end_date' => 'date'
+    ];
+    public $incrementing = false;
+
+    public $keyType =  'string';
+
+    public $table = "fee_waivers";
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',

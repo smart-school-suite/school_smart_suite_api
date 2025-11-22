@@ -23,10 +23,10 @@ class CreateCourseRequest extends FormRequest
         return [
             'course_code' => 'required|string',
             'course_title' => 'required|string',
-            'specialty_id' => 'required|string',
-            'credit' => 'required|integer',
-            'semester_id' => 'required|string',
-            'description' => 'nullable|string'
+            'specialty_id' => 'required|string|exists:specialties,id',
+            'credit' => 'required|integer|max:10',
+            'semester_id' => 'required|string|exists:semesters,id',
+            'description' => 'nullable|string|max:500'
         ];
     }
 }

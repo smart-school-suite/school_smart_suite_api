@@ -18,10 +18,10 @@ class CreateResitExamScore extends FormRequest
     {
         return [
             'entries' => 'required|array',
-            'entries.*.student_id' => 'required|string',
-            'entries.*.course_id' => 'required|string',
-            'entries.*.specialty_id' => 'required|string',
-            'entries.*.exam_id' => 'required|string',
+            'entries.*.student_id' => 'required|string|exists:students,id',
+            'entries.*.course_id' => 'required|string|exists:courses,id',
+            'entries.*.specialty_id' => 'required|string|exists:specialties,id',
+            'entries.*.exam_id' => 'required|string|exists:exams,id',
             'entries.*.score' => [
                 'required',
                 'regex:/^\d+(\.\d{1,2})?$/',

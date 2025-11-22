@@ -7,9 +7,8 @@ use App\Http\Controllers\StudentResultController;
 Route::middleware(['permission:schoolAdmin.examResults.view'])->get('/student-results', [StudentResultController::class, 'getAllStudentResults'])
     ->name('student-results.index');
 
-// Get results for a specific student and exam
-Route::middleware(['permission:schoolAdmin.examResults.view.student|teacher.examResults.view.student|student.examResults.view.student'])
-->get('/exams/{examId}/students/{studentId}/results', [StudentResultController::class, 'getMyResults'])
+// Get results for a specific student and exam ['permission:schoolAdmin.examResults.view.student|teacher.examResults.view.student|student.examResults.view.student']
+Route::get('/exams/{examId}/students/{studentId}/results', [StudentResultController::class, 'getMyResults'])
     ->name('exams.students.results.show');
 
 // Get standings for a specific exam

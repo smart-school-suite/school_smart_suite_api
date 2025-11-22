@@ -16,7 +16,12 @@ class Hall extends Model
         'capacity',
         'status',
         'location',
-        'school_branch_id'
+        'school_branch_id',
+        'is_exam_hall'
+    ];
+
+    protected $cast = [
+        'capacity' => 'integer'
     ];
 
     public $keyType = 'string';

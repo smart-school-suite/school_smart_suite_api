@@ -21,10 +21,10 @@ class CreateSpecialtyRequest extends FormRequest
     {
         return [
             'specialty_name' => 'required|string',
-            'department_id' => 'required|string',
+            'department_id' => 'required|string|exists:departments,id',
             'registration_fee' => 'required|decimal:0, 2',
             'school_fee' => 'required|decimal:0, 2',
-            'level_id' => 'required|string',
+            'level_id' => 'required|string|exists:levels,id',
             'description' => 'sometimes|nullable|string',
         ];
     }

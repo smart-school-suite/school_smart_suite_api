@@ -18,10 +18,10 @@ class GenerateTimetableRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "specialty_id" => "required|string|exists:specialty,id",
+            "specialty_id" => "required|string|exists:specialties,id",
             "semester_id" => "required|string|exists:school_semesters,id",
-            "level_id" => "required|string|exists:education_levels,id",
-            "student_batch_id" => "required|string|exists:student_batch,id"
+            "level_id" => "required|string|exists:levels,id",
+            "student_batch_id" => "required|string|exists:student_batches,id"
         ];
     }
 }

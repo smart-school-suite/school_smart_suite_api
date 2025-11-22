@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_resit', function (Blueprint $table) {
+        Schema::create('student_resits', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('paid_status')->default('unpaid');
             $table->decimal('resit_fee', 8, 2)->default(3000.00);
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_resit');
+        Schema::dropIfExists('student_resits');
     }
 };

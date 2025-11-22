@@ -20,6 +20,9 @@ class Installment extends Model
         'status'
     ];
 
+    protected $cast = [
+         'count' => 'integer'
+    ];
     public $table = 'installments';
     public $incrementing = 'false';
     public $keyType = 'string';

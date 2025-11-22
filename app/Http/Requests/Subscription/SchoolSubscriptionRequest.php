@@ -22,7 +22,7 @@ class SchoolSubscriptionRequest extends FormRequest
             'num_students' => 'required|integer',
             'billing_frequency' => 'required|string',
             'school_name' => 'required|string|max:250',
-            'country_id' => 'required|string|exists:country,id',
+            'country_id' => 'required|string|exists:countries,id',
             'type' => 'required|string|in:private,government',
             'school_branch_name' => 'required|string|max:300',
             'abbreviation' => 'required|string|max:20'

@@ -52,7 +52,7 @@ class CountrySeeder extends Seeder
         }
 
         if (!empty($countries)) {
-            DB::table('country')->insert($countries);
+            DB::table('countries')->insert($countries);
             Log::info('Inserted ' . count($countries) . ' countries.');
         } else {
             Log::warning('No countries to insert from CSV.');

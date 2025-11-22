@@ -18,7 +18,7 @@ class Educationlevels extends Model
 
     public $keyType = 'string';
     public $incrementing = 'false';
-    public $table = 'education_levels';
+    public $table = 'levels';
 
 
     public function specialtyHall(): HasMany {
@@ -43,10 +43,6 @@ class Educationlevels extends Model
     public function resitResults(): HasMany
     {
         return $this->hasMany(ResitResults::class);
-    }
-    public function studentGradDates(): HasMany
-    {
-        return $this->hasMany(StudentBatchGradeDates::class);
     }
 
     public function studentFeeSchedule(): HasMany {

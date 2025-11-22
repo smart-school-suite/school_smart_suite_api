@@ -21,7 +21,7 @@ class BulkBillStudentAdditionalFeeRequest extends FormRequest
             'fee_details' => "required|array",
             'fee_details.*.student_id' => 'required|string|exists:student,id',
             'fee_details.*.reason' => 'required|string|max:500',
-            'fee_details.*.additionalfee_category_id' => 'required|string|exists:additional_fee_category,id',
+            'fee_details.*.additionalfee_category_id' => 'required|string|exists:additional_fee_categories,id',
              'fee_details.*.amount' => [
                 'required',
                 'numeric',

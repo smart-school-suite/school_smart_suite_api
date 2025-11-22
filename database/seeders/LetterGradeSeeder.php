@@ -54,7 +54,7 @@ class LetterGradeSeeder extends Seeder
 
             // Insert the countries into the database
             if (!empty($letter_grade)) {
-                DB::table('letter_grade')->insert($letter_grade);
+                DB::table('letter_grades')->insert($letter_grade);
                 Log::info('Inserted Grades: ' . count($letter_grade) . ' entries.');
             } else {
                 Log::warning('No Grades to insert.');

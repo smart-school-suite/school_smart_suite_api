@@ -19,7 +19,7 @@ class Country extends Model
     ];
 
     public $keyType = 'string';
-    public $table = 'country';
+    public $table = 'countries';
     public $incrementing = 'false';
 
 

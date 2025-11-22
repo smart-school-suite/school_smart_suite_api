@@ -20,7 +20,7 @@ class CreateSchoolBranchRequest extends FormRequest
     public function rules()
     {
         return [
-            'school_id' => 'required|string',
+            'school_id' => 'required|string|exists:schools,id',
             'branch_name' => 'required|string',
             'address' => 'required|string',
             'city' => 'required|string',

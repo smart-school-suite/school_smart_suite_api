@@ -18,6 +18,9 @@ class Semester extends Model
         'program_name'
     ];
 
+    protected $cast = [
+        'count' => 'integer'
+    ];
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'semesters';

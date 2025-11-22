@@ -16,7 +16,7 @@ class LetterGrade extends Model
     ];
 
     public $incrementing = 'false';
-    public $table = 'letter_grade';
+    public $table = 'letter_grades';
     public $keyType = 'string';
 
     public function grades(): HasMany {

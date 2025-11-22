@@ -22,6 +22,9 @@ class AdditionalFees extends Model
        'additionalfee_category_id'
     ];
 
+    protected $cast = [
+         'amount' => 'decimal:2'
+    ];
     public $incrementint = 'false';
     public $keyType = 'string';
 

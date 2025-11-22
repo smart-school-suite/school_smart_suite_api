@@ -9,26 +9,31 @@ use App\Traits\GeneratesUuid;
 
 class SchoolAdminAnnouncement extends Model
 {
-   use HasFactory, GeneratesUuid;
+    use HasFactory, GeneratesUuid;
 
-   protected $fillable = [
-       'id',
-       'school_admin_id',
+    protected $fillable = [
+        'id',
+        'school_admin_id',
         'announcement_id',
         'school_branch_id',
         'seen_at',
         'status'
-   ];
+    ];
 
+    protected $cast = [
+        'seen_at' => 'datetime'
+    ];
     public $incrementing = false;
     public $table = 'school_admin_announcements';
     public $keyType = 'string';
 
-    public function schoolAdmin(): BelongsTo {
-         return $this->belongsTo(SchoolAdmin::class, 'school_admin_id');
+    public function schoolAdmin(): BelongsTo
+    {
+        return $this->belongsTo(SchoolAdmin::class, 'school_admin_id');
     }
 
-    public function announcement(): BelongsTo {
-         return $this->belongsTo(Announcement::class, 'announcement_id');
+    public function announcement(): BelongsTo
+    {
+        return $this->belongsTo(Announcement::class, 'announcement_id');
     }
 }
