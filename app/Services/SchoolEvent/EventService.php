@@ -3,6 +3,7 @@
 namespace App\Services\SchoolEvent;
 
 use App\Models\SchoolEvent;
+use App\Models\Student;
 use App\Exceptions\AppException;
 use App\Models\EventLikeStatus;
 use App\Models\EventTag;
@@ -10,6 +11,7 @@ use App\Models\EventCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Carbon\Carbon;
 
 class EventService
 {
@@ -196,7 +198,7 @@ class EventService
     {
         try {
             $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
-             ->findOrFail($eventCategoryId);
+                ->findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(
                 "Event category with ID '{$eventCategoryId}' not found.",
@@ -298,9 +300,10 @@ class EventService
 
         return $groupedEvents;
     }
-    public function getDraftSchoolEvents($currentSchool){
+    public function getDraftSchoolEvents($currentSchool)
+    {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
-           ->where("status", "draft")
+            ->where("status", "draft")
             ->with(['eventCategory'])
             ->get();
         if ($schoolEvents->isEmpty()) {
@@ -308,11 +311,11 @@ class EventService
                 "No draft school events found for school branch ID '{$currentSchool->id}'.",
                 404,
                 "No Draft School Events Found 📅",
-                    "We couldn't find any draft events scheduled for your school branch. Please ensure that events have been created and their status is set to 'draft'.",
-                    null
+                "We couldn't find any draft events scheduled for your school branch. Please ensure that events have been created and their status is set to 'draft'.",
+                null
             );
-       }
-       $groupedEvents = $schoolEvents->groupBy(function ($event) {
+        }
+        $groupedEvents = $schoolEvents->groupBy(function ($event) {
             return optional($event->eventCategory)->name ?? 'Uncategorized';
         })->map(function ($events, $categoryName) {
             return [
@@ -323,7 +326,8 @@ class EventService
 
         return $groupedEvents;
     }
-    public function getDraftSchoolEventsByCategory($currentSchool, $eventCategoryId){
+    public function getDraftSchoolEventsByCategory($currentSchool, $eventCategoryId)
+    {
         try {
             $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($eventCategoryId);
@@ -456,5 +460,55 @@ class EventService
         }
 
         return $tags;
+    }
+    public function getStudentUpcomingEvents($currentSchool, $student)
+    {
+        $now = Carbon::now();
+        $studentSpecialtyId = $student->specialty_id;
+
+        $events = SchoolEvent::where('school_branch_id', $currentSchool->id)
+            ->where('status', 'published')
+            ->where('end_date', '>=', $now)
+            ->orderBy('start_date', 'asc')
+            ->get();
+
+        $visibleEvents = $events->filter(function ($event) use ($studentSpecialtyId) {
+            $audience = $event->audience;
+
+            if (empty($audience->students) && empty($audience->teachers) && empty($audience->admins)) {
+                return true;
+            }
+
+            if (!empty($audience->students) && is_array($audience->students)) {
+                return in_array($studentSpecialtyId, $audience->students);
+            }
+
+            return false;
+        });
+
+        $likedEventIds = EventLikeStatus::where('likeable_type', Student::class)
+            ->where('likeable_id', $student->id)
+            ->where('event_id', $visibleEvents->pluck('id')->toArray())
+            ->where('status', 'liked')
+            ->pluck('event_id')
+            ->toArray();
+
+        $formatted = $visibleEvents->map(function ($event) use ($likedEventIds) {
+            return [
+                "event_id"        => $event->id,
+                "title"           => $event->title,
+                "description"     => $event->description ?? "No description available",
+                "background_image" => $event->background_image,
+                "location"        => $event->location,
+                "organizer"       => $event->organizer,
+                "start_date"      => $event->start_date,
+                "end_date"        => $event->end_date,
+                "tags"            => $event->tags ?? [],
+                "likes_count"     => $event->likes ?? 0,
+                "is_liked"        => in_array($event->id, $likedEventIds)
+            ];
+        })->values();
+
+        return $formatted;
     }
 }
