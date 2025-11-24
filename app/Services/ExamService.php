@@ -659,8 +659,8 @@ class ExamService
                 "exam_name"          => $exam->examtype?->exam_name ?? "Upcoming Exam",
                 'description'        => $exam->examtype?->description ?? null,
                 "semester"           => $exam->semester?->name ?? "Unknown Semester",
-                "start_date"         => $exam->start_date?->format('Y-m-d'),
-                "end_date"           => $exam->end_date?->format('Y-m-d'),
+                "start_date"         => $exam->start_date,
+                "end_date"           => $exam->end_date,
                 "timetable_published" => (bool) $exam->timetable_published,
             ]);
         });
@@ -671,8 +671,8 @@ class ExamService
                 "exam_name"          => $exam->examtype?->exam_name ?? "Resit Exam",
                 'description'        => $exam->examtype?->description ?? null,
                 "semester"           => $exam->semester?->name ?? "Unknown Semester",
-                "start_date"         => $exam->start_date?->format('Y-m-d'),
-                "end_date"           => $exam->end_date?->format('Y-m-d'),
+                "start_date"         => $exam->start_date,
+                "end_date"           => $exam->end_date,
                 "timetable_published" => (bool) $exam->timetable_published,
             ]);
         });

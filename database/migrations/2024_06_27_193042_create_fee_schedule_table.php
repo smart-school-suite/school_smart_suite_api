@@ -38,8 +38,11 @@ return new class extends Migration
         Schema::create('student_fee_schedules', function(Blueprint $table){
            $table->string('id')->primary();
            $table->decimal('expected_amount', 15, 2);
-           $table->enum('status', ['paid', 'unpaid'])->default('unpaid');
-           $table->enum('gramification', ['late', 'on time', 'pending'])->default('pending');
+           $table->decimal('amount_paid', 8,2)->default(0.0);
+           $table->decimal('amount_left', 8, 2);
+           $table->decimal('percentage_paid', 6, 2)->default(0.0);
+           $table->enum('status', ['completed', 'unpaid', 'inprogress'])->default('unpaid');
+           $table->enum('gramification', ['late', 'paypunctual', 'pending'])->default('pending');
            $table->timestamps();
         });
     }

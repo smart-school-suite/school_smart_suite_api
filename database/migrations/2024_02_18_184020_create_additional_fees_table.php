@@ -15,7 +15,8 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->text('reason')->nullable();
             $table->decimal('amount', 8, 2);
-            $table->enum('status', ['paid', 'unpaid', 'pending']);
+            $table->enum('status', ['paid', 'unpaid', 'due'])->default('unpaid');
+            $table->date('due_date');
             $table->timestamps();
         });
     }

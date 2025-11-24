@@ -160,7 +160,7 @@ class FeeScheduleService
         $feeSchedule->delete();
         return $feeSchedule;
     }
-    public function getStudentFeeSchedule($currentSchool, string $studentId): Collection
+    public function getFeeScheduleStudentId($currentSchool, string $studentId): Collection
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->findOrFail($studentId);
@@ -192,5 +192,104 @@ class FeeScheduleService
         });
 
         return $formattedSchedule;
+    }
+    public function getStudentFeeSchedule($currentSchool, $student): array
+    {
+        $studentFeeSchedule = StudentFeeSchedule::select('student_fee_schedules.*')
+            ->join('levels', 'levels.id', '=', 'student_fee_schedules.level_id')
+
+            ->where("student_fee_schedules.school_branch_id", $currentSchool->id)
+            ->where("student_fee_schedules.student_id", $student->id)
+
+            ->orderBy('levels.level', 'asc')
+
+            ->with(['specialty', 'level', 'feeScheduleSlot.installment'])
+
+            ->get();
+
+        $groupedByLevel = $studentFeeSchedule->groupBy('level_id');
+
+
+        $formattedOutput = $groupedByLevel->map(function ($feeSlots, $levelId) {
+
+            $level = $feeSlots->first()->level;
+
+            return [
+                'level_id' => $level->id,
+                'level_name' => "Level {$level->level} - {$level->name}",
+
+                'installment_slots' => $feeSlots->map(function ($slot) {
+                    $feeScheduleSlot = $slot->feeScheduleSlot;
+                    $installment = $feeScheduleSlot->installment;
+
+                    return [
+                        'slot_id' => $slot->id,
+                        'status' => $slot->status,
+                        'gramification' => $slot->gramification,
+                        'installment' => optional($installment)->name,
+                        'installment_id' => optional($installment)->id,
+                        'amount_paid' => (float) $slot->amount_paid,
+                        'amount_left' => (float) $slot->amount_left,
+                        'expected_amount' => (float) $slot->expected_amount,
+                        'percentage_paid' => (float) round($slot->percentage_paid, 2),
+                        'due_date' => $feeScheduleSlot->due_date ? : null,
+                    ];
+                })->values()->all(),
+            ];
+        })->values()->all();
+
+        return $formattedOutput;
+    }
+    public function getStudentFeeScheduleLevelId($currentSchool, $student, $levelId): array
+    {
+        $studentFeeSchedule = StudentFeeSchedule::select('student_fee_schedules.*')
+            ->join('levels', 'levels.id', '=', 'student_fee_schedules.level_id')
+
+            ->where("student_fee_schedules.school_branch_id", $currentSchool->id)
+            ->where("student_fee_schedules.student_id", $student->id)
+
+            ->where("student_fee_schedules.level_id", $levelId)
+
+            ->orderBy('levels.level', 'asc')
+
+            ->with(['specialty', 'level', 'feeScheduleSlot.installment'])
+
+            ->get();
+
+        if ($studentFeeSchedule->isEmpty()) {
+            return [];
+        }
+
+        $groupedByLevel = $studentFeeSchedule->groupBy('level_id');
+
+        $formattedOutput = $groupedByLevel->map(function ($feeSlots, $levelId) {
+
+            $level = $feeSlots->first()->level;
+
+            return [
+                'level_id' => $level->id,
+                'level_name' => "Level {$level->level} - {$level->name}",
+
+                'installment_slots' => $feeSlots->map(function ($slot) {
+                    $feeScheduleSlot = $slot->feeScheduleSlot;
+                    $installment = optional($feeScheduleSlot)->installment;
+
+                    return [
+                        'slot_id' => $slot->id,
+                        'status' => $slot->status,
+                        'gramification' => $slot->gramification,
+                        'installment' => optional($installment)->name,
+                        'installment_id' => optional($installment)->id,
+                        'amount_paid' => (float) $slot->amount_paid,
+                        'amount_left' => (float) $slot->amount_left,
+                        'expected_amount' => (float) $slot->expected_amount,
+                        'percentage_paid' => (float) round($slot->percentage_paid, 2),
+                        'due_date' => optional($feeScheduleSlot)->due_date ? optional($feeScheduleSlot)->due_date->format('d-m-Y') : null,
+                    ];
+                })->values()->all(),
+            ];
+        })->values()->all();
+
+        return $formattedOutput;
     }
 }

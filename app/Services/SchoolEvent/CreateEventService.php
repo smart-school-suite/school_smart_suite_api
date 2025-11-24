@@ -139,7 +139,7 @@ class CreateEventService
                 'likes' => 0,
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
-                'invitee_count' => $totalInvitee,
+                'invitee' => $totalInvitee,
                 'status' => $status,
                 'published_at' => $publishedAt,
                 'expires_at' => $data['end_date'],

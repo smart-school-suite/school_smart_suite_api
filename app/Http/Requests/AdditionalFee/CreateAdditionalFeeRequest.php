@@ -28,7 +28,7 @@ class CreateAdditionalFeeRequest extends FormRequest
                 'min:0',
             ],
            'additionalfee_category_id' => 'required|string|exists:additional_fee_categories,id',
-           'student_id' => 'required|string|exists:student,id'
+           'student_id' => 'required|string|exists:students,id'
         ];
     }
 }

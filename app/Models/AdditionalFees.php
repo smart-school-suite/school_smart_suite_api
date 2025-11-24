@@ -19,6 +19,7 @@ class AdditionalFees extends Model
        'specialty_id',
        'level_id',
        'student_id',
+       'due_date',
        'additionalfee_category_id'
     ];
 

@@ -21,6 +21,10 @@ class EventLikeStatus extends Model
     public $keyType  = 'string';
     public $table = 'event_like_statuses';
 
+    protected $casts = [
+         'status' => 'boolean',
+    ];
+
     public function schoolEvent(): BelongsTo {
          return $this->belongsTo(SchoolEvent::class, 'event_id');
     }

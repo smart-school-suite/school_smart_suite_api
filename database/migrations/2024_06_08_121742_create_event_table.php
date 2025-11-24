@@ -22,7 +22,6 @@ return new class extends Migration
         Schema::create('event_tags', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
-            $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
@@ -43,6 +42,7 @@ return new class extends Migration
             $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->json('audience');
+            $table->json('tags');
             $table->timestamps();
         });
 

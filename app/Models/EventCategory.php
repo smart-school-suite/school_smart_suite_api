@@ -18,6 +18,9 @@ class EventCategory extends Model
        'description'
     ];
 
+    protected $cast = [
+         'status' => 'boolean'
+    ];
     public $incrementing = 'false';
     public $table = 'event_categories';
     public $keyType = 'string';

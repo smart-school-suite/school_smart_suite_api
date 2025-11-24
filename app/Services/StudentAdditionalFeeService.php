@@ -17,6 +17,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Exceptions\AppException;
+use Carbon\Carbon;
 
 class StudentAdditionalFeeService
 {
@@ -34,6 +35,13 @@ class StudentAdditionalFeeService
         $studentAdditionFees->specialty_id = $student->specialty_id;
         $studentAdditionFees->level_id = $student->level_id;
         $studentAdditionFees->student_id = $student->id;
+
+        if (isset($additionalFees['due_date'])) {
+            $studentAdditionFees->due_date = $additionalFees['due_date'];
+        } else {
+            $studentAdditionFees->due_date = Carbon::now()->addDays(7);
+        }
+
         $studentAdditionFees->save();
         AdditionalFeeStatJob::dispatch($additionalFeeId, $currentSchool->id);
         $student->notify(new AdditionalFee($additionalFees['amount'], $additionalFees['reason']));
@@ -59,7 +67,7 @@ class StudentAdditionalFeeService
         $additionalFee->update($removedEmptyInputs);
         return $additionalFee;
     }
-    public function getStudentAdditionalFees(string $studentId, $currentSchool)
+    public function getStudentAdditionalFeesStudentId(string $studentId, $currentSchool)
     {
         try {
             $studentAdditionFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
@@ -516,5 +524,29 @@ class StudentAdditionalFeeService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function getStudentAdditionalFees($currentSchool, $student, $status)
+    {
+        $allowedStatus = collect([
+            "unpaid",
+            "paid",
+            "due"
+        ]);
+        if (!$allowedStatus->contains($status)) {
+            throw new AppException(
+                "Invalid Additional Fee Status",
+                404,
+                "Invalid Additional Fee Status",
+                "Invalid Additional Fee Status, Additional Fee Status Must Only Be unpaid paid or due"
+            );
+        }
+
+        $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("status", $status)
+            ->with(['feeCategory'])
+            ->get();
+        return $additionalFees;
     }
 }

@@ -34,7 +34,7 @@ class SchoolEvent extends Model
         'audience'
     ];
 
-    protected $cast = [
+    protected $casts = [
          'likes' => 'integer',
          'invitee_count' => 'integer',
          'tags' => 'json',

@@ -13,7 +13,8 @@ class Schoolexpensescategory extends Model
 
     protected $fillable = [
       'school_branch_id',
-      'name'
+      'name',
+      'description'
     ];
 
     public $table = 'expense_categories';

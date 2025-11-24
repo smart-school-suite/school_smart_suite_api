@@ -88,3 +88,5 @@ use App\Http\Controllers\FeePaymentController;
     Route::post('/registration-fee/bulk-delete', [FeePaymentController::class, 'bulkDeleteRegistrationFee'])->name('bulk.delete.registration.fee');
 
     Route::delete('/registration-fee/{feeId}', [FeePaymentController::class, 'deleteRegistrationFee'])->name('delete.registration.fee');
+
+    Route::get('/student/registration-fees', [FeePaymentController::class, 'getStudentRegistrationFee'])->name("get.student.registration.fees");

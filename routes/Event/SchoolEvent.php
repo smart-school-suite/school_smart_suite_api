@@ -19,3 +19,4 @@ Route::get('/scheduled/event-category/{eventCategoryId}', [SchoolEventController
 Route::get('/scheduled', [SchoolEventController::class, 'getScheduledSchoolEvents'])->name("get.scheduled.school.events");
 Route::get('/draft', [SchoolEventController::class, 'getDraftSchoolEvents'])->name("get.draft.school-events");
 Route::get('/draft/event-category/{eventCategoryId}', [SchoolEventController::class, 'getDraftSchoolEventsByCategory'])->name("get.draft.school.events.by.category");
+Route::get('/student/event-upcoming', [SchoolEventController::class, 'getStudentUpcomingSchoolEvents'])->name("get.upcoming.school.events");

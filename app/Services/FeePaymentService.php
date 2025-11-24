@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use App\Models\Feepayment;
 use App\Models\RegistrationFee;
 use App\Models\TuitionFeeTransactions;
+use App\Models\StudentFeeSchedule;
 use App\Notifications\TuitionFeePaid;
 use Illuminate\Support\Facades\Log;
 use Exception;
@@ -51,19 +52,18 @@ class FeePaymentService
                 throw new Exception('Payment amount must be greater than zero.', 400);
             }
 
-            if ($data['amount'] > $studentTuitionFees->amount_left) {
+            if ($data['amount'] > ($studentTuitionFees->amount_left + 0.001)) {
                 throw new Exception('The payment amount exceeds the remaining fee debt.', 409);
             }
 
-            if ($student->payment_format === "one-time" && $studentTuitionFees->tution_fee_total != $data['amount']) {
+            if ($student->payment_format === "one-time" && $studentTuitionFees->tution_fee_total != $studentTuitionFees->amount_paid + $data['amount']) {
                 throw new Exception('Student payment structure requires a one-time payment for the full amount.', 400);
             }
 
             $studentTuitionFees->amount_paid += $data['amount'];
             $studentTuitionFees->amount_left -= $data['amount'];
 
-
-            if ($studentTuitionFees->amount_left <= 0) {
+            if ($studentTuitionFees->amount_left <= 0.001) {
                 $studentTuitionFees->status = "completed";
                 $studentTuitionFees->amount_left = 0;
             }
@@ -81,6 +81,10 @@ class FeePaymentService
                 'tuition_id' => $studentTuitionFees->id,
                 'school_branch_id' => $currentSchool->id,
             ]);
+
+            if ($student->payment_format === "installmental") {
+                $this->handleInstallmentalFeePaymentProgress($currentSchool, $studentTuitionFees, $data);
+            }
 
             DB::commit();
 
@@ -102,6 +106,66 @@ class FeePaymentService
             DB::rollBack();
             throw $e;
         }
+    }
+    protected function handleInstallmentalFeePaymentProgress($currentSchool, $studentTuitionFees, $data)
+    {
+        $remainingAmountToDistribute = $data['amount'];
+        $paymentTime = now();
+
+        $studentFeeSchedules = StudentFeeSchedule::select('student_fee_schedules.*')
+            ->join('fee_schedule_slots', 'student_fee_schedules.fee_schedule_slot_id', '=', 'fee_schedule_slots.id')
+            ->where("student_fee_schedules.school_branch_id", $currentSchool->id)
+            ->where("student_fee_schedules.tuition_fee_id", $studentTuitionFees->id)
+            ->with('feeScheduleSlot')
+            ->orderBy('fee_schedule_slots.due_date', 'asc')
+            ->get();
+
+        DB::transaction(function () use ($studentFeeSchedules, &$remainingAmountToDistribute, $paymentTime) {
+            foreach ($studentFeeSchedules as $scheduleSlot) {
+
+                if ($scheduleSlot->status === 'completed') {
+                    continue;
+                }
+
+                $amountNeeded = $scheduleSlot->expected_amount - $scheduleSlot->amount_paid;
+                $amountToApply = min($remainingAmountToDistribute, $amountNeeded);
+
+                if ($amountToApply > 0) {
+                    $isCompletingPayment = ($scheduleSlot->amount_paid + $amountToApply) >= $scheduleSlot->expected_amount;
+
+                    $scheduleSlot->amount_paid += $amountToApply;
+                    $scheduleSlot->amount_left = $scheduleSlot->expected_amount - $scheduleSlot->amount_paid;
+                    $scheduleSlot->percentage_paid = ($scheduleSlot->amount_paid / $scheduleSlot->expected_amount) * 100;
+
+                    if ($scheduleSlot->amount_left <= 0.001) {
+                        $scheduleSlot->status = 'completed';
+                        $scheduleSlot->amount_left = 0;
+                        $scheduleSlot->percentage_paid = 100;
+                    } else {
+                        $scheduleSlot->status = 'inprogress';
+                    }
+
+                    if ($isCompletingPayment && $scheduleSlot->gramification === 'pending') {
+
+                        $dueDate = optional($scheduleSlot->feeScheduleSlot)->due_date;
+
+                        if ($dueDate && $paymentTime->lessThanOrEqualTo($dueDate)) {
+                            $scheduleSlot->gramification = 'paypunctual';
+                        } else {
+                            $scheduleSlot->gramification = 'late';
+                        }
+                    }
+
+                    $scheduleSlot->save();
+
+                    $remainingAmountToDistribute -= $amountToApply;
+
+                    if ($remainingAmountToDistribute <= 0) {
+                        break;
+                    }
+                }
+            }
+        });
     }
     public function reverseFeePaymentTransaction(string $transactionId, $currentSchool)
     {
@@ -669,5 +733,13 @@ class FeePaymentService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function getStudentRegistratonFees($currentSchool, $student){
+         $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
+                           ->where("student_id", $student->id)
+                           ->with(['specialty', 'level'])
+                            ->get();
+        return $registrationFees;
     }
 }

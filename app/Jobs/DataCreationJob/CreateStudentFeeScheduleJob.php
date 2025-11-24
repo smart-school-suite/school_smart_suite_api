@@ -12,33 +12,23 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class CreateStudentFeeScheduleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
     public $tries = 3;
-
-    /**
-     * The maximum number of exceptions to allow before failing.
-     *
-     * @var int
-     */
     public $maxExceptions = 1;
+    public $timeout = 1200; // 20 minutes max
+    public $backoff = [10, 30, 60];
 
     protected string $feeScheduleId;
     protected string $schoolBranchId;
     protected string $specialtyId;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(string $feeScheduleId, string $schoolBranchId, string $specialtyId)
     {
         $this->feeScheduleId = $feeScheduleId;
@@ -46,78 +36,87 @@ class CreateStudentFeeScheduleJob implements ShouldQueue
         $this->specialtyId = $specialtyId;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-        // Use transactions for data integrity
+
         DB::beginTransaction();
 
         try {
-            $feeScheduleSlots = FeeScheduleSlot::where("school_branch_id", $this->schoolBranchId)
-                ->where("fee_schedule_id", $this->feeScheduleId)
+            $feeScheduleSlots = FeeScheduleSlot::where('school_branch_id', $this->schoolBranchId)
+                ->where('fee_schedule_id', $this->feeScheduleId)
                 ->get();
 
-            $specialty = Specialty::where("school_branch_id", $this->schoolBranchId)
+            if ($feeScheduleSlots->isEmpty()) {
+                DB::rollBack();
+                return;
+            }
+
+            $specialty = Specialty::where('school_branch_id', $this->schoolBranchId)
                 ->findOrFail($this->specialtyId);
 
-            $studentDebts = $this->getStudentDebts($specialty, $this->schoolBranchId);
+            $studentDebts = TuitionFees::where('school_branch_id', $this->schoolBranchId)
+                ->where('specialty_id', $specialty->id)
+                ->where('level_id', $specialty->level_id)
+                ->select('id', 'student_id', 'level_id', 'specialty_id', 'tution_fee_total')
+                ->get();
+
+            if ($studentDebts->isEmpty()) {
+                Log::info('No students with tuition fees found for this specialty', [
+                    'specialty_id' => $specialty->id,
+                    'level_id' => $specialty->level_id
+                ]);
+                DB::commit();
+                return;
+            }
 
             $this->createStudentFeePaymentSchedule($feeScheduleSlots, $studentDebts, $this->schoolBranchId);
 
             DB::commit();
+
+
         } catch (Throwable $e) {
             DB::rollBack();
-            // Optionally, log the exception or report it to a service like Sentry
             report($e);
-            // Re-throw the exception to mark the job as failed
             throw $e;
         }
     }
 
-    /**
-     * Get student debts based on specialty and school branch.
-     *
-     * @param Specialty $specialty
-     * @param string $schoolBranchId
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    protected function getStudentDebts(Specialty $specialty, string $schoolBranchId): \Illuminate\Database\Eloquent\Collection
-    {
-        return TuitionFees::where("school_branch_id", $schoolBranchId)
-            ->where("specialty_id", $specialty->id)
-            ->where("level_id", $specialty->level_id)
-            ->get();
-    }
-
-    /**
-     * Create student fee payment schedules.
-     *
-     * @param \Illuminate\Database\Eloquent\Collection $feeScheduleSlots
-     * @param \Illuminate\Database\Eloquent\Collection $studentDebts
-     * @param string $schoolBranchId
-     * @return void
-     */
     protected function createStudentFeePaymentSchedule(
-        \Illuminate\Database\Eloquent\Collection $feeScheduleSlots,
-        \Illuminate\Database\Eloquent\Collection $studentDebts,
+        $feeScheduleSlots,
+        $studentDebts,
         string $schoolBranchId
     ): void {
-        foreach ($studentDebts as $debt) {
-            foreach ($feeScheduleSlots as $slot) {
-                $totalDebt = $debt->tution_fee_total;
-                $installment = $totalDebt * $slot->fee_percentage;
-                StudentFeeSchedule::create([
-                    'student_id' => $debt->student_id,
-                    'level_id' => $debt->level_id,
-                    'specialty_id' => $debt->specialty_id,
-                    'school_branch_id' => $schoolBranchId,
-                    'expected_amount' => $installment,
-                    'fee_schedule_slot_id' => $slot->id,
-                    'fee_schedule_id' => $slot->fee_schedule_id,
-                ]);
+        $now = now();
+
+        $studentDebts->chunk(100)->each(function ($debts) use ($feeScheduleSlots, $schoolBranchId, $now) {
+            $records = [];
+
+            foreach ($debts as $debt) {
+                foreach ($feeScheduleSlots as $slot) {
+                    $installmentAmount = $debt->tution_fee_total * ($slot->fee_percentage / 100);
+
+                    $records[] = [
+                        'id' => Str::uuid()->toString(),
+                        'student_id'           => $debt->student_id,
+                        'level_id'             => $debt->level_id,
+                        'specialty_id'         => $debt->specialty_id,
+                        'school_branch_id'     => $schoolBranchId,
+                        'expected_amount'      => $installmentAmount,
+                        'fee_schedule_slot_id' => $slot->id,
+                        'fee_schedule_id'      => $slot->fee_schedule_id,
+                        'tuition_fee_id'       => $debt->id,
+                        'amount_paid'          => 0,
+                        'amount_left'          => $installmentAmount,
+                        'percentage_paid'      => 0,
+                        'created_at'           => $now,
+                        'updated_at'           => $now,
+                    ];
+                }
             }
-        }
+
+            if (!empty($records)) {
+                StudentFeeSchedule::insert($records);
+            }
+        });
     }
 }

@@ -941,10 +941,6 @@ return new class extends Migration
            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('event_tags', function (Blueprint $table) {
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-        });
 
         Schema::table('event_categories', function (Blueprint $table) {
             $table->string('school_branch_id')->index();
@@ -998,6 +994,8 @@ return new class extends Migration
         });
 
         Schema::table('student_fee_schedules', function (Blueprint $table) {
+            $table->string('tuition_fee_id')->index();
+            $table->foreign('tuition_fee_id')->references('id')->on('tuition_fees');
             $table->string('student_id')->index();
             $table->foreign('student_id')->references('id')->on('students');
             $table->string('level_id')->index();
@@ -1368,11 +1366,6 @@ return new class extends Migration
             $table->dropColumn('announcement_id');
         });
 
-        Schema::table('event_tags', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropColumn('school_branch_id');
-        });
-
         Schema::table('event_categories', function (Blueprint $table) {
             $table->dropForeign(['school_branch_id']);
             $table->dropColumn('school_branch_id');
@@ -1419,7 +1412,8 @@ return new class extends Migration
             $table->dropForeign(['fee_schedule_slot_id']);
             $table->dropForeign(['fee_schedule_id']);
             $table->dropForeign(['school_branch_id']);
-            $table->dropColumn(['student_id', 'level_id', 'specialty_id', 'fee_schedule_slot_id', 'fee_schedule_id', 'school_branch_id']);
+            $table->dropForeign(['tuition_fee_id']);
+            $table->dropColumn(['student_id', 'tuition_fee_id', 'level_id', 'specialty_id', 'fee_schedule_slot_id', 'fee_schedule_id', 'school_branch_id']);
         });
 
 

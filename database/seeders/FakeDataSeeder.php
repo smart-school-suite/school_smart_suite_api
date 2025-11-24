@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\AdditionalFeesCategory;
+use App\Models\AnnouncementCategory;
+use App\Models\Schoolexpensescategory;
 use App\Models\Department;
 use App\Models\Educationlevels;
 use App\Models\Schoolbranches;
@@ -10,15 +13,14 @@ use App\Models\Studentbatch;
 use App\Models\Semester;
 use App\Models\Parents;
 use App\Models\Student;
-use App\Models\Schooladmin;
-use App\Models\RegistrationFee;
-use App\Models\TuitionFees;
+use App\Models\EventTag;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Faker\Factory as Faker;
 use Illuminate\Support\Facades\Hash;
 use App\Models\AnnouncementTag;
+use App\Models\EventCategory;
 
 class FakeDataSeeder extends Seeder
 {
@@ -38,6 +40,12 @@ class FakeDataSeeder extends Seeder
         $this->seedStudentFees();
         $this->seedSchoolAdmin();
         $this->seedAnnouncementTags();
+
+        $this->seedAnnouncementCategories();
+        $this->seedEventCategories();
+        $this->seedAdditionalFeeCategories();
+        $this->seedSchoolExpensesCategories();
+        $this->seedEventCategories();
     }
 
     public function seedDepartment()
@@ -530,7 +538,6 @@ class FakeDataSeeder extends Seeder
             $this->command->info("No School Admins To Insert");
         }
     }
-
     public function seedAnnouncementTags()
     {
         $announcementTags = [
@@ -735,9 +742,467 @@ class FakeDataSeeder extends Seeder
             'student council',
             'youth forum',
         ];
-        foreach($announcementTags as $tag){
-             AnnouncementTag::create([
-                  'name' => $tag
+        foreach ($announcementTags as $tag) {
+            AnnouncementTag::create([
+                'name' => $tag
+            ]);
+        }
+    }
+    public function seedSchoolEventTags(){
+          $schoolEventTags = [
+            'school update',
+            'policy change',
+            'important info',
+            'school rules',
+            'new policy',
+            'daily notice',
+            'weekly update',
+            'reminder',
+            'staff notice',
+            'general info',
+            'student notice',
+            'urgent update',
+            'schedule change',
+            'parent notice',
+            'bulletin',
+            'orientation',
+            'staff meeting',
+            'guidelines',
+            'regulations',
+            'general alert',
+            'curriculum',
+            'syllabus update',
+            'course info',
+            'assignment notice',
+            'project work',
+            'study materials',
+            'class notes',
+            'reading list',
+            'new subject',
+            'curriculum change',
+            'lesson plan',
+            'tutorials',
+            'class update',
+            'learning resources',
+            'academic calendar',
+            'academic deadline',
+            'exam prep',
+            'study guide',
+            'extra class',
+            'course announcement',
+            'exam timetable',
+            'test schedule',
+            'midterm exams',
+            'final exams',
+            'quiz dates',
+            'mock exams',
+            'exam routine',
+            'exam hall allocation',
+            'assessment',
+            'oral exams',
+            'exam guidelines',
+            'time table change',
+            'exam venue',
+            'lab exams',
+            'exam deadlines',
+            'exam slots',
+            'exam notification',
+            'exam start date',
+            'resit exams',
+            'exam plan',
+            'exam results',
+            'grading system',
+            'report card',
+            'GPA update',
+            'marks release',
+            'assessment results',
+            'rank list',
+            'result sheet',
+            'result publication',
+            'results deadline',
+            'grading notice',
+            'progress report',
+            'transcript',
+            'performance update',
+            'semester results',
+            'exam scores',
+            'evaluation',
+            'student ranking',
+            'grade review',
+            'academic results',
+            'school event',
+            'annual day',
+            'cultural fest',
+            'debate competition',
+            'science fair',
+            'art exhibition',
+            'literary week',
+            'career fair',
+            'speech contest',
+            'music concert',
+            'drama club',
+            'dance performance',
+            'guest lecture',
+            'school trip',
+            'seminar',
+            'workshop',
+            'talent show',
+            'cultural event',
+            'fun fair',
+            'parents day',
+            'football match',
+            'basketball',
+            'athletics',
+            'inter-school sports',
+            'cricket match',
+            'sports day',
+            'volleyball',
+            'badminton',
+            'tennis tournament',
+            'swimming competition',
+            'table tennis',
+            'track and field',
+            'marathon',
+            'sports trials',
+            'chess competition',
+            'rugby match',
+            'sports training',
+            'fitness test',
+            'sports camp',
+            'sports result',
+            'holiday notice',
+            'public holiday',
+            'school closure',
+            'semester break',
+            'midterm break',
+            'summer vacation',
+            'winter holiday',
+            'holiday extension',
+            'holiday resumption',
+            'long weekend',
+            'school reopening',
+            'independence day',
+            'national holiday',
+            'holiday schedule',
+            'festive break',
+            'holiday calendar',
+            'official leave',
+            'holiday event',
+            'school off day',
+            'special holiday',
+            'fee notice',
+            'admission update',
+            'staff recruitment',
+            'parent meeting',
+            'policy update',
+            'staff transfer',
+            'school board',
+            'infrastructure update',
+            'budget notice',
+            'donation drive',
+            'maintenance notice',
+            'transport notice',
+            'canteen update',
+            'school facilities',
+            'scholarship',
+            'uniform update',
+            'security notice',
+            'library notice',
+            'staff training',
+            'management update',
+            'weather alert',
+            'storm warning',
+            'pandemic update',
+            'safety notice',
+            'fire drill',
+            'health emergency',
+            'school lockdown',
+            'power outage',
+            'water shortage',
+            'road closure',
+            'accident alert',
+            'earthquake drill',
+            'safety protocol',
+            'medical emergency',
+            'emergency closure',
+            'flood alert',
+            'security alert',
+            'evacuation',
+            'emergency meeting',
+            'urgent alert',
+            'science club',
+            'literature club',
+            'music club',
+            'drama club',
+            'debate club',
+            'robotics club',
+            'coding club',
+            'arts club',
+            'dance club',
+            'environment club',
+            'chess club',
+            'photography club',
+            'film club',
+            'language club',
+            'cultural society',
+            'history club',
+            'mathematics club',
+            'volunteer group',
+            'student council',
+            'youth forum',
+        ];
+        foreach($schoolEventTags as $tag){
+             EventTag::create([
+                 'name' => $tag
+             ]);
+        }
+    }
+    public function seedAnnouncementCategories()
+    {
+        $schoolBranch = Schoolbranches::first();
+        $announcementCategories = [
+            [
+                'name' => 'General News',
+                'description' => 'Announcements covering broad organizational updates significant changes or information relevant to all stakeholders',
+            ],
+            [
+                'name' => 'Product Service Updates',
+                'description' => 'Details regarding new features enhancements bug fixes or sunsetting of specific products or services',
+            ],
+            [
+                'name' => 'Event Information',
+                'description' => 'Notices about upcoming events webinars workshops conferences or important dates and deadlines',
+            ],
+            [
+                'name' => 'System Maintenance Outages',
+                'description' => 'Scheduled notifications for planned system downtime maintenance windows or reports on unexpected service interruptions and resolutions',
+            ],
+            [
+                'name' => 'Policy Changes',
+                'description' => 'Formal communications concerning updates revisions or additions to company policies terms of service or compliance requirements',
+            ],
+            [
+                'name' => 'Security Alerts',
+                'description' => 'Urgent information about potential security vulnerabilities necessary actions for users or updates on security protocols',
+            ],
+            [
+                'name' => 'Hiring Careers',
+                'description' => 'Announcements related to job openings recruitment drives internal promotions or changes within the Human Resources department',
+            ],
+            [
+                'name' => 'Financial Reports',
+                'description' => 'Public disclosures or internal reports on quarterly earnings financial performance budget updates or investment news',
+            ],
+            [
+                'name' => 'Company Culture Recognition',
+                'description' => 'Celebrations of employee achievements birthdays work anniversaries company values or corporate social responsibility initiatives',
+            ],
+            [
+                'name' => 'Training Development',
+                'description' => 'Information on new required training sessions available professional development courses or internal knowledge sharing sessions',
+            ],
+            [
+                'name' => 'Emergency Disaster Info',
+                'description' => 'Critical and time sensitive instructions or updates related to immediate safety weather emergencies or building closures',
+            ],
+            [
+                'name' => 'Regulatory Compliance',
+                'description' => 'Specific announcements regarding new laws industry regulations or external compliance mandates affecting operations',
+            ],
+        ];
+        foreach ($announcementCategories as $category) {
+            AnnouncementCategory::create([
+                "name" => $category['name'],
+                "description" => $category["description"],
+                "school_branch_id" => $schoolBranch->id
+            ]);
+        }
+    }
+    public function seedEventCategories()
+    {
+        $schoolBranch = Schoolbranches::first();
+        $schoolEventCategories = [
+            [
+                'name' => 'Academic Calendar',
+                'description' => 'Key dates like holidays parent teacher conferences exam weeks and progress report deadlines',
+            ],
+            [
+                'name' => 'Sports Athletics',
+                'description' => 'Schedules for team practices games meets tournaments and tryouts for all school sports',
+            ],
+            [
+                'name' => 'Arts Performances',
+                'description' => 'Dates for theater productions music concerts art exhibits and dance recitals',
+            ],
+            [
+                'name' => 'Student Life Clubs',
+                'description' => 'Meetings and activities for student clubs organizations and extracurricular groups',
+            ],
+            [
+                'name' => 'Fundraising Community',
+                'description' => 'Events like school fairs charity drives auctions and community service activities',
+            ],
+            [
+                'name' => 'Grade Level Milestones',
+                'description' => 'Specific events for classes like graduation ceremonies field trips and orientation days',
+            ],
+            [
+                'name' => 'Information Sessions',
+                'description' => 'Meetings for parents and students regarding college planning course selection or school policy changes',
+            ],
+            [
+                'name' => 'Testing Assessments',
+                'description' => 'Dates for standardized tests like SAT ACT state assessments and in-class finals',
+            ],
+            [
+                'name' => 'Professional Development',
+                'description' => 'Training workshops or staff-only meetings for teacher and administrator growth',
+            ],
+            [
+                'name' => 'Health Wellness',
+                'description' => 'Events like school vaccination clinics fitness days mental health awareness workshops or safety drills',
+            ],
+            [
+                'name' => 'School Board Meetings',
+                'description' => 'Public notices of dates times and agendas for official school district board meetings',
+            ],
+            [
+                'name' => 'Alumni Events',
+                'description' => 'Events specifically for former students like class reunions homecoming gatherings or networking mixers',
+            ],
+        ];
+
+
+        foreach ($schoolEventCategories as $category) {
+            EventCategory::create([
+                "name" => $category['name'],
+                "description" => $category["description"],
+                "school_branch_id" => $schoolBranch->id
+            ]);
+        }
+    }
+    public function seedAdditionalFeeCategories()
+    {
+        $schoolBranch = Schoolbranches::first();
+
+        $studentAdditionalFees = [
+            // 1. Administrative and Enrollment Fees
+            [
+                'name' => 'Enrollment Registration Fee',
+                'description' => 'A one-time or annual non-refundable fee to cover administrative costs of processing student admission and registration',
+            ],
+            [
+                'name' => 'Application Fee',
+                'description' => 'A fee required to submit an application for admission often paid only once',
+            ],
+            [
+                'name' => 'Technology Fee',
+                'description' => 'A charge to fund campus-wide technology infrastructure IT support and student access to computer labs and Wi-Fi services',
+            ],
+            [
+                'name' => 'ID Card Fee',
+                'description' => 'A fee for the initial issue or replacement of a student identification card',
+            ],
+            // 2. Service and Activity Fees (Mandatory Campus Services)
+            [
+                'name' => 'Student Activity Fee',
+                'description' => 'A mandatory charge to fund extracurricular activities student organizations and campus events',
+            ],
+            [
+                'name' => 'Health Service Fee',
+                'description' => 'A mandatory fee to support the operations of the campus health clinic and basic student health services',
+            ],
+            [
+                'name' => 'Transportation Parking Fee',
+                'description' => 'A fee for students wishing to use campus parking facilities or access to campus shuttle and public transport services',
+            ],
+            [
+                'name' => 'Library Fee',
+                'description' => 'A fee to support library resources maintenance and access to digital research databases',
+            ],
+            [
+                'name' => 'Building Facility Fee',
+                'description' => 'A charge to cover the maintenance upkeep and future expansion of campus buildings and facilities',
+            ],
+            // 3. Course and Material Fees
+            [
+                'name' => 'Lab Course Fees',
+                'description' => 'Specific charges for courses that require consumables materials or specialized equipment such as science labs art studios or engineering workshops',
+            ],
+            [
+                'name' => 'Books Supplies Fee',
+                'description' => 'Charges for required textbooks course packets or specific academic supplies often provided directly by the institution',
+            ],
+            [
+                'name' => 'Examination Graduation Fee',
+                'description' => 'Fees related to taking standardized exams final board exams or administrative costs associated with graduation application and diploma',
+            ],
+            // 4. Living and Housing Fees (For on-campus students)
+            [
+                'name' => 'Room Board Fee',
+                'description' => 'The cost for on-campus housing (room) and mandatory meal plan (board)',
+            ],
+            [
+                'name' => 'Orientation Fee',
+                'description' => 'A fee for mandatory new student orientation programs including materials activities and temporary housing if applicable',
+            ],
+        ];
+
+        foreach ($studentAdditionalFees as $category) {
+            AdditionalFeesCategory::create([
+                "title" => $category['name'],
+                "description" => $category["description"],
+                "school_branch_id" => $schoolBranch->id
+            ]);
+        }
+    }
+    public function seedSchoolExpensesCategories()
+    {
+        $schoolBranch = Schoolbranches::first();
+        $schoolExpensesCategories = [
+            [
+                'name' => 'Tuition Fees',
+                'description' => 'The main cost for academic instruction, calculated per credit hour per semester or as a flat rate',
+            ],
+            [
+                'name' => 'Mandatory Fees',
+                'description' => 'Required charges for campus services like student activities technology health services and facility maintenance',
+            ],
+            [
+                'name' => 'Room and Board',
+                'description' => 'The cost for on-campus housing and the mandatory meal plan',
+            ],
+            [
+                'name' => 'Course Specific Fees',
+                'description' => 'Additional charges for specific classes that require special materials equipment or lab time (e.g., science art or nursing classes)',
+            ],
+            [
+                'name' => 'Books and Supplies',
+                'description' => 'Estimated costs for required textbooks digital materials notebooks and other academic supplies',
+            ],
+            [
+                'name' => 'Personal Expenses',
+                'description' => 'Estimated costs for clothing laundry personal care items entertainment and other miscellaneous needs',
+            ],
+            [
+                'name' => 'Transportation Costs',
+                'description' => 'Estimated costs for travel to and from campus including daily commuting expenses or travel home during breaks',
+            ],
+            [
+                'name' => 'Health Insurance',
+                'description' => 'The cost for a required student health insurance plan if not covered by a private or family plan',
+            ],
+            [
+                'name' => 'Loan Fees',
+                'description' => 'Estimated fees charged by lenders for processing federal or private student loans',
+            ],
+        ];
+
+        foreach($schoolExpensesCategories as $category){
+             Schoolexpensescategory::create([
+                "name" => $category['name'],
+                "description" => $category["description"],
+                "school_branch_id" => $schoolBranch->id
              ]);
         }
     }

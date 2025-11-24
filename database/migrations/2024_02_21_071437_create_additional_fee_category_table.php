@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('additional_fee_categories', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('title');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

@@ -461,13 +461,14 @@ class EventService
 
         return $tags;
     }
+
     public function getStudentUpcomingEvents($currentSchool, $student)
     {
         $now = Carbon::now();
         $studentSpecialtyId = $student->specialty_id;
 
         $events = SchoolEvent::where('school_branch_id', $currentSchool->id)
-            ->where('status', 'published')
+            ->where('status', 'active')
             ->where('end_date', '>=', $now)
             ->orderBy('start_date', 'asc')
             ->get();
@@ -489,7 +490,7 @@ class EventService
         $likedEventIds = EventLikeStatus::where('likeable_type', Student::class)
             ->where('likeable_id', $student->id)
             ->where('event_id', $visibleEvents->pluck('id')->toArray())
-            ->where('status', 'liked')
+            ->where('status', true)
             ->pluck('event_id')
             ->toArray();
 

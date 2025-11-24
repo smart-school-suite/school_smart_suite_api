@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Http\Requests\AdditionalFee\AdditionalFeeIdRequest;
 use App\Http\Requests\AdditionalFee\AdditionalFeeTransactionIdRequest;
 use App\Http\Requests\AdditionalFee\BulkBillStudentAdditionalFeeRequest;
@@ -33,7 +34,8 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Student Additional Fees Created Sucessfully", $createAdditionalFees, null, 201);
     }
 
-    public function getAdditionalFeeDetails(Request $request, $feeId){
+    public function getAdditionalFeeDetails(Request $request, $feeId)
+    {
         $currenSchool = $request->attributes->get('currentSchool');
         $additionalFeeDetails = $this->studentAdditionalFeeService->getAdditionalFeeDetails($currenSchool, $feeId);
         return ApiResponseService::success("Student Additional Fee Fetched Successfully", $additionalFeeDetails, null, 200);
@@ -53,10 +55,10 @@ class StudentAdditionalFeesController extends Controller
         return ApiResponseService::success("Student Additional Fee Deleted Sucessfully", $deleteAdditionalFees, null, 200);
     }
 
-    public function getStudentAdditionalFees(Request $request, string $studentId)
+    public function getStudentAdditionalFeesStudentId(Request $request, string $studentId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getStudentAdditionalFees = $this->studentAdditionalFeeService->getStudentAdditionalFees($studentId, $currentSchool);
+        $getStudentAdditionalFees = $this->studentAdditionalFeeService->getStudentAdditionalFeesStudentId($studentId, $currentSchool);
         return ApiResponseService::success("Student Addtional Fees Fetched Succesfully", $getStudentAdditionalFees, null, 200);
     }
 
@@ -116,54 +118,70 @@ class StudentAdditionalFeesController extends Controller
     public function bulkDeleteStudentAdditionalFees(AdditionalFeeIdRequest $request)
     {
         try {
-          $bulkDeleteAdditionalFees = $this->studentAdditionalFeeService->bulkDeleteStudentAdditionalFees($request->feeIds);
-          return ApiResponseService::success("Student Additional Fees Deleted Succesfully", $bulkDeleteAdditionalFees, null, 200);
-        }
-        catch (Exception $e) {
+            $bulkDeleteAdditionalFees = $this->studentAdditionalFeeService->bulkDeleteStudentAdditionalFees($request->feeIds);
+            return ApiResponseService::success("Student Additional Fees Deleted Succesfully", $bulkDeleteAdditionalFees, null, 200);
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkDeleteTransaction(AdditionalFeeTransactionIdRequest $request){
-        try{
+    public function bulkDeleteTransaction(AdditionalFeeTransactionIdRequest $request)
+    {
+        try {
             $bulkDeleteTransaction = $this->studentAdditionalFeeService->bulkDeleteTransaction($request->transactionIds);
             return ApiResponseService::success("Transaction Deleted Succesfully", $bulkDeleteTransaction, null, 200);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkReverseTransaction(AdditionalFeeTransactionIdRequest $request){
+    public function bulkReverseTransaction(AdditionalFeeTransactionIdRequest $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        try{
+        try {
             $bulkReverseTransaction = $this->studentAdditionalFeeService->bulkReverseTransaction($request->transactionIds, $currentSchool);
             return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkPayFees(BulkPayAdditionalFeeRequest $request){
+    public function bulkPayFees(BulkPayAdditionalFeeRequest $request)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        try{
+        try {
             $bulkPayFees = $this->studentAdditionalFeeService->bulkPayAdditionalFee($request->additional_fee, $currentSchool);
             return ApiResponseService::success("Additional Fees Paid Succesfully", $bulkPayFees, null, 200);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
 
-    public function bulkUpdateAdditionalFee(BulkUpdateAdditionalFeeRequest $request){
-        try{
-          $currentSchool = $request->attributes->get('currentSchool');
-          $this->studentAdditionalFeeService->bulkUpdateStudentAdditionalFees($request->additional_fee, $currentSchool);
-          return ApiResponseService::success("Additional Fees Updated Successfully", null, null, 200);
-        }
-        catch(Throwable $e){
+    public function bulkUpdateAdditionalFee(BulkUpdateAdditionalFeeRequest $request)
+    {
+        try {
+            $currentSchool = $request->attributes->get('currentSchool');
+            $this->studentAdditionalFeeService->bulkUpdateStudentAdditionalFees($request->additional_fee, $currentSchool);
+            return ApiResponseService::success("Additional Fees Updated Successfully", null, null, 200);
+        } catch (Throwable $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
+    }
+    public function getStudentAdditionalFees(Request $request, $status)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authStudent = $this->resolveUser();
+        $studentAdditionalFees = $this->studentAdditionalFeeService->getStudentAdditionalFees($currentSchool, $authStudent, $status);
+        return ApiResponseService::success("Student Additional Fees Fetched Successfully", $studentAdditionalFees, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

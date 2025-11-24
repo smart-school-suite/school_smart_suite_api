@@ -132,7 +132,7 @@ class EventCategoryService
             );
         }
 
-        if ($eventCategory->status == 'active') {
+        if ($eventCategory->status == true) {
             throw new AppException(
                 "Event category '{$eventCategory->name}' is already active.",
                 409,
@@ -142,7 +142,7 @@ class EventCategoryService
             );
         }
 
-        $eventCategory->status = 'active';
+        $eventCategory->status = true;
         $eventCategory->save();
     }
 
@@ -161,7 +161,7 @@ class EventCategoryService
             );
         }
 
-        if ($eventCategory->status == "inactive") {
+        if ($eventCategory->status == false) {
             throw new AppException(
                 "Event category '{$eventCategory->name}' is already deactivated.",
                 409,
@@ -171,14 +171,14 @@ class EventCategoryService
             );
         }
 
-        $eventCategory->status = 'inactive';
+        $eventCategory->status = false;
         $eventCategory->save();
     }
 
     public function getActiveEventCategory($currentSchool)
     {
         $eventCategories = EventCategory::where("school_branch_id", $currentSchool->id)
-            ->where("status", "active")
+            ->where("status", true)
             ->get();
 
         if ($eventCategories->isEmpty()) {

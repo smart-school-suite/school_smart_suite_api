@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+
 class FeeScheduleSlotService
 {
 
@@ -33,8 +34,8 @@ class FeeScheduleSlotService
         try {
 
             $feeSchedule = FeeSchedule::where('school_branch_id', $currentSchool->id)
-                                      ->with(['specialty', 'level', 'schoolSemester.semester'])
-                                      ->findOrFail($feeScheduleId);
+                ->with(['specialty', 'level', 'schoolSemester.semester'])
+                ->findOrFail($feeScheduleId);
             $scheduleData = [
                 'schoolYear' => $feeSchedule->schoolSemester->school_year,
                 'specialty' => $feeSchedule->specialty->specialty_name,
@@ -77,9 +78,9 @@ class FeeScheduleSlotService
             }
 
             FeeScheduleSlot::insert($slotsToCreate);
-             $feeSchedule->update([
+            $feeSchedule->update([
                 'config_status' => 'configured'
-             ]);
+            ]);
             DB::commit();
             CreateStudentFeeScheduleJob::dispatch($feeScheduleId, $currentSchool->id,  $feeSchedule->specialty->id);
             SendAdminFeeScheduleNotificationJob::dispatch(
@@ -87,12 +88,11 @@ class FeeScheduleSlotService
                 $scheduleData
             );
             SendFeeScheduleNotificationJob::dispatch(
-               $currentSchool->id,
+                $currentSchool->id,
                 $feeSchedule->specialty->id,
                 $scheduleData
             );
             return true;
-
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             Log::error("Fee Schedule (ID: {$feeScheduleId}) not found for school branch (ID: {$currentSchool->id}).", ['exception' => $e]);
@@ -106,8 +106,6 @@ class FeeScheduleSlotService
             Log::error("Failed to create fee schedule slots for Fee Schedule ID: {$feeScheduleId}. Error: " . $e->getMessage(), ['exception' => $e]);
             throw new \Exception("An unexpected error occurred while creating fee schedule slots.", 0, $e);
         }
-
-
     }
     public function updateFeeScheduleSlots(Schoolbranches $currentSchool, string $feeScheduleId, array $slotsData): bool
     {
@@ -116,8 +114,8 @@ class FeeScheduleSlotService
         try {
 
             $feeSchedule = FeeSchedule::where('school_branch_id', $currentSchool->id)
-                                    ->with('specialty')
-                                    ->findOrFail($feeScheduleId);
+                ->with('specialty')
+                ->findOrFail($feeScheduleId);
 
             if (!$feeSchedule->specialty || !isset($feeSchedule->specialty->school_fee)) {
                 throw new \InvalidArgumentException('Fee Schedule or associated Specialty/School Fee data is incomplete. Cannot determine base amount for calculations.');
@@ -132,8 +130,8 @@ class FeeScheduleSlotService
                 }
 
                 $slot = FeeScheduleSlot::where("school_branch_id", $currentSchool->id)
-                                    ->where("fee_schedule_id", $feeScheduleId)
-                                    ->findOrFail($slotData['slot_id']);
+                    ->where("fee_schedule_id", $feeScheduleId)
+                    ->findOrFail($slotData['slot_id']);
 
                 $updatePayload = [];
 
@@ -171,7 +169,6 @@ class FeeScheduleSlotService
             //review this worker its incomplete
             UpdateStudentFeeScheduleJob::dispatch($feeScheduleId, $currentSchool->id,  $feeSchedule->specialty->id);
             return true;
-
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             Log::error("Fee Schedule (ID: {$feeScheduleId}) not found for school branch (ID: {$currentSchool->id}) or a specified slot was not found.", ['exception' => $e]);
@@ -186,21 +183,21 @@ class FeeScheduleSlotService
             throw new \Exception("An unexpected error occurred while updating fee schedule slots.", 0, $e);
         }
     }
-    public function deleteFeeScheduleSlot(string $feeScheduleId, $currentSchool){
+    public function deleteFeeScheduleSlot(string $feeScheduleId, $currentSchool)
+    {
         $feeSchedules = FeeSchedule::where("school_branch_id", $currentSchool->id)
-                                    ->where("fee_schedule_id", $feeScheduleId)
-                                    ->get();
-        foreach($feeSchedules as $feeSchedule){
+            ->where("fee_schedule_id", $feeScheduleId)
+            ->get();
+        foreach ($feeSchedules as $feeSchedule) {
             $feeSchedule->delete();
         }
-
     }
-    public function getFeeScheduleSlots($feeScheduleId, $currentSchool){
+    public function getFeeScheduleSlots($feeScheduleId, $currentSchool)
+    {
         $getFeeScheduleSlots = FeeScheduleSlot::where("school_branch_id", $currentSchool->id)
-                                               ->where("fee_schedule_id", $feeScheduleId)
-                                               ->with(['installment'])
-                                               ->get();
+            ->where("fee_schedule_id", $feeScheduleId)
+            ->with(['installment'])
+            ->get();
         return $getFeeScheduleSlots;
-
     }
 }

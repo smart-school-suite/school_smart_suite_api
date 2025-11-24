@@ -13,7 +13,7 @@ Route::middleware(['permission:schoolAdmin.additionalFee.view'])->get('/', [Stud
     ->name('student-additional-fees.index');
 
 // Get additional fees for a specific student
-Route::middleware(['permission:schoolAdmin.additionalFee.view.student|student.additionalFee.view.student'])->get('/students/{studentId}/additional-fees', [StudentAdditionalFeesController::class, 'getStudentAdditionalFees'])
+Route::middleware(['permission:schoolAdmin.additionalFee.view.student|student.additionalFee.view.student'])->get('/students/{studentId}/additional-fees', [StudentAdditionalFeesController::class, 'getStudentAdditionalFeesStudentId'])
     ->name('students.additional-fees.index');
 
 // Update a specific student additional fee
@@ -65,3 +65,4 @@ Route::middleware(['permission:schoolAdmin.additionalFee.transactions.delete'])-
     ->name('additional-fee-transactions.bulk-delete');
 
 Route::patch('/bulk-update', [StudentAdditionalFeesController::class, "bulkUpdateAdditionalFee"])->name('bulk.update.additional.fee');
+Route::get('/student/additional-fees/status/{status}', [StudentAdditionalFeesController::class, "getStudentAdditionalFees"])->name("get.student.additionalfee");
