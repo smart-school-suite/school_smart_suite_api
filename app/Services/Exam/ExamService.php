@@ -19,7 +19,7 @@ use App\Exceptions\AppException;
 use App\Models\ResitExam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use App\Models\Grades;
 class ExamService
 {
     public function createExam(array $data, $currentSchool)
@@ -425,7 +425,112 @@ class ExamService
     }
 
 
+        public function getExamsByStudentIdSemesterId($currentSchool, $studentId, $semesterId)
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
+            ->findOrFail($studentId);
+        $examQueryConstraints = [
+            ['school_branch_id', $currentSchool->id],
+            ['specialty_id', $student->specialty_id],
+            ['level_id', $student->level_id],
+            ['semester_id', $semesterId],
+        ];
 
+        $relationshipsToLoad = ['semester', 'examtype', 'specialty', 'level'];
+
+        $exams = Exams::where($examQueryConstraints)
+            ->with($relationshipsToLoad)
+            ->get();
+
+        $resitExams = ResitExam::where($examQueryConstraints)
+            ->with($relationshipsToLoad)
+            ->get();
+
+        $allExams = $exams->merge($resitExams);
+
+        $examItems = $allExams->map(function ($exam) {
+            $item = [
+                "exam_name"         => $exam->examtype->exam_name ?? null,
+                "exam_id"           => $exam->id,
+                "level_id"          => $exam->level_id,
+                "level_name"        => $exam->level?->name ?? null,
+                "specialty_id"      => $exam->specialty_id,
+                "specialty_name"    => $exam->specialty?->specialty_name ?? null,
+                "description"       => $exam->examtype->description ?? null,
+                "exam_type_id"      => $exam->exam_type_id,
+                "student_batch_id"  => $exam->student_batch_id,
+                "timetable_created" => (bool) $exam->timetable_published,
+                "result_released"   => (bool) $exam->result_released,
+                "start_date"        => $exam->start_date,
+                "end_date"          => $exam->end_date,
+                "result_message"    => null,
+            ];
+
+            if ($exam->result_released == true) {
+                $item["result_message"] = [
+                    "id"    => (string) Str::uuid(),
+                    "title" => ($exam->examtype->exam_name ?? 'Exam') . " Results Are Out!",
+                    "body"  => "Well done on completing the exams! Your results are ready.",
+                ];
+            }
+
+            return $item;
+        });
+
+        $semester = Semester::find($semesterId);
+
+        $result = [
+            "semester"   => $semester?->name ?? "Semester",
+            "semesterId" => $semesterId,
+            "exams"      => $examItems->values()->all()
+        ];
+
+        return $result;
+    }
+    public function getExamGradeScale(string $examId, $currentSchool)
+    {
+        $exam = Exams::where('school_branch_id', $currentSchool->id)
+            ->with([
+                'examtype',
+                'semester',
+                'level',
+                'specialty'
+            ])
+            ->findOrFail($examId);
+
+        $grades = Grades::where('school_branch_id', $currentSchool->id)
+            ->where('grades_category_id', $exam->grades_category_id)
+            ->with('lettergrade')
+            ->orderBy('minimum_score', 'desc')
+            ->get();
+
+        $gradeScale = $grades->map(function ($grade) {
+            return [
+                "id"             => $grade->id,
+                "minimum_score"  => (float) $grade->minimum_score,
+                "maximum_score"  => (float) $grade->maximum_score,
+                "grade_status"   => $grade->grade_status ?? "N/A",
+                "grade"          => $grade->lettergrade?->letter_grade ?? "N/A",
+                "determinant"    => $grade->determinant ?? "N/A",
+                "grade_points"  => (float) $grade->grade_points,
+            ];
+        })->values();
+
+        $result = [
+            "exam" => [
+                "exam_id"         => $exam->id,
+                "exam_name"       => $exam->examtype?->exam_name ?? "Unnamed Exam",
+                "exam_type"       => $exam->examtype?->type ?? "Unnamed Type",
+                "semester"        => $exam->semester?->name ?? "Unknown Semester",
+                "semester_id"     => $exam->semester_id,
+                "level_name"      => $exam->level?->name ?? "N/A",
+                "specialty_name"  => $exam->specialty?->specialty_name ?? "N/A",
+            ],
+            "grade_scale" => $gradeScale
+        ];
+
+        return $result;
+    }
     public function getUpcomingExams($currentSchool, $student)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
@@ -467,8 +572,8 @@ class ExamService
                 "exam_name"          => $exam->examtype?->exam_name ?? "Upcoming Exam",
                 'description'        => $exam->examtype?->description ?? null,
                 "semester"           => $exam->semester?->name ?? "Unknown Semester",
-                "start_date"         => $exam->start_date?->format('Y-m-d'),
-                "end_date"           => $exam->end_date?->format('Y-m-d'),
+                "start_date"         => $exam->start_date,
+                "end_date"           => $exam->end_date,
                 "timetable_published" => (bool) $exam->timetable_published,
             ]);
         });
@@ -479,13 +584,82 @@ class ExamService
                 "exam_name"          => $exam->examtype?->exam_name ?? "Resit Exam",
                 'description'        => $exam->examtype?->description ?? null,
                 "semester"           => $exam->semester?->name ?? "Unknown Semester",
-                "start_date"         => $exam->start_date?->format('Y-m-d'),
-                "end_date"           => $exam->end_date?->format('Y-m-d'),
+                "start_date"         => $exam->start_date,
+                "end_date"           => $exam->end_date,
                 "timetable_published" => (bool) $exam->timetable_published,
             ]);
         });
 
         $sorted = $allUpcoming->sortBy('start_date')->values();
         return $sorted;
+    }
+
+       public function getAllExamsByStudentId($currentSchool, $studentId)
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
+            ->findOrFail($studentId);
+
+        $examQueryConstraints = [
+            ['school_branch_id', $currentSchool->id],
+            ['specialty_id', $student->specialty_id],
+            ['level_id', $student->level_id],
+        ];
+
+        $relationshipsToLoad = ['semester', 'examtype', 'specialty', 'level'];
+
+        $exams = Exams::where($examQueryConstraints)
+            ->with($relationshipsToLoad)
+            ->get();
+
+        $resitExams = ResitExam::where($examQueryConstraints)
+            ->with($relationshipsToLoad)
+            ->get();
+
+        $allExams = $exams->merge($resitExams);
+
+        $grouped = $allExams->groupBy('semester_id');
+
+        $result = $grouped->map(function ($examsInSemester) {
+            $firstExam = $examsInSemester->first();
+            $semester = $firstExam->semester;
+
+            $semesterExams = $examsInSemester->map(function ($exam) {
+                $item = [
+                    "exam_name"         => $exam->examtype->exam_name ?? null,
+                    "exam_id"           => $exam->id,
+                    "level_id"          => $exam->level_id,
+                    "level_name"        => $exam->level?->name ?? null,
+                    "specialty_id"      => $exam->specialty_id,
+                    "specialty_name"    => $exam->specialty?->specialty_name ?? null,
+                    "description"       => $exam->examtype->description ?? null,
+                    "exam_type_id"      => $exam->exam_type_id,
+                    "student_batch_id"  => $exam->student_batch_id,
+                    "timetable_created" => (bool) $exam->timetable_published,
+                    "result_released"   => (bool) $exam->result_released,
+                    "start_date"        => $exam->start_date,
+                    "end_date"          => $exam->end_date,
+                    "result_message"    => null,
+                ];
+
+                if ($exam->result_released == true) {
+                    $item["result_message"] = [
+                        "id"    => (string) Str::uuid(),
+                        "title" => ($exam->examtype->exam_name ?? 'Exam') . " Results Are Out",
+                        "body"  => "Well done on completing the exams! Your results are ready.",
+                    ];
+                }
+
+                return $item;
+            });
+
+
+            return [
+                "semester"   => $semester?->name ?? 'Unknown Semester',
+                "semesterId" => $semester?->id ?? $firstExam->semester_id,
+                "exams"      => $semesterExams->values()->all()
+            ];
+        })->values()->all();
+
+        return $result;
     }
 }

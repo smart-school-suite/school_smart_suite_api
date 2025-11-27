@@ -82,4 +82,23 @@ class ElectionApplicationController extends Controller
         $applicationDetails = $this->electionApplicationService->getApplicationDetails($applicationId, $currentSchool);
         return ApiResponseService::success("Application Details Fetched Successfully", $applicationDetails, null, 200);
     }
+
+    public function getStudentElectionApplication(Request $request, $electionId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $student = $this->resolveUser();
+        $electionApplications = $this->electionApplicationService->getStudentElectionApplications($currentSchool, $student, $electionId);
+        return ApiResponseService::success("Election Applications Fetched Successfully", $electionApplications, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

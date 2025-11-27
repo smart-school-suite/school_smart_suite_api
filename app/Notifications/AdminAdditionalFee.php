@@ -7,7 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Laravel\Firebase\Facades\FirebaseMessaging;
 class AdminAdditionalFee extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -28,7 +29,7 @@ class AdminAdditionalFee extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['mail', 'database', 'broadcast'];
+        return ['mail', 'database', 'broadcast', 'fcm'];
     }
 
     public function toMail($notifiable)
@@ -57,5 +58,18 @@ class AdminAdditionalFee extends Notification implements ShouldQueue
             'title' => 'Student Charged Additional Fee',
             'body' => "{$this->studentName} incurred ₦{$this->amount} for: {$this->reason}.",
         ]);
+    }
+
+    public function toFcm($notifiable)
+    {
+        return CloudMessage::new()
+            ->withNotification([
+                'title' => 'New Fee Charged',
+                'body'  => "{$this->studentName} was charged XAF {$this->amount}",
+            ])
+            ->withData([
+                'type' => 'fee',
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ]);
     }
 }

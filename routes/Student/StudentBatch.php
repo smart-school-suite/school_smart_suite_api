@@ -1,7 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StudentBatchcontroller;
-
+use App\Http\Controllers\StudentBatch\StudentBatchController;
 // Create a new student batch
     Route::middleware(['permission:schoolAdmin.student.batch.create'])->post('/', [StudentBatchController::class, 'createStudentBatch'])
         ->name('student-batches.store');

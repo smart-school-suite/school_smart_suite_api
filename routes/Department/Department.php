@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\Department\DepartmentController;
 // Create a new department
     Route::middleware(['permission:schoolAdmin.department.create'])->post('/', [DepartmentController::class, 'createDepartment'])
         ->name('departments.store');

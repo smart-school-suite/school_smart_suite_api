@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 use App\Models\TuitionFeeTransactions;
 use App\Notifications\TuitionFeePaid;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\RegistrationFeeTransactions;
+use App\Models\AdditionalFeeTransactions;
 use App\Exceptions\AppException;
 use Throwable;
 
@@ -137,5 +139,73 @@ class TuitionFeePaymentService
                 null
             );
         }
+    }
+    public function getStudentFinancialTransactions($currentSchool, $student)
+    {
+        $schoolBranchId = $currentSchool->id;
+        $studentId      = $student->id;
+        $studentName    = $student->name;
+
+        // 1. Tuition Fee Transactions
+        $tuitionTransactions = TuitionFeeTransactions::where('school_branch_id', $schoolBranchId)
+            ->whereHas('tuition', function ($q) use ($studentId) {
+                $q->where('student_id', $studentId);
+            })
+            ->with('tuition')
+            ->get()
+            ->map(function ($txn) use ($studentName) {
+                return [
+                    'id'              => $txn->id,
+                    'payer_name'      => $studentName,
+                    'transaction_id'  => $txn->transaction_id ?? 'N/A',
+                    'payment_date'    => $txn->created_at,
+                    'payment_title'   => 'Tuition Fee',
+                    'payment_method'  => $txn->payment_method ?? 'Unknown',
+                    'amount'          => $txn->amount,
+                ];
+            });
+        $additionalTransactions = AdditionalFeeTransactions::where('school_branch_id', $schoolBranchId)
+            ->whereHas('additionFee', function ($q) use ($studentId) {
+                $q->where('student_id', $studentId);
+            })
+            ->with('additionFee.feeCategory')
+            ->get()
+            ->map(function ($txn) use ($studentName) {
+                $categoryTitle = $txn->additionFee?->feeCategory?->title ?? 'Additional Fee';
+                return [
+                    'id'              => $txn->id,
+                    'payer_name'      => $studentName,
+                    'transaction_id'  => $txn->transaction_id ?? 'N/A',
+                    'payment_date'    => $txn->created_at,
+                    'payment_title'   => $categoryTitle,
+                    'payment_method'  => $txn->payment_method ?? 'Unknown',
+                    'amount'          =>  $txn->amount,
+                ];
+            });
+        $registrationTransactions = RegistrationFeeTransactions::where('school_branch_id', $schoolBranchId)
+            ->whereHas('registrationFee', function ($q) use ($studentId) {
+                $q->where('student_id', $studentId);
+            })
+            ->with('registrationFee')
+            ->get()
+            ->map(function ($txn) use ($studentName) {
+                return [
+                    'id'              => $txn->id,
+                    'payer_name'      => $studentName,
+                    'transaction_id'  => $txn->transaction_id ?? 'N/A',
+                    'payment_date'    => $txn->created_at,
+                    'payment_title'   => 'Registration Fee',
+                    'payment_method'  => $txn->payment_method ?? 'Unknown',
+                    'amount'          => $txn->amount,
+                ];
+            });
+        $allTransactions = collect()
+            ->merge($tuitionTransactions)
+            ->merge($additionalTransactions)
+            ->merge($registrationTransactions)
+            ->sortByDesc('payment_date')
+            ->values();
+
+        return $allTransactions;
     }
 }

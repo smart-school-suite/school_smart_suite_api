@@ -11,7 +11,8 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
+use App\Models\Student;
+use Illuminate\Database\Eloquent\Collection;
 class CourseService
 {
     public function createCourse(array $data, $currentSchool): Courses
@@ -352,7 +353,8 @@ class CourseService
         }
         return $courses;
     }
-    public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
+
+        public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
     {
         try {
             $schoolSemester = SchoolSemester::findOrFail($semesterId);
@@ -390,5 +392,133 @@ class CourseService
                 "/details"
             );
         }
+    }
+    public function getAllCoursesByStudentId(object $currentSchool, string $studentId): array
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
+            ->find($studentId);
+
+        if (!$student) {
+            throw new AppException(
+                "Student Not Found",
+                404,
+                "Student Retrieval Error",
+                "The student ID {$studentId} could not be found in this school branch. Please verify the ID.",
+                "/students"
+            );
+        }
+
+        if (empty($student->specialty_id) || empty($student->level_id)) {
+            throw new AppException(
+                "Student Profile Incomplete",
+                400,
+                "Course Matching Failed",
+                "The student's specialty or level information is missing, preventing course assignment lookup.",
+                "/students/profile"
+            );
+        }
+
+        $courses = Courses::where('school_branch_id', $currentSchool->id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->where("status", "active")
+            ->with('semester')
+            ->get();
+
+        if ($courses->isEmpty()) {
+            throw new AppException(
+                "No Active Courses Found",
+                404,
+                "Courses Not Configured",
+                "No courses are currently configured for the student's specialty and level in this school branch.",
+                "/courses/configuration"
+            );
+        }
+
+        $groupedCourses = $this->groupAndFormatCourses($courses);
+
+        if (empty($groupedCourses)) {
+            throw new AppException(
+                "Course Grouping Failed",
+                500,
+                "Internal Processing Error",
+                "Courses were found, but the system failed to organize them by semester. Check the 'semester' relationship.",
+                "/system/logs"
+            );
+        }
+
+        return $groupedCourses;
+    }
+    public function getCoursesByStudentIdSemesterId($currentSchool, string $studentId, string $semesterId){
+          $student = Student::where('school_branch_id', $currentSchool->id)
+            ->find($studentId);
+
+        if (!$student) {
+            throw new AppException(
+                "Student Not Found",
+                404,
+                "Student Retrieval Error",
+                "The student ID {$studentId} could not be found in this school branch. Please verify the ID.",
+                "/students"
+            );
+        }
+
+        if (empty($student->specialty_id) || empty($student->level_id)) {
+            throw new AppException(
+                "Student Profile Incomplete",
+                400,
+                "Course Matching Failed",
+                "The student's specialty or level information is missing, preventing course assignment lookup.",
+                "/students/profile"
+            );
+        }
+
+        $courses = Courses::where('school_branch_id', $currentSchool->id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->where("semester_id", $semesterId)
+            ->where("status", "active")
+            ->with('semester')
+            ->get();
+
+        if ($courses->isEmpty()) {
+            throw new AppException(
+                "No Active Courses Found",
+                404,
+                "Courses Not Configured",
+                "No courses are currently configured for the student's specialty and level in this school branch.",
+                "/courses/configuration"
+            );
+        }
+
+        return $courses;
+    }
+       protected function groupAndFormatCourses(Collection $courses): array
+    {
+        $grouped = $courses->groupBy(function ($course) {
+            return optional($course->semester)->name ?? 'Unassigned Semester';
+        });
+
+        $formatted = $grouped->map(function (Collection $coursesInSemester, string $semesterName) {
+            $firstCourse = $coursesInSemester->first();
+            $semesterId = optional($firstCourse)->semester_id;
+
+            return [
+                'semesterId' => $semesterId,
+                'semester' => $semesterName,
+                'courses' => $coursesInSemester->map(function ($course) {
+                    return $course->only([
+                        'id',
+                        'course_code',
+                        'course_title',
+                        'credit',
+                        'description',
+                        'status'
+                    ]);
+                })->toArray(),
+            ];
+        })->values();
+
+        return $formatted->toArray();
     }
 }

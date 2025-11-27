@@ -19,7 +19,7 @@ class AdditionalFeeTransactions extends Model
         'school_branch_id'
     ];
 
-    protected $cast = [
+    protected $casts = [
          'amount' => 'decimal:2'
     ];
     public $keyType = 'string';

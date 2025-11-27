@@ -10,7 +10,8 @@ use App\Models\Elections;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
+use Carbon\Carbon;
+use App\Models\ElectionParticipants;
 class ElectionRoleService
 {
     public function createElectionRole(array $data, $currentSchool)
@@ -381,6 +382,16 @@ class ElectionRoleService
 
         return $electionRoles;
     }
+
+        public function getElectionRoles($currentSchool, $electionId)
+    {
+        $election = Elections::findOrFail($electionId);
+        $electionRoles = ElectionRoles::where('school_branch_id', $currentSchool->id)
+            ->where('election_type_id', $election->election_type_id)
+            ->with(['electionType'])
+            ->get();
+        return $electionRoles;
+    }
     public function getElectionRolesByElection($currentSchool, $electionId)
     {
         try {
@@ -688,4 +699,68 @@ class ElectionRoleService
         );
     }
 }
+
+    public function getStudentElectionRoles($currentSchool, $student, $electionId)
+    {
+        $now = Carbon::now();
+        $schoolBranchId = $currentSchool->id;
+
+        $participant = ElectionParticipants::where('school_branch_id', $schoolBranchId)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->where('election_id', $electionId)
+            ->with([
+                'election.electionType',
+                'election.electionRoles' => function ($q) {
+                    $q->orderBy('order');
+                }
+            ])
+            ->first();
+
+        if (!$participant || !$participant->election) {
+            throw new AppException(
+                "Not Eligible",
+                403,
+                "You are not eligible for this election",
+                "Your specialty or level is not part of this election."
+            );
+        }
+
+        $election = $participant->election;
+        $electionType = $election->electionType;
+
+        $applicationOpen = $now->between($election->application_start, $election->application_end);
+        $votingOpen      = $now->between($election->voting_start, $election->voting_end);
+
+        if (!$applicationOpen && !$votingOpen) {
+            throw new AppException(
+                "Election Closed",
+                410,
+                "This election is no longer active",
+                "Application and voting periods have ended."
+            );
+        }
+
+        $roles = $election->electionRoles->map(function ($role) {
+            return [
+                'role_id'          => $role->id,
+                'role_title'       => $role->title,
+                'max_candidates'   => $role->max_candidates ?? 1,
+                'description'      => $role->description ?? null,
+            ];
+        })->values();
+
+        return [
+            'election_id'         => $election->id,
+            'election_name'       => $electionType?->election_title ?? 'Untitled Election',
+            'description'         => $electionType?->description ?? 'No description available',
+            'application_start'   => $election->application_start,
+            'application_end'     => $election->application_end,
+            'voting_start'        => $election->voting_start,
+            'voting_end'          => $election->voting_end,
+            'is_application_open' => $applicationOpen,
+            'is_voting_open'      => $votingOpen,
+            'roles'               => $roles,
+        ];
+    }
 }

@@ -461,7 +461,6 @@ class EventService
 
         return $tags;
     }
-
     public function getStudentUpcomingEvents($currentSchool, $student)
     {
         $now = Carbon::now();

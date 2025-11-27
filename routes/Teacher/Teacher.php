@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TeacherController;
-
+use App\Http\Controllers\Teacher\TeacherController;
 // Get all teachers/instructors
 Route::middleware(['permission:schoolAdmin.teacher.view'])->get('/teachers', [TeacherController::class, 'getInstructors'])
     ->name('teachers.index');

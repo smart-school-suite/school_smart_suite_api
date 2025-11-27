@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdditionalFeeCategoryController;
-
+use App\Http\Controllers\AdditionalFee\AdditionalFeeCategoryController;
 // Create a new additional fee category
 Route::middleware(['permission:schoolAdmin.additionalFeeCategory.create'])->post('/', [AdditionalFeeCategoryController::class, 'createAddtionalFeeCategory'])
     ->name('additional-fee-categories.store');

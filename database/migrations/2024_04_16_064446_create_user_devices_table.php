@@ -18,7 +18,6 @@ return new class extends Migration
             $table->index(['devicesable_type', 'devicesable_id']);
             $table->string('device_token')->unique();
             $table->string('platform')->nullable();
-            $table->string('app_version')->nullable();
             $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
         });

@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Middleware\IdentifyTenant;
-use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RBAC\RoleController;
 
 // Create a new role
 Route::middleware(['permission:appAdmin.role.create'])->post('/', [RoleController::class, 'createRole'])

@@ -1,7 +1,8 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PermissionController;
 use App\Http\Middleware\IdentifyTenant;
+use App\Http\Controllers\RBAC\PermissionController;
+
 
 // Create a new permission
 Route::middleware(['permission:appAdmin.permission.create'])->post('/', [PermissionController::class, 'createPermission'])

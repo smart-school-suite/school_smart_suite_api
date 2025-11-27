@@ -42,4 +42,8 @@ class TuitionFees extends Model
         return $this->belongsTo(Educationlevels::class , 'level_id');
     }
 
+    public function tuitionFeeTransactions(): HasMany {
+         return $this->hasMany(TuitionFeeTransactions::class);
+    }
+
 }

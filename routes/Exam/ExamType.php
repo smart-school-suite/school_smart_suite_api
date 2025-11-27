@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ExamTypecontroller;
+use App\Http\Controllers\ExamType\ExamTypeController;
 use App\Http\Middleware\IdentifyTenant;
 
 // Create a new exam type

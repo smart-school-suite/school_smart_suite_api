@@ -19,7 +19,7 @@ class RegistrationFeeTransactions extends Model
         'transaction_id',
     ];
 
-    protected $cast = [
+    protected $casts = [
         'amount' => 'decimal:2'
     ];
 

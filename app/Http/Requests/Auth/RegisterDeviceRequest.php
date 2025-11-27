@@ -18,9 +18,8 @@ class RegisterDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-           'device_token' => 'required|string|unique:user_devices,device_token',
-            'platform' => 'nullable|string|in:andriod,ios,desktop',
-            'app_version' => 'nullable|string',
+            'device_token' => 'required|string|unique:user_devices,device_token',
+            'platform' => 'required|string|in:andriod,ios,desktop',
         ];
     }
 }

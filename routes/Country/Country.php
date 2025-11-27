@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CountryController;
+use App\Http\Controllers\Country\CountryController;
 // Publicly accessible route
 Route::get('/', [CountryController::class, 'getCountries'])
     ->name('countries.index');

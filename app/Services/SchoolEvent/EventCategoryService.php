@@ -98,6 +98,7 @@ class EventCategoryService
         }
 
         $eventCategory->delete();
+        return $eventCategory;
     }
     public function getEventCategory($currentSchool)
     {
@@ -144,6 +145,7 @@ class EventCategoryService
 
         $eventCategory->status = true;
         $eventCategory->save();
+        return $eventCategory;
     }
 
     public function deactivateEventCategory($currentSchool, $eventCategoryId)
@@ -173,6 +175,7 @@ class EventCategoryService
 
         $eventCategory->status = false;
         $eventCategory->save();
+        return $eventCategory;
     }
 
     public function getActiveEventCategory($currentSchool)
@@ -194,21 +197,21 @@ class EventCategoryService
         return $eventCategories;
     }
 
-public function getEventCategoryDetails($currentSchool, $eventCategoryId)
-{
-    $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
-        ->find($eventCategoryId);
+    public function getEventCategoryDetails($currentSchool, $eventCategoryId)
+    {
+        $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+            ->find($eventCategoryId);
 
-    if (!$eventCategory) {
-        throw new AppException(
-            "Event category ID '{$eventCategoryId}' not found for school branch ID '{$currentSchool->id}'.",
-            404,
-            "Event Category Not Found 🧐",
-            "We couldn't find the details for the specific event category you requested. Please verify the Category ID is correct and belongs to your school branch.",
-            null
-        );
+        if (!$eventCategory) {
+            throw new AppException(
+                "Event category ID '{$eventCategoryId}' not found for school branch ID '{$currentSchool->id}'.",
+                404,
+                "Event Category Not Found 🧐",
+                "We couldn't find the details for the specific event category you requested. Please verify the Category ID is correct and belongs to your school branch.",
+                null
+            );
+        }
+
+        return $eventCategory;
     }
-
-    return $eventCategory;
-}
 }

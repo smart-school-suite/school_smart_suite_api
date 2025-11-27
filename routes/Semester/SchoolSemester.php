@@ -1,8 +1,8 @@
 <?php
 
 use illuminate\Support\Facades\Route;
-use App\Http\Middleware\IdentifyTenant;
-use App\Http\Controllers\SchoolSemesterController;
+use App\Http\Controllers\Semester\SchoolSemesterController;
+
 
 Route::middleware(['permission:schoolAdmin.schoolSemester.create'])->post('/', [SchoolSemesterController::class, 'createSchoolSemester'])
 ->name('school-semesters.store');

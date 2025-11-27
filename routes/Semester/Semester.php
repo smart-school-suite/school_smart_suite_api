@@ -1,7 +1,7 @@
 <?php
 use illuminate\Support\Facades\Route;
 use App\Http\Middleware\IdentifyTenant;
-use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\Semester\SemesterController;
 
 // Create a new semester
 Route::middleware(['permission:appAdmin.semester.create'])->post('/', [SemesterController::class, 'createSemester'])

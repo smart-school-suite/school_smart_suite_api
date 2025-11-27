@@ -18,6 +18,9 @@ class TuitionFeeTransactions extends Model
         'school_branch_id'
     ];
 
+    public $casts = [
+         'amount' => 'decimal:2'
+    ];
     public $incrementing = 'false';
     public $keyType = 'string';
     public $table = 'tuition_fee_transactions';

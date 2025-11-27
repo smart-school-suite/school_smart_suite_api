@@ -23,7 +23,6 @@ class HallService
         }
         Hall::create([
             'school_branch_id' => $currentSchool->id,
-            'is_exam_hall' => $data['is_exam_hall'],
             'name' => $data['name'],
             'capacity' => $data['capacity'],
             'location' => $data['location']

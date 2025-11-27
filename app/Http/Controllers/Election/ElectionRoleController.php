@@ -98,10 +98,29 @@ class ElectionRoleController extends Controller
         return ApiResponseService::success("Active Roles Fetch Successfully", $getActiveRole, null, 200);
     }
 
-    public function getElectionRoleDetails(Request $request, $electionRoleId){
-          $currentSchool = $request->attributes->get("currentSchool");
-          $electionRoleDetails = $this->electionRoleService->getElectionRoleDetails($electionRoleId, $currentSchool);
-          return ApiResponseService::success("Election Role Details Fetched Successfully", $electionRoleDetails, null, 200);
+    public function getElectionRoleDetails(Request $request, $electionRoleId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $electionRoleDetails = $this->electionRoleService->getElectionRoleDetails($electionRoleId, $currentSchool);
+        return ApiResponseService::success("Election Role Details Fetched Successfully", $electionRoleDetails, null, 200);
     }
 
+    public function getStudentElectionRoles(Request $request, $electionId)
+    {
+        $student = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $getElectionRoles = $this->electionRoleService->getStudentElectionRoles($currentSchool, $student, $electionId);
+        return ApiResponseService::success("Election Roles Fetched Successfully", $getElectionRoles, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

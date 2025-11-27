@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use App\Exceptions\AppException;
+use Exception;
 
 class ElectionService
 {
@@ -184,7 +185,7 @@ class ElectionService
     public function getElections($currentSchool)
     {
         $elections = Elections::where('school_branch_id', $currentSchool->id)
-             ->where("status", "!=", "finished")
+            ->where("status", "!=", "finished")
             ->with(['electionType'])
             ->get();
 
@@ -389,5 +390,92 @@ class ElectionService
         }
 
         return $pastElections;
+    }
+    public function addAllowedElectionParticipants(array $electionParticipantsList, $currentSchool)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($electionParticipantsList as $electionParticipant) {
+                $allowedParticipants = ElectionParticipants::create([
+                    'specialty_id' => $electionParticipant['specialty_id'],
+                    'election_id' => $electionParticipant['election_id'],
+                    'level_id' => $electionParticipant['level_id'],
+                    'school_branch_id' => $currentSchool->id
+                ]);
+                $result[] = $allowedParticipants;
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function getAllowedElectionParticipants($currentSchool, $electionId)
+    {
+        $electionParticipants = ElectionParticipants::where("school_branch_id", $currentSchool->id)
+            ->where("election_id", $electionId)
+            ->with(['Specialty', 'level'])
+            ->get();
+        return $electionParticipants;
+    }
+    public function addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            $electionParticipants = ElectionParticipants::where("election_id", $targetElectionId)->get();
+            foreach ($electionParticipants as $electionParticipant) {
+                $allowedParticipants = ElectionParticipants::create([
+                    'specialty_id' => $electionParticipant['specialty_id'],
+                    'election_id' => $electionId,
+                    'level_id' => $electionParticipant['level_id'],
+                    'school_branch_id' => $currentSchool->id
+                ]);
+                $result[] = $allowedParticipants;
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function upcomingElectionByStudent($currentSchool, $student)
+    {
+        $now = Carbon::now();
+        $elections = ElectionParticipants::where('school_branch_id', $currentSchool->id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->with(['election.electionType'])
+            ->get()
+            ->pluck('election')
+            ->filter(function ($election) use ($now) {
+                return $election->application_end >= $now || $election->voting_end >= $now;
+            })
+            ->unique('id')
+            ->values();
+
+        $formatted = $elections->map(function ($election) use ($now) {
+            $applicationOpen = $now->between($election->application_start, $election->application_end);
+            $votingOpen      = $now->between($election->voting_start, $election->voting_end);
+
+            if (!$applicationOpen && !$votingOpen) {
+                return null;
+            }
+
+            return [
+                "election_name"          => $election->electionType?->election_title ?? "Untitled Election",
+                "application_start_date"   => $election->application_start?->format('Y-m-d'),
+                "application_end_date"   => $election->application_end?->format('Y-m-d'),
+                "election_id"            => $election->id,
+                "description"            => $election->electionType?->description ?? "No description available",
+                "vote"                   => $votingOpen,
+                "application"            => $applicationOpen
+            ];
+        })->filter()->values();
+
+        return $formatted;
     }
 }

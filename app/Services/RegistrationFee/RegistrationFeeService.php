@@ -125,4 +125,13 @@ class RegistrationFeeService
             );
         }
     }
+
+        public function getStudentRegistratonFees($currentSchool, $student)
+    {
+        $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->with(['specialty', 'level'])
+            ->get();
+        return $registrationFees;
+    }
 }

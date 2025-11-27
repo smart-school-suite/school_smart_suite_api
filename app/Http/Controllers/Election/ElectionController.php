@@ -9,6 +9,8 @@ use App\Http\Requests\Election\CreateElectionRequest;
 use App\Http\Requests\Election\UpdateElectionRequest;
 use App\Http\Resources\ElectionResource;
 use App\Services\ApiResponseService;
+use App\Http\Requests\Election\AddElectionParticipantsRequest;
+use Exception;
 
 class ElectionController extends Controller
 {
@@ -52,9 +54,59 @@ class ElectionController extends Controller
         return ApiResponseService::success("Election Updated Successfully", $updateElection, null, 200);
     }
 
-    public function getPastElections(Request $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $pastElectionResults = $this->electionService->getPastElection($currentSchool);
-         return ApiResponseService::success("Past Elections Fetched Successfully", ElectionResource::collection( $pastElectionResults), null, 200);
+    public function getPastElections(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $pastElectionResults = $this->electionService->getPastElection($currentSchool);
+        return ApiResponseService::success("Past Elections Fetched Successfully", ElectionResource::collection($pastElectionResults), null, 200);
+    }
+
+    public function getUpcomingElectionsByStudent(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $student = $this->resolveUser();
+        $elections = $this->electionService->upcomingElectionByStudent($currentSchool, $student);
+        return ApiResponseService::success("Upcoming Elections Fetched Successfully", $elections, null, 200);
+    }
+
+    public function addAllowedParticipantsByOtherElection(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $targetElectionId = $request->route('targetElectionId');
+        $electionId = $request->route('electionId');
+        try {
+            $addAllowedParticipants = $this->electionService->addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId);
+            return ApiResponseService::success("Allowed Participants Added Successfully", $addAllowedParticipants, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+
+    public function getAllowedParticipants(Request $request, $electionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $allowedParticipants = $this->electionService->getAllowedElectionParticipants($currentSchool, $electionId);
+        return ApiResponseService::success("Allowed Participants Fetched Successfully", $allowedParticipants, null, 200);
+    }
+
+    public function addAllowedParticipants(AddElectionParticipantsRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        try {
+            $addAllowedParticipants = $this->electionService->addAllowedElectionParticipants($request->election_participants, $currentSchool);
+            return ApiResponseService::success("Allowed Election Participants Added Successfully", $addAllowedParticipants, null, 200);
+        } catch (Exception $e) {
+            return ApiResponseService::error($e->getMessage(), null, 400);
+        }
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

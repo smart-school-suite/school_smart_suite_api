@@ -15,6 +15,7 @@ class Hall extends Model
         'name',
         'capacity',
         'status',
+        'type',
         'location',
         'school_branch_id',
         'is_exam_hall'

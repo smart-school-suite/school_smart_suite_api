@@ -1,7 +1,7 @@
 <?php
 
 use illuminate\Support\Facades\Route;
-use App\Http\Controllers\SpecialtyController;
+use App\Http\Controllers\Specialty\SpecialtyController;
 
 // Create a new specialty
 Route::middleware(['permission:schoolAdmin.specialty.create'])->post('/', [SpecialtyController::class, 'createSpecialty'])

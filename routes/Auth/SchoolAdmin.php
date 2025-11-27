@@ -9,7 +9,7 @@ use App\Http\Controllers\Auth\SchoolAdmin\CreatesSchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\GetAuthSchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\ValidateOtpController;
 use App\Http\Controllers\Auth\SchoolAdmin\PasswordResetController;
-use App\Http\Controllers\SchoolAdminController;
+use App\Http\Controllers\SchoolAdmin\SchoolAdminController;
 
 
 // Login

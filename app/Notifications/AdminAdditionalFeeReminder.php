@@ -4,83 +4,82 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class AdminAdditionalFeeReminder extends Notification
+class AdminAdditionalFeeReminder extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $unpaidFeesData;
+    public $tries = 3;
+    public $backoff = [60, 300, 600];
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(array $unpaidFeesData)
+    protected array $data;
+
+    public function __construct(array $data)
     {
-        $this->unpaidFeesData = $unpaidFeesData;
+        $this->data = $data;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function via($notifiable): array
     {
         return ['mail', 'database', 'broadcast'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
+    // Unified message used in all channels
+    private function getMessage(): string
     {
-        $count = $this->unpaidFeesData['count'] ?? 0;
-        $totalAmount = number_format($this->unpaidFeesData['total_amount'] ?? 0, 2);
-        $feesUrl = url('/admin/fees/additional?status=unpaid');
+        $count        = $this->data['unpaid_number'];
+        $amount       = number_format($this->data['unpaid_amount'], 0, '', ',');
+        $feeName      = $this->data['fee_name'];
+        $dueDate      = $this->data['due_date']
+            ? \Carbon\Carbon::parse($this->data['due_date'])->format('d M Y')
+            : 'overdue';
 
-        return (new MailMessage)
-            ->subject('🔴 URGENT: Additional Fees Are Now DUE')
-            ->greeting('Hello Administration Team,')
-            ->line("This is an **urgent alert**. We currently have **{$count} student(s)** with **unpaid additional fees** that are **now DUE**.")
-            ->line('### 💰 Summary of DUE Fees')
-            ->line("The **total amount DUE** for these outstanding fees is: **Rwf {$totalAmount}**.")
-            ->line('Immediate action is required to follow up with the students concerned and ensure timely payment.')
-            ->action('Review DUE Fees', $feesUrl)
-            ->line('Thank you for ensuring the financial continuity of ');
+        $specialties = collect($this->data['specialties'])
+            ->pluck('specialty_name')
+            ->unique()
+            ->sort();
+
+        $specialtyText = $specialties->count() > 2
+            ? $specialties->take(2)->join(', ') . ' and ' . ($specialties->count() - 2) . ' other program(s)'
+            : $specialties->join(' and ');
+
+        if ($specialties->isEmpty()) {
+            $specialtyText = 'various programs';
+        }
+
+        return "{$count} student(s) from {$specialtyText} have not paid the additional fee \"{$feeName}\" (Rwf {$amount}) due on {$dueDate}.";
     }
 
-    /**
-     * Get the array representation of the notification (for 'database' channel).
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    public function toMail($notifiable): MailMessage
     {
-        $count = $this->unpaidFeesData['count'] ?? 0;
-        $totalAmount = $this->unpaidFeesData['total_amount'] ?? 0;
+        $message = $this->getMessage();
 
+        return (new MailMessage)
+            ->subject('Unpaid Additional Fee Reminder')
+            ->greeting("Hello {$notifiable->name},")
+            ->line('**Payment Reminder**')
+            ->line($message)
+            ->when($this->data['reason'] ?? null, fn($m) => $m->line("**Reason:** " . $this->data['reason']))
+            ->action('View Unpaid Fees', url('/admin/fees/additional?status=unpaid'))
+            ->line('Please follow up with the students to ensure timely payment.');
+    }
+
+    public function toArray($notifiable): array
+    {
         return [
-            'type' => 'additional_fee_due_alert',
-            'title' => 'Additional Fees are DUE',
-            'body' => "{$count} student(s) have additional fees that are DUE today, totaling Rwf " . number_format($totalAmount, 2) . ".",
+            'title' => 'Unpaid Additional Fee',
+            'body'  => $this->getMessage(),
         ];
     }
 
-    /**
-     * Get the broadcastable representation of the notification.
-     */
-    public function toBroadcast(object $notifiable): BroadcastMessage
+    public function toBroadcast($notifiable): BroadcastMessage
     {
-        $count = $this->unpaidFeesData['count'] ?? 0;
-        $totalAmount = number_format($this->unpaidFeesData['total_amount'] ?? 0, 2);
-
         return new BroadcastMessage([
-            'title' => 'Due Student Additional Fees',
-            'body' => "{$count} students' additional fees (Rwf {$totalAmount}) are now DUE.",
-            'count' => $count,
+            'title' => 'Unpaid Additional Fee',
+            'body'  => $this->getMessage(),
         ]);
     }
 }

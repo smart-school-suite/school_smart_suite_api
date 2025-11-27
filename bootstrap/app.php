@@ -59,6 +59,12 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/permission')
                 ->group(base_path('routes/RoleAndPermission/Permission.php'));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/registration-fees')
+               ->group(base_path("routes\Resit\ResitPayment.php"));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-payment')
+                  ->group(base_path("routes\Resit\ResitPayment.php"));
+
             Route::prefix('api/v1/school-branch')
                 ->group(base_path('routes/School/SchoolBranch.php'));
 

@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SchoolAdminController;
 use App\Http\Controllers\Auth\SchoolAdmin\UpdateSchoolAdminProfileController;
-use App\Http\Middleware\IdentifyTenant;
+use App\Http\Controllers\SchoolAdmin\SchoolAdminController;
 
 // Get all school admins (requires 'view-admin' permission)
 Route::middleware(['permission:schoolAdmin.schoolAdmin.view'])->get('/', [SchoolAdminController::class, 'getSchoolAdmin'])

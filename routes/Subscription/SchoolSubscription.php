@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SchoolSubscriptionController;
+use App\Http\Controllers\Subscription\SchoolSubscriptionController;
 // Subscribe a school to a plan
 Route::post('/school-subscriptions', [SchoolSubscriptionController::class, 'subscribe'])
     ->name('school-subscriptions.store');

@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ResitExamController;
-
+use App\Http\Controllers\ResitExam\ResitExamController;
 // Get all resit exams
 Route::middleware(['permission:schoolAdmin.resitExam.view'])->get('/', [ResitExamController::class, 'getAllResitExams'])
     ->name('resit-exams.index');

@@ -72,13 +72,20 @@ class Student extends Model
         ];
     }
 
-     public function studentAnnouncement(): HasMany {
-         return $this->hasMany(StudentAnnouncement::class);
+    public function routeNotificationForFcm()
+    {
+        return $this->devices()->pluck('token')->toArray();
     }
-    public function studentFeeSchedule(): HasMany {
+    public function studentAnnouncement(): HasMany
+    {
+        return $this->hasMany(StudentAnnouncement::class);
+    }
+    public function studentFeeSchedule(): HasMany
+    {
         return $this->hasMany(StudentFeeSchedule::class);
     }
-    public function resitCandidates(): HasMany {
+    public function resitCandidates(): HasMany
+    {
         return $this->hasMany(ResitCandidates::class, 'resit_id');
     }
     public function devices()
@@ -181,12 +188,14 @@ class Student extends Model
     }
 
 
-    public function vote(){
-         return $this->morphMany(ElectionVotes::class, 'votable');
+    public function vote()
+    {
+        return $this->morphMany(ElectionVotes::class, 'votable');
     }
 
-    public function voteStatus(){
-         return $this->morphMany(VoterStatus::class, 'votableStatus');
+    public function voteStatus()
+    {
+        return $this->morphMany(VoterStatus::class, 'votableStatus');
     }
 
     public function school(): BelongsTo

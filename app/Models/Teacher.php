@@ -63,6 +63,10 @@ class Teacher extends Model
         ];
     }
 
+    public function routeNotificationForFcm()
+    {
+        return $this->devices()->pluck('token')->toArray();
+    }
     public function teacherAnnouncement(): HasMany {
          return $this->hasMany(TeacherAnnouncement::class);
     }

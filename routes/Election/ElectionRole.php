@@ -52,3 +52,5 @@ Route::middleware(['permission:schoolAdmin.electionRole.deactivate'])->post('/bu
     ->name('election-roles.bulk-deactivate');
 
 Route::get('/{electionRoleId}', [ElectionRoleController::class, 'getElectionRoleDetails'])->name("get.election.role.details");
+
+Route::get('/student/election/{electionId}', [ElectionRoleController::class, 'getStudentElectionRoles'])->name("get.election.roles");

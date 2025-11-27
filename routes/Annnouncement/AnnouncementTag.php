@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AnnouncementTagController;
+use App\Http\Controllers\Announcement\AnnouncementTagController;
 
 Route::get('/', [AnnouncementTagController::class, 'getAnnouncementTags'])->name('announcement-tag.index');
 Route::post('/', [AnnouncementTagController::class, 'createTag'])->name('announcement-tag.create');

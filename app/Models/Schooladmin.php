@@ -71,6 +71,11 @@ class Schooladmin extends Authenticatable
         ];
     }
 
+    public function routeNotificationForFcm()
+    {
+        return $this->devices()->pluck('token')->toArray();
+    }
+
     public function getMorphClass()
     {
         return static::class;

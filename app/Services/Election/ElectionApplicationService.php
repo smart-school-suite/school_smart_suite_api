@@ -15,7 +15,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\AppException;
 use Throwable;
-
+use Carbon\Carbon;
+use App\Models\ElectionParticipants;
 class ElectionApplicationService
 {
     public function createApplication(array $data, $currentSchool)
@@ -455,5 +456,64 @@ class ElectionApplicationService
         }
     }
 
+    public function getStudentElectionApplications($currentSchool, $student, $electionId)
+{
+    $schoolBranchId = $currentSchool->id;
+    $now = Carbon::now();
 
+
+    $isInvited = ElectionParticipants::where('school_branch_id', $schoolBranchId)
+        ->where('election_id', $electionId)
+        ->where('specialty_id', $student->specialty_id)
+        ->where('level_id', $student->level_id)
+        ->exists();
+
+    if (!$isInvited) {
+        throw new AppException(
+            "Access Denied",
+            403,
+            "Not Eligible",
+            "You are not invited to participate in this election."
+        );
+    }
+
+    $election = Elections::where('id', $electionId)
+        ->where('school_branch_id', $schoolBranchId)
+        ->with('electionType')
+        ->firstOrFail();
+
+    $applications = ElectionApplication::where('school_branch_id', $schoolBranchId)
+        ->where('election_id', $electionId)
+        ->where('student_id', $student->id)
+        ->with('electionRole')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    $formattedApplications = $applications->map(function ($app) {
+        return [
+            'application_id'        => $app->id,
+            'role_title'            => $app->electionRole?->title ?? 'Unknown Role',
+            'manifesto'             => $app->manifesto ?? null,
+            'personal_vision'       => $app->personal_vision ?? null,
+            'commitment_statement'  => $app->commitment_statement ?? null,
+            'status'                => $app->application_status ?? 'pending',
+            'applied_at'            => $app->created_at?->format('Y-m-d H:i'),
+        ];
+    })->values();
+
+    return [
+        'election' => [
+            'election_id'         => $election->id,
+            'school_year'        => $election->school_year,
+            'title'               => $election->electionType?->election_title ?? 'Untitled Election',
+            'description'         => $election->electionType?->description ?? 'No description',
+            'application_start'   => $election->application_start?->format('Y-m-d'),
+            'application_end'     => $election->application_end?->format('Y-m-d'),
+            'voting_start'        => $election->voting_start?->format('Y-m-d'),
+            'voting_end'          => $election->voting_end?->format('Y-m-d'),
+            'total_roles'         => $election->electionRoles->count(),
+        ],
+        'applications' => $formattedApplications
+    ];
+}
 }

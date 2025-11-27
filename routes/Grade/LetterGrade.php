@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\LetterGradecontroller;
+use App\Http\Controllers\LetterGrade\LetterGradeController;
 use Illuminate\Support\Facades\Route;
 
 // Create a new letter grade

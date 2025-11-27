@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StudentController;
+use App\Http\Controllers\Student\StudentController;
 
 // Deactivate a specific student account
     Route::middleware(['permission:schoolAdmin.student.deactivate'])->post('/{studentId}/deactivate', [StudentController::class, 'deactivateAccount'])

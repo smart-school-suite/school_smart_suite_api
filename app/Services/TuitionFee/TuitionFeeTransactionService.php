@@ -1,26 +1,13 @@
 <?php
 
 namespace App\Services\TuitionFee;
-
-use App\Jobs\NotificationJobs\SendAdminRegistrationFeePaidNotificationJob;
-use App\Jobs\NotificationJobs\SendAdminTuitionFeePaidNotificationJob;
-use App\Jobs\NotificationJobs\SendRegistrationFeePaidNotificationJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\RegistrationFeeStatJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeePaymentStatJob;
-use App\Models\Student;
 use App\Models\TuitionFees;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
-use App\Models\RegistrationFeeTransactions;
-use Illuminate\Support\Str;
-use App\Models\Feepayment;
-use App\Models\RegistrationFee;
 use App\Models\TuitionFeeTransactions;
-use App\Notifications\TuitionFeePaid;
 use Illuminate\Support\Facades\Log;
 use Exception;
 use Throwable;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
 
 class TuitionFeeTransactionService

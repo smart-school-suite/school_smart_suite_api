@@ -24,6 +24,7 @@ class Timetable extends Model
         'start_time',
         'end_time',
         'semester_id',
+        'duration',
         'break',
         'hall_id',
         'student_batch_id'

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SubscriptionPaymentController;
+use App\Http\Controllers\Subscription\SubscriptionPaymentController;
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Get all subscription transactions for a specific school

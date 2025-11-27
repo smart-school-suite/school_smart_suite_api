@@ -11,6 +11,13 @@ use Exception;
 use App\Exceptions\AppException;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Jobs\NotificationJobs\SendAdditionalFeeNotification;
+use App\Jobs\NotificationJobs\SendAdditionalFeePaidNotificationJob;
+use App\Jobs\NotificationJobs\SendAdminAdditionalFeeNotificationJob;
+use App\Models\AdditionalFeeTransactions;
+use App\Jobs\NotificationJobs\SendAdminAdditionalFeeReminderNotificationJob;
+use Carbon\Carbon;
+use App\Services\ApiResponseService;
 
 class AdditionalFeeService
 {
@@ -99,7 +106,7 @@ class AdditionalFeeService
             );
         }
     }
-    public function getStudentAdditionalFees(string $studentId, $currentSchool)
+    public function getStudentAdditionalFeesStudentId(string $studentId, $currentSchool)
     {
         try {
             $studentAdditionFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
@@ -287,6 +294,252 @@ class AdditionalFeeService
                 "We were unable to complete the bulk update due to an unexpected system error. The operation has been rolled back. Please try again or contact support.",
                 null
             );
+        }
+    }
+    public function getStudentAdditionalFees($currentSchool, $student, $status)
+    {
+        $allowedStatus = collect([
+            "unpaid",
+            "paid",
+            "due"
+        ]);
+        if (!$allowedStatus->contains($status)) {
+            throw new AppException(
+                "Invalid Additional Fee Status",
+                404,
+                "Invalid Additional Fee Status",
+                "Invalid Additional Fee Status, Additional Fee Status Must Only Be unpaid paid or due"
+            );
+        }
+
+        $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->where("status", $status)
+            ->with(['feeCategory'])
+            ->get();
+        return $additionalFees;
+    }
+    public function bulkBillStudents(array $studentList, $currentSchool)
+    {
+        try {
+            DB::beginTransaction();
+
+            $studentsToInsert = [];
+            $studentNotificationData = [];
+            $additionalFeeIds = [];
+
+            $studentIds = collect($studentList)->pluck('student_id')->unique()->filter();
+            $students = Student::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $studentIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($studentList as $studentData) {
+                $student = $students->get($studentData['student_id']);
+
+                if (!$student) {
+                    continue;
+                }
+
+                $newId = Str::uuid();
+
+                $studentsToInsert[] = [
+                    'id'                          => $newId,
+                    'reason'                      => $studentData['reason'],
+                    'amount'                      => $studentData['amount'],
+                    'status'                      => 'unpaid',
+                    'additionalfee_category_id'   => $studentData['additionalfee_category_id'],
+                    'school_branch_id'            => $currentSchool->id,
+                    'specialty_id'                => $student->specialty_id,
+                    'level_id'                    => $student->level_id,
+                    'student_id'                  => $student->id,
+                    'due_date'                    => Carbon::now()->addDays(7),
+                    'created_at'                  => now(),
+                    'updated_at'                  => now(),
+                ];
+
+                $studentNotificationData[] = [
+                    'student' => $student,
+                    'amount'  => $studentData['amount'],
+                    'reason'  => $studentData['reason'],
+                ];
+
+                $additionalFeeIds[] = $newId;
+            }
+
+            if (!empty($studentsToInsert)) {
+                DB::table('additional_fees')->insert($studentsToInsert);
+            }
+
+            DB::commit();
+
+            if (!empty($studentNotificationData)) {
+                SendAdditionalFeeNotification::dispatch($studentNotificationData);
+            }
+
+            if (!empty($additionalFeeIds)) {
+                SendAdminAdditionalFeeReminderNotificationJob::dispatch(
+                    $additionalFeeIds,
+                    $currentSchool->id
+                );
+
+                SendAdminAdditionalFeeReminderNotificationJob::dispatch(
+                    $additionalFeeIds,
+                    $currentSchool->id
+                )->delay(Carbon::now()->addDays(7));
+            }
+
+            return $studentsToInsert;
+        } catch (Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function bulkDeleteStudentAdditionalFees($additionalFeeIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($additionalFeeIds as $additionalFeeId) {
+                $studentAdditionalFee = AdditionalFees::findOrFail($additionalFeeId['fee_id']);
+                $studentAdditionalFee->delete();
+                $result[] = [
+                    $studentAdditionalFee
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function bulkDeleteTransaction($transactionIds)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($transactionIds as $transactionId) {
+                $transaction = AdditionalFeeTransactions::findOrFail($transactionId['transaction_id']);
+                $transaction->delete();
+                $result[] = [
+                    $transaction
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function bulkReverseTransaction($transactionIds, $currentSchool)
+    {
+        $result = [];
+        try {
+            DB::beginTransaction();
+            foreach ($transactionIds as $transactionId) {
+                $transaction = AdditionalFeeTransactions::where('school_branch_id', $currentSchool->id)
+                    ->find($transactionId['transaction_id']);
+
+                if (!$transaction) {
+                    return ApiResponseService::error("Transaction Not Found", null, 404);
+                }
+
+                $additionalFees = AdditionalFees::where('id', $transaction->additional_fee_id)
+                    ->where('school_branch_id', $currentSchool->id)
+                    ->first();
+
+                if (!$additionalFees) {
+                    return ApiResponseService::error("Associated Additional Fees Not Found", null, 404);
+                }
+                $additionalFees->status = 'unpaid';
+                $additionalFees->save();
+
+                $transaction->delete();
+
+                $result[] = [
+                    $additionalFees,
+                    $transaction,
+                ];
+            }
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function bulkPayAdditionalFee($feeDataList, $currentSchool)
+    {
+        try {
+            DB::beginTransaction();
+            $feeIds = collect($feeDataList)->pluck('fee_id')->toArray();
+
+            $additionalFees = AdditionalFees::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $feeIds)
+                ->with(['feeCategory', 'student'])
+                ->get()
+                ->keyBy('id');
+
+            $transactionsToInsert = [];
+            $notificationData = [];
+
+            foreach ($feeDataList as $feeData) {
+                $additionalFee = $additionalFees->get($feeData['fee_id']);
+
+                if (!$additionalFee) {
+                    throw new Exception("Student Additional Fees Appears To Be Deleted", 404);
+                }
+
+                if (round($additionalFee->amount, 2) < round($feeData['amount'], 2)) {
+                    throw new Exception("Amount Paid Exceeds The Amount Owed", 400);
+                }
+
+                $transactionsToInsert[] = [
+                    'id' => Str::uuid(),
+                    'transaction_id' => 'ADF-' . substr(str_replace('-', '', Str::uuid()->toString()), 0, 10),
+                    'amount' => $feeData['amount'],
+                    'payment_method' => $feeData['payment_method'],
+                    'fee_id' => $feeData['fee_id'],
+                    'school_branch_id' => $currentSchool->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                $notificationData[] = [
+                    'student' => $additionalFee->student,
+                    'student_name' => $additionalFee->student ? $additionalFee->student->name : 'N/A',
+                    'amount_paid' => $feeData['amount'],
+                    'fee_reason' => $additionalFee->reason,
+                    'category_title' => $additionalFee->feeCategory->title,
+                    'payment_method' => $feeData['payment_method'],
+                ];
+            }
+
+            DB::table('additional_fee_transactions')->insert($transactionsToInsert);
+
+            AdditionalFees::whereIn('id', $feeIds)->update(['status' => 'paid']);
+
+            DB::commit();
+
+            if (!empty($notificationData)) {
+                SendAdminAdditionalFeeNotificationJob::dispatch(
+                    $currentSchool->id,
+                    $notificationData,
+                );
+
+                SendAdditionalFeePaidNotificationJob::dispatch(
+                    $notificationData
+                );
+            }
+
+            return collect($transactionsToInsert)->map(function ($item) {
+                return AdditionalFeeTransactions::find($item['id']);
+            });
+        } catch (Throwable $e) {
+            DB::rollBack();
+            throw $e;
         }
     }
 }

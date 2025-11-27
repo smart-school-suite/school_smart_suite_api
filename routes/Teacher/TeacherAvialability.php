@@ -1,30 +1,28 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\InstructorAvailabilityController;
+use App\Http\Controllers\Teacher\TeacherPreferedTeachingTimeController;
 
-//review this routes and update the routes folder permissions
-
-Route::middleware(['permission:teacher.avialability.create'])->post('/create', [InstructorAvailabilityController::class, 'createInstructorAvailability'])
+Route::middleware(['permission:teacher.avialability.create'])->post('/create', [TeacherPreferedTeachingTimeController::class, 'createInstructorAvailability'])
     ->name('instructor-availability.create');
 
 Route::middleware(['permission:teacher.avialability.create'])->post('/{targetAvailabilityId}/{availabilityId}/create',
-  [InstructorAvailabilityController::class, 'createAvailabilityByOtherSlots']
+  [TeacherPreferedTeachingTimeController::class, 'createAvailabilityByOtherSlots']
 )->name('instructor-availability.create');
 
-Route::middleware(['permission:teacher.avialability.show'])->get('/teacher/{teacherId}/availability', [InstructorAvailabilityController::class, 'getInstructorAvailabilitesByTeacher'])
+Route::middleware(['permission:teacher.avialability.show'])->get('/teacher/{teacherId}/availability', [TeacherPreferedTeachingTimeController::class, 'getInstructorAvailabilitesByTeacher'])
     ->name('teachers.availability.index');
 
-Route::middleware(['permission:teacher.avialability.update'])->patch('/update', [InstructorAvailabilityController::class, 'bulkUpdateInstructorAvialabililty'])
+Route::middleware(['permission:teacher.avialability.update'])->patch('/update', [TeacherPreferedTeachingTimeController::class, 'bulkUpdateInstructorAvialabililty'])
        ->name('instructor-availability.bulk-update');
 
-Route::get('/school-semesters/teacher/{teacherId}/specialty-preference', [InstructorAvailabilityController::class, 'getSchoolSemestersByTeacherSpecialtyPreference']);
+Route::get('/school-semesters/teacher/{teacherId}/specialty-preference', [TeacherPreferedTeachingTimeController::class, 'getSchoolSemestersByTeacherSpecialtyPreference']);
 
-Route::delete('/instructor-availability/teacher/{teacherId}/availability/{availabilityId}', [InstructorAvailabilityController::class, 'deleteAvailabilitySlots'])
+Route::delete('/instructor-availability/teacher/{teacherId}/availability/{availabilityId}', [TeacherPreferedTeachingTimeController::class, 'deleteAvailabilitySlots'])
     ->name('instructor-availability.delete-all-by-teacher-availability');
 
-Route::get('/instructor-availabilities', [InstructorAvailabilityController::class, 'getInstructorAvailabilities'])->name('instructor-availability.get');
+Route::get('/instructor-availabilities', [TeacherPreferedTeachingTimeController::class, 'getInstructorAvailabilities'])->name('instructor-availability.get');
 
-Route::get('/instructor-availability/{availabilityId}', [InstructorAvailabilityController::class, 'getInstructorAvailabilityDetails'])->name('instructor-availability.details');
+Route::get('/instructor-availability/{availabilityId}', [TeacherPreferedTeachingTimeController::class, 'getInstructorAvailabilityDetails'])->name('instructor-availability.details');
 
-Route::get('/instructor-availability/slots/{availabilityId}', [InstructorAvailabilityController::class, 'getAvailabilitySlotsByTeacherAvailability'])->name('instructor-availability-slots');
+Route::get('/instructor-availability/slots/{availabilityId}', [TeacherPreferedTeachingTimeController::class, 'getAvailabilitySlotsByTeacherAvailability'])->name('instructor-availability-slots');
