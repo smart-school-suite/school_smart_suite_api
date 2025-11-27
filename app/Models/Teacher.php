@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions;
+    use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
     /**
      * The attributes that are mass assignable.
      *

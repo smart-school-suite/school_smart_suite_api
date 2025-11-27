@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Teacher;
+
 use App\Models\InstructorAvailability;
 use App\Models\InstructorAvailabilitySlot;
 use App\Models\SchoolSemester;
@@ -9,9 +10,10 @@ use App\Models\TeacherSpecailtyPreference;
 use App\Notifications\AvailabilitySubmitted;
 use Illuminate\Support\Facades\DB;
 use Exception;
+
 class TeacherPreferedTeachingTimeService
 {
-            public function createInstructorAvailability(array $instructorAvailabilities, $currentSchool): array
+    public function createInstructorAvailability(array $instructorAvailabilities, $currentSchool): array
     {
         DB::beginTransaction();
         $schoolSemester = null;
@@ -73,9 +75,9 @@ class TeacherPreferedTeachingTimeService
             DB::beginTransaction();
             $availability = InstructorAvailability::where("school_branch_id", $currentSchool->id)
                 ->find($availabilityId);
-                if($availability->status == 'added'){
-                    throw new Exception("Your Preferred Teaching Time for this semester is already Added", 400);
-                }
+            if ($availability->status == 'added') {
+                throw new Exception("Your Preferred Teaching Time for this semester is already Added", 400);
+            }
             $availabilitySlots = InstructorAvailabilitySlot::where("school_branch_id", $currentSchool->id)
                 ->where("teacher_availability_id", $targetAvailabilityId)
                 ->get();
@@ -153,32 +155,33 @@ class TeacherPreferedTeachingTimeService
             throw $e;
         }
     }
-    public function getInstructorAvailabilities($currentSchool){
+    public function getInstructorAvailabilities($currentSchool)
+    {
         $instructorAvailabilities = InstructorAvailability::where("school_branch_id", $currentSchool->id)
-                                                 ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
-                                                 ->get();
-       return $instructorAvailabilities;
-    }
-
-    public function getInstructorAvailabilitesByTeacher($currentSchool, $teacherId){
-        $instructorAvailabilities = InstructorAvailability::where("school_branch_id", $currentSchool->id)
-                                                 ->where('teacher_id', $teacherId)
-                                                 ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
-                                                 ->get();
+            ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
+            ->get();
         return $instructorAvailabilities;
     }
-
-    public function getInstructorAvailabilityDetails($currentSchool, string $availabilityId){
-         $instructorAvailabilities = InstructorAvailability::where("school_branch_id", $currentSchool->id)
-                                                 ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
-                                                 ->find($availabilityId);
+    public function getInstructorAvailabilitesByTeacher($currentSchool, $teacherId)
+    {
+        $instructorAvailabilities = InstructorAvailability::where("school_branch_id", $currentSchool->id)
+            ->where('teacher_id', $teacherId)
+            ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
+            ->get();
         return $instructorAvailabilities;
     }
-
-    public function getAvailabilitySlotsByTeacher($currentSchool, string $availabilityId){
+    public function getInstructorAvailabilityDetails($currentSchool, string $availabilityId)
+    {
+        $instructorAvailabilities = InstructorAvailability::where("school_branch_id", $currentSchool->id)
+            ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
+            ->find($availabilityId);
+        return $instructorAvailabilities;
+    }
+    public function getAvailabilitySlotsByTeacher($currentSchool, string $availabilityId)
+    {
         $slots = InstructorAvailabilitySlot::where("school_branch_id", $currentSchool->id)
-                                               ->where("teacher_availability_id", $availabilityId)
-                                               ->get();
+            ->where("teacher_availability_id", $availabilityId)
+            ->get();
         return $slots;
     }
 }

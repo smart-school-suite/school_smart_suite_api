@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Specialty;
+
 use App\Exceptions\AppException;
 use App\Jobs\NotificationJobs\SendAdminSpecialtyCreatedNotificationJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\SpecialtyStatJob;
@@ -9,9 +10,10 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 class SpecialtyService
 {
-       public function createSpecialty(array $data, $currentSchool)
+    public function createSpecialty(array $data, $currentSchool)
     {
         try {
             $existingSpecialty = Specialty::where("school_branch_id", $currentSchool->id)

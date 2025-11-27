@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Teacher;
+
 use App\Models\Specialty;
 use App\Models\Teacher;
 use App\Models\TeacherSpecailtyPreference;
@@ -12,9 +13,10 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Throwable;
 use App\Services\ApiResponseService;
+
 class TeacherService
 {
-        public function getTeacherDetails($teacherId)
+    public function getTeacherDetails($teacherId)
     {
         $find_teacher = Teacher::findOrFail($teacherId);
         return $find_teacher;
@@ -85,15 +87,15 @@ class TeacherService
         $specialties = [];
         $specialty = null;
         foreach ($preferenceData as $preference) {
-            if($specialty == null){
+            if ($specialty == null) {
                 $specialtyDetails = Specialty::where("school_branch_id", $currentSchool->id)
-                                   ->with('level')
-                                   ->find($preference['specialty_id']);
+                    ->with('level')
+                    ->find($preference['specialty_id']);
                 $specialty = $specialtyDetails;
             }
-            if($teacher == null){
+            if ($teacher == null) {
                 $teacherDetails = Teacher::where("school_branch_id", $currentSchool->id)
-                                         ->find($preference['teacher_id']);
+                    ->find($preference['teacher_id']);
                 $teacher = $teacherDetails;
             }
             $createdEntry = TeacherSpecailtyPreference::create([
@@ -211,7 +213,7 @@ class TeacherService
     {
 
         try {
-             $teacher = Teacher::findOrFail($authTeacher->id);
+            $teacher = Teacher::findOrFail($authTeacher->id);
             DB::transaction(function () use ($request, $teacher) {
 
                 if ($teacher->profile_picture) {
@@ -246,8 +248,8 @@ class TeacherService
             throw $e;
         }
     }
-
-    public function getTeachersBySpecialtyPreference($specialtyId, $currentSchool){
+    public function getTeachersBySpecialtyPreference($specialtyId, $currentSchool)
+    {
         $teachers = TeacherSpecailtyPreference::where('specialty_id', $specialtyId)
             ->where('school_branch_id', $currentSchool->id)
             ->with('teacher')

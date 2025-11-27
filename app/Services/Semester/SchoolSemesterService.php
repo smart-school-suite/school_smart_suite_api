@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Semester;
+
 use App\Jobs\DataCreationJob\CreateExamJob;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
@@ -19,9 +20,10 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
+
 class SchoolSemesterService
 {
-        public function createSchoolSemester($semesterData, $currentSchool)
+    public function createSchoolSemester($semesterData, $currentSchool)
     {
         try {
             DB::beginTransaction();

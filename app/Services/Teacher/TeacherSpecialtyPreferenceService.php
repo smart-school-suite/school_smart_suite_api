@@ -1,15 +1,17 @@
 <?php
 
 namespace App\Services\Teacher;
+
 use App\Exceptions\AppException;
 use App\Models\Specialty;
 use App\Models\TeacherSpecailtyPreference;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
 class TeacherSpecialtyPreferenceService
 {
-         public function getTeacherPreference($teacherId, $currentSchool)
+    public function getTeacherPreference($teacherId, $currentSchool)
     {
         $preferences = TeacherSpecailtyPreference::where("school_branch_id", $currentSchool->id)
             ->where("teacher_id", $teacherId)
@@ -44,7 +46,6 @@ class TeacherSpecialtyPreferenceService
 
         return $formatted;
     }
-
     public function getAvailableSpecialtiesForTeacher($teacherId, $currentSchool)
     {
         $assignedSpecialtyIds = TeacherSpecailtyPreference::where("school_branch_id", $currentSchool->id)
@@ -126,7 +127,6 @@ class TeacherSpecialtyPreferenceService
             );
         }
     }
-
     public function bulkAddTeacherSpecialtyPreference($currentSchool, array $data)
     {
         $teacherIdsCollection = collect($data['teacherIds'] ?? [])->pluck('teacher_id');
@@ -192,7 +192,6 @@ class TeacherSpecialtyPreferenceService
             );
         }
     }
-
     public function bulkRemoveTeacherSpecialtyPreference($currentSchool, array $data)
     {
         $teacherIds = $data['teacherIds'] ?? [];

@@ -78,7 +78,6 @@ class StudentService
         $student->save();
         return $student;
     }
-
     public function bulkReinstateDropOutStudent($studentDropoutList, $currentSchool)
     {
         try {
@@ -295,7 +294,6 @@ class StudentService
             throw $e;
         }
     }
-
     public function getStudentProfileDetails($currentSchool, $studentId)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Spatie\Permission\Traits\HasPermissions;
 
 class Student extends Model
 {
-    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions;
+    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
 
     /**
      * The attributes that are mass assignable.

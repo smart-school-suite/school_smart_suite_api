@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
 
 class Schooladmin extends Authenticatable
 {
-    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable;
+    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency;
 
     /**
      * The attributes that are mass assignable.
