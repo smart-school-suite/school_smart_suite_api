@@ -12,9 +12,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\ElectionParticipants;
+use App\Events\Actions\AdminActionEvent;
+
 class ElectionRoleService
 {
-    public function createElectionRole(array $data, $currentSchool)
+    public function createElectionRole(array $data, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -49,6 +51,17 @@ class ElectionRoleService
             ]);
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $electionRole,
+                    "message" => "Election Role Created",
+                ]
+            );
             return $electionRole;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -66,7 +79,7 @@ class ElectionRoleService
             );
         }
     }
-    public function updateElectionRole(array $data, $currentSchool, $electionRoleId)
+    public function updateElectionRole(array $data, $currentSchool, $electionRoleId, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -139,6 +152,17 @@ class ElectionRoleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $electionRole,
+                    "message" => "Election Role Updated",
+                ]
+            );
             return $electionRole;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -155,7 +179,7 @@ class ElectionRoleService
             );
         }
     }
-    public function bulkUpdateElectionRole(array $UpdateElectionList)
+    public function bulkUpdateElectionRole(array $UpdateElectionList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -189,7 +213,8 @@ class ElectionRoleService
                 }
 
                 try {
-                    $electionRole = ElectionRoles::findOrFail($electionRoleId);
+                    $electionRole = ElectionRoles::where("school_branch_id", $currentSchool->id)
+                        ->findOrFail($electionRoleId);
                     $newName = $filteredData['name'] ?? null;
                     if ($newName) {
                         $existingRole = ElectionRoles::where("school_branch_id", $electionRole->school_branch_id)
@@ -211,6 +236,18 @@ class ElectionRoleService
 
                     $electionRole->update($filteredData);
                     $result[] = $electionRole;
+                    AdminActionEvent::dispatch(
+                        [
+                            "permissions" =>  ["schoolAdmin.electionRole.update"],
+                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                            "schoolBranch" =>  $currentSchool->id,
+                            "feature" => "electionRoleManagement",
+                            "authAdmin" => $authAdmin,
+                            "data" => $result,
+                            "message" => "Election Roles Updated",
+                        ]
+                    );
+                    return $result;
                 } catch (ModelNotFoundException $e) {
                     DB::rollBack();
                     throw new AppException(
@@ -241,7 +278,7 @@ class ElectionRoleService
             );
         }
     }
-    public function deleteElectionRole($electionRoleId, $currentSchool)
+    public function deleteElectionRole($electionRoleId, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -271,6 +308,17 @@ class ElectionRoleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $electionRole,
+                    "message" => "Election Role Deleted",
+                ]
+            );
             return $electionRole;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -287,7 +335,7 @@ class ElectionRoleService
             );
         }
     }
-    public function bulkDeleteElectionRole($electionRoleIds)
+    public function bulkDeleteElectionRole($electionRoleIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -308,7 +356,7 @@ class ElectionRoleService
                 }
 
                 try {
-                    $electionRole = ElectionRoles::findOrFail($electionRoleId);
+                    $electionRole = ElectionRoles::where('school_branch_id', $currentSchool->id)->findOrFail($electionRoleId);
 
                     $roleName = $electionRole->name;
                     $schoolBranchId = $electionRole->school_branch_id;
@@ -347,6 +395,17 @@ class ElectionRoleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Election Roles Deleted",
+                ]
+            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -382,8 +441,7 @@ class ElectionRoleService
 
         return $electionRoles;
     }
-
-        public function getElectionRoles($currentSchool, $electionId)
+    public function getElectionRoles($currentSchool, $electionId)
     {
         $election = Elections::findOrFail($electionId);
         $electionRoles = ElectionRoles::where('school_branch_id', $currentSchool->id)
@@ -425,10 +483,11 @@ class ElectionRoleService
 
         return $electionRoles;
     }
-    public function activateRole($electionRoleId)
+    public function activateRole($electionRoleId, $currentSchool, $authAdmin)
     {
         try {
-            $electionRole = ElectionRoles::findOrFail($electionRoleId);
+            $electionRole = ElectionRoles::where('school_branch_id', $currentSchool->id)
+                ->findOrFail($electionRoleId);
 
             if ($electionRole->status === 'active') {
                 throw new AppException(
@@ -442,7 +501,17 @@ class ElectionRoleService
 
             $electionRole->status = 'active';
             $electionRole->save();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $electionRole,
+                    "message" => "Election Role Activated",
+                ]
+            );
             return $electionRole;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -465,7 +534,7 @@ class ElectionRoleService
             );
         }
     }
-    public function bulkActivateElectionRole($electionRoleIds)
+    public function bulkActivateElectionRole($electionRoleIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -515,6 +584,17 @@ class ElectionRoleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Election Roles Activated",
+                ]
+            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -562,7 +642,7 @@ class ElectionRoleService
 
         return $activeRoles;
     }
-    public function deactivateRole($electionRoleId)
+    public function deactivateRole($electionRoleId, $currentSchool, $authAdmin)
     {
         try {
             $electionRole = ElectionRoles::findOrFail($electionRoleId);
@@ -579,7 +659,17 @@ class ElectionRoleService
 
             $electionRole->status = 'inactive';
             $electionRole->save();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $electionRole,
+                    "message" => "Election Roles Deactivated",
+                ]
+            );
             return $electionRole;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -602,7 +692,7 @@ class ElectionRoleService
             );
         }
     }
-    public function bulkDeactivateRole($electionRoleIds)
+    public function bulkDeactivateRole($electionRoleIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -656,6 +746,17 @@ class ElectionRoleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionRole.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionRoleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" =>  $result,
+                    "message" => "Election Roles Deactivated",
+                ]
+            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -674,32 +775,31 @@ class ElectionRoleService
         }
     }
     public function getElectionRoleDetails($electionRoleId, $currentSchool)
-{
-    try {
-        $electionRoleDetails = ElectionRoles::where("school_branch_id", $currentSchool->id)
-            ->with(['electionType'])
-            ->findOrFail($electionRoleId);
+    {
+        try {
+            $electionRoleDetails = ElectionRoles::where("school_branch_id", $currentSchool->id)
+                ->with(['electionType'])
+                ->findOrFail($electionRoleId);
 
-        return $electionRoleDetails;
-    } catch (ModelNotFoundException $e) {
-        throw new AppException(
-            "Election role details not found",
-            404,
-            "Role Missing",
-            "The election role with ID $electionRoleId could not be found for this school branch.",
-            "/election-roles"
-        );
-    } catch (Throwable $e) {
-        throw new AppException(
-            "Failed to retrieve election role details",
-            500,
-            "Retrieval Error",
-            "An unexpected error occurred while fetching the election role.",
-            "/election-roles"
-        );
+            return $electionRoleDetails;
+        } catch (ModelNotFoundException $e) {
+            throw new AppException(
+                "Election role details not found",
+                404,
+                "Role Missing",
+                "The election role with ID $electionRoleId could not be found for this school branch.",
+                "/election-roles"
+            );
+        } catch (Throwable $e) {
+            throw new AppException(
+                "Failed to retrieve election role details",
+                500,
+                "Retrieval Error",
+                "An unexpected error occurred while fetching the election role.",
+                "/election-roles"
+            );
+        }
     }
-}
-
     public function getStudentElectionRoles($currentSchool, $student, $electionId)
     {
         $now = Carbon::now();

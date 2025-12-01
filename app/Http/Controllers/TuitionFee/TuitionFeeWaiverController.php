@@ -20,21 +20,24 @@ class TuitionFeeWaiverController extends Controller
     public function  createFeeWaiver(CreateTuitionFeeWaiverRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $createFeeWaiver = $this->feeWaiverService->createFeeWaiver($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $createFeeWaiver = $this->feeWaiverService->createFeeWaiver($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Fee Waiver Created Sucessfully", $createFeeWaiver, null, 201);
     }
 
     public function updateFeeWaiver(UpdateTuitionFeeWaiverRequest $request, string $feeWaiverId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $updateFeeWaiver = $this->feeWaiverService->updateFeeWaiver($request->validated(), $currentSchool, $feeWaiverId);
+        $authAdmin = $this->resolveUser();
+        $updateFeeWaiver = $this->feeWaiverService->updateFeeWaiver($request->validated(), $currentSchool, $feeWaiverId, $authAdmin);
         return ApiResponseService::success("Fee Waiver Updated Succesfully", $updateFeeWaiver, null, 200);
     }
 
     public function deleteFeeWaiver(Request $request, string $feeWaiverId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
-        $deleteFeeWaiver = $this->feeWaiverService->deleteFeeWaiver($currentSchool, $feeWaiverId);
+        $authAdmin = $this->resolveUser();
+        $deleteFeeWaiver = $this->feeWaiverService->deleteFeeWaiver($currentSchool, $feeWaiverId, $authAdmin);
         return ApiResponseService::success("Fee Waiver Deleted Succesfully", $deleteFeeWaiver, null, 200);
     }
 
@@ -50,5 +53,16 @@ class TuitionFeeWaiverController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $getAllFeeWaivers = $this->feeWaiverService->getAllFeeWaiver($currentSchool);
         return ApiResponseService::success("Fee Waiver Fetched Successfully", $getAllFeeWaivers, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

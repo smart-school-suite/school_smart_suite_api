@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Exception;
 use App\Exceptions\AuthException;
+use App\Events\Actions\AdminActionEvent;
 class CreateSchoolAdminService
 {
 
-    public function createSchoolAdmin($schoolAdminData, $currentSchool)
+    public function createSchoolAdmin($schoolAdminData, $currentSchool, $authAdmin)
     {
         try {
             $existingAdmin = Schooladmin::where('email', $schoolAdminData['email'])
@@ -43,7 +44,17 @@ class CreateSchoolAdminService
 
             SendPasswordVaiMailJob::dispatch($password, $schoolAdminData['email']);
             SchoolAdminStatJob::dispatch($currentSchool->id, $schoolAdminId);
-
+                                    AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.schoolAdmin.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "schoolAdminManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $schoolAdmin,
+                    "message" => "School Admin Created",
+                ]
+            );
             return $schoolAdmin;
 
         } catch (AuthException $e) {

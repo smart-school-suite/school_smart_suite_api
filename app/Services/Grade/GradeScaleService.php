@@ -9,10 +9,11 @@ use Exception;
 use Throwable;
 use Illuminate\Support\Str;
 use App\Exceptions\AppException;
+use App\Events\Actions\AdminActionEvent;
 
 class GradeScaleService
 {
-    public function makeGradeForExam(array $grades, $currentSchool)
+    public function makeGradeForExam(array $grades, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -54,14 +55,24 @@ class GradeScaleService
                 $schoolGradesConfig->save();
             }
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $insertedGrades,
+                    "message" => "Grade Scale Created",
+                ]
+            );
             return $insertedGrades;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkCreateExamGrades(array $data, $currentSchool)
+    public function bulkCreateExamGrades(array $data, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -119,12 +130,23 @@ class GradeScaleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $gradesToInsert,
+                    "message" => "Grade Scale Created",
+                ]
+            );
         } catch (Throwable $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function updateExamGrades(array $grades, $currentSchool): bool
+    public function updateExamGrades(array $grades, $currentSchool, $authAdmin): bool
     {
         if (empty($grades)) {
             return true;
@@ -148,14 +170,24 @@ class GradeScaleService
             }
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $grades,
+                    "message" => "Grade Scale Updated",
+                ]
+            );
             return true;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function configureByOtherGrades($configId, $currentSchool, $targetConfigId)
+    public function configureByOtherGrades($configId, $currentSchool, $targetConfigId, $authAdmin)
     {
         $insertedGrades = [];
         DB::beginTransaction();
@@ -197,14 +229,24 @@ class GradeScaleService
             $targetGradesConfig->save();
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $insertedGrades,
+                    "message" => "Grade Scale Created",
+                ]
+            );
             return $insertedGrades;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkConfigureByOtherGrades($data, $currentSchool)
+    public function bulkConfigureByOtherGrades($data, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -267,6 +309,17 @@ class GradeScaleService
                 ]);
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $gradesToInsert,
+                    "message" => "Grade Scale Created",
+                ]
+            );
         } catch (Throwable $e) {
             DB::rollBack();
             throw $e;
@@ -288,7 +341,7 @@ class GradeScaleService
             throw $e;
         }
     }
-    public function deleteGradesConfig($currentSchool, $configId)
+    public function deleteGradesConfig($currentSchool, $configId, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -306,12 +359,23 @@ class GradeScaleService
             $schoolGradesConfig->max_score = null;
             $schoolGradesConfig->save();
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $schoolGradesConfig,
+                    "message" => "Grade Scale Deleted",
+                ]
+            );
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkDeleteGradesConfig($currentSchool, $data)
+    public function bulkDeleteGradesConfig($currentSchool, $data, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -336,6 +400,17 @@ class GradeScaleService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.grades.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "gradeScaleManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $schoolGradesConfigs,
+                    "message" => "Grade Scale Deleted",
+                ]
+            );
         } catch (Throwable $e) {
             DB::rollBack();
             throw $e;

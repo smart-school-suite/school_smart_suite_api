@@ -15,11 +15,12 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
-
+use App\Events\Actions\AdminActionEvent;
 class CreateStudentService
 {
-    public function createStudent($studentData, $currentSchool)
+    public function createStudent($studentData, $currentSchool, $authAdmin)
     {
+
         try {
 
             $specialty = Specialty::where('school_branch_id', $currentSchool->id)
@@ -105,6 +106,17 @@ class CreateStudentService
             SendPasswordVaiMailJob::dispatch($password, $studentData["email"]);
             TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
             StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
+                       AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.student.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "studentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $student,
+                    "message" => "Student Created",
+                ]
+            );
             SendAdminStudentCreatedNotificationJob::dispatch(
                 $specialty->specialty_name,
                 $studentData["name"],

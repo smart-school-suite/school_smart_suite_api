@@ -11,10 +11,11 @@ use Illuminate\Support\Str;
 use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
+use App\Events\Actions\AdminActionEvent;
 
 class DepartmentService
 {
-    public function createDepartment(array $data, $currentSchool)
+    public function createDepartment(array $data, $currentSchool, $authAdmin)
     {
         try {
             $department = new Department();
@@ -38,6 +39,17 @@ class DepartmentService
             $department->save();
             DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
             SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->id, $data);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Created",
+                ]
+            );
             return $department;
         } catch (Exception $e) {
             throw new AppException(
@@ -51,7 +63,7 @@ class DepartmentService
             throw $e;
         }
     }
-    public function updateDepartment(string $departmentId, array $data, $currentSchool)
+    public function updateDepartment(string $departmentId, array $data, $currentSchool, $authAdmin)
     {
         try {
             $department = Department::where("school_branch_id", $currentSchool->id)->find($departmentId);
@@ -97,6 +109,17 @@ class DepartmentService
             }
 
             $department->update($filterData);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Updated",
+                ]
+            );
             return $department;
         } catch (AppException $e) {
             throw $e;
@@ -110,11 +133,22 @@ class DepartmentService
             );
         }
     }
-    public function deleteDepartment(string $departmentId)
+    public function deleteDepartment(string $departmentId, $currentSchool, $authAdmin)
     {
         try {
-            $department = Department::findOrFail($departmentId);
+            $department = Department::where("school_branch_id", $currentSchool->id)->findOrFail($departmentId);
             $department->delete();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Deleted",
+                ]
+            );
             return $department;
         } catch (Exception $e) {
             throw new AppException(
@@ -168,10 +202,11 @@ class DepartmentService
         }
         return $findDeparment;
     }
-    public function deactivateDepartment(string $departmentId)
+    public function deactivateDepartment(string $departmentId, $currentSchool, $authAdmin)
     {
         try {
-            $department = Department::findOrFail($departmentId);
+            $department = Department::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($departmentId);
             if ($department->status === 'inactive') {
                 throw new AppException(
                     "The department is already inactive.",
@@ -183,6 +218,17 @@ class DepartmentService
             }
             $department->status = 'inactive';
             $department->save();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Deactivated",
+                ]
+            );
             return $department;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -202,10 +248,11 @@ class DepartmentService
             );
         }
     }
-    public function activateDepartment(string $departmentId)
+    public function activateDepartment(string $departmentId, $currentSchool, $authAdmin)
     {
         try {
-            $department = Department::findOrFail($departmentId);
+            $department = Department::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($departmentId);
             if ($department->status === "active") {
                 throw new AppException(
                     "The department is already active.",
@@ -216,6 +263,17 @@ class DepartmentService
                 );
             }
             $department->status = "active";
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Activated",
+                ]
+            );
             $department->save();
             return $department;
         } catch (ModelNotFoundException $e) {
@@ -236,16 +294,28 @@ class DepartmentService
             );
         }
     }
-    public function bulkDeactivateDepartment(array $departmentIds)
+    public function bulkDeactivateDepartment(array $departmentIds, $currentSchool, $authAdmin)
     {
         try {
             foreach ($departmentIds as $departmentId) {
-                $department = Department::findOrFail($departmentId['department_id']);
+                $department = Department::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($departmentId['department_id']);
                 if ($department->status === 'active') {
                     $department->status = 'inactive';
                     $department->save();
                 }
             }
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Deactivated",
+                ]
+            );
             return true;
         } catch (Exception $e) {
             throw new AppException(
@@ -265,17 +335,29 @@ class DepartmentService
             );
         }
     }
-    public function bulkActivateDepartment(array $departmentIds)
+    public function bulkActivateDepartment(array $departmentIds, $currentSchool, $authAdmin)
     {
         try {
             foreach ($departmentIds as $departmentId) {
-                $department = Department::findOrFail($departmentId['department_id']);
+                $department = Department::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($departmentId['department_id']);
                 if ($department->status === 'inactive') {
                     continue;
                 }
                 $department->status = 'active';
                 $department->save();
             }
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Activated",
+                ]
+            );
             return true;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -295,13 +377,14 @@ class DepartmentService
             );
         }
     }
-    public function bulkUpdateDepartment(array $updateDataList): array
+    public function bulkUpdateDepartment(array $updateDataList, $currentSchool, $authAdmin): array
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($updateDataList as $updateData) {
-                $department = Department::findOrFail($updateData['department_id']);
+                $department = Department::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($updateData['department_id']);
                 if ($department) {
                     $cleanedData = array_filter($updateData, function ($value) {
                         return $value !== null && $value !== '';
@@ -314,25 +397,48 @@ class DepartmentService
                 }
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Department Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkDeleteDepartment(array $departmentIds)
+    public function bulkDeleteDepartment(array $departmentIds, $currentSchool, $authAdmin)
     {
         $result = [];
         DB::beginTransaction();
         try {
             foreach ($departmentIds as $departmentId) {
-                $department = Department::findOrFail($departmentId['department_id']);
+                $department = Department::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($departmentId['department_id']);
                 $department->delete();
                 $result[] = [
                     $department
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.department.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "departmentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $department,
+                    "message" => "Department Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

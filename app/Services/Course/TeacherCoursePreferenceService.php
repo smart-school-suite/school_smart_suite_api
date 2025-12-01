@@ -7,11 +7,12 @@ use App\Models\TeacherSpecailtyPreference;
 use App\Exceptions\AppException;
 use App\Models\Courses;
 use Illuminate\Support\Facades\DB;
+use App\Events\Actions\AdminActionEvent;
 
 class TeacherCoursePreferenceService
 {
 
-    public function assignTeacherCoursePreference($currentSchool, $data): array
+    public function assignTeacherCoursePreference($currentSchool, $data, $authAdmin): array
     {
         $schoolBranchId = $currentSchool->id;
         $teacherId      = $data['teacher_id'];
@@ -87,13 +88,23 @@ class TeacherCoursePreferenceService
 
         TeacherCoursePreference::insert($insertData);
 
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.teacherCoursePreference.assign"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "teacherCoursePreferenceManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $insertData,
+                "message" => "Course Assigned to teacher",
+            ]
+        );
         return [
             'teacher_id' => $teacherId,
             'course_count' => count($insertData),
             'school_branch_id' => $schoolBranchId,
         ];
     }
-
     public function getAssignableTeacherCourses($currentSchool, $teacherId)
     {
         $schoolBranchId = $currentSchool->id;
@@ -134,9 +145,7 @@ class TeacherCoursePreferenceService
             ];
         })->values();
     }
-
-
-    public function removeTeacherAssignedCourses($currentSchool, $data)
+    public function removeTeacherAssignedCourses($currentSchool, $data, $authAdmin)
     {
         $schoolBranchId = $currentSchool->id;
         $teacherId      = $data['teacher_id'] ?? null;
@@ -183,6 +192,17 @@ class TeacherCoursePreferenceService
             ->whereIn('course_id', $assigned)
             ->delete();
 
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.teacherCoursePreference.remove"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "teacherCoursePreferenceManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $assigned,
+                "message" => "Course Assigned to teacher",
+            ]
+        );
         return [
             'teacher_id' => $teacherId,
             'removed_courses_count' => $deleted,
@@ -191,7 +211,6 @@ class TeacherCoursePreferenceService
             'requested_count' => $courseIds->count(),
         ];
     }
-
     public function getAssignedTeacherCourses($currentSchool, $teacherId)
     {
         $schoolBranchId = $currentSchool->id;

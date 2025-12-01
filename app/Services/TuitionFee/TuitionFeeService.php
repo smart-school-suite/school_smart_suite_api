@@ -8,6 +8,7 @@ use App\Models\Feepayment;
 use Exception;
 use Throwable;
 use App\Exceptions\AppException;
+use App\Events\Actions\AdminActionEvent;
 
 class TuitionFeeService
 {
@@ -41,7 +42,7 @@ class TuitionFeeService
             );
         }
     }
-    public function deleteFeePayment($feeId, $currentSchool)
+    public function deleteFeePayment($feeId, $currentSchool, $authAdmin)
     {
         try {
             $findFeePayment = Feepayment::where('school_branch_id', $currentSchool->id)
@@ -58,7 +59,17 @@ class TuitionFeeService
             }
 
             $findFeePayment->delete();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.tuitionFee.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $findFeePayment,
+                    "message" => "Tuition Fee Payment Deleted",
+                ]
+            );
             return $findFeePayment;
         } catch (AppException $e) {
             throw $e;

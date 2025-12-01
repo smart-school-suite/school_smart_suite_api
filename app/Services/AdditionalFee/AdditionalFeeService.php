@@ -18,10 +18,11 @@ use App\Models\AdditionalFeeTransactions;
 use App\Jobs\NotificationJobs\SendAdminAdditionalFeeReminderNotificationJob;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class AdditionalFeeService
 {
-    public function createStudentAdditionalFees(array $additionalFees, $currentSchool)
+    public function createStudentAdditionalFees(array $additionalFees, $currentSchool, $authAdmin)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->find($additionalFees['student_id']);
         $studentAdditionFees = new AdditionalFees();
@@ -37,10 +38,21 @@ class AdditionalFeeService
         $studentAdditionFees->student_id = $student->id;
         $studentAdditionFees->save();
         AdditionalFeeStatJob::dispatch($additionalFeeId, $currentSchool->id);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFee.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $studentAdditionFees,
+                "message" => "Additional Fee Created",
+            ]
+        );
         $student->notify(new AdditionalFee($additionalFees['amount'], $additionalFees['reason']));
         return $studentAdditionFees;
     }
-    public function deleteStudentAdditionalFees(string $feeId, $currentSchool)
+    public function deleteStudentAdditionalFees(string $feeId, $currentSchool, $authAdmin)
     {
         $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)->find($feeId);
 
@@ -56,6 +68,17 @@ class AdditionalFeeService
 
         try {
             $additionalFee->delete();
+                   AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFee.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $additionalFee,
+                "message" => "Additional Fee Deleted",
+            ]
+        );
             return $additionalFee;
         } catch (Exception $e) {
             throw new AppException(
@@ -67,7 +90,7 @@ class AdditionalFeeService
             );
         }
     }
-    public function updateStudentAdditionalFees(array $additionalFeesData, string $feeId, $currentSchool)
+    public function updateStudentAdditionalFees(array $additionalFeesData, string $feeId, $currentSchool, $authAdmin)
     {
         $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)->find($feeId);
 
@@ -95,6 +118,17 @@ class AdditionalFeeService
 
         try {
             $additionalFee->update($removedEmptyInputs);
+                               AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFee.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $additionalFee,
+                "message" => "Additional Fee Updated",
+            ]
+        );
             return $additionalFee;
         } catch (Exception $e) {
             throw new AppException(
@@ -184,7 +218,7 @@ class AdditionalFeeService
             );
         }
     }
-    public function bulkUpdateStudentAdditionalFees($additionalFees, $currentSchool)
+    public function bulkUpdateStudentAdditionalFees($additionalFees, $currentSchool, $authAdmin)
     {
         if (empty($additionalFees)) {
             throw new AppException(
@@ -279,7 +313,17 @@ class AdditionalFeeService
             }
 
             DB::commit();
-
+                                            AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFee.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $successfulUpdates,
+                "message" => "Additional Fee Updated",
+            ]
+        );
             // Return the IDs of records that were successfully updated
             return $successfulUpdates;
         } catch (AppException $e) {
@@ -319,7 +363,7 @@ class AdditionalFeeService
             ->get();
         return $additionalFees;
     }
-    public function bulkBillStudents(array $studentList, $currentSchool)
+    public function bulkBillStudents(array $studentList, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -387,6 +431,17 @@ class AdditionalFeeService
                     $additionalFeeIds,
                     $currentSchool->id
                 )->delay(Carbon::now()->addDays(7));
+                        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFee.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $additionalFeeIds,
+                "message" => "Additional Fee Created",
+            ]
+        );
             }
 
             return $studentsToInsert;
@@ -395,7 +450,7 @@ class AdditionalFeeService
             throw $e;
         }
     }
-    public function bulkDeleteStudentAdditionalFees($additionalFeeIds)
+    public function bulkDeleteStudentAdditionalFees($additionalFeeIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -408,136 +463,19 @@ class AdditionalFeeService
                 ];
             }
             DB::commit();
+                               AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFee.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $additionalFeeIds,
+                "message" => "Additional Fee Deleted",
+            ]
+        );
             return $result;
         } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function bulkDeleteTransaction($transactionIds)
-    {
-        $result = [];
-        try {
-            DB::beginTransaction();
-            foreach ($transactionIds as $transactionId) {
-                $transaction = AdditionalFeeTransactions::findOrFail($transactionId['transaction_id']);
-                $transaction->delete();
-                $result[] = [
-                    $transaction
-                ];
-            }
-            DB::commit();
-            return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function bulkReverseTransaction($transactionIds, $currentSchool)
-    {
-        $result = [];
-        try {
-            DB::beginTransaction();
-            foreach ($transactionIds as $transactionId) {
-                $transaction = AdditionalFeeTransactions::where('school_branch_id', $currentSchool->id)
-                    ->find($transactionId['transaction_id']);
-
-                if (!$transaction) {
-                    return ApiResponseService::error("Transaction Not Found", null, 404);
-                }
-
-                $additionalFees = AdditionalFees::where('id', $transaction->additional_fee_id)
-                    ->where('school_branch_id', $currentSchool->id)
-                    ->first();
-
-                if (!$additionalFees) {
-                    return ApiResponseService::error("Associated Additional Fees Not Found", null, 404);
-                }
-                $additionalFees->status = 'unpaid';
-                $additionalFees->save();
-
-                $transaction->delete();
-
-                $result[] = [
-                    $additionalFees,
-                    $transaction,
-                ];
-            }
-            DB::commit();
-            return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function bulkPayAdditionalFee($feeDataList, $currentSchool)
-    {
-        try {
-            DB::beginTransaction();
-            $feeIds = collect($feeDataList)->pluck('fee_id')->toArray();
-
-            $additionalFees = AdditionalFees::where('school_branch_id', $currentSchool->id)
-                ->whereIn('id', $feeIds)
-                ->with(['feeCategory', 'student'])
-                ->get()
-                ->keyBy('id');
-
-            $transactionsToInsert = [];
-            $notificationData = [];
-
-            foreach ($feeDataList as $feeData) {
-                $additionalFee = $additionalFees->get($feeData['fee_id']);
-
-                if (!$additionalFee) {
-                    throw new Exception("Student Additional Fees Appears To Be Deleted", 404);
-                }
-
-                if (round($additionalFee->amount, 2) < round($feeData['amount'], 2)) {
-                    throw new Exception("Amount Paid Exceeds The Amount Owed", 400);
-                }
-
-                $transactionsToInsert[] = [
-                    'id' => Str::uuid(),
-                    'transaction_id' => 'ADF-' . substr(str_replace('-', '', Str::uuid()->toString()), 0, 10),
-                    'amount' => $feeData['amount'],
-                    'payment_method' => $feeData['payment_method'],
-                    'fee_id' => $feeData['fee_id'],
-                    'school_branch_id' => $currentSchool->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-
-                $notificationData[] = [
-                    'student' => $additionalFee->student,
-                    'student_name' => $additionalFee->student ? $additionalFee->student->name : 'N/A',
-                    'amount_paid' => $feeData['amount'],
-                    'fee_reason' => $additionalFee->reason,
-                    'category_title' => $additionalFee->feeCategory->title,
-                    'payment_method' => $feeData['payment_method'],
-                ];
-            }
-
-            DB::table('additional_fee_transactions')->insert($transactionsToInsert);
-
-            AdditionalFees::whereIn('id', $feeIds)->update(['status' => 'paid']);
-
-            DB::commit();
-
-            if (!empty($notificationData)) {
-                SendAdminAdditionalFeeNotificationJob::dispatch(
-                    $currentSchool->id,
-                    $notificationData,
-                );
-
-                SendAdditionalFeePaidNotificationJob::dispatch(
-                    $notificationData
-                );
-            }
-
-            return collect($transactionsToInsert)->map(function ($item) {
-                return AdditionalFeeTransactions::find($item['id']);
-            });
-        } catch (Throwable $e) {
             DB::rollBack();
             throw $e;
         }

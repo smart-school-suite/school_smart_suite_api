@@ -22,8 +22,9 @@ class ElectionController extends Controller
 
     public function createElection(CreateElectionRequest $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $election = $this->electionService->createElection($request->validated(), $currentSchool);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $election = $this->electionService->createElection($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Created Sucessfully", $election, null, 201);
     }
 
@@ -35,8 +36,9 @@ class ElectionController extends Controller
     }
     public function deleteElection(Request $request, $electionId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $deleteElection = $this->electionService->deleteElection($currentSchool, $electionId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $deleteElection = $this->electionService->deleteElection($currentSchool, $electionId, $authAdmin);
         return ApiResponseService::success("Election Deleted Successfully", $deleteElection, null, 200);
     }
 
@@ -50,7 +52,8 @@ class ElectionController extends Controller
     public function updateElection(UpdateElectionRequest $request, $electionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateElection = $this->electionService->updateElection($request->validated(), $currentSchool, $electionId);
+        $authAdmin = $this->resolveUser();
+        $updateElection = $this->electionService->updateElection($request->validated(), $currentSchool, $electionId, $authAdmin);
         return ApiResponseService::success("Election Updated Successfully", $updateElection, null, 200);
     }
 
@@ -72,14 +75,11 @@ class ElectionController extends Controller
     public function addAllowedParticipantsByOtherElection(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
         $targetElectionId = $request->route('targetElectionId');
         $electionId = $request->route('electionId');
-        try {
-            $addAllowedParticipants = $this->electionService->addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId);
-            return ApiResponseService::success("Allowed Participants Added Successfully", $addAllowedParticipants, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $addAllowedParticipants = $this->electionService->addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId, $authAdmin);
+        return ApiResponseService::success("Allowed Participants Added Successfully", $addAllowedParticipants, null, 200);
     }
 
     public function getAllowedParticipants(Request $request, $electionId)
@@ -92,12 +92,9 @@ class ElectionController extends Controller
     public function addAllowedParticipants(AddElectionParticipantsRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $addAllowedParticipants = $this->electionService->addAllowedElectionParticipants($request->election_participants, $currentSchool);
-            return ApiResponseService::success("Allowed Election Participants Added Successfully", $addAllowedParticipants, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $authAdmin = $this->resolveUser();
+        $addAllowedParticipants = $this->electionService->addAllowedElectionParticipants($request->election_participants, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Allowed Election Participants Added Successfully", $addAllowedParticipants, null, 200);
     }
     protected function resolveUser()
     {

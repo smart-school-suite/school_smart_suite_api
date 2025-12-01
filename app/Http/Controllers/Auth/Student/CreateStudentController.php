@@ -19,11 +19,19 @@ class CreateStudentController extends Controller
     public function createStudent(CreateStudentRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $createStudent = $this->createStudentService->createStudent($request->validated(), $currentSchool);
-            return ApiResponseService::success("Student created successfully", $createStudent, null, 201);
-        } catch (\Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
+        $authAdmin = $this->resolveUser();
+        $createStudent = $this->createStudentService->createStudent($request->validated(), $currentSchool, $authAdmin);
+        return ApiResponseService::success("Student created successfully", $createStudent, null, 201);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
         }
+        return null;
     }
 }

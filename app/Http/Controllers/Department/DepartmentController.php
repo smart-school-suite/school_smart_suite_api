@@ -11,28 +11,33 @@ use App\Http\Requests\Department\BulkUpdateDepartmentRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\Department\ValidateDepartmentIdRequest;
 use Illuminate\Http\Request;
+
 class DepartmentController extends Controller
 {
-        protected DepartmentService $departmentService;
+    protected DepartmentService $departmentService;
     public function __construct(DepartmentService $departmentService)
     {
         $this->departmentService = $departmentService;
     }
     public function createDepartment(CreateDepartmentRequest $request)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $department = $this->departmentService->createDepartment($request->validated(), $currentSchool);
+        $department = $this->departmentService->createDepartment($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Department Created Sucessfully", $department, null, 201);
     }
-    public function deleteDepartment(string $departmentId)
+    public function deleteDepartment(Request $request, string $departmentId)
     {
-        $deleteDepartment = $this->departmentService->deleteDepartment($departmentId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteDepartment = $this->departmentService->deleteDepartment($departmentId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Department Deleted successfully", $deleteDepartment, null, 200);
     }
     public function updateDepartment(UpdateDepartmentRequest $request, string $departmentId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateDepartment = $this->departmentService->updateDepartment($departmentId, $request->validated(), $currentSchool);
+        $updateDepartment = $this->departmentService->updateDepartment($departmentId, $request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success('Department updated sucessfully', $updateDepartment, null, 200);
     }
     public function getDepartments(Request $request)
@@ -48,34 +53,56 @@ class DepartmentController extends Controller
         $departmentDetails = $this->departmentService->getDepartmentDetails($currentSchool, $departmentId);
         return ApiResponseService::success("Department Details Fetched Sucessfully", $departmentDetails, null, 200);
     }
-    public function deactivateDepartment($departmentId)
+    public function deactivateDepartment(Request $request, $departmentId)
     {
-        $deactivateDepartment = $this->departmentService->deactivateDepartment($departmentId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deactivateDepartment = $this->departmentService->deactivateDepartment($departmentId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Department Deactivated Sucessfully", $deactivateDepartment, null, 200);
     }
-    public function activateDepartment($departmentId)
+    public function activateDepartment(Request $request, $departmentId)
     {
-        $activateDepartment = $this->departmentService->activateDepartment($departmentId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activateDepartment = $this->departmentService->activateDepartment($departmentId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Department Activated Sucessfully", $activateDepartment, null, 200);
     }
     public function bulkDeactivateDepartment(ValidateDepartmentIdRequest $request)
     {
-        $bulkDeactivateDepartment = $this->departmentService->bulkDeactivateDepartment($request->departmentIds);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkDeactivateDepartment = $this->departmentService->bulkDeactivateDepartment($request->departmentIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Department Deactivated Succesfully", $bulkDeactivateDepartment, null, 200);
     }
     public function bulkActivateDepartment(ValidateDepartmentIdRequest $request)
     {
-        $bulkActivateDepartment = $this->departmentService->bulkActivateDepartment($request->departmentIds);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkActivateDepartment = $this->departmentService->bulkActivateDepartment($request->departmentIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Departments Activated Succesfully", $bulkActivateDepartment, null, 200);
     }
     public function bulkDeleteDepartment(ValidateDepartmentIdRequest $request)
     {
-        $bulkDeleteDepartment = $this->departmentService->bulkDeleteDepartment($request->departmentIds);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkDeleteDepartment = $this->departmentService->bulkDeleteDepartment($request->departmentIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Bulk Department Deleted Succesfully", $bulkDeleteDepartment, null, 200);
     }
     public function bulkUpdateDepartment(BulkUpdateDepartmentRequest $request)
     {
-        $bulkUpdateDepartment = $this->departmentService->bulkUpdateDepartment($request->departments);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkUpdateDepartment = $this->departmentService->bulkUpdateDepartment($request->departments, $currentSchool, $authAdmin);
         return ApiResponseService::success("Departments Updated Succesfully", $bulkUpdateDepartment, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

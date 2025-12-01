@@ -10,6 +10,7 @@ use App\Models\Exams;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\Actions\AdminActionEvent;
 
 class ExamGradeService
 {
@@ -31,7 +32,7 @@ class ExamGradeService
 
         return $gradesData;
     }
-    public function deleteExamGrading($currentSchool, $examId)
+    public function deleteExamGrading($currentSchool, $examId, $authAdmin)
     {
         try {
             $exam = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
@@ -39,7 +40,17 @@ class ExamGradeService
             $exam->grades_category_id = null;
             $exam->grading_added = false;
             $exam->save();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.examGradeScale.remove"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exam,
+                    "message" => "Exam Grade Scale Romoved",
+                ]
+            );
             return $exam;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -59,7 +70,7 @@ class ExamGradeService
             );
         }
     }
-    public function bulkDeleteExamGrading($examIds, $currentSchool)
+    public function bulkDeleteExamGrading($examIds, $currentSchool, $authAdmin)
     {
         $results = [];
         try {
@@ -74,6 +85,17 @@ class ExamGradeService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.examGradeScale.remove"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $results,
+                    "message" => "Exam Grade Scale Romoved",
+                ]
+            );
             return $results;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -95,13 +117,24 @@ class ExamGradeService
             );
         }
     }
-    public function updateExamGrading($currentSchool, $examId, $updateData)
+    public function updateExamGrading($currentSchool, $examId, $updateData, $authAdmin)
     {
         try {
             $exams = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
             $exams->grades_category_id = $updateData['grades_category_id'];
             $exams->grading_added = true;
             $exams->save();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.examGradeScale.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exams,
+                    "message" => "Exam Grade Scale Updated",
+                ]
+            );
             return $exams;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

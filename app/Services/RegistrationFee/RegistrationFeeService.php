@@ -8,7 +8,7 @@ use Exception;
 use Throwable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
-
+use App\Events\Actions\AdminActionEvent;
 class RegistrationFeeService
 {
     public function getRegistrationFees($currentSchool)
@@ -41,7 +41,7 @@ class RegistrationFeeService
             );
         }
     }
-    public function bulkDeleteRegistrationFee($feeIds, $currentSchool)
+    public function bulkDeleteRegistrationFee($feeIds, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -63,14 +63,24 @@ class RegistrationFeeService
             RegistrationFee::whereIn('id', $feeIds)->delete();
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.registrationFee.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "registrationFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $registrationFees,
+                    "message" => "Registration Fee Deleted",
+                ]
+            );
             return true;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function deleteRegistrationFee($feeId, $currentSchool)
+    public function deleteRegistrationFee($feeId, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -86,7 +96,17 @@ class RegistrationFeeService
             $registrationFee->delete();
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.registrationFee.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "registrationFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $registrationFee,
+                    "message" => "Registration Fee Deleted",
+                ]
+            );
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();

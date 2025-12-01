@@ -18,13 +18,16 @@ class RegistrationFeeTransactionController extends Controller
     }
     public function bulkDeleteRegistrationFeeTransactions(RegistrationFeeTransactionIdRequest $request)
     {
-        $bulkDelete = $this->registrationFeeTransactionService->bulkDeleteRegistrationFeeTransactions($request->transactionIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDelete = $this->registrationFeeTransactionService->bulkDeleteRegistrationFeeTransactions($request->transactionIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transactions Deleted Succesfully", $bulkDelete, null, 200);
     }
     public function reverseRegistrationFeePaymentTransaction(Request $request, $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $reverseTransaction = $this->registrationFeeTransactionService->reverseRegistrationFeePaymentTransaction($transactionId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $reverseTransaction = $this->registrationFeeTransactionService->reverseRegistrationFeePaymentTransaction($transactionId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transaction Reversed Sucessfully", $reverseTransaction, null, 200);
     }
     public function getRegistrationFeeTransactions(Request $request)
@@ -42,13 +45,26 @@ class RegistrationFeeTransactionController extends Controller
     public function deleteRegistrationFeeTransaction(Request $request, $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->registrationFeeTransactionService->deleteRegistrationFeeTransaction($currentSchool, $transactionId);
+        $authAdmin = $this->resolveUser();
+        $this->registrationFeeTransactionService->deleteRegistrationFeeTransaction($currentSchool, $transactionId, $authAdmin);
         return ApiResponseService::success("Registration Transaction Deleted Successfully", null, null, 200);
     }
     public function bulkReverseRegistrationFeeTransaction(RegistrationFeeTransactionIdRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $bulkReverseTransaction = $this->registrationFeeTransactionService->bulkReverseRegistrationFeeTransaction($request->transactionIds, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $bulkReverseTransaction = $this->registrationFeeTransactionService->bulkReverseRegistrationFeeTransaction($request->transactionIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

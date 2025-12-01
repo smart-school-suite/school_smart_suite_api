@@ -57,14 +57,16 @@ class SchoolEventController extends Controller
     }
     public function updateSchoolEventContent(UpdateEventContentRequest $request, $schoolEventId)
     {
+        $authAdmin = $this->getAuthenticatedUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateEventContent = $this->eventService->updateSchoolEventContent($request->validated(), $currentSchool, $schoolEventId);
+        $updateEventContent = $this->eventService->updateSchoolEventContent($request->validated(), $currentSchool, $schoolEventId, $authAdmin['authUser']);
         return ApiResponseService::success("School Event Content Updated Successfully", $updateEventContent, null, 200);
     }
     public function deleteSchoolEventContent(Request $request, $schoolEventId)
     {
+        $authAdmin = $this->getAuthenticatedUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->eventService->deleteSchoolEvent($currentSchool, $schoolEventId);
+        $this->eventService->deleteSchoolEvent($currentSchool, $schoolEventId, $authAdmin['authUser']);
         return ApiResponseService::success("School Event Deleted Successfully", null, null, 200);
     }
     public function getSchoolEventDetails(Request $request, $schoolEventId)

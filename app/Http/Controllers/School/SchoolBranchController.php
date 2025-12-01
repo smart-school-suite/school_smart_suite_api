@@ -10,26 +10,39 @@ use App\Services\School\SchoolBranchService;
 
 class SchoolBranchController extends Controller
 {
-       protected SchoolBranchService $schoolBranchesService;
-    public function __construct(SchoolBranchService $schoolBranchesService){
+    protected SchoolBranchService $schoolBranchesService;
+    public function __construct(SchoolBranchService $schoolBranchesService)
+    {
         $this->schoolBranchesService = $schoolBranchesService;
     }
-
-    public function updateSchoolBranch(UpdateSchoolBranchRequest $request){
-        $currentSchool = $request->attributes->get("currentSchool");
-        $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $currentSchool->id);
+    public function updateSchoolBranch(UpdateSchoolBranchRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $updateSchoolBranch = $this->schoolBranchesService->updateSchoolBranch($request->validated(), $currentSchool->id, $authAdmin);
         return ApiResponseService::success("School Branch updated Succesfully", $updateSchoolBranch, null, 200);
     }
-
-    public function getBranchDetails(Request $request){
-         $currentSchool = $request->attributes->get("currentSchool");
-         $branchDetails = $this->schoolBranchesService->getSchoolBranchDetails($currentSchool->id);
-         return ApiResponseService::success("School Branch Details Fetched Successfully", $branchDetails, null, 200);
-    }
-
-    public function deleteSchoolBranch(Request $request){
+    public function getBranchDetails(Request $request)
+    {
         $currentSchool = $request->attributes->get("currentSchool");
-        $deleteSchoolBranch = $this->schoolBranchesService->deleteSchoolBranch($currentSchool->id);
-       return ApiResponseService::success("School Branch Deleted Sucessfully", $deleteSchoolBranch, null, 200);
+        $branchDetails = $this->schoolBranchesService->getSchoolBranchDetails($currentSchool->id);
+        return ApiResponseService::success("School Branch Details Fetched Successfully", $branchDetails, null, 200);
+    }
+    public function deleteSchoolBranch(Request $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteSchoolBranch = $this->schoolBranchesService->deleteSchoolBranch($currentSchool->id, $authAdmin);
+        return ApiResponseService::success("School Branch Deleted Sucessfully", $deleteSchoolBranch, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

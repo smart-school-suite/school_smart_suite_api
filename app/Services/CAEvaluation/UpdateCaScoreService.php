@@ -9,10 +9,10 @@ use App\Models\Grades;
 use App\Models\Exams;
 use App\Models\Student;
 use App\Models\StudentResults;
-use Illuminate\Support\Collection;
+use App\Events\Actions\AdminActionEvent;
 class UpdateCaScoreService
 {
-    public function updateCaScore(array $updateData, $currentSchool): array
+    public function updateCaScore(array $updateData, $currentSchool, $authAdmin): array
     {
         $results = [];
         $exam = null;
@@ -60,6 +60,17 @@ class UpdateCaScoreService
             );
 
             DB::commit();
+                                                AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.examEvaluation.updateScore"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examEvaluation",
+                    "authAdmin" => $authAdmin,
+                    "data" => $results,
+                    "message" => "Student CA Results Updated",
+                ]
+            );
             return $results;
         } catch (Exception $e) {
             DB::rollBack();

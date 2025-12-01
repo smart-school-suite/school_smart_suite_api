@@ -17,10 +17,10 @@ use App\Models\StudentResults;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use App\Events\Actions\AdminActionEvent;
 class AddCaScoresService
 {
-    public function addCaScore(array $studentScores, $currentSchool): array
+    public function addCaScore(array $studentScores, $currentSchool, $authAdmin): array
     {
         $results = [];
         $examDetails = null;
@@ -78,7 +78,17 @@ class AddCaScoresService
                 CaStatsJob::dispatch($examDetails);
                 $this->sendExamResultsNotification($examDetails);
             }
-
+                                    AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.examEvaluation.addScore"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examEvaluation",
+                    "authAdmin" => $authAdmin,
+                    "data" => $results,
+                    "message" => "Student CA Results Summited",
+                ]
+            );
             return $results;
         } catch (AppException | ModelNotFoundException $e) {
             DB::rollBack();

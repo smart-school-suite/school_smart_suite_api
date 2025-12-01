@@ -25,14 +25,16 @@ class RegistrationFeeController extends Controller
     public function bulkDeleteRegistrationFee(RegistrationFeeIdRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->registrationFeeService->bulkDeleteRegistrationFee($request->registrationFeeIds, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $this->registrationFeeService->bulkDeleteRegistrationFee($request->registrationFeeIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Registration Fee Deleted Successfully", null, null, 200);
     }
 
     public function deleteRegistrationFee(Request $request, $feeId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->registrationFeeService->deleteRegistrationFee($feeId, $currentSchool);
+        $this->registrationFeeService->deleteRegistrationFee($feeId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Registration Fee Deleted Successfully", null, null, 200);
     }
 

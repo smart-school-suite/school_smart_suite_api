@@ -27,19 +27,22 @@ class ExamController extends Controller
     public function createExam(CreateExamRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $createExam = $this->examService->createExam($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $createExam = $this->examService->createExam($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Exam Created Succefully", $createExam, null, 201);
     }
     public function updateExam(UpdateExamRequest $request, $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateExam = $this->examService->updateExam($examId, $currentSchool,  $request->validated());
+        $authAdmin = $this->resolveUser();
+        $updateExam = $this->examService->updateExam($examId, $currentSchool,  $request->validated(), $authAdmin);
         return ApiResponseService::success("Exam Updated Successfully", $updateExam, null, 200);
     }
     public function deleteExam(Request $request, $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteExam = $this->examService->deleteExam($examId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $deleteExam = $this->examService->deleteExam($examId, $currentSchool, $authAdmin);
         return ApiResponseService::success('Exam deleted sucessfully', $deleteExam, null, 200);
     }
     public function getExams(Request $request)
@@ -72,30 +75,31 @@ class ExamController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $examId = $request->route("examId");
         $gradesConfigId = $request->route("gradesConfigId");
-        $addGradesConfig = $this->examService->addExamGrading($examId, $currentSchool, $gradesConfigId);
+        $authAdmin = $this->resolveUser();
+        $addGradesConfig = $this->examService->addExamGrading($examId, $currentSchool, $gradesConfigId, $authAdmin);
         return ApiResponseService::success("Exam Grading Added Successfully", $addGradesConfig, null, 201);
     }
     public function bulkDeleteExam(ExamIdRequest $request)
     {
 
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteExam = $this->examService->bulkDeleteExam($request->examIds, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $deleteExam = $this->examService->bulkDeleteExam($request->examIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Exam Deleted Succesfully", $deleteExam, null, 200);
     }
     public function bulkAddExamGrading(BulkAddExamGradingRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $bulkAddExamGrading = $this->examService->bulkAddExamGrading($request->exam_grading, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $bulkAddExamGrading = $this->examService->bulkAddExamGrading($request->exam_grading, $currentSchool, $authAdmin);
         return ApiResponseService::success("Exam Grading Added Successfully", $bulkAddExamGrading, null, 200);
     }
     public function bulkUpdateExam(BulkUpdateExamRequest $request)
     {
-        try {
-            $bulkUpdateExam = $this->examService->bulkUpdateExam($request->exams);
-            return ApiResponseService::success("Exam Updated Successfully", $bulkUpdateExam, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkUpdateExam = $this->examService->bulkUpdateExam($request->exams, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Exam Updated Successfully", $bulkUpdateExam, null, 200);
     }
 
     public function getAllExamsByStudentId(Request $request, $studentId)

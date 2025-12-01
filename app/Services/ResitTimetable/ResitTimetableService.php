@@ -9,10 +9,10 @@ use Illuminate\Support\Str;
 use Exception;
 use App\Models\ResitExam;
 use App\Models\Resitexamtimetable;
-use Illuminate\Database\Eloquent\Collection;
 use App\Models\Studentresit;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\Actions\AdminActionEvent;
 
 class ResitTimetableService
 {
@@ -97,8 +97,7 @@ class ResitTimetableService
 
         return trim($duration);
     }
-
-    public function createResitTimetable(array $resitTimetableEntries, object $currentSchool, string $resitExamId)
+    public function createResitTimetable(array $resitTimetableEntries, object $currentSchool, string $resitExamId, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -145,8 +144,19 @@ class ResitTimetableService
 
             $exam->timetable_published = true;
             $exam->save();
-
             DB::commit();
+
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitTimetable.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $timetableData,
+                    "message" => "Resit Timetable Created",
+                ]
+            );
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -171,8 +181,7 @@ class ResitTimetableService
             );
         }
     }
-
-    public function deleteResitTimetable($resitExamId, $currentSchool)
+    public function deleteResitTimetable($resitExamId, $currentSchool, $authAdmin)
     {
         try {
             $resitExam = ResitExam::where("school_branch_id", $currentSchool->id)
@@ -217,7 +226,17 @@ class ResitTimetableService
 
             $resitExam->timetable_published = false;
             $resitExam->save();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitTimetable.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $timetableEntries,
+                    "message" => "Resit Timetable Dleted",
+                ]
+            );
             return $timetableEntries;
         } catch (AppException $e) {
             throw $e;
@@ -231,7 +250,7 @@ class ResitTimetableService
             );
         }
     }
-    public function updateResitTimetable(array $entries, object $currentSchool, string $resitExamId)
+    public function updateResitTimetable(array $entries, object $currentSchool, string $resitExamId, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -302,7 +321,17 @@ class ResitTimetableService
             }
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitTimetable.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $timetableEntries,
+                    "message" => "Resit Timetable Updated",
+                ]
+            );
             return Resitexamtimetable::whereIn('id', $updatedIds)->get(); // Return updated models
 
         } catch (InvalidArgumentException $e) {

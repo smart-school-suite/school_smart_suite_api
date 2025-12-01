@@ -19,10 +19,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use App\Exceptions\AppException;
 use Exception;
+use App\Events\Actions\AdminActionEvent;
 
 class ElectionService
 {
-    public function createElection(array $data, $currentSchool)
+    public function createElection(array $data, $currentSchool, $authAdmin)
     {
         try {
             $existingElection = Elections::where("school_branch_id", $currentSchool->id)
@@ -54,7 +55,17 @@ class ElectionService
             $election->save();
 
             $this->dispatchJobs($electionId, $currentSchool, $data);
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.election.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $election,
+                    "message" => "Election Created",
+                ]
+            );
             return $election;
         } catch (Throwable $e) {
             if (!($e instanceof AppException)) {
@@ -82,7 +93,7 @@ class ElectionService
         SendAdminElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
         SendElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
     }
-    public function bulkDeleteElection($electionIds)
+    public function bulkDeleteElection($electionIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -122,7 +133,7 @@ class ElectionService
 
             foreach ($electionIds as $electionItem) {
                 $electionId = $electionItem['election_id'];
-                $election = Elections::find($electionId);
+                $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
                 $election->delete();
                 $result[] = $election;
             }
@@ -139,6 +150,17 @@ class ElectionService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.election.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $electionIds,
+                    "message" => "Election Deleted",
+                ]
+            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -155,7 +177,7 @@ class ElectionService
             );
         }
     }
-    public function deleteElection($currentSchool, $electionId)
+    public function deleteElection($currentSchool, $electionId, $authAdmin)
     {
         $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
 
@@ -171,6 +193,17 @@ class ElectionService
 
         try {
             $election->delete();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.election.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $election,
+                    "message" => "Election Deleted",
+                ]
+            );
             return $election;
         } catch (Throwable $e) {
             throw new AppException(
@@ -219,7 +252,7 @@ class ElectionService
 
         return $electionDetails;
     }
-    public function updateElection(array $data, $currentSchool, $electionId)
+    public function updateElection(array $data, $currentSchool, $electionId, $authAdmin)
     {
         $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
 
@@ -247,6 +280,17 @@ class ElectionService
 
         try {
             $election->update($filterData);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.election.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $election,
+                    "message" => "Election Updated",
+                ]
+            );
             return $election;
         } catch (Throwable $e) {
             throw new AppException(
@@ -258,7 +302,7 @@ class ElectionService
             );
         }
     }
-    public function bulkUpdateElection(array $electionList)
+    public function bulkUpdateElection(array $electionList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -294,6 +338,17 @@ class ElectionService
                     $schoolElection = Elections::findOrFail($electionId);
                     $schoolElection->update($filterData);
                     $result[] = $schoolElection;
+                    AdminActionEvent::dispatch(
+                        [
+                            "permissions" =>  ["schoolAdmin.election.update"],
+                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                            "schoolBranch" =>  $currentSchool->id,
+                            "feature" => "electionManagement",
+                            "authAdmin" => $authAdmin,
+                            "data" => $result,
+                            "message" => "Elections Updated",
+                        ]
+                    );
                 } catch (ModelNotFoundException $e) {
                     DB::rollBack();
                     throw new AppException(
@@ -391,7 +446,7 @@ class ElectionService
 
         return $pastElections;
     }
-    public function addAllowedElectionParticipants(array $electionParticipantsList, $currentSchool)
+    public function addAllowedElectionParticipants(array $electionParticipantsList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -406,6 +461,17 @@ class ElectionService
                 $result[] = $allowedParticipants;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.election.add.participants"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Election Participants Added",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -420,7 +486,7 @@ class ElectionService
             ->get();
         return $electionParticipants;
     }
-    public function addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId)
+    public function addAllowedParticipantsByOtherElection($currentSchool, $electionId, $targetElectionId, $authAdmin)
     {
         $result = [];
         try {
@@ -435,6 +501,17 @@ class ElectionService
                 ]);
                 $result[] = $allowedParticipants;
             }
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.election.add.participants"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Election Participants Added",
+                ]
+            );
             DB::commit();
             return $result;
         } catch (Exception $e) {

@@ -8,15 +8,16 @@ use App\Services\TuitionFee\TuitionFeeScheduleService;
 use App\Http\Requests\TuitionFeeSchedule\AutoCreateFeePaymentScheduleRequest;
 use App\Http\Resources\FeeScheduleResource;
 use App\Services\ApiResponseService;
+
 class TuitionFeeScheduleController extends Controller
 {
     protected TuitionFeeScheduleService $tuitionFeeScheduleService;
 
-    public function __construct(TuitionFeeScheduleService $tuitionFeeScheduleService){
-         $this->tuitionFeeScheduleService = $tuitionFeeScheduleService;
+    public function __construct(TuitionFeeScheduleService $tuitionFeeScheduleService)
+    {
+        $this->tuitionFeeScheduleService = $tuitionFeeScheduleService;
     }
-
-        public function autoCreateFeePaymentSchedule(AutoCreateFeePaymentScheduleRequest $request)
+    public function autoCreateFeePaymentSchedule(AutoCreateFeePaymentScheduleRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $feeSchedule = $this->tuitionFeeScheduleService->autoCreateFeePaymentSchedule($currentSchool, $request->validated());
@@ -32,7 +33,8 @@ class TuitionFeeScheduleController extends Controller
     public function deleteFeeSchedule(Request $request, $feeScheduleId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteFeeSchedule = $this->tuitionFeeScheduleService->deleteFeeShedule($currentSchool, $feeScheduleId);
+        $authAdmin = $this->resolveUser();
+        $deleteFeeSchedule = $this->tuitionFeeScheduleService->deleteFeeShedule($currentSchool, $feeScheduleId, $authAdmin);
         return ApiResponseService::success("Fee Schedule Deleted Successfully", $deleteFeeSchedule, null, 200);
     }
 
@@ -51,7 +53,8 @@ class TuitionFeeScheduleController extends Controller
         return ApiResponseService::success("Student Fee Schedule Fetched Successfully", $feeSchedule, null, 200);
     }
 
-    public function getStudentFeeScheduleLevelId(Request $request, $levelId){
+    public function getStudentFeeScheduleLevelId(Request $request, $levelId)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $authStudent = $this->resolveUser();
         $feeSchedule = $this->tuitionFeeScheduleService->getStudentFeeScheduleLevelId($currentSchool, $authStudent, $levelId);

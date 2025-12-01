@@ -9,8 +9,6 @@ use App\Jobs\StatisticalJobs\FinancialJobs\AdditionalFeeStatJob;
 use App\Jobs\StatisticalJobs\FinancialJobs\AdditionalFeeTransactionJob;
 use App\Models\AdditionalFees;
 use App\Models\AdditionalFeeTransactions;
-use App\Models\Student;
-use App\Notifications\AdditionalFee;
 use App\Notifications\AdditionalFeePaidNotification;
 use Illuminate\Support\Str;
 use Exception;
@@ -18,11 +16,11 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\Actions\AdminActionEvent;
 
 class AdditionalFeePaymentService
 {
-
-    public function payAdditionalFees(array $additionalFeesData, $currentSchool): AdditionalFeeTransactions
+    public function payAdditionalFees(array $additionalFeesData, $currentSchool, $authAdmin): AdditionalFeeTransactions
     {
         DB::beginTransaction();
 
@@ -49,7 +47,7 @@ class AdditionalFeePaymentService
                 DB::rollBack();
                 throw new AppException(
                     "Student additional fee record ID '{$feeId}' is already marked as paid.",
-                    409, // 409 Conflict
+                    409,
                     "Fee Already Paid ✅",
                     "This additional fee is already marked as paid and cannot accept further payments.",
                     null
@@ -109,6 +107,17 @@ class AdditionalFeePaymentService
                 $adminNotificationData
             );
 
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $additionalFee,
+                    "message" => "Additional Fee Paid",
+                ]
+            );
             return $transaction;
         } catch (AppException $e) {
             DB::rollBack();
@@ -124,7 +133,7 @@ class AdditionalFeePaymentService
             );
         }
     }
-    public function reverseTransaction($transactionId, $currentSchool)
+    public function reverseTransaction($transactionId, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -161,9 +170,19 @@ class AdditionalFeePaymentService
             $additionalFees->save();
 
             $transaction->delete();
-
             DB::commit();
 
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.reverse"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeTransactionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $additionalFees,
+                    "message" => "Additional Fee Transaction Reversed",
+                ]
+            );
             return $transaction;
         } catch (AppException $e) {
             DB::rollBack();
@@ -209,7 +228,7 @@ class AdditionalFeePaymentService
             );
         }
     }
-    public function deleteTransaction($transactionId, $currentSchool)
+    public function deleteTransaction($transactionId, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -219,6 +238,18 @@ class AdditionalFeePaymentService
             $transaction->delete();
 
             DB::commit();
+
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeTransactionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $transaction,
+                    "message" => "Additional Fee Transaction Deleted",
+                ]
+            );
             return $transaction;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -266,7 +297,7 @@ class AdditionalFeePaymentService
             );
         }
     }
-    public function bulkDeleteTransaction($transactionIds, $currentSchool)
+    public function bulkDeleteTransaction($transactionIds, $currentSchool, $authAdmin)
     {
         if (empty($transactionIds)) {
             throw new AppException(
@@ -312,6 +343,17 @@ class AdditionalFeePaymentService
                 );
             }
             DB::commit();
+                       AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeTransactionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $allTransactionIds,
+                    "message" => "Additional Fee Transaction Deleted",
+                ]
+            );
             return $successfulDeletions;
         } catch (AppException $e) {
             DB::rollBack();
@@ -327,7 +369,7 @@ class AdditionalFeePaymentService
             );
         }
     }
-    public function bulkReverseTransaction($transactionIds, $currentSchool)
+    public function bulkReverseTransaction($transactionIds, $currentSchool, $authAdmin)
     {
 
         if (empty($transactionIds)) {
@@ -401,6 +443,17 @@ class AdditionalFeePaymentService
             }
 
             DB::commit();
+                     AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeTransactionManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $allTransactionIds,
+                    "message" => "Additional Fee Transaction Reversed",
+                ]
+            );
             return $reversedTransactions;
         } catch (AppException $e) {
             DB::rollBack();
@@ -416,7 +469,7 @@ class AdditionalFeePaymentService
             );
         }
     }
-    public function bulkPayAdditionalFee($feeDataList, $currentSchool)
+    public function bulkPayAdditionalFee($feeDataList, $currentSchool, $authAdmin)
     {
         if (empty($feeDataList)) {
             throw new AppException(
@@ -438,7 +491,6 @@ class AdditionalFeePaymentService
             ->with(['feeCategory', 'student'])
             ->get()
             ->keyBy('id');
-
         DB::beginTransaction();
 
         try {
@@ -517,6 +569,17 @@ class AdditionalFeePaymentService
             DB::commit();
 
             if (!empty($notificationData)) {
+                            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $additionalFee,
+                    "message" => "Additional Fee Paid",
+                ]
+            );
                 SendAdminAdditionalFeeNotificationJob::dispatch(
                     $currentSchool->id,
                     $notificationData,
@@ -543,6 +606,4 @@ class AdditionalFeePaymentService
             );
         }
     }
-
-
 }

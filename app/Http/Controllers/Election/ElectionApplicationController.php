@@ -30,14 +30,17 @@ class ElectionApplicationController extends Controller
     {
         $applicationId = $request->route('applicationId');
         $currentSchool = $request->attributes->get('currentSchool');
-        $approveApplication = $this->electionApplicationService->approveApplication($applicationId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $approveApplication = $this->electionApplicationService->approveApplication($applicationId, $currentSchool, $authAdmin);
         return ApiResponseService::success('Application Approved Successfully', $approveApplication, null, 200);
     }
 
     public function deleteApplication(Request $request)
     {
         $applicationId = $request->route('applicationId');
-        $application = $this->electionApplicationService->deleteApplication($applicationId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $application = $this->electionApplicationService->deleteApplication($applicationId, $currentSchool, $authAdmin);
         return ApiResponseService::success('Application Deleted Succefully', $application, null, 200);
     }
 
@@ -61,13 +64,16 @@ class ElectionApplicationController extends Controller
     }
     public function bulkDeleteApplication(ElectionApplicationIdRequest $request)
     {
-        $bulkDeleteApplication = $this->electionApplicationService->bulkDeleteApplication($request->electionApplicationIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDeleteApplication = $this->electionApplicationService->bulkDeleteApplication($request->electionApplicationIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Application Deleted Successfully", $bulkDeleteApplication, null, 200);
     }
     public function bulkApproveApplication(ElectionApplicationIdRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $bulkApproveApplication = $this->electionApplicationService->bulkApproveApplication($request->electionApplicationIds, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $bulkApproveApplication = $this->electionApplicationService->bulkApproveApplication($request->electionApplicationIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Applications Approved Successfully", $bulkApproveApplication, null, 200);
     }
     public function getApplicationsByStudentId(Request $request, $studentId)

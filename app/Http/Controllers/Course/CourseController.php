@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-       protected CourseService $courseService;
+    protected CourseService $courseService;
     public function __construct(CourseService $courseService)
     {
         $this->courseService = $courseService;
@@ -24,21 +24,24 @@ class CourseController extends Controller
     public function createCourse(CreateCourseRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $course = $this->courseService->createCourse($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $course = $this->courseService->createCourse($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success('Course Created Succefully', $course, null, 201);
     }
 
     public function deleteCourse(Request $request, string $courseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteCourse = $this->courseService->deleteCourse($courseId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $deleteCourse = $this->courseService->deleteCourse($courseId, $currentSchool, $authAdmin);
         return  ApiResponseService::success('Course Deleted Succefully', $deleteCourse, null, 200);
     }
 
     public function updateCourse(UpdateCourseRequest $request, string $courseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateCourse = $this->courseService->updateCourse($courseId, $request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $updateCourse = $this->courseService->updateCourse($courseId, $request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success('Course Update Succefully', $updateCourse, null, 200);
     }
     public function getCourses(Request $request)
@@ -69,14 +72,16 @@ class CourseController extends Controller
     }
     public function activateCourse(Request $request, string $courseId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $activateCourse = $this->courseService->activateCourse($currentSchool, $courseId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $activateCourse = $this->courseService->activateCourse($currentSchool, $courseId, $authAdmin);
         return ApiResponseService::success("Course Activated Succesfully", $activateCourse, null, 200);
     }
     public function deactivateCourse(Request $request, string $courseId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $deactivateCourse = $this->courseService->deactivateCourse($currentSchool, $courseId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $deactivateCourse = $this->courseService->deactivateCourse($currentSchool, $courseId, $authAdmin);
         return ApiResponseService::success("Course Deactivated Succesfully", $deactivateCourse, null, 200);
     }
     public function getCoursesBySchoolSemester(Request $request, string $semesterId, string $specialtyId)
@@ -87,23 +92,30 @@ class CourseController extends Controller
     }
     public function bulkUpdateCourse(BulkUpdateCourseRequest $request)
     {
-
-        $bulkUpdateCourse = $this->courseService->bulkUpdateCourse($request->courses);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkUpdateCourse = $this->courseService->bulkUpdateCourse($request->courses, $currentSchool, $authAdmin);
         return ApiResponseService::success("Course Updated Succesfully", $bulkUpdateCourse, null, 200);
     }
     public function bulkDeleteCourse(CourseIdRequest $request)
     {
-        $bulkDelete = $this->courseService->bulkDeleteCourse($request->courseIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDelete = $this->courseService->bulkDeleteCourse($request->courseIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Course Deleted Successfully", $bulkDelete, null, 200);
     }
     public function bulkDeactivateCourse(CourseIdRequest $request)
     {
-        $bulkDeactivate = $this->courseService->bulkDeactivateCourse($request->courseIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDeactivate = $this->courseService->bulkDeactivateCourse($request->courseIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Course Deactivated Successfully", $bulkDeactivate, null, 200);
     }
     public function bulkActivateCourse(CourseIdRequest $request)
     {
-        $bulkActivate = $this->courseService->bulkActivateCourse($request->courseIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkActivate = $this->courseService->bulkActivateCourse($request->courseIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Course Activated Successfully", $bulkActivate, null, 200);
     }
     public function getActiveCourses(Request $request)
@@ -139,5 +151,16 @@ class CourseController extends Controller
             ->where("semester_id", $semesterId)
             ->get();
         return ApiResponseService::success("Courses By Specialty Semester Fetched Successfully", CourseResource::collection($courses), null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

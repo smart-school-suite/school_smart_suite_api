@@ -21,7 +21,8 @@ class TuitionFeeScheduleSlotController extends Controller
     public function createFeeScheduleSlots(CreateFeeScheduleSlotsRequest $request, $feeScheduleId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $scheduleSlots = $this->tuitionFeeScheduleSlotService->createFeeScheduleSlots($currentSchool, $feeScheduleId, $request->slots);
+        $authAdmin = $this->resolveUser();
+        $scheduleSlots = $this->tuitionFeeScheduleSlotService->createFeeScheduleSlots($currentSchool, $feeScheduleId, $request->slots, $authAdmin);
         return ApiResponseService::success("Fee Schedule Slots Created Successfully", $scheduleSlots, null, 200);
     }
 
@@ -35,7 +36,18 @@ class TuitionFeeScheduleSlotController extends Controller
     public function updateFeeScheduleSlots(UpdateFeeScheduleSlotsRequest $request, $feeScheduleId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateSlot = $this->tuitionFeeScheduleSlotService->updateFeeScheduleSlots($currentSchool, $feeScheduleId, $request->slots);
+        $authAdmin = $this->resolveUser();
+        $updateSlot = $this->tuitionFeeScheduleSlotService->updateFeeScheduleSlots($currentSchool, $feeScheduleId, $request->slots, $authAdmin);
         return ApiResponseService::success("Fee Schedule Updated Successfully", $updateSlot, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

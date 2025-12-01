@@ -11,7 +11,15 @@ class AnnouncementLabel extends Model
     use HasFactory, GeneratesUuid;
 
     protected $fillable = [
-       'name'
+       'name',
+       'color',
+       'status',
+       'description'
+    ];
+
+    protected $casts = [
+        'color' => 'json',
+        'status' => 'boolean'
     ];
 
     public $incrementing = false;

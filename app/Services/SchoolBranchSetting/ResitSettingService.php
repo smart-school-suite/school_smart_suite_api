@@ -7,11 +7,12 @@ use App\Models\Educationlevels;
 use App\Models\SchoolBranchSetting;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Events\Actions\AdminActionEvent;
 
 class ResitSettingService
 {
 
-    public function updateResitSetting($currentSchool, $updateData)
+    public function updateResitSetting($currentSchool, $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;
@@ -65,6 +66,17 @@ class ResitSettingService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.timetableSetting.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolSettingManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $setting,
+                "message" => "Resit Setting Updated",
+            ]
+        );
             return $setting;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
@@ -122,8 +134,11 @@ class ResitSettingService
                 null
             );
         }
-        $setting->value = $newValue;
-        $setting->save();
+
+        //$setting->value = $newValue;
+        $setting->update([
+             "value" => $newValue
+        ]);
     }
 
     private function handleLevelFeeUpdate(SchoolBranchSetting $setting, $newValue)

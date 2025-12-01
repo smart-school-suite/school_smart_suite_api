@@ -24,7 +24,8 @@ class AdditionalFeePaymentController extends Controller
     public function payAdditionalFees(PayAdditionalFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $payAdditionalFees = $this->additionalFeePaymentService->payAdditionalFees($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $payAdditionalFees = $this->additionalFeePaymentService->payAdditionalFees($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Additional Fees Paid Successfully", $payAdditionalFees, null, 201);
     }
 
@@ -38,14 +39,16 @@ class AdditionalFeePaymentController extends Controller
     public function reverseAdditionalFeesTransaction(Request $request, string $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $reverseTransaction = $this->additionalFeePaymentService->reverseTransaction($transactionId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $reverseTransaction = $this->additionalFeePaymentService->reverseTransaction($transactionId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transaction Reversed Successfully", $reverseTransaction, null, 200);
     }
 
     public function deleteTransaction(Request $request, string $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteTransaction = $this->additionalFeePaymentService->deleteTransaction($transactionId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $deleteTransaction = $this->additionalFeePaymentService->deleteTransaction($transactionId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transaction Deleted Successfully", $deleteTransaction, null, 200);
     }
 
@@ -58,34 +61,35 @@ class AdditionalFeePaymentController extends Controller
 
     public function bulkDeleteTransaction(AdditionalFeeTransactionIdRequest $request)
     {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $bulkDeleteTransaction = $this->additionalFeePaymentService->bulkDeleteTransaction($request->transactionIds, $currentSchool);
-            return ApiResponseService::success("Transaction Deleted Succesfully", $bulkDeleteTransaction, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDeleteTransaction = $this->additionalFeePaymentService->bulkDeleteTransaction($request->transactionIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Transaction Deleted Succesfully", $bulkDeleteTransaction, null, 200);
     }
 
     public function bulkReverseTransaction(AdditionalFeeTransactionIdRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $bulkReverseTransaction = $this->additionalFeePaymentService->bulkReverseTransaction($request->transactionIds, $currentSchool);
-            return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $authAdmin = $this->resolveUser();
+        $bulkReverseTransaction = $this->additionalFeePaymentService->bulkReverseTransaction($request->transactionIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
     }
 
     public function bulkPayFees(BulkPayAdditionalFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $bulkPayFees = $this->additionalFeePaymentService->bulkPayAdditionalFee($request->additional_fee, $currentSchool);
-            return ApiResponseService::success("Additional Fees Paid Succesfully", $bulkPayFees, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
+        $authAdmin = $this->resolveUser();
+        $bulkPayFees = $this->additionalFeePaymentService->bulkPayAdditionalFee($request->additional_fee, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Additional Fees Paid Succesfully", $bulkPayFees, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
         }
+        return null;
     }
 }

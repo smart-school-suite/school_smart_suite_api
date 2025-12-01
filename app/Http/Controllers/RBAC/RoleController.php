@@ -39,14 +39,27 @@ class RoleController extends Controller
     }
 
     public function assignRoleSchoolAdmin(AddUserRoleRequest $request, string $schoolAdminId){
-       $currentSchool = $request->attributes->get('currentSchool');
-       $assignRole = $this->roleService->assignRolesSchoolAdmin($request->roles, $schoolAdminId, $currentSchool);
+               $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+       $assignRole = $this->roleService->assignRolesSchoolAdmin($request->roles, $schoolAdminId, $currentSchool, $authAdmin);
        return ApiResponseService::success("Role Assigned To Admin Successfully", $assignRole, null, 200);
     }
 
     public function removeRoleSchoolAdmin(RemoveRoleRequest $request, string $schoolAdminId){
-        $currentSchool = $request->attributes->get("currentSchool");
-        $removeRole = $this->roleService->removeRole($request->role, $schoolAdminId, $currentSchool);
+                $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $removeRole = $this->roleService->removeRole($request->role, $schoolAdminId, $currentSchool, $authAdmin);
         return ApiResponseService::success("School Admin Role Removed Succesfully", $removeRole, null, 200);
+    }
+
+        protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

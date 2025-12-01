@@ -6,8 +6,8 @@ use App\Models\Schooladmin;
 use Spatie\Permission\Models\Permission;
 use App\Models\Permission as AppPermission;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class PermissionService
 {
@@ -82,23 +82,51 @@ class PermissionService
         return $grouped;
     }
 
-    public function givePermissionToAdmin(array $permissions,  string $userId, $currentSchool)
+    public function givePermissionToAdmin(array $permissions,  string $userId, $currentSchool, $authAdmin)
     {
         $schoolAdminExist = Schooladmin::where("school_branch_id", $currentSchool->id)->find($userId);
         if (!$schoolAdminExist) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $givePermission = $schoolAdminExist->givePermissionTo($permissions);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.schoolAdmin.permission.assign"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "schoolAdminRBACManagement",
+                "authAdmin" => $authAdmin,
+                "data" => [
+                    "permissions" => $permissions,
+                    "school_admin" => $schoolAdminExist
+                ],
+                "message" => "Permission Assigned to Admin",
+            ]
+        );
         return $givePermission;
     }
 
-    public function revokePermission(array $permissions,  string $userId, $currentSchool)
+    public function revokePermission(array $permissions,  string $userId, $currentSchool, $authAdmin)
     {
         $schoolAdminExist = Schooladmin::where("school_branch_id", $currentSchool->id)->find($userId);
         if (!$schoolAdminExist) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $revokePermission = $schoolAdminExist->revokePermissionTo($permissions);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.schoolAdmin.permission.revoke"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "schoolAdminRBACManagement",
+                "authAdmin" => $authAdmin,
+                "data" => [
+                    "permissions" => $revokePermission,
+                    "school_admin" => $schoolAdminExist
+                ],
+                "message" => "Admin Permission Revoked",
+            ]
+        );
         return $revokePermission;
     }
 

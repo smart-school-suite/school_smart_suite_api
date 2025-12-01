@@ -64,13 +64,15 @@ class AnnouncementController extends Controller
     public function updateAnnouncementContent(UpdateAnnouncementContentRequest $request, string $announcementId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateAnnouncementContent = $this->announcementService->updateAnnouncementContent($request->validated(), $currentSchool, $announcementId);
+        $authenticatedUser = $this->getAuthenticatedUser();
+        $updateAnnouncementContent = $this->announcementService->updateAnnouncementContent($request->validated(), $currentSchool, $announcementId, $authenticatedUser['authUser']);
         return ApiResponseService::success("Announcement Content Updated Successfully", $updateAnnouncementContent, null, 200);
     }
     public function deleteAnnouncement(Request $request, $announcementId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteAnnouncement = $this->announcementService->deleteAnnouncement($announcementId, $currentSchool);
+        $authenticatedUser = $this->getAuthenticatedUser();
+        $deleteAnnouncement = $this->announcementService->deleteAnnouncement($announcementId, $currentSchool, $authenticatedUser['authUser']);
         return ApiResponseService::success("Announcement Deleted Successfully", $deleteAnnouncement, null, 200);
     }
     public function getAnnouncementByState(Request $request, $status)

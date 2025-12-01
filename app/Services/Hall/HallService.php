@@ -4,10 +4,11 @@ namespace App\Services\Hall;
 
 use App\Exceptions\AppException;
 use App\Models\Hall;
+use App\Events\Actions\AdminActionEvent;
 
 class HallService
 {
-    public function createHall($currentSchool, $data)
+    public function createHall($currentSchool, $data, $authAdmin)
     {
         $existingHall = Hall::where("school_branch_id", $currentSchool->id)
             ->where("name", $data['name'])
@@ -27,11 +28,21 @@ class HallService
             'capacity' => $data['capacity'],
             'location' => $data['location']
         ]);
-
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.hall.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $existingHall,
+                "message" => "Hall Created",
+            ]
+        );
         return true;
     }
 
-    public function updateHall($currentSchool, $updateData, $hallId)
+    public function updateHall($currentSchool, $updateData, $hallId, $authAdmin)
     {
         $hall = Hall::where("school_branch_id", $currentSchool->id)
             ->find($hallId);
@@ -61,10 +72,22 @@ class HallService
         }
 
         $hall->update($filteredUpdateData);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.hall.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $hall,
+                "message" => "Hall Updated",
+            ]
+        );
         return $hall;
     }
 
-    public function deleteHall($currentSchool, $hallId){
+    public function deleteHall($currentSchool, $hallId, $authAdmin)
+    {
         $hall = Hall::where("school_branch_id", $currentSchool->id)
             ->find($hallId);
 
@@ -78,43 +101,57 @@ class HallService
         }
 
         $hall->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.hall.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $hall,
+                "message" => "Hall Deleted",
+            ]
+        );
         return $hall;
     }
 
 
-    public function getAllHalls($currentSchool){
-         $halls = Hall::where("school_branch_id", $currentSchool->id)
-                    ->get();
-         if($halls->isEmpty()){
+    public function getAllHalls($currentSchool)
+    {
+        $halls = Hall::where("school_branch_id", $currentSchool->id)
+            ->get();
+        if ($halls->isEmpty()) {
             throw new AppException(
                 "No Halls Added",
                 404,
                 "No Halls Found",
                 "There are no Halls available for this school branch.",
             );
-         }
+        }
 
-         return $halls;
+        return $halls;
     }
 
-    public function getActiveHalls($currentSchool){
-          $halls = Hall::where("school_branch_id", $currentSchool->id)
-                  ->where("status", '=', "available")
-                    ->get();
-         if($halls->isEmpty()){
+    public function getActiveHalls($currentSchool)
+    {
+        $halls = Hall::where("school_branch_id", $currentSchool->id)
+            ->where("status", '=', "available")
+            ->get();
+        if ($halls->isEmpty()) {
             throw new AppException(
                 "No Halls Active Halls Found",
                 404,
                 "No Halls Active Found",
                 "There are no Active Halls available for this school branch.",
             );
-         }
+        }
 
         return $halls;
     }
 
-    public function activateHall($currentSchool, $hallId){
-         $hall = Hall::where("school_branch_id", $currentSchool->id)
+    public function activateHall($currentSchool, $hallId, $authAdmin)
+    {
+        $hall = Hall::where("school_branch_id", $currentSchool->id)
             ->find($hallId);
 
         if (!$hall) {
@@ -128,11 +165,23 @@ class HallService
 
         $hall->status = 'available';
         $hall->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.hall.activated"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $hall,
+                "message" => "Hall Activated",
+            ]
+        );
         return $hall;
     }
 
-    public function deactivateHall($currentSchool, $hallId){
-         $hall = Hall::where("school_branch_id", $currentSchool->id)
+    public function deactivateHall($currentSchool, $hallId, $authAdmin)
+    {
+        $hall = Hall::where("school_branch_id", $currentSchool->id)
             ->find($hallId);
 
         if (!$hall) {
@@ -146,9 +195,17 @@ class HallService
 
         $hall->status = 'unavailable';
         $hall->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.hall.deactivated"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $hall,
+                "message" => "Hall Deactivated",
+            ]
+        );
         return $hall;
     }
-
-
-
 }

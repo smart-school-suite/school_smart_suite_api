@@ -14,10 +14,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use App\Events\Actions\AdminActionEvent;
 
 class TuitionFeeScheduleSlotService
 {
-    public function createFeeScheduleSlots(Schoolbranches $currentSchool, string $feeScheduleId, array $slotsData): bool
+    public function createFeeScheduleSlots(Schoolbranches $currentSchool, string $feeScheduleId, array $slotsData, $authAdmin): bool
     {
         DB::beginTransaction();
         try {
@@ -81,6 +82,17 @@ class TuitionFeeScheduleSlotService
                 $feeSchedule->specialty->id,
                 $scheduleData
             );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.feeScheduleSlots.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeSheduleSlotMangement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $feeSchedule,
+                    "message" => "Tuition Fee Schedule Slots Created",
+                ]
+            );
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -96,7 +108,7 @@ class TuitionFeeScheduleSlotService
             throw new \Exception("An unexpected error occurred while creating fee schedule slots.", 0, $e);
         }
     }
-    public function updateFeeScheduleSlots(Schoolbranches $currentSchool, string $feeScheduleId, array $slotsData): bool
+    public function updateFeeScheduleSlots(Schoolbranches $currentSchool, string $feeScheduleId, array $slotsData, $authAdmin): bool
     {
         DB::beginTransaction();
 
@@ -157,6 +169,17 @@ class TuitionFeeScheduleSlotService
 
             //review this worker its incomplete
             UpdateStudentFeeScheduleJob::dispatch($feeScheduleId, $currentSchool->id,  $feeSchedule->specialty->id);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.feeScheduleSlot.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeSheduleSlotMangement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $feeSchedule,
+                    "message" => "Tuition Fee Schedule Slots Updated",
+                ]
+            );
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -172,7 +195,7 @@ class TuitionFeeScheduleSlotService
             throw new \Exception("An unexpected error occurred while updating fee schedule slots.", 0, $e);
         }
     }
-    public function deleteFeeScheduleSlot(string $feeScheduleId, $currentSchool)
+    public function deleteFeeScheduleSlot(string $feeScheduleId, $currentSchool, $authAdmin)
     {
         $feeSchedules = FeeSchedule::where("school_branch_id", $currentSchool->id)
             ->where("fee_schedule_id", $feeScheduleId)
@@ -180,6 +203,17 @@ class TuitionFeeScheduleSlotService
         foreach ($feeSchedules as $feeSchedule) {
             $feeSchedule->delete();
         }
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.feeScheduleSlots.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "tuitionFeeSheduleSlotMangement",
+                "authAdmin" => $authAdmin,
+                "data" => $feeSchedule,
+                "message" => "Tuition Fee Schedule Slots Deleted",
+            ]
+        );
     }
     public function getFeeScheduleSlots($feeScheduleId, $currentSchool)
     {

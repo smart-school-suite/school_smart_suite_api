@@ -4,10 +4,11 @@ namespace App\Services\AdditionalFee;
 
 use App\Models\AdditionalFeesCategory;
 use App\Exceptions\AppException;
+use App\Events\Actions\AdminActionEvent;
 
 class AdditionalFeeCategoryService
 {
-    public function createAdditionalFeeCategory(array $categoryData, $currentSchool)
+    public function createAdditionalFeeCategory(array $categoryData, $currentSchool, $authAdmin)
     {
         $additionalFeeCategory = AdditionalFeesCategory::where("school_branch_id", $currentSchool->id)
             ->where("title", $categoryData["title"])
@@ -25,10 +26,21 @@ class AdditionalFeeCategoryService
         $additionalFeeCategory->school_branch_id = $currentSchool->id;
         $additionalFeeCategory->title = $categoryData["title"];
         $additionalFeeCategory->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFeeCategory.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $additionalFeeCategory,
+                "message" => "Additional Fee Category Deleted",
+            ]
+        );
         return $additionalFeeCategory;
     }
 
-    public function updateAdditionalFeeCategory(array $categoryData, $currentSchool, $feeCategoryId)
+    public function updateAdditionalFeeCategory(array $categoryData, $currentSchool, $feeCategoryId, $authAdmin)
     {
         $feeCategoryExists = AdditionalFeesCategory::where("school_branch_id", $currentSchool->id)->find($feeCategoryId);
 
@@ -63,6 +75,17 @@ class AdditionalFeeCategoryService
 
         try {
             $feeCategoryExists->update($filterData);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFeeCategory.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalCategoryManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $feeCategoryExists,
+                    "message" => "Additional Fee Category Updated",
+                ]
+            );
             return $feeCategoryExists;
         } catch (\Exception $e) {
             throw new AppException(
@@ -75,7 +98,7 @@ class AdditionalFeeCategoryService
         }
     }
 
-    public function deleteAdditionalFeeCategory($currentSchool, $feeCategoryId)
+    public function deleteAdditionalFeeCategory($currentSchool, $feeCategoryId, $authAdmin)
     {
         $feeCategoryExists = AdditionalFeesCategory::where("school_branch_id", $currentSchool->id)->find($feeCategoryId);
         if (!$feeCategoryExists) {
@@ -88,6 +111,18 @@ class AdditionalFeeCategoryService
             );
         }
         $feeCategoryExists->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.additionalFeeCategory.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "additionalCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $feeCategoryExists,
+                "message" => "Additional Fee Category Deleted",
+            ]
+        );
+        return $feeCategoryExists;
     }
 
     public function getAdditionalFeeCategory($currentSchool)

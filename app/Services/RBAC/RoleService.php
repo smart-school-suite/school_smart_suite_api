@@ -5,6 +5,7 @@ namespace App\Services\RBAC;
 use App\Services\ApiResponseService;
 use Spatie\Permission\Models\Role;
 use App\Models\Schooladmin;
+use App\Events\Actions\AdminActionEvent;
 
 class RoleService
 {
@@ -43,23 +44,51 @@ class RoleService
         return Role::all();
     }
 
-    public function assignRolesSchoolAdmin(array $roles, string $userId, $currentSchool)
+    public function assignRolesSchoolAdmin(array $roles, string $userId, $currentSchool, $authAdmin)
     {
         $schoolAdminExist = Schooladmin::where("school_branch_id", $currentSchool->id)->find($userId);
         if (!$schoolAdminExist) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $assignRoles = $schoolAdminExist->assignRole($roles);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.schoolAdmin.role.assign"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "schoolAdminRBACManagement",
+                "authAdmin" => $authAdmin,
+                "data" => [
+                    "roles" => $roles,
+                    "school_admin" => $schoolAdminExist
+                ],
+                "message" => "Role Assigned to Admin",
+            ]
+        );
         return $assignRoles;
     }
 
-    public function removeRole(string $role, string $userId, $currentSchool)
+    public function removeRole(string $role, string $userId, $currentSchool, $authAdmin)
     {
         $schoolAdminExist = Schooladmin::where("school_branch_id", $currentSchool->id)->find($userId);
         if (!$schoolAdminExist) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $removeRole = $schoolAdminExist->removeRole($role);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.schoolAdmin.role.revoke"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "schoolAdminRBACManagement",
+                "authAdmin" => $authAdmin,
+                "data" => [
+                    "roles" => $role,
+                    "school_admin" => $schoolAdminExist
+                ],
+                "message" => "Role Revoked From Admin",
+            ]
+        );
         return $removeRole;
     }
 }

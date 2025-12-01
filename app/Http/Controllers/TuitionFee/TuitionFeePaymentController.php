@@ -20,7 +20,8 @@ class TuitionFeePaymentController extends Controller
     public function payTuitionFees(PayTuitionFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $payFees = $this->tuitionFeePaymentService->payStudentFees($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $payFees = $this->tuitionFeePaymentService->payStudentFees($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Fees Paid Sucessfully", $payFees, null, 201);
     }
     public function getStudentFinancialTransactions(Request $request)

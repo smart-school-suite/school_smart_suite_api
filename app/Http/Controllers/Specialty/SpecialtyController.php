@@ -12,6 +12,7 @@ use App\Http\Requests\Specialty\SpecialtyIdRequest;
 use App\Http\Requests\Specialty\BulkUpdateSpecialtyRequest;
 use App\Http\Resources\SpecialtyResource;
 use Exception;
+
 class SpecialtyController extends Controller
 {
     protected SpecialtyService $specialtyService;
@@ -22,19 +23,22 @@ class SpecialtyController extends Controller
     public function createSpecialty(CreateSpecialtyRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $createSpecailty = $this->specialtyService->createSpecialty($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $createSpecailty = $this->specialtyService->createSpecialty($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("specialty created sucessfully", $createSpecailty, null, 200);
     }
     public function deleteSpecialty(Request $request, $specialtyId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteSpecailty = $this->specialtyService->deleteSpecialty($currentSchool, $specialtyId);
+        $authAdmin = $this->resolveUser();
+        $deleteSpecailty = $this->specialtyService->deleteSpecialty($currentSchool, $specialtyId, $authAdmin);
         return ApiResponseService::success("Specialty Deleted Sucessfully", $deleteSpecailty, null, 200);
     }
     public function updateSpecialty(UpdateSpecialtyRequest $request, $specialtyId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateSpecailty = $this->specialtyService->updateSpecialty($request->validated(), $currentSchool, $specialtyId);
+        $authAdmin = $this->resolveUser();
+        $updateSpecailty = $this->specialtyService->updateSpecialty($request->validated(), $currentSchool, $specialtyId, $authAdmin);
         return ApiResponseService::success("Specialty Updated Sucessfully", $updateSpecailty, null, 200);
     }
     public function getSpecialtiesBySchoolBranch(Request $request)
@@ -50,50 +54,56 @@ class SpecialtyController extends Controller
         $specailtyDetails = $this->specialtyService->getSpecailtyDetails($currentSchool, $specialtyId);
         return ApiResponseService::success("specialty details fetched succefully", $specailtyDetails, null, 200);
     }
-    public function activateSpecialty($specialtyId)
+    public function activateSpecialty(Request $request, $specialtyId)
     {
-        $activateSpecialty = $this->specialtyService->activateSpecialty($specialtyId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activateSpecialty = $this->specialtyService->activateSpecialty($specialtyId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Specialty Activated Successfully", $activateSpecialty, null, 200);
     }
-    public function deactivateSpecialty($specialtyId)
+    public function deactivateSpecialty(Request $request, $specialtyId)
     {
-        $deactivateSpecialty = $this->specialtyService->deactivateSpecialty($specialtyId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deactivateSpecialty = $this->specialtyService->deactivateSpecialty($specialtyId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Specialty Deactivated Successfully", $deactivateSpecialty, null, 200);
     }
     public function bulkDeactivateSpecialty(SpecialtyIdRequest $request)
     {
-        try {
-            $bulkDeactivateSpecialty = $this->specialtyService->bulkDeactivateSpecialty($request->specialtyIds);
-            return ApiResponseService::success("Specialty Deactived Succesfully", $bulkDeactivateSpecialty, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkDeactivateSpecialty = $this->specialtyService->bulkDeactivateSpecialty($request->specialtyIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Specialty Deactived Succesfully", $bulkDeactivateSpecialty, null, 200);
     }
     public function bulkActivateSpecialty(SpecialtyIdRequest $request)
     {
-        try {
-            $bulkActivateSpecialty = $this->specialtyService->bulkActivateSpecialty($request->specialtyIds);
-            return ApiResponseService::success("Specialty activated Succesfully", $bulkActivateSpecialty, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkActivateSpecialty = $this->specialtyService->bulkActivateSpecialty($request->specialtyIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Specialty activated Succesfully", $bulkActivateSpecialty, null, 200);
     }
     public function bulkDeleteSpecialty(SpecialtyIdRequest $request)
     {
-        try {
-            $bulkDeleteSpecialty = $this->specialtyService->bulkDeleteSpecialty($request->specialtyIds);
-            return ApiResponseService::success("Specialty Deleted Succesfully", $bulkDeleteSpecialty, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkDeleteSpecialty = $this->specialtyService->bulkDeleteSpecialty($request->specialtyIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Specialty Deleted Succesfully", $bulkDeleteSpecialty, null, 200);
     }
     public function bulkUdateSpecialty(BulkUpdateSpecialtyRequest $request)
     {
-        try {
-            $bulkUpdateSpecialty = $this->specialtyService->bulkUpdateSpecialty($request->specialties);
-            return ApiResponseService::success("Specialty Updated Successfully", $bulkUpdateSpecialty, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $bulkUpdateSpecialty = $this->specialtyService->bulkUpdateSpecialty($request->specialties, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Specialty Updated Successfully", $bulkUpdateSpecialty, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
         }
+        return null;
     }
 }

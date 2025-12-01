@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Resit;
+
 use App\Models\Courses;
 use App\Models\Marks;
 use App\Models\Studentresit;
@@ -16,9 +17,11 @@ use App\Models\ResitResults;
 use App\Models\Student;
 use App\Models\StudentResults;
 use Exception;
+use App\Events\Actions\AdminActionEvent;
+
 class AddResitScoreService
 {
-        /**
+    /**
      * Submits resit scores for a student.
      *
      * @param array $entries Array of resit entry data. Each entry should contain:
@@ -31,7 +34,7 @@ class AddResitScoreService
      * @return array An array of the stored resit score details.
      * @throws Exception If any database operation fails.
      */
-    public function submitStudentResitScores(array $entries, object $currentSchool, string $candidateId): array
+    public function submitStudentResitScores(array $entries, object $currentSchool, string $candidateId, $authAdmin): array
     {
         DB::beginTransaction();
 
@@ -47,7 +50,6 @@ class AddResitScoreService
                 if ($exam === null) {
 
                     $exam = Exams::findOrFail($entry['exam_id']);
-
                 }
                 $letterGradeDetails = $this->determineResitLetterGrade(
                     $entry['score'],
@@ -101,7 +103,23 @@ class AddResitScoreService
             );
             $this->updateAccessmentStatus($candidateId);
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitEvaluation.addScore"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitEvaluationManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => [
+                        "results" => $results,
+                        "ca_results" => $caResults,
+                        "exam_results" => $examResults,
+                        "former_gp" => $caGpaAndExamGpa,
+                        "new_gpa" => $newExamGpa
+                    ],
+                    "message" => "Resit Resit Score Summited Successfully",
+                ]
+            );
             return [
                 "results" => $results,
                 "ca_results" => $caResults,
@@ -440,7 +458,7 @@ class AddResitScoreService
             throw new Exception('Exam type is not valid or not found');
         }
 
-       $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
+        $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
             ->where('type', 'ca')
             ->firstOrFail();
 

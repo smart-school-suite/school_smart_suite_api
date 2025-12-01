@@ -11,6 +11,7 @@ use Exception;
 use App\Models\Installment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+use App\Events\Actions\AdminActionEvent;
 
 class TuitionFeeScheduleService
 {
@@ -151,11 +152,22 @@ class TuitionFeeScheduleService
             );
         }
     }
-    public function deleteFeeShedule($currentSchool, $feeScheduleId)
+    public function deleteFeeShedule($currentSchool, $feeScheduleId, $authAdmin)
     {
         $feeSchedule = FeeSchedule::where("school_branch_id", $currentSchool->id)
             ->findOrFail($feeScheduleId);
         $feeSchedule->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.feeSchedule.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "tuitionFeeScheduleManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $feeSchedule,
+                "message" => "Tuition Fee Schedule Deleted",
+            ]
+        );
         return $feeSchedule;
     }
     public function getFeeScheduleStudentId($currentSchool, string $studentId): Collection

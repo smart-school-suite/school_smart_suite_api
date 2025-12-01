@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\Resit\ResitPaymentService;
 use App\Http\Requests\StudentResit\StudentResitTransactionIdRequest;
-use Exception;
 use App\Http\Requests\StudentResit\BulkPayStudentResitRequest;
 use App\Http\Requests\StudentResit\PayResitFeeRequest;
 use App\Http\Resources\StudentResitTransResource;
@@ -23,7 +22,8 @@ class ResitPaymentController extends Controller
     public function payResit(PayResitFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $payStudentResit = $this->resitPaymentService->payResit($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $payStudentResit = $this->resitPaymentService->payResit($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Resit Paid Successfully", $payStudentResit, null, 200);
     }
     public function getResitPaymentTransactions(Request $request)
@@ -35,7 +35,8 @@ class ResitPaymentController extends Controller
     public function deleteFeePaymentTransaction(Request $request, $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteTransaction = $this->resitPaymentService->deleteResitFeeTransaction($currentSchool, $transactionId);
+        $authAdmin = $this->resolveUser();
+        $deleteTransaction = $this->resitPaymentService->deleteResitFeeTransaction($currentSchool, $transactionId, $authAdmin);
         return ApiResponseService::success("Transaction Deleted Succesfully", $deleteTransaction, null, 200);
     }
     public function getTransactionDetails(Request $request, $transactionId)
@@ -46,37 +47,41 @@ class ResitPaymentController extends Controller
     }
     public function reverseTransaction(Request $request, $transactionId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $reverseTransaction = $this->resitPaymentService->reverseResitTransaction($transactionId, $currentSchool);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $reverseTransaction = $this->resitPaymentService->reverseResitTransaction($transactionId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transaction Reversed Succesfully", $reverseTransaction, null, 200);
     }
     public function bulkPayStudentResit(BulkPayStudentResitRequest $request)
     {
-        try {
-            $currentSchool = $request->attributes->get("currentSchool");
-            $bulkPayStudentResit = $this->resitPaymentService->bulkPayStudentResit($request->paymentData, $currentSchool);
-            return ApiResponseService::success("Student Resit Paid Succesfully", $bulkPayStudentResit, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkPayStudentResit = $this->resitPaymentService->bulkPayStudentResit($request->paymentData, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Student Resit Paid Succesfully", $bulkPayStudentResit, null, 200);
     }
     public function bulkDeleteStudentResitTransactions(StudentResitTransactionIdRequest $request)
     {
-        try {
-            $bulkDeletResitTransactions = $this->resitPaymentService->bulkDeleteTransaction($request->transactionIds);
-            return ApiResponseService::success("Student Resit Transactions Deleted Succefully", $bulkDeletResitTransactions, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDeletResitTransactions = $this->resitPaymentService->bulkDeleteTransaction($request->transactionIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Student Resit Transactions Deleted Succefully", $bulkDeletResitTransactions, null, 200);
     }
     public function bulkReverseTransaction(StudentResitTransactionIdRequest $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        try {
-            $bulkReverseTransaction = $this->resitPaymentService->bulkReverseResitTransaction($request->transactionIds, $currentSchool);
-            return ApiResponseService::success("Transactions Reversed Succesfully", $bulkReverseTransaction, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkReverseTransaction = $this->resitPaymentService->bulkReverseResitTransaction($request->transactionIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Transactions Reversed Succesfully", $bulkReverseTransaction, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
         }
+        return null;
     }
 }

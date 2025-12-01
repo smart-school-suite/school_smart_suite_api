@@ -18,29 +18,39 @@ class SchoolExpenseCategoryController extends Controller
     }
     public function createCategory(CreateExpensesCategoryRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Category Expenses Created Sucessfully", $createCategoryExpenses, null, 201);
     }
-
     public function updateCategory(UpdateExpensesCategoryRequest $request, $categoryId)
     {
-        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated(),  $categoryId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $updateCategoryExpenses = $this->schoolExpensesCategoryService->updateSchoolExpenseCategory($request->validated(),  $categoryId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Expenses Category Updated Sucessfully", $updateCategoryExpenses, null, 200);
     }
-
-
-    public function deleteCategory(string $categoryId)
+    public function deleteCategory(Request $request, string $categoryId)
     {
-        $deleteCategoryExpenses = $this->schoolExpensesCategoryService->deleteSchoolExpenseCategory($categoryId);
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $deleteCategoryExpenses = $this->schoolExpensesCategoryService->deleteSchoolExpenseCategory($categoryId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Expenses Category Deleted Succesfully", $deleteCategoryExpenses, null, 200);
     }
-
-
     public function getCategory(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getSchoolExpensesCategory = $this->schoolExpensesCategoryService->getSchoolCategoryExpenses($currentSchool);
         return ApiResponseService::success("Category Expenses Fetched Successfully", $getSchoolExpensesCategory, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

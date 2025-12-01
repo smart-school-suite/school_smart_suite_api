@@ -6,10 +6,11 @@ use App\Exceptions\AppException;
 use Throwable;
 use App\Models\AnnouncementCategory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\Actions\AdminActionEvent;
 
 class AnnouncementCategoryService
 {
-    public function createCategory(array $categoryData, $currentSchool)
+    public function createCategory(array $categoryData, $currentSchool, $authAdmin)
     {
         $existingCategory = AnnouncementCategory::where('school_branch_id', $currentSchool->id)
             ->where('name', $categoryData['name'])
@@ -32,6 +33,17 @@ class AnnouncementCategoryService
                 'school_branch_id' => $currentSchool->id
             ]);
 
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.announcementCategory.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "announcementCategoryManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $category,
+                    "message" => "Announcement Category Created",
+                ]
+            );
             return $category;
         } catch (Throwable $e) {
             throw new AppException(
@@ -43,7 +55,7 @@ class AnnouncementCategoryService
             );
         }
     }
-    public function updateCategory(array $categoryData, $currentSchool, $categoryId)
+    public function updateCategory(array $categoryData, $currentSchool, $categoryId, $authAdmin)
     {
         try {
             $announcementCategory = AnnouncementCategory::where("school_branch_id", $currentSchool->id)
@@ -69,6 +81,17 @@ class AnnouncementCategoryService
             }
 
             $announcementCategory->update($filterData);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.announcementCategory.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "announcementCategoryManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $announcementCategory,
+                    "message" => "Announcement Category Updated",
+                ]
+            );
             return $announcementCategory;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -118,7 +141,7 @@ class AnnouncementCategoryService
             );
         }
     }
-    public function deleteCategory($currentSchool, $categoryId)
+    public function deleteCategory($currentSchool, $categoryId, $authAdmin)
     {
         $categoryName = 'Unknown Category';
 
@@ -129,7 +152,17 @@ class AnnouncementCategoryService
             $categoryName = $announcementCategory->name;
 
             $announcementCategory->delete();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.announcementCategory.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "announcementCategoryManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $announcementCategory,
+                    "message" => "Announcement Category Deleted",
+                ]
+            );
             return $announcementCategory;
         } catch (ModelNotFoundException $e) {
 

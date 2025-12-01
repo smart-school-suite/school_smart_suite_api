@@ -11,10 +11,11 @@ use Illuminate\Support\Str;
 use App\Models\RegistrationFee;
 use Exception;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class RegistrationFeePayment
 {
-    public function payRegistrationFees(array $data, $currentSchool)
+    public function payRegistrationFees(array $data, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -59,13 +60,27 @@ class RegistrationFeePayment
                 $registrationFeeData,
                 $currentSchool->id
             );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.registrationFee.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "registrationFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => [
+                        "transaction" => $transaction,
+                        "registration_fee" => $registrationFee
+                    ],
+                    "message" => "Registration Fee Paid",
+                ]
+            );
             return $transaction;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkPayRegistrationFee(array $feeDataArray, $currentSchool)
+    public function bulkPayRegistrationFee(array $feeDataArray, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -110,6 +125,17 @@ class RegistrationFeePayment
             SendRegistrationFeePaidNotificationJob::dispatch(
                 $registrationFeeData,
                 $currentSchool->id
+            );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.registrationFee.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "registrationFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $registrationFeeData,
+                    "message" => "Registration Fee Paid",
+                ]
             );
             return true;
         } catch (Exception $e) {

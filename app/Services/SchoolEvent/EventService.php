@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+use App\Events\Actions\AdminActionEvent;
 
 class EventService
 {
@@ -359,7 +360,7 @@ class EventService
 
         return $schoolEvents->values()->all();
     }
-    public function deleteSchoolEvent($currentSchool, $eventId)
+    public function deleteSchoolEvent($currentSchool, $eventId, $authAdmin)
     {
         $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->find($eventId);
@@ -375,6 +376,18 @@ class EventService
         }
 
         $schoolEvent->delete();
+                AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.event.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolEventManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $schoolEvent,
+                "message" => "School Event Deleted",
+            ]
+        );
+        return $schoolEvent;
     }
     public function getSchoolEventDetails($currentSchool, $eventId)
     {
@@ -394,7 +407,7 @@ class EventService
 
         return $schoolEvents;
     }
-    public function updateSchoolEventContent($eventData, $currentSchool, $eventId)
+    public function updateSchoolEventContent($eventData, $currentSchool, $eventId, $authAdmin)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->find($eventId);
@@ -437,7 +450,17 @@ class EventService
         }
 
         $schoolEvents->update($dataToUpdate);
-
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.event.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolEventManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $schoolEvents,
+                "message" => "School Event Updated",
+            ]
+        );
         return $schoolEvents;
     }
     protected function getTags(array $data): Collection

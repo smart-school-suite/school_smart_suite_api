@@ -6,35 +6,71 @@ use App\Models\Schoolexpensescategory;
 use App\Exceptions\AppException;
 use Exception;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class ExpenseCategoryService
 {
-    public function createSchoolExpense(array $data, $currentSchool)
+    public function createSchoolExpense(array $data, $currentSchool, $authAdmin)
     {
         $expensesCategory = new Schoolexpensescategory();
         $expensesCategory->name = $data["name"];
         $expensesCategory->school_branch_id = $currentSchool->id;
         $expensesCategory->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.schoolExpenses.category.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolExpenseManager",
+                "authAdmin" => $authAdmin,
+                "data" => $expensesCategory,
+                "message" => "Expense Category Created",
+            ]
+        );
         return $expensesCategory;
     }
 
-    public function updateSchoolExpenseCategory(array $data, $schoolExpensesId)
+    public function updateSchoolExpenseCategory(array $data, $schoolExpensesId, $currentSchool, $authAdmin)
     {
-        $schoolExpensesExists = Schoolexpensescategory::find($schoolExpensesId);
+        $schoolExpensesExists = Schoolexpensescategory::where("school_branch_id", $currentSchool->id)
+            ->find($schoolExpensesId);
         if (!$schoolExpensesExists) {
             return ApiResponseService::error("School Expenses Not found", null, 400);
         }
         $filterData = array_filter($data);
         $schoolExpensesExists->update($filterData);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.schoolExpenses.category.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "expenseCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $schoolExpensesExists,
+                "message" => "Expense Category Updated",
+            ]
+        );
         return $schoolExpensesExists;
     }
-    public function deleteSchoolExpenseCategory($schoolExpenseCategoryId)
+    public function deleteSchoolExpenseCategory($schoolExpenseCategoryId, $currentSchool, $authAdmin)
     {
-        $schoolExpensesCategoryExists = Schoolexpensescategory::find($schoolExpenseCategoryId);
+        $schoolExpensesCategoryExists = Schoolexpensescategory::where("school_branch_id", $currentSchool->id)
+            ->find($schoolExpenseCategoryId);
         if (!$schoolExpensesCategoryExists) {
             return ApiResponseService::error("School Expenses Not found", null, 400);
         }
         $schoolExpensesCategoryExists->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.schoolExpenses.category.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "expenseCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $schoolExpensesCategoryExists,
+                "message" => "Expense Category Updated",
+            ]
+        );
         return $schoolExpensesCategoryExists;
     }
 

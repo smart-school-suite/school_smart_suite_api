@@ -1,14 +1,16 @@
 <?php
 
 namespace App\Services\Exam;
+
 use App\Models\AccessedStudent;
 use App\Exceptions\AppException;
 use App\Models\Exams;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 class ExamCandidateService
 {
-        public function getAccessedStudents($currentSchool)
+    public function getAccessedStudents($currentSchool)
     {
         try {
             $accessedStudents = AccessedStudent::where("school_branch_id", $currentSchool->id)

@@ -24,18 +24,26 @@ class CAEvaluationController extends Controller
     public function createCaMark(CreateExamScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $results = $this->addCaScoresService->addCaScore($request->scores_entries, $currentSchool, $authAdmin);
         return ApiResponseService::success("Marks Submitted Sucessfully", $results, null, 201);
     }
 
         public function updateCaMark(UpdateExamScoreRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $results = $this->updateCaScoresService->updateCaScore($request->scores_entries, $currentSchool);
+          $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+            $results = $this->updateCaScoresService->updateCaScore($request->scores_entries, $currentSchool, $authAdmin);
             return ApiResponseService::success("MarkS Updated Sucessfully", $results, null, 201);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
+    }
+        protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
         }
+        return null;
     }
 }

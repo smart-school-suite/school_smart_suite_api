@@ -16,7 +16,19 @@ class CreateTeacherController extends Controller
     }
     public function createInstructor(CreateTeacherRequest $request){
         $currentSchool = $request->attributes->get('currentSchool');
-        $createInstructor = $this->createTeacherService->createInstructor($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $createInstructor = $this->createTeacherService->createInstructor($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Instructor Created Succesfully", $createInstructor, null, 200);
+    }
+
+        protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

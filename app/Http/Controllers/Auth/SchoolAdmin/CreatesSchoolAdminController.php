@@ -15,11 +15,23 @@ class CreatesSchoolAdminController extends Controller
     public function __construct(CreateSchoolAdminService $createSchoolAdminService)
     {
         $this->createSchoolAdminService = $createSchoolAdminService;
-
     }
-    public function createSchoolAdmin(CreateSchoolAdminRequest $request){
+    public function createSchoolAdmin(CreateSchoolAdminRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $createSchoolAdmin = $this->createSchoolAdminService->createSchoolAdmin($request->validated(), $currentSchool);
+        $createSchoolAdmin = $this->createSchoolAdminService->createSchoolAdmin($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("School Admin Created Successfully", $createSchoolAdmin, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

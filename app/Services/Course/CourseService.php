@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Collection;
+use App\Events\Actions\AdminActionEvent;
+
 class CourseService
 {
-    public function createCourse(array $data, $currentSchool): Courses
+    public function createCourse(array $data, $currentSchool, $authAdmin): Courses
     {
         $specialty = Specialty::findOrFail($data['specialty_id']);
         $courses = Courses::where("school_branch_id", $currentSchool->id)
@@ -44,10 +46,21 @@ class CourseService
         $course->level_id = $specialty->level_id;
         $course->description = $data['description'] ?? null;
         $course->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.course.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "courseManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $course,
+                "message" => "Course Created",
+            ]
+        );
         CourseStatJob::dispatch($currentSchool->id, $courseId);
         return $course;
     }
-    public function deleteCourse(string $courseId, $currentSchool)
+    public function deleteCourse(string $courseId, $currentSchool, $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if (!$course) {
@@ -60,19 +73,41 @@ class CourseService
             );
         }
         $course->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.course.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "courseManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $course,
+                "message" => "Course Deleted",
+            ]
+        );
         return $course;
     }
-    public function bulkDeleteCourse($coursesIds)
+    public function bulkDeleteCourse($coursesIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($coursesIds as $courseId) {
-                $course = Courses::findOrFail($courseId['course_id']);
+                $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($courseId['course_id']);
                 $course->delete();
                 $result[] = $course;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.course.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "courseManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $course,
+                    "message" => "Course Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -88,7 +123,7 @@ class CourseService
             );
         }
     }
-    public function updateCourse(string $courseId, array $data, $currentSchool)
+    public function updateCourse(string $courseId, array $data, $currentSchool, $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if (!$course) {
@@ -126,22 +161,43 @@ class CourseService
         }
 
         $course->update($filteredData);
-
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.course.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "courseManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $course,
+                "message" => "Course Updated",
+            ]
+        );
 
         return $course;
     }
-    public function bulkUpdateCourse($updateCourseList)
+    public function bulkUpdateCourse($updateCourseList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($updateCourseList as $updateCourse) {
-                $course = Courses::findOrFail($updateCourse['course_id']);
+                $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($updateCourse['course_id']);
                 $filteredData = array_filter($updateCourse);
                 $course->update($filteredData);
                 $result[] = $course;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.course.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "courseManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $course,
+                    "message" => "Course Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -249,7 +305,7 @@ class CourseService
             );
         }
     }
-    public function deactivateCourse($currentSchool, string $courseId)
+    public function deactivateCourse($currentSchool, string $courseId, $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if ($course->status === "inactive") {
@@ -260,15 +316,26 @@ class CourseService
         }
         $course->status = "inactive";
         $course->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.course.deactivate"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "courseManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $course,
+                "message" => "Course Deactivated",
+            ]
+        );
         return $course;
     }
-    public function bulkDeactivateCourse($coursesIds)
+    public function bulkDeactivateCourse($coursesIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($coursesIds as $courseId) {
-                $course = Courses::findOrFail($courseId['course_id']);
+                $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($courseId['course_id']);
                 $course->status = 'inactive';
                 $course->save();
                 $result[] = [
@@ -276,6 +343,17 @@ class CourseService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.course.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "courseManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $course,
+                    "message" => "Course Deactivated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -297,7 +375,7 @@ class CourseService
             );
         }
     }
-    public function activateCourse($currentSchool, string $courseId)
+    public function activateCourse($currentSchool, string $courseId, $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if ($course->status === "active") {
@@ -308,15 +386,26 @@ class CourseService
         }
         $course->status = "active";
         $course->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.course.activate"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "courseManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $course,
+                "message" => "Course Deactivated",
+            ]
+        );
         return $course;
     }
-    public function bulkActivateCourse($courseIds)
+    public function bulkActivateCourse($courseIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($courseIds as $courseId) {
-                $course = Courses::findOrFail($courseId['course_id']);
+                $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($courseId['course_id']);
                 $course->status = 'active';
                 $course->save();
                 $result[] = [
@@ -324,6 +413,17 @@ class CourseService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.course.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "courseManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $course,
+                    "message" => "Course Deactivated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -351,10 +451,10 @@ class CourseService
                 "/courses"
             );
         }
+
         return $courses;
     }
-
-        public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
+    public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
     {
         try {
             $schoolSemester = SchoolSemester::findOrFail($semesterId);
@@ -449,8 +549,9 @@ class CourseService
 
         return $groupedCourses;
     }
-    public function getCoursesByStudentIdSemesterId($currentSchool, string $studentId, string $semesterId){
-          $student = Student::where('school_branch_id', $currentSchool->id)
+    public function getCoursesByStudentIdSemesterId($currentSchool, string $studentId, string $semesterId)
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
             ->find($studentId);
 
         if (!$student) {
@@ -493,7 +594,7 @@ class CourseService
 
         return $courses;
     }
-       protected function groupAndFormatCourses(Collection $courses): array
+    protected function groupAndFormatCourses(Collection $courses): array
     {
         $grouped = $courses->groupBy(function ($course) {
             return optional($course->semester)->name ?? 'Unassigned Semester';

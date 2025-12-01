@@ -16,32 +16,41 @@ class AdditionalFeeCategoryController extends Controller
     {
         $this->additionalFeeCategoryService = $additionalFeeCategoryService;
     }
-
     public function createAddtionalFeeCategory(CreateAdditionalFeeCategoryRequest $request)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $createAdditionalFee = $this->additionalFeeCategoryService->createAdditionalFeeCategory($request->validated(), $currentSchool);
+        $createAdditionalFee = $this->additionalFeeCategoryService->createAdditionalFeeCategory($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Additional Fee Category Created Sucessfully", $createAdditionalFee, null, 201);
     }
-
     public function deleteAdditionalFeeCategory(Request $request, string $feeCategoryId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->additionalFeeCategoryService->deleteAdditionalFeeCategory($currentSchool, $feeCategoryId);
+        $this->additionalFeeCategoryService->deleteAdditionalFeeCategory($currentSchool, $feeCategoryId, $authAdmin);
         return ApiResponseService::success("Additionla Fee Category Deleted Succesfully", null, null, 200);
     }
-
     public function updateAdditionalFeeCategory(UpdateAdditionalFeeCategoryRequest $request, string $feeCategoryId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateAdditionalFeeCategory = $this->additionalFeeCategoryService->updateAdditionalFeeCategory($request->validated(), $currentSchool, $feeCategoryId);
+        $updateAdditionalFeeCategory = $this->additionalFeeCategoryService->updateAdditionalFeeCategory($request->validated(), $currentSchool, $feeCategoryId, $authAdmin);
         return ApiResponseService::success("Additional Fee Category Updated Sucessfully", $updateAdditionalFeeCategory, null, 200);
     }
-
     public function getAdditionalFeeCategory(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getAdditionalFeeCategory = $this->additionalFeeCategoryService->getAdditionalFeeCategory($currentSchool);
         return ApiResponseService::success("Additional Fee Category Fetched Succesfully", $getAdditionalFeeCategory, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Events\Actions\AdminActionEvent;
 
 class CreateEventService
 {
@@ -37,6 +38,7 @@ class CreateEventService
                 null
             );
         }
+
 
         return $this->createSchoolEventContent($currentSchool, $authenticatedUser, $data, $tags, $recipients);
     }
@@ -62,128 +64,150 @@ class CreateEventService
         return $tags;
     }
 
-  public function createSchoolEventContent($currentSchool, $authenticatedUser, $data, $tags, $recipients)
-{
-    try {
-        return DB::transaction(function () use ($currentSchool, $authenticatedUser, $data, $tags, $recipients) {
-            $schoolEventId = Str::uuid()->toString();
+    public function createSchoolEventContent($currentSchool, $authenticatedUser, $data, $tags, $recipients)
+    {
+        try {
+            return DB::transaction(function () use ($currentSchool, $authenticatedUser, $data, $tags, $recipients) {
+                $schoolEventId = Str::uuid()->toString();
 
-            $isDraft = $data['status'] === 'draft';
-            $hasPublishedAt = !empty($data['published_at']);
-            $intendedScheduled = $data['status'] === 'scheduled' || ($hasPublishedAt && Carbon::parse($data['published_at'])->isFuture());
+                $isDraft = $data['status'] === 'draft';
+                $hasPublishedAt = !empty($data['published_at']);
+                $intendedScheduled = $data['status'] === 'scheduled' || ($hasPublishedAt && Carbon::parse($data['published_at'])->isFuture());
 
-            if ($intendedScheduled && !$hasPublishedAt) {
-                throw new AppException(
-                    "Published Time Required for Scheduled School Event",
-                    400,
-                    "Published Time Required",
-                    "You are trying to schedule a School Event, but no published time was provided. Please specify a future date and time.",
-                    null
-                );
-            }
-
-            $publishedAt = $isDraft ? null : ($hasPublishedAt ? Carbon::parse($data['published_at']) : Carbon::now());
-            $isScheduled = !$isDraft && $hasPublishedAt && $publishedAt->isFuture();
-
-            if (!$isDraft && $hasPublishedAt && $publishedAt->isPast()) {
-                throw new AppException(
-                    "Published Time Cannot Be in the Past",
-                    400,
-                    "Invalid Published Time",
-                    "The provided published time is in the past. Please provide a future date or leave it blank for immediate publication.",
-                    null
-                );
-            }
-
-            if ($isScheduled && $publishedAt->diffInDays(Carbon::now()) > 30) {
-                throw new AppException(
-                    "Scheduled Time Too Far in the Future",
-                    400,
-                    "Scheduled Time Limit Exceeded",
-                    "The scheduled publication time is more than 30 days in the future. Please choose a closer date to avoid long queue delays.",
-                    null
-                );
-            }
-
-            $status = $isDraft ? 'draft' : ($isScheduled ? 'scheduled' : 'active');
-
-            if ($data['status'] === 'scheduled' && $status !== 'scheduled') {
-                throw new AppException(
-                    "Invalid Scheduled Configuration",
-                    400,
-                    "Scheduled School Event Misconfigured",
-                    "You specified a scheduled status, but the provided published time is not in the future or is invalid. Please correct the published time.",
-                    null
-                );
-            }
-
-            $totalStudents = $recipients->whereInstanceOf(Student::class)->count();
-            $totalTeachers = $recipients->whereInstanceOf(Teacher::class)->count();
-            $totalAdmins = $recipients->whereInstanceOf(Schooladmin::class)->count();
-            $totalInvitee = $totalStudents + $totalTeachers + $totalAdmins;
-
-            $backgroundImage = '';
-            if (!empty($data['background_image']) && $data['background_image'] instanceof \Illuminate\Http\UploadedFile) {
-                $fileName = time() . '.' . $data['background_image']->getClientOriginalExtension();
-                $data['background_image']->storeAs('public/school_events', $fileName);
-                $backgroundImage = $fileName;
-            }
-
-            $schoolEventData = [
-                'id' => $schoolEventId,
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'background_image' => $backgroundImage,
-                'location' => $data['location'],
-                'organizer' => $data['organizer'],
-                'likes' => 0,
-                'start_date' => $data['start_date'],
-                'end_date' => $data['end_date'],
-                'invitee' => $totalInvitee,
-                'status' => $status,
-                'published_at' => $publishedAt,
-                'expires_at' => $data['end_date'],
-                'event_category_id' => $data['event_category_id'],
-                'notification_sent_at' => null,
-                'tags' => json_encode($tags->toArray()),
-                'audience' => json_encode(array_filter([
-                    'teachers' => $data['teacher_ids'] ?? null,
-                    'admins' => $data['school_admin_ids'] ?? null,
-                    'students' => $data['student_audience'] ?? null,
-                ])),
-                'school_branch_id' => $currentSchool->id,
-            ];
-
-            $schoolEvent = SchoolEvent::create($schoolEventData);
-
-            $endDate = Carbon::parse($data['end_date']);
-            $startDate = Carbon::parse($data['start_date']);
-
-            if ($status === 'active') {
-                SendAdminEventCreatedNotificationJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id);
-                CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEventId);
-                UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser);
-                UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEventId);
-                CleanSchoolEventData::dispatch($schoolEventId, $currentSchool->id)->delay($endDate);
-            } elseif ($status === 'scheduled') {
-                SendAdminScheduledSchoolEventNotiJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id);
-                CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEventId)->delay($publishedAt);
-                UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser)->delay($startDate);
-                UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser)->delay($endDate);
-                UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEventId)->delay($publishedAt);
-                SendAdminEventCreatedNotificationJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id)->delay($publishedAt);
-                if ($publishedAt->greaterThan(now()->addMinutes(10))) {
-                    SendAdminEventScheduleReminderNotiJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id)
-                        ->delay($publishedAt->copy()->subMinutes(5));
+                if ($intendedScheduled && !$hasPublishedAt) {
+                    throw new AppException(
+                        "Published Time Required for Scheduled School Event",
+                        400,
+                        "Published Time Required",
+                        "You are trying to schedule a School Event, but no published time was provided. Please specify a future date and time.",
+                        null
+                    );
                 }
-            }
 
-            return $schoolEvent;
-        });
-    } catch (Throwable $e) {
-        throw $e;
+                $publishedAt = $isDraft ? null : ($hasPublishedAt ? Carbon::parse($data['published_at']) : Carbon::now());
+                $isScheduled = !$isDraft && $hasPublishedAt && $publishedAt->isFuture();
+
+                if (!$isDraft && $hasPublishedAt && $publishedAt->isPast()) {
+                    throw new AppException(
+                        "Published Time Cannot Be in the Past",
+                        400,
+                        "Invalid Published Time",
+                        "The provided published time is in the past. Please provide a future date or leave it blank for immediate publication.",
+                        null
+                    );
+                }
+
+                if ($isScheduled && $publishedAt->diffInDays(Carbon::now()) > 30) {
+                    throw new AppException(
+                        "Scheduled Time Too Far in the Future",
+                        400,
+                        "Scheduled Time Limit Exceeded",
+                        "The scheduled publication time is more than 30 days in the future. Please choose a closer date to avoid long queue delays.",
+                        null
+                    );
+                }
+
+                $status = $isDraft ? 'draft' : ($isScheduled ? 'scheduled' : 'active');
+
+                if ($data['status'] === 'scheduled' && $status !== 'scheduled') {
+                    throw new AppException(
+                        "Invalid Scheduled Configuration",
+                        400,
+                        "Scheduled School Event Misconfigured",
+                        "You specified a scheduled status, but the provided published time is not in the future or is invalid. Please correct the published time.",
+                        null
+                    );
+                }
+
+                $totalStudents = $recipients->whereInstanceOf(Student::class)->count();
+                $totalTeachers = $recipients->whereInstanceOf(Teacher::class)->count();
+                $totalAdmins = $recipients->whereInstanceOf(Schooladmin::class)->count();
+                $totalInvitee = $totalStudents + $totalTeachers + $totalAdmins;
+
+                $backgroundImage = '';
+                if (!empty($data['background_image']) && $data['background_image'] instanceof \Illuminate\Http\UploadedFile) {
+                    $fileName = time() . '.' . $data['background_image']->getClientOriginalExtension();
+                    $data['background_image']->storeAs('public/school_events', $fileName);
+                    $backgroundImage = $fileName;
+                }
+
+                $schoolEventData = [
+                    'id' => $schoolEventId,
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'background_image' => $backgroundImage,
+                    'location' => $data['location'],
+                    'organizer' => $data['organizer'],
+                    'likes' => 0,
+                    'start_date' => $data['start_date'],
+                    'end_date' => $data['end_date'],
+                    'invitee' => $totalInvitee,
+                    'status' => $status,
+                    'published_at' => $publishedAt,
+                    'expires_at' => $data['end_date'],
+                    'event_category_id' => $data['event_category_id'],
+                    'notification_sent_at' => null,
+                    'tags' => json_encode($tags->toArray()),
+                    'audience' => json_encode(array_filter([
+                        'teachers' => $data['teacher_ids'] ?? null,
+                        'admins' => $data['school_admin_ids'] ?? null,
+                        'students' => $data['student_audience'] ?? null,
+                    ])),
+                    'school_branch_id' => $currentSchool->id,
+                ];
+
+                $schoolEvent = SchoolEvent::create($schoolEventData);
+
+                $endDate = Carbon::parse($data['end_date']);
+                $startDate = Carbon::parse($data['start_date']);
+
+                if ($status === 'active') {
+                    SendAdminEventCreatedNotificationJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id);
+                    CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEventId);
+                    UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser);
+                    UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEventId);
+                    CleanSchoolEventData::dispatch($schoolEventId, $currentSchool->id)->delay($endDate);
+                    AdminActionEvent::dispatch(
+                        [
+                            "permissions" =>  ["schoolAdmin.event.create"],
+                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                            "schoolBranch" =>  $currentSchool->id,
+                            "feature" => "schoolEventManagement",
+                            "authAdmin" => $authenticatedUser['authUser'],
+                            "data" => $schoolEvent,
+                            "message" => "School Event Published",
+                        ]
+                    );
+                } elseif ($status === 'scheduled') {
+                    SendAdminScheduledSchoolEventNotiJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id);
+                    CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEventId)->delay($publishedAt);
+                    UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser)->delay($startDate);
+                    UpdateSchoolEventStatusJob::dispatch($schoolEventId, $currentSchool->id, $authenticatedUser)->delay($endDate);
+                    UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEventId)->delay($publishedAt);
+                    SendAdminEventCreatedNotificationJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id)->delay($publishedAt);
+                    AdminActionEvent::dispatch(
+                        [
+                            "permissions" =>  ["schoolAdmin.event.create"],
+                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                            "schoolBranch" =>  $currentSchool->id,
+                            "feature" => "schoolEventManagement",
+                            "authAdmin" => $authenticatedUser['authUser'],
+                            "data" => $schoolEvent,
+                            "message" => "School Event Scheduled",
+                        ]
+                    );
+                    if ($publishedAt->greaterThan(now()->addMinutes(10))) {
+                        SendAdminEventScheduleReminderNotiJob::dispatch($schoolEventId, $authenticatedUser, $currentSchool->id)
+                            ->delay($publishedAt->copy()->subMinutes(5));
+                    }
+                }
+
+                return $schoolEvent;
+            });
+        } catch (Throwable $e) {
+            throw $e;
+        }
     }
-}
 
     protected function collectRecipients($currentSchool, array $data): Collection
     {

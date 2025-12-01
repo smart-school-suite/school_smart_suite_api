@@ -13,7 +13,7 @@ use App\Models\TeacherAnnouncement;
 use App\Models\SchoolAdminAnnouncement;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use App\Events\Actions\AdminActionEvent;
 class AnnouncementService
 {
     public function getAnnouncementEngagementOverview($currentSchool, $announcementId)
@@ -67,7 +67,7 @@ class AnnouncementService
         ];
     }
 
-    public function updateAnnouncementContent($announcementData, $currentSchool, $announcementId)
+    public function updateAnnouncementContent($announcementData, $currentSchool, $announcementId, $authAdmin)
     {
         try {
             $announcement = Announcement::where("school_branch_id", $currentSchool->id)
@@ -87,19 +87,40 @@ class AnnouncementService
             }
 
             $announcement->update($dataToUpdate);
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.announcement.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "announcementManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $announcement,
+                    "message" => "Announcement Content Updated",
+                ]
+            );
             return $announcement;
         } catch (Throwable $e) {
             throw $e;
         }
     }
 
-    public function deleteAnnouncement($announcementId, $currentSchool)
+    public function deleteAnnouncement($announcementId, $currentSchool, $authAdmin)
     {
         try {
             $annoucement = Announcement::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($announcementId);
             $annoucement->delete();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.announcement.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "announcementManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $annoucement,
+                    "message" => "Announcement Deleted",
+                ]
+            );
             return $annoucement;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

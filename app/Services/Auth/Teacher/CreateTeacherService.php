@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
+use App\Events\Actions\AdminActionEvent;
 
 class CreateTeacherService
 {
-    public function createInstructor($teacherData, $currentSchool)
+    public function createInstructor($teacherData, $currentSchool, $authAdmin)
     {
         try {
             if (Teacher::where('email', $teacherData['email'])->where('school_branch_id', $currentSchool->id)->exists()) {
@@ -59,7 +60,17 @@ class CreateTeacherService
 
             SendPasswordVaiMailJob::dispatch($password, $teacherData['email']);
             TeacherRegistrationStatsJob::dispatch($instructorId, $currentSchool->id);
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.teacher.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "teacherManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $instructor,
+                    "message" => "Teacher Created",
+                ]
+            );
             return $instructor;
         } catch (AuthException | AppException $e) {
             DB::rollBack();

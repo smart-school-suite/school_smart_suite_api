@@ -6,10 +6,11 @@ use App\Models\FeeWaiver;
 use Exception;
 use Throwable;
 use App\Exceptions\AppException;
+use App\Events\Actions\AdminActionEvent;
 
 class TuitionFeeWaiverService
 {
-    public function createFeeWaiver(array $feeWaiverData, $currentSchool)
+    public function createFeeWaiver(array $feeWaiverData, $currentSchool, $authAdmin)
     {
         if (strtotime($feeWaiverData['start_date']) > strtotime($feeWaiverData['end_date'])) {
             throw new AppException(
@@ -53,7 +54,17 @@ class TuitionFeeWaiverService
             $feeWaiver->school_branch_id = $currentSchoolId;
 
             $feeWaiver->save();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.feeWaiver.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeWaiverManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $feeWaiver,
+                    "message" => "Tuition Fee Waiver Created",
+                ]
+            );
             return $feeWaiver;
         } catch (Throwable $e) {
             throw new AppException(
@@ -65,7 +76,7 @@ class TuitionFeeWaiverService
             );
         }
     }
-    public function updateFeeWaiver(array $feeWaiverData, $currentSchool, string $feeWaiverId)
+    public function updateFeeWaiver(array $feeWaiverData, $currentSchool, string $feeWaiverId, $authAdmin)
     {
         try {
             $waiverExists = FeeWaiver::where("school_branch_id", $currentSchool->id)->find($feeWaiverId);
@@ -122,6 +133,17 @@ class TuitionFeeWaiverService
             }
 
             $waiverExists->update($filteredEmptyEntries);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.feeWaiver.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeWaiverManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $waiverExists,
+                    "message" => "Tuition Fee Waiver Updated",
+                ]
+            );
             return $waiverExists;
         } catch (AppException $e) {
             throw $e;
@@ -135,7 +157,7 @@ class TuitionFeeWaiverService
             );
         }
     }
-    public function deleteFeeWaiver(string $feeWaiverId, $currentSchool)
+    public function deleteFeeWaiver(string $feeWaiverId, $currentSchool, $authAdmin)
     {
         $waiverDescription = 'Unknown Waiver';
 
@@ -155,7 +177,17 @@ class TuitionFeeWaiverService
             $waiverDescription = $waiverExists->description;
 
             $waiverExists->delete();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.feeWaiver.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeWaiverManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $waiverExists,
+                    "message" => "Tuition Fee Waiver Deleted",
+                ]
+            );
             return $waiverExists;
         } catch (AppException $e) {
             throw $e;

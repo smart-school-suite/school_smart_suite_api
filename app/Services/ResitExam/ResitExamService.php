@@ -9,10 +9,11 @@ use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Exceptions\AppException;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class ResitExamService
 {
-    public function updateResitExam($updateData, string $resitExamId, $currentSchool)
+    public function updateResitExam($updateData, string $resitExamId, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -26,19 +27,31 @@ class ResitExamService
             $resit->update($updateData);
             dispatch(new CreateResitCandidateJob($resit));
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitExam.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitExamManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $resit,
+                    "message" => "Resit Exam Updated",
+                ]
+            );
             return $resit;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkUpdateResitExam($examUpdateList)
+    public function bulkUpdateResitExam($examUpdateList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($examUpdateList as $examUpdate) {
-                $resitExam = ResitExam::findOrFail($examUpdate['resit_exam_id']);
+                $resitExam = ResitExam::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($examUpdate['resit_exam_id']);
                 $filterData = array_filter($examUpdate);
                 $resitExam->update($filterData);
                 $result[] = [
@@ -46,6 +59,17 @@ class ResitExamService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitExam.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitExamManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Exam Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -82,7 +106,7 @@ class ResitExamService
             );
         }
     }
-    public function addExamGrading(string $resitExamId, $currentSchool, $gradesConfigId)
+    public function addExamGrading(string $resitExamId, $currentSchool, $gradesConfigId, $authAdmin)
     {
         $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($gradesConfigId);
         if (!$gradesConfig) {
@@ -95,6 +119,17 @@ class ResitExamService
         $exam->grades_category_id = $gradesConfig->grades_category_id;
         $exam->grading_added = true;
         $exam->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.resitExam.gradeScaleAdd"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "resitExamManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $exam,
+                "message" => "Resit Exam Grade Scale Added",
+            ]
+        );
         return $exam;
     }
     public function examDetails($currentSchool, string $resitExamId)
@@ -107,28 +142,52 @@ class ResitExamService
         }
         return $exam;
     }
-    public function deleteResitExam($resitExamId)
+    public function deleteResitExam($resitExamId, $currentSchool, $authAdmin)
     {
-        $resitExam = ResitExam::findOrFail($resitExamId);
+        $resitExam = ResitExam::where("school_branch_id", $currentSchool->id)
+            ->findOrFail($resitExamId);
         $resitExam->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.resitExam.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "resitExamManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $resitExam,
+                "message" => "Resit Exam Deleted",
+            ]
+        );
         return $resitExam;
     }
-    public function bulkDeleteResitExam($resitExamIds)
+    public function bulkDeleteResitExam($resitExamIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($resitExamIds as $resitExamId) {
-                $resitExam = ResitExam::findOrFail($resitExamId['resit_exam_id']);
+                $resitExam = ResitExam::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($resitExamId['resit_exam_id']);
                 $result[] = $resitExam;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitExam.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitExamManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Exam Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             throw $e;
         }
     }
-    public function bulkAddExamGrading($examGradingList, $currentSchool)
+    public function bulkAddExamGrading($examGradingList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -151,6 +210,17 @@ class ResitExamService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitExam.gradeScaleAdd"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitExamManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exam,
+                    "message" => "Resit Exam Grade Scale Added",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

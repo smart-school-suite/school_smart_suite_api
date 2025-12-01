@@ -25,14 +25,16 @@ class TuitionFeeTransactionController extends Controller
     }
     public function reverseTuitionFeeTransaction(Request $request, $transactionId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $reverseTransaction = $this->tuitionFeeTransactionService->reverseFeePaymentTransaction($transactionId, $currentSchool);
+        $reverseTransaction = $this->tuitionFeeTransactionService->reverseFeePaymentTransaction($transactionId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Transaction Reversed Successfully", $reverseTransaction, null, 200);
     }
     public function deleteTuitionFeeTransaction(Request $request, $transactionId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->tuitionFeeTransactionService->deleteTuitionFeeTransaction($transactionId, $currentSchool);
+        $this->tuitionFeeTransactionService->deleteTuitionFeeTransaction($transactionId, $currentSchool, $authAdmin);
     }
     public function getTuitionTransactionFeeDetails(Request $request, $tranctionId)
     {
@@ -43,20 +45,25 @@ class TuitionFeeTransactionController extends Controller
     public function bulkReverseTuitionFeeTransaction(TuitionFeeTransactionIdRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $bulkReverseTransaction = $this->tuitionFeeTransactionService->bulkReverseTuitionFeeTransaction($request->transactionIds, $currentSchool);
-            return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $authAdmin = $this->resolveUser();
+        $bulkReverseTransaction = $this->tuitionFeeTransactionService->bulkReverseTuitionFeeTransaction($request->transactionIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Transaction Reversed Successfully", $bulkReverseTransaction, null, 200);
     }
     public function bulkDeleteTuitionFeeTransactions(TuitionFeeTransactionIdRequest $request)
     {
-        try {
-            $bulkDelete = $this->tuitionFeeTransactionService->bulkDeleteTuitionFeeTransaction($request->transactionIds);
-            return ApiResponseService::success("Tuition Fee Transactions Deleted Successfully", $bulkDelete, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDelete = $this->tuitionFeeTransactionService->bulkDeleteTuitionFeeTransaction($request->transactionIds, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Tuition Fee Transactions Deleted Successfully", $bulkDelete, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
         }
+        return null;
     }
 }

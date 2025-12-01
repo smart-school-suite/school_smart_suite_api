@@ -16,10 +16,11 @@ use App\Models\RegistrationFeeTransactions;
 use App\Models\AdditionalFeeTransactions;
 use App\Exceptions\AppException;
 use Throwable;
+use App\Events\Actions\AdminActionEvent;
 
 class TuitionFeePaymentService
 {
-    public function payStudentFees(array $data, object $currentSchool): TuitionFees
+    public function payStudentFees(array $data, object $currentSchool, $authAdmin): TuitionFees
     {
         DB::beginTransaction();
 
@@ -106,7 +107,17 @@ class TuitionFeePaymentService
             TuitionFeePaymentStatJob::dispatch($paymentId, $currentSchool->id);
             SendAdminTuitionFeePaidNotificationJob::dispatch($currentSchool->id, $student, $paymentDetails);
             $student->notify(new TuitionFeePaid($paymentAmount, $studentTuitionFees->amount_left, now()));
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.tuitionFee.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "tuitionFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $studentTuitionFees,
+                    "message" => "Tuition Fee Paid",
+                ]
+            );
             return $studentTuitionFees;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();

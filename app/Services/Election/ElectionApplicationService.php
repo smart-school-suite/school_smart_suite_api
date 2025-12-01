@@ -17,6 +17,7 @@ use App\Exceptions\AppException;
 use Throwable;
 use Carbon\Carbon;
 use App\Models\ElectionParticipants;
+use App\Events\Actions\AdminActionEvent;
 class ElectionApplicationService
 {
     public function createApplication(array $data, $currentSchool)
@@ -104,7 +105,7 @@ class ElectionApplicationService
             );
         }
     }
-    public function deleteApplication(string $application_id)
+    public function deleteApplication(string $application_id, $currentSchool, $authAdmin)
     {
         $applcationExists = ElectionApplication::find($application_id);
 
@@ -120,7 +121,19 @@ class ElectionApplicationService
 
         try {
             $applcationExists->delete();
+                        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.electionApplications.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "electionApplicationManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $applcationExists,
+                "message" => "Election Application Deleted",
+            ]
+        );
             return $applcationExists;
+
         } catch (Throwable $e) {
             throw new AppException(
                 "Failed to delete application",
@@ -131,7 +144,7 @@ class ElectionApplicationService
             );
         }
     }
-    public function bulkDeleteApplication($applicationIds)
+    public function bulkDeleteApplication($applicationIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -151,7 +164,8 @@ class ElectionApplicationService
                     );
                 }
 
-                $application = ElectionApplication::find($applicationId);
+                $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
+                    ->find($applicationId);
 
                 if (is_null($application)) {
                     DB::rollBack();
@@ -180,6 +194,17 @@ class ElectionApplicationService
             }
 
             DB::commit();
+            AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.electionApplications.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "electionApplicationManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $result,
+                "message" => "Election Application Deleted",
+            ]
+        );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -196,7 +221,7 @@ class ElectionApplicationService
             );
         }
     }
-    public function bulkApproveApplication($applicationIds, $currentSchool)
+    public function bulkApproveApplication($applicationIds, $currentSchool, $authAdmin)
     {
         $applicationData = [];
 
@@ -265,7 +290,17 @@ class ElectionApplicationService
 
             SendCandidacyApprovedNotification::dispatch($applicationData, $currentSchool->id);
             SendAdminApplicationApprovedNotification::dispatch($applicationData, $currentSchool->id);
-
+                                  AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.electionApplications.approve"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "electionApplicationManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $applicationData,
+                "message" => "Election Application Approved",
+            ]
+        );
             return true;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -373,7 +408,7 @@ class ElectionApplicationService
 
         return $studentApplications;
     }
-    public function approveApplication(string $applicationId, $currentSchool)
+    public function approveApplication(string $applicationId, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -438,7 +473,17 @@ class ElectionApplicationService
             SendCandidacyApprovedNotification::dispatch($applicationData, $currentSchool->id);
             SendAdminApplicationApprovedNotification::dispatch($applicationData, $currentSchool->id);
 
-
+                     AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.electionApplications.approve"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "electionApplicationManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $application,
+                "message" => "Election Application Approved",
+            ]
+        );
             return $application;
         } catch (Throwable $e) {
             DB::rollBack();

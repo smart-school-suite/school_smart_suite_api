@@ -15,9 +15,10 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use illuminate\Http\JsonResponse;
 use App\Services\ExamTimetable\ExamTimetableService;
+
 class ExamTimetableController extends Controller
 {
-        protected ExamTimetableService $examTimeTableService;
+    protected ExamTimetableService $examTimeTableService;
     protected AutoGenExamTimetableService $autoGenExamTimetableService;
 
     public function __construct(ExamTimetableService $examTimeTableService, AutoGenExamTimetableService $autoGenExamTimetableService)
@@ -26,15 +27,15 @@ class ExamTimetableController extends Controller
         $this->autoGenExamTimetableService  = $autoGenExamTimetableService;
     }
 
-    public function autoGenExamTimetable(AutoGenExamTimetableRequest $request){
-         try{
+    public function autoGenExamTimetable(AutoGenExamTimetableRequest $request)
+    {
+        try {
             $currentSchool = $request->attributes->get('currentSchool');
-         $examTimetable = $this->autoGenExamTimetableService->autoGenExamTimetable($currentSchool, $request->validated());
-         return ApiResponseService::success("Exam Timetable Generated Successfully", $examTimetable, null, 200);
-         }
-         catch(Exception $e){
+            $examTimetable = $this->autoGenExamTimetableService->autoGenExamTimetable($currentSchool, $request->validated());
+            return ApiResponseService::success("Exam Timetable Generated Successfully", $examTimetable, null, 200);
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
-         }
+        }
     }
     /**
      * Creates a new exam timetable.
@@ -45,15 +46,10 @@ class ExamTimetableController extends Controller
      */
     public function createTimetable(CreateExamTimetableRequest $request, string $examId): JsonResponse
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $createdExamTimeTable = $this->examTimeTableService->createExamTimeTable($request->entries, $currentSchool, $examId);
+                           $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+            $createdExamTimeTable = $this->examTimeTableService->createExamTimeTable($request->entries, $currentSchool, $examId, $authAdmin);
             return ApiResponseService::success("Timetable Created Successfully", $createdExamTimeTable, null, Response::HTTP_CREATED);
-        } catch (InvalidArgumentException $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_UNPROCESSABLE_ENTITY);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
     }
 
     /**
@@ -65,14 +61,12 @@ class ExamTimetableController extends Controller
      */
     public function deleteTimetableEntry(Request $request, string $entryId): JsonResponse
     {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
         $currentSchool = $request->attributes->get('currentSchool');
-        $deletedExamTimeTableEntry = $this->examTimeTableService->deleteTimetableEntry($entryId, $currentSchool);
+        $deletedExamTimeTableEntry = $this->examTimeTableService->deleteTimetableEntry($entryId, $currentSchool, $authAdmin);
 
-        if ($deletedExamTimeTableEntry) {
-            return ApiResponseService::success("Exam Timetable Entry Deleted Successfully", $deletedExamTimeTableEntry, null, Response::HTTP_OK);
-        } else {
-            return ApiResponseService::error("Exam Timetable Entry Not Found", null, Response::HTTP_NOT_FOUND);
-        }
+        return ApiResponseService::success("Exam Timetable Entry Deleted Successfully", $deletedExamTimeTableEntry, null, Response::HTTP_OK);
     }
 
     /**
@@ -84,15 +78,10 @@ class ExamTimetableController extends Controller
      */
     public function deleteTimetable(Request $request, string $examId): JsonResponse
     {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $deletedTimetable = $this->examTimeTableService->deleteExamTimetable($examId, $currentSchool);
-            return ApiResponseService::success("Exam Timetable Deleted Successfully", $deletedTimetable, null, Response::HTTP_OK);
-        } catch (ModelNotFoundException $e) {
-            return ApiResponseService::error("Exam Not Found", null, Response::HTTP_NOT_FOUND);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $deletedTimetable = $this->examTimeTableService->deleteExamTimetable($examId, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Exam Timetable Deleted Successfully", $deletedTimetable, null, Response::HTTP_OK);
     }
 
     /**
@@ -103,15 +92,10 @@ class ExamTimetableController extends Controller
      */
     public function updateTimetable(UpdateExamTimetableRequest $request): JsonResponse
     {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $updatedExamTimetable = $this->examTimeTableService->updateExamTimetable($request->entries, $currentSchool);
-            return ApiResponseService::success("Exam Timetable Updated Successfully", $updatedExamTimetable, null, Response::HTTP_OK);
-        } catch (ModelNotFoundException $e) {
-            return ApiResponseService::error("Exam Timetable Entry Not Found", null, Response::HTTP_NOT_FOUND);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $updatedExamTimetable = $this->examTimeTableService->updateExamTimetable($request->entries, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Exam Timetable Updated Successfully", $updatedExamTimetable, null, Response::HTTP_OK);
     }
 
     /**
@@ -124,7 +108,8 @@ class ExamTimetableController extends Controller
      */
     public function generateExamTimetable(Request $request): JsonResponse
     {
-        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
         $examId = $request->route('examId');
         $generatedExamTimeTable = $this->examTimeTableService->generateExamTimeTable($examId, $currentSchool);
         return ApiResponseService::success("Exam Timetable Generated Successfully", $generatedExamTimeTable, null, Response::HTTP_OK);
@@ -139,20 +124,29 @@ class ExamTimetableController extends Controller
      */
     public function prepareExamTimeTableData(Request $request, string $examId): JsonResponse
     {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $preparedExamTimeTableData = $this->examTimeTableService->prepareExamTimeTableData($examId, $currentSchool);
-            return ApiResponseService::success("Exam Timetable Data Fetched Successfully", $preparedExamTimeTableData, null, Response::HTTP_OK);
-        } catch (ModelNotFoundException) {
-            return ApiResponseService::error("Exam Not Found", null, Response::HTTP_NOT_FOUND);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $preparedExamTimeTableData = $this->examTimeTableService->prepareExamTimeTableData($examId, $currentSchool);
+        return ApiResponseService::success("Exam Timetable Data Fetched Successfully", $preparedExamTimeTableData, null, Response::HTTP_OK);
     }
 
-    public function getExamTimetableStudentIdExamId(Request $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-            $studentId = $request->route('studentId');
-            $examId = $request->route('examId');
-            $examTimetable = $this->examTimeTableService->getExamTimetableStudentIdExamId($currentSchool, $studentId, $examId);
-            return ApiResponseService::success("Exam Timetable Fetched Successfully", $examTimetable, null, 200);
+    public function getExamTimetableStudentIdExamId(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $studentId = $request->route('studentId');
+        $examId = $request->route('examId');
+        $examTimetable = $this->examTimeTableService->getExamTimetableStudentIdExamId($currentSchool, $studentId, $examId);
+        return ApiResponseService::success("Exam Timetable Fetched Successfully", $examTimetable, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

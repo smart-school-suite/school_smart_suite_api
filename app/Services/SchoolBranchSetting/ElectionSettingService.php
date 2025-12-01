@@ -6,10 +6,10 @@ use App\Exceptions\AppException;
 use App\Models\SchoolBranchSetting;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-
+use App\Events\Actions\AdminActionEvent;
 class ElectionSettingService
 {
-    public function updateElectionSetting($currentSchool, $updateData)
+    public function updateElectionSetting($currentSchool, $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;
@@ -49,6 +49,17 @@ class ElectionSettingService
             }
 
             DB::commit();
+                    AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.electionSetting.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolSettingManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $setting,
+                "message" => "School Election Setting Updated",
+            ]
+        );
             return $setting;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

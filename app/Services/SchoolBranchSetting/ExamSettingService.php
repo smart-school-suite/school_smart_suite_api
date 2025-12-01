@@ -7,10 +7,10 @@ use App\Models\Examtype;
 use App\Models\SchoolBranchSetting;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-
+use App\Events\Actions\AdminActionEvent;
 class ExamSettingService
 {
-    public function updateExamSetting($currentSchool, $updateData)
+    public function updateExamSetting($currentSchool, $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;
@@ -51,6 +51,17 @@ class ExamSettingService
             }
 
             DB::commit();
+                                AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.examSetting.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolSettingManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $setting,
+                "message" => "Exam Setting Updated",
+            ]
+        );
             return $setting;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

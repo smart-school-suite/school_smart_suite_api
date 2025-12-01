@@ -22,22 +22,25 @@ class ElectionRoleController extends Controller
 
     public function createElectionRole(CreateElectionRoleRequest $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $createElectionRole = $this->electionRoleService->createElectionRole($request->validated(), $currentSchool);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $createElectionRole = $this->electionRoleService->createElectionRole($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Role Created Sucessfully", $createElectionRole, null, 201);
     }
 
     public function updateElectionRole(UpdateElectionRoleRequest $request, string $electionRoleId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $updateElectionRole = $this->electionRoleService->updateElectionRole($request->validated(), $currentSchool, $electionRoleId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $updateElectionRole = $this->electionRoleService->updateElectionRole($request->validated(), $currentSchool, $electionRoleId, $authAdmin);
         return ApiResponseService::success("Election Role Updated Succefully", $updateElectionRole, null, 200);
     }
 
     public function deleteElectionRole(Request $request, string $electionRoleId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $deleteElectionRole = $this->electionRoleService->deleteElectionRole($electionRoleId, $currentSchool);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $deleteElectionRole = $this->electionRoleService->deleteElectionRole($electionRoleId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Role Deleted Sucessfully", $deleteElectionRole, null, 200);
     }
 
@@ -57,38 +60,49 @@ class ElectionRoleController extends Controller
 
     public function bulkDeleteRole(ElectionRoleIdRequest $request)
     {
-        $bulkDeleteRole = $this->electionRoleService->bulkDeleteElectionRole($request->electionRoleIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkDeleteRole = $this->electionRoleService->bulkDeleteElectionRole($request->electionRoleIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Roles Deleted Successfully", $bulkDeleteRole, null, 200);
     }
 
     public function bulkUpdateElectionRole(BulkUpdateElectionRoleRequest $request)
     {
-
-        $bulkUpdateElectionRole = $this->electionRoleService->bulkUpdateElectionRole($request->election_roles);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkUpdateElectionRole = $this->electionRoleService->bulkUpdateElectionRole($request->election_roles, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Roles Updated Successfully", $bulkUpdateElectionRole, null, 200);
     }
 
-    public function activateRole($electionRoleId)
+    public function activateRole(Request $request, $electionRoleId)
     {
-        $activateRole = $this->electionRoleService->activateRole($electionRoleId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $activateRole = $this->electionRoleService->activateRole($electionRoleId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Role Activated Successfully", $activateRole, null, 200);
     }
 
     public function bulkActivateRole(ElectionRoleIdRequest $request)
     {
-        $bulkActivate = $this->electionRoleService->bulkActivateElectionRole($request->electionRoleIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkActivate = $this->electionRoleService->bulkActivateElectionRole($request->electionRoleIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Roles Activated Successfully", $bulkActivate, null, 200);
     }
 
-    public function deactivateRole($electionRoleId)
+    public function deactivateRole(Request $request, $electionRoleId)
     {
-        $deactivateRole = $this->electionRoleService->deactivateRole($electionRoleId);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $deactivateRole = $this->electionRoleService->deactivateRole($electionRoleId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Roles Deactivated Successfully", $deactivateRole, null, 200);
     }
 
     public function bulkDeactivateRole(ElectionRoleIdRequest $request)
     {
-        $bulkActivate = $this->electionRoleService->bulkDeactivateRole($request->electionRoleIds);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkActivate = $this->electionRoleService->bulkDeactivateRole($request->electionRoleIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Election Roles Deactivated Successfully", $bulkActivate, null, 200);
     }
     public function getActiveRoles(Request $request, $electionId)

@@ -11,10 +11,11 @@ use App\Notifications\ResitPayment;
 use Exception;
 use App\Models\Studentresit;
 use App\Exceptions\AppException;
+use App\Events\Actions\AdminActionEvent;
 
 class ResitPaymentService
 {
-    public function payResit($studentResitData, $currentSchool)
+    public function payResit($studentResitData, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -51,6 +52,17 @@ class ResitPaymentService
                 'courseName' => $studentResit->courses->course_title
             ];
             $studentResit->student->notify(new ResitPayment($paymentDetails));
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitPayment.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $studentResit,
+                    "message" => "Resit Fee Paid",
+                ]
+            );
             return $studentResit;
         } catch (Exception $e) {
             DB::rollBack();
@@ -87,13 +99,24 @@ class ResitPaymentService
             );
         }
     }
-    public function deleteResitFeeTransaction($currentSchool, string $transactionId)
+    public function deleteResitFeeTransaction($currentSchool, string $transactionId, $authAdmin)
     {
         $resitTransaction = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)->find($transactionId);
         if (!$resitTransaction) {
             return ApiResponseService::error("Resit Transaction Not Found", null, 200);
         }
         $resitTransaction->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.resitTransaction.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "resitFeeManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $resitTransaction,
+                "message" => "Resit Fee Transaction Deleted",
+            ]
+        );
         return $resitTransaction;
     }
     public function getTransactionDetails($currentSchool, string $transactionId)
@@ -102,7 +125,7 @@ class ResitPaymentService
             ->with(['studentResit', 'studentResit.student', 'studentResit.specialty', 'studentResit.level', 'studentResit.courses'])
             ->find($transactionId);
     }
-    public function reverseResitTransaction($transactionId, $currentSchool)
+    public function reverseResitTransaction($transactionId, $currentSchool, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -131,14 +154,24 @@ class ResitPaymentService
             $studentResit->save();
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitTransaction.reverse"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $transaction,
+                    "message" => "Resit Fee Transaction Reversed",
+                ]
+            );
             return $transaction;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkPayStudentResit($studentResitIds, $currentSchool)
+    public function bulkPayStudentResit($studentResitIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -167,30 +200,53 @@ class ResitPaymentService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitPayment.pay"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Fee Paid",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkDeleteTransaction($transactionIds)
+    public function bulkDeleteTransaction($transactionIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($transactionIds as $transactionId) {
-                $transaction = ResitFeeTransactions::findOrFail($transactionId['transaction_id']);
+                $transaction = ResitFeeTransactions::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($transactionId['transaction_id']);
                 $transaction->delete();
                 $result[] = $transaction;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitTransaction.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Fee Transaction Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkReverseResitTransaction($transactionIds, $currentSchool)
+    public function bulkReverseResitTransaction($transactionIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -223,6 +279,17 @@ class ResitPaymentService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitTransaction.reverse"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Fee Transaction Reversed",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

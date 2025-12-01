@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Events\ExamCandidate\ExamCandidateCreatedEvent;
 
 class CreateExamCandidateJob implements ShouldQueue
 {
@@ -58,5 +59,6 @@ class CreateExamCandidateJob implements ShouldQueue
         }
        $exam->expected_candidate_number = $students->count();
        $exam->save();
+       ExamCandidateCreatedEvent::dispatch($exam->school_branch_id);
     }
 }

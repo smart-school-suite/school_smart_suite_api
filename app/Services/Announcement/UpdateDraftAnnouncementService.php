@@ -18,6 +18,7 @@ use App\Models\AnnouncementTag;
 use Illuminate\Support\Collection;
 use Throwable;
 use App\Jobs\DataCleanupJobs\UpdateAnnouncementStatusJob;
+use App\Events\Actions\AdminActionEvent;
 
 class UpdateDraftAnnouncementService
 {
@@ -202,6 +203,18 @@ class UpdateDraftAnnouncementService
                         AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
                         UpdateAnnouncementStatusJob::dispatch($announcementId, $currentSchool->id)->delay($expiresAt);
                         CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId);
+
+                        AdminActionEvent::dispatch(
+                            [
+                                "permissions" =>  ["schoolAdmin.announcement.create"],
+                                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                                "schoolBranch" =>  $currentSchool->id,
+                                "feature" => "announcementManagement",
+                                "authAdmin" => $authenticatedUser,
+                                "data" => $announcement,
+                                "message" => "Announcement Published",
+                            ]
+                        );
                     } elseif ($status === 'scheduled') {
                         AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
                         CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId)
@@ -212,6 +225,17 @@ class UpdateDraftAnnouncementService
                                 ->delay($publishedAt->copy()->subMinutes(5));
                         }
                         UpdateAnnouncementStatusJob::dispatch($announcementId, $currentSchool->id)->delay($expiresAt);
+                        AdminActionEvent::dispatch(
+                            [
+                                "permissions" =>  ["schoolAdmin.announcement.create"],
+                                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                                "schoolBranch" =>  $currentSchool->id,
+                                "feature" => "announcementManagement",
+                                "authAdmin" => $authenticatedUser,
+                                "data" => $announcement,
+                                "message" => "Announcement Scheduled",
+                            ]
+                        );
                     }
                 }
 
@@ -221,7 +245,6 @@ class UpdateDraftAnnouncementService
             throw $e;
         }
     }
-
     protected function getTags(array $data): Collection
     {
         if (empty($data['tag_ids'])) {
@@ -243,7 +266,6 @@ class UpdateDraftAnnouncementService
 
         return $tags;
     }
-
     protected function collectRecipients($currentSchool, array $data): Collection
     {
         $recipients = collect();
@@ -290,7 +312,6 @@ class UpdateDraftAnnouncementService
 
         return $recipients->unique('id');
     }
-
     protected function studentAudience($currentSchool, $studentAudienceIds)
     {
         $students = Student::where("school_branch_id", $currentSchool->id)
@@ -309,14 +330,12 @@ class UpdateDraftAnnouncementService
 
         return $students;
     }
-
     protected function schoolAdminAudience($currentSchool, $schoolAdminIds)
     {
         return Schooladmin::where("school_branch_id", $currentSchool->id)
             ->whereIn("id", $schoolAdminIds)
             ->get();
     }
-
     protected function teacherAudience($currentSchool, $teacherIds)
     {
         return Teacher::where("school_branch_id", $currentSchool->id)

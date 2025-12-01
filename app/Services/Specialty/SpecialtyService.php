@@ -10,10 +10,11 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\Actions\AdminActionEvent;
 
 class SpecialtyService
 {
-    public function createSpecialty(array $data, $currentSchool)
+    public function createSpecialty(array $data, $currentSchool, $authAdmin)
     {
         try {
             $existingSpecialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -46,7 +47,17 @@ class SpecialtyService
 
             SpecialtyStatJob::dispatch($specialtyId, $currentSchool->id);
             SendAdminSpecialtyCreatedNotificationJob::dispatch($currentSchool->id, $data);
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Created",
+                ]
+            );
             return $specialty;
         } catch (AppException $e) {
             throw $e;
@@ -60,8 +71,7 @@ class SpecialtyService
             );
         }
     }
-
-    public function updateSpecialty(array $data, $currentSchool, $specialtyId)
+    public function updateSpecialty(array $data, $currentSchool, $specialtyId, $authAdmin)
     {
         try {
             $specialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -89,6 +99,17 @@ class SpecialtyService
             }
 
             $specialty->update($filteredData);
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Updated",
+                ]
+            );
             return $specialty;
         } catch (AppException $e) {
             throw $e;
@@ -102,8 +123,7 @@ class SpecialtyService
             );
         }
     }
-
-    public function deleteSpecialty($currentSchool, $specialtyId)
+    public function deleteSpecialty($currentSchool, $specialtyId, $authAdmin)
     {
         try {
             $specialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -120,6 +140,17 @@ class SpecialtyService
             }
 
             $specialty->delete();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Deleted",
+                ]
+            );
             return $specialty;
         } catch (AppException $e) {
             throw $e;
@@ -133,7 +164,6 @@ class SpecialtyService
             );
         }
     }
-
     public function getSpecialties($currentSchool)
     {
         $specialtyData = Specialty::where("school_branch_id", $currentSchool->id)
@@ -152,7 +182,6 @@ class SpecialtyService
 
         return $specialtyData;
     }
-
     public function getSpecailtyDetails($currentSchool, $specialtyId)
     {
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -171,11 +200,11 @@ class SpecialtyService
 
         return $specialty;
     }
-
-    public function deactivateSpecialty($specialtyId)
+    public function deactivateSpecialty($specialtyId, $currentSchool, $authAdmin)
     {
         try {
-            $specialty = Specialty::findOrFail($specialtyId);
+            $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($specialtyId);
             if ($specialty->status === "inactive") {
                 throw new AppException(
                     "The specialty is already inactive.",
@@ -187,6 +216,17 @@ class SpecialtyService
             }
             $specialty->status = "inactive";
             $specialty->save();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Deactivated",
+                ]
+            );
             return $specialty;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -208,11 +248,11 @@ class SpecialtyService
             );
         }
     }
-
-    public function activateSpecialty($specialtyId)
+    public function activateSpecialty($specialtyId, $currentSchool, $authAdmin)
     {
         try {
-            $specialty = Specialty::findOrFail($specialtyId);
+            $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                ->findOrFail($specialtyId);
             if ($specialty->status === "active") {
                 throw new AppException(
                     "The specialty is already active.",
@@ -224,6 +264,17 @@ class SpecialtyService
             }
             $specialty->status = "active";
             $specialty->save();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Activated",
+                ]
+            );
             return $specialty;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -245,8 +296,7 @@ class SpecialtyService
             );
         }
     }
-
-    public function bulkUpdateSpecialty($updateDataList)
+    public function bulkUpdateSpecialty($updateDataList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -262,7 +312,8 @@ class SpecialtyService
                         null
                     );
                 }
-                $specialty = Specialty::findOrFail($specialtyId);
+                $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($specialtyId);
                 $cleanedData = array_filter($updateData, function ($value, $key) {
                     return $key !== 'id' && $value !== null && $value !== '';
                 }, ARRAY_FILTER_USE_BOTH);
@@ -280,6 +331,17 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Updated",
+                ]
+            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -304,8 +366,7 @@ class SpecialtyService
             );
         }
     }
-
-    public function bulkDeactivateSpecialty($specialtyIds)
+    public function bulkDeactivateSpecialty($specialtyIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -321,7 +382,8 @@ class SpecialtyService
                         null
                     );
                 }
-                $specialty = Specialty::findOrFail($specialtyId);
+                $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($specialtyId);
                 if ($specialty->status === "inactive") {
                     throw new AppException(
                         "A specialty you are trying to deactivate is already inactive.",
@@ -336,6 +398,17 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Deactivated",
+                ]
+            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -360,8 +433,7 @@ class SpecialtyService
             );
         }
     }
-
-    public function bulkActivateSpecialty(array $specialtyIds)
+    public function bulkActivateSpecialty(array $specialtyIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -377,7 +449,8 @@ class SpecialtyService
                         null
                     );
                 }
-                $specialty = Specialty::findOrFail($specialtyId);
+                $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($specialtyId);
                 if ($specialty->status === "active") {
                     throw new AppException(
                         "A specialty you're trying to activate is already active.",
@@ -392,6 +465,17 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Activated",
+                ]
+            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -416,8 +500,7 @@ class SpecialtyService
             );
         }
     }
-
-    public function bulkDeleteSpecialty($specialtyIds)
+    public function bulkDeleteSpecialty($specialtyIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -433,11 +516,23 @@ class SpecialtyService
                         null
                     );
                 }
-                $specialty = Specialty::findOrFail($specialtyId);
+                $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($specialtyId);
                 $specialty->delete();
                 $result[] = $specialty;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.specialty.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "specialtyManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $specialty,
+                    "message" => "Specialty Deleted",
+                ]
+            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -462,4 +557,6 @@ class SpecialtyService
             );
         }
     }
+
+
 }

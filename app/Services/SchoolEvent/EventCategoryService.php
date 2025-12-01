@@ -5,10 +5,11 @@ namespace App\Services\SchoolEvent;
 use App\Exceptions\AppException;
 use App\Models\EventCategory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\Actions\AdminActionEvent;
 
 class EventCategoryService
 {
-    public function createEventCategory($currentSchool, $data)
+    public function createEventCategory($currentSchool, $data, $authAdmin)
     {
         $categoryExist = EventCategory::where("school_branch_id", $currentSchool->id)
             ->where("name", $data['name'])
@@ -30,10 +31,21 @@ class EventCategoryService
             'status' => true
         ]);
 
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.eventCategory.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "announcementCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $category,
+                "message" => "Announcement Category Created",
+            ]
+        );
         return $category;
     }
 
-    public function updateEventCategory($currentSchool, $updateData, $eventCategoryId)
+    public function updateEventCategory($currentSchool, $updateData, $eventCategoryId, $authAdmin)
     {
         try {
             $category = EventCategory::where("school_branch_id", $currentSchool->id)
@@ -68,11 +80,21 @@ class EventCategoryService
         }
 
         $category->update($cleanData);
-
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.eventCategory.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "announcementCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $category,
+                "message" => "Announcement Category Update",
+            ]
+        );
         return $category;
     }
 
-    public function deleteEventCategory($currentSchool, $eventCategoryId)
+    public function deleteEventCategory($currentSchool, $eventCategoryId, $authAdmin)
     {
         try {
             $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
@@ -98,6 +120,17 @@ class EventCategoryService
         }
 
         $eventCategory->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.eventCategory.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "announcementCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $eventCategory,
+                "message" => "Announcement Category Deleted",
+            ]
+        );
         return $eventCategory;
     }
     public function getEventCategory($currentSchool)
@@ -118,7 +151,7 @@ class EventCategoryService
         return $eventCategories;
     }
 
-    public function activateEventCategory($currentSchool, $eventCategoryId)
+    public function activateEventCategory($currentSchool, $eventCategoryId, $authAdmin)
     {
         $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
             ->find($eventCategoryId);
@@ -145,10 +178,21 @@ class EventCategoryService
 
         $eventCategory->status = true;
         $eventCategory->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.eventCategory.activate"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "announcementCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $eventCategory,
+                "message" => "Announcement Category Activated",
+            ]
+        );
         return $eventCategory;
     }
 
-    public function deactivateEventCategory($currentSchool, $eventCategoryId)
+    public function deactivateEventCategory($currentSchool, $eventCategoryId, $authAdmin)
     {
         $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
             ->find($eventCategoryId);
@@ -175,6 +219,17 @@ class EventCategoryService
 
         $eventCategory->status = false;
         $eventCategory->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.eventCategory.deactivate"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "announcementCategoryManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $eventCategory,
+                "message" => "Announcement Category Deactivated",
+            ]
+        );
         return $eventCategory;
     }
 

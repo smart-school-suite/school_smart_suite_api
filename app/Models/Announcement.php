@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Json;
 class Announcement extends Model
 {
     use HasFactory;
@@ -18,7 +19,6 @@ class Announcement extends Model
         'published_at',
         'expires_at',
         'category_id',
-        'reciepient_count',
         'notification_sent_at',
         'label_id',
         'audience',
@@ -30,8 +30,7 @@ class Announcement extends Model
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
         'audience' => 'json',
-        'tags' => 'json',
-        'reciepient_count' => 'integer'
+        'tags' => 'json'
     ];
 
     public $table = 'announcements';

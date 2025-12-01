@@ -10,22 +10,37 @@ use App\Services\Resit\ResitCandidateService;
 
 class ResitCandidateController extends Controller
 {
-       protected ResitCandidateService $resitCandidateService;
-   public function __construct(ResitCandidateService $resitCandidateService){
-      $this->resitCandidateService = $resitCandidateService;
-   }
-
-   public function getResitCandidates(Request $request){
-      $currentSchool = $request->attributes->get('currentSchool');
-      $resitCandidates = $this->resitCandidateService->getResitCandidates($currentSchool);
-      return ApiResponseService::success("Resit Candidates Fetched Successfully",
-       ResitExamCandidateResource::collection($resitCandidates), null, 200);
-   }
-
-   public function deleteResitCandidate(Request $request, $candidateId){
-      $currentSchool = $request->attributes->get('currentSchool');
-       $this->resitCandidateService->deleteCandidates($currentSchool, $candidateId);
-       return ApiResponseService::success("Student Deleted Successfully", null, null, 200);
-
-   }
+    protected ResitCandidateService $resitCandidateService;
+    public function __construct(ResitCandidateService $resitCandidateService)
+    {
+        $this->resitCandidateService = $resitCandidateService;
+    }
+    public function getResitCandidates(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $resitCandidates = $this->resitCandidateService->getResitCandidates($currentSchool);
+        return ApiResponseService::success(
+            "Resit Candidates Fetched Successfully",
+            ResitExamCandidateResource::collection($resitCandidates),
+            null,
+            200
+        );
+    }
+    public function deleteResitCandidate(Request $request, $candidateId)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $this->resitCandidateService->deleteCandidates($currentSchool, $candidateId, $authAdmin);
+        return ApiResponseService::success("Student Deleted Successfully", null, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

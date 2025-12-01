@@ -13,6 +13,7 @@ use App\Services\SchoolBranchSetting\PromotionSettingService;
 use App\Services\SchoolBranchSetting\GradeSettingService;
 use App\Services\SchoolBranchSetting\ResitSettingService;
 use App\Services\SchoolBranchSetting\TimetableSettingService;
+
 class SchoolBranchSettingController extends Controller
 {
     protected SchoolBranchSettingService $schoolBranchSettingService;
@@ -24,14 +25,13 @@ class SchoolBranchSettingController extends Controller
     protected TimetableSettingService $timetableSettingService;
     public function __construct(
         SchoolBranchSettingService $schoolBranchSettingService,
-         ExamSettingService $examSettingService,
-         ElectionSettingService $electionSettingService,
-         PromotionSettingService $promotionSettingService,
-         GradeSettingService $gradeSettingService,
-         ResitSettingService $resitSettingService,
-         TimetableSettingService $timetableSettingService
-        )
-    {
+        ExamSettingService $examSettingService,
+        ElectionSettingService $electionSettingService,
+        PromotionSettingService $promotionSettingService,
+        GradeSettingService $gradeSettingService,
+        ResitSettingService $resitSettingService,
+        TimetableSettingService $timetableSettingService
+    ) {
         $this->schoolBranchSettingService = $schoolBranchSettingService;
         $this->examSettingService = $examSettingService;
         $this->electionSettingService = $electionSettingService;
@@ -40,54 +40,68 @@ class SchoolBranchSettingController extends Controller
         $this->resitSettingService = $resitSettingService;
         $this->timetableSettingService = $timetableSettingService;
     }
-
     public function getSchoolBranchSetting(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $schoolBranchSetting = $this->schoolBranchSettingService->getSchoolBranchSetting($currentSchool);
         return ApiResponseService::success("School Branch Setting Fetched Successfully", $schoolBranchSetting, null, 200);
     }
-
-    public function getSchoolBranchSettingDetails(Request $request, $schoolBranchSettingId){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $schoolBranchSettingDetails = $this->schoolBranchSettingService->getSchoolBranchSettingDetails($currentSchool, $schoolBranchSettingId);
-         return ApiResponseService::success("School Branch Setting Details Fetched Successfully", $schoolBranchSettingDetails, null, 200);
-    }
-
-    public function updateExamSetting(UpdateSchoolBranchSettingRequest $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $this->examSettingService->updateExamSetting($currentSchool, $request->validated());
-         return ApiResponseService::success("Exam Setting Updated Successfully", null, null, 200);
-    }
-
-    public function updateElectionSetting(UpdateSchoolBranchSettingRequest $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $this->electionSettingService->updateElectionSetting($currentSchool, $request->validated());
-         return ApiResponseService::success("Election Setting Updated Successfully", null, null, 200);
-    }
-
-    public function updatePromotionSetting(UpdateSchoolBranchSettingRequest $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $this->promotionSettingService->updatePromotionSetting($currentSchool, $request->validated());
-         return ApiResponseService::success("Student Promotion Setting Updated Successfully", null, null, 200);
-    }
-
-    public function updateGradeSetting(UpdateSchoolBranchSettingRequest $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $this->gradeSettingService->updateGradeSetting($currentSchool, $request->validated());
-         return ApiResponseService::success("Grade Setting Updated Successfully", null, null, 200);
-    }
-
-    public function updateResitSetting(UpdateSchoolBranchSettingRequest $request){
+    public function getSchoolBranchSettingDetails(Request $request, $schoolBranchSettingId)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->resitSettingService->updateResitSetting($currentSchool, $request->validated());
+        $schoolBranchSettingDetails = $this->schoolBranchSettingService->getSchoolBranchSettingDetails($currentSchool, $schoolBranchSettingId);
+        return ApiResponseService::success("School Branch Setting Details Fetched Successfully", $schoolBranchSettingDetails, null, 200);
+    }
+    public function updateExamSetting(UpdateSchoolBranchSettingRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->examSettingService->updateExamSetting($currentSchool, $request->validated(), $authAdmin);
+        return ApiResponseService::success("Exam Setting Updated Successfully", null, null, 200);
+    }
+    public function updateElectionSetting(UpdateSchoolBranchSettingRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->electionSettingService->updateElectionSetting($currentSchool, $request->validated(), $authAdmin);
+        return ApiResponseService::success("Election Setting Updated Successfully", null, null, 200);
+    }
+    public function updatePromotionSetting(UpdateSchoolBranchSettingRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->promotionSettingService->updatePromotionSetting($currentSchool, $request->validated(), $authAdmin);
+        return ApiResponseService::success("Student Promotion Setting Updated Successfully", null, null, 200);
+    }
+    public function updateGradeSetting(UpdateSchoolBranchSettingRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->gradeSettingService->updateGradeSetting($currentSchool, $request->validated(), $authAdmin);
+        return ApiResponseService::success("Grade Setting Updated Successfully", null, null, 200);
+    }
+    public function updateResitSetting(UpdateSchoolBranchSettingRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->resitSettingService->updateResitSetting($currentSchool, $request->validated(), $authAdmin);
         return ApiResponseService::success("Resit Setting Updated Successfully", null, null, 200);
     }
-
-    public function updateTimetableSetting(UpdateSchoolBranchSettingRequest $request){
-        $currentSchool = $request->attributes->get('currentSchool');
-        $this->resitSettingService->updateResitSetting($currentSchool, $request->validated());
+    public function updateTimetableSetting(UpdateSchoolBranchSettingRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->resitSettingService->updateResitSetting($currentSchool, $request->validated(), $authAdmin);
         return ApiResponseService::success("Timetable Setting Updated Successfully", null, null, 200);
     }
-
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

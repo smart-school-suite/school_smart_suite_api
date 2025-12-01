@@ -15,10 +15,11 @@ use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+use App\Events\Actions\AdminActionEvent;
 
 class ExamTimetableService
 {
-    public function createExamTimeTable(array $examTimetableEntries, Schoolbranches $currentSchool, string $examId)
+    public function createExamTimeTable(array $examTimetableEntries, Schoolbranches $currentSchool, string $examId, $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -76,7 +77,17 @@ class ExamTimetableService
                 $currentSchool->id,
                 $examData
             );
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.exam.timetable.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $createdTimetables,
+                    "message" => "Exam Timetable Created",
+                ]
+            );
             return $createdTimetables;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -120,12 +131,23 @@ class ExamTimetableService
 
         return trim($duration);
     }
-    public function deleteTimetableEntry(string $entryId, Schoolbranches $currentSchool)
+    public function deleteTimetableEntry(string $entryId, Schoolbranches $currentSchool, $authAdmin)
     {
         try {
             $examTimeTableEntry = Examtimetable::where('school_branch_id', $currentSchool->id)
                 ->findOrFail($entryId);
             $examTimeTableEntry->delete();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.exam.timetable.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $examTimeTableEntry,
+                    "message" => "Exam Timetable Entry Deleted",
+                ]
+            );
             return $examTimeTableEntry;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -276,7 +298,7 @@ class ExamTimetableService
             );
         }
     }
-    public function deleteExamTimetable(string $examId, SchoolBranches $currentSchool): ?Collection
+    public function deleteExamTimetable(string $examId, SchoolBranches $currentSchool, $authAdmin): ?Collection
     {
         try {
             $exam = Exams::where("school_branch_id", $currentSchool->id)
@@ -314,6 +336,17 @@ class ExamTimetableService
                 $exam->save();
             });
 
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.exam.timetable.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $timetableEntries,
+                    "message" => "Exam Timetable Deleted",
+                ]
+            );
             return $timetableEntries;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -335,7 +368,7 @@ class ExamTimetableService
             );
         }
     }
-    public function updateExamTimetable(array $examTimetableEntries, SchoolBranches $currentSchool): ?Collection
+    public function updateExamTimetable(array $examTimetableEntries, SchoolBranches $currentSchool, $authAdmin): ?Collection
     {
         try {
             if (empty($examTimetableEntries)) {
@@ -377,6 +410,17 @@ class ExamTimetableService
                 }
             });
 
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.exam.timetable.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "examTimetableManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $updatedTimetables,
+                    "message" => "Exam Timetable Updated",
+                ]
+            );
             return $updatedTimetables;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -398,7 +442,6 @@ class ExamTimetableService
             );
         }
     }
-
     public function getExamTimetableStudentIdExamId($currentSchool, $studentId, $examId)
     {
         $timetableEntries = Examtimetable::where('school_branch_id', $currentSchool->id)

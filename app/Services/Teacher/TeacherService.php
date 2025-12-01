@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Throwable;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class TeacherService
 {
@@ -21,17 +22,41 @@ class TeacherService
         $find_teacher = Teacher::findOrFail($teacherId);
         return $find_teacher;
     }
-    public function deletetTeacher($teacherId)
+    public function deletetTeacher($teacherId, $currentSchool, $authAdmin)
     {
-        $teacher = Teacher::findOrFail($teacherId);
+        $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+            ->findOrFail($teacherId);
         $teacher->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.teacher.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "teacherManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $teacher,
+                "message" => "Teacher Deleted",
+            ]
+        );
         return $teacher;
     }
-    public function updateTeacher(array $data, $teacherId)
+    public function updateTeacher(array $data, $teacherId, $currentSchool, $authAdmin)
     {
-        $teacher = Teacher::findOrFail($teacherId);
+        $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+            ->findOrFail($teacherId);
         $filterData = array_filter($data);
         $teacher->update($filterData);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.teacher.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "teacherManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $teacher,
+                "message" => "Teacher Updated",
+            ]
+        );
         return $teacher;
     }
     public function getTeacherSchedule($teacherId, $currentSchool)
@@ -109,27 +134,52 @@ class TeacherService
         $teacher->notify(new SpecialtyAssignedToTeacher($specialties));
         return $result;
     }
-    public function deactivateTeacher($teacherId)
+    public function deactivateTeacher($teacherId, $currentSchool, $authAdmin)
     {
-        $teacher = Teacher::findOrFail($teacherId);
+        $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+            ->findOrFail($teacherId);
         $teacher->status = "inactive";
         $teacher->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.teacher.deactivate"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "teacherManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $teacher,
+                "message" => "Teacher Account Deactivated",
+            ]
+        );
         return $teacher;
     }
-    public function activateTeacher($teacherId)
+    public function activateTeacher($teacherId, $currentSchool, $authAdmin)
     {
-        $teacher = Teacher::findOrFail($teacherId);
+        $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+            ->findOrFail($teacherId);
         $teacher->status = "active";
         $teacher->save();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.teacher.activate"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "teacherManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $teacher,
+                "message" => "Teacher Account Activated",
+            ]
+        );
         return $teacher;
     }
-    public function bulkDeactivateTeacher($teacherIds)
+    public function bulkDeactivateTeacher($teacherIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($teacherIds as $teacherId) {
-                $teacher = Teacher::findOrFail($teacherId['teacher_id']);
+                $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($teacherId['teacher_id']);
                 $teacher->status = "inactive";
                 $teacher->save();
                 $result[] = [
@@ -137,19 +187,31 @@ class TeacherService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.teacher.deactivate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "teacherManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $teacher,
+                    "message" => "Teacher Account Deactivated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkActivateTeacher($teacherIds)
+    public function bulkActivateTeacher($teacherIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($teacherIds as $teacherId) {
-                $teacher = Teacher::findOrFail($teacherId['teacher_id']);
+                $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($teacherId['teacher_id']);
                 $teacher->status = "active";
                 $teacher->save();
                 $result[] = [
@@ -157,38 +219,62 @@ class TeacherService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.teacher.activate"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "teacherManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Teacher Account Activated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkDeleteTeacher($teacherIds)
+    public function bulkDeleteTeacher($teacherIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($teacherIds as $teacherId) {
-                $teacher = Teacher::findOrFail($teacherId['teacher_id']);
+                $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($teacherId['teacher_id']);
                 $teacher->delete();
                 $result[] = [
                     $teacher
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.teacher.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "teacherManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Teacher Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkUpdateTeacher($updateDataList)
+    public function bulkUpdateTeacher($updateDataList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($updateDataList as $updateData) {
-                $teacher = Teacher::findOrFail($updateData['id']);
+                $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($updateData['id']);
                 if ($teacher) {
                     $cleanedData = array_filter($updateData, function ($value) {
                         return $value !== null && $value !== '';
@@ -203,6 +289,17 @@ class TeacherService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.teacher.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "teacherManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Teacher Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

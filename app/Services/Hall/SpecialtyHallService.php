@@ -7,10 +7,11 @@ use App\Models\SpecialtyHall;
 use App\Models\Specialty;
 use App\Exceptions\AppException;
 use App\Models\Student;
+use App\Events\Actions\AdminActionEvent;
 
 class SpecialtyHallService
 {
-    public function assignHallToSpecialty($currentSchool, $data)
+    public function assignHallToSpecialty($currentSchool, $data, $authAdmin)
     {
         $hall = Hall::where("school_branch_id", $currentSchool->id)
             ->find($data['hall_id']);
@@ -71,6 +72,17 @@ class SpecialtyHallService
             'hall_id' => $hall->id
         ]);
 
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.specialtyHall.assign"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $hall,
+                "message" => "Specialty Assigned To Hall",
+            ]
+        );
         return $specialtyHall;
     }
 
@@ -141,20 +153,32 @@ class SpecialtyHallService
         return $assignedHalls;
     }
 
-    public function removeAssignedHalls($currentSchool, $specialtyHallId){
-         $specialtyHall = SpecialtyHall::where("school_branch_id", $currentSchool->id)
-            ->find( $specialtyHallId);
+    public function removeAssignedHalls($currentSchool, $specialtyHallId, $authAdmin)
+    {
+        $specialtyHall = SpecialtyHall::where("school_branch_id", $currentSchool->id)
+            ->find($specialtyHallId);
 
-        if($specialtyHall){
-             throw new AppException(
-                 "Specialty Hall Not Found",
-                 404,
-                 "Specialty Hall Not Found",
-                 "We Could Not Find the HAll Assigned to this specialty it might have been deleted please try again"
-             );
+        if ($specialtyHall) {
+            throw new AppException(
+                "Specialty Hall Not Found",
+                404,
+                "Specialty Hall Not Found",
+                "We Could Not Find the HAll Assigned to this specialty it might have been deleted please try again"
+            );
         }
 
         $specialtyHall->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.specialtyHall.remove"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "hallManagement",
+                "authAdmin" => $authAdmin,
+                "data" =>  $specialtyHall,
+                "message" => "Specialty Removed From Hall",
+            ]
+        );
         return $specialtyHall;
     }
 }

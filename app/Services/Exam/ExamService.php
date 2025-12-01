@@ -20,9 +20,12 @@ use App\Models\ResitExam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Grades;
+use App\Jobs\DataCreationJob\UpdateExamStatusJob;
+use App\Events\Actions\AdminActionEvent;
+
 class ExamService
 {
-    public function createExam(array $data, $currentSchool)
+    public function createExam(array $data, $currentSchool, $authAdmin)
     {
         try {
             $specialty = Specialty::with(['level'])->find($data['specialty_id']);
@@ -94,6 +97,19 @@ class ExamService
                 $currentSchool->id,
                 $examData
             );
+            UpdateExamStatusJob::dispatch($examId)->delay(Carbon::parse($data['end_date']));
+            UpdateExamStatusJob::dispatch($examId)->delay(Carbon::parse($data['start_date']));
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.exam.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exam,
+                    "message" => "Exam Created",
+                ]
+            );
             return $exam;
         } catch (Exception $e) {
             throw new AppException(
@@ -105,7 +121,7 @@ class ExamService
             );
         }
     }
-    public function deleteExam(string $examId, Object $currentSchool)
+    public function deleteExam(string $examId, Object $currentSchool, $authAdmin)
     {
         try {
 
@@ -114,7 +130,17 @@ class ExamService
             $this->deleteExamCandidate($examId, $currentSchool);
 
             $exam->delete();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.exam.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exam,
+                    "message" => "Exam Deleted",
+                ]
+            );
             return $exam;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -143,24 +169,35 @@ class ExamService
             $examCandidate->delete();
         }
     }
-    public function bulkDeleteExam(array $examIds, $currentSchool): array
+    public function bulkDeleteExam(array $examIds, $currentSchool, $authAdmin): array
     {
         $deletedExams = [];
 
         try {
             DB::beginTransaction();
-
+            $specialtyIds = [];
             foreach ($examIds as $examIdItem) {
                 $examId = $examIdItem['exam_id'] ?? null;
                 $exam = Exams::where("school_branch_id", $currentSchool->id)
                     ->findOrFail($examId);
+                $specialtyIds[] = $exam->id;
                 $this->deleteExamCandidate($examId, $currentSchool);
                 $exam->delete();
                 $deletedExams[] = $exam;
             }
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.exam.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exam,
+                    "message" => "Exam Deleted",
+                ]
+            );
             return $deletedExams;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -182,7 +219,7 @@ class ExamService
             );
         }
     }
-    public function updateExam(string $examId, $currentSchool, array $data)
+    public function updateExam(string $examId, $currentSchool, array $data, $authAdmin)
     {
         try {
             $exam = Exams::where("school_branch_id", $currentSchool->id)
@@ -201,7 +238,17 @@ class ExamService
             $filteredData = array_filter($data);
 
             $exam->update($filteredData);
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.exam.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $exam,
+                    "message" => "Exam Updated",
+                ]
+            );
             return $exam;
         } catch (AppException $e) {
             throw $e;
@@ -215,20 +262,34 @@ class ExamService
             );
         }
     }
-    public function bulkUpdateExam($examUpdateList)
+    public function bulkUpdateExam($examUpdateList, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($examUpdateList as $examUpdate) {
-                $exam = Exams::findOrFail($examUpdate['exam_id']);
+                $exam = Exams::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($examUpdate['exam_id']);
                 $filterData = array_filter($examUpdate);
                 $exam->update($filterData);
+                $specialtyIds[] = $exam->specialty_id;
                 $result[] = [
                     $exam
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.exam.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Exam Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -310,7 +371,7 @@ class ExamService
 
         return $results;
     }
-    public function addExamGrading(string $examId, $currentSchool, $gradesConfigId)
+    public function addExamGrading(string $examId, $currentSchool, $gradesConfigId, $authAdmin)
     {
 
         $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
@@ -352,15 +413,25 @@ class ExamService
         $exam->grades_category_id = $gradesConfig->grades_category_id;
         $exam->grading_added = true;
         $exam->save();
-
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.exam.add.grade.config"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "examManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $exam,
+                "message" => "Exam Grade Scale Added",
+            ]
+        );
         return $exam;
     }
-    public function bulkAddExamGrading($examGradingList, $currentSchool)
+    public function bulkAddExamGrading($examGradingList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
-
+            $specialtyIds = [];
             foreach ($examGradingList as $examGrading) {
                 $gradesConfigId = $examGrading['grades_config_Id'] ?? null;
                 $examId = $examGrading['exam_id'] ?? null;
@@ -403,14 +474,24 @@ class ExamService
                 $exam->grades_category_id = $gradesConfig->grades_category_id;
                 $exam->grading_added = true;
                 $exam->save();
-
+                $specialtyIds[] = $exam->specialty_id;
                 $result[] = [
                     'grades_config' => $gradesConfig,
                     'exam' => $exam,
                 ];
             }
-
             DB::commit();
+                    AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.exam.add.grade.config"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "examManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $result,
+                "message" => "Exam Grade Scale Added",
+            ]
+        );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -423,9 +504,7 @@ class ExamService
             );
         }
     }
-
-
-        public function getExamsByStudentIdSemesterId($currentSchool, $studentId, $semesterId)
+    public function getExamsByStudentIdSemesterId($currentSchool, $studentId, $semesterId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->findOrFail($studentId);
@@ -593,8 +672,7 @@ class ExamService
         $sorted = $allUpcoming->sortBy('start_date')->values();
         return $sorted;
     }
-
-       public function getAllExamsByStudentId($currentSchool, $studentId)
+    public function getAllExamsByStudentId($currentSchool, $studentId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->findOrFail($studentId);

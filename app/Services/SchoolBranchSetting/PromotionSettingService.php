@@ -6,10 +6,10 @@ use App\Exceptions\AppException;
 use App\Models\SchoolBranchSetting;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-
+use App\Events\Actions\AdminActionEvent;
 class PromotionSettingService
 {
-    public function updatePromotionSetting($currentSchool, $updateData)
+    public function updatePromotionSetting($currentSchool, $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;
@@ -57,6 +57,17 @@ class PromotionSettingService
             }
 
             DB::commit();
+                                                        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.promotionSetting.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolSettingManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $setting,
+                "message" => "Promotion Setting Updated",
+            ]
+        );
             return $setting;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

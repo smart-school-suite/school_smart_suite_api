@@ -19,10 +19,10 @@ use App\Models\AccessedStudent;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-
+use App\Events\Actions\AdminActionEvent;
 class AddExamScoreService
 {
-    public function addExamScores(array $studentScores, $currentSchool): array
+    public function addExamScores(array $studentScores, $currentSchool, $authAdmin): array
     {
         $results = [];
         $examDetails = null;
@@ -87,7 +87,19 @@ class AddExamScoreService
                 ExamStatsJob::dispatch($examDetails);
                 $this->sendExamResultsNotification($examDetails);
             }
+                        AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.examEvaluation.addScore"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "examEvaluation",
+                    "authAdmin" => $authAdmin,
+                    "data" => $results,
+                    "message" => "Exam Results Summited",
+                ]
+            );
             return $results;
+
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;

@@ -6,6 +6,7 @@ use App\Jobs\DataCleanupJobs\CleanSchoolEventData;
 use App\Jobs\DataCleanupJobs\UpdateSchoolEventStatusJob;
 use App\Jobs\DataCreationJob\CreateSchoolEventLikeStatusJob;
 use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
+use App\Events\AdminSchoolEvent\AdminSchoolEventStatusUpdatedEvent;
 use App\Models\EventTag;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
@@ -14,10 +15,10 @@ use App\Models\Schooladmin;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\SchoolEvent;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Events\Actions\AdminActionEvent;
 use Throwable;
 
 class UpdateDraftEventStatusService
@@ -218,11 +219,33 @@ class UpdateDraftEventStatusService
                         CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEvent->id);
                         CleanSchoolEventData::dispatch($schoolEvent->id, $currentSchool->id)->delay($endDate);
                         UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEvent->id);
+                        AdminActionEvent::dispatch(
+                            [
+                                "permissions" =>  ["schoolAdmin.event.create"],
+                                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                                "schoolBranch" =>  $currentSchool->id,
+                                "feature" => "schoolEventManagement",
+                                "authAdmin" => $authenticatedUser['authUser'],
+                                "data" =>  $schoolEvent,
+                                "message" => "School Event Published",
+                            ]
+                        );
                     } elseif ($status === 'scheduled') {
                         CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEvent->id)->delay($publishedAt);
                         UpdateSchoolEventStatusJob::dispatch($schoolEvent->id, $currentSchool->id, $authenticatedUser)->delay($endDate);
                         UpdateSchoolEventStatusJob::dispatch($schoolEvent->id, $currentSchool->id, $authenticatedUser)->delay($startDate);
                         UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEvent->id)->delay($publishedAt);
+                        AdminActionEvent::dispatch(
+                            [
+                                "permissions" =>  ["schoolAdmin.event.create"],
+                                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                                "schoolBranch" =>  $currentSchool->id,
+                                "feature" => "schoolEventManagement",
+                                "authAdmin" => $authenticatedUser['authUser'],
+                                "data" =>  $schoolEvent,
+                                "message" => "School Event Scheduled",
+                            ]
+                        );
                         if ($publishedAt->greaterThan(now()->addMinutes(10))) {
                             SendAdminEventScheduleReminderNotiJob::dispatch($schoolEvent->id, $authenticatedUser, $currentSchool->id)
                                 ->delay($publishedAt->copy()->subMinutes(5));

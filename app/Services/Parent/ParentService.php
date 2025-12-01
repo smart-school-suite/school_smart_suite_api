@@ -6,10 +6,11 @@ use App\Models\Parents;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class ParentService
 {
-    public function createParent($parentData, $currentSchool)
+    public function createParent($parentData, $currentSchool, $authAdmin)
     {
         $parent = Parents::create([
             'school_branch_id' => $currentSchool->id,
@@ -21,6 +22,17 @@ class ParentService
             "relationship_to_student" => $parentData['relationship_to_student'],
             "preferred_language" => $parentData['preferred_language']
         ]);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.parent.create"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "parentManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $parent,
+                "message" => "Parent Created",
+            ]
+        );
         return $parent;
     }
     public function getAllParents($currentSchool)
@@ -29,28 +41,51 @@ class ParentService
         return $parents;
     }
 
-    public function deleteParent($parentId, $currentSchool)
+    public function deleteParent($parentId, $currentSchool, $authAdmin)
     {
         $parentExist = Parents::where("school_branch_id", $currentSchool->id)->find($parentId);
         if (!$parentExist) {
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
         $parentExist->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.parent.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "parentManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $parentExist,
+                "message" => "Parent Created",
+            ]
+        );
+        return $parentExist;
     }
 
-    public function bulkDeleteParent($parentIds)
+    public function bulkDeleteParent($parentIds, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($parentIds as $parentId) {
-                $parent = Parents::findOrFail($parentId);
+                $parent = Parents::where("school_branch_id", $currentSchool->id)->findOrFail($parentId);
                 $parent->delete();
                 $result[] = [
                     $parent
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.parent.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "parentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Parent Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -58,7 +93,7 @@ class ParentService
         }
     }
 
-    public function updateParent(array $data, $parentId, $currentSchool)
+    public function updateParent(array $data, $parentId, $currentSchool, $authAdmin)
     {
         $parentExist = Parents::where("school_branch_id", $currentSchool->id)->find($parentId);
         if (!$parentExist) {
@@ -66,10 +101,21 @@ class ParentService
         }
         $filterData = array_filter($data);
         $parentExist->update($filterData);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" => ["schoolAdmin.parent.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "parentManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $parentExist,
+                "message" => "Parent Updated",
+            ]
+        );
         return $parentExist;
     }
 
-    public function bulkUpdateParent(array $updateDataArray)
+    public function bulkUpdateParent(array $updateDataArray, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
@@ -81,6 +127,17 @@ class ParentService
                 $result[] = $parent;
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" => ["schoolAdmin.parent.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" => $currentSchool->id,
+                    "feature" => "parentManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Parent Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

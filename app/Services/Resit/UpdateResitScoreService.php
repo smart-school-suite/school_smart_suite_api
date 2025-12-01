@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Resit;
+
 use Illuminate\Support\Facades\DB;
 use App\Models\Exams;
 use App\Models\Examtype;
@@ -16,9 +17,12 @@ use App\Models\ResitResults;
 use App\Models\ResitCandidates;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use App\Events\Actions\AdminActionEvent;
+
 class UpdateResitScoreService
 {
-        public function updateResitScores(array $entries, object $currentSchool, string $candidateId){
+    public function updateResitScores(array $entries, object $currentSchool, string $candidateId, $authAdmin)
+    {
         DB::beginTransaction();
         try {
             $resitCandidate = ResitCandidates::findOrFail($candidateId);
@@ -85,6 +89,24 @@ class UpdateResitScoreService
                 $resitCandidate
             );
             DB::commit();
+
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resitEvaluation.updateScore"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitEvaluationManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => [
+                        'results' => $results,
+                        'resit_exam' => $resitExam,
+                        'exam' => $exam,
+                        'ca_results' => $caResults,
+                        'exam_results' => $examResults
+                    ],
+                    "message" => "Resit Resit Score Updated Successfully",
+                ]
+            );
             return [
                 'results' => $results,
                 'resit_exam' => $resitExam,
@@ -94,19 +116,20 @@ class UpdateResitScoreService
             ];
         } catch (Exception $e) {
             Log::error('AddExamScoresService error', [
-           'message' => $e->getMessage(),
-           'file'    => $e->getFile(),
-           'line'    => $e->getLine(),
-           'trace'   => $e->getTraceAsString(),
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
             ]);
             DB::rollBack();
             throw $e;
         }
     }
-    public function updateResitScore(object $currentSchool, array $letterGradeDetails, array $entry){
+    public function updateResitScore(object $currentSchool, array $letterGradeDetails, array $entry)
+    {
         $course = Courses::findOrFail($entry['course_id']);
         $resitMark = ResitMarks::where("school_branch_id", $currentSchool->id)
-                                         ->findOrFail($entry['resit_mark_id']);
+            ->findOrFail($entry['resit_mark_id']);
         $resitMark->score = $entry['score'];
         $resitMark->grade = $letterGradeDetails['letter_grade'] ?? null;
         $resitMark->grade_status = $letterGradeDetails['grade_status'] ?? null;
@@ -129,9 +152,9 @@ class UpdateResitScoreService
     public function updateResitResults($resitExam, array $gpaDetails, array $results, $examStatus, array $newCaGpa, array $newExamGpa, $resitCandidate)
     {
         $resitExams = ResitResults::where("school_branch_id", $resitExam->school_branch_id)
-                                     ->where("resit_exam_id", $resitCandidate->resit_exam_id)
-                                      ->where("student_id", $resitCandidate->student_id)
-                                      ->first();
+            ->where("resit_exam_id", $resitCandidate->resit_exam_id)
+            ->where("student_id", $resitCandidate->student_id)
+            ->first();
         $resitExams->former_exam_gpa = $gpaDetails['exam_results']->gpa ?? null;
         $resitExams->new_exam_gpa = $newExamGpa['gpa'] ?? null;
         $resitExams->new_ca_gpa = $newCaGpa['gpa'] ?? null;
@@ -217,9 +240,9 @@ class UpdateResitScoreService
         $failedExam = Exams::findOrFail($failedExamId);
         $letterGrade = LetterGrade::where("letter_grade", $resitLetterGrade)->firstOrFail();
         $examGrades = Grades::where("letter_grade_id", $letterGrade->id)
-        ->where("school_branch_id", $currentSchool->id)
-        ->where("grades_category_id", $failedExam->grades_category_id)
-        ->firstorFail();
+            ->where("school_branch_id", $currentSchool->id)
+            ->where("grades_category_id", $failedExam->grades_category_id)
+            ->firstorFail();
 
         if (!$examGrades) {
             throw new Exception("No grades found for school ID: {$currentSchool->id} and grades category ID: {$failedExam->grades_category_id} with letter grade: {$resitLetterGrade}");
@@ -241,9 +264,9 @@ class UpdateResitScoreService
         $failedCa = Exams::findOrFail($failedCaId);
         $letterGrade = LetterGrade::where("letter_grade", $resitLetterGrade)->firstOrFail();
         $caGrades = Grades::where("letter_grade_id", $letterGrade->id)
-        ->where("school_branch_id", $currentSchool->id)
-        ->where("grades_category_id", $failedCa->grades_category_id)
-        ->firstorFail();
+            ->where("school_branch_id", $currentSchool->id)
+            ->where("grades_category_id", $failedCa->grades_category_id)
+            ->firstorFail();
 
         if (!$caGrades) {
             throw new Exception("No grades found for school ID: {$currentSchool->id} and grades category ID: {$failedCa->grades_category_id} with letter grade: {$resitLetterGrade}");
@@ -412,31 +435,30 @@ class UpdateResitScoreService
             ->where("course_id", $entry['course_id'])
             ->where("specialty_id", $entry['specialty_id'])
             ->first();
-        if($resitLetterGrade['grade_status'] === "passed"){
-            if($studentResit){
+        if ($resitLetterGrade['grade_status'] === "passed") {
+            if ($studentResit) {
                 $studentResit->delete();
             }
         }
-        if($resitLetterGrade['grade_status'] === "failed"){
-            if($studentResit){
+        if ($resitLetterGrade['grade_status'] === "failed") {
+            if ($studentResit) {
                 $studentResit->increment('attempt_number');
                 $studentResit->iscarry_over = true;
                 $studentResit->paid_status = 'unpaid';
                 $studentResit->save();
                 return $studentResit;
-            }
-            else{
+            } else {
                 StudentResit::create([
-                   'iscarry_over' => true,
-                   'attempt_number' => 1,
-                   'resit_fee' => $currentSchool->resit_fee,
-                   'school_branch_id' => $currentSchool->id,
-                   'specialty_id' => $entry['specialty_id'],
-                   'course_id' => $entry['course_id'],
-                   'exam_id' => $exam->id,
-                   'level_id' => $exam->level_id,
-                   'student_id' => $entry['student_id'],
-                   'student_batch_id' => $exam->student_batch_id
+                    'iscarry_over' => true,
+                    'attempt_number' => 1,
+                    'resit_fee' => $currentSchool->resit_fee,
+                    'school_branch_id' => $currentSchool->id,
+                    'specialty_id' => $entry['specialty_id'],
+                    'course_id' => $entry['course_id'],
+                    'exam_id' => $exam->id,
+                    'level_id' => $exam->level_id,
+                    'student_id' => $entry['student_id'],
+                    'student_batch_id' => $exam->student_batch_id
                 ]);
             }
         }
@@ -480,7 +502,7 @@ class UpdateResitScoreService
 
             if ($updatedResults) {
                 $updatedResults->gpa = $gpaAndTotalScores['gpa'];
-                $updatedResults->exam_status = empty($failedCourses) ? "passed": "failed";
+                $updatedResults->exam_status = empty($failedCourses) ? "passed" : "failed";
                 $updatedResults->total_score = $gpaAndTotalScores['totalScore'];
                 $updatedResults->score_details = json_encode($results);
                 $updatedResults->save();

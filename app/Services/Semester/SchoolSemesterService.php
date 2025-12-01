@@ -20,10 +20,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
+use App\Events\Actions\AdminActionEvent;
 
 class SchoolSemesterService
 {
-    public function createSchoolSemester($semesterData, $currentSchool)
+    public function createSchoolSemester($semesterData, $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -120,6 +121,17 @@ class SchoolSemesterService
                 $schoolSemesterId
             );
 
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.schoolSemester.create"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "schoolSemesterManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $schoolSemester,
+                    "message" => "School Semester Created ",
+                ]
+            );
             return $schoolSemester;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -141,7 +153,7 @@ class SchoolSemesterService
             );
         }
     }
-    public function updateSchoolSemester($semesterData, $currentSchool, $schoolSemesterId)
+    public function updateSchoolSemester($semesterData, $currentSchool, $schoolSemesterId, $authAdmin)
     {
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->find($schoolSemesterId);
         if (!$schoolSemester) {
@@ -150,15 +162,26 @@ class SchoolSemesterService
 
         $filteredData = array_filter($semesterData);
         $schoolSemester->update($filteredData);
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.schoolSemester.update"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolSemesterManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $schoolSemester,
+                "message" => "School Semester Updated",
+            ]
+        );
         return $schoolSemester;
     }
-    public function bulkUpdateSchoolSemester(array $updateSemesterList)
+    public function bulkUpdateSchoolSemester(array $updateSemesterList, $currentSchool, $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
             foreach ($updateSemesterList as $updateSemester) {
-                $schoolSemester = SchoolSemester::findOrFail($updateSemester['school_semester_id']);
+                $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->findOrFail($updateSemester['school_semester_id']);
                 $filteredData = array_filter($updateSemester);
                 $schoolSemester->update($filteredData);
                 $result[] = [
@@ -166,13 +189,24 @@ class SchoolSemesterService
                 ];
             }
             DB::commit();
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.schoolSemester.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "schoolSemesterManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "School Semester Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function deleteSchoolSemester($schoolSemesterId, $currentSchool)
+    public function deleteSchoolSemester($schoolSemesterId, $currentSchool, $authAdmin)
     {
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
             ->find($schoolSemesterId);
@@ -186,9 +220,20 @@ class SchoolSemesterService
             );
         }
         $schoolSemester->delete();
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.schoolSemester.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "schoolSemesterManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $schoolSemester,
+                "message" => "School Semester Deleted",
+            ]
+        );
         return $schoolSemester;
     }
-    public function bulkDeleteSchoolSemester(array $schoolSemesterIds): array
+    public function bulkDeleteSchoolSemester(array $schoolSemesterIds, $currentSchool, $authAdmin): array
     {
         $deletedSemesters = [];
 
@@ -213,7 +258,17 @@ class SchoolSemesterService
             }
 
             DB::commit();
-
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.schoolSemester.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "schoolSemesterManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $deletedSemesters,
+                    "message" => "School Semester Deleted",
+                ]
+            );
             return $deletedSemesters;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();

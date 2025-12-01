@@ -29,98 +29,87 @@ class SchoolGradeScaleController extends Controller
         $this->autoGenExamGradingService = $autoGenExamGradingService;
     }
 
-        public function updateExamGrades(UpdateGradeRequest $request){
-        try{
-          $currentSchool = $request->attributes->get('currentSchool');
-          $this->addGradesService->updateExamGrades($request->grades, $currentSchool);
-          return ApiResponseService::success("Grades Updated Successfully");
-        }
-        catch(Exception $e){
+    public function updateExamGrades(UpdateGradeRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->addGradesService->updateExamGrades($request->grades, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Grades Updated Successfully");
+    }
+
+    public function bulkCreateExamGrades(BulkCreateGradeRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->addGradesService->bulkCreateExamGrades($request->validated(), $currentSchool, $authAdmin);
+        return ApiResponseService::success("Grades Created Successfully", null, null, 200);
+    }
+
+    public function bulkDeleteGradesByGradeConfig(BulkDeleteGradeConfigRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->addGradesService->bulkDeleteGradesConfig($currentSchool, $request->validated(), $authAdmin);
+        return ApiResponseService::success("Grades Deleted Successfully", null, null, 200);
+    }
+
+    public function bulkConfigureByOtherGradeConfig(BulkConfigureByOtherGradesRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->addGradesService->bulkConfigureByOtherGrades($request->validated(), $currentSchool, $authAdmin);
+        return ApiResponseService::success("Grades Configured Successfully", null, null, 200);
+    }
+    public function deleteGradeConfig(Request $request, $configId)
+    {
+
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $this->addGradesService->deleteGradesConfig($currentSchool, $configId, $authAdmin);
+        return ApiResponseService::success("School Grades Configuration Deleted Successfully", null, null, 200);
+    }
+
+    public function getGradeConfigDetails(Request $request, $configId)
+    {
+        try {
+            $currentSchool = $request->attributes->get('currentSchool');
+            $configDetails = $this->addGradesService->getGradeConfigDetails($currentSchool, $configId);
+            return ApiResponseService::success("Grade Configuration Details Fetched Successfully", $configDetails, null, 200);
+        } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
-    public function bulkCreateExamGrades(BulkCreateGradeRequest $request){
-        try{
-           $currentSchool = $request->attributes->get('currentSchool');
-           $this->addGradesService->bulkCreateExamGrades($request->validated(), $currentSchool);
-           return ApiResponseService::success("Grades Created Successfully", null, null, 200);
-        }
-        catch(Throwable $e){
-             return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-
-    public function bulkDeleteGradesByGradeConfig(BulkDeleteGradeConfigRequest $request){
-         try{
-            Log::info("school grades config");
-           $currentSchool = $request->attributes->get('currentSchool');
-           $this->addGradesService->bulkDeleteGradesConfig($currentSchool, $request->validated());
-           return ApiResponseService::success("Grades Deleted Successfully", null, null, 200);
-        }
-        catch(Throwable $e){
-             return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-
-    public function bulkConfigureByOtherGradeConfig(BulkConfigureByOtherGradesRequest $request){
-        try{
-           $currentSchool = $request->attributes->get('currentSchool');
-           $this->addGradesService->bulkConfigureByOtherGrades($request->validated(), $currentSchool);
-           return ApiResponseService::success("Grades Configured Successfully", null, null, 200);
-        }
-        catch(Throwable $e){
-           return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-    public function deleteGradeConfig(Request $request, $configId){
-        try{
-             $currentSchool = $request->attributes->get('currentSchool');
-             $this->addGradesService->deleteGradesConfig($currentSchool, $configId);
-             return ApiResponseService::success("School Grades Configuration Deleted Successfully", null, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-
-    public function getGradeConfigDetails(Request $request, $configId){
-        try{
-          $currentSchool = $request->attributes->get('currentSchool');
-          $configDetails = $this->addGradesService->getGradeConfigDetails($currentSchool, $configId);
-          return ApiResponseService::success("Grade Configuration Details Fetched Successfully", $configDetails, null, 200);
-        }
-        catch(Exception $e){
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-    public function autoGenExamGrading(AutoGenExamGradingRequest $request){
+    public function autoGenExamGrading(AutoGenExamGradingRequest $request)
+    {
         $examGrading = $this->autoGenExamGradingService->autoGenerateExamGrading($request->validated());
         return ApiResponseService::success("Grading Generated Successfully", $examGrading, null, 200);
     }
     public function createExamGrades(CreateGradeRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        try {
-            $createGrades = $this->addGradesService->makeGradeForExam($request->grades, $currentSchool);
-            return ApiResponseService::success("Exam Grades Created Succefully", $createGrades, null, 201);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
-        }
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
+        $createGrades = $this->addGradesService->makeGradeForExam($request->grades, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Exam Grades Created Succefully", $createGrades, null, 201);
     }
 
-    public function createGradesByOtherGrades(Request $request){
-        $currentSchool = $request->attributes->get('currentSchool');
+    public function createGradesByOtherGrades(Request $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get("currentSchool");
         $configId = $request->route('configId');
         $targetConfigId = $request->route('targetConfigId');
-        try {
-            $createGrades = $this->addGradesService->configureByOtherGrades($configId, $currentSchool, $targetConfigId);
-            return ApiResponseService::success("Exam Grades Added Successfully", $createGrades, null, 201);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
-        }
+        $createGrades = $this->addGradesService->configureByOtherGrades($configId, $currentSchool, $targetConfigId, $authAdmin);
+        return ApiResponseService::success("Exam Grades Added Successfully", $createGrades, null, 201);
     }
 
-
-
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

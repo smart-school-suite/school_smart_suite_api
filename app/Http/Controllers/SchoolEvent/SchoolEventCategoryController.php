@@ -22,21 +22,24 @@ class SchoolEventCategoryController extends Controller
     public function createSchoolEventCategory(CreateEventCategoryRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $createSchoolEvent = $this->eventCategoryService->createEventCategory($currentSchool, $request->validated());
+        $authAdmin = $this->resolveUser();
+        $createSchoolEvent = $this->eventCategoryService->createEventCategory($currentSchool, $request->validated(), $authAdmin);
         return ApiResponseService::success("School Event Category Deleted Successfully", $createSchoolEvent, null, 201);
     }
 
     public function updateSchoolEventCagory(UpdateEventCategoryRequest $request, $eventCategoryId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->eventCategoryService->updateEventCategory($currentSchool, $request->validated(), $eventCategoryId);
+        $this->eventCategoryService->updateEventCategory($currentSchool, $request->validated(), $eventCategoryId, $authAdmin);
         return ApiResponseService::success("School Event Category Updated Successfully", null, null, 200);
     }
 
     public function deleteSchoolEventCategory(Request $request, $eventCategoryId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->eventCategoryService->deleteEventCategory($currentSchool, $eventCategoryId);
+        $this->eventCategoryService->deleteEventCategory($currentSchool, $eventCategoryId, $authAdmin);
         return ApiResponseService::success("School Event Category Deleted Successfully", null, null, 200);
     }
 
@@ -49,15 +52,17 @@ class SchoolEventCategoryController extends Controller
 
     public function activateSchoolEventCategory(Request $request, $eventCategoryId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->eventCategoryService->activateEventCategory($currentSchool, $eventCategoryId);
+        $this->eventCategoryService->activateEventCategory($currentSchool, $eventCategoryId, $authAdmin);
         return ApiResponseService::success("School Event Category Activated Successfully", null, null, 200);
     }
 
     public function deactivateSchoolEventCategory(Request $request, $eventCategoryId)
     {
+        $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->eventCategoryService->deactivateEventCategory($currentSchool, $eventCategoryId);
+        $this->eventCategoryService->deactivateEventCategory($currentSchool, $eventCategoryId, $authAdmin);
         return ApiResponseService::success("School Event Category Deactivated Successfully", null, null, 200);
     }
 
@@ -68,9 +73,20 @@ class SchoolEventCategoryController extends Controller
         return ApiResponseService::success("Active School Event Category Fetched Successfully", $activeSchoolEventCategory, null,  200);
     }
 
-    public function getSchoolEventCategoryDetails(Request $request, $eventCategoryId){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $eventCategoryDetails = $this->eventCategoryService->getEventCategoryDetails($currentSchool, $eventCategoryId);
-         return ApiResponseService::success("Event Category Details Fetched Successfully", $eventCategoryDetails, null, 200);
+    public function getSchoolEventCategoryDetails(Request $request, $eventCategoryId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $eventCategoryDetails = $this->eventCategoryService->getEventCategoryDetails($currentSchool, $eventCategoryId);
+        return ApiResponseService::success("Event Category Details Fetched Successfully", $eventCategoryDetails, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

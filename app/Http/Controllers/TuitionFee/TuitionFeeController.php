@@ -31,7 +31,8 @@ class TuitionFeeController extends Controller
     public function deleteFeePaid(Request $request, $feeId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteFeePayment = $this->tuitionFeeService->deleteFeePayment($feeId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $deleteFeePayment = $this->tuitionFeeService->deleteFeePayment($feeId, $currentSchool, $authAdmin);
         return ApiResponseService::success('Record Deleted Sucessfully', $deleteFeePayment, null, 200);
     }
 
@@ -47,5 +48,16 @@ class TuitionFeeController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $tuitionFees = $this->tuitionFeeService->getTuitionFees($currentSchool);
         return ApiResponseService::success("Tuition Fees Fetched Successfully", TuitionFeeResource::collection($tuitionFees), null, 200);
+    }
+
+        protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

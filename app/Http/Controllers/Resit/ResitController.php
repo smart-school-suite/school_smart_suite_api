@@ -14,25 +14,24 @@ use App\Services\ApiResponseService;
 class ResitController extends Controller
 {
     protected ResitService $studentResitService;
-
-
     public function __construct(
         ResitService $studentResitService,
     ) {
         $this->studentResitService = $studentResitService;
     }
-
     public function updateResit(Request $request, $resitId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateStudentResit = $this->studentResitService->updateStudentResit($request->all(), $currentSchool, $resitId);
+        $authAdmin = $this->resolveUser();
+        $updateStudentResit = $this->studentResitService->updateStudentResit($request->all(), $currentSchool, $resitId, $authAdmin);
         return ApiResponseService::success("Resit Entry Updated Successfully", $updateStudentResit, null, 200);
     }
     public function deleteResit(Request $request, $resitId)
     {
         $resitId = $request->route('resitId');
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteStudentResit = $this->studentResitService->deleteStudentResit($resitId, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $deleteStudentResit = $this->studentResitService->deleteStudentResit($resitId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Resit Record Not Found", $deleteStudentResit, null, 200);
     }
     public function getResitByStudent(Request $request)
@@ -55,7 +54,6 @@ class ResitController extends Controller
         $getStudentResitDetails = $this->studentResitService->getStudentResitDetails($currentSchool, $resitId);
         return ApiResponseService::success("Student Resit Details Fetched Successfully", $getStudentResitDetails, null, 200);
     }
-
     public function getPreparedResitEvaluationData(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
@@ -64,7 +62,6 @@ class ResitController extends Controller
         $prepareResitData = $this->studentResitService->getResitEvaluationHelperData($currentSchool, $resitExamId, $candidateId);
         return ApiResponseService::success("Resit Evaluation Helper Data Fetched Successfully", $prepareResitData, null, 200);
     }
-
     public function getResitScoresByCandidate(Request $request)
     {
         try {
@@ -79,21 +76,21 @@ class ResitController extends Controller
     public function bulkDeleteStudentResit(StudentResitIdRequest $request)
     {
         try {
-            $bulkDeleteStudentResit = $this->studentResitService->bulkDeleteStudentResit($request->resitIds);
+            $currentSchool = $request->attributes->get('currentSchool');
+            $authAdmin = $this->resolveUser();
+            $bulkDeleteStudentResit = $this->studentResitService->bulkDeleteStudentResit($request->resitIds, $currentSchool, $authAdmin);
             return ApiResponseService::success("Student Resit Deleted Succesfully", $bulkDeleteStudentResit, null, 200);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-
     public function bulkUpdateStudentResit(BulkUpdateStudentResitRequest $request)
     {
-        try {
-            $bulkUpdateStudentResit = $this->studentResitService->bulkUpdateStudentResit($request->validated);
-            return ApiResponseService::success("Student Resit Updated Successfully", $bulkUpdateStudentResit, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $bulkUpdateStudentResit = $this->studentResitService->bulkUpdateStudentResit($request->validated, $currentSchool, $authAdmin);
+        return ApiResponseService::success("Student Resit Updated Successfully", $bulkUpdateStudentResit, null, 200);
     }
     public function getAllEligableStudentByExam(Request $request, $resitExamId)
     {
@@ -107,14 +104,12 @@ class ResitController extends Controller
         $getResitExams = $this->studentResitService->getEligableResitExamByStudent($currentSchool, $studentId);
         return ApiResponseService::success("Resit Exams Fetched Successfully", $getResitExams, null, 200);
     }
-
     public function getResitStudentId(Request $request, $studentId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $studentResits = $this->studentResitService->getResitStudentId($currentSchool, $studentId);
         return ApiResponseService::success("Student Resits Fetched Successfully", $studentResits, null, 200);
     }
-
     public function getResitStudentIdSemesterId(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
@@ -123,11 +118,20 @@ class ResitController extends Controller
         $studentResits = $this->studentResitService->getResitStudentIdSemesterId($currentSchool, $studentId, $semesterId);
         return ApiResponseService::success("Student Resits Fetched Successfully", $studentResits, null, 200);
     }
-
     public function getResitStudentIdCarryOver(Request $request, $studentId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $studentResits = $this->studentResitService->getResitStudentIdCarryOver($currentSchool, $studentId);
         return ApiResponseService::success("Student Carry Overs Fetched Succesfully", $studentResits, null, 200);
+    }
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

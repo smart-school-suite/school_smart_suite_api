@@ -20,14 +20,27 @@ class RegistrationFeePaymentController extends Controller
     public function payRegistrationFee(PayRegistrationFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $payRegistrationFees = $this->registrationFeePayment->payRegistrationFees($request->validated(), $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $payRegistrationFees = $this->registrationFeePayment->payRegistrationFees($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Registration Fees Paid Successfully", $payRegistrationFees, null, 200);
     }
 
     public function bulkPayRegistrationFee(BulkPayRegistrationFeeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $bulkPayRegistrationFee = $this->registrationFeePayment->bulkPayRegistrationFee($request->registration_fee, $currentSchool);
+        $authAdmin = $this->resolveUser();
+        $bulkPayRegistrationFee = $this->registrationFeePayment->bulkPayRegistrationFee($request->registration_fee, $currentSchool, $authAdmin);
         return ApiResponseService::success("Fee Paid Succesfully", $bulkPayRegistrationFee, null, 200);
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }
