@@ -14,6 +14,8 @@ use App\Models\SchoolAdminAnnouncement;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
+
 class AnnouncementService
 {
     public function getAnnouncementEngagementOverview($currentSchool, $announcementId)
@@ -87,6 +89,18 @@ class AnnouncementService
             }
 
             $announcement->update($dataToUpdate);
+            //
+            $specialtyIds = collect(json_decode($announcement->audience)->students)->pluck('student_audience_id')->toArray();
+            if (!empty($specialtyIds)) {
+
+                StudentActionEvent::dispatch([
+                    'schoolBranch' => $currentSchool->id,
+                    'specialtyIds'   => $specialtyIds,
+                    'feature'      => 'announcementUpdate',
+                    'message'      => 'Announcement Content Updated',
+                    'data'         =>  $announcement,
+                ]);
+            }
             AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.announcement.update"],
@@ -121,6 +135,17 @@ class AnnouncementService
                     "message" => "Announcement Deleted",
                 ]
             );
+            $specialtyIds = collect(json_decode($annoucement->audience)->students)->pluck('student_audience_id')->toArray();
+            if (!empty($specialtyIds)) {
+
+                StudentActionEvent::dispatch([
+                    'schoolBranch' => $currentSchool->id,
+                    'specialtyIds'   => $specialtyIds,
+                    'feature'      => 'announcementDelete',
+                    'message'      => 'Announcement Deleted',
+                    'data'         =>  $annoucement,
+                ]);
+            }
             return $annoucement;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

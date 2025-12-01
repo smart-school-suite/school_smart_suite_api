@@ -12,13 +12,10 @@ use App\Exceptions\AppException;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Jobs\NotificationJobs\SendAdditionalFeeNotification;
-use App\Jobs\NotificationJobs\SendAdditionalFeePaidNotificationJob;
-use App\Jobs\NotificationJobs\SendAdminAdditionalFeeNotificationJob;
-use App\Models\AdditionalFeeTransactions;
 use App\Jobs\NotificationJobs\SendAdminAdditionalFeeReminderNotificationJob;
 use Carbon\Carbon;
-use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class AdditionalFeeService
 {
@@ -49,6 +46,13 @@ class AdditionalFeeService
                 "message" => "Additional Fee Created",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$studentAdditionFees->student_id],
+            'feature'      => 'studentAdditionalFeeCreated',
+            'message'      => 'Student Additional Fee Created',
+            'data'         =>  $studentAdditionFees,
+        ]);
         $student->notify(new AdditionalFee($additionalFees['amount'], $additionalFees['reason']));
         return $studentAdditionFees;
     }
@@ -68,17 +72,24 @@ class AdditionalFeeService
 
         try {
             $additionalFee->delete();
-                   AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFee.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeManagement",
-                "authAdmin" => $authAdmin,
-                "data" =>  $additionalFee,
-                "message" => "Additional Fee Deleted",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" =>  $additionalFee,
+                    "message" => "Additional Fee Deleted",
+                ]
+            );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$additionalFee->student_id],
+                'feature'      => 'studentAdditionalFeeDelete',
+                'message'      => 'Student Additional Fee Deleted',
+                'data'         =>  $additionalFee,
+            ]);
             return $additionalFee;
         } catch (Exception $e) {
             throw new AppException(
@@ -118,17 +129,24 @@ class AdditionalFeeService
 
         try {
             $additionalFee->update($removedEmptyInputs);
-                               AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFee.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeManagement",
-                "authAdmin" => $authAdmin,
-                "data" =>  $additionalFee,
-                "message" => "Additional Fee Updated",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" =>  $additionalFee,
+                    "message" => "Additional Fee Updated",
+                ]
+            );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$additionalFee->student_id],
+                'feature'      => 'studentAdditionalFeeUpdate',
+                'message'      => 'Student Additional Fee Updated',
+                'data'         =>  $additionalFee,
+            ]);
             return $additionalFee;
         } catch (Exception $e) {
             throw new AppException(
@@ -229,7 +247,7 @@ class AdditionalFeeService
                 null
             );
         }
-
+        $studentIds = [];
         $successfulUpdates = [];
         $failedUpdates = [];
         $updateAttempts = collect($additionalFees);
@@ -282,6 +300,7 @@ class AdditionalFeeService
                 if ($updateData->isNotEmpty()) {
                     $fee->update($updateData->toArray());
                     $successfulUpdates[] = $feeId;
+                    $studentIds[] = $fee->student_id;
                 } elseif (in_array($feeId, array_column($failedUpdates, 'id'))) {
                 } else {
                     $failedUpdates[] = [
@@ -313,17 +332,24 @@ class AdditionalFeeService
             }
 
             DB::commit();
-                                            AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFee.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeManagement",
-                "authAdmin" => $authAdmin,
-                "data" =>  $successfulUpdates,
-                "message" => "Additional Fee Updated",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" =>  $successfulUpdates,
+                    "message" => "Additional Fee Updated",
+                ]
+            );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentAdditionalFeeUpdate',
+                'message'      => 'Student Additional Fee Updated',
+                'data'         =>   $successfulUpdates,
+            ]);
             // Return the IDs of records that were successfully updated
             return $successfulUpdates;
         } catch (AppException $e) {
@@ -431,17 +457,24 @@ class AdditionalFeeService
                     $additionalFeeIds,
                     $currentSchool->id
                 )->delay(Carbon::now()->addDays(7));
-                        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFee.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $additionalFeeIds,
-                "message" => "Additional Fee Created",
-            ]
-        );
+                AdminActionEvent::dispatch(
+                    [
+                        "permissions" =>  ["schoolAdmin.additionalFee.create"],
+                        "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                        "schoolBranch" =>  $currentSchool->id,
+                        "feature" => "additionalFeeManagement",
+                        "authAdmin" => $authAdmin,
+                        "data" => $additionalFeeIds,
+                        "message" => "Additional Fee Created",
+                    ]
+                );
+                StudentActionEvent::dispatch([
+                    'schoolBranch' => $currentSchool->id,
+                    'studentIds'   => $studentIds->toArray(),
+                    'feature'      => 'studentAdditionalFeeCreated',
+                    'message'      => 'Student Additional Fee Created',
+                    'data'         =>  $studentNotificationData,
+                ]);
             }
 
             return $studentsToInsert;
@@ -453,6 +486,7 @@ class AdditionalFeeService
     public function bulkDeleteStudentAdditionalFees($additionalFeeIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($additionalFeeIds as $additionalFeeId) {
@@ -461,19 +495,27 @@ class AdditionalFeeService
                 $result[] = [
                     $studentAdditionalFee
                 ];
+                $studentIds[] = $studentAdditionalFee->student_id;
             }
             DB::commit();
-                               AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFee.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeManagement",
-                "authAdmin" => $authAdmin,
-                "data" =>  $additionalFeeIds,
-                "message" => "Additional Fee Deleted",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.additionalFee.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "additionalFeeManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" =>  $additionalFeeIds,
+                    "message" => "Additional Fee Deleted",
+                ]
+            );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentAdditionalFeeDelete',
+                'message'      => 'Student Additional Fee Deleted',
+                'data'         =>  $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

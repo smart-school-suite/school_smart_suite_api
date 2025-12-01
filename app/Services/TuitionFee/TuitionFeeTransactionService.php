@@ -11,18 +11,22 @@ use Exception;
 use Throwable;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class TuitionFeeTransactionService
 {
     public function bulkDeleteTuitionFeeTransaction($transactionIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($transactionIds as $transactionId) {
-                $transactions = TuitionFeeTransactions::findOrFail($transactionId['transaction_id']);
+                $transactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
+                    ->with(['tuition'])->findOrFail($transactionId['transaction_id']);
                 $transactions->delete();
                 $result[] = $transactions;
+                $studentIds[] = $transactions->tuition->student_id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -36,6 +40,13 @@ class TuitionFeeTransactionService
                     "message" => "Tuition Fee Transaction Deleted Event",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'tuitionFeeTransactionDeleted',
+                'message'      => 'Tuition Fees Transaction Deleted',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -45,6 +56,7 @@ class TuitionFeeTransactionService
     public function bulkReverseTuitionFeeTransaction($transactionIds, $currentSchool, $authAdmin)
     {
         $results = [];
+        $studentIds = [];
         try {
             foreach ($transactionIds as $transactionId) {
                 $transaction = TuitionFeeTransactions::where('school_branch_id', $currentSchool->id)
@@ -76,6 +88,9 @@ class TuitionFeeTransactionService
                 $results[] = [
                     $transaction
                 ];
+                $studentIds[] = [
+                    $transaction->tuition->student_id
+                ];
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -89,6 +104,13 @@ class TuitionFeeTransactionService
                     "message" => "Tuition Fee Transaction Reversed",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'tuitionFeeTransactionReversed',
+                'message'      => 'Tuition Fee Transaction Reversed',
+                'data'         => $results,
+            ]);
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
@@ -128,7 +150,8 @@ class TuitionFeeTransactionService
     public function deleteTuitionFeeTransaction($transactionId, $currentSchool, $authAdmin)
     {
         try {
-            $transaction = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)->find($transactionId);
+            $transaction = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
+                ->with(['tuition'])->find($transactionId);
 
             if (!$transaction) {
                 throw new AppException(
@@ -152,6 +175,13 @@ class TuitionFeeTransactionService
                     "message" => "Tuition Fee Transaction Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$transaction->tuition->student_id],
+                'feature'      => 'tuitionFeeTransactionDeleted',
+                'message'      => 'Tuition Fee Transaction Deleted',
+                'data'         => $transaction,
+            ]);
             return $transaction;
         } catch (AppException $e) {
             throw $e;
@@ -277,6 +307,13 @@ class TuitionFeeTransactionService
                     "message" => "Tuition Fee Transaction Reversed",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$transaction->tuition->student_id],
+                'feature'      => 'tuitionFeeTransactionReversed',
+                'message'      => 'Tuition Fee Transaction Reversed',
+                'data'         => $transaction,
+            ]);
             return $transaction;
         } catch (QueryException $e) {
             DB::rollBack();

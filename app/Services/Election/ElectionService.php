@@ -20,6 +20,7 @@ use Throwable;
 use App\Exceptions\AppException;
 use Exception;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class ElectionService
 {
@@ -449,6 +450,7 @@ class ElectionService
     public function addAllowedElectionParticipants(array $electionParticipantsList, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($electionParticipantsList as $electionParticipant) {
@@ -459,6 +461,7 @@ class ElectionService
                     'school_branch_id' => $currentSchool->id
                 ]);
                 $result[] = $allowedParticipants;
+                $specialtyIds[] = $electionParticipant['specialty_id'];
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -472,6 +475,13 @@ class ElectionService
                     "message" => "Election Participants Added",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => $specialtyIds,
+                'feature'      => 'electionCreate',
+                'message'      => 'Election Created',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

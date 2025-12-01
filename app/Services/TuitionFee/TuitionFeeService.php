@@ -9,7 +9,7 @@ use Exception;
 use Throwable;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
-
+use App\Events\Actions\StudentActionEvent;
 class TuitionFeeService
 {
     public function getFeesPaid($currentSchool)
@@ -70,6 +70,13 @@ class TuitionFeeService
                     "message" => "Tuition Fee Payment Deleted",
                 ]
             );
+                        StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$findFeePayment->student_id],
+                'feature'      => 'tuitionFeeDelete',
+                'message'      => 'Tuition Fees Deleted',
+                'data'         => $findFeePayment,
+            ]);
             return $findFeePayment;
         } catch (AppException $e) {
             throw $e;

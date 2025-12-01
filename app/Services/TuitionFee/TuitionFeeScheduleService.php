@@ -12,7 +12,7 @@ use App\Models\Installment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 use App\Events\Actions\AdminActionEvent;
-
+use App\Events\Actions\StudentActionEvent;
 class TuitionFeeScheduleService
 {
     public function autoCreateFeePaymentSchedule($currentSchool, $data)
@@ -168,6 +168,13 @@ class TuitionFeeScheduleService
                 "message" => "Tuition Fee Schedule Deleted",
             ]
         );
+                StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'specialtyIds'   => [$feeSchedule->specialty_id],
+            'feature'      => 'tuitionFeeScheduleDelete',
+            'message'      => 'Tuition Fee Schedule Deleted',
+            'data'         => $feeSchedule,
+        ]);
         return $feeSchedule;
     }
     public function getFeeScheduleStudentId($currentSchool, string $studentId): Collection

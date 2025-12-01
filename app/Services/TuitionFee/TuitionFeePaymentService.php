@@ -17,7 +17,8 @@ use App\Models\AdditionalFeeTransactions;
 use App\Exceptions\AppException;
 use Throwable;
 use App\Events\Actions\AdminActionEvent;
-
+use App\Events\Actions\StudentActionEvent;
+use App\Models\StudentFeeSchedule;
 class TuitionFeePaymentService
 {
     public function payStudentFees(array $data, object $currentSchool, $authAdmin): TuitionFees
@@ -25,7 +26,7 @@ class TuitionFeePaymentService
         DB::beginTransaction();
 
         try {
-            $studentTuitionFees = TuitionFees::findOrFail($data['tuition_id']);
+            $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)->findOrFail($data['tuition_id']);
             $tuitionId = $studentTuitionFees->id;
 
             $student = Student::where('school_branch_id', $currentSchool->id)
@@ -87,7 +88,7 @@ class TuitionFeePaymentService
             $paymentId = Str::uuid();
             $transactionId = 'TXN-' . strtoupper(Str::random(10));
 
-            TuitionFeeTransactions::create([
+            $tuitionFeeTransaction =  TuitionFeeTransactions::create([
                 'id' => $paymentId,
                 'transaction_id' => $transactionId,
                 'amount' => $paymentAmount,
@@ -95,6 +96,10 @@ class TuitionFeePaymentService
                 'tuition_id' => $tuitionId,
                 'school_branch_id' => $currentSchool->id,
             ]);
+
+            if ($student->payment_format === "installmental") {
+                $this->handleInstallmentalFeePaymentProgress($currentSchool, $studentTuitionFees, $data);
+            }
 
             DB::commit();
 
@@ -118,6 +123,16 @@ class TuitionFeePaymentService
                     "message" => "Tuition Fee Paid",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$studentTuitionFees->student_id],
+                'feature'      => 'tuitionFeePaid',
+                'message'      => 'Tuition Fees Paid',
+                'data'         => [
+                    'tuition_fees' => $studentTuitionFees,
+                    'tution_fee_transaction' => $tuitionFeeTransaction
+                ],
+            ]);
             return $studentTuitionFees;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -218,5 +233,66 @@ class TuitionFeePaymentService
             ->values();
 
         return $allTransactions;
+    }
+
+        protected function handleInstallmentalFeePaymentProgress($currentSchool, $studentTuitionFees, $data)
+    {
+        $remainingAmountToDistribute = $data['amount'];
+        $paymentTime = now();
+
+        $studentFeeSchedules = StudentFeeSchedule::select('student_fee_schedules.*')
+            ->join('fee_schedule_slots', 'student_fee_schedules.fee_schedule_slot_id', '=', 'fee_schedule_slots.id')
+            ->where("student_fee_schedules.school_branch_id", $currentSchool->id)
+            ->where("student_fee_schedules.tuition_fee_id", $studentTuitionFees->id)
+            ->with('feeScheduleSlot')
+            ->orderBy('fee_schedule_slots.due_date', 'asc')
+            ->get();
+
+        DB::transaction(function () use ($studentFeeSchedules, &$remainingAmountToDistribute, $paymentTime) {
+            foreach ($studentFeeSchedules as $scheduleSlot) {
+
+                if ($scheduleSlot->status === 'completed') {
+                    continue;
+                }
+
+                $amountNeeded = $scheduleSlot->expected_amount - $scheduleSlot->amount_paid;
+                $amountToApply = min($remainingAmountToDistribute, $amountNeeded);
+
+                if ($amountToApply > 0) {
+                    $isCompletingPayment = ($scheduleSlot->amount_paid + $amountToApply) >= $scheduleSlot->expected_amount;
+
+                    $scheduleSlot->amount_paid += $amountToApply;
+                    $scheduleSlot->amount_left = $scheduleSlot->expected_amount - $scheduleSlot->amount_paid;
+                    $scheduleSlot->percentage_paid = ($scheduleSlot->amount_paid / $scheduleSlot->expected_amount) * 100;
+
+                    if ($scheduleSlot->amount_left <= 0.001) {
+                        $scheduleSlot->status = 'completed';
+                        $scheduleSlot->amount_left = 0;
+                        $scheduleSlot->percentage_paid = 100;
+                    } else {
+                        $scheduleSlot->status = 'inprogress';
+                    }
+
+                    if ($isCompletingPayment && $scheduleSlot->gramification === 'pending') {
+
+                        $dueDate = optional($scheduleSlot->feeScheduleSlot)->due_date;
+
+                        if ($dueDate && $paymentTime->lessThanOrEqualTo($dueDate)) {
+                            $scheduleSlot->gramification = 'paypunctual';
+                        } else {
+                            $scheduleSlot->gramification = 'late';
+                        }
+                    }
+
+                    $scheduleSlot->save();
+
+                    $remainingAmountToDistribute -= $amountToApply;
+
+                    if ($remainingAmountToDistribute <= 0) {
+                        break;
+                    }
+                }
+            }
+        });
     }
 }

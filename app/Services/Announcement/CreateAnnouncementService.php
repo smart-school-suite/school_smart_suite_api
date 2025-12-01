@@ -20,6 +20,7 @@ use Throwable;
 use App\Exceptions\AppException;
 use App\Jobs\DataCleanupJobs\UpdateAnnouncementStatusJob;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class CreateAnnouncementService
 {
@@ -214,6 +215,16 @@ class CreateAnnouncementService
                             "message" => "Announcement Published",
                         ]
                     );
+                    if (!empty($data['student_audience'])) {
+
+                        StudentActionEvent::dispatch([
+                            'schoolBranch' => $currentSchool->id,
+                            'specialtyIds'   => $data['student_audience'],
+                            'feature'      => 'announcementCreate',
+                            'message'      => 'Announcement Created',
+                            'data'         =>  $announcement,
+                        ]);
+                    }
                 } elseif ($status === 'scheduled') {
                     AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
                     CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId)
@@ -235,6 +246,16 @@ class CreateAnnouncementService
                             "message" => "Announcement Scheduled",
                         ]
                     );
+                    if (!empty($data['student_audience'])) {
+
+                        StudentActionEvent::dispatch([
+                            'schoolBranch' => $currentSchool->id,
+                            'specialtyIds'   => $data['student_audience'],
+                            'feature'      => 'announcementCreate',
+                            'message'      => 'Announcement Created',
+                            'data'         =>  $announcement,
+                        ]);
+                    }
                 }
 
                 return $announcement;

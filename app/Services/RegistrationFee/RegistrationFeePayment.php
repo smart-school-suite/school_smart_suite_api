@@ -12,6 +12,7 @@ use App\Models\RegistrationFee;
 use Exception;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class RegistrationFeePayment
 {
@@ -74,6 +75,13 @@ class RegistrationFeePayment
                     "message" => "Registration Fee Paid",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$registrationFee->student_id],
+                'feature'      => 'registrationFeePaid',
+                'message'      => 'Registration Fees Paid',
+                'data'         => $registrationFeeData,
+            ]);
             return $transaction;
         } catch (Exception $e) {
             DB::rollBack();
@@ -85,6 +93,7 @@ class RegistrationFeePayment
         try {
             DB::beginTransaction();
             $registrationFeeData = [];
+            $studentIds = [];
             foreach ($feeDataArray as $feeData) {
                 $registrationFee = RegistrationFee::where("school_branch_id", $currentSchool->id)
                     ->with(['student'])
@@ -116,6 +125,7 @@ class RegistrationFeePayment
                     'student' => $registrationFee->student,
                     'amount' => $feeData['amount'],
                 ];
+                $studentIds[] =  $registrationFee->student_id;
             }
             DB::commit();
             SendAdminRegistrationFeePaidNotificationJob::dispatch(
@@ -137,6 +147,13 @@ class RegistrationFeePayment
                     "message" => "Registration Fee Paid",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'registrationFeePaid',
+                'message'      => 'Registration Fees Paid',
+                'data'         => $registrationFeeData,
+            ]);
             return true;
         } catch (Exception $e) {
             DB::rollBack();

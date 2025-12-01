@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\Actions\AdminActionEvent;
+
 class AddCaScoresService
 {
     public function addCaScore(array $studentScores, $currentSchool, $authAdmin): array
@@ -32,7 +33,7 @@ class AddCaScoresService
             foreach ($studentScores as $scoreData) {
 
                 $accessedStudent = AccessedStudent::findOrFail($scoreData['accessment_id']);
-                if($accessedStudent->grades_submitted === true) {
+                if ($accessedStudent->grades_submitted === true) {
                     throw new AppException(
                         "The CA Exam Candidate Already Accessed.",
                         400,
@@ -78,7 +79,7 @@ class AddCaScoresService
                 CaStatsJob::dispatch($examDetails);
                 $this->sendExamResultsNotification($examDetails);
             }
-                                    AdminActionEvent::dispatch(
+            AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.examEvaluation.addScore"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
@@ -301,7 +302,7 @@ class AddCaScoresService
 
     private function determineExamResultsStatus(Collection $marks): array
     {
-        $failedCourses = $marks->filter(fn ($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
+        $failedCourses = $marks->filter(fn($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
 
         if ($failedCourses->isEmpty()) {
             return [

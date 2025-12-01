@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class TuitionFeeScheduleSlotService
 {
@@ -93,6 +94,13 @@ class TuitionFeeScheduleSlotService
                     "message" => "Tuition Fee Schedule Slots Created",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => [$feeSchedule->specialty_id],
+                'feature'      => 'tuitionFeeScheduleCreate',
+                'message'      => 'Tuition Fee Schedule Created',
+                'data'         => $feeSchedule,
+            ]);
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -180,6 +188,13 @@ class TuitionFeeScheduleSlotService
                     "message" => "Tuition Fee Schedule Slots Updated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => [$feeSchedule->specialty_id],
+                'feature'      => 'tuitionFeeScheduleUpdate',
+                'message'      => 'Tuition Fee Schedule Updated',
+                'data'         => $feeSchedule,
+            ]);
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -214,6 +229,13 @@ class TuitionFeeScheduleSlotService
                 "message" => "Tuition Fee Schedule Slots Deleted",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'specialtyIds'   => [$feeSchedule->specialty_id],
+            'feature'      => 'tuitionFeeScheduleDelete',
+            'message'      => 'Tuition Fee Schedule Deleted',
+            'data'         => $feeSchedule,
+        ]);
     }
     public function getFeeScheduleSlots($feeScheduleId, $currentSchool)
     {

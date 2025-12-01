@@ -12,6 +12,7 @@ use App\Models\StudentResults;
 use App\Models\Courses;
 use App\Models\Examtype;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 class UpdateExamScoreService
 {
     public function updateExamScore(array $updateData, $currentSchool, $authAdmin): array
@@ -25,13 +26,13 @@ class UpdateExamScoreService
             foreach ($updateData as $data) {
                 $score = Marks::where("school_branch_id", $currentSchool->id)->findOrFail($data['mark_id']);
                 if (!$exam) {
-                    $exam = Exams::findOrFail($score->exam_id);
+                    $exam = Exams::where("school_branch_id", $currentSchool->id)->findOrFail($score->exam_id);
                 }
                 if (!$student) {
-                    $student = Student::findOrFail($score->student_id);
+                    $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($score->student_id);
                 }
 
-                $course = Courses::findOrFail($score->courses_id);
+                $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($score->courses_id);
 
                 $totalScore = $this->calculateTotalScoreForExam(
                     $currentSchool->id,
@@ -64,7 +65,7 @@ class UpdateExamScoreService
             );
 
             DB::commit();
-                                    AdminActionEvent::dispatch(
+            AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.examEvaluation.updateScore"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
@@ -75,6 +76,13 @@ class UpdateExamScoreService
                     "message" => "Exam Results Updated",
                 ]
             );
+                        StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$student->id],
+                'feature'      => 'examResultUpdate',
+                'message'      => 'Exam Result Updated',
+                'data'         => $results,
+            ]);
             return $results;
         } catch (Exception $e) {
             DB::rollBack();

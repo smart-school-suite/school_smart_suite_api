@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Collection;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class CourseService
 {
@@ -57,6 +58,13 @@ class CourseService
                 "message" => "Course Created",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch'  => $currentSchool->id,
+            'specialtyIds'  => [$specialty->id],
+            'feature'       => 'courseCreate',
+            'message'       => "New Course Created",
+            'data'          => $course,
+        ]);
         CourseStatJob::dispatch($currentSchool->id, $courseId);
         return $course;
     }
@@ -84,17 +92,26 @@ class CourseService
                 "message" => "Course Deleted",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch'  => $currentSchool->id,
+            'specialtyIds'  => [$course->specialty_id],
+            'feature'       => 'courseDelete',
+            'message'       => "Course Deleted",
+            'data'          => $course,
+        ]);
         return $course;
     }
     public function bulkDeleteCourse($coursesIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($coursesIds as $courseId) {
                 $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($courseId['course_id']);
                 $course->delete();
                 $result[] = $course;
+                $specialtyIds[] = $course->specialty_id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -108,6 +125,13 @@ class CourseService
                     "message" => "Course Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch'  => $currentSchool->id,
+                'specialtyIds'  => $specialtyIds,
+                'feature'       => 'courseDelete',
+                'message'       => "Course Deleted",
+                'data'          => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -173,11 +197,19 @@ class CourseService
             ]
         );
 
+        StudentActionEvent::dispatch([
+            'schoolBranch'  => $currentSchool->id,
+            'specialtyIds'  => [$course->specialtyId],
+            'feature'       => 'courseUpdate',
+            'message'       => "Course Updated",
+            'data'          => $course,
+        ]);
         return $course;
     }
     public function bulkUpdateCourse($updateCourseList, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($updateCourseList as $updateCourse) {
@@ -185,6 +217,7 @@ class CourseService
                 $filteredData = array_filter($updateCourse);
                 $course->update($filteredData);
                 $result[] = $course;
+                $specialtyIds[] = $course->specialty_id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -194,10 +227,17 @@ class CourseService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $course,
+                    "data" => $result,
                     "message" => "Course Updated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch'  => $currentSchool->id,
+                'specialtyIds'  => [$specialtyIds],
+                'feature'       => 'courseUpdate',
+                'message'       => "Course Updated",
+                'data'          => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -327,11 +367,19 @@ class CourseService
                 "message" => "Course Deactivated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch'  => $currentSchool->id,
+            'specialtyIds'  => [$course->specialty_id],
+            'feature'       => 'courseDeactivate',
+            'message'       => "Course Deactivated",
+            'data'          => $course,
+        ]);
         return $course;
     }
     public function bulkDeactivateCourse($coursesIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($coursesIds as $courseId) {
@@ -341,6 +389,7 @@ class CourseService
                 $result[] = [
                     $course
                 ];
+                $specialtyIds[] = $course->specialty_id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -350,10 +399,17 @@ class CourseService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $course,
+                    "data" => $result,
                     "message" => "Course Deactivated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch'  => $currentSchool->id,
+                'specialtyIds'  => $specialtyIds,
+                'feature'       => 'courseDeactivate',
+                'message'       => "Course Deactivated",
+                'data'          => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -394,14 +450,22 @@ class CourseService
                 "feature" => "courseManagement",
                 "authAdmin" => $authAdmin,
                 "data" => $course,
-                "message" => "Course Deactivated",
+                "message" => "Course Activated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch'  => $currentSchool->id,
+            'specialtyIds'  => [$course->specialty_id],
+            'feature'       => 'courseActivate',
+            'message'       => "Course Activated",
+            'data'          => $course,
+        ]);
         return $course;
     }
     public function bulkActivateCourse($courseIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($courseIds as $courseId) {
@@ -411,6 +475,7 @@ class CourseService
                 $result[] = [
                     $course
                 ];
+                $specialtyIds = $course->specialty_id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -420,10 +485,17 @@ class CourseService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $course,
+                    "data" => $result,
                     "message" => "Course Deactivated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch'  => $currentSchool->id,
+                'specialtyIds'  => $specialtyIds,
+                'feature'       => 'courseActivate',
+                'message'       => "Course Activated",
+                'data'          => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

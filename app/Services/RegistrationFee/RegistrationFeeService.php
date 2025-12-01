@@ -9,6 +9,8 @@ use Throwable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
+
 class RegistrationFeeService
 {
     public function getRegistrationFees($currentSchool)
@@ -61,8 +63,8 @@ class RegistrationFeeService
             }
 
             RegistrationFee::whereIn('id', $feeIds)->delete();
-
             DB::commit();
+
             AdminActionEvent::dispatch(
                 [
                     "permissions" => ["schoolAdmin.registrationFee.delete"],
@@ -74,6 +76,13 @@ class RegistrationFeeService
                     "message" => "Registration Fee Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $registrationFees->pluck('student_id')->toArray(),
+                'feature'      => 'registrationFeeDeleted',
+                'message'      => 'Registration Fees Deleted',
+                'data'         => $registrationFees,
+            ]);
             return true;
         } catch (Exception $e) {
             DB::rollBack();
@@ -107,6 +116,13 @@ class RegistrationFeeService
                     "message" => "Registration Fee Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$registrationFee->student_id],
+                'feature'      => 'registrationFeeDeleted',
+                'message'      => 'Registration Fees Deleted',
+                'data'         =>  $registrationFee,
+            ]);
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -146,7 +162,7 @@ class RegistrationFeeService
         }
     }
 
-        public function getStudentRegistratonFees($currentSchool, $student)
+    public function getStudentRegistratonFees($currentSchool, $student)
     {
         $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $student->id)

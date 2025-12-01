@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\PermissionCategory;
 use App\Models\Schooladmin;
+use App\Events\Actions\StudentActionEvent;
 class SendExamResultsReleasedNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -36,6 +37,14 @@ class SendExamResultsReleasedNotificationJob implements ShouldQueue
         Notification::send($schoolAdmins, new AdminExamResultsReleased($this->exam));
         Notification::send($this->examCandidates->pluck('student'),
          new ExamResultsAvailable( $this->exam));
+
+                     StudentActionEvent::dispatch([
+                'schoolBranch' => $this->exam->school_branch_id,
+                'specialtyIds'   => [$this->exam->specialty_id],
+                'feature'      => 'examResultReleased',
+                'message'      => 'Exam Result Released',
+                'data'         => $this->exam,
+            ]);
     }
 
       private function getAuthorizedAdmins($schoolBranchId)
@@ -55,4 +64,5 @@ class SendExamResultsReleasedNotificationJob implements ShouldQueue
             ->get()
             ->filter(fn($admin) => $admin->hasAnyPermission($electionPermissionNames));
     }
+
 }

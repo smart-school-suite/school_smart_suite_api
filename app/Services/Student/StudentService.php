@@ -6,11 +6,11 @@ use App\Models\Student;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Exceptions\AppException;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class StudentService
 {
@@ -43,6 +43,13 @@ class StudentService
                 "message" => "Student Deleted",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$studentExists->id],
+            'feature'      => 'studentDelete',
+            'message'      => 'student Account Deleted',
+            'data'         => $studentExists,
+        ]);
         return $studentExists;
     }
     public function updateStudent($studentId, $currentSchool, array $data, $authAdmin)
@@ -65,6 +72,13 @@ class StudentService
                 "message" => "Student Updated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$studentExists->id],
+            'feature'      => 'studentUpdate',
+            'message'      => 'student Account Updated',
+            'data'         => $studentExists,
+        ]);
         return $studentExists;
     }
     public function studentDetails($studentId, $currentSchool)
@@ -95,6 +109,13 @@ class StudentService
                 "message" => "Student Account Deactivated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$student->id],
+            'feature'      => 'studentDeactivate',
+            'message'      => 'student Account Deactivated',
+            'data'         => $student,
+        ]);
         return $student;
     }
     public function activateStudentAccount($studentId, $currentSchool, $authAdmin)
@@ -113,6 +134,13 @@ class StudentService
                 "message" => "Student Account Activated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$student->id],
+            'feature'      => 'studentDeactivate',
+            'message'      => 'student Account Activated',
+            'data'         => $student,
+        ]);
         return $student;
     }
     public function markStudentAsDropout($studentId, $currentSchool, $reason, $authAdmin)
@@ -132,10 +160,18 @@ class StudentService
                 "message" => "Student Marked As Drop Out",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$student->id],
+            'feature'      => 'studentDropout',
+            'message'      => 'student Marked As Drop out',
+            'data'         => $student,
+        ]);
         return $student;
     }
     public function bulkReinstateDropOutStudent($studentDropoutList, $currentSchool, $authAdmin)
     {
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($studentDropoutList as $studentDropout) {
@@ -143,6 +179,7 @@ class StudentService
                     ->findOrFail($studentDropout['student_id']);
                 $student->dropout_status = false;
                 $student->save();
+                $studentIds[] = $student->id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -156,6 +193,13 @@ class StudentService
                     "message" => "Drop Out Student Reinstated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentDropout',
+                'message'      => 'Drop Out Student Reinstated',
+                'data'         => $student,
+            ]);
             return true;
         } catch (Exception $e) {
             DB::rollBack();
@@ -217,18 +261,27 @@ class StudentService
                 "message" => "Drop Out Student Reinstated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => [$dropoutStudent->id],
+            'feature'      => 'studentDropout',
+            'message'      => 'Drop Out Student Reinstated',
+            'data'         => $dropoutStudent,
+        ]);
         return $dropoutStudent;
     }
     public function bulkMarkStudentAsDropOut($studentDropdoutList, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($studentDropdoutList as $studentDropout) {
                 $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentDropout['student_id']);
                 $student->dropout_status = true;
-                $student->save();
                 $result[] = $student;
+                $studentIds = $student->id;
+                $student->save();
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -242,6 +295,13 @@ class StudentService
                     "message" => "Student Marked As Drop Out",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentDropout',
+                'message'      => 'student Marked As Drop out',
+                'data'         => $student,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -251,12 +311,14 @@ class StudentService
     public function bulkDeleteStudent($studentIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($studentIds as $studentId) {
                 $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId['student_id']);
                 $student->delete();
                 $result[] = $student;
+                $studentIds[] = $student->id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -266,10 +328,17 @@ class StudentService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $studentIds,
+                    "data" => $result,
                     "message" => "Student Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentDelete',
+                'message'      => 'Student Account Deleted',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -279,6 +348,7 @@ class StudentService
     public function bulkUpdateStudent($updateData, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($updateData as $data) {
@@ -286,6 +356,7 @@ class StudentService
                 $filteredData = array_filter($data);
                 $student->update($filteredData);
                 $result[] = $student;
+                $studentIds[] = $student->id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -299,6 +370,13 @@ class StudentService
                     "message" => "Student Updated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentUpdate',
+                'message'      => 'Student Account Updated',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -308,6 +386,7 @@ class StudentService
     public function bulkActivateStudent($studentIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($studentIds as $studentId) {
@@ -315,6 +394,7 @@ class StudentService
                 $student->status =  'active';
                 $student->save();
                 $result[] = $student;
+                $studentIds[] = $student->id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -324,10 +404,17 @@ class StudentService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $student,
+                    "data" => $result,
                     "message" => "Student Account Activated",
                 ]
             );
+                        StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentActivate',
+                'message'      => 'Student Account Activated',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -337,6 +424,7 @@ class StudentService
     public function bulkDeactivateStudent($studentIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($studentIds as $studentId) {
@@ -345,6 +433,7 @@ class StudentService
                 $student->status =  'inactive';
                 $student->save();
                 $result[] = $student;
+                $studentIds[] = $studentIds;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -354,10 +443,17 @@ class StudentService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $student,
+                    "data" => $result,
                     "message" => "Student Account Deactivated",
                 ]
             );
+                                    StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentDeactivate',
+                'message'      => 'Student Account Deactivated',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -367,6 +463,7 @@ class StudentService
     public function bulkReinstateStudent($dropOutIds, $currentSchool, $authAdmin)
     {
         $result = [];
+        $studentIds = [];
         try {
             DB::beginTransaction();
             foreach ($dropOutIds as $dropOutId) {
@@ -375,6 +472,7 @@ class StudentService
                 $studentDropout->dropout_status = false;
                 $studentDropout->save();
                 $result[] = $studentDropout;
+                $studentIds[] = $studentDropout->id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -388,6 +486,13 @@ class StudentService
                     "message" => "Drop Out Student Reinstated",
                 ]
             );
+              StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => $studentIds,
+                'feature'      => 'studentDropout',
+                'message'      => 'Student Dropout Reinstated',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

@@ -21,6 +21,7 @@ use App\Exceptions\AppException;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class SchoolSemesterService
 {
@@ -132,6 +133,13 @@ class SchoolSemesterService
                     "message" => "School Semester Created ",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => [$semesterData['specialty_id']],
+                'feature'      => 'semesterCreated',
+                'message'      => 'Semester Created',
+                'data'         => $schoolSemester,
+            ]);
             return $schoolSemester;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -173,11 +181,19 @@ class SchoolSemesterService
                 "message" => "School Semester Updated",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'specialtyIds'   => [$schoolSemester->specialty_id],
+            'feature'      => 'semesterUpdate',
+            'message'      => 'Semester  Updated',
+            'data'         => $schoolSemester,
+        ]);
         return $schoolSemester;
     }
     public function bulkUpdateSchoolSemester(array $updateSemesterList, $currentSchool, $authAdmin)
     {
         $result = [];
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($updateSemesterList as $updateSemester) {
@@ -187,6 +203,7 @@ class SchoolSemesterService
                 $result[] = [
                     $schoolSemester
                 ];
+                $specialtyIds[] = $schoolSemester->specialty_id;
             }
             DB::commit();
             AdminActionEvent::dispatch(
@@ -200,6 +217,13 @@ class SchoolSemesterService
                     "message" => "School Semester Updated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => $specialtyIds,
+                'feature'      => 'semesterUpdate',
+                'message'      => 'Semester Semester Updated',
+                'data'         => $result,
+            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -231,12 +255,19 @@ class SchoolSemesterService
                 "message" => "School Semester Deleted",
             ]
         );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'specialtyIds'   => [$schoolSemester->specialty_id],
+            'feature'      => 'semesterDelete',
+            'message'      => 'Semester Deleted',
+            'data'         => $schoolSemester,
+        ]);
         return $schoolSemester;
     }
     public function bulkDeleteSchoolSemester(array $schoolSemesterIds, $currentSchool, $authAdmin): array
     {
         $deletedSemesters = [];
-
+        $specialtyIds = [];
         try {
             DB::beginTransaction();
 
@@ -255,6 +286,7 @@ class SchoolSemesterService
                 $schoolSemester = SchoolSemester::findOrFail($id);
                 $schoolSemester->delete();
                 $deletedSemesters[] = $schoolSemester;
+                $specialtyIds[] = $schoolSemester->id;
             }
 
             DB::commit();
@@ -269,6 +301,13 @@ class SchoolSemesterService
                     "message" => "School Semester Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => $specialtyIds,
+                'feature'      => 'semesterDelete',
+                'message'      => 'Semester Deleted',
+                'data'         => $schoolSemester,
+            ]);
             return $deletedSemesters;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();

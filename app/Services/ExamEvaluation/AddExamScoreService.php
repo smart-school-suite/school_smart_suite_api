@@ -18,8 +18,8 @@ use App\Models\Courses;
 use App\Models\AccessedStudent;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use App\Events\Actions\AdminActionEvent;
+
 class AddExamScoreService
 {
     public function addExamScores(array $studentScores, $currentSchool, $authAdmin): array
@@ -33,7 +33,6 @@ class AddExamScoreService
             foreach ($studentScores as $scoreData) {
                 $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
                 $targetStudent = $student;
-                Log::info($scoreData['exam_id']);
                 $exam = Exams::with('examtype')->findOrFail($scoreData['exam_id']);
                 $examDetails = $exam;
 
@@ -87,7 +86,7 @@ class AddExamScoreService
                 ExamStatsJob::dispatch($examDetails);
                 $this->sendExamResultsNotification($examDetails);
             }
-                        AdminActionEvent::dispatch(
+            AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.examEvaluation.addScore"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
@@ -99,7 +98,6 @@ class AddExamScoreService
                 ]
             );
             return $results;
-
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;

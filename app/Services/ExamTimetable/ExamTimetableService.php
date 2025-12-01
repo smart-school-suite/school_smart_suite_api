@@ -16,13 +16,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
 
 class ExamTimetableService
 {
     public function createExamTimeTable(array $examTimetableEntries, Schoolbranches $currentSchool, string $examId, $authAdmin)
     {
-        DB::beginTransaction();
         try {
+            DB::beginTransaction();
             $exam = Exams::with(['examtype.semesters', 'level'])
                 ->findOrFail($examId);
 
@@ -88,6 +89,13 @@ class ExamTimetableService
                     "message" => "Exam Timetable Created",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => [$exam->specialty_id],
+                'feature'      => 'examTimetableCreate',
+                'message'      => 'Exam Timetable Created',
+                'data'         => $exam,
+            ]);
             return $createdTimetables;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -347,6 +355,13 @@ class ExamTimetableService
                     "message" => "Exam Timetable Deleted",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => [$exam->specialty_id],
+                'feature'      => 'examTimetableDelete',
+                'message'      => 'Exam Timetable Deleted',
+                'data'         => $exam,
+            ]);
             return $timetableEntries;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -376,8 +391,8 @@ class ExamTimetableService
             }
 
             $updatedTimetables = collect();
-
-            DB::transaction(function () use ($examTimetableEntries, $currentSchool, &$updatedTimetables) {
+            $specialtyIds = [];
+            DB::transaction(function () use ($examTimetableEntries, $currentSchool, &$updatedTimetables, $specialtyIds) {
                 foreach ($examTimetableEntries as $entryData) {
                     $entryId = $entryData['entry_id'] ?? null;
                     if (!$entryId) {
@@ -392,6 +407,7 @@ class ExamTimetableService
 
                     $timetableEntry = Examtimetable::where('school_branch_id', $currentSchool->id)
                         ->findOrFail($entryId);
+                    $specialtyIds[] = $timetableEntry->specialty_id;
 
                     $fillableData = collect($entryData)->except(['entry_id'])->toArray();
                     if (empty($fillableData)) {
@@ -421,6 +437,13 @@ class ExamTimetableService
                     "message" => "Exam Timetable Updated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'specialtyIds'   => $specialtyIds,
+                'feature'      => 'examTimetableUpdate',
+                'message'      => 'Exam Timetable Updated',
+                'data'         => $updatedTimetables,
+            ]);
             return $updatedTimetables;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

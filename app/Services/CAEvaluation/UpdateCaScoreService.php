@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\CAEvaluation;
+
 use App\Models\Courses;
 use Exception;
 use App\Models\Marks;
@@ -10,6 +11,8 @@ use App\Models\Exams;
 use App\Models\Student;
 use App\Models\StudentResults;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
+
 class UpdateCaScoreService
 {
     public function updateCaScore(array $updateData, $currentSchool, $authAdmin): array
@@ -60,7 +63,7 @@ class UpdateCaScoreService
             );
 
             DB::commit();
-                                                AdminActionEvent::dispatch(
+            AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.examEvaluation.updateScore"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
@@ -71,6 +74,13 @@ class UpdateCaScoreService
                     "message" => "Student CA Results Updated",
                 ]
             );
+            StudentActionEvent::dispatch([
+                'schoolBranch' => $currentSchool->id,
+                'studentIds'   => [$student->id],
+                'feature'      => 'examResultUpdate',
+                'message'      => 'Exam Result Updated',
+                'data'         => $results,
+            ]);
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
