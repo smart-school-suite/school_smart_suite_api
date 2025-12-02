@@ -35,6 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher')
                 ->group(base_path('routes/Teacher/Teacher.php'));
 
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/pdf')
+                ->group(base_path('routes/PDF/Pdf.php'));
+
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-branch-setting')
                 ->group(base_path('routes/Setting/SchoolBranchSetting.php'));
 

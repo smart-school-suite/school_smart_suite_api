@@ -234,8 +234,7 @@ class TuitionFeePaymentService
 
         return $allTransactions;
     }
-
-        protected function handleInstallmentalFeePaymentProgress($currentSchool, $studentTuitionFees, $data)
+    protected function handleInstallmentalFeePaymentProgress($currentSchool, $studentTuitionFees, $data)
     {
         $remainingAmountToDistribute = $data['amount'];
         $paymentTime = now();

@@ -5,7 +5,7 @@ use App\Http\Controllers\Resit\ResitPaymentController;
 
 // Record payment for a resit middleware(['permission:schoolAdmin.studentResits.pay'])
 Route::post('/pay-resit', [ResitPaymentController::class, 'payResit'])
- ->name('resit-payments.store');
+ ->name('resit-payments.pay');
 
  // Get all resit payment transactions (potentially admin-only, consider prefixing with /admin)
 Route::middleware(['permission:schoolAdmin.studentResits.transactions.view'])->get('/resit-transactions', [ResitPaymentController::class, 'getResitPaymentTransactions'])
