@@ -21,6 +21,11 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('specialty_halls', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -29,5 +34,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('halls');
+        Schema::dropIfExists('specialty_halls');
     }
 };

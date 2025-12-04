@@ -25,7 +25,7 @@ class SpecialtyHallController extends Controller
         return ApiResponseService::success("Hall Assigned Successfully", $assignHall, null, 200);
     }
 
-    public function getAvailableAssignableHalls(Request $request, $specialtyId)
+    public function getAssignableHalls(Request $request, $specialtyId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $assignableHalls = $this->specialtyHallService->getAvailableAssignableHalls($currentSchool, $specialtyId);

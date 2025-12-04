@@ -21,6 +21,27 @@ return new class extends Migration
             $table->string("determinant");
             $table->timestamps();
         });
+
+        Schema::create('letter_grades', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('letter_grade')->unique();
+            $table->timestamps();
+        });
+
+        Schema::create('school_grade_scale_categories', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->boolean('isgrades_configured')->default(false);
+            $table->decimal('max_score', 5, 2)->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('grade_scale_categories', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('title');
+            $table->enum('status', ['active', 'inactive']);
+            $table->enum('exam_type', ['exam', 'resit', 'ca']);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -29,5 +50,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('grade_scales');
+        Schema::dropIfExists('letter_grades');
+        Schema::dropIfExists('school_grade_scale_categories');
+        Schema::dropIfExists('grade_scale_categories');
     }
 };

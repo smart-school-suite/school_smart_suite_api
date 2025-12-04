@@ -18,6 +18,13 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
         });
+
+         Schema::create('expense_categories', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -26,5 +33,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('school_expenses');
+        Schema::dropIfExists('expense_categories');
     }
 };

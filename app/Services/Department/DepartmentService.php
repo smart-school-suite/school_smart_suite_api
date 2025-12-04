@@ -173,7 +173,6 @@ class DepartmentService
     public function getDepartments($currentSchool)
     {
         $departmentData = Department::where("school_branch_id", $currentSchool->id)
-            ->with(['hods.hodable'])
             ->get();
         if ($departmentData->isEmpty()) {
             throw new AppException(
@@ -189,7 +188,6 @@ class DepartmentService
     public function getDepartmentDetails($currentSchool, $departmentId)
     {
         $findDeparment = Department::where("school_branch_id", $currentSchool->id)
-            ->with(['hods.hodable'])
             ->find($departmentId);
         if (!$findDeparment) {
             throw new AppException(

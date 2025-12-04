@@ -233,6 +233,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/event-tag')
               ->group(base_path('routes/Event/SchoolEventTag.php'));
 
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher-course')
+              ->group(base_path('routes/Course/TeacherCoursePreference.php'));
+
             Route::middleware(['auth:sanctum'])->prefix('api/v1/fee-installment')
             ->group(base_path('routes/FeeInstallment/FeeInstallment.php'));
         }

@@ -121,13 +121,6 @@ return new class extends Migration
             $table->foreign('grades_category_id')->references('id')->on('grade_scale_categories');
         });
 
-        Schema::table('fee_payment_transactions', function (Blueprint $table) {
-            $table->string('school_branch_id')->after('id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
-        });
-
         Schema::table('parents', function (Blueprint $table) {
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
@@ -1832,13 +1825,6 @@ return new class extends Migration
         Schema::table('parents', function (Blueprint $table) {
             $table->dropForeign(['school_branch_id']);
             $table->dropColumn(['school_branch_id']);
-        });
-
-        // Dropping foreign keys and columns from fee_payment_transactions
-        Schema::table('fee_payment_transactions', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropForeign(['student_id']);
-            $table->dropColumn(['school_branch_id', 'student_id']);
         });
 
         // Dropping foreign keys and columns from exams

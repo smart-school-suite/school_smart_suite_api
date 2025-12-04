@@ -30,6 +30,14 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+
+        Schema::create('student_batches', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->enum('status', ['active', 'inactive'])->default('inactive');
+            $table->text('description');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -38,5 +46,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('student');
+        Schema::dropIfExists('student_batches');
     }
 };

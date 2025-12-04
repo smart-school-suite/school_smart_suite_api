@@ -18,6 +18,16 @@ return new class extends Migration
             $table->string('program_name');
             $table->timestamps();
         });
+
+        Schema::create('school_semesters', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->date("start_date");
+            $table->date("end_date");
+            $table->string("school_year");
+            $table->boolean("timetable_published")->default(false);
+            $table->enum('status', ['expired', 'active', 'pending'])->default('pending');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -26,5 +36,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('semesters');
+         Schema::dropIfExists('school_semesters');
     }
 };

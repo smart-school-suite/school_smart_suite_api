@@ -26,6 +26,30 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+
+        Schema::create('teacher_course_preferences', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
+
+        Schema::create('teacher_availability_slots', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('day_of_week');
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->timestamps();
+        });
+
+        Schema::create('teacher_availabilities', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->enum('status', ['added', 'not added'])->default('not added');
+            $table->timestamps();
+        });
+
+                Schema::create('teacher_specialty_preferences', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -34,5 +58,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('teachers');
+        Schema::dropIfExists('teacher_course_preferences');
+        Schema::dropIfExists('teacher_availability_slots');
+        Schema::dropIfExists('teacher_availabilities');
+        Schema::dropIfExists('teacher_specialty_preferences');
     }
 };

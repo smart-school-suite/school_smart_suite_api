@@ -102,13 +102,13 @@ class PermissionCategorySeeder extends Seeder
                 "title" => "Grades Category Manager",
                 "description" => "Organizes grades into categories such as exams, assignments, or projects."
             ],
-            [
-                "title" => "HOD Manager",
-                "description" => "Heads department management, overseeing faculty and department activities."
+             [
+                "title" => "Announcement Category Manager",
+                "description" => "Organizes and categorizes various types of announcement"
             ],
-            [
-                "title" => "HOS Manager",
-                "description" => "Manages school heads or principals and their administrative duties."
+             [
+                "title" => "Announcement Manager",
+                "description" => "Manages All School Announcements"
             ],
             [
                 "title" => "Letter Grade Manager",
@@ -121,10 +121,6 @@ class PermissionCategorySeeder extends Seeder
             [
                 "title" => "Resit Manager",
                 "description" => "Handles resit exams and related scheduling."
-            ],
-            [
-                "title" => "Registration Fee Manager",
-                "description" => "Manages registration fee collection and status tracking."
             ],
             [
                 "title" => "School Manager",
@@ -163,17 +159,31 @@ class PermissionCategorySeeder extends Seeder
                 "description" => "Manages subscription plans, payments, and billing cycles."
             ],
             [
+                "title" => "Event Category Manager",
+                "description" => "Manages Event Categories",
+            ],
+            [
+               "title" => "Teacher Course Preference Manager",
+               "description" => "Manages Teacher Course Preference"
+            ],
+            [
                 "title" => "Teacher Manager",
                 "description" => "Handles teacher profiles, assignments, and schedules."
             ],
+             [
+                "title" => "School Branch Setting Manager",
+                "description" => "Manages All Settings Related To The School"
+            ],
+            [
+                "title" => "Hall Manager",
+                "description" => "Manages All The Related Features in the school"
+            ]
         ];
-        $this->command->info("Creating Permission Category..........................................1%");
         foreach ($data as $entry) {
             PermissionCategory::create([
                 'title' => $entry['title'],
                 'description' => $entry['description']
             ]);
         }
-        $this->command->info("Permission Category Created Successfully.........................................100%");
     }
 }

@@ -19,6 +19,14 @@ return new class extends Migration
             $table->unsignedInteger('iscarry_over')->default(false);
             $table->timestamps();
         });
+
+        Schema::create('resit_fee_transactions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('transaction_id');
+            $table->decimal('amount', 8, 2);
+            $table->enum('payment_method', ['cash', 'cheque', 'credit_card', 'debit_card', 'bank_transfer']);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -27,5 +35,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('student_resits');
+        Schema::dropIfExists('resit_fee_transactions');
     }
 };

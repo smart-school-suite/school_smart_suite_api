@@ -33,6 +33,7 @@ use App\Models\Timetable;
 use Carbon\Carbon;
 use App\Models\ElectionType;
 use App\Models\ElectionRoles;
+use App\Models\StudentParentRelationship;
 
 class FakeDataSeeder extends Seeder
 {
@@ -318,7 +319,6 @@ class FakeDataSeeder extends Seeder
                 'name' => "$firstName $lastName",
                 'phone' => $phoneOne,
                 'address' => $faker->address,
-                'relationship_to_student' => $gender == 'Male' ? 'Father' :  'Mother',
                 'preferred_language' => 'english',
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
@@ -412,7 +412,7 @@ class FakeDataSeeder extends Seeder
         $students = [];
         $specialties = Specialty::where('school_branch_id', $schoolBranch->id)->get();
         $parents = Parents::where("school_branch_id", $schoolBranch->id)->pluck('id')->toArray();
-
+        $relationships = StudentParentRelationship::pluck('id')->toArray();
         if (empty($parents)) {
             $this->command->info("No parents found for this school branch. Please seed parents first.");
             return;
@@ -424,6 +424,7 @@ class FakeDataSeeder extends Seeder
                 $lastName = $faker->lastName;
                 $gender = $faker->randomElement(['Male', 'Female']);
                 $parentId = $faker->randomElement($parents);
+                $relationshipId = $faker->randomElement($relationships);
                 $dob = $faker->date('Y-m-d', '2005-01-01');
 
                 $students[] = [
@@ -441,6 +442,7 @@ class FakeDataSeeder extends Seeder
                     'phone' => $faker->phoneNumber,
                     'email' => $faker->unique()->safeEmail,
                     'DOB' => $dob,
+                    'relationship_id' => $relationshipId,
                     'password' => Hash::make('password'),
                     'created_at' => $timestamp,
                     'updated_at' => $timestamp,

@@ -154,26 +154,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('class_timetable_stats', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value', 20, 2)->nullable();
-            $table->json('json_value')->nullable();
-            $table->integer('year')->nullable();
-            $table->integer('month')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('exam_timetable_stats', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->integer('integer_value')->nullable();
-            $table->decimal('decimal_value', 20, 2)->nullable();
-            $table->json('json_value')->nullable();
-            $table->integer('year')->nullable();
-            $table->integer('month')->nullable();
-            $table->timestamps();
-        });
-
         Schema::create('department_stats', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->integer('integer_value')->nullable();
@@ -295,8 +275,6 @@ return new class extends Migration
         Schema::dropIfExists('election_winner_stats');
         Schema::dropIfExists('student_stats');
         Schema::dropIfExists('teacher_stats');
-        Schema::dropIfExists('class_timetable_stats');
-        Schema::dropIfExists('exam_timetable_stats');
         Schema::dropIfExists('stat_types');
         Schema::dropIfExists('department_stats');
         Schema::dropIfExists('specialty_stats');

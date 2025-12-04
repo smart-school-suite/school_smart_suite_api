@@ -69,7 +69,8 @@ class SpecialtyHallService
         $specialtyHall = SpecialtyHall::create([
             'specialty_id' => $specialty->id,
             'level_id' => $specialty->level_id,
-            'hall_id' => $hall->id
+            'hall_id' => $hall->id,
+            'school_branch_id' => $currentSchool->id
         ]);
 
         AdminActionEvent::dispatch(
@@ -108,7 +109,7 @@ class SpecialtyHallService
             ->pluck('hall_id')->toArray();
 
         $assignableHalls = Hall::where("school_branch_id", $currentSchool->id)
-            ->whereIn("id", "!=", $assignedHalls)
+            ->whereNotIn("id", $assignedHalls)
             ->get();
         if ($assignableHalls->isEmpty()) {
             throw new AppException(

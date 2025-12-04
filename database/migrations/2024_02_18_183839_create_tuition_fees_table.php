@@ -19,6 +19,23 @@ return new class extends Migration
             $table->enum('status', ['completed', 'owing', 'bad debt'])->default('owing');
             $table->timestamps();
         });
+
+        Schema::create('tuition_fee_transactions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('transaction_id');
+            $table->decimal('amount', 8, 2);
+            $table->enum('payment_method', ['cash', 'cheque', 'credit_card', 'debit_card', 'bank_transfer']);
+            $table->timestamps();
+        });
+
+        Schema::create('fee_waivers', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->text('description')->nullable();
+            $table->enum('status', ['expired', 'active']);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -27,5 +44,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('tuition_fees');
+        Schema::dropIfExists('tuition_fee_transactions');
+        Schema::dropIfExists('fee_waivers');
     }
 };

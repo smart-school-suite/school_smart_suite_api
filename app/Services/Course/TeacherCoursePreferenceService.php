@@ -8,7 +8,7 @@ use App\Exceptions\AppException;
 use App\Models\Courses;
 use Illuminate\Support\Facades\DB;
 use App\Events\Actions\AdminActionEvent;
-
+use Illuminate\Support\Str;
 class TeacherCoursePreferenceService
 {
 
@@ -16,7 +16,7 @@ class TeacherCoursePreferenceService
     {
         $schoolBranchId = $currentSchool->id;
         $teacherId      = $data['teacher_id'];
-        $requestedCourses = collect($data['coursesId']);
+        $requestedCourses = collect($data['courseIds']);
 
         if ($requestedCourses->isEmpty()) {
             throw new AppException(
@@ -78,6 +78,7 @@ class TeacherCoursePreferenceService
 
         $insertData = $requestedCourseIds->map(function ($courseId) use ($teacherId, $schoolBranchId) {
             return [
+                'id' => Str::uuid()->toString(),
                 'course_id'        => $courseId,
                 'teacher_id'       => $teacherId,
                 'school_branch_id' => $schoolBranchId,
@@ -129,7 +130,7 @@ class TeacherCoursePreferenceService
             ->select('id', 'course_code', 'course_title', 'credit', 'specialty_id', 'level_id');
 
 
-        $courses->whereDoesntHave('teacherPreferences', function ($query) use ($schoolBranchId, $teacherId) {
+        $courses->whereDoesntHave('teacherCoursePreference', function ($query) use ($schoolBranchId, $teacherId) {
             $query->where('teacher_id', $teacherId)
                 ->where('school_branch_id', $schoolBranchId);
         });
@@ -149,7 +150,7 @@ class TeacherCoursePreferenceService
     {
         $schoolBranchId = $currentSchool->id;
         $teacherId      = $data['teacher_id'] ?? null;
-        $courseIds      = collect($data['coursesId'] ?? [])->pluck('course_id')->filter()->unique()->values();
+        $courseIds      = collect($data['courseIds'] ?? [])->pluck('course_id')->filter()->unique()->values();
 
         if (!$teacherId) {
             throw new AppException(
