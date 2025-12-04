@@ -26,7 +26,7 @@ class LoginTeacherService
         );
     }
 
-    if (!$user->is_active) {
+    if ($user->status == "inactive") {
         throw new AppException(
             "Teacher account with email '{$loginData['email']}' is inactive.",
             403,
@@ -35,7 +35,6 @@ class LoginTeacherService
             null
         );
     }
-
 
     $otp = random_int(100000, 999999);
     $otp_header = Str::random(24);

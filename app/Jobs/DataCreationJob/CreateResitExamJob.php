@@ -12,7 +12,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use App\Models\ResitExamRef;
+use Illuminate\Support\Str;
 
 class CreateResitExamJob implements ShouldQueue
 {
@@ -53,8 +54,6 @@ class CreateResitExamJob implements ShouldQueue
 
         $resitType = $this->getResitType($examType);
         if (!$resitType) {
-            // Log an error or handle the case where the resit type doesn't exist.
-            Log::warning('Resit exam type not found for semester: ' . $examType->semester);
             return;
         }
 
@@ -62,6 +61,7 @@ class CreateResitExamJob implements ShouldQueue
             'school_branch_id' => $this->exam->school_branch_id,
             'specialty_id' => $this->exam->specialty_id,
             'level_id' => $this->exam->level_id,
+            'semester_id' => $this->exam->semester_id
         ])->get();
 
         if ($studentResits->isNotEmpty() && !$this->resitExamExists()) {
@@ -79,14 +79,18 @@ class CreateResitExamJob implements ShouldQueue
 
     private function resitExamExists(): bool
     {
-        return ResitExam::where('school_branch_id', $this->exam->school_branch_id)
-            ->where('reference_exam_id', $this->exam->id)
+        return ResitExamRef::where('school_branch_id', $this->exam->school_branch_id)
+            ->where('semester_id', $this->exam->semester_id)
+            ->where("student_batch_id", $this->exam->student_batch_id)
+            ->where("specialty_id", $this->exam->specialty_id)
             ->exists();
     }
 
     private function createResitExam(Examtype $resitType): void
     {
+        $resitExamId = Str::uuid()->toString();
         ResitExam::create([
+            'id' => $resitExamId,
             'level_id' => $this->exam->level_id,
             'specialty_id' => $this->exam->specialty_id,
             'exam_type_id' => $resitType->id,
@@ -94,6 +98,42 @@ class CreateResitExamJob implements ShouldQueue
             'semester_id' => $this->exam->semester_id,
             'reference_exam_id' => $this->exam->id,
         ]);
+
+        $studentResits = Studentresit::where([
+            'school_branch_id' => $this->exam->school_branch_id,
+            'specialty_id' => $this->exam->specialty_id,
+            'level_id' => $this->exam->level_id,
+            'semester_id' => $this->exam->semester_id
+        ])
+            ->select(
+                'level_id',
+                'student_batch_id',
+                'specialty_id',
+                'exam_id',
+                'exam_type_id',
+                'semester_id'
+            )
+            ->groupBy(
+                'level_id',
+                'student_batch_id',
+                'specialty_id',
+                'exam_id',
+                'exam_type_id',
+                'semester_id'
+            )
+            ->get();
+        foreach ($studentResits as $studentResit) {
+            ResitExamRef::create([
+                'school_branch_id' => $studentResit->school_branch_id,
+                'exam_type_id' => $studentResit->exam_type_id,
+                'level_id' => $studentResit->level_id,
+                'exam_id' => $studentResit->exam_id,
+                'semester_id' => $studentResit->semester_id,
+                'specialty_id' => $studentResit->specialty_id,
+                'student_batch_id' => $studentResit->student_batch_id,
+                'resit_exam_id' => $resitExamId
+            ]);
+        }
     }
 
     private function notifyAdmin(Examtype $resitDetails): void
@@ -101,9 +141,6 @@ class CreateResitExamJob implements ShouldQueue
         $examDetails = Exams::with(['specialty', 'level', 'examtype'])->find($this->exam->id);
 
         if ($examDetails) {
-            Log::info("Exam details: " . json_encode($examDetails->toArray()));
-            Log::info("Resit details: " . json_encode($resitDetails->toArray()));
-
             SendAdminResitExamCreatedNotificationJob::dispatch($this->exam->school_branch_id, $resitDetails, $examDetails);
         }
     }

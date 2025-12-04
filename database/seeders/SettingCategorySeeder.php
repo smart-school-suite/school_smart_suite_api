@@ -44,6 +44,10 @@ class SettingCategorySeeder extends Seeder
             [
                 'name' => 'Election Tie Breaker Setting',
                 'key' => 'setting.category.election.tie.breaker'
+            ],
+            [
+                'name' => 'Level Setting',
+                'key' => 'setting.category.level'
             ]
 
         ];

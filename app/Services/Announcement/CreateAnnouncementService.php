@@ -21,6 +21,8 @@ use App\Exceptions\AppException;
 use App\Jobs\DataCleanupJobs\UpdateAnnouncementStatusJob;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Models\AnnouncementAudience;
+use App\Models\Specialty;
 
 class CreateAnnouncementService
 {
@@ -174,11 +176,6 @@ class CreateAnnouncementService
                     'label_id' => $data['label_id'],
                     'notification_sent_at' => null,
                     'tags' => json_encode($tags->toArray()),
-                    'audience' => json_encode(array_filter([
-                        'teachers' => $data['teacher_ids'] ?? null,
-                        'admins' => $data['school_admin_ids'] ?? null,
-                        'students' => $data['student_audience'] ?? null,
-                    ])),
                     'school_branch_id' => $currentSchool->id,
                 ];
 
@@ -198,6 +195,12 @@ class CreateAnnouncementService
                     'total_unseen' => $totalRecipients,
                     'announcement_id' => $announcementId,
                     'school_branch_id' => $currentSchool->id
+                ]);
+
+                $this->createAudience($currentSchool, $announcementId, [
+                    'teachers' => $data['teacher_ids'] ?? null,
+                    'admins' => $data['school_admin_ids'] ?? null,
+                    'students' => $data['student_audience'] ?? null,
                 ]);
 
                 if ($status === 'active') {
@@ -263,6 +266,49 @@ class CreateAnnouncementService
         } catch (Throwable $e) {
             throw $e;
         }
+    }
+
+    private function createAudience($currentSchool, $announcementId, $audience)
+    {
+        $audienceList = [];
+        if (!empty($audience['teachers'])) {
+            $teacherIds = $audience['teachers'];
+            foreach ($teacherIds as $teacherId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "announcement_id" => $announcementId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $teacherId['teacher_id'],
+                    'audienceable_type' => Teacher::class
+                ];
+            }
+        }
+        if (!empty($audience['admins'])) {
+            $adminIds = $audience['admins'];
+            foreach ($adminIds as $adminId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "announcement_id" => $announcementId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $adminId['school_admin_id'],
+                    'audienceable_type' => Schooladmin::class
+                ];
+            }
+        }
+
+        if (!empty($audience['students'])) {
+            $studentIds = $audience['students'];
+            foreach ($studentIds as $studentId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "announcement_id" => $announcementId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $studentId['student_audience_id'],
+                    'audienceable_type' => Specialty::class
+                ];
+            }
+        }
+        AnnouncementAudience::insert($audienceList);
     }
     private function studentAudience($currentSchool, $studentAudienceIds)
     {

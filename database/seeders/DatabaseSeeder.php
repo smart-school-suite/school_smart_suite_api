@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(LevelSeeder::class);
         $this->call(PermissionCategorySeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(PermissionSeeder::class);
-        $this->call(StarterPackSeeder::class);
         $this->call(StatTypeSeeder::class);
         $this->call(AssignPermissionToRoles::class);
         $this->call(InstallmentSeeder::class);
@@ -29,5 +29,7 @@ class DatabaseSeeder extends Seeder
         $this->call(GradeCategorySeeder::class);
         $this->call(SettingCategorySeeder::class);
         $this->call(SettingDefinationSeeder::class);
+        $this->call(LevelTypeSeeder::class);
+        $this->call(StudentParentRelationshipSeeder::class);
     }
 }

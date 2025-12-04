@@ -232,7 +232,7 @@ class AddExamScoreService
         foreach ($grades as $grade) {
             if ($score >= $grade->minimum_score && $score <= $grade->maximum_score) {
                 if ($grade->resit_status === 'resit') {
-                    $this->createResitableCourse($courseId, $examId, $student, $schoolId);
+                    $this->createResitableCourse($courseId, $exam, $student, $schoolId);
                 }
 
                 return [
@@ -255,7 +255,7 @@ class AddExamScoreService
         ];
     }
 
-    private function createResitableCourse(string $courseId, string $examId, Student $student, string $schoolId): void
+    private function createResitableCourse(string $courseId,  $exam, Student $student, string $schoolId): void
     {
 
         if (!Studentresit::where("student_id", $student->id)
@@ -268,7 +268,8 @@ class AddExamScoreService
                 'student_id' => $student->id,
                 'specialty_id' => $student->specialty_id,
                 'course_id' => $courseId,
-                'exam_id' => $examId,
+                'exam_id' => $exam->id,
+                'semester_id' => $exam->semester_id,
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
             ]);

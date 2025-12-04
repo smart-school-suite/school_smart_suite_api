@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use App\Models\SettingCategory;
 use App\Models\SettingDefination;
 use App\Models\LetterGrade;
+use App\Models\LevelType;
 
 class SettingDefinationSeeder extends Seeder
 {
@@ -254,6 +255,31 @@ class SettingDefinationSeeder extends Seeder
         $settingCategoryName = 'Election Tie Breaker Setting';
         $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
 
+        foreach ($settingDefs as $settingDef) {
+            SettingDefination::create([
+                'key' => $settingDef['key'],
+                'data_type' => $settingDef['data_type'],
+                'default_value' => $settingDef['default_value'],
+                'name' => $settingDef['label'],
+                'description' => $settingDef['description'] ?? null,
+                'setting_category_id' => $settingCategory->id
+            ]);
+        }
+    }
+
+    public function levelSetting()
+    {
+        $settingDefs = [
+            [
+                'key' => 'level.start',
+                'label' => 'Level Start',
+                'data_type' => 'json',
+                'default_value' => LevelType::where("program_name", "level_start_100")->first(),
+                'description' => 'Defines the starting academic level used by the institution (e.g., 100, 200, 300)',
+            ],
+        ];
+        $settingCategoryName = 'Level Setting';
+        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
         foreach ($settingDefs as $settingDef) {
             SettingDefination::create([
                 'key' => $settingDef['key'],

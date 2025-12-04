@@ -26,8 +26,7 @@ class Teacher extends Model
         'school_branch_id',
         'email',
         'name',
-        'phone_one',
-        'phone_two',
+        'phone',
         'first_name',
         'last_name',
         'status',
@@ -68,26 +67,31 @@ class Teacher extends Model
     {
         return $this->devices()->pluck('token')->toArray();
     }
-    public function teacherAnnouncement(): HasMany {
-         return $this->hasMany(TeacherAnnouncement::class);
+    public function teacherAnnouncement(): HasMany
+    {
+        return $this->hasMany(TeacherAnnouncement::class);
     }
-    public function teacherCoursePreference(): HasMany {
-         return $this->hasMany(TeacherCoursePreference::class, 'teacher_id');
+    public function teacherCoursePreference(): HasMany
+    {
+        return $this->hasMany(TeacherCoursePreference::class, 'teacher_id');
     }
     public function otp()
     {
         return $this->morphMany(Otp::class, 'actorable');
     }
 
-    public function vote(){
-         return $this->morphMany(ElectionVotes::class, 'votable');
+    public function vote()
+    {
+        return $this->morphMany(ElectionVotes::class, 'votable');
     }
 
-    public function voteStatus(){
-         return $this->morphMany(VoterStatus::class, 'votableStatus');
+    public function voteStatus()
+    {
+        return $this->morphMany(VoterStatus::class, 'votableStatus');
     }
 
-    public function instructorAvailability(): HasMany {
+    public function instructorAvailability(): HasMany
+    {
         return $this->hasMany(InstructorAvailability::class);
     }
     public function devices()
@@ -130,5 +134,14 @@ class Teacher extends Model
     public function badges()
     {
         return $this->morphMany(BadgeAssignment::class, 'assignable');
+    }
+
+    public function eventAudience()
+    {
+        return $this->morphMany(EventAudience::class, 'audienceable');
+    }
+    public function announcementAudience()
+    {
+        return $this->morphMany(AnnouncementAudience::class, 'audienceable');
     }
 }

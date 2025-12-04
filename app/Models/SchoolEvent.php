@@ -56,5 +56,7 @@ class SchoolEvent extends Model
         return $this->hasMany(EventAuthor::class, 'event_id');
     }
 
-
+    public function eventAudience(): HasMany {
+        return $this->hasMany(EventAudience::class);
+    }
 }

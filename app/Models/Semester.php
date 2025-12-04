@@ -25,21 +25,29 @@ class Semester extends Model
     public $incrementing = 'false';
     public $table = 'semesters';
 
-    public function exams(): HasMany {
+    public function resitExamRef(): HasMany
+    {
+        return $this->hasMany(ResitExamRef::class);
+    }
+    public function studentResit(): HasMany
+    {
+        return $this->hasMany(StudentResit::class);
+    }
+    public function exams(): HasMany
+    {
         return $this->hasMany(Exams::class);
     }
-
-    public function resitExam(): HasMany {
-        return $this->hasMany(ResitExam::class);
-    }
-    public function examtype(): HasMany {
+    public function examtype(): HasMany
+    {
         return $this->hasMany(Examtype::class);
     }
 
-    public function timetable(): BelongsTo {
+    public function timetable(): BelongsTo
+    {
         return $this->belongsTo(Timetable::class, 'semeter_id');
     }
-    public function courses(): HasMany {
-         return $this->hasMany(Courses::class);
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Courses::class);
     }
 }

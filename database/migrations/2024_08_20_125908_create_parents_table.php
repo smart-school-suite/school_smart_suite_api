@@ -16,11 +16,16 @@ return new class extends Migration
             $table->string('name');
             $table->string('address');
             $table->string("email");
-            $table->string('phone_one');
-            $table->string('phone_two')->nullable();
-            $table->string('relationship_to_student')->nullable();
+            $table->string('phone');
             $table->string('preferred_contact_method')->default("All");
             $table->string('preferred_language')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('stu_par_relationships', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name')->unique();
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

@@ -20,6 +20,9 @@ use Throwable;
 use App\Jobs\DataCleanupJobs\UpdateAnnouncementStatusJob;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Models\AnnouncementAudience;
+use App\Models\Specialty;
+use Illuminate\Support\Str;
 
 class UpdateDraftAnnouncementService
 {
@@ -158,15 +161,15 @@ class UpdateDraftAnnouncementService
                     'label_id' => $data['label_id'] ?? $announcement->label_id,
                     'notification_sent_at' => null,
                     'tags' => json_encode($tags->toArray()),
-                    'audiences' => json_encode(array_filter([
-                        'teachers' => $data['teacher_ids'] ?? null,
-                        'admins' => $data['school_admin_ids'] ?? null,
-                        'students' => $data['student_audience'] ?? null,
-                    ])),
                     'school_branch_id' => $currentSchool->id,
                 ];
 
                 $announcement->update($announcementData);
+                $this->createAudience($currentSchool, $announcement->id, [
+                    'teachers' => $data['teacher_ids'] ?? null,
+                    'admins' => $data['school_admin_ids'] ?? null,
+                    'students' => $data['student_audience'] ?? null,
+                ]);
 
                 if ($status !== 'draft') {
                     $totalStudents = $recipients->whereInstanceOf(Student::class)->count();
@@ -265,6 +268,51 @@ class UpdateDraftAnnouncementService
         } catch (Throwable $e) {
             throw $e;
         }
+    }
+
+    private function createAudience($currentSchool, $announcementId, $audience)
+    {
+
+        AnnouncementAudience::where("id", $announcementId)->delete();
+        $audienceList = [];
+        if (!empty($audience['teachers'])) {
+            $teacherIds = $audience['teachers'];
+            foreach ($teacherIds as $teacherId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "announcement_id" => $announcementId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $teacherId['teacher_id'],
+                    'audienceable_type' => Teacher::class
+                ];
+            }
+        }
+        if (!empty($audience['admins'])) {
+            $adminIds = $audience['admins'];
+            foreach ($adminIds as $adminId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "announcement_id" => $announcementId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $adminId['school_admin_id'],
+                    'audienceable_type' => Schooladmin::class
+                ];
+            }
+        }
+
+        if (!empty($audience['students'])) {
+            $studentIds = $audience['students'];
+            foreach ($studentIds as $studentId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "announcement_id" => $announcementId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $studentId['student_audience_id'],
+                    'audienceable_type' => Specialty::class
+                ];
+            }
+        }
+        AnnouncementAudience::insert($audienceList);
     }
     protected function getTags(array $data): Collection
     {

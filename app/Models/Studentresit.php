@@ -23,6 +23,7 @@ class Studentresit extends Model
         'student_batch_id',
         'resit_fee',
         'attempt_number',
+        'semester_id',
         'iscarry_over'
     ];
 
@@ -30,6 +31,9 @@ class Studentresit extends Model
     public $table = 'student_resits';
     public $incrementing = 'false';
 
+    public function semester(): BelongsTo {
+         return $this->belongsTo(Semester::class, 'semester_id');
+    }
     public function studentResitTransactions(): HasMany
     {
         return $this->hasMany(ResitFeeTransactions::class, 'resitfee_id');

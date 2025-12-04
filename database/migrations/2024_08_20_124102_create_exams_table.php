@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
             $table->integer('expected_candidate_number')->default(0);
             $table->integer('evaluated_candidate_number')->default(0);
+            $table->boolean("grading_added")->default(false);
             $table->timestamps();
         });
     }

@@ -27,7 +27,8 @@ class CreateStudentRequest extends FormRequest
             'email' => 'required|email',
             'specialty_id' => 'required|string|exists:specialties,id',
             'guardian_id' => 'required|string|exists:parents,id',
-            'student_batch_id' => 'required|string|exists:student_batches,id'
+            'student_batch_id' => 'required|string|exists:student_batches,id',
+            'relationship_id' => 'required|string|exists:stu_par_relationships,id'
         ];
     }
 }

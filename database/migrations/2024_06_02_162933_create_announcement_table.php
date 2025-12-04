@@ -47,7 +47,13 @@ return new class extends Migration
             $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->json('tags');
-            $table->json('audience');
+            $table->timestamps();
+        });
+
+        Schema::create('announcement_audiences', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('audienceable_id');
+            $table->string('audienceable_type');
             $table->timestamps();
         });
 

@@ -25,6 +25,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('event_audiences', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('audienceable_id');
+            $table->string('audienceable_type');
+            $table->timestamps();
+        });
+
         Schema::create('school_events', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('title');

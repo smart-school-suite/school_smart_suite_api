@@ -31,7 +31,8 @@ class UpdateStudentRequest extends FormRequest
             'department_id' => 'sometimes|nullable|string|exists:departments,id',
             'email' => 'sometimes|nullable|email',
             'guadian_id' => 'sometimes|nullable|string|exists:parents,id',
-            'student_batch_id' => 'sometimes|nullable|string|exists:student_batches,id'
+            'student_batch_id' => 'sometimes|nullable|string|exists:student_batches,id',
+            'relationship_id' => 'sometimes|nullable|string|exists:stu_par_relationships,id'
         ];
     }
 }

@@ -34,7 +34,7 @@ class Exams extends Model
     ];
 
     protected $cast = [
-         'start_date' => 'date',
+        'start_date' => 'date',
         'end_date' => 'date',
         'weighted_mark' => 'decimal:2',
         'expected_candidate_number' => 'integer',
@@ -45,14 +45,15 @@ class Exams extends Model
     public $incrementing = 'false';
     public $table = 'exams';
 
+    public function resitExamRef(): HasMany
+    {
+        return $this->hasMany(ResitExamRef::class);
+    }
     public function resitmarks(): HasMany
     {
         return $this->hasMany(ResitMarks::class, 'exam_id');
     }
 
-    public function examResit(): HasMany {
-        return $this->hasMany(ResitExam::class);
-    }
     public function courses(): BelongsTo
     {
         return $this->belongsTo(Exams::class);

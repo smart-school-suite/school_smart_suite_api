@@ -13,8 +13,18 @@ return new class extends Migration
     {
         Schema::create('levels', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name')->unique();
+            $table->string('name');
             $table->string('level');
+            $table->string('program_name');
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+        });
+
+        Schema::create('level_types', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name')->unique();
+            $table->string('program_name')->unique();
+            $table->text('description');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });

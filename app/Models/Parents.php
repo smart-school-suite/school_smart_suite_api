@@ -24,11 +24,9 @@ class Parents extends Model
         'name',
         'address',
         'email',
-        'phone_one',
-        'phone_two',
+        'phone',
         'preferred_language',
-        'school_branch_id',
-        'relationship_to_student',
+        'school_branch_id'
     ];
 
     /**

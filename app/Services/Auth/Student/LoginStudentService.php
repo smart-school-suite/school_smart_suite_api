@@ -4,61 +4,77 @@ namespace App\Services\Auth\Student;
 
 use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\Student;
+use App\Models\OTP;
+use App\Exceptions\AppException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use App\Models\OTP;
-use App\Exceptions\AppException;
 
 class LoginStudentService
 {
-    public function loginStudent($loginData)
+    public function loginStudent(array $loginData): array
     {
-        $user = Student::where('email', $loginData['email'])->first();
+        $student = Student::where('email', $loginData['email'])->first();
 
-        if (!$user || !Hash::check($loginData['password'], $user->password)) {
+        if (!$student || !Hash::check($loginData['password'], $student->password)) {
             throw new AppException(
-                "Student login failed for email '{$loginData['email']}': Invalid email or password.",
+                "Invalid credentials provided for student login.",
                 401,
-                "Incorrect Credentials 🛑",
-                "The student ID (email address) or password you entered is incorrect. Please double-check your credentials and try again.",
+                "Incorrect Email or Password",
+                "The email or password you entered is incorrect. Please check and try again.",
+                request()->path()
+            );
+        }
+
+        if ($student->status == "inactive") {
+            throw new AppException(
+                "ACCOUNT_DEACTIVATED",
+                403,
+                "Account Deactivated",
+                "Your student account has been deactivated. Please contact your school administration to resolve this issue.",
                 null
             );
         }
 
-       if ($user->deactivated == true) {
-          throw new AppException(
-                "Student account with email '{$loginData['email']}' is currently Deactivated.",
+        if ($student->dropout_status == true) {
+            throw new AppException(
+                "STUDENT_DROPPED_OUT",
                 403,
-                "Account Deactivated 🎓",
-              "Your student account is currently Deactivated. Please contact the school administration for assistance.",
-             null
-           );
+                "Dropped Out",
+                "You have been marked as a dropout. Access to the system is restricted. Please contact administration for clarification.",
+                null,
+            );
         }
 
         $otp = random_int(100000, 999999);
-        $otp_header = Str::random(24);
-        $expiresAt = Carbon::now()->addMinutes(5);
+        $otpHeader = Str::random(32);
+        $expiresAt = Carbon::now()->addMinutes(10);
 
         try {
             OTP::create([
-                'token_header' => $otp_header,
-                'actorable_id' => $user->id,
-                'actorable_type' => Student::class,
-                'otp' => $otp,
-                'expires_at' => $expiresAt,
+                'token_header'     => $otpHeader,
+                'actorable_id'     => $student->id,
+                'actorable_type'   => Student::class,
+                'otp'              => $otp,
+                'expires_at'       => $expiresAt,
             ]);
         } catch (\Exception $e) {
+
             throw new AppException(
-                "Failed to create OTP record during student login. Error: " . $e->getMessage(),
+                "Failed to generate login code.",
                 500,
-                "Login System Error 🚨",
-                "A system error occurred while generating your one-time code. Please try logging in again in a moment.",
-                null
+                "Temporary System Issue",
+                "We couldn't send you the verification code right now. Please try again in a few minutes.",
+                request()->path()
             );
         }
 
-        SendOTPViaEmailJob::dispatch($loginData['email'], $otp);
-        return ['otp_token_header' => $otp_header];
+        SendOTPViaEmailJob::dispatch($student->email, $otp);
+
+        return [
+            'otp_token_header' => $otpHeader,
+            'message'          => 'Verification code sent successfully.',
+            'expires_in'       => 600
+        ];
     }
 }

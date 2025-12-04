@@ -48,4 +48,9 @@ class Studentbatch extends Model
     {
         return $this->hasMany(Student::class, 'student_batch_id');
     }
+
+    public function resitExamRef(): HasMany
+    {
+        return $this->hasMany(ResitExamRef::class);
+    }
 }

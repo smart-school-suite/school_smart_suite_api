@@ -222,7 +222,9 @@ class FakeDataSeeder extends Seeder
         ];
 
         $specialties = [];
-        $levels = Educationlevels::all();
+        $levels = Educationlevels::whereHas('levelType', function ($query) {
+             $query->where("program_name", "level_start_100");
+        })->get();
 
         foreach ($departments as $department) {
             $specialtyOptions = $specialtyTemplates[$department->department_name] ?? [
@@ -272,15 +274,13 @@ class FakeDataSeeder extends Seeder
             $lastName = $faker->lastName;
             $gender = $faker->randomElement(['Male', 'Female']);
             $phoneOne = $faker->phoneNumber;
-            $phoneTwo = $faker->boolean(50) ? $faker->phoneNumber : null;
 
             $teachers[] = [
                 'id' => $uuid,
                 'school_branch_id' => $schoolBranch->id,
                 'email' => $faker->unique()->safeEmail,
                 'name' => "$firstName $lastName",
-                'phone_one' => $phoneOne,
-                'phone_two' => $phoneTwo,
+                'phone' => $phoneOne,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'address' => $faker->address,
@@ -310,15 +310,13 @@ class FakeDataSeeder extends Seeder
             $lastName = $faker->lastName;
             $gender = $faker->randomElement(['Male', 'Female']);
             $phoneOne = $faker->phoneNumber;
-            $phoneTwo = $faker->boolean(50) ? $faker->phoneNumber : null;
 
             $parents[] = [
                 'id' => $uuid,
                 'school_branch_id' => $schoolBranch->id,
                 'email' => $faker->unique()->safeEmail,
                 'name' => "$firstName $lastName",
-                'phone_one' => $phoneOne,
-                'phone_two' => $phoneTwo,
+                'phone' => $phoneOne,
                 'address' => $faker->address,
                 'relationship_to_student' => $gender == 'Male' ? 'Father' :  'Mother',
                 'preferred_language' => 'english',
@@ -440,8 +438,7 @@ class FakeDataSeeder extends Seeder
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'gender' => $gender,
-                    'phone_one' => $faker->phoneNumber,
-                    'phone_two' => $faker->phoneNumber,
+                    'phone' => $faker->phoneNumber,
                     'email' => $faker->unique()->safeEmail,
                     'DOB' => $dob,
                     'password' => Hash::make('password'),

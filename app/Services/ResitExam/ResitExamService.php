@@ -17,15 +17,15 @@ class ResitExamService
     {
         DB::beginTransaction();
         try {
-            $resit = ResitExam::where("school_branch_id", $currentSchool->id)
+            $resitExam = ResitExam::where("school_branch_id", $currentSchool->id)
                 ->find($resitExamId);
 
-            if (!$resit) {
+            if (!$resitExam) {
                 return ApiResponseService::error("Resit Not found", null, 404);
             }
 
-            $resit->update($updateData);
-            dispatch(new CreateResitCandidateJob($resit));
+            $resitExam->update($updateData);
+            dispatch(new CreateResitCandidateJob($resitExam));
             DB::commit();
             AdminActionEvent::dispatch(
                 [
@@ -34,11 +34,11 @@ class ResitExamService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "resitExamManagement",
                     "authAdmin" => $authAdmin,
-                    "data" => $resit,
+                    "data" => $resitExam,
                     "message" => "Resit Exam Updated",
                 ]
             );
-            return $resit;
+            return $resitExam;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;

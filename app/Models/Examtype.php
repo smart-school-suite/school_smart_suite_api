@@ -26,9 +26,6 @@ class Examtype extends Model
     public $keyType = 'string';
     public $table = 'exam_types';
 
-    public function examResit(): HasMany {
-        return $this->hasMany(ResitExam::class);
-    }
    public function semesters(): BelongsTo {
       return $this->belongsTo(Semester::class, 'semester_id');
    }
@@ -36,4 +33,8 @@ class Examtype extends Model
    public function exams(): HasMany {
       return $this->hasMany(Exams::class, 'exam_type_id');
    }
+
+    public function resitExamRef(): HasMany {
+         return $this->hasMany(ResitExamRef::class);
+    }
 }

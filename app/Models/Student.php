@@ -29,8 +29,7 @@ class Student extends Model
         'last_name',
         'DOB',
         'gender',
-        'phone_one',
-        'phone_two',
+        'phone',
         'gender',
         'level_id',
         'school_branch_id',
@@ -42,7 +41,8 @@ class Student extends Model
         'payment_format',
         'email',
         'password',
-        'profile_picture'
+        'profile_picture',
+        'relationship_id'
     ];
 
     /**
@@ -236,5 +236,9 @@ class Student extends Model
     public function badges()
     {
         return $this->morphMany(BadgeAssignment::class, 'assignable');
+    }
+
+    public function studentParentRelationship(){
+         return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
     }
 }

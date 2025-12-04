@@ -18,11 +18,11 @@ class CreateResitCandidateJob implements ShouldQueue
      * Create a new job instance.
      */
     public $tries = 3;
-    protected  $resit;
-    public function __construct($resit)
+    protected  $resitExam;
+    public function __construct($resitExam)
     {
         //
-        $this->resit = $resit;
+        $this->resitExam = $resitExam;
     }
 
     /**
@@ -32,24 +32,25 @@ class CreateResitCandidateJob implements ShouldQueue
     {
         //
         // Logic to create resit candidates
-        $resitCandidates = Studentresit::select('student_id', 'specialty_id', 'level_id')
-            ->where('specialty_id', $this->resit->specialty_id)
-            ->where('level_id', $this->resit->level_id)
+        $resitExamCandidates = Studentresit::select('student_id', 'specialty_id', 'level_id')
+            ->where('specialty_id', $this->resitExam->specialty_id)
+            ->where('level_id', $this->resitExam->level_id)
+            ->where("semester_id", $this->resitExam->semester_id)
             ->distinct()
             ->get();
 
-        foreach ($resitCandidates as $candidate) {
+        foreach ($resitExamCandidates as $candidate) {
             ResitCandidates::create([
                 'student_id' => $candidate->student_id,
-                'resit_exam_id' => $this->resit->id,
-                'school_branch_id' => $this->resit->school_branch_id,
+                'resit_exam_id' => $this->resitExam->id,
+                'school_branch_id' => $this->resitExam->school_branch_id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
         // Update the expected candidate number
-        $this->resit->expected_candidate_number = $resitCandidates->count();
-        $this->resit->save();
+        $this->resitExam->expected_candidate_number = $resitExamCandidates->count();
+        $this->resitExam->save();
     }
 }

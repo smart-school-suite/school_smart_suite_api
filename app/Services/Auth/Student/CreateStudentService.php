@@ -65,11 +65,12 @@ class CreateStudentService
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
             $student->gender = $studentData['gender'];
-            $student->phone_one = $studentData['phone_one'] ?? null;
+            $student->phone = $studentData['phone'] ?? null;
             $student->last_name = $studentData["last_name"];
             $student->guardian_id = $studentData["guardian_id"];
             $student->email = $studentData["email"];
             $student->level_id = $specialty->level_id;
+            $student->relationship_id = $studentData['relationship_id'];
             $student->specialty_id = $specialty->id;
             $student->department_id = $specialty->department_id;
             $student->student_batch_id = $studentData["student_batch_id"];

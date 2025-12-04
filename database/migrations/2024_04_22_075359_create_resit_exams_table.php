@@ -24,6 +24,11 @@ return new class extends Migration
             $table->string('school_year')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('resit_exam_references', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
     }
 
     /**

@@ -21,6 +21,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Events\Actions\AdminActionEvent;
+use App\Models\EventAudience;
+use App\Models\Specialty;
 
 class CreateEventService
 {
@@ -148,15 +150,16 @@ class CreateEventService
                     'event_category_id' => $data['event_category_id'],
                     'notification_sent_at' => null,
                     'tags' => json_encode($tags->toArray()),
-                    'audience' => json_encode(array_filter([
-                        'teachers' => $data['teacher_ids'] ?? null,
-                        'admins' => $data['school_admin_ids'] ?? null,
-                        'students' => $data['student_audience'] ?? null,
-                    ])),
                     'school_branch_id' => $currentSchool->id,
                 ];
 
                 $schoolEvent = SchoolEvent::create($schoolEventData);
+
+                $this->createAudience($currentSchool, $schoolEventId, [
+                    'teachers' => $data['teacher_ids'] ?? null,
+                    'admins' => $data['school_admin_ids'] ?? null,
+                    'students' => $data['student_audience'] ?? null,
+                ]);
 
                 $endDate = Carbon::parse($data['end_date']);
                 $startDate = Carbon::parse($data['start_date']);
@@ -209,6 +212,48 @@ class CreateEventService
         }
     }
 
+    private function createAudience($currentSchool, $schoolEventId, $audience)
+    {
+        $audienceList = [];
+        if (!empty($audience['teachers'])) {
+            $teacherIds = $audience['teachers'];
+            foreach ($teacherIds as $teacherId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "event_id" => $schoolEventId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $teacherId['teacher_id'],
+                    'audienceable_type' => Teacher::class
+                ];
+            }
+        }
+        if (!empty($audience['admins'])) {
+            $adminIds = $audience['admins'];
+            foreach ($adminIds as $adminId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "event_id" => $schoolEventId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $adminId['school_admin_id'],
+                    'audienceable_type' => Schooladmin::class
+                ];
+            }
+        }
+
+        if (!empty($audience['students'])) {
+            $studentIds = $audience['students'];
+            foreach ($studentIds as $studentId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "event_id" => $schoolEventId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $studentId['student_audience_id'],
+                    'audienceable_type' => Specialty::class
+                ];
+            }
+        }
+        EventAudience::insert($audienceList);
+    }
     protected function collectRecipients($currentSchool, array $data): Collection
     {
         $recipients = collect();

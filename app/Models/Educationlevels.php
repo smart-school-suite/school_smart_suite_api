@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Educationlevels extends Model
 {
     use HasFactory, GeneratesUuid;
@@ -13,6 +15,8 @@ class Educationlevels extends Model
     protected $fillable = [
         'name',
         'level',
+        'program_name',
+        'level_type_id',
         'status'
     ];
 
@@ -21,6 +25,9 @@ class Educationlevels extends Model
     public $table = 'levels';
 
 
+    public function resitExamRef(): HasMany {
+         return $this->hasMany(ResitExamRef::class);
+    }
     public function specialtyHall(): HasMany {
          return $this->hasMany(SpecialtyHall::class);
     }
@@ -36,9 +43,6 @@ class Educationlevels extends Model
     public function electionParticipants(): HasMany
     {
         return $this->hasMany(ElectionParticipants::class);
-    }
-    public function examResit(): HasMany {
-        return $this->hasMany(ResitExam::class);
     }
     public function resitResults(): HasMany
     {
@@ -104,5 +108,9 @@ class Educationlevels extends Model
     public function studentresit(): HasMany
     {
         return $this->hasMany(Studentresit::class);
+    }
+
+    public function levelType(): BelongsTo {
+         return $this->belongsTo(LevelType::class, 'level_type_id');
     }
 }

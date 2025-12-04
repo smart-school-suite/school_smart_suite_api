@@ -6,7 +6,6 @@ use App\Jobs\DataCleanupJobs\CleanSchoolEventData;
 use App\Jobs\DataCleanupJobs\UpdateSchoolEventStatusJob;
 use App\Jobs\DataCreationJob\CreateSchoolEventLikeStatusJob;
 use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
-use App\Events\AdminSchoolEvent\AdminSchoolEventStatusUpdatedEvent;
 use App\Models\EventTag;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
@@ -20,6 +19,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Events\Actions\AdminActionEvent;
 use Throwable;
+use App\Models\EventAudience;
+use App\Models\Specialty;
+use Illuminate\Support\Str;
 
 class UpdateDraftEventStatusService
 {
@@ -200,15 +202,15 @@ class UpdateDraftEventStatusService
                     'category_id' => $eventData['category_id'] ?? $schoolEvent->category_id,
                     'notification_sent_at' => null,
                     'tags' => $eventData['tags'] ?? $schoolEvent->tags,
-                    'audience' => json_encode(array_filter([
-                        'teachers' => $eventData['teacher_ids'] ?? json_decode($schoolEvent->audience, true)['teachers'] ?? null,
-                        'admins' => $eventData['school_admin_ids'] ?? json_decode($schoolEvent->audience, true)['admins'] ?? null,
-                        'students' => $eventData['student_audience'] ?? json_decode($schoolEvent->audience, true)['students'] ?? null,
-                    ])),
                     'school_branch_id' => $currentSchool->id,
                 ];
 
                 $schoolEvent->update($eventDataToUpdate);
+                $this->createAudience($currentSchool, $schoolEvent->id, [
+                        'teachers' => $eventData['teacher_ids'],
+                        'admins' => $eventData['school_admin_ids'],
+                        'students' => $eventData['student_audience']
+                ]);
 
                 if ($status !== 'draft') {
                     $startDate = Carbon::parse($eventData['start_date'] ?? $schoolEvent->start_date);
@@ -260,6 +262,50 @@ class UpdateDraftEventStatusService
         }
     }
 
+    private function createAudience($currentSchool, $schoolEventId, $audience)
+    {
+        EventAudience::where("event_id", $schoolEventId)->where("school_branch_id", $currentSchool->id)
+            ->delete();
+        $audienceList = [];
+        if (!empty($audience['teachers'])) {
+            $teacherIds = $audience['teachers'];
+            foreach ($teacherIds as $teacherId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "event_id" => $schoolEventId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $teacherId['teacher_id'],
+                    'audienceable_type' => Teacher::class
+                ];
+            }
+        }
+        if (!empty($audience['admins'])) {
+            $adminIds = $audience['admins'];
+            foreach ($adminIds as $adminId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "event_id" => $schoolEventId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $adminId['school_admin_id'],
+                    'audienceable_type' => Schooladmin::class
+                ];
+            }
+        }
+
+        if (!empty($audience['students'])) {
+            $studentIds = $audience['students'];
+            foreach ($studentIds as $studentId) {
+                $audienceList[] = [
+                    "id" => Str::uuid()->toString(),
+                    "event_id" => $schoolEventId,
+                    "school_branch_id" => $currentSchool->id,
+                    "audienceable_id" => $studentId['student_audience_id'],
+                    'audienceable_type' => Specialty::class
+                ];
+            }
+        }
+        EventAudience::insert($audienceList);
+    }
     protected function getTags(array $data): Collection
     {
         if (empty($data['tag_ids'])) {

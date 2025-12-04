@@ -24,28 +24,36 @@ class Specialty extends Model
     ];
 
     protected $cast = [
-         'school_fee' => 'decimal:2',
-         'registration_fee' => 'decimal:2'
+        'school_fee' => 'decimal:2',
+        'registration_fee' => 'decimal:2'
     ];
     public $keyType = 'string';
     public $table = 'specialties';
     public $incrementing = 'false';
 
-
-    public function specialtyHall(): HasMany {
-         return $this->hasMany(SpecialtyHall::class);
+    public function resitExamRef(): HasMany
+    {
+        return $this->hasMany(ResitExamRef::class);
     }
-    public function examCandidate(): HasMany {
-         return $this->hasMany(AccessedStudent::class);
+    public function specialtyHall(): HasMany
+    {
+        return $this->hasMany(SpecialtyHall::class);
     }
-     public function instructorAvailability(): HasMany {
+    public function examCandidate(): HasMany
+    {
+        return $this->hasMany(AccessedStudent::class);
+    }
+    public function instructorAvailability(): HasMany
+    {
         return $this->hasMany(InstructorAvailability::class);
     }
 
-    public function instructorAvailabilitySlot(): HasMany {
+    public function instructorAvailabilitySlot(): HasMany
+    {
         return $this->hasMany(InstructorAvailabilitySlot::class);
     }
-    public function feeSchedule(): HasMany {
+    public function feeSchedule(): HasMany
+    {
         return $this->hasMany(FeeSchedule::class);
     }
 
@@ -61,11 +69,9 @@ class Specialty extends Model
     {
         return $this->hasMany(ResitResults::class);
     }
-    public function studentFeeSchedule(): HasMany {
+    public function studentFeeSchedule(): HasMany
+    {
         return $this->hasMany(StudentFeeSchedule::class);
-    }
-    public function examResit(): HasMany {
-        return $this->hasMany(ResitExam::class);
     }
     public function resitmarks(): HasMany
     {
@@ -141,5 +147,14 @@ class Specialty extends Model
     public function studentresit(): HasMany
     {
         return $this->hasMany(Studentresit::class);
+    }
+
+    public function eventAudience()
+    {
+        return $this->morphMany(EventAudience::class, 'audienceable');
+    }
+    public function announcementAudience()
+    {
+        return $this->morphMany(AnnouncementAudience::class, 'audienceable');
     }
 }

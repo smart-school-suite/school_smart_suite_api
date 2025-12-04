@@ -456,6 +456,7 @@ class UpdateResitScoreService
                     'specialty_id' => $entry['specialty_id'],
                     'course_id' => $entry['course_id'],
                     'exam_id' => $exam->id,
+                    'semester_id' => $exam->semester_id,
                     'level_id' => $exam->level_id,
                     'student_id' => $entry['student_id'],
                     'student_batch_id' => $exam->student_batch_id

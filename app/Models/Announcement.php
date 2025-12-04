@@ -62,6 +62,9 @@ class Announcement extends Model
         return $this->belongsTo(SchoolBranches::class, 'school_branch_id');
     }
 
+    public function annnouncementAudience(): HasMany {
+         return $this->hasMany(AnnouncementAudience::class);
+    }
 }
 
 

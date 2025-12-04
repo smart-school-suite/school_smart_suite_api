@@ -42,7 +42,7 @@ class Schooladmin extends Authenticatable
     ];
 
     protected $cast = [
-       'date_of_birth' => 'date'
+        'date_of_birth' => 'date'
     ];
     /**
      * The attributes that should be hidden for serialization.
@@ -67,7 +67,6 @@ class Schooladmin extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -131,5 +130,13 @@ class Schooladmin extends Authenticatable
     public function badges()
     {
         return $this->morphMany(BadgeAssignment::class, 'assignable');
+    }
+    public function eventAudience()
+    {
+        return $this->morphMany(EventAudience::class, 'audienceable');
+    }
+    public function announcementAudience()
+    {
+        return $this->morphMany(AnnouncementAudience::class, 'audienceable');
     }
 }

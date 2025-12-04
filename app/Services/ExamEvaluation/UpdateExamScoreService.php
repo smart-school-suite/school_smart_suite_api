@@ -189,7 +189,7 @@ class UpdateExamScoreService
         foreach ($grades as $grade) {
             if ($score >= $grade->minimum_score && $score <= $grade->maximum_score) {
                 if ($grade->resit_status === 'resit') {
-                    $this->createResitableCourse($courseId, $examId, $student, $schoolId);
+                    $this->createResitableCourse($courseId, $exam, $student, $schoolId);
                 }
                 if ($grade->resit_status === 'no_resit') {
                     $this->checkAndRemoveStudentResit($courseId, $examId, $student, $schoolId);
@@ -215,7 +215,7 @@ class UpdateExamScoreService
         ];
     }
 
-    public function createResitableCourse(string $courseId, string $examId, Student $student, string $schoolId): void
+    public function createResitableCourse(string $courseId,  $exam, Student $student, string $schoolId): void
     {
         if (
             !Studentresit::where("student_id", $student->id)
@@ -228,7 +228,8 @@ class UpdateExamScoreService
                 'school_branch_id' => $schoolId,
                 'student_id' => $student->id,
                 'course_id' => $courseId,
-                'exam_id' => $examId,
+                'exam_id' => $exam->id,
+                'semester_id' => $exam->semester_id,
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
             ]);

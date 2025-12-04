@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Auth\SchoolAdmin;
+
 use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
@@ -36,6 +37,15 @@ class LoginSchoolAdminService
                 throw new AuthException("The password you entered is incorrect.", 401, "Authentication Failed", "The password you provided does not match our records.");
             }
 
+            if ($user->status == "inactive") {
+                throw new AuthException(
+                    "ACCOUNT_DEACTIVATED",
+                    403,
+                    "Account Deactivated",
+                    "Your student account has been deactivated. Please contact your school administration to resolve this issue.",
+                    null
+                );
+            }
             $otp = random_int(100000, 999999);
             $otp_header = Str::random(200);
             $expiresAt = Carbon::now()->addMinutes(config('auth.otp_expiry_minutes', 5));
@@ -51,7 +61,6 @@ class LoginSchoolAdminService
             SendOTPViaEmailJob::dispatch($user->email, $otp);
 
             return ['otp_token_header' => $otp_header];
-
         } catch (AuthException $e) {
             throw $e;
         } catch (Exception $e) {
