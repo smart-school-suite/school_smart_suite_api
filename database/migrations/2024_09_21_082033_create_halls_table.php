@@ -18,6 +18,8 @@ return new class extends Migration
             $table->enum("type", ["lab", "lecture"]);
             $table->boolean('is_exam_hall')->default(true);
             $table->enum('status', ['available', 'unavailable'])->default('available');
+            $table->integer('num_assigned_specialties')->default(0);
+            $table->enum('assignment_status', ['assigned', 'unassigned'])->default('unassigned');
             $table->string('location')->nullable();
             $table->timestamps();
         });

@@ -18,7 +18,9 @@ class Hall extends Model
         'type',
         'location',
         'school_branch_id',
-        'is_exam_hall'
+        'is_exam_hall',
+        'num_assigned_specialties',
+        'assignment_status'
     ];
 
     protected $cast = [

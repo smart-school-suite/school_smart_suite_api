@@ -23,7 +23,10 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('address')->nullable();
             $table->string('gender');
-            $table->rememberToken();
+            $table->integer('num_assigned_courses')->default(0);
+            $table->enum('course_assignment_status', ['assigned', 'unassigned'])->default('assigned');
+            $table->integer('num_assigned_specialties')->default(0);
+            $table->enum('specialty_assignment_status', ['assigned', 'unassigned'])->default('assigned');
             $table->timestamps();
         });
 

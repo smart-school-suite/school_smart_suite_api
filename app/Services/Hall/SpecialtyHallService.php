@@ -8,86 +8,102 @@ use App\Models\Specialty;
 use App\Exceptions\AppException;
 use App\Models\Student;
 use App\Events\Actions\AdminActionEvent;
+use Illuminate\Support\Facades\DB;
 
 class SpecialtyHallService
 {
     public function assignHallToSpecialty($currentSchool, $data, $authAdmin)
     {
-        $hall = Hall::where("school_branch_id", $currentSchool->id)
-            ->find($data['hall_id']);
-        if (!$hall) {
-            throw new AppException(
-                "Hall Not Found, it might have been deleted please try again",
-                404,
-                "Hall Not Found",
-                "The Hall Your Trying to update was not found it might have been deleted please verify and try again"
-            );
-        }
-        $specialty = Specialty::where("school_branch_id", $currentSchool->id)
-            ->with(['level'])
-            ->find($data["specialty_id"]);
+        return DB::transaction(function () use ($currentSchool, $data, $authAdmin) {
+            $hall = Hall::where("school_branch_id", $currentSchool->id)
+                ->lockForUpdate()
+                ->find($data['hall_id']);
 
-        if (!$specialty) {
-            throw new AppException(
-                "The specialty you are trying to Assign Was Not Found.",
-                404,
-                "Specialty Not Found",
-                "We could not find the specialty with the provided ID for this school. It may have already been deleted.",
-                null
-            );
-        }
+            if (!$hall) {
+                throw new AppException(
+                    "Hall Not Found, it might have been deleted please try again",
+                    404,
+                    "Hall Not Found",
+                    "The Hall you're trying to update was not found. It might have been deleted. Please verify and try again."
+                );
+            }
 
-        $alreadyAssigned = SpecialtyHall::where("school_branch_id", $currentSchool->id)
-            ->where("hall_id", $data["hall_id"])
-            ->where("specialty_id", $specialty->id)
-            ->where("level_id", $specialty->level->id)
-            ->first();
+            $specialty = Specialty::where("school_branch_id", $currentSchool->id)
+                ->with(['level'])
+                ->find($data["specialty_id"]);
 
-        if ($alreadyAssigned) {
-            throw new AppException(
-                "Specialty Already Already Assigned to this hall",
-                404,
-                "Specialty Already Assigned",
-                "{$specialty->specialty_name} {$specialty->level->level_name} already assigned to {$hall->name}, please select another hall and try again"
-            );
-        }
+            if (!$specialty) {
+                throw new AppException(
+                    "The specialty you are trying to assign was not found.",
+                    404,
+                    "Specialty Not Found",
+                    "We could not find the specialty with the provided ID for this school. It may have been deleted."
+                );
+            }
 
-        $studentCount = Student::where("school_branch_id", $currentSchool->id)
-            ->where("specialty_id", $specialty->id)
-            ->where("level_id", $specialty->level_id)
-            ->count();
+            $alreadyAssigned = SpecialtyHall::where("school_branch_id", $currentSchool->id)
+                ->where("hall_id", $hall->id)
+                ->where("specialty_id", $specialty->id)
+                ->where("level_id", $specialty->level_id)
+                ->exists();
 
-        if ($studentCount > $hall->capacity) {
-            throw new AppException(
-                "Student Count Greater than max hall Capacity",
-                404,
-                "Student Count Greater than max hall capacity",
-                "The Number of students {$studentCount} for {$specialty->specialty_name}, {$specialty->level->level_name}, is greater than {$hall->name} with max capacity {$hall->capacity}"
-            );
-        }
+            if ($alreadyAssigned) {
+                throw new AppException(
+                    "Specialty already assigned to this hall",
+                    409,
+                    "Duplicate Assignment",
+                    "{$specialty->specialty_name} ({$specialty->level->level_name}) is already assigned to {$hall->name}."
+                );
+            }
 
-        $specialtyHall = SpecialtyHall::create([
-            'specialty_id' => $specialty->id,
-            'level_id' => $specialty->level_id,
-            'hall_id' => $hall->id,
-            'school_branch_id' => $currentSchool->id
-        ]);
+            $studentCount = Student::where("school_branch_id", $currentSchool->id)
+                ->where("specialty_id", $specialty->id)
+                ->where("level_id", $specialty->level_id)
+                ->count();
 
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.specialtyHall.assign"],
+            if ($studentCount > $hall->capacity) {
+                throw new AppException(
+                    "Student count exceeds hall capacity",
+                    400,
+                    "Capacity Exceeded",
+                    "There are {$studentCount} students in {$specialty->specialty_name} ({$specialty->level->level_name}), which exceeds {$hall->name}'s capacity of {$hall->capacity}."
+                );
+            }
+
+            $specialtyHall = SpecialtyHall::create([
+                'specialty_id' => $specialty->id,
+                'level_id' => $specialty->level_id,
+                'hall_id' => $hall->id,
+                'school_branch_id' => $currentSchool->id
+            ]);
+
+            $wasUnassigned = $hall->assignment_status === 'unassigned';
+
+            $hall->increment('num_assigned_specialties');
+
+            if ($wasUnassigned) {
+                $hall->assignment_status = 'assigned';
+                $hall->save();
+            }
+
+            AdminActionEvent::dispatch([
+                "permissions" => ["schoolAdmin.specialtyHall.assign"],
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
+                "schoolBranch" => $currentSchool->id,
                 "feature" => "hallManagement",
                 "authAdmin" => $authAdmin,
-                "data" =>  $hall,
-                "message" => "Specialty Assigned To Hall",
-            ]
-        );
-        return $specialtyHall;
+                "data" => [
+                    'hall' => $hall->name,
+                    'specialty' => $specialty->specialty_name,
+                    'level' => $specialty->level->level_name,
+                    'student_count' => $studentCount
+                ],
+                "message" => "Specialty assigned to hall successfully",
+            ]);
+
+            return $specialtyHall;
+        });
     }
-
-
     public function getAvailableAssignableHalls($currentSchool, $specialtyId)
     {
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -122,7 +138,6 @@ class SpecialtyHallService
 
         return $assignableHalls;
     }
-
     public function getAssignedHalls($currentSchool, $specialtyId)
     {
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -153,33 +168,59 @@ class SpecialtyHallService
 
         return $assignedHalls;
     }
-
     public function removeAssignedHalls($currentSchool, $specialtyHallId, $authAdmin)
     {
-        $specialtyHall = SpecialtyHall::where("school_branch_id", $currentSchool->id)
-            ->find($specialtyHallId);
+        return DB::transaction(function () use ($currentSchool, $specialtyHallId, $authAdmin) {
 
-        if ($specialtyHall) {
-            throw new AppException(
-                "Specialty Hall Not Found",
-                404,
-                "Specialty Hall Not Found",
-                "We Could Not Find the HAll Assigned to this specialty it might have been deleted please try again"
-            );
-        }
+            $specialtyHall = SpecialtyHall::where('school_branch_id', $currentSchool->id)
+                ->with(['hall', 'specialty.level'])
+                ->lockForUpdate()
+                ->find($specialtyHallId);
 
-        $specialtyHall->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.specialtyHall.remove"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "hallManagement",
-                "authAdmin" => $authAdmin,
-                "data" =>  $specialtyHall,
-                "message" => "Specialty Removed From Hall",
-            ]
-        );
-        return $specialtyHall;
+            if (!$specialtyHall) {
+                throw new AppException(
+                    "Assigned hall not found",
+                    404,
+                    "Assignment Not Found",
+                    "The hall assignment you are trying to remove does not exist or may have already been deleted."
+                );
+            }
+
+            $hall = $specialtyHall->hall;
+            if (!$hall) {
+                throw new AppException("Hall missing from assignment record", 500);
+            }
+
+            $hallName      = $hall->name;
+            $specialtyName = $specialtyHall->specialty?->specialty_name ?? 'Unknown';
+            $levelName     = $specialtyHall->specialty?->level?->level_name ?? 'Unknown';
+
+            $specialtyHall->delete();
+
+            $hall->decrement('num_assigned_specialties');
+
+            if ($hall->num_assigned_specialties <= 0) {
+                $hall->num_assigned_specialties = 0;
+                $hall->assignment_status = 'unassigned';
+                $hall->save();
+            }
+
+            AdminActionEvent::dispatch([
+                "permissions"  => ["schoolAdmin.specialtyHall.remove"],
+                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature"      => "hallManagement",
+                "authAdmin"    => $authAdmin,
+                "data"         => [
+                    'hall'          => $hallName,
+                    'specialty'     => $specialtyName,
+                    'level'         => $levelName,
+                    'hall_id'       => $hall->id,
+                ],
+                "message" => "Specialty removed from hall successfully",
+            ]);
+
+            return true;
+        });
     }
 }

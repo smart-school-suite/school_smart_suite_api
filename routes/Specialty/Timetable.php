@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Timetable\TimetableController;
+use App\Http\Controllers\Timetable\AIGenTimetableController;
 // Create a new timetable based on availability for a specific semester
 Route::middleware(['permission:schoolAdmin.specialty.timetable.create'])->post('/semesters/timetable/availability', [TimeTableController::class, 'createTimetableByAvailability'])
     ->name('semesters.timetable.availability.store');
@@ -40,3 +41,4 @@ Route::middleware(['permission:schoolAdmin.specialty.timetable.avialability.view
 
 
 Route::get('/student', [TimeTableController::class, 'getTimetableStudent'])->name('get.student.timetable');
+Route::post('/ai-generate-timetable', [AIGenTimetableController::class, 'generateTimetable'])->name('ai.generate.timetable');

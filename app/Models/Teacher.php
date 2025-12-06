@@ -32,7 +32,11 @@ class Teacher extends Model
         'status',
         'profile_picture',
         'address',
-        'gender'
+        'gender',
+        'num_assigned_courses',
+        'course_assignment_status',
+        'num_assigned_specialties',
+        'specialty_assignment_status'
     ];
 
     /**
@@ -42,7 +46,6 @@ class Teacher extends Model
      */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
     /**
