@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-
 class ActivationCodeUsage extends Model
 {
+    use GeneratesUuid;
     protected $fillable = [
         'school_branch_id',
         'activation_code_id',

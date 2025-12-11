@@ -27,6 +27,7 @@ return new class extends Migration
             $table->enum('course_assignment_status', ['assigned', 'unassigned'])->default('assigned');
             $table->integer('num_assigned_specialties')->default(0);
             $table->enum('specialty_assignment_status', ['assigned', 'unassigned'])->default('assigned');
+            $table->enum('sub_status', ['subscribed', 'expired', 'renewed', 'pending'])->default('pending');
             $table->timestamps();
         });
 
@@ -49,7 +50,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-                Schema::create('teacher_specialty_preferences', function (Blueprint $table) {
+        Schema::create('teacher_specialty_preferences', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->timestamps();
         });

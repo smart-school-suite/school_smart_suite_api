@@ -27,7 +27,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->boolean('dropout_status')->default(false);
             $table->enum('payment_format', ["one time", "installmental"])->default('installmental');
-            $table->rememberToken();
+            $table->enum('sub_status', ['subscribed','expired','renewed','pending'])->default('pending');
             $table->timestamps();
         });
 

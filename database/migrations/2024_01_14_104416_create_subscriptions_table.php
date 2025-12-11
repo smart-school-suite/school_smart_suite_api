@@ -51,7 +51,7 @@ return new class extends Migration
         Schema::create('school_transactions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->enum('type', ['activation_code_purchase', 'subscription_purchase', 'subscription_upgrade']);
-            $table->decimal('amount', 8, 2);
+            $table->decimal('amount', 15, 2);
             $table->string('payment_ref');
             $table->string('transaction_id');
             $table->enum('status', ['pending', 'failed', 'completed']);

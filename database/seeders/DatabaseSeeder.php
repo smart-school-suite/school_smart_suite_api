@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ActivationCodeType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -32,6 +33,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SettingDefinationSeeder::class);
         $this->call(StudentParentRelationshipSeeder::class);
         $this->call(LevelSeeder::class);
+        $this->call(ActivationCodeType::class);
         $this->call(FeaturePlanSeeder::class);
     }
 }

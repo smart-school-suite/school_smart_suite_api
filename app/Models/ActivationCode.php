@@ -17,7 +17,8 @@ class ActivationCode extends Model
          'duration',
          'expires_at',
          'school_branch_id',
-         'country_id'
+         'country_id',
+         'activation_code_type_id'
     ];
 
     public $keyType = 'string';
@@ -31,6 +32,9 @@ class ActivationCode extends Model
          return $this->belongsTo(Country::class, 'country_id');
     }
 
+    public function activationCodeType(): BelongsTo {
+         return $this->belongsTo(ActivationCodeType::class, 'activation_code_type_id');
+    }
     public function schoolBranch(): BelongsTo {
          return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }

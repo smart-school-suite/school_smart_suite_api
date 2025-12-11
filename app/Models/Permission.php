@@ -14,7 +14,9 @@ class Permission extends SpatiePermission
     protected $fillable  = [
         'name',
         'guard_name',
-        'permission_category_id'
+        'permission_category_id',
+        'desc_name',
+        'desc_text'
     ];
 
     public function permissionCategory(): BelongsTo {

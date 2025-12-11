@@ -24,6 +24,9 @@ class Country extends Model
     public $table = 'countries';
     public $incrementing = 'false';
 
+    public function activationCodeType(): HasMany {
+         return $this->hasMany(ActivationCodeType::class);
+    }
     public function paymentMethod(): HasMany {
          return $this->hasMany(PaymentMethod::class);
     }

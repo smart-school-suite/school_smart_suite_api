@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Controllers\ActivationCode;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ActivationCode\ActivateStudentAccountRequest;
+use App\Http\Requests\ActivationCode\ActivateTeacherAccountRequest;
+use App\Http\Requests\ActivationCode\PurchaseActivationCodeRequest;
+use Illuminate\Http\Request;
+use App\Services\ActivationCode\ActivationCodeService;
+use App\Services\ApiResponseService;
+
+class ActivationCodeController extends Controller
+{
+    protected ActivationCodeService $activationCodeService;
+    public function __construct(ActivationCodeService $activationCodeService)
+    {
+        $this->activationCodeService = $activationCodeService;
+    }
+    public function purchaseActivationCode(PurchaseActivationCodeRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $purchaseCodes = $this->activationCodeService->purchaseActivationCode($request->validated(), $currentSchool);
+        return ApiResponseService::success("Activation Code Purchased Successfully", $purchaseCodes, null, 200);
+    }
+    public function getSchoolBranchActivationCodes(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activationCodes = $this->activationCodeService->getSchoolBranchActivationCodes($currentSchool);
+        return ApiResponseService::success("Activation Code Fetched Successfully", $activationCodes, null, 200);
+    }
+    public function activateStudentAccount(ActivateStudentAccountRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activateStudent = $this->activationCodeService->activateStudentAccount($request->validated(), $currentSchool);
+        return ApiResponseService::success("Student Account Activated Successfully", $activateStudent, null, 200);
+    }
+    public function activateTeacherAccount(ActivateTeacherAccountRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activateTeacher = $this->activationCodeService->activateTeacherAccount($request->validated(), $currentSchool);
+        return ApiResponseService::success("Teacher Account Activated Successfully", $activateTeacher, null, 200);
+    }
+}

@@ -29,6 +29,8 @@ return new class extends Migration
             $table->uuid('uuid')->primary()->unique();
             $table->string('name');
             $table->string('guard_name');
+            $table->string('desc_name')->nullable();
+            $table->string('desc_text')->nullable();
             $table->timestamps();
 
             $table->unique(['name', 'guard_name']);

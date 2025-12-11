@@ -251,6 +251,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::prefix('api/v1/payment-method')
                 ->group(base_path('routes/PaymentMethod/PaymentMethod.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/activation-code')
+              ->group(base_path('routes/ActivationCode/ActivationCode.php'));
+
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/activation-code-type')
+              ->group(base_path('routes/ActivationCode/ActivationCodeType.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

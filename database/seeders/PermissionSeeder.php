@@ -59,12 +59,16 @@ class PermissionSeeder extends Seeder
         Permission::create([
             'name' => "schoolAdmin.student.create",
             "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
+            "permission_category_id" => $studentMananger->id,
+            "desc_name" => "Create Student",
+            "desc_text" => "Manages Student Creation"
         ]);
         Permission::create([
             'name' => "schoolAdmin.student.update",
             "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
+            "permission_category_id" => $studentMananger->id,
+            "desc_name" => "Update Student",
+            "desc_text" => "Manages Student Updates"
         ]);
         Permission::create([
             'name' => "schoolAdmin.student.activate",

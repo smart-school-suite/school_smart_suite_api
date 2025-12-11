@@ -41,6 +41,7 @@ class Student extends Model
         'payment_format',
         'email',
         'password',
+        "sub_status",
         'profile_picture',
         'relationship_id'
     ];
