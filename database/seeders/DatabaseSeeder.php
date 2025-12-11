@@ -12,6 +12,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(CountrySeeder::class);
+        $this->call(FeatureSeeder::class);
+        $this->call(PlanSeeder::class);
         $this->call(LevelTypeSeeder::class);
         $this->call(PermissionCategorySeeder::class);
         $this->call(RoleSeeder::class);
@@ -23,13 +26,12 @@ class DatabaseSeeder extends Seeder
         $this->call(StudentBadgeSeeder::class);
         $this->call(SemesterSeeder::class);
         $this->call(LetterGradeSeeder::class);
-        $this->call(CountrySeeder::class);
-        $this->call(RateCardSeeder::class);
         $this->call(ExamTypeSeeder::class);
         $this->call(GradeCategorySeeder::class);
         $this->call(SettingCategorySeeder::class);
         $this->call(SettingDefinationSeeder::class);
         $this->call(StudentParentRelationshipSeeder::class);
         $this->call(LevelSeeder::class);
+        $this->call(FeaturePlanSeeder::class);
     }
 }

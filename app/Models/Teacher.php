@@ -66,6 +66,10 @@ class Teacher extends Model
         ];
     }
 
+    public function activationCode(): MorphMany
+    {
+        return $this->morphMany(ActivationCodeUsage::class, 'actorable');
+    }
     public function routeNotificationForFcm()
     {
         return $this->devices()->pluck('token')->toArray();

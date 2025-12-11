@@ -13,6 +13,7 @@ use App\Http\Requests\SchoolAdmin\UpdateSchoolAdminRequest;
 use App\Services\SchoolAdmin\SchoolAdminService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class SchoolAdminController extends Controller
 {
@@ -52,13 +53,26 @@ class SchoolAdminController extends Controller
     public function createAdminOnSignup(CreateSchoolSuperAdminRequest $request)
     {
         try {
-            $schoolBranchApiKey = $request->header('API-KEY');
-            if (!$schoolBranchApiKey) {
-                ApiResponseService::error("School Branch Api Key is required please provide a valid api key", null, 400);
+            $providedKey = $request->header('API-KEY');
+
+            if (!$providedKey) {
+                return ApiResponseService::error("School Branch Api Key is required please provide a valid api key", null, 400);
             }
-            $schoolBranch = SchoolBranchApiKey::where("api_key", $schoolBranchApiKey)->with(['schoolBranch'])->first();
-            $createSchoolAdmin = $this->schoolAdminService->createSchoolAdmin($request->validated(), $schoolBranch->schoolBranch->id);
-            return ApiResponseService::success("School Admin Created Sucessfully", $createSchoolAdmin, null, 201);
+
+            $apiKeyRecord = SchoolBranchApiKey::with('schoolBranch')
+                ->get()
+                ->first(fn($record) => Hash::check($providedKey, $record->api_key));
+
+            if (!$apiKeyRecord?->schoolBranch) {
+                return ApiResponseService::error("Invalid or unauthorized API key", null, 401);
+            }
+
+            $createSchoolAdmin = $this->schoolAdminService->createSchoolAdmin(
+                $request->validated(),
+                $apiKeyRecord->schoolBranch->id
+            );
+
+            return ApiResponseService::success("School Admin Created Successfully", $createSchoolAdmin, null, 201);
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Subscription;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Subscription\RenewSubscriptionPlanRequest;
 use App\Http\Requests\Subscription\SchoolSubscriptionRequest;
+use App\Http\Requests\Subscription\UpgradeSubscriptionPlanRequest;
 use App\Services\Subscription\SchoolSubscriptionService;
 use App\Services\ApiResponseService;
+use Illuminate\Http\Request;
 
 class SchoolSubscriptionController extends Controller
 {
@@ -18,23 +20,23 @@ class SchoolSubscriptionController extends Controller
     }
     public function subscribe(SchoolSubscriptionRequest $request)
     {
-        try {
-            $schoolSubcription = $this->schoolSubcriptionService->subscribe($request->validated());
-            return ApiResponseService::success("School Subcription Was Succesfully", $schoolSubcription, null, 200);
-        } catch (\Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $schoolSubcription = $this->schoolSubcriptionService->subscribe($request->validated());
+        return ApiResponseService::success("School Subcription Was Succesfully", $schoolSubcription, null, 200);
     }
-
-    public function getSubscribedSchools(Request $request)
-    {
-        $getAllSubcribedSchools = $this->schoolSubcriptionService->getAllSubcription();
-        return ApiResponseService::success("Schoo Subcription Fetched Sucessfully", $getAllSubcribedSchools, null, 200);
+    public function upgradePlan(UpgradeSubscriptionPlanRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $upgradePlan = $this->schoolSubcriptionService->upgradePlan($request->validated(), $currentSchool);
+        return ApiResponseService::success("Plan Upgraded Successfully", $upgradePlan, null, 200);
     }
-
-    public function getSchoolSubscriptonDetails($subscriptionId)
+    public function renewPlan(RenewSubscriptionPlanRequest $request){
+        $currentSchool = $request->attributes->get('currentSchool');
+        $renewPlan = $this->schoolSubcriptionService->renewSubscription($request->validated(), $currentSchool);
+        return ApiResponseService::success("Subscription Plan Renewed Successfully", $renewPlan, null, 200);
+    }
+    public function getSchoolSubscriptions(Request $request)
     {
-        $subscriptionDetails = $this->schoolSubcriptionService->subcriptionPlanDetails($subscriptionId);
-        return ApiResponseService::success("Subcription Details Fetched Sucessfully", $subscriptionDetails, null, 200);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $subscriptions = $this->schoolSubcriptionService->getSchoolBranchSubscription($currentSchool);
+        return ApiResponseService::success("School Subscription Fetched Successfully", $subscriptions, null, 200);
     }
 }

@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use App\Models\Country;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,27 +26,43 @@ class Schoolbranches extends Model
         'email',
         "website",
         'final_semester',
-        'abbreviation',
-        'max_gpa'
+        'abbreviation'
     ];
 
     protected $cast = [
         'semester_count' => 'integer',
-        'max_gpa' => 'decimal:2'
     ];
     public $keyType = 'string';
     public $table = 'school_branches';
     public $incrementing = 'false';
 
-
-    public function halls(): HasMany {
+    public function subscriptionUsage(): HasMany
+    {
+        return $this->hasMany(SchoolSubscription::class);
+    }
+    public function affiliateCommission(): HasMany
+    {
+        return $this->hasMany(AffiliateCommission::class);
+    }
+    public function activationCode(): HasMany
+    {
+        return $this->hasMany(ActivationCode::class);
+    }
+    public function schoolTransaction(): HasMany
+    {
+        return $this->hasMany(SchoolTransaction::class);
+    }
+    public function halls(): HasMany
+    {
         return $this->hasMany(Hall::class);
     }
-    public function announcementCategory(): HasMany {
+    public function announcementCategory(): HasMany
+    {
         return $this->hasMany(AnnouncementCategory::class, 'school_branch_id');
     }
 
-    public function announcement(): HasMany {
+    public function announcement(): HasMany
+    {
         return $this->hasMany(Announcement::class, 'school_branch_id');
     }
     public function country(): BelongsTo
@@ -55,7 +70,8 @@ class Schoolbranches extends Model
         return $this->belongsTo(Country::class);
     }
 
-    public function examResit(): HasMany {
+    public function examResit(): HasMany
+    {
         return $this->hasMany(ResitExam::class);
     }
     public function schoolBranchApiKey(): BelongsTo
@@ -101,12 +117,6 @@ class Schoolbranches extends Model
     {
         return $this->hasMany(Schooladmin::class);
     }
-
-    public function schoolbranches(): HasMany
-    {
-        return $this->hasMany(Schoolbranches::class);
-    }
-
     public function specialty(): HasMany
     {
         return $this->hasMany(Specialty::class);
@@ -122,8 +132,13 @@ class Schoolbranches extends Model
         return $this->hasMany(Teacher::class);
     }
 
+    public function schoolBranchSetting(): HasMany
+    {
+        return $this->hasMany(SchoolBranchSetting::class);
+    }
 
-    public function schoolBranchSetting(): HasMany {
-         return $this->hasMany(SchoolBranchSetting::class);
+    public function schoolSubscription(): HasMany
+    {
+        return $this->hasMany(SchoolSubscription::class);
     }
 }

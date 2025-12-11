@@ -2,26 +2,44 @@
 
 namespace App\Services\Subscription;
 
-use App\Models\SubscriptionPayment;
+use App\Exceptions\AppException;
+use App\Models\SchoolTransaction;
 
 class SubscriptionPaymentService
 {
-    public function deletePaymentTransaction($transactionId)
+    public function getSubscriptionTransactions($currentSchool)
     {
-        $findTransaction = SubscriptionPayment::findOrFail($transactionId);
-        $findTransaction->delete();
-        return $findTransaction;
-    }
-
-    public function myTransactions($school_id)
-    {
-        $myTransactions = SubscriptionPayment::where("school_id", $school_id)->with(['schoolSubscription'])->get();
-        return $myTransactions;
-    }
-
-    public function getAllTransactions()
-    {
-        $transactions = SubscriptionPayment::with(['schoolSubscription'])->get();
+        $transactions = SchoolTransaction::where("school_branch_id", $currentSchool->id)
+            ->where('type', "subscription_purchase")
+            ->with(['country'])
+            ->get();
         return $transactions;
     }
+
+    public function getTransactionDetails($currrentSchool, $transactionId)
+    {
+        $transaction = SchoolTransaction::where("school_branch_id", $currrentSchool->id)
+            ->where("type", "subscription_purchase")
+            ->where("id", $transactionId)
+            ->firstOrFail();
+        return $transaction;
+    }
+
+    public function deleteTransaction($currentSchool, $transactionId)
+    {
+        $transaction = SchoolTransaction::where("school_branch_id", $currentSchool->id)
+            ->find($transactionId);
+        if (!$transaction) {
+            throw new AppException(
+                "Transaction Not Found",
+                404,
+                "Transaction Not Found",
+                "Transaction Not Found, the transaction might have been deleted please try or contact customer support"
+            );
+        }
+
+        $transaction->delete();
+        return $transaction;
+    }
+
 }

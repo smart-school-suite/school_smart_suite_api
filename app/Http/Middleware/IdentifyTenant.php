@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use App\Models\SchoolBranchApiKey;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyTenant
@@ -18,12 +18,18 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $schoolBranchApiKey = $request->header('API-KEY');
-        $schoolBranch = SchoolBranchApiKey::where("api_key", $schoolBranchApiKey)->with(['schoolBranch'])->first();
-        if(!$schoolBranch){
+        $providedKey = $request->header('API-KEY');
+
+        $apiKeyRecord = SchoolBranchApiKey::with('schoolBranch')
+            ->get()
+            ->first(fn($record) => Hash::check($providedKey, $record->api_key));
+
+        if (!$apiKeyRecord?->schoolBranch) {
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);
         }
-        $request->attributes->set('currentSchool', $schoolBranch->schoolBranch);
+
+        $request->attributes->set('currentSchool', $apiKeyRecord->schoolBranch);
+
         return $next($request);
     }
 }

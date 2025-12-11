@@ -11,46 +11,58 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('features', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('key', 100);
+            $table->string('name', 150);
+            $table->text('description');
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('limit_type', ['integer','decimal','boolean']);
+            $table->json('default');
+            $table->timestamps();
+        });
+
+        Schema::create('plans', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('key', 100);
+            $table->string('name', 150);
+            $table->decimal('price', 15, 2);
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->text('description');
+            $table->timestamps();
+        });
+
+        Schema::create('plan_features', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->json('value');
+            $table->enum('type', ['integer', 'decimal', 'boolean']);
+            $table->json('default');
+            $table->timestamps();
+        });
 
         Schema::create('school_subscriptions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->integer('max_number_students');
-            $table->integer('max_number_parents');
-            $table->integer('max_number_school_admins');
-            $table->integer('max_number_teacher');
-            $table->decimal('total_monthly_cost', 10, 2)->nullable();
-            $table->decimal('total_yearly_cost', 10, 2)->nullable();
-            $table->enum('billing_frequency', ['monthly', 'yearly']);
-            $table->enum('status', ['active', 'inactive', 'cancelled'])->default('active');
-            $table->timestamp('subscription_start_date');
-            $table->timestamp('subscription_end_date');
-            $table->timestamp('subscription_renewal_date')->nullable();
-            $table->boolean('auto_renewal')->default(true);
-            $table->softDeletes();
+            $table->enum('status', ['pending', 'active', 'expired', 'cancelled']);
+            $table->date('start_date');
+            $table->date('end_date');
             $table->timestamps();
         });
 
-        Schema::create('rate_cards', function (Blueprint $table) {
+        Schema::create('school_transactions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->integer('min_students');
-            $table->integer('max_students');
-            $table->integer('max_school_admins');
-            $table->integer('max_teachers');
-            $table->decimal('monthly_rate_per_student', 10, 2);
-            $table->decimal('yearly_rate_per_student', 10, 2);
-            $table->boolean('is_active')->default(true);
+            $table->enum('type', ['activation_code_purchase', 'subscription_purchase', 'subscription_upgrade']);
+            $table->decimal('amount', 8, 2);
+            $table->string('payment_ref');
+            $table->string('transaction_id');
+            $table->enum('status', ['pending', 'failed', 'completed']);
             $table->timestamps();
         });
 
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::create('subscription_usage', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->timestamp('payment_date');
-            $table->decimal('amount', 10, 2);
-            $table->string('payment_method');
-            $table->enum('payment_status', ['completed', 'failed', 'pending']);
-            $table->string('transaction_id')->nullable();
-            $table->string('currency', 3)->default('XAF');
-            $table->string('description')->nullable();
+            $table->json('limit');
+            $table->json('current_usage');
+            $table->enum('limit_type', ['integer','decimal','boolean']);
             $table->timestamps();
         });
     }
@@ -60,9 +72,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-
+        Schema::dropIfExists('features');
+        Schema::dropIfExists('plans');
+        Schema::dropIfExists('plan_features');
         Schema::dropIfExists('school_subscriptions');
-        Schema::dropIfExists('payments');
-        Schema::dropIfExists('rate_cards');
+        Schema::dropIfExists('school_transactions');
+        Schema::dropIfExists('subscription_usage');
     }
 };

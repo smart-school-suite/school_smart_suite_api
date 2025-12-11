@@ -8,9 +8,10 @@ use App\Http\Requests\Teacher\RemoveSpecialtyPreferenceRequest;
 use App\Services\ApiResponseService;
 use App\Services\Teacher\TeacherSpecialtyPreferenceService;
 use Illuminate\Http\Request;
+
 class TeacherSpecialtyPreferenceController extends Controller
 {
-       protected TeacherSpecialtyPreferenceService $teacherSpecialtyPreferenceService;
+    protected TeacherSpecialtyPreferenceService $teacherSpecialtyPreferenceService;
     public function __construct(TeacherSpecialtyPreferenceService $teacherSpecialtyPreferenceService)
     {
         $this->teacherSpecialtyPreferenceService = $teacherSpecialtyPreferenceService;
@@ -32,22 +33,36 @@ class TeacherSpecialtyPreferenceController extends Controller
 
     public function removeTeacherSpecialtyPreference(RemoveSpecialtyPreferenceRequest $request)
     {
+        $authAdmin = auth()->guard('teacher')->user();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->teacherSpecialtyPreferenceService->removeTeacherSpecialtyPreference($currentSchool, $request->specialty_preferences);
+        $this->teacherSpecialtyPreferenceService->removeTeacherSpecialtyPreference($currentSchool, $request->specialty_preferences, $authAdmin);
         return ApiResponseService::success("Teacher Specialty Preference Removed Successfully", null, null, 200);
     }
 
     public function bulkAddTeacherSpecialtyPreference(BulkTeacherPreferenceRequest $request)
     {
+        $authAdmin = auth()->guard('teacher')->user();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->teacherSpecialtyPreferenceService->bulkAddTeacherSpecialtyPreference($currentSchool, $request->validated());
+        $this->teacherSpecialtyPreferenceService->bulkAddTeacherSpecialtyPreference($currentSchool, $request->validated(), $authAdmin);
         return ApiResponseService::success("Teacher Specialty Preference Added Successfully");
     }
 
     public function bulkRemoveTeacherSpecialtyPreference(BulkTeacherPreferenceRequest $request)
     {
+        $authAdmin = auth()->guard('teacher')->user();
         $currentSchool = $request->attributes->get('currentSchool');
-        $this->teacherSpecialtyPreferenceService->bulkRemoveTeacherSpecialtyPreference($currentSchool, $request->validated());
+        $this->teacherSpecialtyPreferenceService->bulkRemoveTeacherSpecialtyPreference($currentSchool, $request->validated(), $authAdmin);
         return ApiResponseService::success("Teacher Specialty Preference Removed Successfully");
+    }
+
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

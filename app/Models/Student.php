@@ -128,6 +128,10 @@ class Student extends Model
         return $this->morphMany(Otp::class, 'actorable');
     }
 
+    public function activationCode(): MorphMany {
+         return $this->morphMany(ActivationCodeUsage::class, 'actorable');
+    }
+
     public function additionalFees(): HasMany
     {
         return $this->hasMany(AdditionalFees::class, 'student_id');

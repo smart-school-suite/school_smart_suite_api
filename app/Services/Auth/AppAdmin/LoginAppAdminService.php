@@ -3,7 +3,6 @@
 namespace App\Services\Auth\AppAdmin;
 
 use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
-use App\Jobs\SendOtpJob;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Edumanageadmin;
 use Illuminate\Support\Str;

@@ -39,6 +39,12 @@ return new class extends Migration
             $table->decimal('resit_fee', 8, 2)->default(3000.00);
             $table->timestamps();
         });
+
+        Schema::create('school_branch_api_keys', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('api_key')->unique();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -48,5 +54,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('schools');
         Schema::dropIfExists('school_branches');
+        Schema::dropIfExists('school_branch_api_keys');
     }
 };

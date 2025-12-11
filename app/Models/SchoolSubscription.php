@@ -2,39 +2,43 @@
 
 namespace App\Models;
 
-use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolSubscription extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory;
 
     protected $fillable = [
-        'school_branch_id', 'subscription_plan_id', 'total_monthly_cost', 'total_yearly_cost', 'billing_frequency',
-        'status', 'subscription_start_date', 'subscription_end_date', 'subscription_renewal_date',
-        'auto_renewal', 'rate_card_id', 'max_number_students', 'max_number_parents', 'max_number_school_admins',
-        'max_number_teacher'
+        'id',
+        'status',
+        'start_date',
+        'end_date',
+        'country_id',
+        'school_branch_id',
+        'plan_id'
     ];
 
-    protected $dates = ['subscription_start_date', 'subscription_end_date', 'subscription_renewal_date', 'deleted_at'];
+    protected $dates = ['start_date', 'end_date'];
 
     public $keyType = 'string';
     public $incrementing = false;
     public $table = 'school_subscriptions';
 
-    public function school()
-    {
-        return $this->belongsTo(School::class);
+    public function subscriptionUsage(): HasMany {
+         return $this->hasMany(SchoolSubscription::class);
+    }
+    public function country(): BelongsTo {
+         return $this->belongsTo(Country::class, 'country_id');
     }
 
-    public function payments()
-    {
-        return $this->hasMany(SubscriptionPayment::class);
+    public function schoolBranch(): BelongsTo {
+         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 
-    public function rateCard()
-    {
-        return $this->hasOne(RatesCard::class);
+    public function plan(): BelongsTo {
+         return $this->belongsTo(Plan::class, 'plan_id');
     }
 }

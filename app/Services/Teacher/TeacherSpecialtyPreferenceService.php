@@ -8,6 +8,8 @@ use App\Models\TeacherSpecailtyPreference;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\Teacher;
+use App\Events\Actions\AdminActionEvent;
 
 class TeacherSpecialtyPreferenceService
 {
@@ -78,163 +80,328 @@ class TeacherSpecialtyPreferenceService
 
         return $availableSpecialties;
     }
-    public function removeTeacherSpecialtyPreference($currentSchool, array $preferences)
+    public function removeTeacherSpecialtyPreference($currentSchool, array $preferences, $authAdmin)
     {
-        try {
-            DB::beginTransaction();
+        return DB::transaction(function () use ($currentSchool, $preferences, $authAdmin) {
+            $preferenceIds = collect($preferences)->pluck('preference_id')->filter()->unique()->values();
 
-            $preferenceIds = collect($preferences)->pluck('preference_id');
-
-            $validPreferences = TeacherSpecailtyPreference::where("school_branch_id", $currentSchool->id)
-                ->whereIn("id", $preferenceIds)
-                ->pluck('id');
-
-            if ($validPreferences->isEmpty() && $preferenceIds->isNotEmpty()) {
-                DB::rollBack();
+            if ($preferenceIds->isEmpty()) {
                 throw new AppException(
-                    "None of the provided preference IDs were found or belong to school branch ID '{$currentSchool->id}'. IDs checked: " . $preferenceIds->implode(', '),
+                    "No preferences selected",
+                    400,
+                    "Invalid Request",
+                    "Please provide at least one preference ID to remove."
+                );
+            }
+
+            $validPreferences = TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $preferenceIds)
+                ->with('teacher')
+                ->get();
+
+            if ($validPreferences->isEmpty()) {
+                throw new AppException(
+                    "No valid specialty preferences found",
                     404,
-                    "Preferences Not Found or Invalid 🚫",
-                    "We couldn't locate any of the requested teacher specialty preferences to remove. Please ensure the IDs are correct and belong to a teacher at your school.",
-                    null
+                    "Preferences Not Found",
+                    "None of the provided preference IDs exist or belong to your school branch."
                 );
             }
 
-            $deletedCount = TeacherSpecailtyPreference::destroy($validPreferences);
+            $teacherIds = $validPreferences->pluck('teacher_id')->unique();
 
-            if ($deletedCount !== $validPreferences->count()) {
-                DB::rollBack();
-                throw new AppException(
-                    "Attempted to delete {$validPreferences->count()} preferences but only {$deletedCount} were affected. Database inconsistency detected.",
-                    500,
-                    "Incomplete Removal ❌",
-                    "There was an issue removing all the requested preferences. Some were successfully removed, but the system reported a partial failure. Please contact support.",
-                    null
-                );
+            Teacher::whereIn('id', $teacherIds)
+                ->where('school_branch_id', $currentSchool->id)
+                ->lockForUpdate()
+                ->get();
+
+            $preferencesByTeacher = $validPreferences->groupBy('teacher_id');
+
+            $deletedCount = 0;
+            $affectedTeachers = [];
+
+            foreach ($preferencesByTeacher as $teacherId => $prefs) {
+                $countToDelete = $prefs->count();
+
+                $deleted = TeacherSpecailtyPreference::whereIn('id', $prefs->pluck('id'))->delete();
+                $deletedCount += $deleted;
+
+                $teacher = $prefs->first()->teacher;
+
+                $teacher->decrement('num_assigned_specialties', $countToDelete);
+
+                if ($teacher->num_assigned_specialties <= 0) {
+                    $teacher->num_assigned_specialties = 0;
+                    $teacher->specialty_assignment_status = 'unassigned';
+                    $teacher->save();
+                }
+
+                $affectedTeachers[] = [
+                    'teacher_id'   => $teacher->id,
+                    'teacher_name' => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
+                    'specialties_removed' => $countToDelete,
+                    'remaining_specialties' => $teacher->num_assigned_specialties,
+                    'status_changed' => $teacher->wasChanged('specialty_assignment_status'),
+                ];
             }
 
-            DB::commit();
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw new AppException(
-                "Database transaction failed during preference removal: " . $e->getMessage(),
-                500,
-                "Removal Failed Due to System Error 🛑",
-                "We were unable to complete the removal of the teacher's specialty preferences due to a system error. The operation has been rolled back. Please try again or contact support.",
-                null
-            );
-        }
+            AdminActionEvent::dispatch([
+                "permissions"  => ["schoolAdmin.teacherSpecialtyPreference.remove"],
+                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature"      => "teacherSpecialtyPreferenceManagement",
+                "authAdmin"    => $authAdmin,
+                "data"         => [
+                    'total_removed'      => $deletedCount,
+                    'affected_teachers'  => $affectedTeachers,
+                    'removed_preference_ids' => $validPreferences->pluck('id')->toArray(),
+                ],
+                "message" => "Teacher specialty preferences removed successfully",
+            ]);
+
+            return [
+                'message'               => 'Specialty preferences removed successfully',
+                'total_removed'         => $deletedCount,
+                'affected_teacher_count' => count($affectedTeachers),
+                'affected_teachers'     => $affectedTeachers,
+            ];
+        });
     }
-    public function bulkAddTeacherSpecialtyPreference($currentSchool, array $data)
+    public function bulkAddTeacherSpecialtyPreference($currentSchool, array $data, $authAdmin): array
     {
-        $teacherIdsCollection = collect($data['teacherIds'] ?? [])->pluck('teacher_id');
-        $specialtyIdsCollection = collect($data['specialtyIds'] ?? [])->pluck('specialty_id');
+        return DB::transaction(function () use ($currentSchool, $data, $authAdmin) {
+            $teacherIds = collect($data['teacherIds'] ?? [])
+                ->pluck('teacher_id')
+                ->filter()
+                ->unique()
+                ->values();
 
-        if ($teacherIdsCollection->isEmpty() || $specialtyIdsCollection->isEmpty()) {
-            throw new AppException(
-                "Missing teacher or specialty IDs in the request data.",
-                400,
-                "Incomplete Request Data 📝",
-                "To perform a bulk add, you must provide a list of both Teacher IDs and Specialty IDs. Please check your input and try again.",
-                null
-            );
-        }
+            $specialtyIds = collect($data['specialtyIds'] ?? [])
+                ->pluck('specialty_id')
+                ->filter()
+                ->unique()
+                ->values();
 
-        $teacherIds = $teacherIdsCollection->all();
-        $specialtyIds = $specialtyIdsCollection->all();
+            if ($teacherIds->isEmpty() || $specialtyIds->isEmpty()) {
+                throw new AppException(
+                    "Teacher IDs or Specialty IDs missing",
+                    400,
+                    "Incomplete Request",
+                    "You must provide at least one teacher ID and one specialty ID for bulk assignment."
+                );
+            }
 
-        try {
-            $existingPreferences = TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
+            $teachers = Teacher::whereIn('id', $teacherIds)
+                ->where('school_branch_id', $currentSchool->id)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            if ($teachers->count() !== $teacherIds->count()) {
+                throw new AppException(
+                    "Some teachers not found or don't belong to this school branch",
+                    404,
+                    "Invalid Teachers",
+                    "One or more teacher IDs are invalid or not associated with your school."
+                );
+            }
+
+            $existing = TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
                 ->whereIn('teacher_id', $teacherIds)
                 ->whereIn('specialty_id', $specialtyIds)
                 ->get(['teacher_id', 'specialty_id'])
-                ->map(fn($item) => "{$item->teacher_id}-{$item->specialty_id}")
-                ->toArray();
+                ->pluck('specialty_id', 'teacher_id');
 
             $insertData = [];
+            $perTeacherNewCount = $teachers->mapWithKeys(fn($t) => [$t->id => 0])->toArray();
+            $wasUnassigned = [];
+
             foreach ($teacherIds as $teacherId) {
+                $teacher = $teachers->get($teacherId);
+                $wasUnassigned[$teacherId] = $teacher->specialty_assignment_status === 'unassigned';
+
                 foreach ($specialtyIds as $specialtyId) {
-                    $uniqueKey = "{$teacherId}-{$specialtyId}";
-                    if (!in_array($uniqueKey, $existingPreferences)) {
-                        $insertData[] = [
-                            'id' => Str::uuid(),
-                            'teacher_id' => $teacherId,
-                            'specialty_id' => $specialtyId,
-                            'school_branch_id' => $currentSchool->id
-                        ];
+                    if ($existing->has($teacherId) && $existing->get($teacherId)->contains($specialtyId)) {
+                        continue;
                     }
+
+                    $insertData[] = [
+                        'id'               => Str::uuid()->toString(),
+                        'teacher_id'       => $teacherId,
+                        'specialty_id'     => $specialtyId,
+                        'school_branch_id' => $currentSchool->id,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ];
+
+                    $perTeacherNewCount[$teacherId]++;
                 }
             }
 
-            if (!empty($insertData)) {
-                TeacherSpecailtyPreference::insert($insertData);
-                return true;
-            }
-
-            throw new AppException(
-                "All requested specialty preferences already exist for these teachers at school branch ID '{$currentSchool->id}'.",
-                409,
-                "Preferences Already Exist 🔄",
-                "The combination of teachers and specialties you attempted to add are already recorded as preferences. No new records were created.",
-                null
-            );
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new AppException(
-                "Database insert failed during bulk specialty preference addition: " . $e->getMessage(),
-                500,
-                "Bulk Add Failed Due to System Error 🛑",
-                "We were unable to complete the bulk assignment of specialty preferences due to a system error. Please review the data and contact support if the issue persists.",
-                null
-            );
-        }
-    }
-    public function bulkRemoveTeacherSpecialtyPreference($currentSchool, array $data)
-    {
-        $teacherIds = $data['teacherIds'] ?? [];
-        $specialtyIds = $data['specialtyIds'] ?? [];
-
-        if (empty($teacherIds) || empty($specialtyIds)) {
-            throw new AppException(
-                "Missing teacher or specialty IDs in the request data for bulk removal.",
-                400,
-                "Incomplete Removal Request 🛑",
-                "To perform a bulk removal, you must provide a list of both Teacher IDs and Specialty IDs. Please check your input and try again.",
-                null
-            );
-        }
-
-        try {
-            $deletedCount = TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
-                ->whereIn('teacher_id', $teacherIds)
-                ->whereIn('specialty_id', $specialtyIds)
-                ->delete();
-
-            if ($deletedCount === 0) {
-
+            if (empty($insertData)) {
                 throw new AppException(
-                    "No matching specialty preferences were found for removal. Teacher IDs: " . implode(',', $teacherIds) . " | Specialty IDs: " . implode(',', $specialtyIds),
-                    404,
-                    "No Preferences to Remove 🗑️",
-                    "The system found no existing specialty preferences matching the combination of teachers and specialties you specified at your school. No records were deleted.",
-                    null
+                    "No new preferences to add",
+                    409,
+                    "All Already Assigned",
+                    "All selected teacher-specialty combinations already exist."
                 );
             }
 
-            return true;
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new AppException(
-                "Database deletion failed during bulk specialty preference removal: " . $e->getMessage(),
-                500,
-                "Bulk Removal Failed Due to System Error ❌",
-                "We were unable to complete the bulk removal of specialty preferences due to a system error. Please try again or contact support.",
-                null
-            );
-        }
+            TeacherSpecailtyPreference::insert($insertData);
+
+            $affectedTeachersSummary = [];
+
+            foreach ($perTeacherNewCount as $teacherId => $newCount) {
+                if ($newCount === 0) continue;
+
+                $teacher = $teachers->get($teacherId);
+
+                $teacher->increment('num_assigned_specialties', $newCount);
+
+                if ($wasUnassigned[$teacherId]) {
+                    $teacher->specialty_assignment_status = 'assigned';
+                    $teacher->save();
+                }
+
+                $affectedTeachersSummary[] = [
+                    'teacher_id'     => $teacher->id,
+                    'teacher_name'   => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
+                    'new_specialties_added' => $newCount,
+                    'total_specialties'     => $teacher->num_assigned_specialties,
+                    'status_changed_to_assigned' => $wasUnassigned[$teacherId],
+                ];
+            }
+
+            AdminActionEvent::dispatch([
+                "permissions"  => ["schoolAdmin.teacherSpecialtyPreference.bulkAssign"],
+                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature"      => "teacherSpecialtyPreferenceManagement",
+                "authAdmin"    => $authAdmin,
+                "data"         => [
+                    'total_preferences_added' => count($insertData),
+                    'affected_teachers_count' => count($affectedTeachersSummary),
+                    'affected_teachers'       => $affectedTeachersSummary,
+                    'specialty_ids'           => $specialtyIds->toArray(),
+                    'teacher_ids'             => $teacherIds->toArray(),
+                ],
+                "message" => "Bulk teacher specialty preferences assigned successfully",
+            ]);
+
+            return [
+                'message'                  => 'Bulk assignment completed successfully',
+                'total_preferences_added'  => count($insertData),
+                'affected_teachers_count'  => count($affectedTeachersSummary),
+                'affected_teachers'        => $affectedTeachersSummary,
+                'skipped_duplicates'      => count($teacherIds) * count($specialtyIds) - count($insertData),
+            ];
+        });
+    }
+    public function bulkRemoveTeacherSpecialtyPreference($currentSchool, array $data, $authAdmin): array
+    {
+        return DB::transaction(function () use ($currentSchool, $data, $authAdmin) {
+            $teacherIds = collect($data['teacherIds'] ?? [])
+                ->pluck('teacher_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $specialtyIds = collect($data['specialtyIds'] ?? [])
+                ->pluck('specialty_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($teacherIds->isEmpty() || $specialtyIds->isEmpty()) {
+                throw new AppException(
+                    "Teacher IDs or Specialty IDs missing",
+                    400,
+                    "Incomplete Request",
+                    "You must provide at least one teacher ID and one specialty ID for bulk removal."
+                );
+            }
+
+            $teachers = Teacher::whereIn('id', $teacherIds)
+                ->where('school_branch_id', $currentSchool->id)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            if ($teachers->count() !== $teacherIds->count()) {
+                throw new AppException(
+                    "Some teachers not found or do not belong to this school branch",
+                    404,
+                    "Invalid Teachers",
+                    "One or more teacher IDs are invalid or not associated with your school."
+                );
+            }
+
+            $preferencesToDelete = TeacherSpecailtyPreference::where('school_branch_id', $currentSchool->id)
+                ->whereIn('teacher_id', $teacherIds)
+                ->whereIn('specialty_id', $specialtyIds)
+                ->get();
+
+            if ($preferencesToDelete->isEmpty()) {
+                throw new AppException(
+                    "No matching specialty preferences found to remove",
+                    404,
+                    "Nothing to Remove",
+                    "None of the selected teacher-specialty combinations exist in your school branch."
+                );
+            }
+
+            $preferencesByTeacher = $preferencesToDelete->groupBy('teacher_id');
+            $deletedCount = $preferencesToDelete->count();
+
+            $affectedTeachersSummary = [];
+
+            foreach ($preferencesByTeacher as $teacherId => $prefs) {
+                $removeCount = $prefs->count();
+                $teacher = $teachers->get($teacherId);
+
+                $teacher->decrement('num_assigned_specialties', $removeCount);
+
+                $becameUnassigned = false;
+                if ($teacher->num_assigned_specialties <= 0) {
+                    $teacher->num_assigned_specialties = 0;
+                    $teacher->specialty_assignment_status = 'unassigned';
+                    $teacher->save();
+                    $becameUnassigned = true;
+                }
+
+                $affectedTeachersSummary[] = [
+                    'teacher_id'       => $teacher->id,
+                    'teacher_name'     => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
+                    'specialties_removed' => $removeCount,
+                    'remaining_specialties' => $teacher->num_assigned_specialties,
+                    'status_changed_to_unassigned' => $becameUnassigned,
+                ];
+            }
+
+            TeacherSpecailtyPreference::whereIn('id', $preferencesToDelete->pluck('id'))->delete();
+
+            AdminActionEvent::dispatch([
+                "permissions"  => ["schoolAdmin.teacherSpecialtyPreference.bulkRemove"],
+                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature"      => "teacherSpecialtyPreferenceManagement",
+                "authAdmin"    => $authAdmin,
+                "data"         => [
+                    'total_preferences_removed' => $deletedCount,
+                    'affected_teachers_count'   => count($affectedTeachersSummary),
+                    'affected_teachers'         => $affectedTeachersSummary,
+                    'removed_teacher_ids'       => $teacherIds->toArray(),
+                    'removed_specialty_ids'     => $specialtyIds->toArray(),
+                ],
+                "message" => "Bulk teacher specialty preferences removed successfully",
+            ]);
+
+            return [
+                'message'                    => 'Bulk removal completed successfully',
+                'total_preferences_removed'  => $deletedCount,
+                'affected_teachers_count'    => count($affectedTeachersSummary),
+                'affected_teachers'          => $affectedTeachersSummary,
+            ];
+        });
     }
 }

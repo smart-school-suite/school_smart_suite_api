@@ -11,6 +11,106 @@ return new class extends Migration
      */
     public function up(): void
     {
+
+        Schema::table('features', function (Blueprint $table) {
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('payment_method', function (Blueprint $table) {
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+            $table->string('category_id');
+            $table->foreign('category_id')->references('id')->on('payment_method_category');
+        });
+
+        Schema::table('subscription_usage', function (Blueprint $table) {
+            $table->string('subscription_id');
+            $table->foreign('subscription_id')->references('id')->on('school_subscriptions');
+            $table->string('feature_plan_id');
+            $table->foreign('feature_plan_id')->references('id')->on('plan_features');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('plans', function (Blueprint $table) {
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('school_transactions', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+            $table->string('payment_method_id');
+            $table->foreign('payment_method_id')->references('id')->on("payment_method");
+        });
+
+        Schema::table('plan_features', function (Blueprint $table) {
+            $table->string('feature_id');
+            $table->foreign('feature_id')->references('id')->on('features');
+            $table->string('plan_id');
+            $table->foreign('plan_id')->references('id')->on('plans');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('school_subscriptions', function (Blueprint $table) {
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('plan_id');
+            $table->foreign('plan_id')->references('id')->on('plans');
+        });
+
+        Schema::table('activation_codes', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('activation_code_usages', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+            $table->string('activation_code_id');
+            $table->foreign('activation_code_id')->references('id')->on('activation_codes');
+        });
+
+        Schema::table('affiliate_applications', function (Blueprint $table) {
+            $table->string('affiliate_id');
+            $table->foreign('affiliate_id')->references('id')->on('affiliates');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('affiliate_payouts', function (Blueprint $table) {
+            $table->string('affiliate_id');
+            $table->foreign('affiliate_id')->references('id')->on('affiliates');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('affiliates', function (Blueprint $table) {
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
+        Schema::table('affiliate_commissions', function (Blueprint $table) {
+            $table->string('affiliate_id');
+            $table->foreign('affiliate_id')->references('id')->on('affiliates');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('school_transaction_id');
+            $table->foreign('school_transaction_id')->references('id')->on('school_transactions');
+            $table->string('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
+        });
+
         Schema::table('setting_definations', function (Blueprint $table) {
             $table->string('setting_category_id');
             $table->foreign('setting_category_id')->references('id')->on("setting_categories");
@@ -272,22 +372,6 @@ return new class extends Migration
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batches');
         });
-
-
-        Schema::table('school_subscriptions', function (Blueprint $table) {
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('rate_card_id');
-            $table->foreign('rate_card_id')->references('id')->on('rate_cards');
-        });
-
-        Schema::table('payments', function (Blueprint $table) {
-            $table->string('school_subscription_id');
-            $table->foreign('school_subscription_id')->references('id')->on('school_subscriptions');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-        });
-
 
         Schema::table('election_applications', function (Blueprint $table) {
             $table->string('school_branch_id')->index();
@@ -1033,6 +1117,77 @@ return new class extends Migration
     }
     public function down(): void
     {
+        Schema::table('affiliate_applications', function (Blueprint $table) {
+            $table->dropForeign('affiliate_id');
+            $table->dropForeign('country_id');
+            $table->dropColumn('country_id');
+            $table->dropColumn('affiliate_id');
+        });
+
+        Schema::table('affiliate_payouts', function (Blueprint $table) {
+            $table->dropForeign('affiliate_id');
+            $table->dropForeign('country_id');
+            $table->dropColumn('country_id');
+            $table->dropColumn('affiliate_id');
+        });
+
+        Schema::table('affiliates', function (Blueprint $table) {
+            $table->dropForeign('country_id');
+            $table->dropColumn('country_id');
+        });
+
+        Schema::table('affiliate_commissions', function (Blueprint $table) {
+            $table->dropForeign('affiliate_id');
+            $table->dropForeign('country_id');
+            $table->dropForeign('school_branch_id');
+            $table->dropForeign('school_transaction_id');
+            $table->dropColumn('country_id');
+            $table->dropColumn('affiliate_id');
+            $table->dropColumn('school_branch_id');
+            $table->dropColumn('school_transaction_id');
+        });
+
+        Schema::table('activation_code_usages', function (Blueprint $table) {
+            $table->dropForeign('country_id');
+            $table->dropForeign(['school_branch_id']);
+            $table->dropColumn('country_id');
+            $table->dropColumn(['school_branch_id']);
+        });
+
+        Schema::table('activation_codes', function (Blueprint $table) {
+            $table->dropForeign('country_id');
+            $table->dropForeign(['school_branch_id']);
+            $table->dropColumn('country_id');
+            $table->dropColumn(['school_branch_id']);
+        });
+        Schema::table('school_subscriptions', function (Blueprint $table) {
+            $table->dropForeign('plan_id');
+            $table->dropForeign('country_id');
+            $table->dropForeign(['school_branch_id']);
+            $table->dropColumn('country_id');
+            $table->dropColumn(['school_branch_id']);
+            $table->dropColumn('plan_id');
+        });
+
+        Schema::table('plan_features', function (Blueprint $table) {
+            $table->dropForeign('feature_id');
+            $table->dropForeign('plan_id');
+            $table->dropForeign('country_id');
+            $table->dropColumn('country_id');
+            $table->dropColumn('plan_id');
+            $table->dropColumn('feature_id');
+        });
+
+        Schema::table('school_transactions', function (Blueprint $table) {
+            $table->dropForeign(['school_branch_id']);
+            $table->dropForeign(['country_id']);
+            $table->dropColumn('country_id');
+            $table->dropColumn(['school_branch_id']);
+        });
+        Schema::table('features', function (Blueprint $table) {
+            $table->dropForeign(['country_id']);
+            $table->dropColumn('country_id');
+        });
         Schema::table('setting_definations', function (Blueprint $table) {
             $table->dropForeign(['setting_category_id']);
             $table->dropColumn(['setting_category_id']);
@@ -1688,20 +1843,6 @@ return new class extends Migration
             $table->dropForeign(['election_role_id']);
             $table->dropForeign(['student_id']);
             $table->dropColumn(['school_branch_id', 'election_id', 'election_role_id', 'student_id']);
-        });
-
-        // Dropping foreign keys and columns from payments
-        Schema::table('payments', function (Blueprint $table) {
-            $table->dropForeign(['school_subscription_id']);
-            $table->dropForeign(['school_branch_id']);
-            $table->dropColumn(['school_subscription_id', 'school_branch_id']);
-        });
-
-        // Dropping foreign keys and columns from school_subscriptions
-        Schema::table('school_subscriptions', function (Blueprint $table) {
-            $table->dropForeign(['school_branch_id']);
-            $table->dropForeign(['rate_card_id']);
-            $table->dropColumn(['school_branch_id', 'rate_card_id']);
         });
 
         // Dropping foreign keys and columns from student_resit

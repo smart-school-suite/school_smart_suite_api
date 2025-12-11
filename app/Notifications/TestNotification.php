@@ -51,6 +51,10 @@ class TestNotification extends Notification implements ShouldQueue
         ];
     }
 
+    public function broadcastAs(): string
+    {
+        return 'test.notification';
+    }
     /**
      * Send a broadcast notification.
      */
