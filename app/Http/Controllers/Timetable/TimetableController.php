@@ -51,105 +51,52 @@ class TimetableController extends Controller
         $this->updateTimeTableService = $updateTimeTableService;
     }
 
-    /**
-     * Creates a timetable based on teacher availability.
-     *
-     * @param CreateTimeTableByTeacherAvailabilityRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function createTimetableByAvailability(CreateTimeTableByTeacherAvailabilityRequest $request)
     {
 
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
+        $authAdmin = $this->resolveUser();
             $result = $this->createSpecailtyTimeTableService->createTimetableByAvailability(
                 $request->scheduleEntries,
-                $currentSchool
+                $currentSchool,
+                $authAdmin
             );
             return ApiResponseService::success("Timetable Created Successfully", $result, null, Response::HTTP_CREATED);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
-        }
     }
-
-    /**
-     * Creates a new timetable.
-     *
-     * @param CreateTimetableRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function createTimetable(CreateTimetableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
             $result = $this->createSpecailtyTimeTableService->createTimetable(
                 $request->scheduleEntries,
                 $currentSchool
             );
             return ApiResponseService::success("Timetable Created Successfully", $result, null, Response::HTTP_CREATED);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
-        }
+
     }
 
-    /**
-     * Deletes a timetable based on the provided parameters.
-     *
-     * @param GenerateTimeTableRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function deleteTimetable(GenerateTimeTableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
             $deleteTimetable = $this->specailtyTimeTableService->deleteTimetable($currentSchool, $request->validated());
             return ApiResponseService::success("Timetable Deleted Successfully", $deleteTimetable, null, Response::HTTP_OK);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_NOT_FOUND);
-        }
     }
 
-    /**
-     * Deletes a specific entry from the timetable.
-     *
-     * @param Request $request
-     * @param string $entryId
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function deleteTimeTableEntry(Request $request, string $entryId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
             $deleteTimetableEntry = $this->specailtyTimeTableService->deleteTimeTableEntry($currentSchool, $entryId);
             return ApiResponseService::success("Time Table Entry Deleted Successfully", $deleteTimetableEntry, null, Response::HTTP_OK);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
-        }
+
     }
 
-    /**
-     * Updates existing timetable entries.
-     *
-     * @param UpdateTimetableRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function updateTimetable(UpdateTimetableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        try {
             $updateTimetable = $this->updateTimeTableService->updateTimetableEntries($request->scheduleEntries, $currentSchool);
             return ApiResponseService::success("{$updateTimetable} entries updated Successfully", null, null, Response::HTTP_OK);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, Response::HTTP_BAD_REQUEST);
-        }
+
     }
 
-    /**
-     * Updates timetable entries based on teacher availability.
-     *
-     * @param UpdateTimetableByTeacherAvailability $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function updateTimetableByTeacherAvailability(UpdateTimetableByTeacherAvailability $request)
     {
         try {
@@ -164,12 +111,6 @@ class TimetableController extends Controller
         }
     }
 
-    /**
-     * Generates a new timetable.
-     *
-     * @param GenerateTimeTableRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function generateTimetable(GenerateTimeTableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -177,12 +118,6 @@ class TimetableController extends Controller
         return ApiResponseService::success('Time Table Generated Sucessfully', $generateTimeTable, null, Response::HTTP_OK);
     }
 
-    /**
-     * Retrieves the details of a specific timetable entry.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getTimetableDetails(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
@@ -190,13 +125,6 @@ class TimetableController extends Controller
         $getTimeTableDetails = $this->specailtyTimeTableService->getTimeTableDetails($entry_id, $currentSchool);
         return ApiResponseService::success("Time Table Details Fetched Sucessfully", $getTimeTableDetails, null, Response::HTTP_OK);
     }
-
-    /**
-     * Retrieves the availability of instructors for a specific semester and specialty.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getInstructorAvailabilityBySemesterSpecialty(Request $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");

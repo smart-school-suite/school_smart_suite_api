@@ -22,6 +22,7 @@ class InstructorAvailabilitySlot extends Model
         'teacher_availability_id'
     ];
 
+
     public $incrementing = 'false';
     public $table = 'teacher_availability_slots';
     public $keyType = 'string';

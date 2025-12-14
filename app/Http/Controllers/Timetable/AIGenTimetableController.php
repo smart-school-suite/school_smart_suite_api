@@ -15,7 +15,8 @@ class AIGenTimetableController extends Controller
     }
 
     public function generateTimetable(AiGenerateTimetableRequest $request){
-        $timetable = $this->aiGenerateTimetableService->generateTimetable($request->prompt);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $timetable = $this->aiGenerateTimetableService->generateTimetable($request->validated(), $currentSchool);
         return ApiResponseService::success("Timetable Generated Successfully", $timetable, null, 200);
     }
 }

@@ -25,37 +25,43 @@ class SchoolSemester extends Model
     ];
 
     protected $cast = [
-         'start_date' => 'date',
-         'end_date' => 'date'
+        'start_date' => 'date',
+        'end_date' => 'date'
     ];
 
     public $incrementing = 'false';
     public $table = 'school_semesters';
     public $keyType = 'string';
 
-     public function instructorAvailability(): HasMany {
+    public function instructorAvailability(): HasMany
+    {
         return $this->hasMany(InstructorAvailability::class);
     }
-    public function feeSchedule(): HasMany {
+    public function feeSchedule(): HasMany
+    {
         return $this->hasMany(FeeSchedule::class);
     }
-    public function specialty(): BelongsTo {
-         return $this->belongsTo(Specialty::class, 'specialty_id');
+    public function specialty(): BelongsTo
+    {
+        return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
-    public function semester(): BelongsTo {
+    public function semester(): BelongsTo
+    {
         return $this->belongsTo(Semester::class, 'semester_id');
     }
 
-    public function teacherAvailabilitySlot(): HasMany {
+    public function teacherAvailabilitySlot(): HasMany
+    {
         return $this->hasMany(InstructorAvailabilitySlot::class, 'school_semester_id');
     }
-    public function studentBatch(): BelongsTo {
-         return $this->belongsTo(Studentbatch::class, 'student_batch_id');
+    public function studentBatch(): BelongsTo
+    {
+        return $this->belongsTo(Studentbatch::class, 'student_batch_id');
     }
 
-    public function schoolBranch(): BelongsTo {
+    public function schoolBranch(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
-
 }

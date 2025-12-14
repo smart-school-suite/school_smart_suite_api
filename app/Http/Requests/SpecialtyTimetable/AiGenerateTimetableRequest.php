@@ -14,7 +14,8 @@ class AiGenerateTimetableRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'prompt' => 'required|string'
+            'prompt' => 'required|string',
+            'school_semester_id' => 'required|string|exists:school_semesters,id'
         ];
     }
 }

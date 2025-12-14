@@ -24,7 +24,6 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'levels';
 
-
     public function resitExamRef(): HasMany {
          return $this->hasMany(ResitExamRef::class);
     }
