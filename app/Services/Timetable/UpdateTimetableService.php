@@ -1,13 +1,15 @@
 <?php
 
 namespace App\Services\Timetable;
+
 use App\Exceptions\AppException;
 use App\Models\Timetable;
 use Exception;
 use Illuminate\Support\Facades\DB;
+
 class UpdateTimetableService
 {
-        public function updateTimetableEntriesByTeacherAvailability(array $scheduleUpdatesEntries, $currentSchool)
+    public function updateTimetableEntriesByTeacherAvailability(array $scheduleUpdatesEntries, $currentSchool)
     {
         DB::beginTransaction();
         try {

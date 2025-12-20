@@ -23,22 +23,277 @@ use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
 use App\Models\Timetable;
 use App\Models\Studentbatch;
+use App\Models\TestMongoDB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Faker\Factory as Faker;
+use App\Events\Analytics\FinancialAnalyticsEvent;
+use App\Models\Department;
+use App\Models\Educationlevels;
+use App\Models\Student;
+use Illuminate\Support\Facades\DB;
 
 class test extends Seeder
 {
     public function run(): void
     {
-        // $this->schoolHallSeeder();
-        // $this->teacherSpecialtyPreferenceSeeder();
-        // $this->specialtyHallSeeder();
-        // $this->teacherCoursePreference();
-        // $this->timetableSeeder();
-        $this->electionType();
-        $this->electionRoles();
+
+
+        for ($i = 0; $i < 100; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: 'finance.registration_fee.incurred',
+                version: 1,
+                payload: [
+                    // ─── REQUIRED ───────────────────────
+                    'amount' => rand(50000, 100000),
+
+                    // ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    // ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Department::first()->id,
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Specialty::first()->id,
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Educationlevels::first()->id,
+
+                    // ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    // ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 100; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: 'finance.tuition_fee.incurred',
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(500000, 1000000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Department::first()->id,
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Specialty::first()->id,
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Educationlevels::first()->id,
+
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 5; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: 'finance.resit_fee.incurred',
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(2500, 10000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Department::first()->id,
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Specialty::first()->id,
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Educationlevels::first()->id,
+
+                    'course_id' => Courses::first()->id,
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        event(new FinancialAnalyticsEvent(
+            eventType: 'finance.resit_fee.reversed',
+            version: 1,
+            payload: [
+                ///  ─── REQUIRED ───────────────────────
+                'amount' => rand(2500, 10000),
+
+                /// ─── TENANCY ────────────────────────
+                'school_id'        => Schoolbranches::first()->school_id,
+                'school_branch_id' => Schoolbranches::first()->id,
+
+                //  ─── ACADEMIC STRUCTURE ──────────────
+                'department' => Department::first()->department_name,
+                "department_id" => Department::first()->id,
+                'specialty'  => Specialty::first()->specialty_name,
+                "specialty_id" => Specialty::first()->id,
+                'level'      => EducationLevels::first()->level_name,
+                "level_id" => Educationlevels::first()->id,
+
+                'course_id' => Courses::first()->id,
+                ///  ─── FINANCIAL STRUCTURE ─────────────
+                'fee_type' => 'tuition',
+
+                ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                'student_id' => Student::first()->id,
+                'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                //  ─── METADATA ────────────────────────
+                'currency' => 'XAF',
+                'source'   => 'billing_service',
+            ]
+        ));
+
+        for ($i = 0; $i < 100; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: 'finance.additional_fee.incurred',
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(2500, 50000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Department::first()->id,
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Specialty::first()->id,
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Educationlevels::first()->id,
+
+                    'course_id' => Courses::first()->id,
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'category_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 50; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: 'finance.additional_fee.paid',
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(2500, 50000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Department::first()->id,
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Specialty::first()->id,
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Educationlevels::first()->id,
+
+                    'course_id' => Courses::first()->id,
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'category_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
     }
+
+    // private function generateTimeSeries(string $kpiId): array
+    // {
+    //     $data = [];
+    //     $baseValue = ($kpiId === 'REGISTRATION_FEE_TOTAL') ? 10000.00 : 50000.00;
+    //     $prevValue = $baseValue * 0.95;  Start value before first entry
+
+    //      //Start from 2024-12 and go to 2025-03
+    //     for ($i = 0; $i < 4; $i++) {
+    //         $month = 12 + $i;
+    //         $year = 2024;
+    //         if ($month > 12) {
+    //             $month -= 12;
+    //             $year = 2025;
+    //         }
+
+    //         $currentValue = $prevValue * (1 + (rand(10, 50) / 1000));  Random 1% to 5% increase
+    //        // $absoluteChange = $currentValue - $prevValue;
+    //         $percentChange = $absoluteChange / $prevValue;
+
+    //        //  Format previous period for metadata
+    //         $prevMonth = $month - 1;
+    //         $prevYear = $year;
+    //         if ($prevMonth < 1) {
+    //             $prevMonth = 12;
+    //             $prevYear--;
+    //         }
+
+    //          The 'period' field is crucial for our queries
+    //         $periodString = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+    //         $prevPeriodString = $prevYear . '-' . str_pad($prevMonth, 2, '0', STR_PAD_LEFT);
+
+    //         $data[] = [
+    //             'period' => $periodString,
+    //             'value' => round($currentValue, 2),
+    //             'metadata' => [
+    //                 'comparison_period' => $prevPeriodString,
+    //                 'comparison_value' => round($prevValue, 2),
+    //                 'absolute_change' => round($absoluteChange, 2),
+    //                 'percent_change' => round($percentChange, 4)  Store as a decimal (e.g., 0.0250)
+    //             ]
+    //         ];
+
+    //          Set the current value as the previous value for the next iteration
+    //         $prevValue = $currentValue;
+    //     }
+
+    //     return $data;
+    // }
 
     public function electionSettingSeeder()
     {

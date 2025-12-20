@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Timetable;
+
 use App\Exceptions\AppException;
 use App\Models\Timetable;
 use App\Models\Specialty;
@@ -15,17 +16,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 class TimetableService
 {
-     // Implement your logic here
-    /**
-     * Deletes a single timetable entry.
-     *
-     * @param SchoolBranches $currentSchool The current school.
-     * @param string $timeTableId The ID of the timetable entry to delete.
-     * @return Timetable
-     * @throws Exception
-     */
     public function deleteTimeTableEntry(Schoolbranches $currentSchool, string $entryId): Timetable
     {
         try {
@@ -54,15 +47,6 @@ class TimetableService
             throw $e;
         }
     }
-
-    /**
-     * Deletes timetable entries based on the provided parameters.
-     *
-     * @param SchoolBranches $currentSchool The current school.
-     * @param array $timtableData The parameters to filter timetable entries.
-     * @return array An array of deleted timetable entries.
-     * @throws Exception
-     */
     public function deleteTimetable(SchoolBranches $currentSchool, array $timtableData): array
     {
         try {
@@ -99,15 +83,6 @@ class TimetableService
             throw new Exception('Failed to delete timetable entries');
         }
     }
-    /**
-     * Generates the timetable data based on route parameters.
-     *
-     * @param array $timtableData An array containing route parameters: 'specialty_id', 'level_id',
-     * 'semester_id', and 'student_batch_id'.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return array
-     * @throws Exception
-     */
     public function generateTimeTable(array $timtableData, SchoolBranches $currentSchool): array
     {
         try {
@@ -227,15 +202,6 @@ class TimetableService
 
         return trim($duration);
     }
-    /**
-     * Retrieves instructor availability data, considering existing timetable entries.
-     *
-     * @param string $specialtyId The ID of the specialty.
-     * @param string $semesterId The ID of the semester.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return array
-     * @throws Exception
-     */
     public function getInstructorAvailability(string $specialtyId, string $semesterId, SchoolBranches $currentSchool): array
     {
         try {
@@ -326,15 +292,6 @@ class TimetableService
             throw $e;
         }
     }
-
-    /**
-     * Retrieves the details of a specific timetable entry.
-     *
-     * @param string $entryId The ID of the timetable entry.
-     * @param SchoolBranches $currentSchool The current school.
-     * @return Timetable
-     * @throws Exception
-     */
     public function getTimeTableDetails(string $entryId, SchoolBranches $currentSchool): Timetable
     {
         try {
@@ -353,103 +310,101 @@ class TimetableService
             throw new Exception('Failed to retrieve timetable details');
         }
     }
+    public function getStudentTimetable($currentSchool, $student)
+    {
+        $student = Student::where('school_branch_id', $currentSchool->id)
+            ->findOrFail($student->id);
 
+        $now = Carbon::today();
 
-public function getStudentTimetable($currentSchool, $student)
-{
-    $student = Student::where('school_branch_id', $currentSchool->id)
-                     ->findOrFail($student->id);
+        $activeSemester = SchoolSemester::where('school_branch_id', $currentSchool->id)
+            ->where('student_batch_id', $student->student_batch_id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now)
+            ->with(['semester'])
+            ->firstOrFail();
 
-    $now = Carbon::today();
+        $slots = Timetable::where('school_branch_id', $currentSchool->id)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->where('student_batch_id', $student->student_batch_id)
+            ->where('semester_id', $activeSemester->semester_id)
+            ->with(['course', 'teacher', 'hall'])
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
 
-    $activeSemester = SchoolSemester::where('school_branch_id', $currentSchool->id)
-        ->where('student_batch_id', $student->student_batch_id)
-        ->where('specialty_id', $student->specialty_id)
-        ->where('start_date', '<=', $now)
-        ->where('end_date', '>=', $now)
-        ->with(['semester'])
-        ->firstOrFail();
+        if ($slots->isEmpty()) {
+            throw new AppException("Timetable not available", 404);
+        }
 
-    $slots = Timetable::where('school_branch_id', $currentSchool->id)
-        ->where('specialty_id', $student->specialty_id)
-        ->where('level_id', $student->level_id)
-        ->where('student_batch_id', $student->student_batch_id)
-        ->where('semester_id', $activeSemester->semester_id)
-        ->with(['course', 'teacher', 'hall'])
-        ->orderBy('day_of_week')
-        ->orderBy('start_time')
-        ->get();
+        $grouped = $slots->groupBy(fn($slot) => strtolower($slot->day_of_week));
 
-    if ($slots->isEmpty()) {
-        throw new AppException("Timetable not available", 404);
-    }
+        $daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-    $grouped = $slots->groupBy(fn($slot) => strtolower($slot->day_of_week));
+        $timetable = collect();
 
-    $daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        foreach ($daysOrder as $day) {
+            $daySlots = $grouped->get($day, collect());
 
-    $timetable = collect();
+            if ($daySlots->isEmpty()) continue;
 
-    foreach ($daysOrder as $day) {
-        $daySlots = $grouped->get($day, collect());
+            $formattedSlots = $daySlots->map(function ($slot) {
+                $start = Carbon::createFromFormat('H:i', $slot->start_time);
+                $end   = Carbon::createFromFormat('H:i', $slot->end_time);
+                $diff   = $start->diff($end);
 
-        if ($daySlots->isEmpty()) continue;
+                $hours = $diff->h;
+                $mins  = $diff->i;
+                $duration = $hours > 0
+                    ? "{$hours}h" . ($mins > 0 ? " {$mins}min" : "")
+                    : "{$mins}min";
 
-        $formattedSlots = $daySlots->map(function ($slot) {
-            $start = Carbon::createFromFormat('H:i', $slot->start_time);
-            $end   = Carbon::createFromFormat('H:i', $slot->end_time);
-            $diff   = $start->diff($end);
+                if ($slot->break) {
+                    return [
+                        "slot_id"    => $slot->id,
+                        "start_time" => substr($slot->start_time, 0, 5),
+                        "end_time"   => substr($slot->end_time, 0, 5),
+                        "break"      => true,
+                        "name"       => "Break",
+                        "duration"    => $duration,
+                        "day"        => $slot->day_of_week
+                    ];
+                }
 
-            $hours = $diff->h;
-            $mins  = $diff->i;
-            $duration = $hours > 0
-                ? "{$hours}h" . ($mins > 0 ? " {$mins}min" : "")
-                : "{$mins}min";
-
-            if ($slot->break) {
+                // Regular class
                 return [
-                    "slot_id"    => $slot->id,
-                    "start_time" => substr($slot->start_time, 0, 5),
-                    "end_time"   => substr($slot->end_time, 0, 5),
-                    "break"      => true,
-                    "name"       => "Break",
-                    "duration"    => $duration,
-                    "day"        => $slot->day_of_week
+                    "slot_id"        => $slot->id,
+                    "start_time"     => substr($slot->start_time, 0, 5),
+                    "end_time"       => substr($slot->end_time, 0, 5),
+                    "course_id"      => $slot->course_id,
+                    "course_name"    => $slot->course?->course_title ?? "Free Period",
+                    "course_credit"  => $slot->course?->credit ?? 0,
+                    "course_code"    => $slot->course?->course_code ?? "N/A",
+                    "teacher_name"   => $slot->teacher?->name ?? "Not Assigned",
+                    "teacher_id"     => $slot->teacher_id,
+                    "teacher_avatar" => $slot->teacher?->profile_picture ?? null,
+                    "hall_id"        => $slot->hall_id,
+                    "hall_name"      => $slot->hall?->name ?? "TBA",
+                    "duration"       => $duration,
+                    "day"           => strtolower($slot->day_of_week)
                 ];
-            }
+            })->values();
 
-            // Regular class
-            return [
-                "slot_id"        => $slot->id,
-                "start_time"     => substr($slot->start_time, 0, 5),
-                "end_time"       => substr($slot->end_time, 0, 5),
-                "course_id"      => $slot->course_id,
-                "course_name"    => $slot->course?->course_title ?? "Free Period",
-                "course_credit"  => $slot->course?->credit ?? 0,
-                "course_code"    => $slot->course?->course_code ?? "N/A",
-                "teacher_name"   => $slot->teacher?->name ?? "Not Assigned",
-                "teacher_id"     => $slot->teacher_id,
-                "teacher_avatar" => $slot->teacher?->profile_picture ?? null,
-                "hall_id"        => $slot->hall_id,
-                "hall_name"      => $slot->hall?->name ?? "TBA",
-                "duration"       => $duration,
-                "day"           => strtolower($slot->day_of_week)
-            ];
-        })->values();
+            $timetable->push([
+                "day"         => $day,
+                "scheduleId"  => Str::uuid(),
+                "slots"       => $formattedSlots
+            ]);
+        }
 
-        $timetable->push([
-            "day"         => $day,
-            "scheduleId"  => Str::uuid(),
-            "slots"       => $formattedSlots
-        ]);
+        return [
+            "timetable_name"   => "{$activeSemester->semester?->name} Timetable" ?? "Current Semester",
+            "semster_id" => $activeSemester->semester?->id,
+            "specialty"  => $student->specialty?->specialty_name ?? "N/A",
+            "level"     => $student->level?->name ?? "N/A",
+            'timetable' => $timetable
+        ];
     }
-
-    return [
-        "timetable_name"   => "{$activeSemester->semester?->name } Timetable" ?? "Current Semester",
-        "semster_id" => $activeSemester->semester?->id,
-        "specialty"  => $student->specialty?->specialty_name ?? "N/A",
-        "level"     => $student->level?->name ?? "N/A",
-        'timetable' => $timetable
-    ];
-}
 }

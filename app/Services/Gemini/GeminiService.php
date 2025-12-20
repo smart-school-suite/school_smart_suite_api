@@ -69,21 +69,21 @@ $softDefaults
   - "Teachers should not teach more than 6 hours a day" → set soft_constraints.teacher_max_daily_hours to 6.0
   - "Prefer practicals in the morning" → change soft_constraints.course_preferred_time_of_day.practical to "morning"
 
-- If the user says nothing specific about a section → return the defaults unchanged.
-- Never add, remove, or rename fields.
-- Never invent new fields.
-- Output ONLY valid JSON. No explanations, no markdown, no extra text.
+  - If the user says nothing specific about a section → return the defaults unchanged.
+  - Never add, remove, or rename fields.
+  - Never invent new fields.
+  - Output ONLY valid JSON. No explanations, no markdown, no extra text.
 
-Strict combined JSON Schema you MUST follow exactly:
-$combinedSchema
+  Strict combined JSON Schema you MUST follow exactly:
+  $combinedSchema
 
-User request: "$userPrompt"
+  User request: "$userPrompt"
 
-Return only the final JSON object with this exact structure:
-{
+  Return only the final JSON object with this exact structure:
+  {
   "hard_constraints": { ... },
   "soft_constraints": { ... }
-}
+  }
 EOT;
 
         $endpoint = "models/{$this->model}:generateContent";

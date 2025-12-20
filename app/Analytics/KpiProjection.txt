@@ -1,0 +1,579 @@
+//finacial kpis
+*potential_kpis* => "student_registration_source"
+//event
+{
+     "event_type":"student.registered",
+     "event_id":"uuid",
+     "occurred_at":"datetime",
+     "payload":{
+         "school_branch_id":"uuid",
+         "specialty":"software engineering",
+         "department":"engineering",
+         "department_id":"uuid",
+         "specialty_id":"uuid",
+         "source_id":"uuid",
+         "source":"flyer",
+         "student_id":"uuid"
+     }
+}
+
+//snapshots
+{
+    "_id":"uuid",
+    "kpi":"student_registration_source",
+    "department_id":"uuid",
+    "specialty_id":"uuid",
+    "specialty":"software engineering",
+    "department":"engineering",
+    "source":"flyer",
+    "source_id":"uuid",
+    "value":100
+}
+
+{
+    "_id":"uuid",
+    "kpi":"student_registration_source",
+    "department_id":"uuid",
+    "specialty_id":"uuid",
+    "specialty":"software engineering",
+    "department":"engineering",
+    "source":"newspapper",
+    "source_id":"uuid",
+    "value":200
+}
+
+//timeseries
+{
+    "_id":"uuid",
+    "kpi":"student_registration_source",
+    "bucket":"2025-10-02",
+    "department_id":"uuid",
+    "department":"engineering",
+    "specialty_id":"uuid",
+    "source_id":"uuid",
+    "source":"flyer",
+    "granularity":"day",
+    "delta":40
+}
+
+*potential_kpis* => "tutition_fee_debt", "tuition_fee_debt_by_department", "tuition_fee_debt_by_specialy", "school_revenue"
+
+//tuition fee incurred
+{
+    "event_type":"tuitionFee.incurred",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "department_id":"uuid",
+         "department":"engineering",
+         "specialty":"software engineering",
+         "specialty_id":"uuid",
+         "amount":400000,
+    }
+}
+
+{
+    "event_type":"tuitionFee.paid",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "department_id":"uuid",
+         "department":"engineering",
+         "specialty":"software engineering",
+         "specialty_id":"uuid",
+         "amount":50000,
+    }
+}
+
+//snapshots
+
+{
+     "_id":"uuid",
+     "kpi":"tuition_fee_paid",
+     "specialty":"software engineering",
+     "specialty_id":"uuid",
+     "department":"engineering",
+     "department_id":"uuid",
+     "school_branch_id":"uuid",
+     "value":5000
+},
+{
+    "_id":"uuid",
+    "kpi":"tutition_fee_incurred",
+    "specialty":"software engineering",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "department":"engineering",
+    "school_branch_id":"uuid",
+    "value":10000
+}
+
+//timeseries
+{
+     "_id":"uuid",
+     "kpi":"tuition_fee_paid",
+     "school_branch_id":"uuid",
+     "specialty":"software engineering",
+     "specialty_id":"uuid",
+     "department_id":"uuid",
+     "department":"engineering",
+     "bucket":"2025-10-30",
+     "delta":20000,
+}
+{
+    "_id":"uuid",
+    "kpi":"tutition_fee_incurred",
+    "school_branch_id":"uuid",
+    "specialty":"software engineering",
+    "specialty_id":"uuid",
+    "department":"engineering",
+    "department_id":"uuid",
+    "bucket":"2025-10-30",
+    "delta":20000,
+}
+
+
+//registration fee inccurred
+{
+    "event_type":"registrationFee.inccurred",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "specialty_id":"uuid",
+         "department_id":"uuid",
+         "department":"engineering",
+         "specialty":"software engineering",
+         "amount":100000,
+         "student_id":"uuid",
+    }
+}
+
+//registration fee paid
+{
+    "event_type":"registrationFee.paid",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "specialty":"software engineering",
+         "specialty_id":"uuid",
+         "department_id":"uuid",
+         "department":"engineering",
+         "amount":40000,
+         "student_id":"uuid",
+    }
+}
+//snapshots
+
+{
+    "_id":"uuid",
+    "kpi":"registration_fee_paid",
+    "department":"engineering",
+    "department_id":"uuid",
+    "specialty":"software engineering",
+    "specialty_id":"uuid",
+    "school_branch_id":"uuid",
+    "delta":10000
+},
+
+{
+    "_id":"uuid",
+    "kpi":"registration_fee_incurred",
+    "department":"engineering",
+    "department_id":"uuid",
+    "specialty":"software engineering",
+    "specialty_id":"uuid",
+    "school_branch_id":"uuid",
+    "delta":100000
+}
+
+
+//additional fee paid
+{
+     "event_type":"additionalFee.paid",
+     "event_id":"uuid",
+     "occurred_at":"datetime",
+     "payload":{
+         "school_branch_id":"uuid",
+         "specialty":"software engineering",
+         "specialty_id":"uuid",
+         "department":"engineering",
+         "department_id":"uuid",
+         "category_id":"uuid",
+         "category":"student id card",
+         "student_id":"uuid,
+         "amount":10000
+     }
+}
+
+//additional fee incurred
+{
+    "event_type":"additionalFee.inccurred",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "specialty":"software engineering",
+         "specialty_id":"uuid",
+         "department":"engineering",
+         "department_id":"uuid",
+         "student_id":"uuid",
+         "category_id":"uuid",
+         "category":"student id card",
+         "amount":10000
+    }
+}
+
+
+//snapshots
+
+{
+     "_id":"uuid",
+     "kpi":"additional_fee_incurred",
+     "category":"student id card",
+     "category_id":"uuid",
+     "specialty":"software engineering",
+     "specialty_id":"uuid",
+     "department_id":"uuid",
+     "department":"engineering",
+     "value":10000
+}
+
+{
+    "_id":"uuid",
+    "kpi":"additional_fee_paid",
+    "category":"student id card",
+    "category_id":"uuid",
+    "specialty":"software engineering",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "department":"engineering",
+    "value":10000
+}
+
+
+//timeseries
+
+{
+     "_id":"uuid",
+     "kpi":"additional_fee_incurred",
+     "category_id":"uuid",
+     "category":"student id card",
+     "specialty":"software engineering",
+     "specialty_id":"uuid",
+     "department":"engineering",
+     "department_id":"uuid",
+     "bucket":"2025-10-20",
+     "granularity":"day"
+}
+
+{
+    "_id":"uuid",
+    "kpi":"additional_fee_paid",
+    "category_id":"uuid",
+    "category":"student id card",
+    "specialty":"software engineering",
+    "specialty_id":"uuid",
+    "department":"engineering",
+    "department_id":"uuid",
+    "bucket":"2025-10-20",
+    "granularity":"day"
+}
+
+
+//expenses event
+{
+    "event_type":"expenses.inccurred",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "category_id":"uuid",
+         "category":"exam papers",
+         "amount":"10000"
+    }
+}
+
+
+//snapshots
+{
+     "_id":"uuid",
+     "kpi":"expenses_inccurred",
+     "category":"exam papers",
+     "category_id":"uuid",
+     "value":10000
+}
+
+//timeseries
+{
+    "_id":"uuid",
+    "kpi":"expenses_inccurred",
+    "category":"exam papers",
+    "category_id":"uuid",
+    "bucket":"2025-10-20",
+    "delta":10000
+}
+
+//resit fee incurred event
+{
+    "event_type":"resitFee.inccurred",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "specialty_id":"uuid",
+         "department_id":"uuid",
+         "student_id":"uuid",
+         "course_id":"uuid",
+         "exam_id":"uuid"
+    }
+}
+
+
+//snapshots
+{
+     "_id":"uuid",
+     "kpi":"resit_incurred",
+     "specialty_id":"uuid",
+     "department_id":"uuid",
+     "exam_id":"uuid",
+     "value":10000
+}
+
+//timeseries
+{
+    "_id":"uuid",
+    "kpi":"resit_incurred",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "exam_id":"uuid",
+    "bucket":"20250-10"
+}
+
+
+//resit fee paid event
+{
+    "event_type":"resitFee.Paid",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "department_id":"uuid",
+         "specialty_id":"uuid",
+         "resit_fee_id":"uuid",
+         "exam_id":"uuid",
+         "amount":3000
+    }
+}
+
+//snapshots
+{
+     "_id":"uuid",
+     "department_id":"uuid",
+     "specialty_id":"uuid",
+     "exam_id":"uuid",
+     "bucket":"2025-10-20,
+     "delta":1000
+}
+
+
+/**academic stats **/
+
+{
+    "event_type":"candidate.evaluated",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "student_id":"uuid",
+         "gpa":3.40,
+         "specialty_id":"uuid",
+         "specialty":"software engineering",
+         "department_id":"uuid",
+         "department":"engineering",
+         "exam_id":"uuid",
+         "exam_type_id":"uuid",
+         "level_id":"uuid",
+         "passed":true
+    }
+}
+
+{
+    "event_type":"candidateCourse.evaluated",
+    "event_id":"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+        "school_branch_id":"uuid",
+        "student_id":"uuid",
+        "passed":true,
+        "letter_grade":"A+",
+        "score":100,
+        "course_id":"uuid",
+        "specialty_id":"uuid",
+        "department_id":"uuid",
+        "exam_id":"uuid",
+        "exam_type_id":"uuid",
+        "letter_grade_id":"uuid"
+    }
+}
+
+{
+    "event_type":"candidateCourse.evaluated",
+    "event_id:"uuid",
+    "occurred_at":"datetime",
+    "payload":{
+         "school_branch_id":"uuid",
+         "student_id":"uuid",
+         "failed":true,
+         "letter_grade_id:"A+",
+         "score":40,
+         "course_id":"uuid",
+         "specialty_id":"uuid",
+         "department_id":"uuid",
+         "exam_id":"uuid",
+         "exam_type_id":"uuid",
+         "letter_grade_id":"uuid"
+    }
+}
+
+//snapshots
+
+//number of candidate grades with a particular grade for a course in an exam
+{
+    "_id":"uuid",
+    "kpi":"exam_course_grade",
+    "exam_type_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "course_id":"uuid",
+    "school_branch_id":"uuid",
+    "letter_grade_id":"uuid",
+    "value":555,
+    "exam_id":"uuid"
+}
+
+//student resit number
+{
+    "_id":"uuid",
+    "student_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "level_id":"uuid",
+    "exam_id":"uuid",
+    "value":10
+}
+
+//exam candidate resit number
+{
+    "_id":"uuid",
+    "exam_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "level_id":"uuid",
+    "exam_id":"uuid",
+    "value":100
+}
+
+
+//number of candidates for a particular course in an exam
+{
+    "_id":"uuid",
+    "kpi":"exam_course_candidate",
+    "exam_type_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "school_branch_id":"uuid",
+    "exam_id":"uuid",
+    "course_id":"uuid",
+    "value":500
+}
+
+//number of candidates passed for a course in an exam
+{
+    "_id":"uuid",
+    "kpi":"exam_course_passed_candidate",
+    "exam_type_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "course_id":"uuid",
+    "exam_id":"uuid",
+    "school_branch_id":"uuid",
+    "value":400
+}
+
+//number of candidate failed for a couse in an exam
+{
+     "_id":"uuid",
+     "kpi":"exam_course_failed_candidate",
+     "exam_type_id":"uuid",
+     "specialty_id":"uuid",
+     "course_id":"uuid",
+     "exam_id":"uuid",
+     "school_branch_id":"uuid",
+     "value":45
+}
+
+
+
+//snapshots the count of the student gpa
+{
+     "_id":"uuid",
+     "kpi":"student_gpa",
+     "student_id":"uuid",
+     "level_id":"uuid",
+     "specialty_id":"uuid",
+     "department_id:"uuid",
+     "exam_type":"uuid",
+     "value":80.94
+}
+
+//snapshots the count of the number of exams the student took
+{
+    "_id":"uuid",
+    "kpi":"student_exams",
+    "student_id":"uuid",
+    "level_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "exam_type":"uuid",
+    "value":9
+}
+
+{
+   "_id":"uuid",
+   "kpi":"exam_type_gpa",
+   "exam_type_id":"uuid",
+   "specialty_id":"uuid",
+   "department_id":"uuid",
+    "value":400.01
+}
+
+{
+    "_id":"uuid",
+    "kpi":"exam_evaluated_candidate",
+    "exam_type_id:"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "value":100
+}
+
+{
+    "_id":"uuid",
+    "kpi":"exam_pass_candidate,
+    "exam_type_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "value":105
+}
+
+{
+    "_id":"uuid",
+    "kpi":"exam_failed_candidate,
+    "exam_type_id":"uuid",
+    "specialty_id":"uuid",
+    "department_id":"uuid",
+    "value":120
+}
