@@ -2,16 +2,19 @@
 
 namespace App\Events\Analytics;
 
-use DateTimeInterface;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-class FinancialAnalyticsEvent implements ShouldQueue
-{
-    use Dispatchable, SerializesModels;
 
+class EnrollmentAnalyticsEvent implements ShouldQueue
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
     private string $eventType;
     private array $payload;
     private CarbonImmutable $occurredAt;
@@ -27,8 +30,6 @@ class FinancialAnalyticsEvent implements ShouldQueue
         $this->version = $version;
         $this->occurredAt = $occurredAt ?? CarbonImmutable::now();
     }
-
-    /* ───────────── ACCESSORS ───────────── */
 
     public function version(): int
     {
@@ -49,8 +50,9 @@ class FinancialAnalyticsEvent implements ShouldQueue
         return $this->occurredAt;
     }
 
-    public function schoolBranchId(): string {
-         return $this->payload['school_branch_id'];
+    public function schoolBranchId(): string
+    {
+        return $this->payload['school_branch_id'];
     }
 
     /**
