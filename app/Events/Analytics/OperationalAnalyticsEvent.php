@@ -11,10 +11,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Carbon\CarbonImmutable;
-
-class EnrollmentAnalyticsEvent implements ShouldQueue
+class OperationalAnalyticsEvent Implements ShouldQueue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
     private string $eventType;
     private array $payload;
     private CarbonImmutable $occurredAt;
@@ -55,8 +55,8 @@ class EnrollmentAnalyticsEvent implements ShouldQueue
         return $this->payload['school_branch_id'];
     }
 
-    public function amount(): float
+    public function count(): float
     {
-        return (float) ($this->payload['amount'] ?? 0);
+        return (float) ($this->payload['count'] ?? 0);
     }
 }

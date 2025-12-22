@@ -4,61 +4,48 @@ namespace App\Constant\Analytics\Academic;
 
 class AcademicAnalyticsKpi
 {
-    // === Student Performance ===
-    public const STUDENT_TOTAL_SCORE = 'student_total_score';
-    public const STUDENT_COURSES_TAKEN = 'student_courses_taken';
-    public const STUDENT_COURSES_PASSED = 'student_courses_passed';
-    public const STUDENT_GPA = 'student_gpa';
-    public const STUDENT_INCREASE_PERFORMANCE = "student_increase_performance";
-    public const STUDENT_DECREASE_PERFORMANCE = "student_decrease_performance";
-    public const STUDENT_PASS_RATE = 'student_pass_rate';
-    public const STUDENT_FAIL_RATE = 'student_fail_rate';
-    public const STUDENT_RESIT_POTENTIAL = 'student_resit_potential';
-    //public const STUDENT_
+    //tracks how many people took a particular course
 
-    // === Teacher Performance ===
-    public const TEACHER_TOTAL_SCORE = 'teacher_total_score';
-    public const TEACHER_STUDENTS_TAUGHT = 'teacher_students_taught';
-    public const TEACHER_STUDENTS_PASSED = 'teacher_students_passed';
-    public const TEACHER_PASS_RATE = 'teacher_pass_rate';
+    //course performance
+   public const EXAM_COURSE_CANDIDATE = "exam_course_candidate_count";
+   public const EXAM_COURSE_CANDIDATE_PASSED = "exam_course_candidate_pass";
+   public const EXAM_COURSE_CANDIDATE_FAILED = "exam_course_cadidate_failed";
+   public const EXAM_COURSE_GRADE_DISTRIBUTION = "exam_course_grade_distribution";
+   public const EXAM_COURSE_RESIT_DISTRIBUTION = "exam_course_resit_distribution";
+   public const EXAM_COURSE_SCORE_DISTRIBUTION = "exam_course_score_distribution";
 
-    // === Course Analytics ===
-    public const COURSE_TOTAL_SCORE = 'course_total_score';
-    public const COURSE_STUDENTS_PASSED = 'course_students_passed';
-    public const COURSE_STUDENT_FAILED = 'course_students_failed';
-    public const COURSE_PASS_RATE = 'course_pass_rate';
-    public consT COURSE_FAIL_RATE = 'course_fail_rate';
+   //student performance
+   public const STUDENT_EXAM_GPA = "student_exam_gpa";
+   public const STUDENT_EXAM = 'student_exam';
+   public const STUDENT_RESIT = 'student_resit';
+   public const STUDENT_SCORE = 'student_score';
+   public const STUDENT_PASS_EXAM = 'student_pass_exam';
+   public const STUDENT_FAIL_EXAM = 'student_fail_exam';
+   public const STUDENT_EXAM_COURSE = 'student_exam_course';
+   public const STUDENT_EXAM_COURSE_FAILED = 'student_exam_course_failed';
+   public const STUDENT_EXAM_COURSE_PASSED = 'student_exam_course_passed';
 
-    // === School Academic Health ===
-    public const SCHOOL_AVERAGE_SCORE = 'school_average_score';
-    public const SCHOOL_PASS_RATE = 'school_pass_rate';
-    public const SCHOOL_AVERAGE_GPA = 'school_average_gpa';
-    public const SCHOOL_FAIL_RATE = 'school_pass_rate';
+   //teacher performance
+   public const TEACHER_EXAM_COURSE_PASSED = "teacher_exam_course_passed"; //teacher exam courses passed count
+   public const TEACHER_EXAM_COURSE_FAILED = "teacher_exam_course_failed"; //teacher exam courses failed count
+   public const TEACHER_EXAM_COURSE_CANDIDATE = "teacher_exam_course_candidate"; //teacher exam course candidate
+   public const TEACHER_EXAM_COURSE_GRADE_DISTRIBUTION = "teacher_exam_course_grade_distribution"; //teacher exam course grades distribution
 
-    // === Exam Participation ===
-    public const EXAM_TOTAL_STUDENTS_ASSESSED = 'exam_total_students_assessed';
+   //exam performance
+   public const EXAM_GPA = "exam_gpa";
+   public const EXAM = "exam";
+   public const EXAM_CANDIDATE = "exam_candidate";
+   public const EXAM_RESIT = "exam_resit";
+   public const EXAM_PASSED = "exam_passed";
+   public const EXAM_FAILED = "exam_failed";
+   public const EXAM_GPA_DISTRIBUTION = "exam_gpa_distribution";
+   public const EXAM_SCORE_DISTRIBUTION = "exam_score_distribution";
+   public const EXAM_GRADE_DISTRIBUTION = "exam_grade_distribution";
 
-    // === Exam Outcomes ===
-    public const EXAM_TOTAL_STUDENTS_PASSED = 'exam_total_students_passed';
-    public const EXAM_TOTAL_STUDENTS_FAILED = 'exam_total_students_failed';
-
-    // === Exam Rates ===
-    public const EXAM_PASS_RATE = 'exam_pass_rate';
-    public const EXAM_FAIL_RATE = 'exam_fail_rate';
-
-    // === Exam Scores ===
-    public const AVERAGE_EXAM_TOTAL_SCORE = 'average_exam_total_score';
-    public const AVERAGE_EXAM_GPA = 'average_exam_gpa';
-
-    // === Distributions ===
-    public const EXAM_COURSE_FAIL_DISTRIBUTION = 'exam_course_fail_distribution';
-    public const EXAM_COURSE_PASS_DISTRIBUTION = 'exam_course_pass_distribution';
-    public const EXAM_COURSE_RESIT_DISTRIBUTION = 'exam_course_resit_distribution';
-    public const EXAM_GRADES_DISTRIBUTION = 'exam_grades_distribution';
-    public const EXAM_COURSE_SCORE_DISTRIBUTION = 'exam_course_score_distribution';
-
-    // === Resits ===
-    public const EXAM_TOTAL_NUMBER_OF_RESITS = 'exam_total_number_of_resits';
-    public const EXAM_COUNT = 'total_number_exams';
+   //resit
+   public const RESIT_EXAM = "resit_exam";
+   public const RESIT_EXAM_CANDIDATE = "resit_exam_candidate";
+   public const RESIT_EXAM_PASSED = "resit_exam_passed";
+   public const RESIT_EXAM_FAILED = "resit_exam_failed";
 
 }

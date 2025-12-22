@@ -1,18 +1,22 @@
 <?php
 
-namespace App\Listeners\Analytics\Operational;
+namespace App\Listeners\Analytics\Academic;
 
-use App\Models\Analytics\OperationalAnalyticEvent;
+use App\Events\Analytics\AcademicAnalyticsEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Events\Analytics\OperationalAnalyticsEvent;
+use App\Models\Analytics\AcademicAnalyticEvent;
 
-class StoreOperationalAnalyticsListener implements ShouldQueue
+class StoreAcademicAnalyticsListener implements ShouldQueue
 {
+    /**
+     * Create the event listener.
+     */
     use InteractsWithQueue;
-    public function handle(OperationalAnalyticsEvent $event): void
+
+    public function handle(AcademicAnalyticsEvent $event): void
     {
-        OperationalAnalyticEvent::create([
+        AcademicAnalyticEvent::create([
             'event_type' => $event->eventType(),
             'school_branch_id' => $event->payload()['school_branch_id'],
             'count' => $event->count(),

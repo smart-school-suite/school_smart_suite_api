@@ -1,14 +1,12 @@
 <?php
 
 namespace App\Analytics\Engines;
-
+use App\Analytics\Projections\Academic\SnapshotProjector;
+use App\Analytics\Projections\Academic\TimeSeriesProjector;
 class AcademicAnalyticsEngine
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
-    {
-        //
+    public static function projection($event){
+        SnapshotProjector::project($event);
+        TimeSeriesProjector::project($event);
     }
 }

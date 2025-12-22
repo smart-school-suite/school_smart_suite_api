@@ -1,14 +1,17 @@
 <?php
 
-namespace App\Analytics\Projections\Academic;
-use App\Constant\Analytics\Academic\AcademicKpiDefination;
-use App\Models\Analytics\AcademicAnalyticSnapshot;
+namespace App\Analytics\Projections\Operational;
+
+use App\Constant\Analytics\Operational\OperationalKpiDefination;
+use App\Models\Analytics\OperationalAnalyticSnapshot;
 
 class SnapshotProjector
 {
-   public static function project($event) {
-       $definitions = AcademicKpiDefination::definitions();
-             foreach ($definitions as $def) {
+    public static function project($event): void
+    {
+        // Implementation for projecting operational analytics events
+        $definitions = OperationalKpiDefination::definitions();
+        foreach ($definitions as $def) {
             if (!in_array($event->eventType(), $def['source_events'] ?? [], true)) {
                 continue;
             }
@@ -27,7 +30,7 @@ class SnapshotProjector
                 $dimensions
             );
 
-            AcademicAnalyticSnapshot::raw(function ($collection) use ($filter, $count) {
+            OperationalAnalyticSnapshot::raw(function ($collection) use ($filter, $count) {
                 return $collection->updateOne(
                     $filter,
                     [
@@ -39,5 +42,5 @@ class SnapshotProjector
                 );
             });
         }
-   }
+    }
 }
