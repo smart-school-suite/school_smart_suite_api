@@ -15,7 +15,7 @@ class StoreEnrollementAnalyticsListener implements ShouldQueue
         EnrollmentAnalyticEvent::create([
             'event_type' => $event->eventType(),
             'school_branch_id' => $event->payload()['school_branch_id'],
-            'amount' => $event->amount(),
+            'amount' => $event->value(),
             'payload' => $event->payload(),
             'occurred_at' => $event->occurredAt(),
             'version' => $event->version(),

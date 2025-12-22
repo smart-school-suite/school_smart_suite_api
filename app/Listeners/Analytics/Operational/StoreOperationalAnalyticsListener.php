@@ -15,7 +15,7 @@ class StoreOperationalAnalyticsListener implements ShouldQueue
         OperationalAnalyticEvent::create([
             'event_type' => $event->eventType(),
             'school_branch_id' => $event->payload()['school_branch_id'],
-            'count' => $event->count(),
+            'count' => $event->value(),
             'payload' => $event->payload(),
             'occurred_at' => $event->occurredAt(),
             'version' => $event->version(),

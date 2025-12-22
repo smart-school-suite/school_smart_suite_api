@@ -55,8 +55,8 @@ class EnrollmentAnalyticsEvent implements ShouldQueue
         return $this->payload['school_branch_id'];
     }
 
-    public function amount(): float
+    public function value(): float
     {
-        return (float) ($this->payload['amount'] ?? 0);
+        return (float) ($this->payload['value'] ?? 0);
     }
 }
