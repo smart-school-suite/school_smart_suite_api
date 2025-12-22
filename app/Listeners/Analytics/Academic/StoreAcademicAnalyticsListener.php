@@ -5,7 +5,7 @@ namespace App\Listeners\Analytics\Academic;
 use App\Events\Analytics\AcademicAnalyticsEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Models\Analytics\AcademicAnalyticEvent;
+use App\Models\Analytics\Academic\AcademicAnalyticEvent;
 
 class StoreAcademicAnalyticsListener implements ShouldQueue
 {

@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Models\Analytics;
+namespace App\Models\Analytics\Election;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
-class EnrollmentAnalyticsTimeseries extends Model
+class ElectionAnalyticsSnapshot extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'financial_analytics_timeseries';
+    protected $table = 'election_analytics_snapshot';
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
     protected $guarded = [];
     protected $casts = [
         'dimensions' => 'array',
-        'value' => 'float',
+        'value' => 'integer',
         'updated_at' => 'datetime',
     ];
 
@@ -25,7 +25,7 @@ class EnrollmentAnalyticsTimeseries extends Model
 
     public function getTable()
     {
-        return 'financial_analytics_timeseries';
+        return 'election_analytics_snapshot';
     }
 
     public function newEloquentBuilder($query)

@@ -5,7 +5,7 @@ namespace App\Listeners\Analytics\Enrollment;
 use App\Events\Analytics\EnrollmentAnalyticsEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Models\Analytics\EnrollmentAnalyticEvent;
+use App\Models\Analytics\Enrollment\EnrollmentAnalyticEvent;
 
 class StoreEnrollementAnalyticsListener implements ShouldQueue
 {

@@ -2,7 +2,7 @@
 
 namespace App\Listeners\Analytics\Operational;
 
-use App\Models\Analytics\OperationalAnalyticEvent;
+use App\Models\Analytics\Operational\OperationalAnalyticEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Events\Analytics\OperationalAnalyticsEvent;

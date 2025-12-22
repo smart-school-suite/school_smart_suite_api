@@ -3,7 +3,7 @@
 namespace App\Analytics\Projections\Operational;
 
 use App\Constant\Analytics\Operational\OperationalKpiDefination;
-use App\Models\Analytics\OperationalAnalyticSnapshot;
+use App\Models\Analytics\Operational\OperationalAnalyticSnapshot;
 
 class TimeSeriesProjector
 {

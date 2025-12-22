@@ -3,9 +3,8 @@
 namespace App\Analytics\Projections\Financial;
 
 use App\Constant\Analytics\Financial\FinancialKpiDefination;
-use App\Models\Analytics\FinancialAnalyticsSnapshot as AnalyticsSnapshot;
+use App\Models\Analytics\Finance\FinanceAnalyticSnapshot as AnalyticsSnapshot;
 use App\Constant\Analytics\Financial\FinancialAnalyticsEvent;
-use Illuminate\Support\Facades\Log;
 
 class SnapshotProjector
 {

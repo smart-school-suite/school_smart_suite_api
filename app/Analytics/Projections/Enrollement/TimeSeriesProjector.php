@@ -3,7 +3,7 @@
 namespace App\Analytics\Projections\Enrollement;
 
 use App\Constant\Analytics\Enrollment\EnrollmentKpiDefination;
-use App\Models\Analytics\EnrollmentAnalyticsTimeseries;
+use App\Models\Analytics\Enrollment\EnrollmentAnalyticTimeseries;
 use App\Analytics\Projections\Shared\TimeSeriesBucket;
 
 class TimeSeriesProjector
@@ -46,7 +46,7 @@ class TimeSeriesProjector
                     $dimensions
                 );
 
-                EnrollmentAnalyticsTimeseries::raw(function ($collection) use ($filter, $count) {
+                EnrollmentAnalyticTimeseries::raw(function ($collection) use ($filter, $count) {
                     return $collection->updateOne(
                         $filter,
                         [

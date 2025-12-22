@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Analytics\Projections\Financial;
+namespace App\Analytics\Projections\Election;
 
-use App\Constant\Analytics\Financial\FinancialKpiDefination;
 use App\Analytics\Projections\Shared\TimeSeriesBucket;
-use App\Models\Analytics\Finance\FinanceAnalyticTimeSeries as AnalyticsTimeSeries;
+use App\Constant\Analytics\Election\ElectionAnalyticsDefination;
+use App\Models\Analytics\Election\ElectionAnalyticsTimeseries;
 
 class TimeSeriesProjector
 {
     public static function project($event): void
     {
-        $definitions = FinancialKpiDefination::definitions();
+        $definitions = ElectionAnalyticsDefination::definations();
 
         foreach ($definitions as $def) {
             if (!in_array($event->eventType(), $def['source_events'] ?? [], true)) {
@@ -23,12 +23,7 @@ class TimeSeriesProjector
 
             $payload = $event->payload();
 
-            $amount = data_get($payload, $def['amount_path'] ?? 'amount', 0);
-
-            // Handle refunds / reversals
-            if (self::handleReversal($event->eventType())) {
-                $amount = -abs($amount);
-            }
+            $count = $def['type'] === 'counter' ? 1 : ($payload['value'] ?? 0);
 
             // Dimensions
             $dimensions = [];
@@ -51,12 +46,12 @@ class TimeSeriesProjector
                     $dimensions
                 );
 
-                AnalyticsTimeSeries::raw(function ($collection) use ($filter, $amount) {
+                ElectionAnalyticsTimeseries::raw(function ($collection) use ($filter, $count) {
                     return $collection->updateOne(
                         $filter,
                         [
                             '$inc' => [
-                                'delta'   => $amount,
+                                'delta'   => $count,
                             ],
                         ],
                         ['upsert' => true]
@@ -64,15 +59,5 @@ class TimeSeriesProjector
                 });
             }
         }
-    }
-    private static function handleReversal(string $eventType)
-    {
-        $reversalEvents = collect([
-            'finance.registration_fee.reversed',
-            'finance.tuition_fee.reversed',
-            'finance.additional_fee.reversed',
-            'finance.resit_fee.reversed',
-        ]);
-        return $reversalEvents->contains($eventType);
     }
 }

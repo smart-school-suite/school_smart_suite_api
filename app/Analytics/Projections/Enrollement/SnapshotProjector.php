@@ -2,7 +2,7 @@
 
 namespace App\Analytics\Projections\Enrollement;
 use App\Constant\Analytics\Enrollment\EnrollmentKpiDefination;
-use App\Models\Analytics\EnrollmentAnalyticsSnapshot;
+use App\Models\Analytics\Enrollment\EnrollmentAnalyticSnapshot;
 class SnapshotProjector
 {
    public static function project($event) {
@@ -26,7 +26,7 @@ class SnapshotProjector
                 $dimensions
             );
 
-            EnrollmentAnalyticsSnapshot::raw(function ($collection) use ($filter, $count) {
+            EnrollmentAnalyticSnapshot::raw(function ($collection) use ($filter, $count) {
                 return $collection->updateOne(
                     $filter,
                     [

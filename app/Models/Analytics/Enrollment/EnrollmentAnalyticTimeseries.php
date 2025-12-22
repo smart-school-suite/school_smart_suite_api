@@ -1,39 +1,38 @@
 <?php
 
-namespace App\Models\Analytics;
+namespace App\Models\Analytics\Enrollment;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class OperationalAnalyticEvent extends Model
+class EnrollmentAnalyticTimeseries extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'operational_events';
-
+    protected $table = 'financial_analytics_timeseries';
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = [
-        'event_type',
-        'school_branch_id',
-        'amount',
-        'payload',
-        'occurred_at',
-        'version',
-        'event_hash'
-    ];
+    protected $guarded = [];
     protected $casts = [
-        'payload' => 'array',
-        'occurred_at' => 'datetime',
+        'dimensions' => 'array',
+        'value' => 'float',
+        'updated_at' => 'datetime',
     ];
+
+    public function scopeForKpi($query, string $kpi)
+    {
+        return $query->where('kpi', $kpi);
+    }
+
     public function getTable()
     {
-        return 'operational_events';
+        return 'financial_analytics_timeseries';
     }
 
     public function newEloquentBuilder($query)
     {
         return new \MongoDB\Laravel\Eloquent\Builder($query);
     }
+
     public function qualifyColumn($column)
     {
         return $column;

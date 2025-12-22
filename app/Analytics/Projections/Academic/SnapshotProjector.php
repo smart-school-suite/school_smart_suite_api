@@ -2,7 +2,7 @@
 
 namespace App\Analytics\Projections\Academic;
 use App\Constant\Analytics\Academic\AcademicKpiDefination;
-use App\Models\Analytics\AcademicAnalyticSnapshot;
+use App\Models\Analytics\Academic\AcademicAnalyticSnapshot;
 
 class SnapshotProjector
 {

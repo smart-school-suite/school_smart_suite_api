@@ -1,20 +1,21 @@
 <?php
 
-namespace App\Models\Analytics;
+namespace App\Models\Analytics\Finance;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class EnrollmentAnalyticsSnapshot extends Model
+class FinanceAnalyticSnapshot extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'enrollment_analytics_snapshots';
+    protected $table = 'financial_analytics_snapshots';
+
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
     protected $guarded = [];
     protected $casts = [
         'dimensions' => 'array',
-        'value' => 'integer',
+        'value' => 'float',
         'updated_at' => 'datetime',
     ];
 
@@ -25,7 +26,7 @@ class EnrollmentAnalyticsSnapshot extends Model
 
     public function getTable()
     {
-        return 'enrollment_analytics_snapshots';
+        return 'financial_analytics_snapshots';
     }
 
     public function newEloquentBuilder($query)

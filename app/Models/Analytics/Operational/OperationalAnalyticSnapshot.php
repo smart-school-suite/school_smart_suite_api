@@ -1,38 +1,36 @@
 <?php
 
-namespace App\Models\Analytics;
+namespace App\Models\Analytics\Operational;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class AcademicAnalyticSnapshot extends Model
+class OperationalAnalyticSnapshot extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'academic_analytics_snapshots';
+    protected $table = 'operational_snapshots';
+
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $guarded = [];
-    protected $casts = [
-        'dimensions' => 'array',
-        'value' => 'integer',
-        'updated_at' => 'datetime',
+    protected $fillable = [
+        'snapshot_type',
+        'school_branch_id',
+        'payload',
+        'snapshot_at'
     ];
-
-    public function scopeForKpi($query, string $kpi)
-    {
-        return $query->where('kpi', $kpi);
-    }
-
+    protected $casts = [
+        'payload' => 'array',
+        'snapshot_at' => 'datetime',
+    ];
     public function getTable()
     {
-        return 'academic_analytics_snapshots';
+        return 'operational_snapshots';
     }
 
     public function newEloquentBuilder($query)
     {
         return new \MongoDB\Laravel\Eloquent\Builder($query);
     }
-
     public function qualifyColumn($column)
     {
         return $column;

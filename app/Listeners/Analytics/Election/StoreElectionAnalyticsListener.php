@@ -1,28 +1,28 @@
 <?php
 
-namespace App\Listeners\Analytics\Financial;
+namespace App\Listeners\Analytics\Election;
 
-use App\Events\Analytics\FinancialAnalyticsEvent;
-use App\Models\Analytics\Finance\FinanceAnalyticEvent;
+use App\Events\Analytics\ElectionAnalyticsEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Models\Analytics\Election\ElectionAnalyticEvent;
 
-class StoreFinancialAnalyticsListener implements ShouldQueue
+class StoreElectionAnalyticsListener implements ShouldQueue
 {
     use InteractsWithQueue;
-    public function handle(FinancialAnalyticsEvent $event): void
+    public function handle(ElectionAnalyticsEvent $event): void
     {
-        FinanceAnalyticEvent::create([
+        ElectionAnalyticEvent::create([
             'event_type' => $event->eventType(),
             'school_branch_id' => $event->payload()['school_branch_id'],
-            'amount' => $event->amount(),
+            'count' => $event->value(),
             'payload' => $event->payload(),
             'occurred_at' => $event->occurredAt(),
             'version' => $event->version(),
             'event_hash' => sha1(
                 $event->eventType() .
-                    $event->payload()['school_branch_id'].
-                    $event->occurredAt().
+                    $event->payload()['school_branch_id'] .
+                    $event->occurredAt() .
                     json_encode($event->payload())
             ),
         ]);

@@ -3,7 +3,7 @@
 namespace App\Analytics\Projections\Academic;
 use App\Constant\Analytics\Academic\AcademicKpiDefination;
 use App\Analytics\Projections\Shared\TimeSeriesBucket;
-use App\Models\Analytics\AcademicAnalyticTimeSeries;
+use App\Models\Analytics\Academic\AcademicAnalyticTimeSeries;
 class TimeSeriesProjector
 {
     public static function project($event): void

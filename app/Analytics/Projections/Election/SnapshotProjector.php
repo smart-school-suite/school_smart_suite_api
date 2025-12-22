@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Analytics\Projections\Operational;
+namespace App\Analytics\Projections\Election;
 
-use App\Constant\Analytics\Operational\OperationalKpiDefination;
-use App\Models\Analytics\Operational\OperationalAnalyticSnapshot;
+use App\Constant\Analytics\Election\ElectionAnalyticsDefination;
+use App\Models\Analytics\Election\ElectionAnalyticsSnapshot;
 
 class SnapshotProjector
 {
     public static function project($event): void
     {
-        // Implementation for projecting operational analytics events
-        $definitions = OperationalKpiDefination::definitions();
+        $definitions = ElectionAnalyticsDefination::definations();
         foreach ($definitions as $def) {
             if (!in_array($event->eventType(), $def['source_events'] ?? [], true)) {
                 continue;
@@ -30,7 +29,7 @@ class SnapshotProjector
                 $dimensions
             );
 
-            OperationalAnalyticSnapshot::raw(function ($collection) use ($filter, $count) {
+            ElectionAnalyticsSnapshot::raw(function ($collection) use ($filter, $count) {
                 return $collection->updateOne(
                     $filter,
                     [

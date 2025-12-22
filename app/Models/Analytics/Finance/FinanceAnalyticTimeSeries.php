@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\Analytics;
+namespace App\Models\Analytics\Finance;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class AcademicAnalyticTimeSeries extends Model
+class FinanceAnalyticTimeSeries extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'academic_analytics_timeseries';
+    protected $table = 'financial_analytics_timeseries';
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -25,7 +25,7 @@ class AcademicAnalyticTimeSeries extends Model
 
     public function getTable()
     {
-        return 'academic_analytics_timeseries';
+        return 'financial_analytics_timeseries';
     }
 
     public function newEloquentBuilder($query)

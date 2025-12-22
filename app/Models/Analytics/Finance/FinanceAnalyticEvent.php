@@ -1,38 +1,39 @@
 <?php
 
-namespace App\Models\Analytics;
+namespace App\Models\Analytics\Finance;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class FinancialAnalyticsTimeSeries extends Model
+class FinanceAnalyticEvent extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'financial_analytics_timeseries';
+    protected $table = 'financial_events';
+
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $guarded = [];
-    protected $casts = [
-        'dimensions' => 'array',
-        'value' => 'float',
-        'updated_at' => 'datetime',
+    protected $fillable = [
+        'event_type',
+        'school_branch_id',
+        'amount',
+        'payload',
+        'occurred_at',
+        'version',
+        'event_hash'
     ];
-
-    public function scopeForKpi($query, string $kpi)
-    {
-        return $query->where('kpi', $kpi);
-    }
-
+    protected $casts = [
+        'payload' => 'array',
+        'occurred_at' => 'datetime',
+    ];
     public function getTable()
     {
-        return 'financial_analytics_timeseries';
+        return 'financial_events';
     }
 
     public function newEloquentBuilder($query)
     {
         return new \MongoDB\Laravel\Eloquent\Builder($query);
     }
-
     public function qualifyColumn($column)
     {
         return $column;
