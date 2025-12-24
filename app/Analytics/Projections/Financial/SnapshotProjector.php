@@ -5,7 +5,7 @@ namespace App\Analytics\Projections\Financial;
 use App\Constant\Analytics\Financial\FinancialKpiDefination;
 use App\Models\Analytics\Finance\FinanceAnalyticSnapshot as AnalyticsSnapshot;
 use App\Constant\Analytics\Financial\FinancialAnalyticsEvent;
-
+use App\Constant\Analytics\Financial\FinancialAnalyticsDimension;
 class SnapshotProjector
 {
     public static function project($event): void
@@ -36,6 +36,9 @@ class SnapshotProjector
                 $dimensions
             );
 
+            // Handle date dimensions
+            $dateDimensions = self::handleDateDimension($def['dimensions'], $payload);
+            $filter = array_merge($filter, $dateDimensions);
             AnalyticsSnapshot::raw(function ($collection) use ($filter, $amount) {
                 return $collection->updateOne(
                     $filter,
@@ -50,6 +53,19 @@ class SnapshotProjector
         }
     }
 
+    private static function handleDateDimension(array $dimensions, array $payload): array
+    {
+        $collectedDimensions = collect($dimensions);
+        $currentDate = now();
+        $dateDimensions = [];
+        if ($collectedDimensions->contains(FinancialAnalyticsDimension::YEAR)) {
+            $dateDimensions[FinancialAnalyticsDimension::YEAR] = $currentDate->year;
+        }
+        if ($collectedDimensions->contains(FinancialAnalyticsDimension::MONTH)) {
+            $dateDimensions[FinancialAnalyticsDimension::MONTH] = $currentDate->month;
+        }
+        return $dateDimensions;
+    }
     private static function handleReversal(string $eventType){
          $reversalEvents = collect([
             FinancialAnalyticsEvent::REGISTRATION_FEE_REVERSED,

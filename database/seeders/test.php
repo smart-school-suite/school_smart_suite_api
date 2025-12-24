@@ -31,15 +31,19 @@ use App\Events\Analytics\FinancialAnalyticsEvent;
 use App\Models\Department;
 use App\Models\Educationlevels;
 use App\Models\Student;
+use App\Models\AdditionalFeesCategory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as EventConstant;
+use App\Models\Schoolexpensescategory;
 
 class test extends Seeder
 {
-    public function run(): void
+    public function run(): void {}
+
+    public function financialStatsSeeder()
     {
-
-
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 500; $i++) {
             event(new FinancialAnalyticsEvent(
                 eventType: 'finance.registration_fee.incurred',
                 version: 1,
@@ -53,11 +57,12 @@ class test extends Seeder
 
                     // ─── ACADEMIC STRUCTURE ──────────────
                     'department' => Department::first()->department_name,
-                    "department_id" => Department::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
                     'specialty'  => Specialty::first()->specialty_name,
-                    "specialty_id" => Specialty::first()->id,
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
                     'level'      => EducationLevels::first()->level_name,
-                    "level_id" => Educationlevels::first()->id,
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "category_id" => Arr::random(AdditionalFeesCategory::all()->pluck('id')->toArray()),
 
                     // ─── FINANCIAL STRUCTURE ─────────────
                     'fee_type' => 'tuition',
@@ -73,7 +78,41 @@ class test extends Seeder
             ));
         }
 
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 40; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: 'finance.registration_fee.paid',
+                version: 1,
+                payload: [
+                    // ─── REQUIRED ───────────────────────
+                    'amount' => rand(50000, 100000),
+
+                    // ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    // ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+
+                    // ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    // ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 500; $i++) {
             event(new FinancialAnalyticsEvent(
                 eventType: 'finance.tuition_fee.incurred',
                 version: 1,
@@ -87,11 +126,11 @@ class test extends Seeder
 
                     //  ─── ACADEMIC STRUCTURE ──────────────
                     'department' => Department::first()->department_name,
-                    "department_id" => Department::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
                     'specialty'  => Specialty::first()->specialty_name,
-                    "specialty_id" => Specialty::first()->id,
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
                     'level'      => EducationLevels::first()->level_name,
-                    "level_id" => Educationlevels::first()->id,
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
 
                     ///  ─── FINANCIAL STRUCTURE ─────────────
                     'fee_type' => 'tuition',
@@ -107,9 +146,43 @@ class test extends Seeder
             ));
         }
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 45; $i++) {
             event(new FinancialAnalyticsEvent(
-                eventType: 'finance.resit_fee.incurred',
+                eventType: 'finance.tuition_fee.paid',
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(500000, 1000000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    'department' => Department::first()->department_name,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    'specialty'  => Specialty::first()->specialty_name,
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    'level'      => EducationLevels::first()->level_name,
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+                    'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 300; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: EventConstant::RESIT_FEE_INCURRED,
                 version: 1,
                 payload: [
                     ///  ─── REQUIRED ───────────────────────
@@ -120,12 +193,10 @@ class test extends Seeder
                     'school_branch_id' => Schoolbranches::first()->id,
 
                     //  ─── ACADEMIC STRUCTURE ──────────────
-                    'department' => Department::first()->department_name,
-                    "department_id" => Department::first()->id,
-                    'specialty'  => Specialty::first()->specialty_name,
-                    "specialty_id" => Specialty::first()->id,
-                    'level'      => EducationLevels::first()->level_name,
-                    "level_id" => Educationlevels::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "category_id" => Arr::random(AdditionalFeesCategory::all()->pluck('id')->toArray()),
 
                     'course_id' => Courses::first()->id,
                     ///  ─── FINANCIAL STRUCTURE ─────────────
@@ -142,66 +213,30 @@ class test extends Seeder
             ));
         }
 
-        event(new FinancialAnalyticsEvent(
-            eventType: 'finance.resit_fee.reversed',
-            version: 1,
-            payload: [
-                ///  ─── REQUIRED ───────────────────────
-                'amount' => rand(2500, 10000),
-
-                /// ─── TENANCY ────────────────────────
-                'school_id'        => Schoolbranches::first()->school_id,
-                'school_branch_id' => Schoolbranches::first()->id,
-
-                //  ─── ACADEMIC STRUCTURE ──────────────
-                'department' => Department::first()->department_name,
-                "department_id" => Department::first()->id,
-                'specialty'  => Specialty::first()->specialty_name,
-                "specialty_id" => Specialty::first()->id,
-                'level'      => EducationLevels::first()->level_name,
-                "level_id" => Educationlevels::first()->id,
-
-                'course_id' => Courses::first()->id,
-                ///  ─── FINANCIAL STRUCTURE ─────────────
-                'fee_type' => 'tuition',
-
-                ///  ─── ACTORS (NOT DIMENSIONS) ─────────
-                'student_id' => Student::first()->id,
-                'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
-
-                //  ─── METADATA ────────────────────────
-                'currency' => 'XAF',
-                'source'   => 'billing_service',
-            ]
-        ));
-
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 150; $i++) {
             event(new FinancialAnalyticsEvent(
-                eventType: 'finance.additional_fee.incurred',
+                eventType: EventConstant::RESIT_FEE_PAID,
                 version: 1,
                 payload: [
                     ///  ─── REQUIRED ───────────────────────
-                    'amount' => rand(2500, 50000),
+                    'amount' => rand(2500, 10000),
 
                     /// ─── TENANCY ────────────────────────
                     'school_id'        => Schoolbranches::first()->school_id,
                     'school_branch_id' => Schoolbranches::first()->id,
 
                     //  ─── ACADEMIC STRUCTURE ──────────────
-                    'department' => Department::first()->department_name,
-                    "department_id" => Department::first()->id,
-                    'specialty'  => Specialty::first()->specialty_name,
-                    "specialty_id" => Specialty::first()->id,
-                    'level'      => EducationLevels::first()->level_name,
-                    "level_id" => Educationlevels::first()->id,
-
-                    'course_id' => Courses::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "category_id" => Arr::random(AdditionalFeesCategory::all()->pluck('id')->toArray()),
+                    'course_id' => Arr::random(Courses::all()->pluck('id')->toArray()),
                     ///  ─── FINANCIAL STRUCTURE ─────────────
                     'fee_type' => 'tuition',
 
                     ///  ─── ACTORS (NOT DIMENSIONS) ─────────
                     'student_id' => Student::first()->id,
-                    'category_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+                    'invoice_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
 
                     //  ─── METADATA ────────────────────────
                     'currency' => 'XAF',
@@ -210,9 +245,9 @@ class test extends Seeder
             ));
         }
 
-        for ($i = 0; $i < 50; $i++) {
+        for ($i = 0; $i < 450; $i++) {
             event(new FinancialAnalyticsEvent(
-                eventType: 'finance.additional_fee.paid',
+                eventType: EventConstant::ADDITIONAL_FEE_INCURRED,
                 version: 1,
                 payload: [
                     ///  ─── REQUIRED ───────────────────────
@@ -223,20 +258,77 @@ class test extends Seeder
                     'school_branch_id' => Schoolbranches::first()->id,
 
                     //  ─── ACADEMIC STRUCTURE ──────────────
-                    'department' => Department::first()->department_name,
-                    "department_id" => Department::first()->id,
-                    'specialty'  => Specialty::first()->specialty_name,
-                    "specialty_id" => Specialty::first()->id,
-                    'level'      => EducationLevels::first()->level_name,
-                    "level_id" => Educationlevels::first()->id,
-
-                    'course_id' => Courses::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "category_id" => Arr::random(AdditionalFeesCategory::all()->pluck('id')->toArray()),
                     ///  ─── FINANCIAL STRUCTURE ─────────────
                     'fee_type' => 'tuition',
 
                     ///  ─── ACTORS (NOT DIMENSIONS) ─────────
                     'student_id' => Student::first()->id,
-                    'category_id' => '00fc2af1-ff25-4382-84e6-1cd4393613e3',
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 100; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: EventConstant::ADDITIONAL_FEE_PAID,
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(2500, 50000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "category_id" => Arr::random(AdditionalFeesCategory::all()->pluck('id')->toArray()),
+
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
+
+                    //  ─── METADATA ────────────────────────
+                    'currency' => 'XAF',
+                    'source'   => 'billing_service',
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 150; $i++) {
+            event(new FinancialAnalyticsEvent(
+                eventType: EventConstant::EXPENSE_INCURRED,
+                version: 1,
+                payload: [
+                    ///  ─── REQUIRED ───────────────────────
+                    'amount' => rand(100000, 500000),
+
+                    /// ─── TENANCY ────────────────────────
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+
+                    //  ─── ACADEMIC STRUCTURE ──────────────
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "category_id" => Arr::random(Schoolexpensescategory::all()->pluck('id')->toArray()),
+
+                    ///  ─── FINANCIAL STRUCTURE ─────────────
+                    'fee_type' => 'tuition',
+
+                    ///  ─── ACTORS (NOT DIMENSIONS) ─────────
+                    'student_id' => Student::first()->id,
 
                     //  ─── METADATA ────────────────────────
                     'currency' => 'XAF',
@@ -245,55 +337,6 @@ class test extends Seeder
             ));
         }
     }
-
-    // private function generateTimeSeries(string $kpiId): array
-    // {
-    //     $data = [];
-    //     $baseValue = ($kpiId === 'REGISTRATION_FEE_TOTAL') ? 10000.00 : 50000.00;
-    //     $prevValue = $baseValue * 0.95;  Start value before first entry
-
-    //      //Start from 2024-12 and go to 2025-03
-    //     for ($i = 0; $i < 4; $i++) {
-    //         $month = 12 + $i;
-    //         $year = 2024;
-    //         if ($month > 12) {
-    //             $month -= 12;
-    //             $year = 2025;
-    //         }
-
-    //         $currentValue = $prevValue * (1 + (rand(10, 50) / 1000));  Random 1% to 5% increase
-    //        // $absoluteChange = $currentValue - $prevValue;
-    //         $percentChange = $absoluteChange / $prevValue;
-
-    //        //  Format previous period for metadata
-    //         $prevMonth = $month - 1;
-    //         $prevYear = $year;
-    //         if ($prevMonth < 1) {
-    //             $prevMonth = 12;
-    //             $prevYear--;
-    //         }
-
-    //          The 'period' field is crucial for our queries
-    //         $periodString = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
-    //         $prevPeriodString = $prevYear . '-' . str_pad($prevMonth, 2, '0', STR_PAD_LEFT);
-
-    //         $data[] = [
-    //             'period' => $periodString,
-    //             'value' => round($currentValue, 2),
-    //             'metadata' => [
-    //                 'comparison_period' => $prevPeriodString,
-    //                 'comparison_value' => round($prevValue, 2),
-    //                 'absolute_change' => round($absoluteChange, 2),
-    //                 'percent_change' => round($percentChange, 4)  Store as a decimal (e.g., 0.0250)
-    //             ]
-    //         ];
-
-    //          Set the current value as the previous value for the next iteration
-    //         $prevValue = $currentValue;
-    //     }
-
-    //     return $data;
-    // }
 
     public function electionSettingSeeder()
     {

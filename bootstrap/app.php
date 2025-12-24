@@ -198,9 +198,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/school-grades')
                 ->group(base_path("routes/Grade/SchoolGrades.php"));
 
-            Route::prefix('api/v1/stats')
-                ->group(base_path("routes/Stats/FinancialStats.php"));
-
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/academic-stats')
                 ->group(base_path('routes/Stats/AcademicStats.php'));
 

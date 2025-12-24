@@ -17,7 +17,6 @@ use App\Models\SchoolTransaction;
 use App\Models\SchoolSubscription;
 use App\Models\SubscriptionUsage;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class SchoolSubscriptionService
@@ -45,8 +44,6 @@ class SchoolSubscriptionService
             $branchId     = (string) Str::uuid();
             $rawApiKey    = (string) Str::uuid();
             $subscriptionId = (string) Str::uuid();
-            $hashedApiKey = Hash::make($rawApiKey);
-
             School::create([
                 'id'         => $schoolId,
                 'name'       => $data['school_name'],
@@ -77,7 +74,7 @@ class SchoolSubscriptionService
 
             SchoolBranchApiKey::create([
                 'school_branch_id' => $branchId,
-                'api_key'          => $hashedApiKey,
+                'api_key'          => $rawApiKey,
                 'issued_at'        => now(),
             ]);
 

@@ -21,8 +21,8 @@ class IdentifyTenant
         $providedKey = $request->header('API-KEY');
 
         $apiKeyRecord = SchoolBranchApiKey::with('schoolBranch.school.country')
-            ->get()
-            ->first(fn($record) => Hash::check($providedKey, $record->api_key));
+            ->where('api_key', $providedKey)
+            ->first();
 
         if (!$apiKeyRecord?->schoolBranch) {
             return ApiResponseService::error("school branch not found or api key invalid", null, 404);

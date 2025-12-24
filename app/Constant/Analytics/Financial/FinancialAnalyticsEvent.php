@@ -19,4 +19,8 @@ class FinancialAnalyticsEvent
     public const RESIT_FEE_PAID = 'finance.resit_fee.paid';
     public const RESIT_FEE_REVERSED = 'finance.resit_fee.reversed';
     public const RESIT_FEE_INCURRED = 'finance.resit_fee.incurred';
+
+    public const EXPENSE_INCURRED = 'finance.expense.incurred';
+    public const EXPENSE_UPDATED = 'finance.expense.updated';
+    public const EXPENSE_DELETED = 'finance.expense.deleted';
 }
