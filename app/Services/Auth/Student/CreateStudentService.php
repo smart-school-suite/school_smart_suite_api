@@ -64,7 +64,8 @@ class CreateStudentService
             $student->id = $randomId;
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
-            $student->gender = $studentData['gender'];
+            $student->gender_id = $studentData['gender_id'];
+            $student->student_source_id = $studentData['student_source_id'];
             $student->phone = $studentData['phone'] ?? null;
             $student->last_name = $studentData["last_name"];
             $student->guardian_id = $studentData["guardian_id"];

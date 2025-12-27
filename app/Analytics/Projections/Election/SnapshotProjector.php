@@ -4,6 +4,7 @@ namespace App\Analytics\Projections\Election;
 
 use App\Constant\Analytics\Election\ElectionAnalyticsDefination;
 use App\Models\Analytics\Election\ElectionAnalyticsSnapshot;
+use Illuminate\Support\Facades\Log;
 
 class SnapshotProjector
 {
@@ -28,7 +29,7 @@ class SnapshotProjector
                 ['kpi' => $def['kpi']],
                 $dimensions
             );
-
+            Log::info("Election Snapshot Inserted Successfully 1");
             ElectionAnalyticsSnapshot::raw(function ($collection) use ($filter, $count) {
                 return $collection->updateOne(
                     $filter,
@@ -40,6 +41,7 @@ class SnapshotProjector
                     ['upsert' => true]
                 );
             });
+            Log::info("Election Snapshot Inserted Successfully 2");
         }
     }
 }

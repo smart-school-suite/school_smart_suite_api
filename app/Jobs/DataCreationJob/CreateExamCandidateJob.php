@@ -59,6 +59,6 @@ class CreateExamCandidateJob implements ShouldQueue
         }
        $exam->expected_candidate_number = $students->count();
        $exam->save();
-       ExamCandidateCreatedEvent::dispatch($exam->school_branch_id);
+    //    ExamCandidateCreatedEvent::dispatch($exam->school_branch_id);
     }
 }

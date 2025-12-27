@@ -3,8 +3,7 @@
 namespace App\Analytics\Projections\Operational;
 
 use App\Constant\Analytics\Operational\OperationalKpiDefination;
-use App\Models\Analytics\Operational\OperationalAnalyticSnapshot;
-
+use App\Models\Analytics\Operational\OperationalAnalyticTimeseries;
 class TimeSeriesProjector
 {
     public static function project($event): void
@@ -31,7 +30,7 @@ class TimeSeriesProjector
                 ['timestamp' => $event->occurredAt()]
             );
 
-            OperationalAnalyticSnapshot::raw(function ($collection) use ($filter, $count) {
+            OperationalAnalyticTimeseries::raw(function ($collection) use ($filter, $count) {
                 return $collection->updateOne(
                     $filter,
                     [

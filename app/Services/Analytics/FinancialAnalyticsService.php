@@ -3,11 +3,14 @@
 namespace App\Services\Analytics;
 
 use App\Models\Analytics\Finance\FinanceAnalyticSnapshot;
-use App\Models\Analytics\Finance\FinanceAnalyticTimeSeries;
+//use App\Models\Analytics\Finance\FinanceAnalyticTimeSeries;
 use App\Constant\Analytics\Financial\FinancialAnalyticsKpi;
+use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsKpi;
 use App\Models\Schoolexpensescategory;
 use App\Models\AdditionalFeesCategory;
+use App\Models\Analytics\Enrollment\EnrollmentAnalyticSnapshot;
 use App\Models\Department;
+use App\Models\StudentSource;
 
 class FinancialAnalyticsService
 {
@@ -28,6 +31,10 @@ class FinancialAnalyticsService
             'tuition_fee_breakdown' => self::tuitionFeeBreakDown($currentSchool, $year),
             'resit_fee_paid' => self::getResitFeePaid($currentSchool, $year),
             'resit_fee_debt' => self::getResitFeeDebt($currentSchool, $year),
+            "enrollment_total" => self::getStudentEnrollmentCount($currentSchool, $year),
+            "student_enrollment_source" => self::getStudentEnrollmentSource($currentSchool, $year),
+            "dept_enrollment_total" => self::getEnrollmentByDepartment($currentSchool, $year),
+            "dept_enrollment_source" => self::getStudentDepartmentEnrollmentSource($currentSchool, $year)
         ];
     }
 
@@ -209,5 +216,60 @@ class FinancialAnalyticsService
         $additionalFee = Self::getAdditionalFeePaid($currentSchool, $year);
         $schoolExpense = Self::getTotalSchoolExpenses($currentSchool, $year);
         return $resitFee + $tuitionFee + $registrationFee + $additionalFee - $schoolExpense;
+    }
+    protected static function getStudentEnrollmentSource($currentSchool, $year)
+    {
+        $studentSources = EnrollmentAnalyticSnapshot::where("school_branch_id", $currentSchool->id)
+            ->where("kpi", EnrollmentAnalyticsKpi::STUDENT_ENROLLEMENT_SOURCE)
+            ->where('year', $year)
+            ->get();
+        if ($studentSources->isEmpty()) {
+            return [];
+        }
+        return $studentSources->map(fn($studentSource) =>
+        [
+            "source" => StudentSource::find($studentSource->source_id)->name ?? "unknown",
+            "value" => $studentSource->value ?? 0
+        ]);
+    }
+    protected static function getStudentEnrollmentCount($currentSchool, $year)
+    {
+        $enrolledStudents = EnrollmentAnalyticSnapshot::where("school_branch_id", $currentSchool->id)
+            ->where("kpi", EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS)
+            ->where("year", $year)
+            ->first();
+        return $enrolledStudents->value ?? 0;
+    }
+    protected static function getStudentDepartmentEnrollmentSource($currentSchool, $year)
+    {
+        $enrollmentSource = EnrollmentAnalyticSnapshot::where("school_branch_id", $currentSchool->id)
+            ->where("kpi", EnrollmentAnalyticsKpi::STUDENT_DEPARTMENT_ENROLLMENT_SOURCE)
+            ->where('year', $year)
+            ->get();
+        if ($enrollmentSource->isEmpty()) {
+            return [];
+        }
+        return $enrollmentSource->map(fn($source) => [
+            "source" => StudentSource::find($source->source_id)->name ?? "unknown",
+            "department" => Department::find($source->department_id)->department_name ?? "unknown",
+            "value" => $source->value ?? 0
+        ]);
+    }
+    protected static function getEnrollmentByDepartment($currentSchool, $year)
+    {
+        $deptEnrollments = EnrollmentAnalyticSnapshot::where("school_branch_id", $currentSchool->id)
+            ->where("kpi", EnrollmentAnalyticsKpi::STUDENT_DEPARTMENT_ENROLLMENTS)
+            ->where('year', $year)
+            ->orderByDesc('value')
+            ->limit(5)
+            ->get();
+        if ($deptEnrollments->isEmpty()) {
+            return [];
+        }
+
+        return   $deptEnrollments->map(fn($enrollment) => [
+            "department" => Department::find($enrollment->department_id)->department_name ?? "unknown",
+            "value" => $enrollment->value ?? 0
+        ]);
     }
 }

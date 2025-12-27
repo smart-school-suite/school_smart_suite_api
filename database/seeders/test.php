@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Analytics\Academic\AcademicAnalyticEvent;
 use App\Models\FeeSchedule;
 use App\Models\Schooladmin;
 use App\Models\Schoolbranches;
@@ -23,7 +24,6 @@ use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
 use App\Models\Timetable;
 use App\Models\Studentbatch;
-use App\Models\TestMongoDB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Faker\Factory as Faker;
@@ -32,15 +32,834 @@ use App\Models\Department;
 use App\Models\Educationlevels;
 use App\Models\Student;
 use App\Models\AdditionalFeesCategory;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as EventConstant;
 use App\Models\Schoolexpensescategory;
+use App\Events\Analytics\EnrollmentAnalyticsEvent;
+use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsEvent as EnrollmentEvents;
+use App\Models\StudentSource;
+use App\Models\Gender;
+use App\Events\Analytics\OperationalAnalyticsEvent;
+use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OpEvents;
+use App\Events\Analytics\ElectionAnalyticsEvent;
+use App\Models\Elections;
+use App\Models\Students;
+use App\Models\ElectionCandidates;
+use App\Models\ElectionApplication;
+use App\Events\Analytics\AcademicAnalyticsEvent;
+use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvents;
+use Illuminate\Support\Str;
+use App\Models\Exams;
+use App\Models\ExamType;
+use App\Models\Semester;
+use App\Models\AccessedStudent;
+use App\Jobs\DataCreationJob\CreateExamCandidateJob;
+use App\Models\LetterGrade;
 
 class test extends Seeder
 {
-    public function run(): void {}
+    public function run(): void
+    {
+        $this->academicStats();
+    }
 
+    public function academicStats()
+    {
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_GPA_CALCULATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => rand(1.00, 4.00)
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_COURSE_EVALUATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_COURSE_GRADE,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "letter_grade_id" => Arr::random(LetterGrade::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_COURSE_SCORE,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "value" => rand(1, 100)
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_COURSE_PASSED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_COURSE_FAILED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_RESIT_INCURRED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_PASSED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_FAILED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_CREATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_COURSE_CREATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 100; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CREATED,
+                version: 1,
+                payload: [
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::STUDENT_EXAM_CREATED,
+                version: 1,
+                payload: [
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::RESIT_EXAM_CANDIDATE_EVALUATED,
+                version: 1,
+                payload: [
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::RESIT_EXAM_CANDIDATE_PASSED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::RESIT_EXAM_CANDIDATE_FAILED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::RESIT_EXAM_CREATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::RESIT_EXAM_CANDIDATE_CREATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::TEACHER_EXAM_COURSE_CREATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_TOTAL_SCORE_CALCULATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
+                    "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+                    "value" => rand(30, 100)
+                ]
+            ));
+        }
+    }
+    public function electionStats()
+    {
+
+        for ($i = 0; $i < 100; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "electionType.created",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 125; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "election_created",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 200; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "electionRole.created",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 100; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "candidate_registered",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 900; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "vote_casted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(ElectionCandidates::all()->pluck('id')->toArray()),
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 800; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "election_application_submitted",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 100; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "election_application_approved",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 800; $i++) {
+            event(new ElectionAnalyticsEvent(
+                eventType: "election_application_rejected",
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                    "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+                    "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+    }
+    public function operationalStats()
+    {
+        for ($i = 0; $i < 100; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::COURSE_CREATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                ]
+            ));
+        }
+        for ($i = 0; $i < 200; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::DEPARTMENT_ACTIVATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 100; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::DEPARTMENT_DEACTIVATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::DEPARTMENT_CREATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::SPECIALTY_CREATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::SPECIALTY_ACTIVATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::SPECIALTY_DEACTIVATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::SPECIALTY_CREATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::STUDENT_DROPOUT,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 100; $i++) {
+            event(new OperationalAnalyticsEvent(
+                eventType: OpEvents::HALL_CREATED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "value" => 1
+                ]
+            ));
+        }
+    }
+    public function enrollmentStatSeeder()
+    {
+        for ($i = 0; $i < 500; $i++) {
+            event(new EnrollmentAnalyticsEvent(
+                eventType: EnrollmentEvents::STUDENT_ENROLLED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_batch" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                    "source_id" => Arr::random(StudentSource::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "value" =>  1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new EnrollmentAnalyticsEvent(
+                eventType: EnrollmentEvents::STUDENT_ENROLLED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_batch" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                    "student_source_id" => Arr::random(StudentSource::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "value" =>  1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new EnrollmentAnalyticsEvent(
+                eventType: EnrollmentEvents::STUDENT_ENROLLED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_batch" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                    "student_source_id" => Arr::random(StudentSource::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "value" =>  1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new EnrollmentAnalyticsEvent(
+                eventType: EnrollmentEvents::STUDENT_ENROLLED,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_batch" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                    "student_source_id" => Arr::random(StudentSource::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "value" =>  1
+                ]
+            ));
+        }
+    }
     public function financialStatsSeeder()
     {
         for ($i = 0; $i < 500; $i++) {
@@ -78,7 +897,7 @@ class test extends Seeder
             ));
         }
 
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 300; $i++) {
             event(new FinancialAnalyticsEvent(
                 eventType: 'finance.registration_fee.paid',
                 version: 1,
@@ -146,7 +965,7 @@ class test extends Seeder
             ));
         }
 
-        for ($i = 0; $i < 45; $i++) {
+        for ($i = 0; $i < 400; $i++) {
             event(new FinancialAnalyticsEvent(
                 eventType: 'finance.tuition_fee.paid',
                 version: 1,
@@ -337,7 +1156,6 @@ class test extends Seeder
             ));
         }
     }
-
     public function electionSettingSeeder()
     {
         $data = [
@@ -854,6 +1672,97 @@ class test extends Seeder
                     'school_branch_id' => $schoolBranch->id,
                 ]);
             }
+        }
+    }
+    public function electionFaker()
+    {
+        for ($i = 0; $i < 50; $i++) {
+            $faker = Faker::create();
+            $appStart = Carbon::now()->addDays(rand(-30, 30));
+            $appEnd = (clone $appStart)->addDays(7);
+            $voteStart = (clone $appEnd)->addDay();
+            $voteEnd = (clone $voteStart)->addDays(2);
+            Elections::create([
+                "id" =>  Str::uuid(),
+                "election_type_id" => Arr::random(ElectionType::all()->pluck("id")->toArray()), // Assumes types exist
+                'application_start' => $appStart,
+                'application_end' => $appEnd,
+                'voting_start' => $voteStart,
+                'voting_end' => $voteEnd,
+                'voting_status' => $faker->randomElement(['ongoing', 'ended', 'pending']),
+                'application_status' => $faker->randomElement(['ongoing', 'ended', 'pending']),
+                'school_year' => '2024-2025',
+                'is_results_published' => false,
+                'school_branch_id' => Schoolbranches::first()->id, // Assumes branches exist
+                'status' => $faker->randomElement(['upcoming', 'ongoing', 'finished']),
+            ]);
+        }
+    }
+    public function electionApplication()
+    {
+        $faker = Faker::create();
+        for ($i = 0; $i < 500; $i++) {
+            ElectionApplication::create([
+                "id" => Str::uuid(),
+                'school_branch_id' => Schoolbranches::first()->id, // Usually matches the student/election branch
+                'election_id' => Arr::random(Elections::all()->pluck('id')->toArray()), // Creates a new election if none provided
+                'election_role_id' => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                'student_id' => Arr::random(Student::all()->pluck('id')->toArray()),
+                'manifesto' => $faker->paragraphs(3, true),
+                'application_status' => $faker->randomElement(['pending', 'approved', 'rejected']),
+                'personal_vision' => $faker->sentence(),
+                'commitment_statement' => $faker->paragraph(),
+            ]);
+        }
+    }
+    public function electionCandidate()
+    {
+        for ($i = 0; $i < 500; $i++) {
+            ElectionCandidates::create([
+                "id" => Str::uuid(),
+                "isActive" => true,
+                "application_id" => Arr::random(ElectionApplication::all()->pluck('id')->toArray()),
+                "school_branch_id" => Schoolbranches::first()->id,
+                "election_id" => Arr::random(Elections::all()->pluck('id')->toArray()),
+                "election_role_id" => Arr::random(ElectionRoles::all()->pluck('id')->toArray()),
+                "student_id" => Arr::random(Student::all()->pluck('id')->toArray()),
+            ]);
+        }
+    }
+    public function createExam()
+    {
+        $faker = Faker::create();
+        for ($i = 0; $i < 10; $i++) {
+            $examType = ExamType::where("type", "!=", "resit")->pluck('id')->toArray();
+            $startDate = Carbon::parse($faker->dateTimeBetween('now', '+6 months'));
+
+            $endDate = (clone $startDate)->addDays(rand(1, 14));
+            Exams::create([
+                'id' => Str::uuid(),
+                'school_branch_id' => Schoolbranches::first()->id,
+                // "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                "student_batch_id" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                "exam_type_id" => Arr::random($examType),
+                "start_date" => $startDate,
+                "end_date" => $endDate,
+                "weighted_mark" => $faker->randomElement([30, 100]),
+                "school_year" => "2026-2027",
+                "semester_id" => Arr::random(Semester::all()->pluck('id')->toArray())
+            ]);
+        }
+    }
+    public function createCandidate()
+    {
+        $exams = Exams::all();
+        foreach ($exams as $exam) {
+            CreateExamCandidateJob::dispatch(
+                $exam->specialty_id,
+                $exam->level_id,
+                $exam->student_batch_id,
+                $exam->id
+            );
         }
     }
 }

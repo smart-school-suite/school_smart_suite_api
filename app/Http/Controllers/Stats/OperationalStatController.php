@@ -6,15 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\Stats\OperationalStatService;
+use App\Services\Analytics\OperationalAnalyticsService;
 class OperationalStatController extends Controller
 {
     protected OperationalStatService $operationalStatService;
-    public function __construct(OperationalStatService $operationalStatService){
+    protected OperationalAnalyticsService $operationalAnalyticsService;
+    public function __construct(
+        OperationalStatService $operationalStatService,
+        OperationalAnalyticsService $operationalAnalyticsService
+        ){
         $this->operationalStatService = $operationalStatService;
+        $this->operationalAnalyticsService = $operationalAnalyticsService;
     }
     public function getSchoolOperationalStats(Request $request, $year){
         $currentSchool = $request->attributes->get('currentSchool');
-        $operationalStats = $this->operationalStatService->getOperationalStats($currentSchool, $year);
+        $operationalStats = $this->operationalAnalyticsService->getOperationalAnalytics($currentSchool, $year);
         return ApiResponseService::success("Operational Stats Fetched Successfully", $operationalStats, null, 200);
     }
 }

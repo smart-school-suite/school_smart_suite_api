@@ -35,5 +35,6 @@ class DatabaseSeeder extends Seeder
         $this->call(LevelSeeder::class);
         $this->call(ActivationCodeType::class);
         $this->call(FeaturePlanSeeder::class);
+        $this->call(StudentCredentials::class);
     }
 }

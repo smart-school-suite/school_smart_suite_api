@@ -27,7 +27,7 @@ class ElectionAnalyticEvent extends Model
     ];
     public function getTable()
     {
-        return 'operational_events';
+        return 'election_events';
     }
 
     public function newEloquentBuilder($query)

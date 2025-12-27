@@ -8,8 +8,8 @@ class ElectionAnalyticsEvent
     public const ELECTION_UPDATED = "election_updated";
     public const ELECTION_DELETED = "election_deleted";
 
-    public const ELECTION_TYPE_CREATED = "electionRole.created";
-    public const ELECTION_TYPE_DELETED =  "electionRole.deleted";
+    public const ELECTION_TYPE_CREATED = "electionType.created";
+    public const ELECTION_TYPE_DELETED =  "electionType.deleted";
 
     public const ELECTION_ROLE_CREATED = "electionRole.created";
     public const ELECTION_ROLE_DELETED = "electionRole.deleted";

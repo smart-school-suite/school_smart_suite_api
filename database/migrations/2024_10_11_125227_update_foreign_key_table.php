@@ -266,6 +266,10 @@ return new class extends Migration
             $table->foreign('student_batch_id')->references('id')->on('student_batches');
             $table->string('relationship_id');
             $table->foreign('relationship_id')->references('id')->on('stu_par_relationships');
+            $table->string('student_source_id');
+            $table->foreign('student_source_id')->references('id')->on('student_sources');
+            $table->string('gender_id');
+            $table->foreign('gender_id')->references('id')->on('genders');
         });
 
         Schema::table('timetable_slots', function (Blueprint $table) {

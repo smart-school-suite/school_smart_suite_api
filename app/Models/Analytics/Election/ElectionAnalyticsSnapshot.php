@@ -2,7 +2,7 @@
 
 namespace App\Models\Analytics\Election;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class ElectionAnalyticsSnapshot extends Model
 {

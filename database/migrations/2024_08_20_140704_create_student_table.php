@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->date('DOB')->nullable();
-            $table->string('gender')->nullable();
             $table->string('phone')->unique()->nullable();
             $table->string('email');
             $table->string('password');
@@ -27,7 +26,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->boolean('dropout_status')->default(false);
             $table->enum('payment_format', ["one time", "installmental"])->default('installmental');
-            $table->enum('sub_status', ['subscribed','expired','renewed','pending'])->default('pending');
+            $table->enum('sub_status', ['subscribed', 'expired', 'renewed', 'pending'])->default('pending');
             $table->timestamps();
         });
 
@@ -36,6 +35,21 @@ return new class extends Migration
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->text('description');
+            $table->timestamps();
+        });
+
+        Schema::create('student_sources', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name', 150);
+            $table->text('description');
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+        });
+
+        Schema::create('genders', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name', 150);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }
@@ -47,5 +61,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('student');
         Schema::dropIfExists('student_batches');
+        Schema::dropIfExists('genders');
+        Schema::dropIfExists('student_sources');
     }
 };

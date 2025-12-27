@@ -28,9 +28,8 @@ class Student extends Model
         'first_name',
         'last_name',
         'DOB',
-        'gender',
+        'gender_id',
         'phone',
-        'gender',
         'level_id',
         'school_branch_id',
         'specialty_id',
@@ -43,7 +42,8 @@ class Student extends Model
         'password',
         "sub_status",
         'profile_picture',
-        'relationship_id'
+        'relationship_id',
+        'student_source_id'
     ];
 
     /**
@@ -74,6 +74,13 @@ class Student extends Model
         ];
     }
 
+    public function gender(): BelongsTo {
+         return $this->belongsTo(Gender::class, 'gender_id');
+    }
+
+    public function studentSource(): BelongsTo {
+         return $this->belongsTo(StudentSource::class, 'student_source_id');
+    }
     public function routeNotificationForFcm()
     {
         return $this->devices()->pluck('token')->toArray();

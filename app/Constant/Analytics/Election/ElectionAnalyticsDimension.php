@@ -13,4 +13,5 @@ class ElectionAnalyticsDimension
    public const LEVEL_ID = "level_id";
    public const DEPARTMENT_ID = "department_id";
    public const GENDER_ID = "gender_id";
+   public const YEAR = "year";
 }

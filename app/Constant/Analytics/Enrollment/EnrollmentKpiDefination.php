@@ -13,13 +13,11 @@ class EnrollmentKpiDefination
         return [
 
             EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS => [
-                'kpi' => 'student_enrollments',
+                'kpi' => EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS,
                 'type' => 'counter',
                 'dimensions' => [
-                    EnrollmentAnalyticsDimension::DEPARTMENT_ID,
-                    EnrollmentAnalyticsDimension::LEVEL_ID,
-                    EnrollmentAnalyticsDimension::SPECIALTY_ID,
-                    EnrollmentAnalyticsDimension::SOURCE_ID,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
@@ -27,42 +25,89 @@ class EnrollmentKpiDefination
                 'time_series' => [
                     'enabled' => true,
                     'granularities' => ['year'],
+                ],
+            ],
+
+            EnrollmentAnalyticsKpi::STUDENT_DEPARTMENT_ENROLLMENTS => [
+                'kpi' => EnrollmentAnalyticsKpi::STUDENT_DEPARTMENT_ENROLLMENTS,
+                'type' => 'counter',
+                'dimensions' => [
+                    EnrollmentAnalyticsDimension::DEPARTMENT_ID,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR
+                ],
+                'source_events' => [
+                    EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
+                ],
+                'time_series' => [
+                    'enabled' => false,
+                ],
+            ],
+
+            EnrollmentAnalyticsKpi::STUDENT_SPECIALTY_ENROLLMENTS => [
+                'kpi' => EnrollmentAnalyticsKpi::STUDENT_SPECIALTY_ENROLLMENTS,
+                'type' => 'counter',
+                'dimensions' => [
+                    EnrollmentAnalyticsDimension::SPECIALTY_ID,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR,
+
+                ],
+                'source_events' => [
+                    EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
+                ],
+                'time_series' => [
+                    'enabled' => false,
                 ],
             ],
 
             EnrollmentAnalyticsKpi::STUDENT_ENROLLEMENT_SOURCE => [
-                'kpi' => 'student_enrollment_source',
+                'kpi' => EnrollmentAnalyticsKpi::STUDENT_ENROLLEMENT_SOURCE,
                 'type' => 'counter',
                 'dimensions' => [
                     EnrollmentAnalyticsDimension::SOURCE_ID,
-                    EnrollmentAnalyticsDimension::DEPARTMENT_ID,
-                    EnrollmentAnalyticsDimension::LEVEL_ID,
-                    EnrollmentAnalyticsDimension::SPECIALTY_ID,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR,
                 ],
                 'source_events' => [
                     EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
                 ],
                 'time_series' => [
-                    'enabled' => true,
-                    'granularities' => ['year'],
+                    'enabled' => false,
                 ],
             ],
 
-            EnrollmentAnalyticsKpi::STUDENT_GENDER_ENROLLMENTS => [
-                'kpi' => 'student_gender_enrollments',
+            EnrollmentAnalyticsKpi::STUDENT_DEPARTMENT_ENROLLMENT_SOURCE => [
+                'kpi' => EnrollmentAnalyticsKpi::STUDENT_DEPARTMENT_ENROLLMENT_SOURCE,
                 'type' => 'counter',
                 'dimensions' => [
-                    EnrollmentAnalyticsDimension::GENDER_ID,
+                    EnrollmentAnalyticsDimension::SOURCE_ID,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR,
                     EnrollmentAnalyticsDimension::DEPARTMENT_ID,
-                    EnrollmentAnalyticsDimension::LEVEL_ID,
+                ],
+                'source_events' => [
+                    EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
+                ],
+                'time_series' => [
+                    'enabled' => false,
+                ],
+            ],
+
+            EnrollmentAnalyticsKpi::STUDENT_SPECIALTY_ENROLLMENT_SOURCE => [
+                'kpi' => EnrollmentAnalyticsKpi::STUDENT_SPECIALTY_ENROLLMENT_SOURCE,
+                'type' => 'counter',
+                'dimensions' => [
+                    EnrollmentAnalyticsDimension::SOURCE_ID,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR,
                     EnrollmentAnalyticsDimension::SPECIALTY_ID,
                 ],
                 'source_events' => [
                     EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
                 ],
                 'time_series' => [
-                    'enabled' => true,
-                    'granularities' => ['year'],
+                    'enabled' => false,
                 ],
             ],
 
@@ -100,6 +145,7 @@ class EnrollmentKpiDefination
                     'granularities' => ['year'],
                 ],
             ],
+
 
         ];
     }

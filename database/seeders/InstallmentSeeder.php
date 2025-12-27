@@ -46,12 +46,10 @@ class InstallmentSeeder extends Seeder
                 'code' => 'FIFINS'
             ]
         ];
-        $this->command->info("Creating Fee Installments..............................................1%");
         foreach($data as $feeInstallment){
             Installment::create(
                 $feeInstallment
             );
         }
-        $this->command->info("Fee Installments Created Successfully..............................................1%");
     }
 }

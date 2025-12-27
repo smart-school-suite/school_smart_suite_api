@@ -24,7 +24,6 @@ class UpdateStudentRequest extends FormRequest
             'name' => 'sometimes|nullable|string',
             'first_name' => 'sometimes|nullable|string',
             'last_name' => 'sometimes|nullable|string',
-            'gender' => 'sometimes|nullable|string',
             'phone_one' => 'sometimes|nullable|string',
             'level_id' => 'sometimes|nullable|string|exists:levels,id',
             'specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
@@ -32,7 +31,9 @@ class UpdateStudentRequest extends FormRequest
             'email' => 'sometimes|nullable|email',
             'guadian_id' => 'sometimes|nullable|string|exists:parents,id',
             'student_batch_id' => 'sometimes|nullable|string|exists:student_batches,id',
-            'relationship_id' => 'sometimes|nullable|string|exists:stu_par_relationships,id'
+            'relationship_id' => 'sometimes|nullable|string|exists:stu_par_relationships,id',
+            'student_source_id' => 'sometimes|nullable|string|exists:student_sources,id',
+            'gender_id' => 'sometimes|nullable|string|exists:genders,id'
         ];
     }
 }

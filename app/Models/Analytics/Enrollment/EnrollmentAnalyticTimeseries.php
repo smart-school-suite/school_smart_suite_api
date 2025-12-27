@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class EnrollmentAnalyticTimeseries extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'financial_analytics_timeseries';
+    protected $table = 'enrollment_analytics_timeseries';
     protected $primaryKey = '_id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -25,7 +25,7 @@ class EnrollmentAnalyticTimeseries extends Model
 
     public function getTable()
     {
-        return 'financial_analytics_timeseries';
+        return 'enrollment_analytics_timeseries';
     }
 
     public function newEloquentBuilder($query)

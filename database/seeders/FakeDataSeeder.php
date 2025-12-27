@@ -34,7 +34,8 @@ use Carbon\Carbon;
 use App\Models\ElectionType;
 use App\Models\ElectionRoles;
 use App\Models\StudentParentRelationship;
-
+use App\Models\StudentSource;
+use App\Models\Gender;
 class FakeDataSeeder extends Seeder
 {
     /**
@@ -402,6 +403,8 @@ class FakeDataSeeder extends Seeder
         $faker = Faker::create();
         $schoolBranch = Schoolbranches::first();
         $studentBatch = Studentbatch::first();
+        $genders = Gender::all();
+        $studentSources = StudentSource::all();
 
         if (!$schoolBranch || !$studentBatch) {
             $this->command->info("Please ensure School Branches and Student Batches are seeded first.");
@@ -422,7 +425,8 @@ class FakeDataSeeder extends Seeder
             for ($i = 0; $i < 10; $i++) {
                 $firstName = $faker->firstName;
                 $lastName = $faker->lastName;
-                $gender = $faker->randomElement(['Male', 'Female']);
+                $genderId = $faker->randomElement($genders->pluck('id')->toArray());
+                $sourceId = $faker->randomElement($studentSources->pluck('id')->toArray());
                 $parentId = $faker->randomElement($parents);
                 $relationshipId = $faker->randomElement($relationships);
                 $dob = $faker->date('Y-m-d', '2005-01-01');
@@ -438,7 +442,8 @@ class FakeDataSeeder extends Seeder
                     'name' => "$firstName $lastName",
                     'first_name' => $firstName,
                     'last_name' => $lastName,
-                    'gender' => $gender,
+                    'gender_id' => $genderId,
+                    'student_source_id' => $sourceId,
                     'phone' => $faker->phoneNumber,
                     'email' => $faker->unique()->safeEmail,
                     'DOB' => $dob,
