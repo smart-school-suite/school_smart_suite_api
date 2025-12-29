@@ -17,7 +17,10 @@ class EnrollmentKpiDefination
                 'type' => 'counter',
                 'dimensions' => [
                     EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
-                    EnrollmentAnalyticsDimension::YEAR
+                    EnrollmentAnalyticsDimension::YEAR,
+                    EnrollmentAnalyticsDimension::DEPARTMENT_ID,
+                    EnrollmentAnalyticsDimension::SPECIALTY_ID,
+                    EnrollmentAnalyticsDimension::LEVEL_ID
                 ],
                 'source_events' => [
                     EnrollmentAnalyticsEvent::STUDENT_ENROLLED,
@@ -118,6 +121,9 @@ class EnrollmentKpiDefination
                     EnrollmentAnalyticsDimension::DEPARTMENT_ID,
                     EnrollmentAnalyticsDimension::LEVEL_ID,
                     EnrollmentAnalyticsDimension::SPECIALTY_ID,
+                    EnrollmentAnalyticsDimension::YEAR,
+                    EnrollmentAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    EnrollmentAnalyticsDimension::YEAR,
                 ],
                 'source_events' => [
                     EnrollmentAnalyticsEvent::STUDENT_DROPPED_OUT,

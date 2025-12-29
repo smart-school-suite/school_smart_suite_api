@@ -175,6 +175,10 @@ class OperationalKpiDefination
                 "dimensions" => [
                     OperationalAnalyticsDimension::SCHOOL_BRANCH_ID,
                     OperationalAnalyticsDimension::YEAR,
+                    OperationalAnalyticsDimension::GENDER_ID,
+                    OperationalAnalyticsDimension::DEPARTMENT_ID,
+                    OperationalAnalyticsDimension::SPECIALTY_ID,
+                    OperationalAnalyticsDimension::LEVEL_ID
                 ],
                 "source_events" => [
                     OperationalAnalyticsEvent::STUDENT_DROPOUT

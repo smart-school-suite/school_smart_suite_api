@@ -4,7 +4,7 @@ namespace App\Constant\Analytics\Academic;
 
 class AcademicAnalyticsEvent
 {
-   // public const EXAM_CANDIDATE_EVALUATED = "exam.candidate.evaluated";
+    public const EXAM_CANDIDATE_EVALUATED = "exam.candidate.evaluated";
     public const EXAM_CANDIDATE_GPA_CALCULATED = "exam.candidate.gpacalculated";
     public const EXAM_CANDIDATE_TOTAL_SCORE_CALCULATED = "exam.candidate.totalScoreCalculated";
     public const EXAM_CANDIDATE_COURSE_EVALUATED = "exam.candidate.course.evaluated";

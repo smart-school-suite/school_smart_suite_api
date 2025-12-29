@@ -61,6 +61,9 @@ class test extends Seeder
     public function run(): void
     {
         $this->academicStats();
+        $this->academicStats();
+        $this->academicStats();
+        $this->academicStats();
     }
 
     public function academicStats()
@@ -412,6 +415,38 @@ class test extends Seeder
                     "teacher_id" => Arr::random(Teacher::all()->pluck('id')->toArray()),
                     "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
                     "value" => rand(30, 100)
+                ]
+            ));
+        }
+      for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_EVALUATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "value" => 1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 999; $i++) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvents::EXAM_CANDIDATE_EVALUATED,
+                version: 1,
+                payload: [
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "exam_id" => Arr::random(Exams::all()->pluck('id')->toArray()),
+                    "exam_type_id" => Arr::random(Examtype::all()->pluck('id')->toArray()),
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "candidate_id" => Arr::random(AccessedStudent::all()->pluck('id')->toArray()),
+                    "value" => 1
                 ]
             ));
         }

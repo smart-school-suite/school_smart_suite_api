@@ -47,5 +47,18 @@ class AcademicAnalyticsKpi
    public const RESIT_EXAM_CANDIDATE = "resit_exam_candidate";
    public const RESIT_EXAM_PASSED = "resit_exam_passed";
    public const RESIT_EXAM_FAILED = "resit_exam_failed";
+   public const RESIT = "resit_count";
+
+   //school stats
+   public const SCHOOL_EXAM = "school_exam";
+   public const SCHOOL_EXAM_TYPE = "school_exam_type";
+   public const SCHOOL_GPA = "school_gpa";
+   public const SCHOOL_EXAM_TYPE_GPA = "school_exam_type_gpa";
+   public const SCHOOL_EXAM_CANDIDATE = "school_exam_candidate";
+   public const SCHOOL_EXAM_TYPE_CANDIDATE = "school_exam_type_candidate";
+   public const SCHOOL_EXAM_CANDIDATE_PASSED = "school_exam_candidate_pass";
+   public const SCHOOL_EXAM_TYPE_CANDIDATE_PASSED = "school_exam_type_candidate_passed";
+   public const SCHOOL_EXAM_CANDIDATE_FAILED = "school_exam_candidate_failed";
+   public const SCHOOL_EXAM_TYPE_CANDIDATE_FAILED = "school_exam_type_candidate_failed";
 
 }
