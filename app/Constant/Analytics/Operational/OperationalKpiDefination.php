@@ -169,71 +169,18 @@ class OperationalKpiDefination
                     "enabled" => false
                 ]
             ],
-            OperationalAnalyticsKpi::STUDENT_DROPOUT => [
-                "kpi" => OperationalAnalyticsKpi::STUDENT_DROPOUT,
+            OperationalAnalyticsKpi::TEACHER_LEVEL_COUNT => [
+                "kpi" => OperationalAnalyticsKpi::TEACHER_LEVEL_COUNT,
                 "type" => "counter",
                 "dimensions" => [
-                    OperationalAnalyticsDimension::SCHOOL_BRANCH_ID,
-                    OperationalAnalyticsDimension::YEAR,
-                    OperationalAnalyticsDimension::GENDER_ID,
-                    OperationalAnalyticsDimension::DEPARTMENT_ID,
-                    OperationalAnalyticsDimension::SPECIALTY_ID,
-                    OperationalAnalyticsDimension::LEVEL_ID
-                ],
-                "source_events" => [
-                    OperationalAnalyticsEvent::STUDENT_DROPOUT
-                ],
-                "time_series" => [
-                    "enabled" => true,
-                    "granularities" => ["year"]
-                ]
-            ],
-            OperationalAnalyticsKpi::STUDENT_GENDER_DROPOUT => [
-                "kpi" => OperationalAnalyticsKpi::STUDENT_GENDER_DROPOUT,
-                "type" => "counter",
-                "dimensions" => [
-                    OperationalAnalyticsDimension::SCHOOL_BRANCH_ID,
-                    OperationalAnalyticsDimension::YEAR,
-                    OperationalAnalyticsDimension::GENDER_ID
-                ],
-                "source_events" => [
-                    OperationalAnalyticsEvent::STUDENT_DROPOUT
-                ],
-                "time_series" => [
-                    "enabled" => true,
-                    "granularities" => ["year"]
-                ]
-            ],
-            OperationalAnalyticsKpi::STUDENT_DEPARTMENT_DROPOUT => [
-                "kpi" => OperationalAnalyticsKpi::STUDENT_DEPARTMENT_DROPOUT,
-                "type" => "counter",
-                "dimensions" => [
-                    OperationalAnalyticsDimension::SCHOOL_BRANCH_ID,
-                    OperationalAnalyticsDimension::DEPARTMENT_ID,
-                    OperationalAnalyticsDimension::YEAR,
-                ],
-                "source_events" => [
-                    OperationalAnalyticsEvent::STUDENT_DROPOUT
-                ],
-                "time_series" => [
-                    "enabled" => true,
-                    "granularities" => ["year"]
-                ]
-            ],
-            OperationalAnalyticsKpi::STUDENT_LEVEL_DPOPOUT => [
-                "kpi" => OperationalAnalyticsKpi::STUDENT_LEVEL_DPOPOUT,
-                "type" => "counter",
-                "dimensions" => [
-                    OperationalAnalyticsDimension::SCHOOL_BRANCH_ID,
                     OperationalAnalyticsDimension::LEVEL_ID,
-                    OperationalAnalyticsDimension::YEAR
+                    OperationalAnalyticsDimension::SCHOOL_BRANCH_ID
                 ],
                 "source_events" => [
-                    OperationalAnalyticsEvent::STUDENT_DROPOUT
+                    OperationalAnalyticsEvent::TEACHER_SPECIALTY_ASSIGNED
                 ],
                 "time_series" => [
-                    "enabled" => true,
-                    "granularities" => ["year"]
+                    "enabled" => false
                 ]
             ],
             OperationalAnalyticsKpi::HALL => [

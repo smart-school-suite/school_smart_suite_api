@@ -25,7 +25,8 @@ class StudentDropoutLevelGender
             "level" => true
         ];
 
-        $query = EnrollmentAnalyticQuery::base($currentSchool->id, $year, $targetKpis);
+        $query = EnrollmentAnalyticQuery::base($currentSchool->id,  $targetKpis);
+        $query->where("year", $year);
         if (empty($filters)) {
             return $this->studentDropoutLevelGenderAggregator->calculate($query, $defaultFilters);
         }

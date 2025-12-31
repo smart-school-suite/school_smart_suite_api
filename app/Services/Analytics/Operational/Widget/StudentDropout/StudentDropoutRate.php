@@ -19,7 +19,8 @@ class StudentDropoutRate
           EnrollmentAnalyticsKpi::STUDENT_DROPOUT,
           EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS
        ];
-       $enrollmentQuery = EnrollmentAnalyticQuery::base($currentSchool->id, $year, $enrollmentKpis);
+       $enrollmentQuery = EnrollmentAnalyticQuery::base($currentSchool->id,  $enrollmentKpis);
+       $enrollmentQuery->where("year", $year);
        $enrollmentQuery = $this->studentDropoutRateFilter->apply($enrollmentQuery, $filters);
        //call aggregator and return value
        return $this->dropoutRateAggregator->calculate($enrollmentQuery, $filters);

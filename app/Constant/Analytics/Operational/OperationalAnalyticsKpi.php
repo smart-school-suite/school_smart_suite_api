@@ -18,6 +18,7 @@ class OperationalAnalyticsKpi
     public const TEACHER_GENDER = "teacher_gender_count";
     public const TEACHER_DEPARTMENT_COUNT = "teacher_deparment_count";
     public const TEACHER_SPECIALTY_COUNT =  "teacher_specialty_count";
+    public const TEACHER_LEVEL_COUNT = "teacher_level_count";
     public const STUDENT_DROPOUT = "student_dropout_count";
     public const STUDENT_SPECIALTY_DROPOUT = "student_specialty_dropout";
     public const STUDENT_DEPARTMENT_DROPOUT = "student_department_dropout";

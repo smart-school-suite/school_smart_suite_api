@@ -60,10 +60,31 @@ class test extends Seeder
 {
     public function run(): void
     {
+        $this->financialStatsSeeder();
+        $this->financialStatsSeeder();
+        $this->financialStatsSeeder();
+        $this->financialStatsSeeder();
+        $this->financialStatsSeeder();
+        $this->financialStatsSeeder();
+
+        $this->enrollmentStatSeeder();
+        $this->enrollmentStatSeeder();
+        $this->enrollmentStatSeeder();
+        $this->enrollmentStatSeeder();
+        $this->enrollmentStatSeeder();
+
         $this->academicStats();
         $this->academicStats();
         $this->academicStats();
         $this->academicStats();
+        $this->academicStats();
+
+        $this->operationalStats();
+        $this->operationalStats();
+        $this->operationalStats();
+        $this->operationalStats();
+        $this->operationalStats();
+        $this->operationalStats();
     }
 
     public function academicStats()
@@ -793,21 +814,6 @@ class test extends Seeder
                     'school_branch_id' => Schoolbranches::first()->id,
                     "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
                     "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
-                    "value" => 1
-                ]
-            ));
-        }
-        for ($i = 0; $i < 500; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::STUDENT_DROPOUT,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
-                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
-                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
                     "value" => 1
                 ]
             ));

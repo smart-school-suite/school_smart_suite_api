@@ -4,7 +4,6 @@ namespace App\Constant\Analytics\Operational;
 
 class OperationalAnalyticsEvent
 {
-    public const STUDENT_DROPOUT = "operational.student_dropout";
     public const TEACHER_DROPOUT = "operational.teacher_dropout";
     public const STAFF_DROPOUT = "operational.staff_dropout";
     public const COURSE_CREATED = "operational.course.created";
