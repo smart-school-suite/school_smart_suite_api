@@ -254,6 +254,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/activation-code-type')
               ->group(base_path('routes/ActivationCode/ActivationCodeType.php'));
+
+              Route::middleware(['auth:sanctum'])->prefix('api/v1/student-source')
+              ->group(base_path('routes/Student/StudentSource.php'));
+
+               Route::middleware(['auth:sanctum'])->prefix('api/v1/gender')
+              ->group(base_path('routes/Gender/Gender.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
