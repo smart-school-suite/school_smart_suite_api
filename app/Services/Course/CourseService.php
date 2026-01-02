@@ -15,7 +15,8 @@ use App\Models\Student;
 use Illuminate\Database\Eloquent\Collection;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
-
+use App\Events\Analytics\OperationalAnalyticsEvent;
+use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 class CourseService
 {
     public function createCourse(array $data, $currentSchool, $authAdmin): Courses
@@ -65,7 +66,17 @@ class CourseService
             'message'       => "New Course Created",
             'data'          => $course,
         ]);
-        CourseStatJob::dispatch($currentSchool->id, $courseId);
+        event(new OperationalAnalyticsEvent(
+             eventType:OperationalEvent::COURSE_CREATED,
+             version:1,
+             payload:[
+                "school_branch_id" => $currentSchool,
+                "specialty_id" => $specialty->id,
+                "department_id" => $specialty->department_id,
+                "level_id" => $specialty->level_id,
+                "value" => 1
+             ]
+        ));
         return $course;
     }
     public function deleteCourse(string $courseId, $currentSchool, $authAdmin)
@@ -374,6 +385,7 @@ class CourseService
             'message'       => "Course Deactivated",
             'data'          => $course,
         ]);
+
         return $course;
     }
     public function bulkDeactivateCourse($coursesIds, $currentSchool, $authAdmin)

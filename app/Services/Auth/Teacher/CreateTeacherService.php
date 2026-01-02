@@ -12,7 +12,8 @@ use Illuminate\Support\Str;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
-
+use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvents;
+use App\Events\Analytics\OperationalAnalyticsEvent;
 class CreateTeacherService
 {
     public function createInstructor($teacherData, $currentSchool, $authAdmin)
@@ -66,11 +67,20 @@ class CreateTeacherService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "teacherManagement",
+                    "action" => "teacher.created",
                     "authAdmin" => $authAdmin,
                     "data" => $instructor,
                     "message" => "Teacher Created",
                 ]
             );
+            event(new OperationalAnalyticsEvent(
+                 eventType:OperationalEvents::TEACHER_CREATED,
+                 version:1,
+                 payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "value" => 1,
+                 ]
+            ));
             return $instructor;
         } catch (AuthException | AppException $e) {
             DB::rollBack();

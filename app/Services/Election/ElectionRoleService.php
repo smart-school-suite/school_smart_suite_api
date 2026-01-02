@@ -13,7 +13,8 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\ElectionParticipants;
 use App\Events\Actions\AdminActionEvent;
-
+use App\Events\Analytics\ElectionAnalyticsEvent;
+use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
 class ElectionRoleService
 {
     public function createElectionRole(array $data, $currentSchool, $authAdmin)
@@ -62,6 +63,15 @@ class ElectionRoleService
                     "message" => "Election Role Created",
                 ]
             );
+            event(new ElectionAnalyticsEvent(
+                 eventType:ElectionEvent::ELECTION_ROLE_CREATED,
+                 version:1,
+                 payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "election_type_id" => $data["election_type_id"],
+                    "value" => 1
+                 ]
+            ));
             return $electionRole;
         } catch (Throwable $e) {
             DB::rollBack();

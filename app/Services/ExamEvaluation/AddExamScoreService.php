@@ -19,6 +19,9 @@ use App\Models\AccessedStudent;
 use App\Models\Studentresit;
 use Illuminate\Support\Collection;
 use App\Events\Actions\AdminActionEvent;
+use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvent;
+use App\Events\Analytics\AcademicAnalyticsEvent;
+use App\Models\TeacherCoursePreference;
 
 class AddExamScoreService
 {
@@ -66,8 +69,24 @@ class AddExamScoreService
                 $results[] = $marks;
             }
 
-            $totalScoreAndGpa = $this->calculateGpaAndTotalScore(collect($results));
-            $examStatus = $this->determineExamResultsStatus(collect($results));
+            $totalScoreAndGpa = $this->calculateGpaAndTotalScore(
+                collect($results),
+                collect([
+                    "exam" => $exam,
+                    "student" => $student,
+                    "candidate" => $currentSchool,
+                    "currentSchool" => $currentSchool
+                ])
+            );
+            $examStatus = $this->determineExamResultsStatus(
+                collect($results),
+                collect([
+                    "exam" => $exam,
+                    "student" => $student,
+                    "candidate" => $currentSchool,
+                    "currentSchool" => $currentSchool
+                ])
+            );
 
             $this->addStudentResultRecords(
                 $student,
@@ -97,15 +116,34 @@ class AddExamScoreService
                     "message" => "Exam Results Summited",
                 ]
             );
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvent::EXAM_CANDIDATE_EVALUATED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "exam_type_id" => $exam->exam_type_id,
+                    "level_id" => $exam->level_id,
+                    "department_id" => $exam->department_id,
+                    "specialty_id" => $exam->specialty_id
+                ]
+            ));
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    private function createMarks(array $gradeData, float $score, Student $student, string $schoolId, object $exam, string $courseId): array
-    {
-        $course = Courses::findOrFail($courseId);
+    private function createMarks(
+        array $gradeData,
+        float $score,
+        Student $student,
+        string $schoolId,
+        object $exam,
+        string $courseId
+    ): array {
+        $teacherCourse = TeacherCoursePreference::where("school_branch_id", $schoolId)
+            ->with(['course'])
+            ->where("course_id", $gradeData['course_id'])->first();
         Marks::create([
             'student_batch_id' => $student->student_batch_id,
             'courses_id' => $courseId,
@@ -121,18 +159,105 @@ class AddExamScoreService
             'resit_status' => $gradeData['resitStatus'],
             'gratification' => $gradeData['gratification'],
         ]);
-
+        event(new AcademicAnalyticsEvent(
+            eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_EVALUATED,
+            version: 1,
+            payload: [
+                'school_branch_id' => $schoolId,
+                'student_id' => $student->id,
+                'level_id' => $student->level_id,
+                'courses_id' => $teacherCourse->course_id,
+                "teacher_id" => $teacherCourse->teacher_id,
+                "letter_grade_id" => $gradeData['letterGradeId'],
+                'exam_id' => $exam->id,
+                'exam_type_id' => $exam->exam_type_id,
+                'specialty_id' => $student->specialty_id,
+                "department_id" => $exam->department_id,
+                "value" => 1
+            ]
+        ));
+        event(new AcademicAnalyticsEvent(
+            eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_SCORE,
+            version: 1,
+            payload: [
+                'school_branch_id' => $schoolId,
+                'student_id' => $student->id,
+                'level_id' => $student->level_id,
+                'courses_id' => $teacherCourse->course_id,
+                "teacher_id" => $teacherCourse->teacher_id,
+                "letter_grade_id" => $gradeData['letterGradeId'],
+                'exam_id' => $exam->id,
+                'exam_type_id' => $exam->exam_type_id,
+                'specialty_id' => $student->specialty_id,
+                "department_id" => $exam->department_id,
+                "value" => $gradeData['score']
+            ]
+        ));
+        event(new AcademicAnalyticsEvent(
+            eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_GRADE,
+            version: 1,
+            payload: [
+                'school_branch_id' => $schoolId,
+                'student_id' => $student->id,
+                'level_id' => $student->level_id,
+                'courses_id' => $teacherCourse->course_id,
+                "teacher_id" => $teacherCourse->teacher_id,
+                "letter_grade_id" => $gradeData['letterGradeId'],
+                'exam_id' => $exam->id,
+                'exam_type_id' => $exam->exam_type_id,
+                'specialty_id' => $student->specialty_id,
+                "department_id" => $exam->department_id,
+                "value" => 1
+            ]
+        ));
+        if ($gradeData['gradeStatus'] == "passed") {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_PASSED,
+                version: 1,
+                payload: [
+                    'school_branch_id' => $schoolId,
+                    'student_id' => $student->id,
+                    'level_id' => $student->level_id,
+                    'courses_id' => $teacherCourse->course_id,
+                    "teacher_id" => $teacherCourse->teacher_id,
+                    "letter_grade_id" => $gradeData['letterGradeId'],
+                    'exam_id' => $exam->id,
+                    'exam_type_id' => $exam->exam_type_id,
+                    'specialty_id' => $student->specialty_id,
+                    "department_id" => $exam->department_id,
+                    "value" => 1
+                ]
+            ));
+        } else {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_FAILED,
+                version: 1,
+                payload: [
+                    'school_branch_id' => $schoolId,
+                    'student_id' => $student->id,
+                    'level_id' => $student->level_id,
+                    'courses_id' => $teacherCourse->course_id,
+                    "teacher_id" => $teacherCourse->teacher_id,
+                    "letter_grade_id" => $gradeData['letterGradeId'],
+                    'exam_id' => $exam->id,
+                    'exam_type_id' => $exam->exam_type_id,
+                    'specialty_id' => $student->specialty_id,
+                    "department_id" => $exam->department_id,
+                    "value" => 1
+                ]
+            ));
+        }
         return [
-            'course_id' => $course->id,
-            'course_name' => $course->course_title,
-            'course_code' => $course->course_code,
+            'course_id' => $teacherCourse->course->id,
+            'course_name' => $teacherCourse->course->course_title,
+            'course_code' => $teacherCourse->course->course_code,
             'score' => $gradeData['score'],
             'grade' => $gradeData['letterGrade'],
             'grade_status' => $gradeData['gradeStatus'],
             'gratification' => $gradeData['gratification'],
             'grade_points' => $gradeData['gradePoints'],
             'resit_status' => $gradeData['resitStatus'],
-            'course_credit' => $course->credit,
+            'course_credit' => $teacherCourse->course->credit,
         ];
     }
     private function updateEvaluatedStudentCount(Exams $exam): bool
@@ -273,6 +398,20 @@ class AddExamScoreService
                 'student_batch_id' => $student->student_batch_id,
                 'level_id' => $student->level_id,
             ]);
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvent::EXAM_CANDIDATE_RESIT_INCURRED,
+                version: 1,
+                payload: [
+                    'school_branch_id' => $schoolId,
+                    'student_id' => $student->id,
+                    'specialty_id' => $student->specialty_id,
+                    'course_id' => $courseId,
+                    'exam_id' => $exam->id,
+                    'semester_id' => $exam->semester_id,
+                    'student_batch_id' => $student->student_batch_id,
+                    'level_id' => $student->level_id,
+                ]
+            ));
         }
     }
 
@@ -285,7 +424,7 @@ class AddExamScoreService
         }
     }
 
-    private function calculateGpaAndTotalScore(Collection $marks): array
+    private function calculateGpaAndTotalScore(Collection $marks, Collection $evaluationCredentials): array
     {
         $totalWeightedPoints = 0;
         $totalCredits = 0;
@@ -303,6 +442,34 @@ class AddExamScoreService
 
         $gpa = $totalCredits > 0 ? round($totalWeightedPoints / $totalCredits, 2) : 0.00;
 
+        event(new AcademicAnalyticsEvent(
+            eventType: AcademicEvent::EXAM_CANDIDATE_GPA_CALCULATED,
+            version: 1,
+            payload: [
+                "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
+                "student_id" => $evaluationCredentials->get("student")->id,
+                "level_id" => $evaluationCredentials->get("student")->level_id,
+                "department_id" => $evaluationCredentials->get("student")->department_id,
+                "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
+                "exam_id" => $evaluationCredentials->get("exam")->id,
+                "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
+                "value" => $gpa
+            ]
+        ));
+        event(new AcademicAnalyticsEvent(
+            eventType: AcademicEvent::EXAM_CANDIDATE_TOTAL_SCORE_CALCULATED,
+            version: 1,
+            payload: [
+                "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
+                "student_id" => $evaluationCredentials->get("student")->id,
+                "level_id" => $evaluationCredentials->get("student")->level_id,
+                "department_id" => $evaluationCredentials->get("student")->department_id,
+                "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
+                "exam_id" => $evaluationCredentials->get("exam")->id,
+                "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
+                "value" => round($overallTotalScore, 2)
+            ]
+        ));
         return [
             'totalScore' => round($overallTotalScore, 2),
             'gpa' => $gpa,
@@ -326,11 +493,25 @@ class AddExamScoreService
         return $studentResult;
     }
 
-    private function determineExamResultsStatus(Collection $marks): array
+    private function determineExamResultsStatus(Collection $marks, Collection $evaluationCredentials): array
     {
         $failedCourses = $marks->filter(fn($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
 
         if ($failedCourses->isEmpty()) {
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvent::EXAM_CANDIDATE_PASSED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
+                    "student_id" => $evaluationCredentials->get("student")->id,
+                    "level_id" => $evaluationCredentials->get("student")->level_id,
+                    "department_id" => $evaluationCredentials->get("student")->department_id,
+                    "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
+                    "exam_id" => $evaluationCredentials->get("exam")->id,
+                    "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
+                    "value" => 1
+                ]
+            ));
             return [
                 'exam_status' => 'Passed',
                 'passed' => true,
@@ -338,6 +519,20 @@ class AddExamScoreService
             ];
         }
 
+        event(new AcademicAnalyticsEvent(
+            eventType: AcademicEvent::EXAM_CANDIDATE_FAILED,
+            version: 1,
+            payload: [
+                "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
+                "student_id" => $evaluationCredentials->get("student")->id,
+                "level_id" => $evaluationCredentials->get("student")->level_id,
+                "department_id" => $evaluationCredentials->get("student")->department_id,
+                "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
+                "exam_id" => $evaluationCredentials->get("exam")->id,
+                "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
+                "value" => 1
+            ]
+        ));
         return [
             'exam_status' => 'Failed',
             'passed' => false,

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use App\Events\Actions\AdminActionEvent;
 use Illuminate\Support\Str;
 use App\Models\Teacher;
+use App\Events\Analytics\OperationalAnalyticsEvent;
+use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 
 class TeacherCoursePreferenceService
 {
@@ -96,6 +98,7 @@ class TeacherCoursePreferenceService
 
             TeacherCoursePreference::insert($insertData);
 
+
             $assignedCount = count($insertData);
 
             $teacher->increment('num_assigned_courses', $assignedCount);
@@ -119,6 +122,19 @@ class TeacherCoursePreferenceService
                 ],
                 "message" => "Courses assigned to teacher successfully",
             ]);
+            foreach ($requestedCourseIds as $courseId) {
+                event(new OperationalAnalyticsEvent(
+                    eventType: OperationalEvent::TEACHER_COURSE_ASSIGNED,
+                    version: 1,
+                    payload: [
+                        "school_branch_id" => $currentSchool->id,
+                        "course_id" => $courseId,
+                        "teacher_id" => $teacher->id,
+                        "value" => 1
+                    ]
+                ));
+            }
+
 
             return [
                 'teacher_id'       => $teacherId,

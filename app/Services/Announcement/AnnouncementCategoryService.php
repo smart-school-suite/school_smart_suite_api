@@ -39,6 +39,7 @@ class AnnouncementCategoryService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "announcementCategoryManagement",
+                    "action" => "announcementCategory.created",
                     "authAdmin" => $authAdmin,
                     "data" => $category,
                     "message" => "Announcement Category Created",
@@ -90,6 +91,7 @@ class AnnouncementCategoryService
                     "authAdmin" => $authAdmin,
                     "data" => $announcementCategory,
                     "message" => "Announcement Category Updated",
+                    "action" => "announcementCategory.updated"
                 ]
             );
             return $announcementCategory;
@@ -160,6 +162,7 @@ class AnnouncementCategoryService
                     "feature" => "announcementCategoryManagement",
                     "authAdmin" => $authAdmin,
                     "data" => $announcementCategory,
+                    "action" => "announcementCategory.deleted",
                     "message" => "Announcement Category Deleted",
                 ]
             );

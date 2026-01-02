@@ -31,10 +31,11 @@ class AdditionalFeeCategoryService
                 "permissions" =>  ["schoolAdmin.additionalFeeCategory.create"],
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalCategoryManagement",
+                "feature" => "additionalFeeCategoryManagement",
+                "action" => "additionalFeeCategory.created",
                 "authAdmin" => $authAdmin,
                 "data" => $additionalFeeCategory,
-                "message" => "Additional Fee Category Deleted",
+                "message" => "Additional Fee Category Created",
             ]
         );
         return $additionalFeeCategory;
@@ -80,7 +81,8 @@ class AdditionalFeeCategoryService
                     "permissions" =>  ["schoolAdmin.additionalFeeCategory.update"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalCategoryManagement",
+                    "feature" => "additionalFeeCategoryManagement",
+                    "action" => "additionalFeeCategory.updated",
                     "authAdmin" => $authAdmin,
                     "data" => $feeCategoryExists,
                     "message" => "Additional Fee Category Updated",
@@ -116,7 +118,8 @@ class AdditionalFeeCategoryService
                 "permissions" =>  ["schoolAdmin.additionalFeeCategory.delete"],
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalCategoryManagement",
+                "feature" => "additionalFeeCategoryManagement",
+                "action" => "additionalFeeCategory.deleted",
                 "authAdmin" => $authAdmin,
                 "data" => $feeCategoryExists,
                 "message" => "Additional Fee Category Deleted",

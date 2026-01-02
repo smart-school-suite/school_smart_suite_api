@@ -12,6 +12,8 @@ use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Analytics\OperationalAnalyticsEvent;
+use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 
 class DepartmentService
 {
@@ -50,6 +52,14 @@ class DepartmentService
                     "message" => "Department Created",
                 ]
             );
+            event(new OperationalAnalyticsEvent(
+                eventType:OperationalEvent::DEPARTMENT_CREATED,
+                version:1,
+                payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "value" => 1
+                ]
+            ));
             return $department;
         } catch (Exception $e) {
             throw new AppException(
@@ -261,6 +271,7 @@ class DepartmentService
                 );
             }
             $department->status = "active";
+            $department->save();
             AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.department.activate"],
@@ -272,7 +283,14 @@ class DepartmentService
                     "message" => "Department Activated",
                 ]
             );
-            $department->save();
+            event(new OperationalAnalyticsEvent(
+                 eventType:OperationalEvent::DEPARTMENT_ACTIVATED,
+                 version:1,
+                 payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "value" => 1
+                 ]
+            ));
             return $department;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -314,6 +332,16 @@ class DepartmentService
                     "message" => "Department Deactivated",
                 ]
             );
+            foreach($departmentIds as $departmentId){
+                event(new OperationalAnalyticsEvent(
+                     eventType:OperationalEvent::DEPARTMENT_DEACTIVATED,
+                     version:1,
+                     payload:[
+                         "school_branch_id" => $currentSchool->id,
+                         "value" => 1
+                     ]
+                ));
+            }
             return true;
         } catch (Exception $e) {
             throw new AppException(
@@ -356,6 +384,16 @@ class DepartmentService
                     "message" => "Department Activated",
                 ]
             );
+            foreach($departmentIds as $departmentId){
+                event(new OperationalAnalyticsEvent(
+                     eventType:OperationalEvent::DEPARTMENT_ACTIVATED,
+                     version:1,
+                     payload:[
+                        "school_branch_id" => $currentSchool->id,
+                        "value" => 1
+                     ]
+                ));
+            }
             return true;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

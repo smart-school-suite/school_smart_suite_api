@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Election;
+
 use App\Jobs\StatisticalJobs\OperationalJobs\ElectionVoteStatJob;
 use App\Models\Student;
 use App\Models\ElectionVotes;
@@ -13,9 +14,12 @@ use App\Models\VoterStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Events\Analytics\ElectionAnalyticsEvent;
+use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
+
 class ElectionVoteService
 {
-       public function castVote(array $data, $currentSchool, $authUser)
+    public function castVote(array $data, $currentSchool, $authUser)
     {
         try {
             DB::beginTransaction();
@@ -88,20 +92,29 @@ class ElectionVoteService
             broadcast(new VoteCastEvent($updatedResult))->toOthers();
 
             DB::commit();
-            ElectionVoteStatJob::dispatch($voteId, $currentSchool->id);
-
+            event(new ElectionAnalyticsEvent(
+                eventType: ElectionEvent::VOTE_CASTED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "election_id" => $data['election_id'],
+                    "candidate_id" => $data['candidate_id'],
+                    "election_role_id" => $data["position_id"],
+                    "election_type_id" => $election->election_type_id
+                ]
+            ));
             return $updatedResult;
         } catch (AppException $e) {
             DB::rollBack();
             throw $e;
         } catch (Exception $e) {
             DB::rollBack();
-             Log::error('Voting Error', [
-        'message' => $e->getMessage(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine(),
-        'trace' => $e->getTraceAsString()
-    ]);
+            Log::error('Voting Error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw new AppException(
                 "An unexpected error occurred while casting the vote.",
                 500,
@@ -109,7 +122,6 @@ class ElectionVoteService
                 "A server-side issue prevented the vote from being cast successfully.",
                 null
             );
-
         }
     }
 

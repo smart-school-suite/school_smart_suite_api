@@ -9,7 +9,8 @@ use App\Exceptions\AppException;
 use App\Models\Elections;
 use Illuminate\Support\Facades\DB;
 use App\Events\Actions\AdminActionEvent;
-
+use App\Events\Analytics\ElectionAnalyticsEvent;
+use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
 class ElectionTypeService
 {
     public function createElectionType($electionTypeData, $currentSchool, $authAdmin)
@@ -39,11 +40,20 @@ class ElectionTypeService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "electionTypeManagement",
+                    "action" => "electionType.created",
                     "authAdmin" => $authAdmin,
                     "data" => $electionType,
                     "message" => "Election Type Created",
                 ]
             );
+            event(new ElectionAnalyticsEvent(
+                eventType:ElectionEvent::ELECTION_TYPE_CREATED,
+                version:1,
+                payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "value" => 1
+                ]
+            ));
             return $electionType;
         } catch (Throwable $e) {
             throw new AppException(

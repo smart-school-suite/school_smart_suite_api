@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Services\Grade;
+
 use App\Models\SchoolGradesConfig;
 use App\Models\Grades;
+
 class SchoolGradeConfigService
 {
-        public function getSchoolGradeConfig($currentSchool)
+    public function getSchoolGradeConfig($currentSchool)
     {
         $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->with(['gradesCategory'])->get();
         return $schoolGradesConfig;

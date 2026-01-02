@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Auth\SchoolAdmin;
+
 use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
 use App\Jobs\StatisticalJobs\OperationalJobs\SchoolAdminStatJob;
 use App\Models\Schooladmin;
@@ -9,6 +10,8 @@ use Illuminate\Support\Str;
 use Exception;
 use App\Exceptions\AuthException;
 use App\Events\Actions\AdminActionEvent;
+use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvents;
+use App\Events\Analytics\OperationalAnalyticsEvent;
 class CreateSchoolAdminService
 {
 
@@ -16,8 +19,8 @@ class CreateSchoolAdminService
     {
         try {
             $existingAdmin = Schooladmin::where('email', $schoolAdminData['email'])
-                                     ->where('school_branch_id', $currentSchool->id)
-                                     ->first();
+                ->where('school_branch_id', $currentSchool->id)
+                ->first();
 
             if ($existingAdmin) {
                 throw new AuthException(
@@ -38,25 +41,36 @@ class CreateSchoolAdminService
             $schoolAdmin->password = Hash::make($password);
             $schoolAdmin->first_name = $schoolAdminData["first_name"];
             $schoolAdmin->last_name = $schoolAdminData["last_name"];
+            $schoolAdmin->gender_id = $schoolAdminData['gender_id'];
             $schoolAdmin->school_branch_id = $currentSchool->id;
             $schoolAdmin->save();
             $schoolAdmin->assignRole('schoolAdmin');
 
             SendPasswordVaiMailJob::dispatch($password, $schoolAdminData['email']);
             SchoolAdminStatJob::dispatch($currentSchool->id, $schoolAdminId);
-                                    AdminActionEvent::dispatch(
+            AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.schoolAdmin.create"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "schoolAdminManagement",
+                    "action" => "schoolAdmin.created",
                     "authAdmin" => $authAdmin,
                     "data" => $schoolAdmin,
                     "message" => "School Admin Created",
                 ]
             );
-            return $schoolAdmin;
 
+            event (new OperationalAnalyticsEvent(
+                 eventType:OperationalEvents::SCHOOL_ADMIN_CREATED,
+                 version:1,
+                 payload:[
+                      "school_branch_id" => $currentSchool,
+                      "gender_id" => $schoolAdminData['gender_id'],
+                      "value" => 1
+                 ]
+            ));
+            return $schoolAdmin;
         } catch (AuthException $e) {
             throw $e;
         } catch (Exception $e) {

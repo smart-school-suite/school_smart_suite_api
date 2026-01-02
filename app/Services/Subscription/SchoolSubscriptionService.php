@@ -16,7 +16,6 @@ use App\Models\SchoolBranchSetting;
 use App\Models\SchoolTransaction;
 use App\Models\SchoolSubscription;
 use App\Models\SubscriptionUsage;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class SchoolSubscriptionService

@@ -10,6 +10,8 @@ use Exception;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Events\Analytics\FinancialAnalyticsEvent;
+use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class RegistrationFeeTransactionService
 {
@@ -21,7 +23,7 @@ class RegistrationFeeTransactionService
             DB::beginTransaction();
             foreach ($transactionIds as $transactionId) {
                 $transaction = RegistrationFeeTransactions::where('school_branch_id', $currentSchool->id)
-                    ->with(['registrationFee'])
+                    ->with(['registrationFee.specialty'])
                     ->findOrFail($transactionId['transaction_id']);
                 $transaction->delete();
                 $result[] = $transaction;
@@ -57,7 +59,7 @@ class RegistrationFeeTransactionService
         try {
             DB::beginTransaction();
             $transaction = RegistrationFeeTransactions::where('school_branch_id', $currentSchool->id)
-                ->with(['registrationFee'])
+                ->with(['registrationFee.specialty'])
                 ->find($transactionId);
 
             if (!$transaction) {
@@ -95,6 +97,17 @@ class RegistrationFeeTransactionService
                 'message'      => 'Registration Fees Transaction Reversed',
                 'data'         => $transaction,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::REGISTRATION_FEE_REVERSED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "level_id" => $transaction->registrationFee->level_id,
+                    "specialty_id" => $transaction->registrationFee->specialty->id,
+                    "department_id" => $transaction->registrationFee->specialty->department_id,
+                    "value" => $transaction->registrationFee->amount
+                ]
+            ));
             return $transaction;
         } catch (QueryException $e) {
             DB::rollBack();
@@ -219,6 +232,17 @@ class RegistrationFeeTransactionService
                 'message'      => 'Registration Fees Transaction Reversed',
                 'data'         => $transaction,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::REGISTRATION_FEE_REVERSED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "level_id" => $transaction->registrationFee->level_id,
+                    "specialty_id" => $transaction->registrationFee->specialty->id,
+                    "department_id" => $transaction->registrationFee->specialty->department_id,
+                    "value" => $transaction->registrationFee->amount
+                ]
+            ));
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

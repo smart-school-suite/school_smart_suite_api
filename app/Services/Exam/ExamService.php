@@ -23,7 +23,8 @@ use App\Models\Grades;
 use App\Jobs\DataCreationJob\UpdateExamStatusJob;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
-
+use App\Events\Analytics\AcademicAnalyticsEvent;
+use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvent;
 class ExamService
 {
     public function createExam(array $data, $currentSchool, $authAdmin)
@@ -118,6 +119,17 @@ class ExamService
                 'message'      => 'Exam Created',
                 'data'         => $exam,
             ]);
+            event(new AcademicAnalyticsEvent(
+                 eventType:AcademicEvent::EXAM_CREATED,
+                 version:1,
+                 payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "specialty_id" => $specialty->id,
+                    "department_id" => $specialty->department_id,
+                    "level_id" => $specialty->level_id,
+                    "value" => 1
+                 ]
+            ));
             return $exam;
         } catch (Exception $e) {
             throw new AppException(

@@ -21,7 +21,8 @@ use App\Exceptions\AppException;
 use Exception;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
-
+use App\Events\Analytics\ElectionAnalyticsEvent;
+use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
 class ElectionService
 {
     public function createElection(array $data, $currentSchool, $authAdmin)
@@ -67,6 +68,14 @@ class ElectionService
                     "message" => "Election Created",
                 ]
             );
+            event(new ElectionAnalyticsEvent(
+                 eventType:ElectionEvent::ELECTION_CREATED,
+                 version:1,
+                 payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "election_type_id" => $data["election_type_id"]
+                 ]
+            ));
             return $election;
         } catch (Throwable $e) {
             if (!($e instanceof AppException)) {

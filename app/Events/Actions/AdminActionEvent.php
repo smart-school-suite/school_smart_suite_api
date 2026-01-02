@@ -18,24 +18,23 @@ class AdminActionEvent implements ShouldBroadcast, ShouldQueue
     protected array $roles = [];
     protected string $schoolBranchId;
     protected string $feature;
+    protected string $action;
     protected $authAdmin;
     protected $data;
     protected  $message;
 
     public function __construct(array $options)
     {
-        // Required
         $this->schoolBranchId = $options['schoolBranch'] ?? $options['school_branch_id'];
         $this->feature        = $options['feature'];
+        $this->action         = $options['action'];
         $this->message        = $options['message'] ?? 'Action performed';
 
-        // Optional with defaults
         $this->permissions    = $options['permissions'] ?? [];
         $this->roles          = $options['roles'] ?? [];
         $this->data           = $options['data'] ?? [];
         $this->authAdmin      = $options['authAdmin'] ?? auth('schooladmin')->user();
 
-        // Optional: exclude self by default
         $this->authAdmin      = $this->authAdmin ?? throw new \InvalidArgumentException('authAdmin is required');
     }
 
@@ -56,17 +55,12 @@ class AdminActionEvent implements ShouldBroadcast, ShouldQueue
     {
         $roleName = $this->getRoleName($admin);
 
-        // schoolAdmin always receives everything in their branch
         if ($roleName === 'schoolAdmin') {
             return true;
         }
-
-        // Must have at least one of the required roles
         if (empty($this->roles) || !in_array($roleName, $this->roles)) {
             return false;
         }
-
-        // Must have ALL required permissions
         return $this->hasAllPermissions($admin);
     }
 
@@ -104,5 +98,10 @@ class AdminActionEvent implements ShouldBroadcast, ShouldQueue
             'school_branch_id'    => $this->schoolBranchId,
             'timestamp'           => now()->toDateTimeString(),
         ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return $this->feature;
     }
 }

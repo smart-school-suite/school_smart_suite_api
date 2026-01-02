@@ -19,4 +19,5 @@ class OperationalAnalyticsEvent
     public const SPECIALTY_ACTIVATED = "operational.specialty.activated";
     public const DEPARTMENT_DEACTIVATED = "operational.department.deactivated";
     public const DEPARTMENT_ACTIVATED = "operational.department.activated";
+    public const SCHOOL_ADMIN_CREATED = "schoolAdmin.created";
 }

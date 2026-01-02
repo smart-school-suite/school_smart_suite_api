@@ -32,4 +32,5 @@ class OperationalAnalyticsKpi
     public const ACTIVE_HALL = "active_hall_count";
     public const INACTIVE_HALL  = "inactive_hall_count";
     public const TEACHER_COURSE = "teacher_course_assignment_count";
+    public const SCHOOL_ADMIN = "school_admin_count";
 }

@@ -16,6 +16,9 @@ use App\Jobs\NotificationJobs\SendAdminAdditionalFeeReminderNotificationJob;
 use Carbon\Carbon;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Events\Analytics\FinancialAnalyticsEvent;
+use App\Models\Specialty;
+use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class AdditionalFeeService
 {
@@ -41,6 +44,7 @@ class AdditionalFeeService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "additionalFeeManagement",
+                "action" => "additionalFee.charged",
                 "authAdmin" => $authAdmin,
                 "data" => $studentAdditionFees,
                 "message" => "Additional Fee Created",
@@ -53,6 +57,18 @@ class AdditionalFeeService
             'message'      => 'Student Additional Fee Created',
             'data'         =>  $studentAdditionFees,
         ]);
+        event(new FinancialAnalyticsEvent(
+            eventType: FinancialEventConstant::ADDITIONAL_FEE_INCURRED,
+            version: 1,
+            payload: [
+                "school_branch_id" => $currentSchool->id,
+                "category_id" => $additionalFees['additionalfee_category_id'],
+                "amount" => $additionalFees['amount'],
+                "specialty_id" => $student->specialty_id,
+                "department_id" => $student->department_id,
+                "level_id" => $student->level_id
+            ]
+        ));
         $student->notify(new AdditionalFee($additionalFees['amount'], $additionalFees['reason']));
         return $studentAdditionFees;
     }
@@ -78,6 +94,7 @@ class AdditionalFeeService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeManagement",
+                    "action" => "additionalFee.deleted",
                     "authAdmin" => $authAdmin,
                     "data" =>  $additionalFee,
                     "message" => "Additional Fee Deleted",
@@ -135,6 +152,7 @@ class AdditionalFeeService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeManagement",
+                    "action" => "additionalFee.deleted",
                     "authAdmin" => $authAdmin,
                     "data" =>  $additionalFee,
                     "message" => "Additional Fee Updated",
@@ -338,6 +356,7 @@ class AdditionalFeeService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeManagement",
+                    "action" => "additionalFee.updated",
                     "authAdmin" => $authAdmin,
                     "data" =>  $successfulUpdates,
                     "message" => "Additional Fee Updated",
@@ -463,6 +482,7 @@ class AdditionalFeeService
                         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                         "schoolBranch" =>  $currentSchool->id,
                         "feature" => "additionalFeeManagement",
+                        "action" => "additionalFee.charged",
                         "authAdmin" => $authAdmin,
                         "data" => $additionalFeeIds,
                         "message" => "Additional Fee Created",
@@ -475,6 +495,18 @@ class AdditionalFeeService
                     'message'      => 'Student Additional Fee Created',
                     'data'         =>  $studentNotificationData,
                 ]);
+                event(new FinancialAnalyticsEvent(
+                    eventType: FinancialEventConstant::ADDITIONAL_FEE_INCURRED,
+                    version: 1,
+                    payload: [
+                        "school_branch_id" => $currentSchool->id,
+                        "category_id" => $studentData['additionalfee_category_id'],
+                        "amount" => $studentData['amount'],
+                        "specialty_id" => $student->specialty_id,
+                        "department_id" => $student->department_id,
+                        "level_id" => $student->level_id
+                    ]
+                ));
             }
 
             return $studentsToInsert;
@@ -504,6 +536,7 @@ class AdditionalFeeService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeManagement",
+                    "action" => "additionalFee.Deleted",
                     "authAdmin" => $authAdmin,
                     "data" =>  $additionalFeeIds,
                     "message" => "Additional Fee Deleted",

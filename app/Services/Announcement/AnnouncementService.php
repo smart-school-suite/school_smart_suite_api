@@ -107,6 +107,7 @@ class AnnouncementService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "announcementManagement",
+                    "action" => "announcement.updated",
                     "authAdmin" => $authAdmin,
                     "data" => $announcement,
                     "message" => "Announcement Content Updated",

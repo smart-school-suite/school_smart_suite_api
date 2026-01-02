@@ -18,6 +18,9 @@ use Throwable;
 use Carbon\Carbon;
 use App\Models\ElectionParticipants;
 use App\Events\Actions\AdminActionEvent;
+use App\Events\Analytics\ElectionAnalyticsEvent;
+use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
+
 class ElectionApplicationService
 {
     public function createApplication(array $data, $currentSchool)
@@ -51,10 +54,20 @@ class ElectionApplicationService
             $electionApplication->school_branch_id = $currentSchool->id;
             $electionApplication->isApproved = false;
             $electionApplication->application_status = 'pending';
-
             $electionApplication->save();
 
-            ElectionApplicationStatJob::dispatch($applicationId, $currentSchool->id);
+            event(new ElectionAnalyticsEvent(
+                eventType: ElectionEvent::ELECTION_APPLICATION_SUBMITTED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "election_id" => $data["election_id"],
+                    "election_role_id" => $data["election_role_id"],
+                    "student_id" => $data["student_id"],
+                    "value" => 1
+                ]
+            ));
+
             return $electionApplication;
         } catch (Throwable $e) {
             throw new AppException(
@@ -121,19 +134,18 @@ class ElectionApplicationService
 
         try {
             $applcationExists->delete();
-                        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.electionApplications.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "electionApplicationManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $applcationExists,
-                "message" => "Election Application Deleted",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionApplications.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionApplicationManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $applcationExists,
+                    "message" => "Election Application Deleted",
+                ]
+            );
             return $applcationExists;
-
         } catch (Throwable $e) {
             throw new AppException(
                 "Failed to delete application",
@@ -195,16 +207,16 @@ class ElectionApplicationService
 
             DB::commit();
             AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.electionApplications.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "electionApplicationManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $result,
-                "message" => "Election Application Deleted",
-            ]
-        );
+                [
+                    "permissions" =>  ["schoolAdmin.electionApplications.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionApplicationManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Election Application Deleted",
+                ]
+            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -279,6 +291,18 @@ class ElectionApplicationService
                     'school_branch_id' => $currentSchool->id
                 ]);
 
+                event(new ElectionAnalyticsEvent(
+                    eventType: ElectionEvent::ELECTION_APPLICATION_APPROVED,
+                    version: 1,
+                    payload: [
+                        "school_branch_id" => $currentSchool->id,
+                        "application_id" => $applicationId,
+                        "election_role_id" => $application->election_role_id,
+                        "election_id" => $application->election_id,
+                        "student_id" => $application->student_id
+                    ]
+                ));
+
                 $applicationData[] = [
                     'student_id' => $application->student_id,
                     'application_id' => $application->id,
@@ -290,17 +314,17 @@ class ElectionApplicationService
 
             SendCandidacyApprovedNotification::dispatch($applicationData, $currentSchool->id);
             SendAdminApplicationApprovedNotification::dispatch($applicationData, $currentSchool->id);
-                                  AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.electionApplications.approve"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "electionApplicationManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $applicationData,
-                "message" => "Election Application Approved",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionApplications.approve"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionApplicationManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $applicationData,
+                    "message" => "Election Application Approved",
+                ]
+            );
             return true;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -473,17 +497,28 @@ class ElectionApplicationService
             SendCandidacyApprovedNotification::dispatch($applicationData, $currentSchool->id);
             SendAdminApplicationApprovedNotification::dispatch($applicationData, $currentSchool->id);
 
-                     AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.electionApplications.approve"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "electionApplicationManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $application,
-                "message" => "Election Application Approved",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.electionApplications.approve"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "electionApplicationManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $application,
+                    "message" => "Election Application Approved",
+                ]
+            );
+
+            event(new ElectionAnalyticsEvent(
+                eventType: ElectionEvent::ELECTION_APPLICATION_APPROVED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    'election_id' => $application->election_id,
+                    'position_id' => $application->election_role_id,
+                    'candidate_id' => $randomId,
+                ]
+            ));
             return $application;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -502,63 +537,63 @@ class ElectionApplicationService
     }
 
     public function getStudentElectionApplications($currentSchool, $student, $electionId)
-{
-    $schoolBranchId = $currentSchool->id;
-    $now = Carbon::now();
+    {
+        $schoolBranchId = $currentSchool->id;
+        $now = Carbon::now();
 
 
-    $isInvited = ElectionParticipants::where('school_branch_id', $schoolBranchId)
-        ->where('election_id', $electionId)
-        ->where('specialty_id', $student->specialty_id)
-        ->where('level_id', $student->level_id)
-        ->exists();
+        $isInvited = ElectionParticipants::where('school_branch_id', $schoolBranchId)
+            ->where('election_id', $electionId)
+            ->where('specialty_id', $student->specialty_id)
+            ->where('level_id', $student->level_id)
+            ->exists();
 
-    if (!$isInvited) {
-        throw new AppException(
-            "Access Denied",
-            403,
-            "Not Eligible",
-            "You are not invited to participate in this election."
-        );
-    }
+        if (!$isInvited) {
+            throw new AppException(
+                "Access Denied",
+                403,
+                "Not Eligible",
+                "You are not invited to participate in this election."
+            );
+        }
 
-    $election = Elections::where('id', $electionId)
-        ->where('school_branch_id', $schoolBranchId)
-        ->with('electionType')
-        ->firstOrFail();
+        $election = Elections::where('id', $electionId)
+            ->where('school_branch_id', $schoolBranchId)
+            ->with('electionType')
+            ->firstOrFail();
 
-    $applications = ElectionApplication::where('school_branch_id', $schoolBranchId)
-        ->where('election_id', $electionId)
-        ->where('student_id', $student->id)
-        ->with('electionRole')
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $applications = ElectionApplication::where('school_branch_id', $schoolBranchId)
+            ->where('election_id', $electionId)
+            ->where('student_id', $student->id)
+            ->with('electionRole')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    $formattedApplications = $applications->map(function ($app) {
+        $formattedApplications = $applications->map(function ($app) {
+            return [
+                'application_id'        => $app->id,
+                'role_title'            => $app->electionRole?->title ?? 'Unknown Role',
+                'manifesto'             => $app->manifesto ?? null,
+                'personal_vision'       => $app->personal_vision ?? null,
+                'commitment_statement'  => $app->commitment_statement ?? null,
+                'status'                => $app->application_status ?? 'pending',
+                'applied_at'            => $app->created_at?->format('Y-m-d H:i'),
+            ];
+        })->values();
+
         return [
-            'application_id'        => $app->id,
-            'role_title'            => $app->electionRole?->title ?? 'Unknown Role',
-            'manifesto'             => $app->manifesto ?? null,
-            'personal_vision'       => $app->personal_vision ?? null,
-            'commitment_statement'  => $app->commitment_statement ?? null,
-            'status'                => $app->application_status ?? 'pending',
-            'applied_at'            => $app->created_at?->format('Y-m-d H:i'),
+            'election' => [
+                'election_id'         => $election->id,
+                'school_year'        => $election->school_year,
+                'title'               => $election->electionType?->election_title ?? 'Untitled Election',
+                'description'         => $election->electionType?->description ?? 'No description',
+                'application_start'   => $election->application_start?->format('Y-m-d'),
+                'application_end'     => $election->application_end?->format('Y-m-d'),
+                'voting_start'        => $election->voting_start?->format('Y-m-d'),
+                'voting_end'          => $election->voting_end?->format('Y-m-d'),
+                'total_roles'         => $election->electionRoles->count(),
+            ],
+            'applications' => $formattedApplications
         ];
-    })->values();
-
-    return [
-        'election' => [
-            'election_id'         => $election->id,
-            'school_year'        => $election->school_year,
-            'title'               => $election->electionType?->election_title ?? 'Untitled Election',
-            'description'         => $election->electionType?->description ?? 'No description',
-            'application_start'   => $election->application_start?->format('Y-m-d'),
-            'application_end'     => $election->application_end?->format('Y-m-d'),
-            'voting_start'        => $election->voting_start?->format('Y-m-d'),
-            'voting_end'          => $election->voting_end?->format('Y-m-d'),
-            'total_roles'         => $election->electionRoles->count(),
-        ],
-        'applications' => $formattedApplications
-    ];
-}
+    }
 }

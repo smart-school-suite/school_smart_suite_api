@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\DB;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
+use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsEvent as EnrollmentEvent;
+use App\Events\Analytics\EnrollmentAnalyticsEvent;
+
 class CreateStudentService
 {
     public function createStudent($studentData, $currentSchool, $authAdmin)
@@ -108,12 +111,13 @@ class CreateStudentService
             SendPasswordVaiMailJob::dispatch($password, $studentData["email"]);
             TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
             StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
-                       AdminActionEvent::dispatch(
+            AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.student.create"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
+                    "action" => "student.created",
                     "authAdmin" => $authAdmin,
                     "data" => $student,
                     "message" => "Student Created",
@@ -126,6 +130,19 @@ class CreateStudentService
                 $currentSchool->id
             );
 
+            event(new EnrollmentAnalyticsEvent(
+                 eventType:EnrollmentEvent::STUDENT_ENROLLED,
+                 version:1,
+                 payload:[
+                    "school_branch_id" => $currentSchool->id,
+                    "specialty_id" => $specialty->id,
+                    "department_id" => $specialty->department_id,
+                    "level_id" => $specialty->level_id,
+                    "gender_id" => $studentData['gender_id'],
+                    "student_source_id" => $studentData['student_source_id'],
+                    "value" => 1
+                 ]
+            ));
             return $student;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

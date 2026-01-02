@@ -16,6 +16,8 @@ use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Events\Analytics\FinancialAnalyticsEvent;
+use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class AdditionalFeePaymentService
 {
@@ -28,7 +30,7 @@ class AdditionalFeePaymentService
             $amountPaid = $additionalFeesData['amount'];
 
             $additionalFee = AdditionalFees::where('school_branch_id', $currentSchool->id)
-                ->with(['feeCategory', 'student'])
+                ->with(['feeCategory', 'student', 'specialty'])
                 ->find($feeId);
 
             if (!$additionalFee) {
@@ -82,8 +84,6 @@ class AdditionalFeePaymentService
 
             DB::commit();
 
-            AdditionalFeeTransactionJob::dispatch($feeTransactionId, $currentSchool->id);
-
             if ($additionalFee->student) {
                 $additionalFee->student->notify(new AdditionalFeePaidNotification(
                     $amountPaid,
@@ -112,6 +112,7 @@ class AdditionalFeePaymentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeManagement",
+                    "action" => "additionalFee.Paid",
                     "authAdmin" => $authAdmin,
                     "data" => $additionalFee,
                     "message" => "Additional Fee Paid",
@@ -124,6 +125,20 @@ class AdditionalFeePaymentService
                 'message'      => 'Student Additional Fee Paid',
                 'data'         =>  $additionalFee,
             ]);
+
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::ADDITIONAL_FEE_PAID,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "category_id" => $additionalFee->additionalfee_category_id,
+                    "amount" => $additionalFee->amount,
+                    "specialty_id" => $additionalFee->specialty->id,
+                    "department_id" => $additionalFee->specialty->department_id,
+                    "level_id" => $additionalFee->specialty->level_id
+                ]
+            ));
+
             return $transaction;
         } catch (AppException $e) {
             DB::rollBack();
@@ -144,6 +159,7 @@ class AdditionalFeePaymentService
         DB::beginTransaction();
         try {
             $transaction = AdditionalFeeTransactions::where('school_branch_id', $currentSchool->id)
+                ->with(['additionFee.specialty'])
                 ->find($transactionId);
 
             if (!$transaction) {
@@ -184,6 +200,7 @@ class AdditionalFeePaymentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeTransactionManagement",
+                    "action" => "additionalFeePayment.reversed",
                     "authAdmin" => $authAdmin,
                     "data" => $additionalFees,
                     "message" => "Additional Fee Transaction Reversed",
@@ -196,6 +213,18 @@ class AdditionalFeePaymentService
                 'message'      => 'Student Additional Fee Paid',
                 'data'         =>  $additionalFees,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::ADDITIONAL_FEE_REVERSED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "category_id" => $transaction->additionFee->additionalfee_category_id,
+                    "amount" => $transaction->amount,
+                    "specialty_id" => $transaction->additionFee->specialty->id,
+                    "department_id" => $transaction->additionFee->specialty->department_id,
+                    "level_id" => $transaction->additionFee->specialty->level_id
+                ]
+            ));
             return $transaction;
         } catch (AppException $e) {
             DB::rollBack();
@@ -246,7 +275,7 @@ class AdditionalFeePaymentService
         DB::beginTransaction();
         try {
             $transaction = AdditionalFeeTransactions::where('school_branch_id', $currentSchool->id)
-                ->with(['additionFee'])
+                ->with(['additionFee.specialty'])
                 ->findOrFail($transactionId);
 
             $transaction->delete();
@@ -259,6 +288,7 @@ class AdditionalFeePaymentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeTransactionManagement",
+                    "action" => "additionalFeeTransaction.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $transaction,
                     "message" => "Additional Fee Transaction Deleted",
@@ -373,6 +403,7 @@ class AdditionalFeePaymentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeTransactionManagement",
+                    "action" => "additionalFeeTransaction.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $allTransactionIds,
                     "message" => "Additional Fee Transaction Deleted",
@@ -434,6 +465,7 @@ class AdditionalFeePaymentService
                 }
 
                 $additionalFees = AdditionalFees::where('id', $transaction->additional_fee_id)
+                    ->with(['specialty'])
                     ->where('school_branch_id', $currentSchool->id)
                     ->first();
 
@@ -483,6 +515,7 @@ class AdditionalFeePaymentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "additionalFeeTransactionManagement",
+                    "action" => "additionalFeeTransaction.reversed",
                     "authAdmin" => $authAdmin,
                     "data" => $allTransactionIds,
                     "message" => "Additional Fee Transaction Reversed",
@@ -495,6 +528,18 @@ class AdditionalFeePaymentService
                 'message'      => 'Additional Fee Transaction Deleted',
                 'data'         =>  $transaction,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::ADDITIONAL_FEE_REVERSED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "category_id" => $additionalFees->additionalfee_category_id,
+                    "amount" => $additionalFees->amount,
+                    "specialty_id" => $additionalFees->specialty->id,
+                    "department_id" => $additionalFees->specialty->department_id,
+                    "level_id" => $additionalFees->specialty->level_id
+                ]
+            ));
             return $reversedTransactions;
         } catch (AppException $e) {
             DB::rollBack();
@@ -530,7 +575,7 @@ class AdditionalFeePaymentService
 
         $additionalFees = AdditionalFees::where('school_branch_id', $currentSchool->id)
             ->whereIn('id', $feeIds)
-            ->with(['feeCategory', 'student'])
+            ->with(['feeCategory', 'student', 'specialty'])
             ->get()
             ->keyBy('id');
         DB::beginTransaction();
@@ -639,6 +684,19 @@ class AdditionalFeePaymentService
                 SendAdditionalFeePaidNotificationJob::dispatch(
                     $notificationData
                 );
+
+                event(new FinancialAnalyticsEvent(
+                    eventType: FinancialEventConstant::ADDITIONAL_FEE_PAID,
+                    version: 1,
+                    payload: [
+                        "school_branch_id" => $currentSchool->id,
+                        "category_id" => $additionalFee->additionalfee_category_id,
+                        "amount" => $additionalFee->amount,
+                        "specialty_id" => $additionalFee->specialty->id,
+                        "department_id" => $additionalFee->specialty->department_id,
+                        "level_id" => $additionalFee->specialty->level_id
+                    ]
+                ));
             }
 
             $newTransactionIds = collect($transactionsToInsert)->pluck('id')->toArray();

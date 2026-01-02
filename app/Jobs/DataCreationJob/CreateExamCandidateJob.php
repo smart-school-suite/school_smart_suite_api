@@ -11,7 +11,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Events\ExamCandidate\ExamCandidateCreatedEvent;
+use App\Events\Analytics\AcademicAnalyticsEvent;
+use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvent;
 
 class CreateExamCandidateJob implements ShouldQueue
 {
@@ -56,9 +57,20 @@ class CreateExamCandidateJob implements ShouldQueue
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            event(new AcademicAnalyticsEvent(
+                eventType: AcademicEvent::EXAM_CANDIDATE_CREATED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $student->school_branch_id,
+                    'level_id' => $student->level_id,
+                    'specialty_id' => $student->specialty_id,
+                    "department_id" => $student->department_id
+                ]
+            ));
         }
-       $exam->expected_candidate_number = $students->count();
-       $exam->save();
-    //    ExamCandidateCreatedEvent::dispatch($exam->school_branch_id);
+        $exam->expected_candidate_number = $students->count();
+        $exam->save();
+        //    ExamCandidateCreatedEvent::dispatch($exam->school_branch_id);
     }
 }

@@ -13,6 +13,8 @@ use Exception;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Events\Analytics\FinancialAnalyticsEvent;
+use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class RegistrationFeePayment
 {
@@ -21,7 +23,8 @@ class RegistrationFeePayment
         DB::beginTransaction();
         try {
             $registrationFeeData = [];
-            $registrationFee = RegistrationFee::with(['student'])->where("school_branch_id", $currentSchool->id)
+            $registrationFee = RegistrationFee::with(['student', 'specialty'])
+                ->where("school_branch_id", $currentSchool->id)
                 ->find($data['registration_fee_id']);
             if (!$registrationFee) {
                 return ApiResponseService::error("Student Registration Fee Appears To Be Deleted", null, 404);
@@ -82,6 +85,17 @@ class RegistrationFeePayment
                 'message'      => 'Registration Fees Paid',
                 'data'         => $registrationFeeData,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::REGISTRATION_FEE_PAID,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "level_id" => $registrationFee->level_id,
+                    "specialty_id" => $registrationFee->specialty->id,
+                    "department_id" => $registrationFee->specialty->department_id,
+                    "value" => $registrationFee->amount
+                ]
+            ));
             return $transaction;
         } catch (Exception $e) {
             DB::rollBack();
@@ -154,6 +168,17 @@ class RegistrationFeePayment
                 'message'      => 'Registration Fees Paid',
                 'data'         => $registrationFeeData,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::REGISTRATION_FEE_PAID,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "level_id" => $registrationFee->level_id,
+                    "specialty_id" => $registrationFee->specialty->id,
+                    "department_id" => $registrationFee->specialty->department_id,
+                    "value" => $registrationFee->amount
+                ]
+            ));
             return true;
         } catch (Exception $e) {
             DB::rollBack();
