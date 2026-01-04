@@ -5,16 +5,18 @@ namespace App\Constant\Authorization\Builder;
 class PermissionBuilder
 {
     public static function make(
-        string $key,
-        string $label,
-        string $group,
-        string $description
+        string $categoryKey,
+        string $guard,
+        string $name,
+        string $desName,
+        string $desText
     ): array {
         return [
-            'key'         => $key,
-            'label'       => $label,
-            'group'       => $group,
-            'description' => $description,
+            'key'         => $categoryKey,
+            'guard'       => $guard,
+            'name'       => $name,
+            'desc_name' => $desName,
+            'desc_text' => $desText
         ];
     }
 }

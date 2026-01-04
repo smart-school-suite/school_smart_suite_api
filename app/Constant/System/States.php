@@ -4,11 +4,15 @@ namespace App\Constant\System;
 
 class States
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public const  INACTIVE = "inactive";
+    public const  ACTIVE = "active";
+    public const PENDING = "pending";
+    public static function all(): array
     {
-        //
+        return [
+            self::INACTIVE,
+            self::ACTIVE,
+            self::PENDING
+        ];
     }
 }

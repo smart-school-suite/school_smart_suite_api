@@ -5,6 +5,7 @@ namespace App\Constant\Authorization\Permissions\Student;
 class StudentPermissions
 {
     public const CREATE = "student.create";
+    public const VIEW = "student.view";
     public const UPDATE =  "student.update";
     public const DELETE = "student.delete";
     public const DEACTIVATE = "student.deactivate";

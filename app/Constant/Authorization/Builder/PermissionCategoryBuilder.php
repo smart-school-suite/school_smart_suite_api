@@ -7,7 +7,6 @@ class PermissionCategoryBuilder
     public static function make(
         string $key,
         string $name,
-        string $guard,
         string $description
     ): array {
         return [

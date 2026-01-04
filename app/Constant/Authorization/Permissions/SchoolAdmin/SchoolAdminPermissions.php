@@ -7,6 +7,7 @@ class SchoolAdminPermissions
    public const CREATE = "school_admin.create";
    public const UPDATE =  "school_admin.update";
    public const DELETE = "school_admin.delete";
+   public const VIEW = "school_admin.view";
    public const DEACTIVATE = "school_admin.deactivate";
    public const ACTIVATE = "school_admin.activate";
    public const ASSIGN_PERMISSION = "school_admin.assign_permission";
