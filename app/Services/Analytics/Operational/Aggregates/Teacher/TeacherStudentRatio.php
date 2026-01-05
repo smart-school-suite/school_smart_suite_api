@@ -4,11 +4,11 @@ namespace App\Services\Analytics\Operational\Aggregates\Teacher;
 
 use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsKpi;
 use App\Constant\Analytics\Operational\OperationalAnalyticsKpi;
-use Laravel\Scout\Builder;
+use Illuminate\Support\Collection;
 
 class TeacherStudentRatio
 {
-    public function calculate(Builder $enrolllmentQuery, Builder $operationalQuery){
+    public function calculate(Collection $enrolllmentQuery, Collection $operationalQuery){
           $totalTeacher = $operationalQuery->where("kpi", OperationalAnalyticsKpi::TEACHER)->sum("value");
           $totalStudentDropout = $enrolllmentQuery->where("kpi", EnrollmentAnalyticsKpi::STUDENT_DROPOUT)->sum("value");
           $totalStudentEnrolled = $enrolllmentQuery->where("kpi", EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS)->sum("value");

@@ -2,11 +2,11 @@
 
 namespace App\Services\Analytics\Academic\Filters;
 
-use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 
 class ResitSuccessRateFilter
 {
-    public function apply(Builder $query, $filter)
+    public function apply(Collection $query, $filter)
     {
         if ($filter['level_id'] && $filter['exam_type_id']) {
             $query->where("level_id", $filter['level_id'])

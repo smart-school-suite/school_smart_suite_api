@@ -3,13 +3,13 @@
 namespace App\Services\Analytics\Operational\Aggregates\Dropout;
 
 use App\Models\Gender;
-use Illuminate\Database\Query\Builder;
 use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsKpi;
 use App\Models\Educationlevels;
+use Illuminate\Support\Collection;
 
 class StudentDropoutLevelGenderAggregator
 {
-    public function calculate(Builder $query, $filter) {
+    public function calculate(Collection $query, $filter) {
          if($filter['gender']){
              return $this->byGender($query);
          }
@@ -18,7 +18,7 @@ class StudentDropoutLevelGenderAggregator
          }
     }
 
-    protected function byLevel(Builder $query)
+    protected function byLevel(Collection $query)
     {
         $levels = Educationlevels::all()->pluck('id');
         $levels->map(function ($levelId) use ($query) {
@@ -39,7 +39,7 @@ class StudentDropoutLevelGenderAggregator
             ];
         });
     }
-    protected function byGender(Builder $query)
+    protected function byGender(Collection $query)
     {
         $genders = Gender::all()->pluck('id');
         $genders->map(function ($genderId) use ($query) {

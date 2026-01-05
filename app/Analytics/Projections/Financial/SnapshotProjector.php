@@ -75,4 +75,6 @@ class SnapshotProjector
          ]);
             return $reversalEvents->contains($eventType);
     }
+
+
 }

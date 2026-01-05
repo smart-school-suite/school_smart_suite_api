@@ -2,12 +2,12 @@
 
 namespace App\Services\Analytics\Academic\Aggregates\FailRate;
 
-use Illuminate\Database\Query\Builder;
 use App\Constant\Analytics\Academic\AcademicAnalyticsKpi;
+use Illuminate\Support\Collection;
 
 class SchoolFailRateAggregate
 {
-    public function calculate(Builder $query, $filters)
+    public function calculate(Collection $query, $filters)
     {
         if (!$filters['level_id'] && !$filters['exam_type_id']) {
             $totalSat =   $query->where('kpi', AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE)

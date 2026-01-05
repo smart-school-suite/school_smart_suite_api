@@ -2,14 +2,14 @@
 
 namespace App\Services\Analytics\Academic\Filters;
 
-use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 
 class SchoolPassRateFilter
 {
     public function apply(
-        Builder $query,
+        Collection $query,
         array $filter,
-    ): Builder {
+    ): Collection {
         if ($filter['level_id'] && $filter['exam_type_id']) {
             $query->where("level_id", $filter['level_id'])
                 ->where("exam_type_id", $filter['exam_type_id']);

@@ -3,13 +3,13 @@
 namespace App\Services\Analytics\Operational\Aggregates\Teacher;
 
 use App\Models\Educationlevels;
-use MongoDB\Laravel\Query\Builder;
+use Illuminate\Support\Collection;
 use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsKpi;
 use App\Constant\Analytics\Operational\OperationalAnalyticsKpi;
 
 class TeacherStudentRatioLevel
 {
-    public function calculate(Builder $enrolllmentQuery, Builder $operationalQuery)
+    public function calculate(Collection $enrolllmentQuery, Collection $operationalQuery)
     {
         $levels = Educationlevels::all();
         $levels->map(function ($level) use ($enrolllmentQuery, $operationalQuery) {

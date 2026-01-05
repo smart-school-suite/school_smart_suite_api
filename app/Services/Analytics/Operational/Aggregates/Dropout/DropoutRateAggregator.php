@@ -2,12 +2,12 @@
 
 namespace App\Services\Analytics\Operational\Aggregates\Dropout;
 
-use Illuminate\Database\Query\Builder;
 use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsKpi;
+use Illuminate\Support\Collection;
 
 class DropoutRateAggregator
 {
-    public function calculate(Builder $query, $filter)
+    public function calculate(Collection $query, $filter)
     {
         $enrolledStudents = $query->where("kpi", EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS)
             ->sum("value");

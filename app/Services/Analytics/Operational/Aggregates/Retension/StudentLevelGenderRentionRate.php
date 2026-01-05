@@ -2,13 +2,13 @@
 
 namespace App\Services\Analytics\Operational\Aggregates\Retension;
 
-use Illuminate\Database\Query\Builder;
 use App\Models\Educationlevels;
 use App\Models\Gender;
+use Illuminate\Support\Collection;
 
 class StudentLevelGenderRentionRate
 {
-    public function calculate(Builder $query, $filter)
+    public function calculate(Collection $query, $filter)
     {
         if ($filter['level']) {
              return $this->byLevel($query);
@@ -18,7 +18,7 @@ class StudentLevelGenderRentionRate
              return $this->byGender($query);
         }
     }
-    protected function byGender(Builder $query)
+    protected function byGender(Collection $query)
     {
         $genders = Gender::all();
         $genders->map(function ($gender) use ($query) {
@@ -34,7 +34,7 @@ class StudentLevelGenderRentionRate
             ];
         });
     }
-    protected function byLevel(Builder $query)
+    protected function byLevel(Collection $query)
     {
         $levels = Educationlevels::all();
         $levels->map(function ($level) use ($query) {

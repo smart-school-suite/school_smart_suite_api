@@ -2,14 +2,14 @@
 
 namespace App\Services\Analytics\Academic\Aggregates\FailRate;
 
-use Illuminate\Database\Query\Builder;
 use App\Constant\Analytics\Academic\AcademicAnalyticsKpi;
 use App\Models\Examtype;
 use App\Models\Educationlevels;
+use Illuminate\Support\Collection;
 
 class ExamTypeLevelFailRateAggregate
 {
-    public function calculate(Builder $query, $filters)
+    public function calculate(Collection $query, $filters)
     {
         if ($filters['exam_type'] ?? false) {
             return $this->byExamType($query);
@@ -20,7 +20,7 @@ class ExamTypeLevelFailRateAggregate
         }
     }
 
-    protected function byExamType(Builder $query)
+    protected function byExamType(Collection $query)
     {
         $examTypes = ExamType::where("type", "!=", "resit")->pluck('id');
 
@@ -43,7 +43,7 @@ class ExamTypeLevelFailRateAggregate
         });
     }
 
-    protected function byLevel(Builder $query)
+    protected function byLevel(Collection $query)
     {
         $levels = Educationlevels::all()->pluck('id');
         return $levels->map(function ($levelId) use ($query) {

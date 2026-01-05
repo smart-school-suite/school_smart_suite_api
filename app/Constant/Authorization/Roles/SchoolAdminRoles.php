@@ -4,11 +4,12 @@ namespace App\Constant\Authorization\Roles;
 
 class SchoolAdminRoles
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+   public const SCHOOL_ADMIN = "schoolAdmin";
+   public const SCHOOL_SUPER_ADMIN = "schoolSuperAdmin";
+   public static function all(): array {
+       return [
+           self::SCHOOL_ADMIN,
+           self::SCHOOL_SUPER_ADMIN
+       ];
+   }
 }

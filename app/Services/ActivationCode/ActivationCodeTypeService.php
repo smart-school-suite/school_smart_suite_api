@@ -177,4 +177,5 @@ class ActivationCodeTypeService
 
         return $activationCodeType;
     }
+
 }

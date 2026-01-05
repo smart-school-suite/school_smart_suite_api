@@ -4,11 +4,10 @@ namespace App\Constant\Authorization\Roles;
 
 class StudentRoles
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+   public const STUDENT = "student";
+   public static function all(): array {
+       return [
+         self::STUDENT
+       ];
+   }
 }

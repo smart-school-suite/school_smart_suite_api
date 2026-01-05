@@ -2,13 +2,13 @@
 
 namespace App\Services\Analytics\Academic\Aggregates\Resit;
 
-use Illuminate\Database\Query\Builder;
 use App\Models\Examtype;
 use App\Models\Educationlevels;
+use Illuminate\Support\Collection;
 
 class ResitTotalAggregate
 {
-    public function calculate(Builder $query, $filters)
+    public function calculate(Collection $query, $filters)
     {
         if ($filters['exam_type'] ?? false) {
             return $this->byExamType($query);
@@ -19,7 +19,7 @@ class ResitTotalAggregate
         }
     }
 
-    protected function byExamType(Builder $query)
+    protected function byExamType(Collection $query)
     {
         $examTypes = ExamType::where("type", "!=", "resit")->pluck('id');
 
@@ -34,7 +34,7 @@ class ResitTotalAggregate
             ];
         });
     }
-    protected function byLevel(Builder $query)
+    protected function byLevel(Collection $query)
     {
         $levels = Educationlevels::all()->pluck('id');
         return $levels->map(function ($levelId) use ($query) {

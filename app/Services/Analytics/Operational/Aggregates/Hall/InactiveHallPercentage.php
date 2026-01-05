@@ -3,11 +3,11 @@
 namespace App\Services\Analytics\Operational\Aggregates\Hall;
 
 use App\Constant\Analytics\Operational\OperationalAnalyticsKpi;
-use Laravel\Scout\Builder;
+use Illuminate\Support\Collection;
 
 class InactiveHallPercentage
 {
-    public function calculate(Builder $query)
+    public function calculate(Collection $query)
     {
         $totalHalls = $query->where("kpi", OperationalAnalyticsKpi::HALL)->sum("value");
         $inactiveHalls = $query->where("kpi", OperationalAnalyticsKpi::INACTIVE_HALL)->sum("value");

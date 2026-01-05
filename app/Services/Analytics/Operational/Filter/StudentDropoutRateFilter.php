@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Services\Analytics\Operational\Filter;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
+
 class StudentDropoutRateFilter
 {
-    public function apply(Builder $query, $filter)
+    public function apply(Collection $query, $filter)
     {
         if ($filter['level_id']  && $filter['gender_id']) {
             $query->where("level_id", $filter['level_id'])
