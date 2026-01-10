@@ -16,13 +16,15 @@ use App\Models\SchoolBranchSetting;
 use App\Models\SchoolTransaction;
 use App\Models\SchoolSubscription;
 use App\Models\SubscriptionUsage;
-use Illuminate\Support\Facades\Log;
+use App\Models\PaymentMethod;
 
 class SchoolSubscriptionService
 {
 
     public function subscribe(array $data): array
     {
+        $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+
         $plan = Plan::with(['country', 'planFeature'])
             ->where('id', $data['plan_id'])
             ->where("status", "active")
@@ -38,7 +40,7 @@ class SchoolSubscriptionService
             );
         }
 
-        return DB::transaction(function () use ($data, $plan) {
+        return DB::transaction(function () use ($data, $plan, $paymentMethod) {
             $schoolId     = (string) Str::uuid();
             $branchId     = (string) Str::uuid();
             $rawApiKey    = (string) Str::uuid();
@@ -88,7 +90,7 @@ class SchoolSubscriptionService
                 'currency'         => $plan->country->currency ?? 'USD',
                 'type'             => 'subscription_purchase',
                 'status'           => 'completed',
-                'payment_method'   => $data['payment_method'] ?? 'mtn_mobile_money',
+                'payment_method_id'   => $paymentMethod->id,
                 'payment_ref'      => $data['payment_ref'] ?? (string) Str::uuid(),
                 'transaction_id'   => $transactionId,
             ]);
@@ -106,6 +108,7 @@ class SchoolSubscriptionService
     public function renewSubscription(array $data, $currentSchool): array
     {
         return DB::transaction(function () use ($data, $currentSchool) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
             $branch = Schoolbranches::with([
                 'schoolSubscription.plan.country'
             ])
@@ -149,7 +152,7 @@ class SchoolSubscriptionService
                 'currency'         => $plan->country->currency ?? 'USD',
                 'type'             => 'subscription_renewal',
                 'status'           => 'completed',
-                'payment_method'   => $data['payment_method'] ?? 'mtn_mobile_money',
+                'payment_method_id'   => $paymentMethod->id,
                 'payment_ref'      => $data['payment_ref'] ?? (string) Str::uuid(),
             ]);
 
@@ -314,7 +317,6 @@ class SchoolSubscriptionService
             ->with(['planFeature.feature'])
             ->first();
 
-      Log::info($newPlan);
         $newPlanFeatures = $newPlan->planFeature;
 
         $newFeatureKeys = $newPlanFeatures->pluck('feature.key')->toArray();

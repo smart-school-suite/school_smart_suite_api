@@ -14,13 +14,10 @@ class HardTimetableConstraints
         'sunday'
     ];
 
-    /**
-     * Minimal clean defaults — no optional fields unless needed
-     */
     public static function getDefaultJson(): string
     {
         $defaults = [
-            "hard_constraints" => [  // ← Fixed: was "hard_constrains"
+            "hard_constraints" => [
                 "break_period" => [
                     "start_time" => "12:00",
                     "end_time"   => "12:45",
@@ -41,20 +38,17 @@ class HardTimetableConstraints
         return json_encode($defaults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    /**
-     * Strict JSON Schema
-     */
     public static function getJsonSchema(): string
     {
         $schema = [
             "\$schema" => "https://json-schema.org/draft/2020-12/schema",
             "title" => "Hard Timetable Constraints",
             "type" => "object",
-            "required" => ["hard_constraints"],  // ← Root wrapper
+            "required" => ["hard_constraints"],
             "properties" => [
                 "hard_constraints" => [
                     "type" => "object",
-                    "required" => ["break_period", "operational_period", "periods"],  // ← Added "periods"
+                    "required" => ["break_period", "operational_period", "periods"],
                     "properties" => [
                         "break_period" => [
                             "type" => "object",

@@ -15,6 +15,7 @@ class FinancialAnalyticsEvent
     public const ADDITIONAL_FEE_PAID = 'finance.additional_fee.paid';
     public const ADDITIONAL_FEE_REVERSED = 'finance.additional_fee.reversed';
     public const ADDITIONAL_FEE_INCURRED = 'finance.additional_fee.incurred';
+    public const ADDITIONAL_FEE_UPDATED = "finance.additional_fee.updated";
 
     public const RESIT_FEE_PAID = 'finance.resit_fee.paid';
     public const RESIT_FEE_REVERSED = 'finance.resit_fee.reversed';

@@ -4,7 +4,6 @@ namespace App\Services\Election;
 
 use App\Jobs\NotificationJobs\SendAdminApplicationApprovedNotification;
 use App\Jobs\NotificationJobs\SendCandidacyApprovedNotification;
-use App\Jobs\StatisticalJobs\OperationalJobs\ElectionApplicationStatJob;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\ElectionCandidates;
 use App\Models\ElectionApplication;

@@ -17,7 +17,8 @@ class PaymentMethod extends Model
       'description',
       'max_deposit',
       'max_withdraw',
-      'operator_img'
+      'operator_img',
+      'key'
    ];
 
    public $table = "payment_method";

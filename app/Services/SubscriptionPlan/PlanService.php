@@ -31,6 +31,11 @@ class PlanService
 
         return $plan;
     }
+    public function getPlanById($planId)
+    {
+        $plan = Plan::with(['planFeature.feature', 'country'])->find($planId);
+        return $plan;
+    }
 
     public function updatePlan($data, $planId)
     {
@@ -133,7 +138,8 @@ class PlanService
     {
         $plans = Plan::where("status", "active")
             ->where("country_id", $countryId)
-            ->with(['planFeature', 'country'])
+            ->with(['planFeature.feature', 'country'])
+            ->take(4)
             ->get();
         if ($plans->isEmpty()) {
             throw new AppException(

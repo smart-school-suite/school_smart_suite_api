@@ -16,7 +16,7 @@ class SchoolFailRate
         $this->schoolFailRateAggregate = $schoolFailRateAggregate;
         $this->schoolFailRateFilter = $schoolFailRateFilter;
     }
-    public function getSchoolFailRate($currentSchool, $year, $filters)
+    public function getSchoolFailRate($currentSchool, $year)
     {
         $targetKpis = [
             AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
@@ -24,7 +24,6 @@ class SchoolFailRate
         ];
 
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $targetKpis);
-        $filteredQuery = $this->schoolFailRateFilter->apply($query, $filters);
-        return $this->schoolFailRateAggregate->calculate($filteredQuery, $filters);
+        return $this->schoolFailRateAggregate->calculate($query);
     }
 }

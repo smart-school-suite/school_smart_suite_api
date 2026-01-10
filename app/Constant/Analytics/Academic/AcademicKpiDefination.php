@@ -87,6 +87,7 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::EXAM_TYPE_ID,
                     AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
                     AcademicAnalyticsDimension::LETTER_GRADE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
                     AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [

@@ -11,16 +11,12 @@ class AblyService
     {
         $ably = new AblyRest(env('ABLY_KEY'));
 
-        $tokenParams = new TokenParams([
-            'clientId' => (string) $authUser->id, // clientId must be string or null
-            'capability' => [
-                '*' => ['publish', 'subscribe', 'presence'],
-            ],
-            // Optional: add ttl, timestamp, etc.
-            // 'ttl' => 3600, // 1 hour in seconds
-        ]);
+        $tokenParams = new TokenParams();
+        $tokenParams->clientId = (string) $authUser->id;
+        $tokenParams->capability = json_encode(['*' => ['publish', 'subscribe', 'presence']]);
+        // $tokenParams->ttl = 3600; // optional
 
-        $tokenRequest = $ably->auth->createTokenRequest($tokenParams);
+        $tokenRequest = $ably->auth->createTokenRequest($tokenParams->toArray());
 
         return $tokenRequest;
     }

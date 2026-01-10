@@ -2,8 +2,6 @@
 
 namespace App\Services\Election;
 
-use App\Jobs\StatisticalJobs\OperationalJobs\ElectionVoteStatJob;
-use App\Models\Student;
 use App\Models\ElectionVotes;
 use App\Models\ElectionResults;
 use Exception;

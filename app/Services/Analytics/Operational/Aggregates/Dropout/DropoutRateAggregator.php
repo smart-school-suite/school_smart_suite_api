@@ -7,13 +7,17 @@ use Illuminate\Support\Collection;
 
 class DropoutRateAggregator
 {
-    public function calculate(Collection $query, $filter)
+    public function calculate(Collection $query)
     {
         $enrolledStudents = $query->where("kpi", EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS)
             ->sum("value");
         $studentDropout = $query->where("kpi", EnrollmentAnalyticsKpi::STUDENT_DROPOUT)
             ->sum("value");
-        return $this->rate($enrolledStudents, $studentDropout);
+        return [
+            "enrolled_students" => $enrolledStudents,
+            "student_dropout" => $studentDropout,
+            "dropout_rate" => $this->rate($enrolledStudents, $studentDropout)
+        ];
     }
 
     protected function rate($enrolledStudents, $studentDropout): float

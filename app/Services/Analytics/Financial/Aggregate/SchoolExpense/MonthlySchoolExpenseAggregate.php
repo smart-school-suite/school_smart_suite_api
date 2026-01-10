@@ -1,19 +1,21 @@
 <?php
 
 namespace App\Services\Analytics\Financial\Aggregate\SchoolExpense;
+
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+
 class MonthlySchoolExpenseAggregate
 {
     public function calculate(Collection $query)
     {
         $monthsOfYear = $this->getMonthsOfYear();
-        $monthsOfYear->map(function ($month) use ($query) {
-            $expenseTotal = $query->where("month", $month->month_count)->sum("value");
+        return  $monthsOfYear->map(function ($month) use ($query) {
+            $expenseTotal = $query->where("month", $month['month_count'])->sum("value");
             return [
-                "month_short" => $month->month_short,
-                "month_full" => $month->month_full,
-                "month_count" => $month->month_count,
+                "month_short" => $month['month_short'],
+                "month_full" => $month['month_full'],
+                "month_count" => $month['month_count'],
                 "expense_total" => $expenseTotal
             ];
         });

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\ExamEvaluation;
+
 use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Models\Exams;
@@ -13,6 +14,7 @@ use App\Models\Courses;
 use App\Models\Examtype;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+
 class UpdateExamScoreService
 {
     public function updateExamScore(array $updateData, $currentSchool, $authAdmin): array
@@ -76,7 +78,7 @@ class UpdateExamScoreService
                     "message" => "Exam Results Updated",
                 ]
             );
-                        StudentActionEvent::dispatch([
+            StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
                 'studentIds'   => [$student->id],
                 'feature'      => 'examResultUpdate',

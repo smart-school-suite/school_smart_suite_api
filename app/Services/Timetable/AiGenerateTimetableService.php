@@ -12,6 +12,7 @@ use App\Models\Timetable;
 use App\Services\Gemini\GeminiService;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
+
 class AiGenerateTimetableService
 {
     protected GeminiService $geminiService;
@@ -97,7 +98,15 @@ class AiGenerateTimetableService
             ->with(['teacher'])
             ->get();
 
-        $promptResponse = $this->geminiService->generateStructuredJson($data['prompt']);
+        $promptResponse = $this->geminiService->generateStructuredJson(
+            $data['prompt'],
+            $teacherCourses->map(fn($teacherCourse) => [
+                "course_id" => $teacherCourse->course->id,
+                "course_title" => $teacherCourse->course->course_title,
+                "course_code" => $teacherCourse->course->course_code,
+                "course_credit" => $teacherCourse->course->credit
+            ])->unique('course_id')->values()->toArray()
+        );
         $body = [
             "teacher_prefered_teaching_period" =>  $teacherPreferredSchedule->map(fn($schedule) => [
                 "start_time" => Carbon::createFromFormat('H:i:s', $schedule->start_time)->format('H:i'),
@@ -144,15 +153,15 @@ class AiGenerateTimetableService
             "periods" => collect($promptResponse["hard_constraints"])->get("periods"),
             "soft_constrains" => collect($promptResponse["soft_constraints"]),
         ];
-        //  $response =  $client->post("http://127.0.0.1:8080/api/v1/schedule/with-preference", [
-        //   'headers' => [
-        //        'Content-Type' => 'application/json',
+        // $response =  $client->post("http://127.0.0.1:8080/api/v1/schedule/with-preference", [
+        //     'headers' => [
+        //         'Content-Type' => 'application/json',
         //         'Accept' => 'application/json',
         //     ],
         //     'json' => $body
-        //  ]);
+        // ]);
 
-        //  $result = json_decode($response->getBody()->getContents(), true);
+        // $result = json_decode($response->getBody()->getContents(), true);
         return $body;
     }
 }

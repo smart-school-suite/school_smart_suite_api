@@ -15,7 +15,7 @@ class SchoolPassRate
         $this->schoolPassRateAggregate = $schoolPassRateAggregate;
         $this->schoolPassRateFilter = $schoolPassRateFilter;
     }
-    public function getSchoolPassRate($currentSchool, $year, $filters)
+    public function getSchoolPassRate($currentSchool, $year)
     {
         $targetKpis = [
             AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
@@ -24,7 +24,6 @@ class SchoolPassRate
 
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $targetKpis);
 
-        $filteredQuery = $this->schoolPassRateFilter->apply($query, $filters);
-        return $this->schoolPassRateAggregate->calculate($filteredQuery, $filters);
+        return $this->schoolPassRateAggregate->calculate($query);
     }
 }

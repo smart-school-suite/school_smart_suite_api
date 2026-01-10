@@ -60,30 +60,26 @@ class test extends Seeder
 {
     public function run(): void
     {
-        $this->financialStatsSeeder();
-        $this->financialStatsSeeder();
-        $this->financialStatsSeeder();
-        $this->financialStatsSeeder();
-        $this->financialStatsSeeder();
-        $this->financialStatsSeeder();
+        // $this->financialStatsSeeder();
+        // $this->financialStatsSeeder();
+        // $this->financialStatsSeeder();
+        // $this->financialStatsSeeder();
+        // $this->financialStatsSeeder();
+        // $this->financialStatsSeeder();
 
-        $this->enrollmentStatSeeder();
-        $this->enrollmentStatSeeder();
-        $this->enrollmentStatSeeder();
-        $this->enrollmentStatSeeder();
-        $this->enrollmentStatSeeder();
+        // $this->enrollmentStatSeeder();
+        // $this->enrollmentStatSeeder();
+        // $this->enrollmentStatSeeder();
+        // $this->enrollmentStatSeeder();
+        // $this->enrollmentStatSeeder();
 
-        $this->academicStats();
-        $this->academicStats();
-        $this->academicStats();
-        $this->academicStats();
-        $this->academicStats();
+        // $this->academicStats();
+        // $this->academicStats();
+        // $this->academicStats();
+        // $this->academicStats();
+        // $this->academicStats();
 
-        $this->operationalStats();
-        $this->operationalStats();
-        $this->operationalStats();
-        $this->operationalStats();
-        $this->operationalStats();
+        //$this->operationalStats();
         $this->operationalStats();
     }
 
@@ -439,7 +435,7 @@ class test extends Seeder
                 ]
             ));
         }
-      for ($i = 0; $i < 999; $i++) {
+        for ($i = 0; $i < 999; $i++) {
             event(new AcademicAnalyticsEvent(
                 eventType: AcademicEvents::EXAM_CANDIDATE_EVALUATED,
                 version: 1,
@@ -718,43 +714,7 @@ class test extends Seeder
     }
     public function operationalStats()
     {
-        for ($i = 0; $i < 100; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::COURSE_CREATED,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
-                ]
-            ));
-        }
-        for ($i = 0; $i < 200; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::DEPARTMENT_ACTIVATED,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "value" => 1
-                ]
-            ));
-        }
-        for ($i = 0; $i < 100; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::DEPARTMENT_DEACTIVATED,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "value" => 1
-                ]
-            ));
-        }
-        for ($i = 0; $i < 500; $i++) {
+        for ($i = 0; $i < 250; $i++) {
             event(new OperationalAnalyticsEvent(
                 eventType: OpEvents::DEPARTMENT_CREATED,
                 version: 1,
@@ -766,6 +726,7 @@ class test extends Seeder
                 ]
             ));
         }
+
         for ($i = 0; $i < 500; $i++) {
             event(new OperationalAnalyticsEvent(
                 eventType: OpEvents::SPECIALTY_CREATED,
@@ -773,51 +734,13 @@ class test extends Seeder
                 payload: [
                     'school_id'        => Schoolbranches::first()->school_id,
                     'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
                     "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(EducationLevels::all()->pluck('id')->toArray()),
                     "value" => 1
                 ]
             ));
         }
-        for ($i = 0; $i < 500; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::SPECIALTY_ACTIVATED,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
-                    "value" => 1
-                ]
-            ));
-        }
-        for ($i = 0; $i < 500; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::SPECIALTY_DEACTIVATED,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
-                    "value" => 1
-                ]
-            ));
-        }
-        for ($i = 0; $i < 500; $i++) {
-            event(new OperationalAnalyticsEvent(
-                eventType: OpEvents::SPECIALTY_CREATED,
-                version: 1,
-                payload: [
-                    'school_id'        => Schoolbranches::first()->school_id,
-                    'school_branch_id' => Schoolbranches::first()->id,
-                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
-                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
-                    "value" => 1
-                ]
-            ));
-        }
+
         for ($i = 0; $i < 100; $i++) {
             event(new OperationalAnalyticsEvent(
                 eventType: OpEvents::HALL_CREATED,
@@ -825,13 +748,199 @@ class test extends Seeder
                 payload: [
                     'school_id'        => Schoolbranches::first()->school_id,
                     'school_branch_id' => Schoolbranches::first()->id,
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(EducationLevels::all()->pluck('id')->toArray()),
                     "value" => 1
                 ]
             ));
         }
+
+        // for ($i = 0; $i < 250; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::TEACHER_CREATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "level_id" => Arr::random(EducationLevels::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 300; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::TEACHER_SPECIALTY_ASSIGNED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "level_id" => Arr::random(EducationLevels::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+
+        // for ($i = 0; $i < 25; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::TEACHER_DROPOUT,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "level_id" => Arr::random(EducationLevels::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+
+        // for ($i = 0; $i < 500; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::TEACHER_COURSE_ASSIGNED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "level_id" => Arr::random(EducationLevels::all()->pluck('id')->toArray()),
+        //             "course_id" => Arr::random(Courses::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+
+
+
+        // for ($i = 0; $i < 100; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::DEPARTMENT_DEACTIVATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 500; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::DEPARTMENT_CREATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 500; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::SPECIALTY_CREATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 500; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::SPECIALTY_ACTIVATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 500; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::SPECIALTY_DEACTIVATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 500; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::SPECIALTY_CREATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+        //             "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
+        // for ($i = 0; $i < 100; $i++) {
+        //     event(new OperationalAnalyticsEvent(
+        //         eventType: OpEvents::HALL_CREATED,
+        //         version: 1,
+        //         payload: [
+        //             'school_id'        => Schoolbranches::first()->school_id,
+        //             'school_branch_id' => Schoolbranches::first()->id,
+        //             "value" => 1
+        //         ]
+        //     ));
+        // }
     }
     public function enrollmentStatSeeder()
     {
+        for ($i = 0; $i < 500; $i++) {
+            event(new EnrollmentAnalyticsEvent(
+                eventType: EnrollmentEvents::STUDENT_DROPPED_OUT,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_batch" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                    "student_source_id" => Arr::random(StudentSource::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "value" =>  1
+                ]
+            ));
+        }
+        for ($i = 0; $i < 500; $i++) {
+            event(new EnrollmentAnalyticsEvent(
+                eventType: EnrollmentEvents::STUDENT_DROPPED_OUT,
+                version: 1,
+                payload: [
+                    'school_id'        => Schoolbranches::first()->school_id,
+                    'school_branch_id' => Schoolbranches::first()->id,
+                    "department_id" => Arr::random(Department::all()->pluck('id')->toArray()),
+                    "specialty_id" => Arr::random(Specialty::all()->pluck('id')->toArray()),
+                    "level_id" => Arr::random(Educationlevels::all()->pluck('id')->toArray()),
+                    "student_batch" => Arr::random(Studentbatch::all()->pluck('id')->toArray()),
+                    "student_source_id" => Arr::random(StudentSource::all()->pluck('id')->toArray()),
+                    "gender_id" => Arr::random(Gender::all()->pluck('id')->toArray()),
+                    "value" =>  1
+                ]
+            ));
+        }
         for ($i = 0; $i < 500; $i++) {
             event(new EnrollmentAnalyticsEvent(
                 eventType: EnrollmentEvents::STUDENT_ENROLLED,

@@ -116,20 +116,8 @@ class TimetableService
                         $startTime = Carbon::parse($entry->start_time);
                         $endTime = Carbon::parse($entry->end_time);
 
-                        // Log parsed times for debugging
-                        Log::debug('Parsed times', [
-                            'start_time' => $entry->start_time,
-                            'parsed_start_time' => $startTime->toDateTimeString(),
-                            'end_time' => $entry->end_time,
-                            'parsed_end_time' => $endTime->toDateTimeString(),
-                        ]);
-
                         // Calculate the duration
                         $durationInMinutes = $endTime->diffInMinutes($startTime);
-                        Log::debug('Duration calculation', [
-                            'duration_in_minutes' => $durationInMinutes,
-                        ]);
-
                         // Format the duration string
                         $duration = '';
                         if ($durationInMinutes <= 0) {

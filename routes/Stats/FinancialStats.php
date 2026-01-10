@@ -38,3 +38,6 @@ Route::post('resit-fee/paid-vs-debt/by-level-exam-type/{year}', [FinancialStatCo
 
     Route::get('tuition-fee/paid-vs-unpaid/by-level/{year}', [FinancialStatController::class, 'getTuitionFeePaidVsUnpaidLevel'])
         ->name('tuition-fee.paid-vs-unpaid.by-level');
+
+    Route::get('school-expense/monthly/{year}', [FinancialStatController::class, "getMonthlySchoolExpense"])->name("monthly.school_expense");
+    Route::get('school-expense/category/{year}', [FinancialStatController::class, "getSchoolExpenseCategory"])->name("school_expense.category");

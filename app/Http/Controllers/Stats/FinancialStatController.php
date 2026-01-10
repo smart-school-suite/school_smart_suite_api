@@ -18,6 +18,8 @@ use App\Services\Analytics\Financial\Widget\TuitionFee\TuitionFeeDebtVsPaidLevel
 use App\Services\Analytics\Financial\Widget\TuitionFee\TuitionFeePaymentRate;
 use App\Services\Analytics\Financial\Widget\ResitFee\ResitFeePaidVsDebtLevelExamType;
 use App\Services\Analytics\Financial\Widget\ResitFee\ResitFeePaymentRate;
+use App\Services\Analytics\Financial\Widget\SchoolExpenses\MontlySchoolExpense;
+use App\Services\Analytics\Financial\Widget\SchoolExpenses\SchoolExpenseCategory;
 class FinancialStatController extends Controller
 {
     public function getResitFeePaidVsDebtLevelExamType(
@@ -191,5 +193,32 @@ class FinancialStatController extends Controller
              null,
              200
         );
+    }
+
+    public function getMonthlySchoolExpense(Request $request,
+     MontlySchoolExpense $montlySchoolExpense,
+    $year){
+         $currentSchool = $request->attributes->get("currentSchool");
+         $stats =  $montlySchoolExpense->getMonthlySchoolExpense($currentSchool, $year);
+         return ApiResponseService::success(
+              "Monthly School Expense Fetched Successfully",
+              $stats,
+              null,
+              200
+         );
+    }
+
+    public function getSchoolExpenseCategory(Request $request,
+     SchoolExpenseCategory $schoolExpenseCategory,
+     $year
+    ) {
+         $currentSchool = $request->attributes->get('currentSchool');
+         $stats = $schoolExpenseCategory->getSchoolExpenseCategory($currentSchool, $year);
+         return ApiResponseService::success(
+            "School Expense Category Fetched Successfully",
+            $stats,
+            null,
+            200
+         );
     }
 }

@@ -13,6 +13,18 @@ class TeacherRentensionRate
             ->sum("value");
         $registeredTeacher = $query->where("kpi", OperationalAnalyticsKpi::TEACHER)
             ->sum("value");
-        return  round($teacherDropout / $registeredTeacher * 100, 2);
+
+        $retainedTeachers = $registeredTeacher - $teacherDropout;
+
+        $retentionRate = ($registeredTeacher > 0)
+            ? ($retainedTeachers / $registeredTeacher) * 100
+            : 0;
+
+        return [
+            "teacher_dropout" => $teacherDropout,
+            "register_teacher" => $registeredTeacher,
+            "retained_teacher" => $retainedTeachers,
+            "retention_rate" => round($retentionRate, 2)
+        ];
     }
 }

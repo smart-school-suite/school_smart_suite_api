@@ -50,4 +50,9 @@ class PlanController extends Controller
          $plan = $this->planService->deactivatePlan($planId);
          return ApiResponseService::success("Plan Deactivated Successfully", $plan, null, 200);
     }
+
+    public function getPlanById(Request $request, $planId){
+         $plan = $this->planService->getPlanById($planId);
+         return ApiResponseService::success("Plan Details Fetched Successfully", $plan, null, 200);
+    }
 }

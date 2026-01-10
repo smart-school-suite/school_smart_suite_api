@@ -60,6 +60,42 @@ class SoftTimetableConstraints
                 'soft_constraints' => [
                     'type' => 'object',
                     'properties' => [
+                        'course_fixed_days' => [
+                            'type' => 'array',
+                            'description' => 'List of courses that must be scheduled on specific days and/or times.',
+                            'items' => [
+                                'type' => 'object',
+                                'required' => ['course_id', 'course_name'],
+                                'properties' => [
+                                    'course_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier for the course.'
+                                    ],
+                                    'course_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable name of the course.'
+                                    ],
+                                    'fixed_slots' => [
+                                        'type' => 'array',
+                                        'items' => [
+                                            'type' => 'object',
+                                            'required' => ['day'],
+                                            'properties' => [
+                                                'day' => [
+                                                    'type' => 'string',
+                                                    'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                                                ],
+                                                'time' => [
+                                                    'type' => 'string',
+                                                    'description' => 'Specific time range (e.g., 07:00 - 10:00). If omitted, the whole day is allowed.',
+                                                    'example' => '07:00 - 10:00'
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ],
                         'teacher_max_daily_hours' => [
                             'type' => 'number',
                             'minimum' => 1,

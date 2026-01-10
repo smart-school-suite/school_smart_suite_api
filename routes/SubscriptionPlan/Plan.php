@@ -11,3 +11,4 @@ Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->get('/', [PlanContro
 Route::get('/country/{countryId}', [PlanController::class, 'getPlanCountryId'])->name('get.plan.countryId');
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/activate/{planId}', [PlanController::class, 'activatePlan'])->name('activate.plan');
 Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->post('/deactivate/{planId}', [PlanController::class, 'deactivatePlan'])->name('deactivate.plan');
+Route::get('/{planId}', [PlanController::class, 'getPlanById'])->name("get.plan.details");

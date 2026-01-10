@@ -24,10 +24,8 @@ class PaymentMethodService
         }
 
         if ($request && $request->hasFile('operator_img')) {
-            $operatorImg = $request->file('operator_img');
-            $fileName = time() . '_' . $operatorImg->getClientOriginalName();
-            $operatorImg->storeAs('public/PaymentOperators', $fileName);
-            $data['operator_img'] = $fileName;
+            $path = $request->file('operator_img')->store('PaymentOperators', 'public');
+            $data['operator_img'] = $path;
         } else {
             $data['operator_img'] = null;
         }
@@ -65,13 +63,11 @@ class PaymentMethodService
 
         if ($request && $request->hasFile('operator_img')) {
             if ($paymentMethod->operator_img) {
-                Storage::disk('public')->delete('PaymentOperators/' . $paymentMethod->operator_img);
+                Storage::disk('public')->delete($paymentMethod->operator_img);
             }
 
-            $operatorImg = $request->file('operator_img');
-            $fileName = time() . '_' . $operatorImg->getClientOriginalName();
-            $operatorImg->storeAs('public/PaymentOperators', $fileName);
-            $data['operator_img'] = $fileName;
+            $path = $request->file('operator_img')->store('PaymentOperators', 'public');
+            $data['operator_img'] = $path;
         } else {
             unset($data['operator_img']);
         }
@@ -151,7 +147,19 @@ class PaymentMethodService
             ->with(['category', 'country'])
             ->where("status", "active")
             ->get();
-        return $paymentMethods;
+
+        $grouped = $paymentMethods->groupBy('category.id')->map(function ($methods, $categoryId) {
+            $category = $methods->first()->category;
+            return [
+                'category' => [
+                    'id'   => $category?->id,
+                    'name' => $category?->name,
+                ],
+                'methods' => $methods,
+            ];
+        })->values();
+
+        return $grouped;
     }
 
     public function deletePaymentMethod($paymentMethodId)

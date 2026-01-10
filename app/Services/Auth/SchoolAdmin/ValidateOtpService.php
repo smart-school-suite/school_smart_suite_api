@@ -9,8 +9,6 @@ use App\Models\SchoolBranchApiKey;
 use Illuminate\Support\Str;
 use Exception;
 use App\Exceptions\AuthException;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 class ValidateOtpService
 {
     // Implement your logic here

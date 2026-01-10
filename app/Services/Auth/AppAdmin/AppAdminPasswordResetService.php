@@ -35,7 +35,7 @@ class AppAdminPasswordResetService
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
-        SendOtpJob::dispatch($passwordResetData['email'], $otp);
+        // SendOtpJob::dispatch($passwordResetData['email'], $otp);
         return ['otp_header' => $otp_header];
     }
 

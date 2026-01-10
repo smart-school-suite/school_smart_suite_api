@@ -16,27 +16,22 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.x-goog-api-key');
-        $this->model  = config('services.gemini.model', 'gemini-1.5-flash'); // Use valid model name
+        $this->model  = config('services.gemini.model', 'gemini-1.5-flash');
 
         $this->client = new Client([
             'base_uri' => 'https://generativelanguage.googleapis.com/v1beta/',
-            'timeout'  => 60, // Increased for larger prompts
+            'timeout'  => 60,
         ]);
     }
 
-    /**
-     * Generate both hard and soft constraints in one structured JSON response
-     */
-    public function generateStructuredJson(string $userPrompt): array
+    public function generateStructuredJson(string $userPrompt, array $courses): array
     {
-        // Get defaults and schemas
         $hardDefaults = HardTimetableConstraints::getDefaultJson();
         $hardSchema   = HardTimetableConstraints::getJsonSchema();
 
         $softDefaults = SoftTimetableConstraints::getDefaultJson();
         $softSchema   = SoftTimetableConstraints::getJsonSchema();
 
-        // Combined root schema structure
         $combinedSchema = json_encode([
             '$schema' => 'https://json-schema.org/draft/2020-12/schema',
             'type' => 'object',

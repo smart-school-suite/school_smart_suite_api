@@ -17,26 +17,26 @@ use Carbon\Carbon;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
 use App\Events\Analytics\FinancialAnalyticsEvent;
-use App\Models\Specialty;
 use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class AdditionalFeeService
 {
-    public function createStudentAdditionalFees(array $additionalFees, $currentSchool, $authAdmin)
+    public function createStudentAdditionalFees(array $data, $currentSchool, $authAdmin)
     {
-        $student = Student::where("school_branch_id", $currentSchool->id)->find($additionalFees['student_id']);
-        $studentAdditionFees = new AdditionalFees();
+        $student = Student::where("school_branch_id", $currentSchool->id)->find($data['student_id']);
+        $additionalFee = new AdditionalFees();
         $additionalFeeId = Str::uuid();
-        $studentAdditionFees->id = $additionalFeeId;
-        $studentAdditionFees->reason = $additionalFees['reason'];
-        $studentAdditionFees->amount = $additionalFees['amount'];
-        $studentAdditionFees->status = "unpaid";
-        $studentAdditionFees->additionalfee_category_id = $additionalFees['additionalfee_category_id'];
-        $studentAdditionFees->school_branch_id = $currentSchool->id;
-        $studentAdditionFees->specialty_id = $student->specialty_id;
-        $studentAdditionFees->level_id = $student->level_id;
-        $studentAdditionFees->student_id = $student->id;
-        $studentAdditionFees->save();
+        $additionalFee->id = $additionalFeeId;
+        $additionalFee->reason = $data['reason'];
+        $additionalFee->amount = $data['amount'];
+        $additionalFee->status = "unpaid";
+        $additionalFee->due_date  = $data['due_date'];
+        $additionalFee->additionalfee_category_id = $data['additionalfee_category_id'];
+        $additionalFee->school_branch_id = $currentSchool->id;
+        $additionalFee->specialty_id = $student->specialty_id;
+        $additionalFee->level_id = $student->level_id;
+        $additionalFee->student_id = $student->id;
+        $additionalFee->save();
         AdditionalFeeStatJob::dispatch($additionalFeeId, $currentSchool->id);
         AdminActionEvent::dispatch(
             [
@@ -46,35 +46,36 @@ class AdditionalFeeService
                 "feature" => "additionalFeeManagement",
                 "action" => "additionalFee.charged",
                 "authAdmin" => $authAdmin,
-                "data" => $studentAdditionFees,
+                "data" => $additionalFee,
                 "message" => "Additional Fee Created",
             ]
         );
         StudentActionEvent::dispatch([
             'schoolBranch' => $currentSchool->id,
-            'studentIds'   => [$studentAdditionFees->student_id],
+            'studentIds'   => [$additionalFee->student_id],
             'feature'      => 'studentAdditionalFeeCreated',
             'message'      => 'Student Additional Fee Created',
-            'data'         =>  $studentAdditionFees,
+            'data'         =>  $additionalFee,
         ]);
         event(new FinancialAnalyticsEvent(
             eventType: FinancialEventConstant::ADDITIONAL_FEE_INCURRED,
             version: 1,
             payload: [
                 "school_branch_id" => $currentSchool->id,
-                "category_id" => $additionalFees['additionalfee_category_id'],
-                "amount" => $additionalFees['amount'],
+                "category_id" => $data['additionalfee_category_id'],
+                "amount" => $data['amount'],
                 "specialty_id" => $student->specialty_id,
                 "department_id" => $student->department_id,
                 "level_id" => $student->level_id
             ]
         ));
-        $student->notify(new AdditionalFee($additionalFees['amount'], $additionalFees['reason']));
-        return $studentAdditionFees;
+        $student->notify(new AdditionalFee($data['amount'], $data['reason']));
+        return $additionalFee;
     }
     public function deleteStudentAdditionalFees(string $feeId, $currentSchool, $authAdmin)
     {
-        $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)->find($feeId);
+        $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            ->find($feeId);
 
         if (!$additionalFee) {
             throw new AppException(
@@ -118,9 +119,10 @@ class AdditionalFeeService
             );
         }
     }
-    public function updateStudentAdditionalFees(array $additionalFeesData, string $feeId, $currentSchool, $authAdmin)
+    public function updateStudentAdditionalFees(array $data, string $feeId, $currentSchool, $authAdmin)
     {
-        $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)->find($feeId);
+        $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            ->with(['student'])->find($feeId);
 
         if (!$additionalFee) {
             throw new AppException(
@@ -132,7 +134,7 @@ class AdditionalFeeService
             );
         }
 
-        $removedEmptyInputs = array_filter($additionalFeesData);
+        $removedEmptyInputs = array_filter($data);
 
         if (empty($removedEmptyInputs)) {
             throw new AppException(
@@ -165,6 +167,20 @@ class AdditionalFeeService
                 'message'      => 'Student Additional Fee Updated',
                 'data'         =>  $additionalFee,
             ]);
+            event(new FinancialAnalyticsEvent(
+                eventType: FinancialEventConstant::ADDITIONAL_FEE_UPDATED,
+                version: 1,
+                payload: [
+                    "school_branch_id" => $currentSchool->id,
+                    "new_category_id" => $data['additionalfee_category_id'],
+                    "old_category_id" => $additionalFee->additionalfee_category_id,
+                    "new_amount" => $data['amount'],
+                    "old_amount" => $additionalFee->amount,
+                    "specialty_id" => $additionalFee->student->specialty_id,
+                    "department_id" => $additionalFee->student->department_id,
+                    "level_id" => $additionalFee->student->level
+                ]
+            ));
             return $additionalFee;
         } catch (Exception $e) {
             throw new AppException(
@@ -179,12 +195,12 @@ class AdditionalFeeService
     public function getStudentAdditionalFeesStudentId(string $studentId, $currentSchool)
     {
         try {
-            $studentAdditionFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            $additionalFee = AdditionalFees::where("school_branch_id", $currentSchool->id)
                 ->where("student_id", $studentId)
                 ->with(['student', 'specialty', 'level', 'feeCategory'])
                 ->get();
 
-            if ($studentAdditionFees->isEmpty()) {
+            if ($additionalFee->isEmpty()) {
                 throw new AppException(
                     "No additional fees were found for this student.",
                     404,
@@ -194,7 +210,7 @@ class AdditionalFeeService
                 );
             }
 
-            return $studentAdditionFees;
+            return $additionalFee;
         } catch (AppException $e) {
             throw $e;
         } catch (Exception $e) {
@@ -227,11 +243,11 @@ class AdditionalFeeService
     public function getAdditionalFees($currentSchool)
     {
         try {
-            $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+            $data = AdditionalFees::where("school_branch_id", $currentSchool->id)
                 ->with(['student', 'specialty', 'level', 'feeCategory'])
                 ->get();
 
-            if ($additionalFees->isEmpty()) {
+            if ($data->isEmpty()) {
                 throw new AppException(
                     "No additional fees were found for this school branch.",
                     404,
@@ -241,7 +257,7 @@ class AdditionalFeeService
                 );
             }
 
-            return $additionalFees;
+            return $data;
         } catch (AppException $e) {
             throw $e;
         } catch (Exception $e) {
@@ -254,9 +270,9 @@ class AdditionalFeeService
             );
         }
     }
-    public function bulkUpdateStudentAdditionalFees($additionalFees, $currentSchool, $authAdmin)
+    public function bulkUpdateStudentAdditionalFees($data, $currentSchool, $authAdmin)
     {
-        if (empty($additionalFees)) {
+        if (empty($data)) {
             throw new AppException(
                 "No fee data was provided for bulk update.",
                 400,
@@ -268,7 +284,7 @@ class AdditionalFeeService
         $studentIds = [];
         $successfulUpdates = [];
         $failedUpdates = [];
-        $updateAttempts = collect($additionalFees);
+        $updateAttempts = collect($data);
 
         $updates = $updateAttempts
             ->filter(fn($fee) => isset($fee['fee_id']) && $fee['fee_id'] !== null)
@@ -369,7 +385,7 @@ class AdditionalFeeService
                 'message'      => 'Student Additional Fee Updated',
                 'data'         =>   $successfulUpdates,
             ]);
-            // Return the IDs of records that were successfully updated
+
             return $successfulUpdates;
         } catch (AppException $e) {
             DB::rollBack();
@@ -401,12 +417,12 @@ class AdditionalFeeService
             );
         }
 
-        $additionalFees = AdditionalFees::where("school_branch_id", $currentSchool->id)
+        $data = AdditionalFees::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $student->id)
             ->where("status", $status)
             ->with(['feeCategory'])
             ->get();
-        return $additionalFees;
+        return $data;
     }
     public function bulkBillStudents(array $studentList, $currentSchool, $authAdmin)
     {

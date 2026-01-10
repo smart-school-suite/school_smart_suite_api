@@ -16,7 +16,8 @@ class TuitionFeeDebtVsPaidLevel
     public function getTuitionFeeDebtVsPaidLevel($currentSchool, $year)
     {
         $targetKpis = [
-            FinancialAnalyticsKpi::TUITION_FEE_INCURRED
+            FinancialAnalyticsKpi::TUITION_FEE_INCURRED,
+            FinancialAnalyticsKpi::TUITION_FEE_PAID
         ];
 
         $query = FinancialAnalyticQuery::base($currentSchool->id, $year, $targetKpis);

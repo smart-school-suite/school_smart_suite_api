@@ -20,6 +20,7 @@ class CreatePaymentMethodRequest extends FormRequest
             'description' => 'required|string|max:500',
             'max_deposit' => 'required|numeric|min:0.01|max:9999999.99',
             'max_withdraw' => 'required|numeric|min:0.01|max:9999999.99',
+            'key' => 'required|string|max:100',
             'operator_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ];
     }

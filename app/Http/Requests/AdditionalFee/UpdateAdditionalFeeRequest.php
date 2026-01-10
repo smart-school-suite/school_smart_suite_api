@@ -29,6 +29,7 @@ class UpdateAdditionalFeeRequest extends FormRequest
                 'regex:/^\d{1,6}(\.\d{1,2})?$/',
                 'min:0',
             ],
+            'due_date' => 'sometimes|nullable|date|after_or_equal:today'
         ];
     }
 }

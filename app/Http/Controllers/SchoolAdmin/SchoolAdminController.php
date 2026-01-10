@@ -60,8 +60,8 @@ class SchoolAdminController extends Controller
             }
 
             $apiKeyRecord = SchoolBranchApiKey::with('schoolBranch')
-                ->get()
-                ->first(fn($record) => Hash::check($providedKey, $record->api_key));
+                ->where("api_key", $providedKey)
+                ->first();
 
             if (!$apiKeyRecord?->schoolBranch) {
                 return ApiResponseService::error("Invalid or unauthorized API key", null, 401);

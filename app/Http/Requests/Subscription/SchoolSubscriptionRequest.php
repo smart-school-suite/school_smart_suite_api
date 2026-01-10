@@ -20,7 +20,7 @@ class SchoolSubscriptionRequest extends FormRequest
         return [
             'plan_id' => 'required|string|exists:plans,id',
             'promo_code' => 'sometimes|nullable|string|exists:affiliates,promo_code',
-            'payment_method' => 'required|string',
+            'payment_method_id' => 'required|string|exists:payment_method,id',
             'school_name' => 'required|string|max:250',
             'country_id' => 'required|string|exists:countries,id',
             'type' => 'required|string|in:private,government',

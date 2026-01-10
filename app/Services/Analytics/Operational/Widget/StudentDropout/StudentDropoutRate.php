@@ -14,15 +14,13 @@ class StudentDropoutRate
       $this->studentDropoutRateFilter = $studentDropoutRateFilter;
       $this->dropoutRateAggregator = $dropoutRateAggregator;
    }
-   public function getStudentDropoutRate($currentSchool, $year, $filters){
+   public function getStudentDropoutRate($currentSchool, $year){
        $enrollmentKpis = [
           EnrollmentAnalyticsKpi::STUDENT_DROPOUT,
           EnrollmentAnalyticsKpi::STUDENT_ENROLLMENTS
        ];
        $enrollmentQuery = EnrollmentAnalyticQuery::base($currentSchool->id,  $enrollmentKpis);
        $enrollmentQuery->where("year", $year);
-       $enrollmentQuery = $this->studentDropoutRateFilter->apply($enrollmentQuery, $filters);
-       //call aggregator and return value
-       return $this->dropoutRateAggregator->calculate($enrollmentQuery, $filters);
+       return $this->dropoutRateAggregator->calculate($enrollmentQuery);
    }
 }

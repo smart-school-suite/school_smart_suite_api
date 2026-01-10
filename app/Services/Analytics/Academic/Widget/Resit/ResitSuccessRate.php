@@ -16,17 +16,13 @@ class ResitSuccessRate
         $this->resitSuccessRateFilter = $resitSuccessRateFilter;
         $this->resitSuccessRateAggregate = $resitSuccessRateAggregate;
     }
-    public function getResitSuccessRate($currentSchool, $year, $filters)
+    public function getResitSuccessRate($currentSchool, $year)
     {
         $targetKpis = [
             AcademicAnalyticsKpi::RESIT_EXAM_CANDIDATE,
             AcademicAnalyticsKpi::RESIT_EXAM_PASSED
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $targetKpis);
-        if(!empty($filters)){
-            $query = $this->resitSuccessRateFilter->apply($query, $filters);
-        }
-
-        return $this->resitSuccessRateAggregate->calculate($query, $filters);
+        return $this->resitSuccessRateAggregate->calculate($query);
     }
 }
