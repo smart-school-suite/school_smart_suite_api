@@ -113,6 +113,7 @@ class TeacherCoursePreferenceService
                 "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" => $currentSchool->id,
                 "feature"      => "teacherCoursePreferenceManagement",
+                "action"       => "teacherCourse.assigned",
                 "authAdmin"    => $authAdmin,
                 "data"         => [
                     'teacher_id'   => $teacher->id,
@@ -168,14 +169,17 @@ class TeacherCoursePreferenceService
             ->select('id', 'course_code', 'course_title', 'credit', 'specialty_id', 'level_id');
 
 
-        $courses->whereDoesntHave('teacherCoursePreference', function ($query) use ($schoolBranchId, $teacherId) {
-            $query->where('teacher_id', $teacherId)
-                ->where('school_branch_id', $schoolBranchId);
+        $courses->whereNotExists(function ($query) use ($teacherId, $schoolBranchId) {
+            $query->select(DB::raw(1))
+                ->from('teacher_course_preferences')
+                ->whereColumn('teacher_course_preferences.course_id', 'courses.id')
+                ->where('teacher_course_preferences.teacher_id', $teacherId)
+                ->where('teacher_course_preferences.school_branch_id', $schoolBranchId);
         });
 
         return $courses->get()->map(function ($course) {
             return [
-                'course_id'       => $course->id,
+                'id'       => $course->id,
                 'course_code'     => $course->course_code,
                 'course_title'    => $course->course_title,
                 'credit'          => $course->credit ?? 0,
@@ -249,7 +253,7 @@ class TeacherCoursePreferenceService
             }
 
             $courseNames = Courses::whereIn('id', $assignedCourseIds)
-                ->pluck('course_name', 'id')
+                ->pluck('course_title', 'id')
                 ->map(fn($name, $id) => "$name (ID: $id)")
                 ->values()
                 ->toArray();
@@ -260,12 +264,13 @@ class TeacherCoursePreferenceService
                 "schoolBranch" => $currentSchool->id,
                 "feature"      => "teacherCoursePreferenceManagement",
                 "authAdmin"    => $authAdmin,
+                "action" => "teacherCourse.removed",
                 "data"         => [
                     'teacher_id'     => $teacher->id,
                     'teacher_name'   => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
                     'removed_courses_count' => $deletedCount,
                     'removed_course_ids'    => $assignedCourseIds,
-                    'removed_course_names'  => $courseNames,
+                    'removed_course_titles'  => $courseNames,
                 ],
                 "message" => "Courses removed from teacher successfully",
             ]);
@@ -298,7 +303,7 @@ class TeacherCoursePreferenceService
 
         return $assignedCourses->map(function ($course) {
             return [
-                'course_id'       => $course->id,
+                'id'       => $course->id,
                 'course_code'     => $course->course_code,
                 'course_title'    => $course->course_title,
                 'credit'          => $course->credit ?? 0,

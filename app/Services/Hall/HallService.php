@@ -10,9 +10,11 @@ class HallService
 {
     public function createHall($currentSchool, $data, $authAdmin)
     {
+        $typeCollectionIds = collect($data['typeIds']);
         $existingHall = Hall::where("school_branch_id", $currentSchool->id)
             ->where("name", $data['name'])
             ->first();
+
 
         if ($existingHall) {
             throw new AppException(
@@ -22,12 +24,14 @@ class HallService
                 "Youve Already Created A Hall With This Same Name {$data}, use another name and try again"
             );
         }
-        Hall::create([
+       $hall = Hall::create([
             'school_branch_id' => $currentSchool->id,
             'name' => $data['name'],
             'capacity' => $data['capacity'],
             'location' => $data['location']
         ]);
+
+        $hall->types()->sync($typeCollectionIds->pluck("type_id")->toArray());
         AdminActionEvent::dispatch(
             [
                 "permissions" =>  ["schoolAdmin.hall.create"],
@@ -69,6 +73,10 @@ class HallService
                     "Youve Already Created A Hall With This Same Name {$filteredUpdateData}, use another name and try again"
                 );
             }
+        }
+
+        if(!empty($updateData['typeIds'])){
+             $hall->types()->sync(collect($updateData['typeIds'])->pluck("type_id")->toArray());
         }
 
         $hall->update($filteredUpdateData);

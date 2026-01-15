@@ -17,7 +17,7 @@ class LevelGradeDistribution
     public function getLevelGradeDistribution($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::EXAM_GRADE_DISTRIBUTION
+            AcademicAnalyticsKpi::SCHOOL_EXAM_GRADE_DISTRIBUTION
         ];
 
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);

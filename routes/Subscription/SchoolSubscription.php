@@ -11,4 +11,6 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
     Route::post('/upgrade', [SchoolSubscriptionController::class, 'upgradePlan'])->name('upgrade.subscription.plan');
     Route::post('/renew', [SchoolSubscriptionController::class, 'renewPlan'])->name('renew.subscription.plan');
     Route::get('/', [SchoolSubscriptionController::class, 'getSchoolSubscriptions'])->name('get.school.branch.subscriptions');
+    Route::get('/recommended-plan', [SchoolSubscriptionController::class, 'recommendPlan'])->name("recommended.plan");
+
 });

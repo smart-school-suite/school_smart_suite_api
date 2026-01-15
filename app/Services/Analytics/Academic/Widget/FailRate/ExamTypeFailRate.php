@@ -17,8 +17,8 @@ class ExamTypeFailRate
     public function getExamTypeFailRate($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::EXAM_CANDIDATE,
-            AcademicAnalyticsKpi::EXAM_COURSE_CANDIDATE_FAILED
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_FAILED
         ];
 
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);

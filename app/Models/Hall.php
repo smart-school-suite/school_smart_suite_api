@@ -7,6 +7,7 @@ use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Hall extends Model
 {
     use HasFactory, GeneratesUuid;
@@ -18,7 +19,6 @@ class Hall extends Model
         'type',
         'location',
         'school_branch_id',
-        'is_exam_hall',
         'num_assigned_specialties',
         'assignment_status'
     ];
@@ -27,15 +27,28 @@ class Hall extends Model
         'capacity' => 'integer'
     ];
 
+
+
     public $keyType = 'string';
     public $table = 'halls';
     public $incrementing = 'false';
 
 
-    public function specialtyHall(): HasMany {
-         return $this->hasMany(SpecialtyHall::class);
+    public function specialtyHall(): HasMany
+    {
+        return $this->hasMany(SpecialtyHall::class);
     }
-    public function schoolBranch(): BelongsTo {
+    public function schoolBranch(): BelongsTo
+    {
         return $this->belongsTo(SchoolBranches::class, 'school_branch_id');
+    }
+    public function types()
+    {
+        return $this->belongsToMany(
+            HallType::class,
+            'school_hall_types',
+            'hall_id',
+            'hall_type_id'
+        )->withTimestamps();
     }
 }

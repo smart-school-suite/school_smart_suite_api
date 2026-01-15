@@ -16,7 +16,7 @@ class SchoolGradeDistribution
     public function getSchoolGradeDistribution($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::EXAM_GRADE_DISTRIBUTION
+            AcademicAnalyticsKpi::SCHOOL_EXAM_GRADE_DISTRIBUTION
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
         return $this->schoolGradeDistributionAggregate->calculate($query);

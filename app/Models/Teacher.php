@@ -32,7 +32,7 @@ class Teacher extends Model
         'status',
         'profile_picture',
         'address',
-        'gender',
+        'gender_id',
         'num_assigned_courses',
         'course_assignment_status',
         'num_assigned_specialties',
@@ -63,6 +63,8 @@ class Teacher extends Model
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'num_assigned_courses' => 'integer',
+            'num_assigned_specialties' => 'integer'
         ];
     }
 
@@ -150,5 +152,10 @@ class Teacher extends Model
     public function announcementAudience()
     {
         return $this->morphMany(AnnouncementAudience::class, 'audienceable');
+    }
+
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class, "gender_id");
     }
 }

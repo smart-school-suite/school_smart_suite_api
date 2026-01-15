@@ -17,7 +17,7 @@ class SnapshotProjector
             }
 
             $payload = $event->payload();
-            $value = $def['type'] === 'counter' ? 1 : ($payload['value'] ?? 0);
+            $value = $payload['value'] ?? 1;
 
             // Build dimensions
             $dimensions = [];

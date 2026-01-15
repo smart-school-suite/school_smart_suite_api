@@ -15,12 +15,26 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('name');
             $table->integer('capacity');
-            $table->enum("type", ["lab", "lecture"]);
-            $table->boolean('is_exam_hall')->default(true);
             $table->enum('status', ['available', 'unavailable'])->default('available');
             $table->integer('num_assigned_specialties')->default(0);
             $table->enum('assignment_status', ['assigned', 'unassigned'])->default('unassigned');
             $table->string('location')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create("hall_types", function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string("name", 150);
+            $table->string("key", 100);
+            $table->char("text_color", 7)->nullable();
+            $table->char("background_color", 7)->nullable();
+            $table->text("description")->nullable();
+            $table->enum('status', ['active','inactive'])->default('active');
+            $table->timestamps();
+        });
+
+        Schema::create("school_hall_types", function (Blueprint $table) {
+            $table->string('id')->primary();
             $table->timestamps();
         });
 

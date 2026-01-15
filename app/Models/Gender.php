@@ -22,4 +22,9 @@ class Gender extends Model
     {
         return $this->hasMany(Student::class);
     }
+
+    public function teacher(): HasMany
+    {
+        return $this->hasMany(Teacher::class);
+    }
 }

@@ -25,9 +25,9 @@ class CreateTeacherRequest extends FormRequest
             'first_name' => 'required|string',
             "last_name" => 'required|string',
             'email' => 'required|email|string',
-            'phone_one' => 'required|string',
+            'phone' => 'required|string',
             'address' => 'sometimes|nullable|string',
-            'gender' => 'required|string'
+            'gender_id' => 'required|string|exists:genders,id'
         ];
     }
 }

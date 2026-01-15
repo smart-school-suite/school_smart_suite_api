@@ -11,6 +11,7 @@ use App\Notifications\AvailabilitySubmitted;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Events\Actions\AdminActionEvent;
+
 class TeacherPreferedTeachingTimeService
 {
     public function createInstructorAvailability(array $instructorAvailabilities, $currentSchool): array
@@ -158,9 +159,23 @@ class TeacherPreferedTeachingTimeService
     public function getInstructorAvailabilities($currentSchool)
     {
         $instructorAvailabilities = InstructorAvailability::where("school_branch_id", $currentSchool->id)
-            ->with(['teacher', 'level', 'schoolSemester', 'specialty'])
+            ->with(['teacher', 'level', 'schoolSemester.semester', 'specialty'])
             ->get();
-        return $instructorAvailabilities;
+        return $instructorAvailabilities->map(fn($availability) => [
+            "id" => $availability->id,
+            "name" => $availability->teacher->name ?? null,
+            "profile_picture" => $availability->teacher->profile_picture ?? null,
+            "teacher_id" => $availability->teacher->id ?? null,
+            "semester" => $availability->schoolSemester->semester->name ?? null,
+            "semester_id" => $availability->schoolSemester->semester->id ?? null,
+            "school_semester_id" => $availability->school_semester_id ?? null,
+            "specialty_id" => $availability->specialty_id ?? null,
+            "specialty_name" => $availability->specialty->specialty_name ?? null,
+            "level_id" => $availability->level->id,
+            "level_name" => $availability->level->name ?? null,
+            "level_number" => $availability->level->level ?? null,
+            "status" => $availability->status
+        ]);
     }
     public function getInstructorAvailabilitesByTeacher($currentSchool, $teacherId)
     {
@@ -179,9 +194,16 @@ class TeacherPreferedTeachingTimeService
     }
     public function getAvailabilitySlotsByTeacher($currentSchool, string $availabilityId)
     {
-        $slots = InstructorAvailabilitySlot::where("school_branch_id", $currentSchool->id)
-            ->where("teacher_availability_id", $availabilityId)
-            ->get();
-        return $slots;
+        return InstructorAvailabilitySlot::where('school_branch_id', $currentSchool->id)
+            ->where('teacher_availability_id', $availabilityId)
+            ->get()
+            ->groupBy('day_of_week')
+            ->map(fn($slots, $day) => [
+                'day'   => $day,
+                'short' => substr(strtolower($day), 0, 3), // mon, tue, wed...
+                'slots' => $slots->values()->toArray(),
+            ])
+            ->values()
+            ->all();
     }
 }

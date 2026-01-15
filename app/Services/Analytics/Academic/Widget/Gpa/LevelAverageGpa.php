@@ -17,7 +17,8 @@ class LevelAverageGpa
     public function getLevelAverageGpa($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::EXAM_GPA
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
+            AcademicAnalyticsKpi::SCHOOL_GPA
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
         return $this->levelAverageGpaAggregator->calculate($query);

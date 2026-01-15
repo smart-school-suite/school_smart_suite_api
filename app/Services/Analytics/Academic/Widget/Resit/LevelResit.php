@@ -17,7 +17,7 @@ class LevelResit
     public function getResitLevel($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::RESIT
+            AcademicAnalyticsKpi::SCHOOL_RESIT_TOTAL
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
         return $this->levelResitAggregate->calculate($query);

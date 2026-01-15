@@ -19,8 +19,8 @@ class ResitSuccessRate
     public function getResitSuccessRate($currentSchool, $year)
     {
         $targetKpis = [
-            AcademicAnalyticsKpi::RESIT_EXAM_CANDIDATE,
-            AcademicAnalyticsKpi::RESIT_EXAM_PASSED
+            AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE,
+            AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE_PASSED
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $targetKpis);
         return $this->resitSuccessRateAggregate->calculate($query);

@@ -49,7 +49,7 @@ class CreateTeacherService
             $instructor->email = $teacherData["email"];
             $instructor->first_name = $teacherData['first_name'];
             $instructor->last_name = $teacherData['last_name'];
-            $instructor->gender = $teacherData['gender'];
+            $instructor->gender_id = $teacherData['gender_id'];
             $instructor->password = Hash::make($password);
             $instructor->phone = $teacherData["phone"];
             $instructor->address = $teacherData['address'] ?? null;

@@ -57,6 +57,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/hall')
                 ->group(base_path("routes/Hall/Hall.php"));
 
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/hall-type')
+                  ->group(base_path('routes/Hall/HallType.php'));
+
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/specialty-hall')
                 ->group(base_path('routes/Hall/SpecialtyHall.php'));
 

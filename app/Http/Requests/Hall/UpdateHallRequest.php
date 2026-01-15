@@ -19,7 +19,9 @@ class UpdateHallRequest extends FormRequest
         return [
             'name' => 'nullable|string|max:150',
             'capacity' => 'nullable|integer|max:5000',
-            'location' => 'nullable|string|max:200'
+            'location' => 'nullable|string|max:200',
+            'typeIds' => "sometimes|nullable|array",
+            "typeIds.*.type_id" => "sometimes|nullable|string|exists:hall_types,id"
         ];
     }
 }

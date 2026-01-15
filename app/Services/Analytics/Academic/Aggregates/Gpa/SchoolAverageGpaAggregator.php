@@ -9,12 +9,17 @@ class SchoolAverageGpaAggregator
 {
     public static function calculate(Collection $query)
     {
-        $totalCandidate = $query->where("kpi", AcademicAnalyticsKpi::EXAM_CANDIDATE)->sum("value");
-        $totalGpa = $query->where("kpi", AcademicAnalyticsKpi::EXAM_GPA)->sum("value");
+        $totalCandidate = $query->where("kpi", AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE)->sum("value");
+        $totalGpa = $query->where("kpi", AcademicAnalyticsKpi::SCHOOL_GPA)->sum("value");
+
+        $averageGpa = ($totalCandidate > 0)
+            ? ($totalGpa / $totalCandidate)
+            : 0;
+
         return [
             "total_candidate" => $totalCandidate,
             "total_gpa" => $totalGpa,
-            "average_gpa" => round($totalGpa / $totalCandidate * 100, 2)
+            "average_gpa" => round($averageGpa, 2)
         ];
     }
 }

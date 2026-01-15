@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('name', 150);
             $table->decimal('price', 15, 2);
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->boolean('max_plan')->default(false);
             $table->text('description');
             $table->timestamps();
         });
@@ -65,6 +66,28 @@ return new class extends Migration
             $table->enum('limit_type', ['integer','decimal','boolean']);
             $table->timestamps();
         });
+
+        Schema::create("plan_recs", function (Blueprint $table) {
+              $table->string('id')->primary();
+              $table->unsignedSmallInteger('priority');
+              $table->enum('status', ['active','inactive'])->default('active');
+              $table->timestamps();
+        });
+
+        Schema::create('plan_rec_conds', function (Blueprint $table) {
+             $table->string('id')->primary();
+             $table->string('operator', 100);
+             $table->json('value');
+             $table->timestamps();
+        });
+
+        Schema::create('plan_rec_copies', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('title', 150);
+            $table->string('cta_text', 100);
+            $table->text('description');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -78,5 +101,8 @@ return new class extends Migration
         Schema::dropIfExists('school_subscriptions');
         Schema::dropIfExists('school_transactions');
         Schema::dropIfExists('subscription_usage');
+        Schema::dropIfExists('plan_recs');
+        Schema::dropIfExists('plan_rec_conds');
+        Schema::dropIfExists('plan_rec_copies');
     }
 };

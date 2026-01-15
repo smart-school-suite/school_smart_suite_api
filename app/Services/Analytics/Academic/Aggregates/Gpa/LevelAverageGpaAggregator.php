@@ -11,16 +11,27 @@ class LevelAverageGpaAggregator
     public static function calculate(Collection $query)
     {
         $levels = Educationlevels::all();
-        return  $levels->map(function ($level) use ($query) {
-            $totalSat = $query->where("kpi", AcademicAnalyticsKpi::EXAM_CANDIDATE)->sum("value");
-            $totalGpa = $query->where("kpi", AcademicAnalyticsKpi::EXAM_GPA)->sum("value");
+
+        return $levels->map(function ($level) use ($query) {
+            $levelData = $query->where("level_id", $level->id);
+
+            $totalSat = $levelData->where("kpi", AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE)
+                ->sum("value");
+
+            $totalGpa = $levelData->where("kpi", AcademicAnalyticsKpi::SCHOOL_GPA)
+                ->sum("value");
+
+            $averageGpa = ($totalSat > 0)
+                ? ($totalGpa / $totalSat)
+                : 0;
+
             return [
                 "level_id" => $level->id,
                 "level_name" => $level->name ?? "unknown",
                 "level_number" => $level->level ?? "unknown",
                 "total_sat" => $totalSat,
                 "total_gpa" => $totalGpa,
-                "average_gpa" => round($totalGpa / $totalSat * 100, 2)
+                "average_gpa" => round($averageGpa, 2)
             ];
         });
     }

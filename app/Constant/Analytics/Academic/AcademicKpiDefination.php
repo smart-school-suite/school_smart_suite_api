@@ -153,7 +153,8 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::DEPARTMENT_ID,
                     AcademicAnalyticsDimension::LEVEL_ID,
                     AcademicAnalyticsDimension::SPECIALTY_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_GPA_CALCULATED,
@@ -292,7 +293,8 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::TEACHER_ID,
                     AcademicAnalyticsDimension::COURSE_ID,
                     AcademicAnalyticsDimension::EXAM_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_COURSE_PASSED,
@@ -312,7 +314,8 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::TEACHER_ID,
                     AcademicAnalyticsDimension::COURSE_ID,
                     AcademicAnalyticsDimension::EXAM_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_COURSE_FAILED,
@@ -332,7 +335,8 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::TEACHER_ID,
                     AcademicAnalyticsDimension::COURSE_ID,
                     AcademicAnalyticsDimension::EXAM_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_COURSE_EVALUATED,
@@ -353,7 +357,8 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::COURSE_ID,
                     AcademicAnalyticsDimension::EXAM_ID,
                     AcademicAnalyticsDimension::LETTER_GRADE_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_COURSE_GRADE,
@@ -375,7 +380,8 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::DEPARTMENT_ID,
                     AcademicAnalyticsDimension::SPECIALTY_ID,
                     AcademicAnalyticsDimension::LEVEL_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_GPA_CALCULATED,
@@ -396,10 +402,11 @@ class AcademicKpiDefination
                     AcademicAnalyticsDimension::DEPARTMENT_ID,
                     AcademicAnalyticsDimension::EXAM_TYPE_ID,
                     AcademicAnalyticsDimension::LEVEL_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
-                    AcademicAnalyticsEvent::EXAM_CANDIDATE_CREATED,
+                    AcademicAnalyticsEvent::EXAM_CANDIDATE_EVALUATED,
                 ],
                 'time_series' => [
                     'enabled' => true,
@@ -415,7 +422,8 @@ class AcademicKpiDefination
                 'dimensions' => [
                     AcademicAnalyticsDimension::EXAM_ID,
                     AcademicAnalyticsDimension::EXAM_TYPE_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_PASSED,
@@ -433,7 +441,8 @@ class AcademicKpiDefination
                 'type' => 'counter',
                 'dimensions' => [
                     AcademicAnalyticsDimension::EXAM_ID,
-                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_FAILED,
@@ -452,7 +461,8 @@ class AcademicKpiDefination
                 'dimensions' => [
                     AcademicAnalyticsDimension::EXAM_ID,
                     AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
-                    AcademicAnalyticsDimension::EXAM_TYPE_ID
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::RESIT_EXAM_CANDIDATE_CREATED,
@@ -471,7 +481,8 @@ class AcademicKpiDefination
                 'dimensions' => [
                     AcademicAnalyticsDimension::EXAM_ID,
                     AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
-                    AcademicAnalyticsDimension::EXAM_TYPE_ID
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::YEAR
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::RESIT_EXAM_CANDIDATE_PASSED,
@@ -501,6 +512,7 @@ class AcademicKpiDefination
                     'granularities' => ['year'],
                 ],
             ],
+
             AcademicAnalyticsKpi::RESIT => [
                 'kpi' => AcademicAnalyticsKpi::RESIT,
                 'name' => 'Resit Exams Failed',
@@ -513,6 +525,29 @@ class AcademicKpiDefination
                 ],
                 'source_events' => [
                     AcademicAnalyticsEvent::EXAM_CANDIDATE_RESIT_INCURRED,
+                ],
+            ],
+
+            AcademicAnalyticsKpi::EXAM_GRADE_DISTRIBUTION => [
+                'kpi' => AcademicAnalyticsKpi::EXAM_CANDIDATE,
+                'name' => 'Exam Candidates Total',
+                'description' => 'Total number of students registered for a specific exam.',
+                'type' => 'counter',
+                'dimensions' => [
+                    AcademicAnalyticsDimension::EXAM_ID,
+                    AcademicAnalyticsDimension::DEPARTMENT_ID,
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR,
+                    AcademicAnalyticsDimension::LETTER_GRADE_ID
+                ],
+                'source_events' => [
+                    AcademicAnalyticsEvent::EXAM_CANDIDATE_COURSE_GRADE,
+                ],
+                'time_series' => [
+                    'enabled' => true,
+                    'granularities' => ['year'],
                 ],
             ],
             //school academic stats
@@ -533,6 +568,7 @@ class AcademicKpiDefination
                     "granularities" => ["year"]
                 ]
             ],
+
             AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE => [
                 "kpi" => AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
                 "type" => "counter",
@@ -549,6 +585,7 @@ class AcademicKpiDefination
                     "enabled" => false
                 ]
             ],
+
             AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_FAILED => [
                 "kpi" =>  AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_FAILED,
                 "type" => "counter",
@@ -565,6 +602,7 @@ class AcademicKpiDefination
                     "enabled" => false
                 ]
             ],
+
             AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_PASSED => [
                 "kpi" => AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_PASSED,
                 "type" => "counter",
@@ -581,6 +619,7 @@ class AcademicKpiDefination
                     "enabled" => false
                 ]
             ],
+
             AcademicAnalyticsKpi::SCHOOL_GPA => [
                 "kpi" => AcademicAnalyticsKpi::SCHOOL_GPA,
                 "type" => "counter",
@@ -597,6 +636,92 @@ class AcademicKpiDefination
                     "enabled" => false
                 ]
             ],
+
+            AcademicAnalyticsKpi::SCHOOL_EXAM_GRADE_DISTRIBUTION => [
+                "kpi" => AcademicAnalyticsKpi::SCHOOL_EXAM_GRADE_DISTRIBUTION,
+                "type" => "counter",
+                "dimensions" => [
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR,
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
+                    AcademicAnalyticsDimension::LETTER_GRADE_ID
+                ],
+                "source_events" => [
+                    AcademicAnalyticsEvent::EXAM_CANDIDATE_COURSE_GRADE,
+                ],
+                "time_series" => [
+                    "enabled" => false
+                ]
+            ],
+
+            AcademicAnalyticsKpi::SCHOOL_RESIT_TOTAL => [
+                "kpi" => AcademicAnalyticsKpi::SCHOOL_RESIT_TOTAL,
+                "type" => "counter",
+                "dimensions" => [
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR,
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
+                ],
+                "source_events" => [
+                    AcademicAnalyticsEvent::EXAM_CANDIDATE_RESIT_INCURRED
+                ],
+                "time_series" => [
+                    "enabled" => false
+                ]
+            ],
+
+            AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE_FAILED => [
+                "kpi" => AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE_FAILED,
+                "type" => "counter",
+                "dimensions" => [
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR,
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
+                ],
+                "source_events" => [
+                    AcademicAnalyticsEvent::RESIT_EXAM_CANDIDATE_FAILED
+                ],
+                "time_series" => [
+                    "enabled" => false
+                ]
+            ],
+
+            AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE_PASSED => [
+                "kpi" => AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE_PASSED,
+                "type" => "counter",
+                "dimensions" => [
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR,
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
+                ],
+                "source_events" => [
+                    AcademicAnalyticsEvent::RESIT_EXAM_CANDIDATE_PASSED
+                ],
+                "time_series" => [
+                    "enabled" => false
+                ]
+            ],
+
+            AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE => [
+                "kpi" => AcademicAnalyticsKpi::SCHOOL_RESIT_CANDIDATE,
+                "type" => "counter",
+                "dimensions" => [
+                    AcademicAnalyticsDimension::SCHOOL_BRANCH_ID,
+                    AcademicAnalyticsDimension::YEAR,
+                    AcademicAnalyticsDimension::EXAM_TYPE_ID,
+                    AcademicAnalyticsDimension::LEVEL_ID,
+                ],
+                "source_events" => [
+                    AcademicAnalyticsEvent::RESIT_EXAM_CANDIDATE_EVALUATED,
+                ],
+                "time_series" => [
+                    "enabled" => false
+                ]
+            ]
         ];
     }
 }

@@ -26,6 +26,8 @@ class Feature extends Model
     public $incrementing = false;
     public $keyType = 'string';
 
+
+
     protected function limitType(): Attribute
     {
         return Attribute::make(
@@ -71,5 +73,10 @@ class Feature extends Model
     public function planFeature(): HasMany
     {
         return $this->hasMany(PlanFeature::class);
+    }
+
+    public function planRecommendation(): HasMany
+    {
+        return $this->hasMany(PlanRecommendation::class);
     }
 }

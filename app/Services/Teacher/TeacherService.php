@@ -102,8 +102,23 @@ class TeacherService
     public function getAllTeachers($currentSchool)
     {
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
+            ->with(['gender'])
             ->get();
-        return $getInstructors;
+        return $getInstructors->map(fn($teacher) => [
+            "id" => $teacher->id,
+            "first_name" => $teacher->first_name ?? null,
+            "last_name" => $teacher->last_name ?? null,
+            "name" => $teacher->name ?? null,
+            "profile_picture" => $teacher->profile_picture ?? null,
+            "gender" => $teacher->gender->name ?? null,
+            "email" => $teacher->email ?? null,
+            "status" => $teacher->status ?? null,
+            "phone" => $teacher->phone ?? null,
+            'num_assigned_courses' => $teacher->num_assigned_courses ?? 0,
+            'course_assignment_status' => $teacher->course_assignment_status ?? null,
+            'num_assigned_specialties' => $teacher->num_assigned_specialties ?? 0,
+            'specialty_assignment_status' => $teacher->specialty_assignment_status ?? null
+        ]);
     }
     public function addSpecailtyPreference(array $preferenceData, $currentSchool)
     {

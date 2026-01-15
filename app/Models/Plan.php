@@ -14,6 +14,7 @@ class Plan extends Model
         'key',
         'name',
         'price',
+        'max_plan',
         'description',
         'country_id',
         'status'
@@ -23,6 +24,9 @@ class Plan extends Model
     public $table = 'plans';
     public $keyType = 'string';
 
+    protected $casts = [
+         'max_plan' => 'boolean'
+    ];
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
@@ -35,5 +39,15 @@ class Plan extends Model
     public function planFeature(): HasMany
     {
         return $this->hasMany(PlanFeature::class);
+    }
+
+    public function sourcePlan(): HasMany
+    {
+        return $this->hasMany(Plan::class, 'source_plan_id');
+    }
+
+    public function targetPlan(): HasMany
+    {
+        return $this->hasMany(Plan::class, 'target_plan_id');
     }
 }

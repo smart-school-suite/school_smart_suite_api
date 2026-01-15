@@ -15,7 +15,7 @@ class LevelResitAggregate
                 "level_id" => $level->id,
                 "level_name" => $level->name ?? "unknown",
                 "level_number" => $level->level ?? "unknown",
-                "total_resits" => $query->where("level_id", $level->id)->sum("value")
+                "total_resits" => $query->where("level_id", $level->id)->sum("value") ?? 0
             ];
         });
     }

@@ -8,6 +8,6 @@ class ResitTotalAggregate
 {
      public static function calculate(Collection $query){
          $resitTotal = $query->sum("value");
-         return $resitTotal;
+         return $resitTotal ?? 0;
      }
 }

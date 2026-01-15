@@ -11,15 +11,16 @@ class LevelFailRate
     protected LevelFailRateAggregate $levelFailRateAggregate;
     public function __construct(LevelFailRateAggregate $levelFailRateAggregate)
     {
-       $this->levelFailRateAggregate = $levelFailRateAggregate;
+        $this->levelFailRateAggregate = $levelFailRateAggregate;
     }
-    public function getLevelFailRate($currentSchool, $year){
-         $kpis = [
-            AcademicAnalyticsKpi::EXAM_CANDIDATE,
-            AcademicAnalyticsKpi::EXAM_COURSE_CANDIDATE_FAILED
-         ];
+    public function getLevelFailRate($currentSchool, $year)
+    {
+        $kpis = [
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_FAILED
+        ];
 
-         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
-         return $this->levelFailRateAggregate->calculate($query);
+        $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
+        return $this->levelFailRateAggregate->calculate($query);
     }
 }

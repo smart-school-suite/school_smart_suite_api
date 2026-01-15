@@ -17,7 +17,8 @@ class ExamTypePassRate
     public function getExamTypePassRate($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::EXAM_PASSED
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_PASSED
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
         return $this->examTypePassRateAggregate->calculate($query);

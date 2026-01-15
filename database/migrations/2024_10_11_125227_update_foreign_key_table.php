@@ -61,6 +61,25 @@ return new class extends Migration
             $table->foreign('country_id')->references('id')->on('countries');
         });
 
+        Schema::table('plan_recs', function (Blueprint $table) {
+            $table->string('feature_id');
+            $table->foreign('feature_id')->references('id')->on('features');
+            $table->string('source_plan_id');
+            $table->foreign('source_plan_id')->references('id')->on('plans');
+            $table->string('target_plan_id');
+            $table->foreign('target_plan_id')->references('id')->on('plans');
+        });
+
+        Schema::table('plan_rec_conds', function (Blueprint $table) {
+            $table->string('plan_rec_id');
+            $table->foreign('plan_rec_id')->references('id')->on('plan_recs');
+        });
+
+        Schema::table('plan_rec_copies', function (Blueprint $table) {
+            $table->string('plan_rec_cond_id');
+            $table->foreign('plan_rec_cond_id')->references('id')->on('plan_rec_conds');
+        });
+
         Schema::table('school_subscriptions', function (Blueprint $table) {
             $table->string('country_id');
             $table->foreign('country_id')->references('id')->on('countries');
@@ -173,6 +192,8 @@ return new class extends Migration
         Schema::table('teachers', function (Blueprint $table) {
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('gender_id');
+            $table->foreign('gender_id')->references('id')->on('genders');
         });
 
         Schema::table('departments', function (Blueprint $table) {
@@ -1189,6 +1210,25 @@ return new class extends Migration
             $table->dropColumn('feature_id');
         });
 
+        Schema::table('plan_recs', function (Blueprint $table) {
+            $table->dropForeign('feature_id');
+            $table->dropForeign('source_plan_id');
+            $table->dropForeign('target_plan_id');
+            $table->dropColumn('feature_id');
+            $table->dropColumn('source_plan_id');
+            $table->dropColumn('target_plan_id');
+        });
+
+        Schema::table('plan_rec_conds', function (Blueprint $table) {
+            $table->dropForeign('plan_rec_id');
+            $table->dropColumn('plan_rec_id');
+        });
+
+        Schema::table('plan_rec_copies', function (Blueprint $table) {
+            $table->dropForeign('plan_rec_cond_id');
+            $table->dropColumn('plan_rec_cond_id');
+        });
+
         Schema::table('school_transactions', function (Blueprint $table) {
             $table->dropForeign(['school_branch_id']);
             $table->dropForeign(['country_id']);
@@ -1224,6 +1264,15 @@ return new class extends Migration
         Schema::table('halls', function (Blueprint $table) {
             $table->dropForeign(['school_branch_id']);
             $table->dropColumn('school_branch_id');
+        });
+
+        Schema::table("school_hall_types", function (Blueprint $table) {
+            $table->string("hall_id");
+            $table->foreign("hall_id")->references("id")->on("halls");
+            $table->string("hall_type_id");
+            $table->foreign("hall_type_id")->references("id")->on("hall_types");
+            $table->string("school_branch_id");
+            $table->foreign("school_branch_id")->references('id')->on("school_branches");
         });
 
         Schema::table('teacher_course_preferences', function (Blueprint $table) {
@@ -2019,7 +2068,9 @@ return new class extends Migration
 
         // Dropping foreign keys and columns from teacher
         Schema::table('teachers', function (Blueprint $table) {
+            $table->dropForeign('gender_id');
             $table->dropForeign(['school_branch_id']);
+            $table->dropColumn('gender_id');
             $table->dropColumn(['school_branch_id']);
         });
 

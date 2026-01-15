@@ -26,6 +26,7 @@ class BulkUpdateTeacherRequest extends FormRequest
             'teachers.*.last_name' => 'sometimes|nullable|string',
             'teachers.*.name' => 'sometimes|nullable|string',
             'teachers.*.email' => 'sometimes|nullable|email',
+            'teachers.*.gender_id' => 'sometimes|nullable|string|exists:genders,id'
         ];
     }
 }

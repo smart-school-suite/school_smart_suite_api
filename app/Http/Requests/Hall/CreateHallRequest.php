@@ -16,7 +16,9 @@ class CreateHallRequest extends FormRequest
         return [
             'name' => 'required|string|max:150',
             'capacity' => 'required|integer|max:5000',
-            'location' => 'required|string|max:200'
+            'location' => 'required|string|max:200',
+            'typeIds' => "required|array",
+            "typeIds.*.type_id" => "required|string|exists:hall_types,id"
         ];
     }
 }

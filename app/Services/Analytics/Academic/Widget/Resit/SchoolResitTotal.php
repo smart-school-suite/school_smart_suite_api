@@ -16,7 +16,7 @@ class SchoolResitTotal
     public function getTotalResit($currentSchool, $year)
     {
         $targetKpis = [
-            AcademicAnalyticsKpi::RESIT
+            AcademicAnalyticsKpi::SCHOOL_RESIT_TOTAL
         ];
 
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $targetKpis);

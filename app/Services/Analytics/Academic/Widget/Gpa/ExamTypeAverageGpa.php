@@ -16,7 +16,8 @@ class ExamTypeAverageGpa
     public function getExamTypeAverageGpa($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::EXAM_GPA
+            AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE,
+            AcademicAnalyticsKpi::SCHOOL_GPA
         ];
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
         return $this->examTypeAverageGpaAggregator->calculate($query);

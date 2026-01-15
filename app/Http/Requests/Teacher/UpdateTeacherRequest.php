@@ -29,8 +29,8 @@ class UpdateTeacherRequest extends FormRequest
             'name' => 'sometimes|nullable|string',
             'email' => 'sometimes|nullable|email',
             'address' => 'sometimes|nullable|string',
-            'phone_one' => 'sometimes|nullable|string',
-            'phone_two' => 'sometimes|nullable|string'
+            'gender_id' => 'sometimes|nullable|string|exists:genders,id',
+            'phone' => 'sometimes|nullable|string',
         ];
     }
 }

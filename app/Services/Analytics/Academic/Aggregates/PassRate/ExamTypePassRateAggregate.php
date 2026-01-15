@@ -11,20 +11,27 @@ class ExamTypePassRateAggregate
     public static function calculate(Collection $query)
     {
         $examTypes = Examtype::where("type", "!=", "resit")->get();
+
         return $examTypes->map(function ($examType) use ($query) {
-            $totalCandidate = $query->where("exam_type_id", $examType->id)
-                ->where("kpi", AcademicAnalyticsKpi::EXAM_CANDIDATE)
+            $examData = $query->where("exam_type_id", $examType->id);
+
+            $totalCandidate = $examData->where("kpi", AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE)
                 ->sum("value");
-            $totalPassed = $query->where("exam_type_id", $examType->id)
-                ->where("kpi", AcademicAnalyticskpi::EXAM_COURSE_CANDIDATE_PASSED)
+
+            $totalPassed = $examData->where("kpi", AcademicAnalyticsKpi::SCHOOL_EXAM_CANDIDATE_PASSED)
                 ->sum("value");
+
+            $passRate = ($totalCandidate > 0)
+                ? ($totalPassed / $totalCandidate) * 100
+                : 0;
+
             return [
                 "exam_type_id" => $examType->id,
                 "exam_name" => $examType->exam_name ?? "unknown",
                 "semester" => $examType->semester ?? "unknown",
                 "total_candidate" => $totalCandidate,
                 "total_passed" => $totalPassed,
-                "pass_rate" => round($totalPassed / $totalCandidate * 100, 2)
+                "pass_rate" => round($passRate, 2)
             ];
         });
     }

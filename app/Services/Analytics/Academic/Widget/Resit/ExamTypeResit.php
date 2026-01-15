@@ -17,7 +17,7 @@ class ExamTypeResit
     public function getExamTypeResit($currentSchool, $year)
     {
         $kpis = [
-            AcademicAnalyticsKpi::RESIT
+            AcademicAnalyticsKpi::SCHOOL_RESIT_TOTAL
         ];
 
         $query = AcademicAnalyticQuery::base($currentSchool->id, $year, $kpis);
