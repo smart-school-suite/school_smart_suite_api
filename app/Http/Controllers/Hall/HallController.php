@@ -70,6 +70,13 @@ class HallController extends Controller
         $deactivateHall = $this->hallService->deactivateHall($currentSchool, $hallId, $authAdmin);
         return ApiResponseService::success("Hall Deactivated Successfully", $deactivateHall, null, 200);
     }
+
+    public function getHallDetails(Request $request, $hallId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $hall = $this->hallService->getHallDetails($currentSchool, $hallId);
+        return ApiResponseService::success("Hall Details Fetched Successfully", $hall, null, 200);
+    }
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {

@@ -16,7 +16,6 @@ class Hall extends Model
         'name',
         'capacity',
         'status',
-        'type',
         'location',
         'school_branch_id',
         'num_assigned_specialties',
@@ -31,7 +30,7 @@ class Hall extends Model
 
     public $keyType = 'string';
     public $table = 'halls';
-    public $incrementing = 'false';
+    public $incrementing = false;
 
 
     public function specialtyHall(): HasMany
@@ -44,11 +43,17 @@ class Hall extends Model
     }
     public function types()
     {
-        return $this->belongsToMany(
-            HallType::class,
-            'school_hall_types',
-            'hall_id',
-            'hall_type_id'
-        )->withTimestamps();
+        return $this->belongsToMany(HallType::class, 'school_hall_types')
+            ->using(SchoolHallType::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
+    }
+    public function syncTypes(array $typeIds)
+    {
+        return $this->types()->sync(
+            collect($typeIds)->mapWithKeys(fn($id) => [
+                $id => ['school_branch_id' => $this->school_branch_id],
+            ])->toArray()
+        );
     }
 }

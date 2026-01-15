@@ -21,13 +21,11 @@ class HallType extends Model
     public $table = "hall_types";
     public $keyType = 'string';
 
-    public function halls()
+    public function types()
     {
-        return $this->belongsToMany(
-            Hall::class,
-            'school_hall_types',
-            'hall_type_id',
-            'hall_id'
-        )->withTimestamps();
+        return $this->belongsToMany(HallType::class, 'school_hall_types')
+            ->using(SchoolHallType::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
     }
 }

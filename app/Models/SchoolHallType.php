@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
-
-class SchoolHallType extends Model
+use Illuminate\Database\Eloquent\Relations\Pivot;
+class SchoolHallType extends Pivot
 {
     use GeneratesUuid;
     protected $fillable = [

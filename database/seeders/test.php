@@ -13,20 +13,36 @@ use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvents;
 use App\Models\Exams;
 use App\Models\ExamType;
 use App\Models\AccessedStudent;
+use App\Models\Hall;
+use App\Models\HallType;
 use App\Models\LetterGrade;
 use App\Models\Teacher;
 use App\Models\Plan;
+
 class test extends Seeder
 {
     public function run(): void
     {
-        $plans = Plan::where('key', 'ultimate.plan')->get();
-        foreach($plans as $plan){
-             $plan->update([
-                'max_plan' => true
-             ]);
+        $hallTypes = HallType::pluck('id')->toArray();
+        $halls = Hall::all();
+
+        foreach ($halls as $hall) {
+
+            $count = rand(1, 3);
+            $selectedTypeIds = Arr::random($hallTypes, $count);
+
+            $syncData = [];
+
+            foreach ((array) $selectedTypeIds as $typeId) {
+                $syncData[$typeId] = [
+                    'school_branch_id' => $hall->school_branch_id,
+                ];
+            }
+
+            $hall->types()->sync($syncData);
         }
     }
+
 
     public function academicStats()
     {
