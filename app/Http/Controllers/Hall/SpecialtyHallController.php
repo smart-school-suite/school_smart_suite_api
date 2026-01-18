@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Hall;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hall\AssignSpecialtyHallRequest;
+use App\Http\Requests\Hall\RemoveAssigedSpecialtyHallRequest;
 use App\Services\ApiResponseService;
 use App\Services\Hall\SpecialtyHallService;
 use Illuminate\Http\Request;
@@ -39,12 +40,19 @@ class SpecialtyHallController extends Controller
         return ApiResponseService::success("Assigned Halls Fetched Successfully", $assignedHalls, null, 200);
     }
 
-    public function removeAssignedHalls(Request $request, $specialtyHallId)
+    public function removeAssignedHalls(RemoveAssigedSpecialtyHallRequest $request)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $authAdmin = $this->resolveUser();
-        $removedAssignedHall = $this->specialtyHallService->removeAssignedHalls($currentSchool, $specialtyHallId, $authAdmin);
+        $removedAssignedHall = $this->specialtyHallService->removeAssignedHalls($currentSchool, $request->validated(), $authAdmin);
         return ApiResponseService::success("Specialty Assiged Hall Removed Successfully", $removedAssignedHall, null, 200);
+    }
+
+    public function removeAllAssignedHalls(Request $request, $specialtyId){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $authAdmin = $this->resolveUser();
+        $removeAllAssignedHalls = $this->specialtyHallService->removeAllAssignedHalls($currentSchool, $specialtyId, $authAdmin);
+        return ApiResponseService::success("All Assigned Specialty Halls Removed Successfully", $removeAllAssignedHalls, null, 200);
     }
 
     protected function resolveUser()

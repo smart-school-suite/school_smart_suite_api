@@ -20,7 +20,7 @@ class StudentResource extends JsonResource
             'student_first_name' => $this->first_name,
             'student_last_name' => $this->last_name,
             'student_DOB' => $this->DOB,
-            'student_gender' => $this->gender,
+            'student_gender' => $this->gender->name ?? null,
             'student_phone_one' => $this->phone_one,
             'student_phone_two' => $this->phone_two,
             'student_religion' => $this->religion,
@@ -31,7 +31,7 @@ class StudentResource extends JsonResource
             'level_name' => $this->level->name,
             'level_number' => $this->level->level,
             'status' => $this->status,
-            'batch_title' => $this->studentBatch->name,
+            'batch_title' => $this->studentBatch->name
         ];
     }
 }

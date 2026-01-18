@@ -7,15 +7,16 @@ use App\Models\Grades;
 
 class SchoolGradeConfigService
 {
-    public function getSchoolGradeConfig($currentSchool)
+    public function getSchoolGradeScaleCategories(object $currentSchool)
     {
-        $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->with(['gradesCategory'])->get();
+        $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
+            ->with(['gradesCategory'])->get();
         return $schoolGradesConfig;
     }
 
-    public function getGradingBySchoolGradeCongfig(object $currentSchool, string $schoolGradeConfigId)
+    public function getGradeScaleSchoolGradeCategoryId(object $currentSchool, string $schoolGradeScaleCategoryId)
     {
-        $schoolGradesConfig = SchoolGradesConfig::findOrFail($schoolGradeConfigId);
+        $schoolGradesConfig = SchoolGradesConfig::findOrFail($schoolGradeScaleCategoryId);
         $grades = Grades::where("school_branch_id", $currentSchool->id)
             ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
             ->with(['lettergrade'])

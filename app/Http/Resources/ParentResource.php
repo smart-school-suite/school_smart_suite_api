@@ -16,15 +16,12 @@ class ParentResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'guardian_name'=> $this->name,
-            'address' => $this->address,
-            'email' => $this->email,
-            'phone_one' => $this->phone_one,
-            'phone_two' => $this->phone_two,
-            'occupation' => $this->occupation,
-            'cultural_background' => $this->cultural_background,
-            'preferred_contact_method' => $this->preferred_contact_method,
-            'relationship_to_student' => $this->relationship_to_student
+            'guardian_name'=> $this->name ?? null,
+            'address' => $this->address ?? null,
+            'phone' => $this->phone ?? null,
+            'total_students' => $this->student->count() ?? 0,
+            'contact_method' => $this->preferred_contact_method,
+            'language' => $this->preferred_language
         ];
     }
 }

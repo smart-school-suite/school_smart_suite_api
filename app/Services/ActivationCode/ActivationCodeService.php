@@ -251,7 +251,6 @@ class ActivationCodeService
             );
         }
 
-        // Prevent multiple active subscriptions for the teacher
         $activeUsage = ActivationCodeUsage::where('actorable_id', $teacher->id)
             ->where('actorable_type', Teacher::class)
             ->where('expires_at', '>', now())
@@ -266,7 +265,6 @@ class ActivationCodeService
             );
         }
 
-        // Find a valid, unused, active activation code
         $code = ActivationCode::where('school_branch_id', $currentSchool->id)
             ->where('code', $data['activation_code'])
             ->where('status', 'active')
@@ -282,7 +280,6 @@ class ActivationCodeService
             );
         }
 
-        // Check if the code is expired
         if ($code->expires_at <= now()) {
             throw new AppException(
                 "Code Expired",
@@ -292,10 +289,8 @@ class ActivationCodeService
             );
         }
 
-        // Calculate subscription expiry based on code duration
         $subscriptionExpiresAt = now()->addDays($code->duration);
 
-        // Create activation code usage record
         $codeUsage = ActivationCodeUsage::create([
             'school_branch_id' => $currentSchool->id,
             'activation_code_id' => $code->id,
@@ -306,14 +301,12 @@ class ActivationCodeService
             'actorable_type' => Teacher::class,
         ]);
 
-        // Mark the activation code as used
         $code->update([
             'used' => true,
             'used_at' => now(),
             'used_by' => $teacher->id,
         ]);
 
-        // Update teacher subscription status and dates
         $teacher->update([
             'sub_status' => 'subscribed',
             'subscribed_at' => now(),
@@ -326,5 +319,43 @@ class ActivationCodeService
             'teacher' => $teacher->fresh(),
             'expires_at' => $subscriptionExpiresAt,
         ];
+    }
+
+    public function getActivationCodeUsage($currentSchool)
+    {
+        return ActivationCodeUsage::where('school_branch_id', $currentSchool->id)
+            ->with(['actorable', 'activationCode'])
+            ->get()
+            ->map(fn(ActivationCodeUsage $usage) => [
+                'id'            => $usage->id,
+                'account_type'  => str($usage->actorable_type)
+                    ->afterLast('\\')
+                    ->lower()
+                    ->value() ?: 'unknown',
+                'user_name'     => $usage->actorable?->name ?? '—',
+                "code" => $usage->activationCode->code ?? '',
+                'activated_date' => $usage->activated_at?->toDateTimeString(),
+                'expires_at'    => $usage->expires_at?->toDateTimeString(),
+                'status'        => $usage->expires_at
+                    ? ($usage->expires_at->isFuture() ? 'active' : 'expired')
+                    : 'no expiry',
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function getStudentActivationStatuses($currentSchool){
+         $activationStatus = Student::where("school_branch_id", $currentSchool->id)
+                             ->with(['activationCode.activationCode', 'specialty.level'])
+                             ->get();
+         return $activationStatus->map(fn ($student) => [
+             "id" => $student->id,
+             "student_name" => $student->name,
+             "specialty_name" => $student->specialty->specialty_name,
+             "level_name" => $student->specialty->level->name,
+             "level" =>   $student->specialty->level->level,
+             "sub_status" => $student->sub_status,
+             "activation_code" => $student->activationCode->first()->activationCode->code ?? null
+         ]);
     }
 }

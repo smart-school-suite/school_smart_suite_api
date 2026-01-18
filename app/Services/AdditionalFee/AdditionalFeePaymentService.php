@@ -4,7 +4,6 @@ namespace App\Services\AdditionalFee;
 
 use App\Jobs\NotificationJobs\SendAdditionalFeePaidNotificationJob;
 use App\Jobs\NotificationJobs\SendAdminAdditionalFeeNotificationJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\AdditionalFeeTransactionJob;
 use App\Models\AdditionalFees;
 use App\Models\AdditionalFeeTransactions;
 use App\Notifications\AdditionalFeePaidNotification;

@@ -3,20 +3,19 @@
 namespace App\Services\Course;
 
 use App\Exceptions\AppException;
-use App\Jobs\StatisticalJobs\OperationalJobs\CourseStatJob;
 use App\Models\Courses;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Collection;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
 use App\Events\Analytics\OperationalAnalyticsEvent;
 use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
+
 class CourseService
 {
     public function createCourse(array $data, $currentSchool, $authAdmin): Courses
@@ -26,7 +25,7 @@ class CourseService
             ->where("course_code", $data['course_code'])
             ->where("course_title", $data['course_title'])
             ->first();
-        if (!$courses) {
+        if ($courses) {
             throw new AppException(
                 "It looks like you already have a course with this title and code",
                 400,
@@ -35,9 +34,7 @@ class CourseService
                 '/courses'
             );
         }
-        $courseId = Str::uuid();
         $course = new Courses();
-        $course->id = $courseId;
         $course->course_code = $data['course_code'];
         $course->course_title = $data['course_title'];
         $course->specialty_id = $specialty->id;
@@ -48,12 +45,24 @@ class CourseService
         $course->level_id = $specialty->level_id;
         $course->description = $data['description'] ?? null;
         $course->save();
+
+        if (!empty($data['typeIds'])) {
+            $syncData = collect($data['typeIds'])
+                ->pluck('type_id')
+                ->mapWithKeys(fn($typeId) => [
+                    $typeId => ['school_branch_id' => $currentSchool->id],
+                ])
+                ->toArray();
+
+            $course->types()->sync($syncData);
+        }
         AdminActionEvent::dispatch(
             [
                 "permissions" =>  ["schoolAdmin.course.create"],
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "courseManagement",
+                "action" => "course.created",
                 "authAdmin" => $authAdmin,
                 "data" => $course,
                 "message" => "Course Created",
@@ -67,15 +76,15 @@ class CourseService
             'data'          => $course,
         ]);
         event(new OperationalAnalyticsEvent(
-             eventType:OperationalEvent::COURSE_CREATED,
-             version:1,
-             payload:[
+            eventType: OperationalEvent::COURSE_CREATED,
+            version: 1,
+            payload: [
                 "school_branch_id" => $currentSchool,
                 "specialty_id" => $specialty->id,
                 "department_id" => $specialty->department_id,
                 "level_id" => $specialty->level_id,
                 "value" => 1
-             ]
+            ]
         ));
         return $course;
     }
@@ -98,6 +107,7 @@ class CourseService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "courseManagement",
+                "action" => "course.deleted",
                 "authAdmin" => $authAdmin,
                 "data" => $course,
                 "message" => "Course Deleted",
@@ -131,6 +141,7 @@ class CourseService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
+                    "action" => "course.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $course,
                     "message" => "Course Deleted",
@@ -195,6 +206,17 @@ class CourseService
             }
         }
 
+        if (!empty($updateData['typeIds'])) {
+            $syncData = collect($data['typeIds'])
+                ->pluck('type_id')
+                ->mapWithKeys(fn($typeId) => [
+                    $typeId => ['school_branch_id' => $currentSchool->id],
+                ])
+                ->toArray();
+
+            $course->types()->sync($syncData);
+        }
+
         $course->update($filteredData);
         AdminActionEvent::dispatch(
             [
@@ -202,6 +224,7 @@ class CourseService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "courseManagement",
+                "action" => "course.updated",
                 "authAdmin" => $authAdmin,
                 "data" => $course,
                 "message" => "Course Updated",
@@ -237,6 +260,7 @@ class CourseService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
+                    "action" => "course.updated",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Course Updated",
@@ -273,7 +297,7 @@ class CourseService
     public function getCourses($currentSchool)
     {
         $courses  = Courses::where("school_branch_id", $currentSchool->id)
-            ->with(['department', 'specialty', 'semester', 'level'])
+            ->with(['department', 'specialty', 'semester', 'level', 'types'])
             ->get();
 
         if ($courses->isEmpty()) {
@@ -292,7 +316,7 @@ class CourseService
     {
         try {
             $course = Courses::where('school_branch_id', $currentSchool->id)
-                ->with(['department', 'specialty', 'semester', 'level'])
+                ->with(['department', 'specialty', 'semester', 'level', 'types'])
                 ->findorFail($courseId);
             return $course;
         } catch (ModelNotFoundException $e) {
@@ -324,6 +348,7 @@ class CourseService
                 ->where("semester_id", $semesterId)
                 ->where("specialty_id", $specialtyId)
                 ->where("level_id", $levelId)
+                ->with(['types'])
                 ->get();
 
             if ($coursesData->isEmpty()) {
@@ -373,6 +398,7 @@ class CourseService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "courseManagement",
+                "action" => "course.deactivated",
                 "authAdmin" => $authAdmin,
                 "data" => $course,
                 "message" => "Course Deactivated",
@@ -410,6 +436,7 @@ class CourseService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
+                    "action" => "course.deactivated",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Course Deactivated",
@@ -460,6 +487,7 @@ class CourseService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "courseManagement",
+                "action" => "course.activated",
                 "authAdmin" => $authAdmin,
                 "data" => $course,
                 "message" => "Course Activated",
@@ -481,7 +509,8 @@ class CourseService
         try {
             DB::beginTransaction();
             foreach ($courseIds as $courseId) {
-                $course = Courses::where("school_branch_id", $currentSchool->id)->findOrFail($courseId['course_id']);
+                $course = Courses::where("school_branch_id", $currentSchool->id)
+                    ->findOrFail($courseId['course_id']);
                 $course->status = 'active';
                 $course->save();
                 $result[] = [
@@ -496,6 +525,7 @@ class CourseService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "courseManagement",
+                    "action" => "course.activated",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Course Deactivated",
@@ -524,7 +554,7 @@ class CourseService
     {
         $courses = Courses::where("school_branch_id", $currentSchool->id)
             ->where("status", "active")
-            ->with(['department', 'specialty', 'semester', 'level'])
+            ->with(['department', 'specialty', 'semester', 'level', 'types'])
             ->get();
         if ($courses->isEmpty()) {
             throw new AppException(
@@ -546,6 +576,7 @@ class CourseService
             $courses = Courses::where("school_branch_id", $currentSchool->id)->where("semester_id", $schoolSemester->semester_id)
                 ->where("specialty_id", $specialty->id)
                 ->where("status", "active")
+                ->with(['types'])
                 ->get();
             if ($courses->isEmpty()) {
                 throw new AppException(
@@ -606,7 +637,7 @@ class CourseService
             ->where('specialty_id', $student->specialty_id)
             ->where('level_id', $student->level_id)
             ->where("status", "active")
-            ->with('semester')
+            ->with(['semester', 'types'])
             ->get();
 
         if ($courses->isEmpty()) {

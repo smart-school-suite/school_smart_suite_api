@@ -41,4 +41,17 @@ class ActivationCodeController extends Controller
         $activateTeacher = $this->activationCodeService->activateTeacherAccount($request->validated(), $currentSchool);
         return ApiResponseService::success("Teacher Account Activated Successfully", $activateTeacher, null, 200);
     }
+
+    public function getActivationCodeUsage(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $activationCodeUsage = $this->activationCodeService->getActivationCodeUsage($currentSchool);
+        return ApiResponseService::success("Activation Code Usages Fetched Successfully", $activationCodeUsage, null, 200);
+    }
+
+    public function getStudentActivationCodeStatus(Request $request){
+         $currentSchool = $request->attributes->get('currentSchool');
+         $status = $this->activationCodeService->getStudentActivationStatuses($currentSchool);
+         return ApiResponseService::success("Student Activation Code Status Fetched Successfully", $status, null, 200);
+    }
 }

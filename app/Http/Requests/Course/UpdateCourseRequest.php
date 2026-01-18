@@ -25,7 +25,9 @@ class UpdateCourseRequest extends FormRequest
             'specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
             'description' => 'sometimes|nullable|string',
             'credit' => 'sometimes|nullable|integer',
-            'semester_id' => 'sometimes|nullable|string|exists:semesters,id'
+            'semester_id' => 'sometimes|nullable|string|exists:semesters,id',
+            'typeIds' => "sometimes|nullable|array",
+            "typeIds.*.type_id" => "sometimes|nullable|exists:course_types,id"
         ];
     }
 }

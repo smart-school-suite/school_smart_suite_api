@@ -19,7 +19,8 @@ class AssignSpecialtyHallRequest extends FormRequest
     {
         return [
             'specialty_id' => 'required|string|exists:specialties,id',
-            'hall_id' => 'required|string|exists:halls,id'
+            'hallIds' => 'required|array',
+            'hallIds.*.hall_id' => "required|string|exists:halls,id"
         ];
     }
 }

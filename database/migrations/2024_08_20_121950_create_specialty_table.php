@@ -18,6 +18,8 @@ return new class extends Migration
             $table->decimal('school_fee', 12, 2);
             $table->enum('status', ['active', 'inactive']);
             $table->text("description")->nullable();
+            $table->enum('hall_assignment_status', ['unassigned','assigned'])->default('unassigned');
+            $table->integer('num_assigned_hall')->default(0);
             $table->timestamps();
         });
     }

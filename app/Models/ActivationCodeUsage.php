@@ -24,6 +24,10 @@ class ActivationCodeUsage extends Model
     public $table = 'activation_code_usages';
     public $keyType = 'string';
 
+    protected $casts = [
+         "activated_at" => "datetime",
+         "expires_at" => "datetime"
+    ];
     public function actorable(): MorphTo
     {
         return $this->morphTo();
@@ -31,5 +35,9 @@ class ActivationCodeUsage extends Model
 
     public function country(): BelongsTo {
          return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    public function activationCode(): BelongsTo {
+         return $this->belongsTo(ActivationCode::class, 'activation_code_id');
     }
 }

@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
 
-
+        Schema::table('school_course_types', function (Blueprint $table) {
+            $table->string('course_id');
+            $table->foreign('course_id')->references('id')->on('courses');
+            $table->string('course_type_id');
+            $table->foreign('course_type_id')->references('id')->on('course_types');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on("school_branches");
+        });
         Schema::table('activation_code_types', function (Blueprint $table) {
             $table->string('country_id');
             $table->foreign('country_id')->references('id')->on('countries');

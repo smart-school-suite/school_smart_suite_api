@@ -13,9 +13,6 @@ use App\Services\ApiResponseService;
 use App\Services\Grade\AutoGenExamGradeScaleService;
 use App\Http\Requests\Grade\CreateGradeRequest;
 use App\Http\Requests\Grade\UpdateGradeRequest;
-use Exception;
-use Throwable;
-use Illuminate\Support\Facades\Log;
 
 class SchoolGradeScaleController extends Controller
 {
@@ -62,7 +59,6 @@ class SchoolGradeScaleController extends Controller
     }
     public function deleteGradeConfig(Request $request, $configId)
     {
-
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get("currentSchool");
         $this->addGradesService->deleteGradesConfig($currentSchool, $configId, $authAdmin);
@@ -71,13 +67,9 @@ class SchoolGradeScaleController extends Controller
 
     public function getGradeConfigDetails(Request $request, $configId)
     {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $configDetails = $this->addGradesService->getGradeConfigDetails($currentSchool, $configId);
-            return ApiResponseService::success("Grade Configuration Details Fetched Successfully", $configDetails, null, 200);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $currentSchool = $request->attributes->get('currentSchool');
+        $configDetails = $this->addGradesService->getGradeConfigDetails($currentSchool, $configId);
+        return ApiResponseService::success("Grade Configuration Details Fetched Successfully", $configDetails, null, 200);
     }
     public function autoGenExamGrading(AutoGenExamGradingRequest $request)
     {

@@ -17,8 +17,23 @@ return new class extends Migration
             $table->string('course_title');
             $table->integer('credit');
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->enum('type', ['practical', 'theoretical', 'mixed'])->default('theoretical');
             $table->text("description")->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('course_types', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name', 150);
+            $table->string('key', 100);
+            $table->char('text_color', 8)->nullable();
+            $table->char('background_color', 8)->nullable();
+            $table->text('description')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+        });
+
+        Schema::create('school_course_types', function (Blueprint $table) {
+            $table->string('id')->primary();
             $table->timestamps();
         });
     }
@@ -29,5 +44,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('courses');
+        Schema::dropIfExists('course_types');
+        Schema::dropIfExists('school_course_types');
     }
 };

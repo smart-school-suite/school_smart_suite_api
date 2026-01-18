@@ -165,7 +165,7 @@ class TeacherCoursePreferenceService
 
         $courses = Courses::where('school_branch_id', $schoolBranchId)
             ->whereIn('specialty_id', $preferredSpecialtyIds)
-            ->with(['specialty', 'level'])
+            ->with(['specialty', 'level', 'types'])
             ->select('id', 'course_code', 'course_title', 'credit', 'specialty_id', 'level_id');
 
 
@@ -185,6 +185,7 @@ class TeacherCoursePreferenceService
                 'credit'          => $course->credit ?? 0,
                 'specialty_name'  => $course->specialty?->specialty_name ?? 'N/A',
                 'level_name'      => $course->level?->name ?? 'N/A',
+                'type' => $course->types ?? null
             ];
         })->values();
     }
@@ -285,31 +286,35 @@ class TeacherCoursePreferenceService
             ];
         });
     }
-    public function getAssignedTeacherCourses($currentSchool, $teacherId)
+    public function getAssignedTeacherCourses(object $currentSchool, string $teacherId)
     {
         $schoolBranchId = $currentSchool->id;
 
-        $assignedCourses = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
+        $preferences = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
             ->where('teacher_id', $teacherId)
             ->with(['course.specialty', 'course.level'])
-            ->get()
-            ->pluck('course');
+            ->get();
 
-        $assignedCourses = $assignedCourses->filter();
-
-        if ($assignedCourses->isEmpty()) {
+        if ($preferences->isEmpty()) {
             return [];
         }
 
-        return $assignedCourses->map(function ($course) {
+        return $preferences->map(function ($preference) {
+            $course = $preference->course;
+
+            if (!$course) {
+                return null;
+            }
+
             return [
-                'id'       => $course->id,
-                'course_code'     => $course->course_code,
-                'course_title'    => $course->course_title,
-                'credit'          => $course->credit ?? 0,
-                'specialty_name'  => $course->specialty?->specialty_name ?? 'N/A',
-                'level_name'      => $course->level?->name ?? 'N/A',
+                'id'             => $course->id,
+                'course_code'    => $course->course_code,
+                'course_title'   => $course->course_title,
+                'credit'         => $course->credit ?? 0,
+                'specialty_name' => $course->specialty?->specialty_name ?? 'N/A',
+                'level_name'     => $course->level?->name ?? 'N/A',
+                'type'           => $course->types ?? null
             ];
-        })->values();
+        })->filter()->values();
     }
 }

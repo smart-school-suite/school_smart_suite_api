@@ -21,9 +21,8 @@ class CreateParentRequest extends FormRequest
         return [
             'name' => 'string|required',
             'address' => 'required|string',
-            'email' => 'required|string|email',
-            'phone_one' => 'string|required',
-            'relationship_to_student' => 'required|string',
+            'phone' => 'string|required',
+            'preferred_contact_method' => 'required|string',
             'preferred_language' => 'required|string',
         ];
     }

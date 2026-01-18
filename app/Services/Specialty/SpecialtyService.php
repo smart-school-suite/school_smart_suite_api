@@ -45,7 +45,6 @@ class SpecialtyService
             $specialty->level_id = $data["level_id"];
             $specialty->save();
 
-            SpecialtyStatJob::dispatch($specialtyId, $currentSchool->id);
             SendAdminSpecialtyCreatedNotificationJob::dispatch($currentSchool->id, $data);
             AdminActionEvent::dispatch(
                 [

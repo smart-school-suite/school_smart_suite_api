@@ -10,4 +10,4 @@ Route::get('/{activationCodeTypeId}', [ActivationCodeTypeController::class, "get
 Route::delete('/delete/{activationCodeTypeId}', [ActivationCodeTypeController::class, "deleteActivationCodeType"])->name("delete.activationCodeType");
 Route::post('/activate/{activationCodeTypeId}', [ActivationCodeTypeController::class, "activationActivationCodeType"])->name("activate.activationCodeType");
 Route::post('/deactivate/{activationCodeTypeId}', [ActivationCodeTypeController::class, "deactivateActivationCodeType"])->name("deactivate.activationCodeType");
-Route::middleware([IdentifyTenant::class])->get('/school', [ActivationCodeTypeController::class, "getActivationCodeTypeCountryId"])->name("get.activationCodeTypeSchoolBranch");
+Route::middleware([IdentifyTenant::class])->get('/school/code-type', [ActivationCodeTypeController::class, "getActivationCodeTypeCountryId"])->name("get.activationCodeTypeSchoolBranch");

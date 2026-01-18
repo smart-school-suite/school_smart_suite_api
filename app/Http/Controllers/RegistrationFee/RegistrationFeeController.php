@@ -4,6 +4,7 @@ namespace App\Http\Controllers\RegistrationFee;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegistrationFee\RegistrationFeeIdRequest;
+use App\Http\Resources\RegistrationFeeResource;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\RegistrationFee\RegistrationFeeService;
@@ -20,7 +21,7 @@ class RegistrationFeeController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $registrationFees = $this->registrationFeeService->getRegistrationFees($currentSchool);
-        return ApiResponseService::success("Registration Fees Fetched Successfully", $registrationFees, null, 200);
+        return ApiResponseService::success("Registration Fees Fetched Successfully",  RegistrationFeeResource::collection($registrationFees), null, 200);
     }
     public function bulkDeleteRegistrationFee(RegistrationFeeIdRequest $request)
     {

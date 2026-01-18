@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->string('name');
             $table->string('address');
-            $table->string("email");
             $table->string('phone');
             $table->string('preferred_contact_method')->default("All");
             $table->string('preferred_language')->nullable();

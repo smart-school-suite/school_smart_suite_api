@@ -16,11 +16,9 @@ class ParentService
             'school_branch_id' => $currentSchool->id,
             'name' => $parentData['name'],
             'address' => $parentData['address'],
-            'email' => $parentData['email'],
-            "phone_one" => $parentData['phone_one'],
-            "phone_two" => $parentData['phone_two'] ?? null,
-            "relationship_to_student" => $parentData['relationship_to_student'],
-            "preferred_language" => $parentData['preferred_language']
+            "phone" => $parentData['phone'],
+            "preferred_language" => $parentData['preferred_language'],
+            "preferred_contact_method" => $parentData["preferred_contact_method"]
         ]);
         AdminActionEvent::dispatch(
             [
@@ -28,6 +26,7 @@ class ParentService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" => $currentSchool->id,
                 "feature" => "parentManagement",
+                "action" => "parent.created",
                 "authAdmin" => $authAdmin,
                 "data" => $parent,
                 "message" => "Parent Created",
@@ -54,6 +53,7 @@ class ParentService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" => $currentSchool->id,
                 "feature" => "parentManagement",
+                "action" => "parent.deleted",
                 "authAdmin" => $authAdmin,
                 "data" => $parentExist,
                 "message" => "Parent Created",
@@ -81,6 +81,7 @@ class ParentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" => $currentSchool->id,
                     "feature" => "parentManagement",
+                    "action" => "parent.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Parent Deleted",
@@ -107,6 +108,7 @@ class ParentService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" => $currentSchool->id,
                 "feature" => "parentManagement",
+                "action" => "parent.updated",
                 "authAdmin" => $authAdmin,
                 "data" => $parentExist,
                 "message" => "Parent Updated",
@@ -133,6 +135,7 @@ class ParentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" => $currentSchool->id,
                     "feature" => "parentManagement",
+                    "action" => "parent.updated",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Parent Updated",

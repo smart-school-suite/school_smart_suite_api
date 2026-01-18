@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolEvent\SchoolEventController;
 
 
-Route::middleware(['permission:schoolAdmin.event.create'])->post('/create', [SchoolEventController::class, 'createSchoolEvent'])
+Route::post('/create', [SchoolEventController::class, 'createSchoolEvent'])
     ->name('school-event.store');
 Route::get('/', [SchoolEventController::class, 'getSchoolEvents'])->name("get.school-events");
 Route::post('/{schoolEventId}/like', [SchoolEventController::class, 'likeSchoolEvent'])->name("like.school.event");

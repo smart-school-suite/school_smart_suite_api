@@ -25,6 +25,8 @@ class SpecialtyResource extends JsonResource
             'level' => $this->level->level ?? null,
             'status' => $this->status,
             'description' => $this->description,
+            'num_assigned_hall' => $this->num_assigned_hall,
+            'hall_assignment_status' => $this->hall_assignment_status,
             'updated_at' => $this->updated_at->toDateTimeString(),
             'created_at' => $this->created_at->toDateTimeString(),
         ];

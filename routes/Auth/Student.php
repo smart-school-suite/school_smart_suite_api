@@ -47,6 +47,6 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
 
     // Create new student (requires tenant identification and student limit)
     Route::post('/register', [CreateStudentController::class, 'createStudent'])
-        ->middleware(Limitstudents::class, 'permission:schoolAdmin.student.create')
+        ->middleware(Limitstudents::class)
         ->name('student.register');
 });

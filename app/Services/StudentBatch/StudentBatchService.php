@@ -2,6 +2,7 @@
 
 namespace App\Services\StudentBatch;
 
+use App\Exceptions\AppException;
 use App\Models\Studentbatch;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -18,6 +19,18 @@ class StudentBatchService
     }
     public function createStudentBatch(array $data, $currentSchool, $authAdmin)
     {
+        $existingBatch = Studentbatch::where("school_branch_id", $currentSchool->id)
+            ->where("name", $data["name"])
+            ->first();
+        if ($existingBatch) {
+            throw new AppException(
+                "A Student with the same name  already exists.",
+                409,
+                "Duplicate Student Batch",
+                "You are trying to create a Student Batch that already exists. Please check the details and try again.",
+                null
+            );
+        }
         $newBatch = new Studentbatch();
         $newBatch->name = $data["name"];
         $newBatch->description = $data["description"];
@@ -30,6 +43,7 @@ class StudentBatchService
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentBatchManagement",
                 "authAdmin" => $authAdmin,
+                "action" => "studentBatch.created",
                 "data" => $newBatch,
                 "message" => "Student Batch Created",
             ]
@@ -51,6 +65,7 @@ class StudentBatchService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentBatchManagement",
+                "action" => "studentBatch.updated",
                 "authAdmin" => $authAdmin,
                 "data" => $studentBatch,
                 "message" => "Student Batch Updated",
@@ -79,6 +94,7 @@ class StudentBatchService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentBatchManagement",
+                    "action" => "studentBatch.updated",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Student Batch Updated",
@@ -104,6 +120,7 @@ class StudentBatchService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentBatchManagement",
+                "action" => "studentBatch.deleted",
                 "authAdmin" => $authAdmin,
                 "data" => $studentBatch,
                 "message" => "Student Batch Deleted",
@@ -129,6 +146,7 @@ class StudentBatchService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentBatchManagement",
+                    "action" => "studentBatch.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Student Batch Deleted",
@@ -157,6 +175,7 @@ class StudentBatchService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentBatchManagement",
+                "action" => "studentBatch.deactivated",
                 "authAdmin" => $authAdmin,
                 "data" => $studentBatch,
                 "message" => "Student Batch Deactivated",
@@ -183,6 +202,7 @@ class StudentBatchService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentBatchManagement",
+                    "action" => "studentBatch.deactivated",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Student Batch Deactivated",
@@ -207,6 +227,7 @@ class StudentBatchService
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentBatchManagement",
                 "authAdmin" => $authAdmin,
+                "action" => "studentBatch.activated",
                 "data" => $studentBatch,
                 "message" => "Student Batch Activated",
             ]
@@ -233,6 +254,7 @@ class StudentBatchService
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentBatchManagement",
                     "authAdmin" => $authAdmin,
+                    "action" => "studentBatch.activated",
                     "data" => $result,
                     "message" => "Student Batch Activated",
                 ]

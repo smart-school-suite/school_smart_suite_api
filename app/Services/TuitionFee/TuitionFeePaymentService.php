@@ -109,7 +109,6 @@ class TuitionFeePaymentService
                 'paymentDate' => now()
             ];
 
-            TuitionFeePaymentStatJob::dispatch($paymentId, $currentSchool->id);
             SendAdminTuitionFeePaidNotificationJob::dispatch($currentSchool->id, $student, $paymentDetails);
             $student->notify(new TuitionFeePaid($paymentAmount, $studentTuitionFees->amount_left, now()));
             AdminActionEvent::dispatch(
@@ -118,6 +117,7 @@ class TuitionFeePaymentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "tuitionFeeManagement",
+                    "action" => "tuitionFee.paid",
                     "authAdmin" => $authAdmin,
                     "data" => $studentTuitionFees,
                     "message" => "Tuition Fee Paid",

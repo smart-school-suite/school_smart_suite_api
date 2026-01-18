@@ -71,6 +71,7 @@ class RegistrationFeePayment
                     "schoolBranch" => $currentSchool->id,
                     "feature" => "registrationFeeManagement",
                     "authAdmin" => $authAdmin,
+                    "action" => "registrationFee.paid",
                     "data" => [
                         "transaction" => $transaction,
                         "registration_fee" => $registrationFee
@@ -156,6 +157,7 @@ class RegistrationFeePayment
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" => $currentSchool->id,
                     "feature" => "registrationFeeManagement",
+                    "action" => "registrationFee.paid",
                     "authAdmin" => $authAdmin,
                     "data" => $registrationFeeData,
                     "message" => "Registration Fee Paid",

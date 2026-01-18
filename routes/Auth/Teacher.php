@@ -47,6 +47,5 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
 
     // Create new teacher (requires tenant identification and teacher limit)
     Route::post('/register', [CreateTeacherController::class, 'createInstructor'])
-        ->middleware( 'permission:schoolAdmin.teacher.create')
         ->name('teacher.register');
 });

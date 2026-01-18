@@ -21,11 +21,14 @@ class Specialty extends Model
         'status',
         'description',
         'school_branch_id',
+        'hall_assignment_status',
+        'num_assigned_hall'
     ];
 
     protected $cast = [
         'school_fee' => 'decimal:2',
-        'registration_fee' => 'decimal:2'
+        'registration_fee' => 'decimal:2',
+        'num_assigned_hall' => 'integer'
     ];
     public $keyType = 'string';
     public $table = 'specialties';

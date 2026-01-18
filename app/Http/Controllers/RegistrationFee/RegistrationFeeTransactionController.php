@@ -4,6 +4,7 @@ namespace App\Http\Controllers\RegistrationFee;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegistrationFee\RegistrationFeeTransactionIdRequest;
+use App\Http\Resources\RegistrationFeeTransResource;
 use Illuminate\Http\Request;
 use App\Services\RegistrationFee\RegistrationFeeTransactionService;
 use App\Services\ApiResponseService;
@@ -34,7 +35,7 @@ class RegistrationFeeTransactionController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $registrationFeeTransaction = $this->registrationFeeTransactionService->getRegistrationFeeTransactions($currentSchool);
-        return ApiResponseService::success("Registration Fee Transactions Fetched Successfully", $registrationFeeTransaction, null, 200);
+        return ApiResponseService::success("Registration Fee Transactions Fetched Successfully", RegistrationFeeTransResource::collection($registrationFeeTransaction), null, 200);
     }
     public function getRegistrationFeeTransactionDetails(Request $request, $transactionId)
     {

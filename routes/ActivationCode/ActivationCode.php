@@ -6,3 +6,5 @@ Route::post('/purchase', [ActivationCodeController::class, 'purchaseActivationCo
 Route::get('/school', [ActivationCodeController::class, 'getSchoolBranchActivationCodes'])->name("get.schoolBranchActivationCode");
 Route::post('/student/activate', [ActivationCodeController::class, 'activateStudentAccount'])->name("activate.studentAccount.activationCode");
 Route::post('/teacher/activate', [ActivationCodeController::class, 'activateTeacherAccount'])->name("activate.teacherAccount.activationCode");
+Route::get("/usage", [ActivationCodeController::class, "getActivationCodeUsage"])->name("activationCodeUsage.index");
+Route::get('/status/student', [ActivationCodeController::class,  "getStudentActivationCodeStatus"])->name("activationCodeStatus.Student");

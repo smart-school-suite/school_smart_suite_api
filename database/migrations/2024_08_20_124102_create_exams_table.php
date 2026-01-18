@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('school_year');
             $table->boolean('timetable_published')->default(false);
             $table->boolean('result_released')->default(false);
-            $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
+            $table->enum('status', ['finished', 'inprogress', 'pending'])->default('pending');
             $table->integer('expected_candidate_number')->default(0);
             $table->integer('evaluated_candidate_number')->default(0);
             $table->boolean("grading_added")->default(false);
@@ -29,9 +29,9 @@ return new class extends Migration
         Schema::create('exam_types', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('exam_name');
-            $table->string('semester'); // first , second, third, fourth, fifth
-            $table->enum('type', ['exam', 'ca', 'resit']); // ex
-            $table->string('program_name'); //EX, CA, RESS
+            $table->string('semester');
+            $table->enum('type', ['exam', 'ca', 'resit']);
+            $table->string('program_name');
             $table->text('description')->nullable();
             $table->timestamps();
         });

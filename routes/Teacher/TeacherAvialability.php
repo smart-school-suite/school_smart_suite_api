@@ -3,17 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Teacher\TeacherPreferedTeachingTimeController;
 
-Route::middleware(['permission:teacher.avialability.create'])->post('/create', [TeacherPreferedTeachingTimeController::class, 'createInstructorAvailability'])
+Route::post('/create', [TeacherPreferedTeachingTimeController::class, 'createInstructorAvailability'])
     ->name('instructor-availability.create');
 
-Route::middleware(['permission:teacher.avialability.create'])->post('/{targetAvailabilityId}/{availabilityId}/create',
+Route::post('/{targetAvailabilityId}/{availabilityId}/create',
   [TeacherPreferedTeachingTimeController::class, 'createAvailabilityByOtherSlots']
 )->name('instructor-availability.create');
 
-Route::middleware(['permission:teacher.avialability.show'])->get('/teacher/{teacherId}/availability', [TeacherPreferedTeachingTimeController::class, 'getInstructorAvailabilitesByTeacher'])
+Route::get('/teacher/{teacherId}/availability', [TeacherPreferedTeachingTimeController::class, 'getInstructorAvailabilitesByTeacher'])
     ->name('teachers.availability.index');
 
-Route::middleware(['permission:teacher.avialability.update'])->patch('/update', [TeacherPreferedTeachingTimeController::class, 'bulkUpdateInstructorAvialabililty'])
+Route::patch('/update', [TeacherPreferedTeachingTimeController::class, 'bulkUpdateInstructorAvialabililty'])
        ->name('instructor-availability.bulk-update');
 
 Route::get('/school-semesters/teacher/{teacherId}/specialty-preference', [TeacherPreferedTeachingTimeController::class, 'getSchoolSemestersByTeacherSpecialtyPreference']);

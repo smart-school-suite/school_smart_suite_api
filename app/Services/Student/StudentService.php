@@ -20,7 +20,8 @@ class StudentService
             'guardian',
             'specialty',
             'level',
-            'studentBatch'
+            'studentBatch',
+            'gender',
         ])
             ->where("dropout_status", false)->get();
         return $students;
@@ -38,6 +39,7 @@ class StudentService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentManagement",
+                "action" => "student.deleted",
                 "authAdmin" => $authAdmin,
                 "data" => $studentExists,
                 "message" => "Student Deleted",
@@ -67,6 +69,7 @@ class StudentService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentManagement",
+                "action" => "student.updated",
                 "authAdmin" => $authAdmin,
                 "data" => $studentExists,
                 "message" => "Student Updated",
@@ -88,7 +91,10 @@ class StudentService
                 'guardian',
                 'specialty',
                 'level',
-                'studentBatch'
+                'gender',
+                'studentSource',
+                'studentBatch',
+                'studentParentRelationship'
             ])
             ->find($studentId);
         return $studentDetails;
@@ -106,6 +112,7 @@ class StudentService
                 "feature" => "studentManagement",
                 "authAdmin" => $authAdmin,
                 "data" => $student,
+                "action" => "student.deactivated",
                 "message" => "Student Account Deactivated",
             ]
         );
@@ -130,6 +137,7 @@ class StudentService
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentManagement",
                 "authAdmin" => $authAdmin,
+                "action" => "student.activated",
                 "data" => $student,
                 "message" => "Student Account Activated",
             ]
@@ -156,6 +164,7 @@ class StudentService
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentManagement",
                 "authAdmin" => $authAdmin,
+                "action" => "student.markedAsDropout",
                 "data" => $student,
                 "message" => "Student Marked As Drop Out",
             ]
@@ -188,6 +197,7 @@ class StudentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
+                    "action" => "student.reinstated",
                     "authAdmin" => $authAdmin,
                     "data" => $studentDropoutList,
                     "message" => "Drop Out Student Reinstated",
@@ -256,6 +266,7 @@ class StudentService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "studentManagement",
+                "action" => "student.reinstated",
                 "authAdmin" => $authAdmin,
                 "data" => $dropoutStudent,
                 "message" => "Drop Out Student Reinstated",
@@ -364,6 +375,7 @@ class StudentService
                     "permissions" =>  ["schoolAdmin.student.update"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
+                    "action" => "student.updated",
                     "feature" => "studentManagement",
                     "authAdmin" => $authAdmin,
                     "data" => $updateData,
@@ -403,12 +415,13 @@ class StudentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
+                    "action" => "student.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Student Account Activated",
                 ]
             );
-                        StudentActionEvent::dispatch([
+            StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
                 'studentIds'   => $studentIds,
                 'feature'      => 'studentActivate',
@@ -442,12 +455,13 @@ class StudentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
+                    "action" => "student.deleted",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Student Account Deactivated",
                 ]
             );
-                                    StudentActionEvent::dispatch([
+            StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
                 'studentIds'   => $studentIds,
                 'feature'      => 'studentDeactivate',
@@ -481,12 +495,13 @@ class StudentService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "studentManagement",
+                    "action" => "student.reinstated",
                     "authAdmin" => $authAdmin,
                     "data" => $dropOutIds,
                     "message" => "Drop Out Student Reinstated",
                 ]
             );
-              StudentActionEvent::dispatch([
+            StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
                 'studentIds'   => $studentIds,
                 'feature'      => 'studentDropout',

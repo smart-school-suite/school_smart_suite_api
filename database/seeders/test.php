@@ -13,6 +13,8 @@ use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvents;
 use App\Models\Exams;
 use App\Models\ExamType;
 use App\Models\AccessedStudent;
+use App\Models\Course\CourseType;
+use App\Models\Courses;
 use App\Models\Hall;
 use App\Models\HallType;
 use App\Models\LetterGrade;
@@ -23,12 +25,12 @@ class test extends Seeder
 {
     public function run(): void
     {
-        $hallTypes = HallType::pluck('id')->toArray();
-        $halls = Hall::all();
+        $hallTypes = CourseType::pluck('id')->toArray();
+        $halls = Courses::all();
 
         foreach ($halls as $hall) {
 
-            $count = rand(1, 3);
+            $count = rand(1, 2);
             $selectedTypeIds = Arr::random($hallTypes, $count);
 
             $syncData = [];

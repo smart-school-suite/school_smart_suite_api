@@ -136,6 +136,7 @@ class RegistrationFeeService
     {
         try {
             $registrationFee = RegistrationFee::where('school_branch_id', $currentSchool->id)
+            ->with(['student', 'specialty', 'level'])
                 ->find($registrationFeeId);
 
             if (!$registrationFee) {

@@ -22,9 +22,8 @@ class UpdateParentRequest extends FormRequest
         return [
             'name' => 'string|sometimes|nullable',
             'address' => 'string|sometimes|nullable',
-            'email' => 'sometimes|nullable|email',
-            'phone_one' => 'string|sometimes|nullable',
-            'relationship_to_student' => 'string|sometimes|nullable',
+            'phone' => 'string|sometimes|nullable',
+            'preferred_contact_method' => 'string|sometimes|nullable',
             'preferred_language' => 'string|sometimes|nullable',
         ];
     }

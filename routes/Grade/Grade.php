@@ -1,45 +1,37 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\GradesController;
+
 use App\Http\Controllers\GradeScale\SchoolGradeScaleController;
 use App\Http\Controllers\Exam\ExamGradeController;
 
-    // Create new exam grades
-    Route::middleware(['permission:schoolAdmin.grades.create'])->post('/exam-grades', [SchoolGradeScaleController::class, 'createExamGrades'])
+    Route::post('/exam-grades', [SchoolGradeScaleController::class, 'createExamGrades'])
         ->name('exam-grades.store');
 
     Route::post('/auto-gen-grading', [SchoolGradeScaleController::class, 'autoGenExamGrading'])->name('exam-grading.auto.generate');
-    // Get all exam grades
-    Route::middleware(['permission:schoolAdmin.grades.view'])->get('/exam-grades', [SchoolGradeScaleController::class, 'getAllGrades'])
+
+    Route::get('/exam-grades', [SchoolGradeScaleController::class, 'getAllGrades'])
         ->name('exam-grades.index');
 
-    // Update a specific grade configuration
-    Route::middleware(['permission:schoolAdmin.grades.update'])->put('/exam-grades/{gradeId}', [SchoolGradeScaleController::class, 'update_grades_scoped'])
+    Route::put('/exam-grades/{gradeId}', [SchoolGradeScaleController::class, 'update_grades_scoped'])
         ->name('exam-grades.update');
 
-    // Delete grades for a specific exam
-    Route::middleware(['permission:schoolAdmin.grades.delete'])->delete('/exams/{examId}/grades', [SchoolGradeScaleController::class, 'deleteGrades'])
+    Route::delete('/exams/{examId}/grades', [SchoolGradeScaleController::class, 'deleteGrades'])
         ->name('exams.grades.destroy');
 
-    // Get related exams for a specific exam (what does "related" mean here?)
-    Route::middleware(['permission:schoolAdmin.grades.relatedexam.view'])->get('/exams/{examId}/related-exams', [SchoolGradeScaleController::class, 'getRelatedExams'])
+    Route::get('/exams/{examId}/related-exams', [SchoolGradeScaleController::class, 'getRelatedExams'])
         ->name('exams.related-exams');
 
-    // Get grade configuration for a specific exam
-    Route::middleware(['permission:schoolAdmin.grades.config.view'])->get('/exams/{examId}/grades-config', [SchoolGradeScaleController::class, 'getGradesConfigByExam'])
+    Route::get('/exams/{examId}/grades-config', [SchoolGradeScaleController::class, 'getGradesConfigByExam'])
         ->name('exams.grades-config');
 
-    // Get exam configuration data for a specific exam (redundant with /exams/{examId}/grades-config?)
-    Route::middleware(['permission:schoolAdmin.grades.config.view'])->get('/exams/{examId}/config-data', [SchoolGradeScaleController::class, 'getExamConfigData'])
+    Route::get('/exams/{examId}/config-data', [SchoolGradeScaleController::class, 'getExamConfigData'])
         ->name('exams.config-data');
 
-    // Bulk delete grades for multiple exams
-    Route::middleware(['permission:permission:schoolAdmin.grades.delete'])->post('/exams/bulk-delete-grades', [SchoolGradeScaleController::class, 'bulkDeleteGrades'])
+    Route::post('/exams/bulk-delete-grades', [SchoolGradeScaleController::class, 'bulkDeleteGrades'])
         ->name('exams.grades.bulk-delete');
 
-    // Create grades based on another grade configuration
-    Route::middleware(['permission:schoolAdmin.grades.create'])->post('/grade-configs/{configId}/target-configs/{targetConfigId}/grades', [SchoolGradeScaleController::class, 'createGradesByOtherGrades'])
+    Route::post('/grade-configs/{configId}/target-configs/{targetConfigId}/grades', [SchoolGradeScaleController::class, 'createGradesByOtherGrades'])
         ->name('grade-configs.target-configs.grades.store');
 
     Route::delete('/grade-config/delete/{configId}', [SchoolGradeScaleController::class, 'deleteGradeConfig'])->name('delete-grades-configuration');
