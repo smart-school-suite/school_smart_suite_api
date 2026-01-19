@@ -8,3 +8,6 @@ Route::post('/student/activate', [ActivationCodeController::class, 'activateStud
 Route::post('/teacher/activate', [ActivationCodeController::class, 'activateTeacherAccount'])->name("activate.teacherAccount.activationCode");
 Route::get("/usage", [ActivationCodeController::class, "getActivationCodeUsage"])->name("activationCodeUsage.index");
 Route::get('/status/student', [ActivationCodeController::class,  "getStudentActivationCodeStatus"])->name("activationCodeStatus.Student");
+Route::get('/status/teacher', [ActivationCodeController::class,  "getTeacherActivationCodeStatus"])->name("activationCodeStatus.Teacher");
+Route::get('/student/subscription/{studentId}', [ActivationCodeController::class,  "getStudentSubscriptionDetail"])->name("student.subscription.detail");
+Route::get('/teacher/subscription/{teacherId}', [ActivationCodeController::class,  "getTeacherSubscriptionDetail"])->name("teacher.subscription.detail");

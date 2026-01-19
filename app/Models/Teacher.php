@@ -36,7 +36,8 @@ class Teacher extends Model
         'num_assigned_courses',
         'course_assignment_status',
         'num_assigned_specialties',
-        'specialty_assignment_status'
+        'specialty_assignment_status',
+        'sub_status'
     ];
 
     /**

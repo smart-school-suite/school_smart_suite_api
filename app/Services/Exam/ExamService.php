@@ -99,14 +99,13 @@ class ExamService
                 $currentSchool->id,
                 $examData
             );
-            UpdateExamStatusJob::dispatch($examId)->delay(Carbon::parse($data['end_date']));
-            UpdateExamStatusJob::dispatch($examId)->delay(Carbon::parse($data['start_date']));
             AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.exam.create"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "examManagement",
+                    "action" => "exam.created",
                     "authAdmin" => $authAdmin,
                     "data" => $exam,
                     "message" => "Exam Created",
@@ -467,6 +466,7 @@ class ExamService
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                 "schoolBranch" =>  $currentSchool->id,
                 "feature" => "examManagement",
+                "action" => "examGradeScale.added",
                 "authAdmin" => $authAdmin,
                 "data" => $exam,
                 "message" => "Exam Grade Scale Added",
@@ -542,6 +542,7 @@ class ExamService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "examManagement",
+                    "action" => "examGradeScale.added",
                     "authAdmin" => $authAdmin,
                     "data" => $result,
                     "message" => "Exam Grade Scale Added",

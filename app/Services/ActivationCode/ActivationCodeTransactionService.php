@@ -18,7 +18,15 @@ class ActivationCodeTransactionService
             );
         }
 
-        return $transactions;
+        return $transactions->map(fn($transaction) => [
+             "id" => $transaction->id,
+             "type" => "Activation Code",
+            "amount" => $transaction->amount,
+            "payment_ref" => $transaction->payment_ref,
+            "transaction_id" => $transaction->transaction_id,
+            "status" => $transaction->status,
+            "created_at" => $transaction->created_at,
+        ]);
     }
 
 }

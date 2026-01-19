@@ -49,9 +49,33 @@ class ActivationCodeController extends Controller
         return ApiResponseService::success("Activation Code Usages Fetched Successfully", $activationCodeUsage, null, 200);
     }
 
-    public function getStudentActivationCodeStatus(Request $request){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $status = $this->activationCodeService->getStudentActivationStatuses($currentSchool);
-         return ApiResponseService::success("Student Activation Code Status Fetched Successfully", $status, null, 200);
+    public function getStudentActivationCodeStatus(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $status = $this->activationCodeService->getStudentActivationStatuses($currentSchool);
+        return ApiResponseService::success("Student Activation Code Status Fetched Successfully", $status, null, 200);
     }
+
+    public function getTeacherActivationCodeStatus(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $status = $this->activationCodeService->getTeacherActivationStatuses($currentSchool);
+        return ApiResponseService::success("Teacher Activation Code Status Fetched Successfully", $status, null, 200);
+    }
+
+    public function getStudentSubscriptionDetail(Request $request, $studentId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $subscriptionDetail = $this->activationCodeService->getStudentSubscriptionDetail($currentSchool, $studentId);
+        return ApiResponseService::success("Student Subscription Detail Fetched Successfully", $subscriptionDetail, null, 200);
+    }
+
+    public function getTeacherSubscriptionDetail(Request $request, $teacherId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $subscriptionDetail = $this->activationCodeService->getTeacherSubscriptionDetail($currentSchool, $teacherId);
+        return ApiResponseService::success("Teacher Subscription Detail Fetched Successfully", $subscriptionDetail, null, 200);
+    }
+
+
 }

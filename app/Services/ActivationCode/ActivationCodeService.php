@@ -344,18 +344,84 @@ class ActivationCodeService
             ->all();
     }
 
-    public function getStudentActivationStatuses($currentSchool){
-         $activationStatus = Student::where("school_branch_id", $currentSchool->id)
-                             ->with(['activationCode.activationCode', 'specialty.level'])
-                             ->get();
-         return $activationStatus->map(fn ($student) => [
-             "id" => $student->id,
-             "student_name" => $student->name,
-             "specialty_name" => $student->specialty->specialty_name,
-             "level_name" => $student->specialty->level->name,
-             "level" =>   $student->specialty->level->level,
-             "sub_status" => $student->sub_status,
-             "activation_code" => $student->activationCode->first()->activationCode->code ?? null
-         ]);
+    public function getStudentActivationStatuses($currentSchool)
+    {
+        $activationStatus = Student::where("school_branch_id", $currentSchool->id)
+            ->with(['activationCode.activationCode', 'specialty.level'])
+            ->get();
+        return $activationStatus->map(fn($student) => [
+            "id" => $student->id,
+            "student_name" => $student->name,
+            "specialty_name" => $student->specialty->specialty_name,
+            "level_name" => $student->specialty->level->name,
+            "level" =>   $student->specialty->level->level,
+            "sub_status" => $student->sub_status,
+            "activation_code" => $student->activationCode->first()->activationCode->code ?? null
+        ]);
+    }
+
+    public function getStudentSubscriptionDetail($currentSchool, $studentId)
+    {
+        $student = Student::where("school_branch_id", $currentSchool->id)
+            ->with(['activationCode.activationCode', 'specialty.level'])
+            ->find($studentId);
+        if (!$student) {
+            throw new AppException(
+                "Student Not Found",
+                404,
+                "Student Not Found",
+                "The student account could not be found. Please ensure it has not been deleted."
+            );
+        }
+        return [
+            "id" => $student->id,
+            "student_name" => $student->name,
+            "avatar" => $student->profile_picture ?? null,
+            "specialty_name" => $student->specialty->specialty_name,
+            "level_name" => $student->specialty->level->name,
+            "level" =>   $student->specialty->level->level,
+            "sub_status" => $student->sub_status,
+            "activation_code" => $student->activationCode->first()->activationCode->code ?? null
+        ];
+    }
+
+    public function getTeacherActivationStatuses($currentSchool)
+    {
+        $activationStatus = Teacher::where("school_branch_id", $currentSchool->id)
+            ->with(['activationCode.activationCode'])
+            ->get();
+        return $activationStatus->map(fn($teacher) => [
+            "id" => $teacher->id,
+            "teacher_name" => $teacher->name,
+            "first_name" => $teacher->first_name,
+            "last_name" => $teacher->last_name,
+            "avatar" => $teacher->profile_picture ?? null,
+            "sub_status" => $teacher->sub_status,
+            "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null
+        ]);
+    }
+
+    public function getTeacherSubscriptionDetail($currentSchool, $teacherId)
+    {
+        $teacher = Teacher::where("school_branch_id", $currentSchool->id)
+            ->with(['activationCode.activationCode'])
+            ->find($teacherId);
+        if (!$teacher) {
+            throw new AppException(
+                "Teacher Not Found",
+                404,
+                "Teacher Not Found",
+                "The teacher account could not be found. Please ensure it has not been deleted."
+            );
+        }
+        return [
+            "id" => $teacher->id,
+            "teacher_name" => $teacher->name,
+            "first_name" => $teacher->first_name,
+            "last_name" => $teacher->last_name,
+            "avatar" => $teacher->profile_picture ?? null,
+            "sub_status" => $teacher->sub_status,
+            "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null
+        ];
     }
 }
