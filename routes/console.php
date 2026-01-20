@@ -15,3 +15,31 @@ Schedule::command('semesters:update-statuses')
     ->withoutOverlapping(3600)
     ->runInBackground()
     ->onOneServer();
+
+Schedule::command('admin:activation-code-expire-reminder-notification')
+    ->dailyAt('09:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(3600)
+    ->runInBackground()
+    ->onOneServer();
+
+Schedule::command('teacher:subscription-renewal-reminder-notification')
+    ->dailyAt('10:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(3600)
+    ->runInBackground()
+    ->onOneServer();
+
+Schedule::command('student:subscription-renewal-reminder-notification')
+    ->dailyAt('11:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(3600)
+    ->runInBackground()
+    ->onOneServer();
+
+Schedule::command('admin:activation-code-renewal-reminder-notification')
+    ->dailyAt('12:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(3600)
+    ->runInBackground()
+    ->onOneServer();

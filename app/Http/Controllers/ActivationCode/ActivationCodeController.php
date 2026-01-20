@@ -20,7 +20,7 @@ class ActivationCodeController extends Controller
     public function purchaseActivationCode(PurchaseActivationCodeRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $purchaseCodes = $this->activationCodeService->purchaseActivationCode($request->validated(), $currentSchool);
+        $purchaseCodes = $this->activationCodeService->purchaseActivationCode($request->validated(), $currentSchool, $this->resolveUser());
         return ApiResponseService::success("Activation Code Purchased Successfully", $purchaseCodes, null, 200);
     }
     public function getSchoolBranchActivationCodes(Request $request)
@@ -77,5 +77,14 @@ class ActivationCodeController extends Controller
         return ApiResponseService::success("Teacher Subscription Detail Fetched Successfully", $subscriptionDetail, null, 200);
     }
 
-
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
+    }
 }

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class UpdateExamStatusJob implements ShouldQueue
 {
-      use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120;
     public $tries = 3;

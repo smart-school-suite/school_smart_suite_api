@@ -12,10 +12,12 @@ use App\Models\Student;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\Teacher;
-
+use App\Notifications\ActivationCode\Admin\AdminPurchaseSuccessfullNotification;
+use App\Notifications\ActivationCode\Teacher\TeacherSubscribedNotification;
+use App\Notifications\ActivationCode\Student\StudentSubscribedNotification;
 class ActivationCodeService
 {
-    public function purchaseActivationCode($data, $currentSchool)
+    public function purchaseActivationCode($data, $currentSchool, $authAdmin)
     {
         $paymentMethod = PaymentMethod::find($data['payment_method_id']);
         if (!$paymentMethod) {
@@ -48,7 +50,6 @@ class ActivationCodeService
             );
         }
 
-        // Fetch pricing for the school's country
         $pricing = ActivationCodeType::where('country_id', $currentSchool->school->country_id)
             ->whereIn('type', ['teacher', 'student'])
             ->pluck('price', 'type');
@@ -74,7 +75,6 @@ class ActivationCodeService
             );
         }
 
-        // Calculate total amount
         $totalAmount = ($teacherCount * $teacherPrice) + ($studentCount * $studentPrice);
 
         if ($totalAmount <= 0) {
@@ -86,7 +86,6 @@ class ActivationCodeService
             );
         }
 
-        // Generate activation codes with prefixed readable code
         $codes = [];
         $expiresAt = Carbon::now()->addYear();
 
@@ -139,6 +138,21 @@ class ActivationCodeService
             'updated_at' => now(),
         ]);
 
+        $authAdmin->notify(new AdminPurchaseSuccessfullNotification(
+            [
+                [
+                    'type' => 'teacher',
+                    'quantity' => $teacherCount,
+                    'duration' => 365,
+                ],
+                [
+                    'type' => 'student',
+                    'quantity' => $studentCount,
+                    'duration' => 365,
+                ],
+            ],
+            $totalAmount
+        ));
         return [
             'transaction' => $transaction,
             'codes_generated' => $codes,
@@ -230,6 +244,10 @@ class ActivationCodeService
             'subscription_expires_at' => $subscriptionExpiresAt,
         ]);
 
+        $student->notify(new StudentSubscribedNotification(
+            $subscriptionExpiresAt->toDateString()
+        ));
+
         return [
             'message' => 'Student account activated successfully.',
             'activation' => $codeUsage,
@@ -313,6 +331,7 @@ class ActivationCodeService
             'subscription_expires_at' => $subscriptionExpiresAt,
         ]);
 
+        $teacher->notify(new TeacherSubscribedNotification($subscriptionExpiresAt));
         return [
             'message' => 'Teacher account activated successfully.',
             'activation' => $codeUsage,
