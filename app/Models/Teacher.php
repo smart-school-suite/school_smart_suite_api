@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
@@ -16,11 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Teacher extends Model
 {
     use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+
     protected $fillable = [
         'id',
         'school_branch_id',
@@ -40,20 +37,10 @@ class Teacher extends Model
         'sub_status'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'teachers';
@@ -158,5 +145,10 @@ class Teacher extends Model
     public function gender(): BelongsTo
     {
         return $this->belongsTo(Gender::class, "gender_id");
+    }
+
+    public function semesterTimetableSlot(): HasMany
+    {
+        return $this->hasMany(SemesterTimetableSlot::class);
     }
 }

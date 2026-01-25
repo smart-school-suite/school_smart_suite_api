@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -41,10 +42,9 @@ class Semester extends Model
     {
         return $this->hasMany(Examtype::class);
     }
-
-    public function timetable(): BelongsTo
+    public function semesterTimetableSlot(): HasMany
     {
-        return $this->belongsTo(Timetable::class, 'semeter_id');
+        return $this->hasMany(SemesterTimetableSlot::class);
     }
     public function courses(): HasMany
     {

@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Teacher;
-use App\Notifications\ActivationCode\Teacher\TeacherSubscriptionRenewalReminderNotification;
+use App\Notifications\ActivationCode\Teacher\TeacherRenewalReminderNotification;
 
 class SendTeacherSubscriptionRenewalReminderNotificationJob implements ShouldQueue
 {
@@ -67,7 +67,7 @@ class SendTeacherSubscriptionRenewalReminderNotificationJob implements ShouldQue
     private function notifyTeacher(Teacher $teacher, int $daysLeft, $expiresAt, int $count): void
     {
         $teacher->notify(
-            new TeacherSubscriptionRenewalReminderNotification(
+            new TeacherRenewalReminderNotification(
                 daysRemaining: $daysLeft,
                 expiryDate: Carbon::parse($expiresAt)->toDateString()
             )

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\SemesterTimetable\SemesterActiveTimetable;
+use App\Models\SemesterTimetable\SemesterTimetableDraft;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,6 +35,14 @@ class SchoolSemester extends Model
     public $table = 'school_semesters';
     public $keyType = 'string';
 
+    public function semesterActiveTimetable(): HasMany
+    {
+        return $this->hasMany(SemesterActiveTimetable::class);
+    }
+    public function semesterTimetableDraft(): HasMany
+    {
+        return $this->hasMany(SemesterTimetableDraft::class);
+    }
     public function instructorAvailability(): HasMany
     {
         return $this->hasMany(InstructorAvailability::class);

@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Requests\SpecialtyTimetable;
+namespace App\Http\Requests\SemesterTimetableDraft;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AiGenerateTimetableRequest extends FormRequest
+class CreateSemesterTimetableDraftRequest extends FormRequest
 {
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -14,10 +15,7 @@ class AiGenerateTimetableRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'prompt' => 'required|string',
             'school_semester_id' => 'required|string|exists:school_semesters,id',
-            'draft_id' => 'sometimes|nullable|string|exists:timetable_drafts,id',
-            'parent_version_id' => 'sometimes|nullable|string|exists:timetable_versions,id',
         ];
     }
 }

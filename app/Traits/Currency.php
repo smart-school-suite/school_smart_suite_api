@@ -6,22 +6,10 @@ trait Currency
 {
     public function getBranchCurrency(): string
     {
-        return Schoolbranches::where('school_branch_id', $this->school_branch_id)
-            ->with('country')
-            ->first()?->country?->currency ?? 'NGN';
+        return Schoolbranches::where('id', $this->school_branch_id)
+            ->with('school.country')
+            ->first()?->school?->country?->currency ?? 'N/A';
     }
-
-    // public function getBranchCurrencySymbol(): string
-    // {
-    //     return match (strtoupper($this->getBranchCurrency())) {
-    //         'NGN' => '₦',
-    //         'USD' => '$',
-    //         'EUR' => '€',
-    //         'GBP' => '£',
-    //         'GHS' => 'GH₵',
-    //         default => $this->getBranchCurrency(),
-    //     };
-    // }
 
     public function formatAmount($amount): string
     {

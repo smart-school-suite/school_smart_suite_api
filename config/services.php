@@ -39,4 +39,8 @@ return [
     'firebase' => [
         'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase/firebase_credentials.json')),
     ],
+
+    'semester_timetable_scheduler' => [
+        'base_url' => env('SEMESTER_TIMETABLE_SCHEDULER_BASE_URL', 'http://localhost:8000'),
+    ],
 ];

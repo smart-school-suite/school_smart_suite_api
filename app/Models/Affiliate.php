@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Affiliate extends Model
 {
+    use GeneratesUuid;
     protected $fillable = [
         'name',
         'first_name',
@@ -22,9 +24,8 @@ class Affiliate extends Model
         'country_id'
     ];
 
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $keyType = 'string';
-
     public $table = 'affiliates';
 
     public function affiliateApplication(): HasMany {

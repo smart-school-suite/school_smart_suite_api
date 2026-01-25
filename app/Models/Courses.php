@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Course\CourseType;
 use App\Models\Course\SchoolCourseType;
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -118,5 +119,10 @@ class Courses extends Model
     public function studentresit(): HasMany
     {
         return $this->hasMany(Studentresit::class);
+    }
+
+    public function semesterTimetableSlot(): HasMany
+    {
+        return $this->hasMany(SemesterTimetableSlot::class);
     }
 }

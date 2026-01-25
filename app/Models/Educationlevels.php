@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,19 +25,24 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'levels';
 
-    public function resitExamRef(): HasMany {
-         return $this->hasMany(ResitExamRef::class);
+    public function resitExamRef(): HasMany
+    {
+        return $this->hasMany(ResitExamRef::class);
     }
-    public function specialtyHall(): HasMany {
-         return $this->hasMany(SpecialtyHall::class);
+    public function specialtyHall(): HasMany
+    {
+        return $this->hasMany(SpecialtyHall::class);
     }
-    public function examCandidate(): HasMany {
-         return $this->hasMany(AccessedStudent::class);
+    public function examCandidate(): HasMany
+    {
+        return $this->hasMany(AccessedStudent::class);
     }
-     public function instructorAvailability(): HasMany {
+    public function instructorAvailability(): HasMany
+    {
         return $this->hasMany(InstructorAvailability::class);
     }
-    public function feeSchedule(): HasMany {
+    public function feeSchedule(): HasMany
+    {
         return $this->hasMany(FeeSchedule::class);
     }
     public function electionParticipants(): HasMany
@@ -48,7 +54,8 @@ class Educationlevels extends Model
         return $this->hasMany(ResitResults::class);
     }
 
-    public function studentFeeSchedule(): HasMany {
+    public function studentFeeSchedule(): HasMany
+    {
         return $this->hasMany(StudentFeeSchedule::class);
     }
     public function resitmarks(): HasMany
@@ -109,7 +116,13 @@ class Educationlevels extends Model
         return $this->hasMany(Studentresit::class);
     }
 
-    public function levelType(): BelongsTo {
-         return $this->belongsTo(LevelType::class, 'level_type_id');
+    public function levelType(): BelongsTo
+    {
+        return $this->belongsTo(LevelType::class, 'level_type_id');
+    }
+
+    public function semesterTimetableSlot(): HasMany
+    {
+        return $this->hasMany(SemesterTimetableSlot::class);
     }
 }

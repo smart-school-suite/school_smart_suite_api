@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -48,9 +49,12 @@ class Studentbatch extends Model
     {
         return $this->hasMany(Student::class, 'student_batch_id');
     }
-
     public function resitExamRef(): HasMany
     {
         return $this->hasMany(ResitExamRef::class);
+    }
+    public function semesterTimetableSlot(): HasMany
+    {
+        return $this->hasMany(SemesterTimetableSlot::class, 'student_batch_id');
     }
 }

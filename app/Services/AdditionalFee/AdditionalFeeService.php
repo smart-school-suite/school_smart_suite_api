@@ -2,7 +2,7 @@
 
 namespace App\Services\AdditionalFee;
 
-use App\Jobs\StatisticalJobs\FinancialJobs\AdditionalFeeStatJob;
+
 use App\Models\AdditionalFees;
 use App\Models\Student;
 use App\Notifications\AdditionalFee;
@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Jobs\NotificationJobs\SendAdditionalFeeNotification;
 use App\Jobs\NotificationJobs\SendAdminAdditionalFeeReminderNotificationJob;
+use App\Notifications\AdditionalFee\Student\StudentAdditionalFeeNotification;
+use App\Notifications\AdditionalFee\Admin\AdminAdditionalFeeNotification;
 use Carbon\Carbon;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
@@ -37,7 +39,7 @@ class AdditionalFeeService
         $additionalFee->level_id = $student->level_id;
         $additionalFee->student_id = $student->id;
         $additionalFee->save();
-        AdditionalFeeStatJob::dispatch($additionalFeeId, $currentSchool->id);
+
         AdminActionEvent::dispatch(
             [
                 "permissions" =>  ["schoolAdmin.additionalFee.create"],
@@ -69,7 +71,8 @@ class AdditionalFeeService
                 "level_id" => $student->level_id
             ]
         ));
-        $student->notify(new AdditionalFee($data['amount'], $data['reason']));
+        $student->notify(new StudentAdditionalFeeNotification($data['amount'], $data['reason']));
+        $authAdmin->notify(new AdminAdditionalFeeNotification(1, $data['amount'], $data['reason']));
         return $additionalFee;
     }
     public function deleteStudentAdditionalFees(string $feeId, $currentSchool, $authAdmin)
@@ -520,7 +523,8 @@ class AdditionalFeeService
                         "amount" => $studentData['amount'],
                         "specialty_id" => $student->specialty_id,
                         "department_id" => $student->department_id,
-                        "level_id" => $student->level_id
+                        "level_id" => $student->level_id,
+                        "value" => 10000
                     ]
                 ));
             }
