@@ -12,17 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Str;
 
 class Schooladmin extends Authenticatable
 {
     use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'id',
         'name',
@@ -44,11 +38,7 @@ class Schooladmin extends Authenticatable
     protected $cast = [
         'date_of_birth' => 'date'
     ];
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -103,11 +93,10 @@ class Schooladmin extends Authenticatable
         return $this->belongsTo(School::class, 'school_branch_id');
     }
 
-    public function otps()
+    public function userBadge()
     {
-        return $this->morphMany(Otp::class, 'otpable');
+        return $this->morphMany(UserBadge::class, 'actorable');
     }
-
     public function passwordResetTokens()
     {
         return $this->morphMany(PasswordResetToken::class, 'actorable');

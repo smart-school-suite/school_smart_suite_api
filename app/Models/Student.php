@@ -74,12 +74,14 @@ class Student extends Model
         ];
     }
 
-    public function gender(): BelongsTo {
-         return $this->belongsTo(Gender::class, 'gender_id');
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class, 'gender_id');
     }
 
-    public function studentSource(): BelongsTo {
-         return $this->belongsTo(StudentSource::class, 'student_source_id');
+    public function studentSource(): BelongsTo
+    {
+        return $this->belongsTo(StudentSource::class, 'student_source_id');
     }
     public function routeNotificationForFcm()
     {
@@ -136,8 +138,14 @@ class Student extends Model
         return $this->morphMany(Otp::class, 'actorable');
     }
 
-    public function activationCode(): MorphMany {
-         return $this->morphMany(ActivationCodeUsage::class, 'actorable');
+    public function userBadge()
+    {
+        return $this->morphMany(UserBadge::class, 'actorable');
+    }
+
+    public function activationCode(): MorphMany
+    {
+        return $this->morphMany(ActivationCodeUsage::class, 'actorable');
     }
 
     public function additionalFees(): HasMany
@@ -250,7 +258,8 @@ class Student extends Model
         return $this->morphMany(BadgeAssignment::class, 'assignable');
     }
 
-    public function studentParentRelationship(){
-         return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
+    public function studentParentRelationship()
+    {
+        return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
     }
 }

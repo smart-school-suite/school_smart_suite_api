@@ -52,10 +52,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
-                Schema::create('marks', function (Blueprint $table) {
+        Schema::create('marks', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->decimal('score', 5, 2);
-            $table->decimal('grade_points', 5,2);
+            $table->decimal('grade_points', 5, 2);
             $table->enum('grade_status', ['passed', 'failed'])->default('passed');
             $table->string('gratification');
             $table->enum('resit_status', ['resit', 'no_resit', 'high_resit_potential', 'low_resit_potential']);
@@ -63,7 +63,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-                Schema::create('student_results', function (Blueprint $table) {
+        Schema::create('student_results', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->decimal('gpa', 4, 2);
             $table->decimal('total_score', 6, 2);
