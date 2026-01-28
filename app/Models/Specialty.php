@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -159,5 +160,10 @@ class Specialty extends Model
     public function announcementAudience()
     {
         return $this->morphMany(AnnouncementAudience::class, 'audienceable');
+    }
+
+    public function schoolAcademicYear(): HasMany
+    {
+        return $this->hasMany(SchoolAcademicYear::class);
     }
 }
