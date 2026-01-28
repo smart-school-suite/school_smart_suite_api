@@ -45,4 +45,9 @@ class SemesterTimetableVersion extends Model
     {
         return $this->hasMany(SemesterTimetablePrompt::class);
     }
+
+    public function timeTableSlot(): HasMany {
+
+        return $this->hasMany(SemesterTimetableSlot::class, 'timetable_version_id');
+    }
 }

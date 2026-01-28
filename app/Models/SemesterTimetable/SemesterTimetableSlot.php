@@ -30,10 +30,10 @@ class SemesterTimetableSlot extends Model
         'start_time',
         'end_time',
         'semester_id',
-        'duration',
         'break',
         'hall_id',
-        'student_batch_id'
+        'student_batch_id',
+        'timetable_version_id',
     ];
 
     protected $casts = [
@@ -76,5 +76,10 @@ class SemesterTimetableSlot extends Model
     public function studentBatch(): BelongsTo
     {
         return $this->belongsTo(Studentbatch::class, 'student_batch_id');
+    }
+
+    public function semesterTimetableVersion(): BelongsTo
+    {
+        return $this->belongsTo(SemesterTimetableVersion::class, 'timetable_version_id');
     }
 }

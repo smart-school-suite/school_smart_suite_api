@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->integer('version_number');
             $table->string('label');
-            $table->enum('scheduler_status', ['success', 'partial', 'failed', 'in_progress'])->default('in_progress');
+            $table->enum('scheduler_status', ['optimal', 'partial', 'failed', 'in_progress'])->default('in_progress');
             $table->timestamps();
         });
 

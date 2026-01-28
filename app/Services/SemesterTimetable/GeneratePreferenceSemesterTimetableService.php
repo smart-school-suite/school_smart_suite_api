@@ -17,7 +17,7 @@ use App\Services\SemesterTimetableAI\GeminiJsonService;
 use App\Services\SemesterTimetableScheduler\PreferenceSchedulingClient;
 use Carbon\Carbon;
 
-class GenerateSemesterTimetableService
+class GeneratePreferenceSemesterTimetableService
 {
     protected PreferenceSchedulingClient $schedulingClient;
     public function __construct(
@@ -28,11 +28,48 @@ class GenerateSemesterTimetableService
         $this->schedulingClient = $schedulingClient;
     }
 
-    public function generateTimetable(array $data, $currentSchool): array
+    public function generateTimetable(array $data, object $currentSchool): array
     {
+       if(isset($data['prompt_id']) && isset($data['parent_version_id'])) {
+            $parentVersion = SemesterTimetablePrompt::where('school_branch_id', $currentSchool->id)
+                ->where('id', $data['prompt_id'])
+                ->with(['baseVersion' => function($q){
+                    $q->where("id", $data['parent_version_id'] ?? null);
+                }])
+                ->first();
+            if(!$parentVersion || !$parentVersion->baseVersion) {
+                throw new AppException(
+                    "Parent Version Not Found",
+                    404,
+                    "Parent Version Not Found",
+                    "The specified parent version for the timetable prompt was not found. Please ensure the parent version ID is correct."
+                );
+            }
+       }
+
+        if (isset($data['draft_id'])) {
+            $draft = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
+                ->where('id', $data['draft_id'])
+                ->firstOrFail();
+        } else {
+            $draft = $this->createTimetableDraft($data, $currentSchool);
+        }
+
+        $timetablePrompt = SemesterTimetablePrompt::create([
+            'school_branch_id' => $currentSchool->id,
+            'user_prompt' => $data['prompt'],
+            'school_semester_id' => $data['school_semester_id'],
+            'draft_id' => $draft->id,
+        ]);
         $stringent = $this->geminiIntentService->classify($data['prompt']);
 
         if ($stringent['is_unrelated']) {
+            $timetablePrompt->update([
+                'ai_output' => [
+                    'is_unrelated' => true,
+                    'message' => "I’m here to help specifically with semester timetables. You can ask me to create a timetable, adjust class schedules, or add scheduling constraints to fit your academic needs.",
+                ],
+            ]);
             return [
                 'is_unrelated' => true,
                 'message' => "I’m here to help specifically with semester timetables. You can ask me to create a timetable, adjust class schedules, or add scheduling constraints to fit your academic needs.",
@@ -70,15 +107,26 @@ class GenerateSemesterTimetableService
 
         $promptResponse = $this->geminiJsonService->generateStructuredJson(
             $data['prompt'],
-            $this->buildPromptPayload($teacherCourses, $teachers, $halls)
+            $this->buildPromptPayload($teacherCourses, $teachers, $halls),
+            $parentVersion?->scheduler_input ?? null
         );
 
-        if ($data['draft_id'] ?? null === null) {
-            $draft = $this->createTimetableDraft($data, $currentSchool);
-            $draftId = $draft->id;
-            $this->createTimetableVersion($data, $currentSchool, $draftId, 'processing');
+
+        $timetableVersion = $this->createTimetableVersion($data, $currentSchool, $draft->id, 'in_progress');
+        if (isset($data['parent_version_id'])) {
+            $timetablePrompt->update([
+                'base_version_id' => $data['parent_version_id'],
+                'result_version_id' => $timetableVersion->id,
+                'scheduler_input' => $promptResponse,
+            ]);
+        } else {
+            $timetablePrompt->update([
+                'base_version_id' => null,
+                'result_version_id' => $timetableVersion->id,
+                'scheduler_input' => $promptResponse,
+            ]);
         }
-        return $this->buildBody(
+        $schedulerInput =  $this->buildBody(
             $preferred,
             $teachers,
             $teacherBusy,
@@ -87,6 +135,14 @@ class GenerateSemesterTimetableService
             $hallBusy,
             $promptResponse
         );
+        $schedulerResponse = $this->schedulingClient->scheduleWithPreferences($schedulerInput);
+        $timetableVersion->update([
+            'scheduler_status' => "optimal",
+        ]);
+        return [
+            'scheduler_response' => $schedulerResponse,
+            'prompt_response' => $promptResponse,
+        ];
     }
     private function getSchoolSemester(string $id): SchoolSemester
     {
@@ -174,7 +230,7 @@ class GenerateSemesterTimetableService
             'courses' => $teacherCourses->map(fn($c) => [
                 'course_id' => $c->course->id,
                 'course_title' => $c->course->course_title,
-                'course_type' => $c->course->types,
+                'course_type' => $c->course->types->pluck('name')->toArray(),
                 'credit' => $c->course->credit,
                 'course_code' => $c->course->course_code,
             ]),
@@ -186,7 +242,7 @@ class GenerateSemesterTimetableService
                 'hall_id' => $h->hall->id,
                 'hall_name' => $h->hall->name,
                 'capacity' => $h->hall->capacity,
-                'type' => $h->hall->types,
+                'type' => $h->hall->types->pluck('name')->toArray(),
             ]),
         ];
     }
@@ -216,7 +272,7 @@ class GenerateSemesterTimetableService
                 'course_id' => $c->course->id,
                 'course_title' => $c->course->course_title,
                 'course_credit' => $c->course->credit,
-                'course_type' => $c->course->types,
+                'course_type' => "theoretical",
                 'course_hours' => 45,
                 'teacher_id' => $c->teacher->id,
                 'teacher_name' => $c->teacher->name,
@@ -225,7 +281,7 @@ class GenerateSemesterTimetableService
                 'hall_name' => $h->hall->name,
                 'hall_id' => $h->hall->id,
                 'hall_capacity' => $h->hall->capacity,
-                'hall_type' => $h->hall->types,
+                'hall_type' => "lecture",
             ]),
             'hall_busy_periods' => $hallBusy->map(fn($s) => [
                 'hall_id' => $s->hall->id,
@@ -240,12 +296,9 @@ class GenerateSemesterTimetableService
             'soft_constrains' => collect($promptResponse['soft_constraints']),
         ];
     }
-
-
-    //create timetable draft
     private function createTimetableDraft(array $data, object $currentSchool)
     {
-        $semesterId = (string) $data['semester_id'];
+        $semesterId = (string) $data['school_semester_id'];
 
         $existingCount = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
             ->where('school_semester_id', $semesterId)
@@ -269,7 +322,6 @@ class GenerateSemesterTimetableService
 
         return $timetableDraft;
     }
-
     private function createTimetableVersion(array $data, object $currentSchool, string $draftId, $schedulerStatus)
     {
         $timetableVersions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
@@ -283,11 +335,11 @@ class GenerateSemesterTimetableService
             'draft_id'           => $draftId,
             'school_branch_id'   => $currentSchool->id,
             'version_count'      => $versionNumber,
-            'scheduler_status' => $schedulerStatus
+            'scheduler_status' => $schedulerStatus ?? 'partial'
         ]);
+
         return $timetableVersion;
     }
-
     private function createTimetableVersionSlots(string $timetableVersionId, object $currentSchool, $schedulerResponse)
     {
         $generatedSlots = $schedulerResponse->timetable;
@@ -305,27 +357,5 @@ class GenerateSemesterTimetableService
                 'timetable_version_id' => $timetableVersionId,
             ]);
         }
-    }
-
-    private function createTimetablePrompts(
-        $schedulerResponse,
-        array $data,
-        string $baseVersionId,
-        string $resultVersionId,
-        object $currentSchool,
-        $schedulerOutput,
-        $schedulerInput,
-        $aiOutput
-    ) {
-
-        SemesterTimetablePrompt::create([
-            'school_branch_id' => $currentSchool->id,
-            'base_version_id' => $baseVersionId ?? null,
-            'result_version_id' => $resultVersionId,
-            'prompt' => $data['prompt'],
-            'ai_output' => json_encode($aiOutput),
-            'scheduler_input' => json_encode($schedulerInput),
-            'scheduler_output' => json_encode($schedulerOutput),
-        ]);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Timetable;
+namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
 use App\Models\InstructorAvailabilitySlot;
@@ -17,7 +17,7 @@ use App\Services\SemesterTimetableAI\GeminiJsonService;
 use App\Services\SemesterTimetableScheduler\PreferenceSchedulingClient;
 use Carbon\Carbon;
 
-class AiGenerateTimetableService
+class GenerateFixedSemesterTimetableService
 {
     protected PreferenceSchedulingClient $schedulingClient;
     public function __construct(
@@ -30,6 +30,23 @@ class AiGenerateTimetableService
 
     public function generateTimetable(array $data, object $currentSchool): array
     {
+
+        if (isset($data['prompt_id']) && isset($data['parent_version_id'])) {
+            $parentVersion = SemesterTimetablePrompt::where('school_branch_id', $currentSchool->id)
+                ->where('id', $data['prompt_id'])
+                ->with(['baseVersion' => function ($q) {
+                    $q->where("id", $data['parent_version_id'] ?? null);
+                }])
+                ->first();
+            if (!$parentVersion || !$parentVersion->baseVersion) {
+                throw new AppException(
+                    "Parent Version Not Found",
+                    404,
+                    "Parent Version Not Found",
+                    "The specified parent version for the timetable prompt was not found. Please ensure the parent version ID is correct."
+                );
+            }
+        }
 
         if (isset($data['draft_id'])) {
             $draft = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
@@ -64,16 +81,6 @@ class AiGenerateTimetableService
         $teachers = $this->getTeachers($currentSchool->id, $semester->specialty_id);
         $teacherIds = $teachers->pluck('teacher_id')->toArray();
 
-        $preferred = $this->getTeacherPreferredSchedule($currentSchool->id, $semester->id, $semester->specialty_id, $teacherIds);
-        if ($preferred->isEmpty()) {
-            throw new AppException(
-                "Teacher Prefered Teaching Slot Not Added",
-                404,
-                "Teacher Preferred Teaching Period Not Added",
-                "Teacher Preferred Teaching for {$semester->semester->name} {$semester->specialty->specialty_name}, {$semester->specialty->level->level} please ensure that all teachers have added their preferred teaching times"
-            );
-        }
-
         $teacherCourses = $this->getTeacherCourses($currentSchool->id, $teacherIds, $semester);
         if ($teacherCourses->isEmpty()) {
             throw new AppException(
@@ -91,7 +98,8 @@ class AiGenerateTimetableService
 
         $promptResponse = $this->geminiJsonService->generateStructuredJson(
             $data['prompt'],
-            $this->buildPromptPayload($teacherCourses, $teachers, $halls)
+            $this->buildPromptPayload($teacherCourses, $teachers, $halls),
+            $parentVersion?->scheduler_input ?? null
         );
 
 
@@ -110,7 +118,6 @@ class AiGenerateTimetableService
             ]);
         }
         $schedulerInput =  $this->buildBody(
-            $preferred,
             $teachers,
             $teacherBusy,
             $teacherCourses,
@@ -149,16 +156,6 @@ class AiGenerateTimetableService
         }
 
         return $q;
-    }
-
-    private function getTeacherPreferredSchedule(string $branchId, string $semesterId, string $specialtyId, array $teacherIds)
-    {
-        return InstructorAvailabilitySlot::where('school_branch_id', $branchId)
-            ->where('specialty_id', $specialtyId)
-            ->where('school_semester_id', $semesterId)
-            ->whereIn('teacher_id', $teacherIds)
-            ->with('teacher')
-            ->get();
     }
 
     private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $semester)
@@ -230,16 +227,9 @@ class AiGenerateTimetableService
         ];
     }
 
-    private function buildBody($preferred, $teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, $promptResponse): array
+    private function buildBody($teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, $promptResponse): array
     {
         return [
-            'teacher_prefered_teaching_period' => $preferred->map(fn($s) => [
-                'start_time' => Carbon::createFromFormat('H:i:s', $s->start_time)->format('H:i'),
-                'end_time' => Carbon::createFromFormat('H:i:s', $s->end_time)->format('H:i'),
-                'day' => $s->day_of_week,
-                'teacher_id' => $s->teacher_id,
-                'teacher_name' => $s->teacher->name,
-            ]),
             'teachers' => $teachers->map(fn($t) => [
                 'teacher_id' => $t->teacher->id,
                 'name' => $t->teacher->name,
@@ -341,5 +331,4 @@ class AiGenerateTimetableService
             ]);
         }
     }
-
 }

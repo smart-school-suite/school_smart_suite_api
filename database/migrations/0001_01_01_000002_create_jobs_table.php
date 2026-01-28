@@ -43,6 +43,37 @@ return new class extends Migration
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
         });
+
+        Schema::create('system_jobs', function (Blueprint $table) {
+            $table->string('id')->primary()->index();
+            $table->string('type', 150);
+            $table->string('context_type');
+            $table->string('context_id', 64);
+            $table->string('initiated_by_id', 64);
+            $table->string('initiated_by_type');
+            $table->string('queue', 150);
+            $table->enum('status', ['QUEUED', 'PROCESSING', 'COMPLETED', 'PARTIAL_SUCCESS', 'FAILED', 'CANCELLED'])->default('QUEUED');
+            $table->string('stage', 150);
+            $table->unsignedTinyInteger('progress')->default(0);
+            $table->unsignedTinyInteger('max_attempts')->default(3);
+            $table->json('payload')->nullable();
+            $table->json('out_put')->nullable();
+            $table->string('error_code')->nullable();
+            $table->text('error_message')->nullable();
+            $table->timestamp('started_at');
+            $table->timestamp('finished_at');
+            $table->timestamps();
+        });
+
+        Schema::create('system_job_events', function (Blueprint $table) {
+            $table->string('id')->primary()->index();
+            $table->enum('status', ['STATUS_CHANGED', 'STAGE_CHANGED', 'PROGRESS_UPDATED', 'RETRY', 'ERROR']);
+            $table->text('message')->nullable();
+            $table->json('meta')->nullable();
+            $table->string('system_job_id');
+            $table->foreign('system_job_id')->references('id')->on('system_jobs');
+            $table->timestamps();
+        });
     }
 
     /**
