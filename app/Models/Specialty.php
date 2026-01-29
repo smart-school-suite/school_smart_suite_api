@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
+use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -161,9 +161,8 @@ class Specialty extends Model
     {
         return $this->morphMany(AnnouncementAudience::class, 'audienceable');
     }
-
-    public function semesterTimetableSlot(): HasMany
+    public function schoolAcademicYear(): HasMany
     {
-        return $this->hasMany(SemesterTimetableSlot::class);
+        return $this->hasMany(SchoolAcademicYear::class);
     }
 }

@@ -43,3 +43,10 @@ Schedule::command('admin:activation-code-renewal-reminder-notification')
     ->withoutOverlapping(3600)
     ->runInBackground()
     ->onOneServer();
+
+Schedule::command('create-system-academic-year-command')
+    ->monthlyOn(1, '00:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(3600)
+    ->runInBackground()
+    ->onOneServer();

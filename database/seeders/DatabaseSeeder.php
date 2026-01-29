@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\ActivationCodeType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -24,7 +22,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AssignPermissionToRoles::class);
         $this->call(InstallmentSeeder::class);
         $this->call(AnnouncementSeeder::class);
-        $this->call(StudentBadgeSeeder::class);
         $this->call(SemesterSeeder::class);
         $this->call(LetterGradeSeeder::class);
         $this->call(ExamTypeSeeder::class);
@@ -33,8 +30,10 @@ class DatabaseSeeder extends Seeder
         $this->call(SettingDefinationSeeder::class);
         $this->call(StudentParentRelationshipSeeder::class);
         $this->call(LevelSeeder::class);
-        $this->call(ActivationCodeType::class);
+        $this->call(ActivationCodeTypeSeeder::class);
         $this->call(FeaturePlanSeeder::class);
         $this->call(StudentCredentials::class);
+        $this->call(UserBadgeSeeder::class);
+        $this->call(SystemAcademicYearSeeder::class);
     }
 }

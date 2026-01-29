@@ -76,7 +76,10 @@ class Teacher extends Model
     {
         return $this->morphMany(Otp::class, 'actorable');
     }
-
+    public function userBadge()
+    {
+        return $this->morphMany(UserBadge::class, 'actorable');
+    }
     public function vote()
     {
         return $this->morphMany(ElectionVotes::class, 'votable');

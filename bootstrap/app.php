@@ -271,6 +271,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/gender')
                 ->group(base_path('routes/Gender/Gender.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-academic-year')
+                ->group(base_path('routes/AcademicYear/SchoolAcademicYear.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/system-academic-year')
+                ->group(base_path('routes/AcademicYear/SystemAcademicYear.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

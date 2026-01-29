@@ -2,8 +2,8 @@
 
 namespace App\Jobs\DataCleanupJobs;
 
-use App\Models\Badge;
-use App\Models\BadgeAssignment;
+use App\Models\Badge\BadgeType;
+use App\Models\Badge\UserBadge;
 use App\Models\CurrentElectionWinners;
 use App\Models\ElectionResults;
 use App\Models\ElectionRoles;
@@ -23,6 +23,7 @@ use App\Models\PermissionCategory;
 use App\Models\Schooladmin;
 use App\Notifications\AdminElectionTransition;
 use Illuminate\Support\Facades\Notification;
+
 class UpdateElectionResultStatus implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -63,7 +64,6 @@ class UpdateElectionResultStatus implements ShouldQueue
 
         $schoolAdminsToNotify = $this->getElectionManagers($this->schoolBranchId);
         Notification::send($schoolAdminsToNotify, new AdminElectionTransition($electionDetails->electionType->election_title));
-
     }
 
     private function processElectionResults(Collection $allElectionResults): Collection
@@ -106,8 +106,8 @@ class UpdateElectionResultStatus implements ShouldQueue
             return;
         }
 
-        $goldBadge = Badge::where('name', 'Golden')->first();
-        $blueBadge = Badge::where('name', 'Blue')->first();
+        $goldBadge = BadgeType::where('name', 'Golden')->first();
+        $blueBadge = BadgeType::where('name', 'Blue')->first();
 
         foreach ($currentWinners as $winner) {
             if (!$winner->student || !$winner->electionRole) {
@@ -120,7 +120,7 @@ class UpdateElectionResultStatus implements ShouldQueue
             }
 
             if ($goldBadge) {
-                BadgeAssignment::where([
+                UserBadge::where([
                     'assignable_id' => $winner->student->id,
                     'assignable_type' => get_class($winner->student),
                     'badge_id' => $goldBadge->id,
@@ -128,7 +128,7 @@ class UpdateElectionResultStatus implements ShouldQueue
             }
 
             if ($blueBadge) {
-                BadgeAssignment::firstOrCreate([
+                UserBadge::firstOrCreate([
                     'assignable_id' => $winner->student->id,
                     'assignable_type' => get_class($winner->student),
                     'badge_id' => $blueBadge->id,
@@ -153,7 +153,7 @@ class UpdateElectionResultStatus implements ShouldQueue
         $electionDetails,
         string $schoolBranchId
     ): void {
-        $goldBadge = Badge::where('name', 'Golden')->first();
+        $goldBadge = BadgeType::where('name', 'Golden')->first();
 
         foreach ($newWinnersElectionResults as $winnerResult) {
             $student = Student::find($winnerResult->electionCandidate->student->id);
@@ -171,13 +171,13 @@ class UpdateElectionResultStatus implements ShouldQueue
             }
 
             if ($goldBadge) {
-                BadgeAssignment::where([
+                UserBadge::where([
                     'assignable_id' => $student->id,
                     'assignable_type' => get_class($student),
                     'badge_id' => $goldBadge->id,
                 ])->delete();
 
-                BadgeAssignment::create([
+                UserBadge::create([
                     'assignable_id' => $student->id,
                     'assignable_type' => get_class($student),
                     'badge_id' => $goldBadge->id,

@@ -12,9 +12,21 @@ return new class extends Migration
     public function up(): void
     {
 
+        Schema::table('school_academic_years', function (Blueprint $table) {
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialties')->onDelete('cascade'); //
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
         Schema::table('timetable_drafts', function (Blueprint $table) {
             $table->string('school_semester_id');
             $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('user_badges', function (Blueprint $table) {
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
