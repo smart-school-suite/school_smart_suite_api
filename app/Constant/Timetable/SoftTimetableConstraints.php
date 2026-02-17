@@ -4,29 +4,174 @@ namespace App\Constant\Timetable;
 
 class SoftTimetableConstraints
 {
+    private const DAYS_OF_WEEK = [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday'
+    ];
     public static function getDefaultJson(): string
     {
         $defaults = [
             "soft_constraints" => [
-                "teacher_max_daily_hours" => 7.5,
-                "teacher_max_weekly_hours" => 35.0,
-                "teacher_minimum_break_minutes" => 15,
-                "room_type_suitability" => [
-                    "theory" => "lecture",
-                    "practical" => "lab"
+                "teacher_max_daily_hours" => [
+                    "max_hours" => 8.0,
+                    "teacher_exceptions" => [
+                        [
+                            "teacher_id" => "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                            "max_hours" => 10
+                        ]
+                    ]
                 ],
-                "course_preferred_time_of_day" => [
-                    "theory" => "morning",
-                    "practical" => "afternoon"
+                "teacher_max_weekly_hours" => [
+                    "max_hours" => 40.0,
+                    "teacher_exceptions" => [
+                        [
+                            "teacher_id" => "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                            "max_hours" => 25
+                        ]
+                    ]
                 ],
-                "time_max_periods_per_day" => 8,
-                "time_min_free_periods_per_day" => 1,
-                "time_consecutive_period_allowance" => [
-                    "practicals" => true,
-                    "theory" => true
+                "schedule_max_periods_per_day" => [
+                    "max_periods" => 8,
+                    "day_exceptions" => [
+                        [
+                            "day" => "monday",
+                            "max_periods" => 7
+                        ]
+                    ]
                 ],
-                "time_min_gap_between_sessions_hours" => 1.0,
-                "time_max_subject_frequency_per_day" => 2
+                "schedule_max_free_periods_per_day" => [
+                    "max_free_periods" => 2,
+                    "day_exceptions" => [
+                        [
+                            "day" => "monday",
+                            "max_free_periods" => 3
+                        ]
+                    ]
+                ],
+                "course_max_daily_frequency" => [
+                    "max_frequency" => 2,
+                    "course_exceptions" => [
+                        [
+                            "course_id" => "s1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                            "max_frequency" => 3
+                        ]
+                    ]
+                ],
+                "course_requested_time_slots" => [
+                    [
+                        "course_id" => "3e47b46a-e7df-4ac9-a29f-8fb07f92500f",
+                        "course_name" => "Introduction to Computer Science",
+                        "slots" => [
+                            [
+                                "day" => "Monday",
+                                "start_time" => "08:00",
+                                "end_time" => "10:00"
+                            ],
+                            [
+                                "day" => "Wednesday",
+                                "start_time" => "08:00",
+                                "end_time" => "10:00"
+                            ],
+                            [
+                                "day" => "friday"
+                            ],
+                            [
+                                "start_time" => "14:00",
+                                "end_time" => "16:00"
+                            ]
+                        ]
+                    ]
+                ],
+                "requested_assignments" => [
+                    [
+                        "course_id" => "3e47b46a-e7df-4ac9-a29f-8fb07f92500f",
+                        "course_name" => "Introduction to Computer Science",
+                        "teacher_id" => "TCH-045",
+                        "teacher_name" => "John Doe",
+                        "room_id" => "HALL-B-204",
+                        "room_name" => "Lecture Hall B",
+                        "day" => "Monday",
+                        "start_time" => "08:00",
+                        "end_time" => "10:00"
+                    ],
+                    [
+                        "course_id" => "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                        "teacher_id" => "f1e2d3c4-b5a6-7890-1234-56789abcdef0",
+                        "hall_id" => "h1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                        "day" => "monday"
+                    ],
+                    [
+                        "course_id" => "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                        "teacher_id" => "f1e2d3c4-b5a6-7890-1234-56789abcdef0",
+                        "hall_id" => "h1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                        "start_time" => "14:00",
+                        "end_time" => "16:00"
+                    ]
+                ],
+                "hall_requested_time_windows" => [
+                    [
+                        "hall_id" => "h1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                        "windows" =>  [
+                            [
+                                "day" => "monday",
+                                "start_time" => "08:00",
+                                "end_time" => "18:00"
+                            ],
+                            [
+                                "day" => "tuesday",
+                                "start_time" => "08:00",
+                                "end_time" => "18:00"
+                            ],
+                            [
+                                "day" => "wednesday"
+                            ],
+                            [
+                                "start_time" => "14:00",
+                                "end_time" => "15:00"
+                            ]
+                        ]
+                    ]
+                ],
+                "teacher_requested_time_windows" => [
+                    [
+                        "teacher_id" => "f1e2d3c4-b5a6-7890-1234-56789abcdef0",
+                        "windows" =>  [
+                            [
+                                "day" => "monday",
+                                "start_time" => "08:00",
+                                "end_time" => "18:00"
+                            ],
+                            [
+                                "day" => "tuesday",
+                                "start_time" => "08:00",
+                                "end_time" => "18:00"
+                            ],
+                            [
+                                "day" => "wednesday"
+                            ],
+                            [
+                                "start_time" => "14:00",
+                                "end_time" => "15:00"
+                            ]
+                        ]
+                    ]
+                ],
+                "requested_free_periods" => [
+                    [
+                        "day" => "monday",
+                        "start_time" => "12:00",
+                        "end_time" => "13:00"
+                    ],
+                    [
+                        "start_time" => "13:00",
+                        "end_time" => "14:00"
+                    ]
+                ]
             ]
         ];
 
@@ -43,111 +188,246 @@ class SoftTimetableConstraints
                 'soft_constraints' => [
                     'type' => 'object',
                     'properties' => [
-                        'teacher_max_daily_hours' => [
-                            'type' => 'number',
-                            'minimum' => 1,
-                            'maximum' => 12,
-                            'description' => 'Maximum teaching hours per day for a teacher (e.g., 6.0–8.0).',
-                            'example' => 8.0
-                        ],
-                        'teacher_max_weekly_hours' => [
-                            'type' => 'number',
-                            'minimum' => 10,
-                            'maximum' => 60,
-                            'description' => 'Maximum teaching hours per week (e.g., 30.0–40.0).',
-                            'example' => 40.0
-                        ],
-                        'teacher_minimum_break_minutes' => [
-                            'type' => 'integer',
-                            'minimum' => 5,
-                            'maximum' => 60,
-                            'description' => 'Minimum break in minutes between two classes for the same teacher (e.g., 10, 15, 30).',
-                            'example' => 15
-                        ],
-                        'room_type_suitability' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'theory' => [
-                                    'type' => 'string',
-                                    'enum' => ['lecture', 'any'],
-                                    'description' => 'Suitable room type for theory.',
-                                    'example' => 'lecture'
+                        "teacher_max_daily_hours" => [
+                            "type" => "object",
+                            "required" => ["max_hours"],
+                            "properties" => [
+                                "max_hours" => [
+                                    "type" => "number",
+                                    "minimum" => 0,
+                                    "maximum" => 8,
+                                    "description" => "Default maximum daily hours that applies to all teachers on all days"
                                 ],
-                                'practical' => [
-                                    'type' => 'string',
-                                    'enum' => ['lab', 'any'],
-                                    'description' => 'Suitable room type for practicals.',
-                                    'example' => 'lab'
+                                "teacher_exceptions" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max hours for specific teachers (applies to ALL days for that teacher)",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["teacher_id", "max_hours"],
+                                        "properties" => [
+                                            "teacher_id" => [
+                                                "type" => "string",
+                                                "minLength" => 1,
+                                                "description" => "Unique identifier for the teacher"
+                                            ],
+                                            "max_hours" => [
+                                                "type" => "number",
+                                                "minimum" => 0,
+                                                "maximum" => 24,
+                                                "description" => "Maximum daily hours for this specific teacher across all days"
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1,
+                                    "uniqueItems" => true
+                                ],
+                                "teacher_day_exceptions" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max hours for specific teachers on specific days (overrides both default and teacher_exceptions)",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["teacher_id", "day", "max_hours"],
+                                        "properties" => [
+                                            "teacher_id" => [
+                                                "type" => "string",
+                                                "minLength" => 1,
+                                                "description" => "Unique identifier for the teacher"
+                                            ],
+                                            "day" => [
+                                                "type" => "string",
+                                                "enum" => self::DAYS_OF_WEEK,
+                                                "description" => "Specific day of the week for this exception"
+                                            ],
+                                            "max_hours" => [
+                                                "type" => "number",
+                                                "minimum" => 0,
+                                                "maximum" => 8,
+                                                "description" => "Maximum hours for this specific teacher on this specific day"
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1
                                 ]
                             ],
-                            'required' => ['theory', 'practical'],
-                            'additionalProperties' => false
+                            "additionalProperties" => false
                         ],
-                        'course_preferred_time_of_day' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'theory' => [
-                                    'type' => 'string',
-                                    'enum' => ['morning', 'afternoon', 'evening', 'any'],
-                                    'description' => 'Preferred time slot for theory.',
-                                    'example' => 'morning'
+                        "teacher_max_weekly_hours" => [
+                            "type" => "object",
+                            "required" => ["max_hours"],
+                            "properties" => [
+                                "max_hours" => [
+                                    "type" => "number",
+                                    "minimum" => 0,
+                                    "maximum" => 40,
+                                    "description" => "Default maximum weekly hours that applies to all teachers"
                                 ],
-                                'practical' => [
-                                    'type' => 'string',
-                                    'enum' => ['morning', 'afternoon', 'evening', 'any'],
-                                    'description' => 'Preferred time slot for practicals.',
-                                    'example' => 'afternoon'
+                                "teacher_exception" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max weekly hours for specific teachers",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["teacher_id", "max_hours"],
+                                        "properties" => [
+                                            "teacher_id" => [
+                                                "type" => "string",
+                                                "minLength" => 1,
+                                                "description" => "Unique identifier for the teacher"
+                                            ],
+                                            "max_hours" => [
+                                                "type" => "number",
+                                                "minimum" => 0,
+                                                "maximum" => 168,
+                                                "description" => "Maximum weekly hours for this specific teacher"
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1,
+                                    "uniqueItems" => true
                                 ]
                             ],
-                            'required' => ['theory', 'practical'],
-                            'additionalProperties' => false
+                            "additionalProperties" => false
                         ],
-                        'time_max_periods_per_day' => [
-                            'type' => 'integer',
-                            'minimum' => 1,
-                            'maximum' => 12,
-                            'description' => 'Maximum number of teaching periods in a day (e.g., 8).',
-                            'example' => 8
-                        ],
-                        'time_min_free_periods_per_day' => [
-                            'type' => 'integer',
-                            'minimum' => 0,
-                            'maximum' => 6,
-                            'description' => 'Minimum number of free periods per day for students/teachers (e.g., 1).',
-                            'example' => 1
-                        ],
-                        'time_consecutive_period_allowance' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'practicals' => [
-                                    'type' => 'boolean',
-                                    'description' => 'true = allow consecutive periods for practicals (common in labs).',
-                                    'example' => true
+                        "schedule_max_periods_per_day" => [
+                            "type" => "object",
+                            "required" => ["max_periods"],
+                            "properties" => [
+                                "max_periods" => [
+                                    "type" => "integer",
+                                    "minimum" => 1,
+                                    "maximum" => 20,
+                                    "description" => "Default maximum number of periods per day that applies to all days"
                                 ],
-                                'theory' => [
-                                    'type' => 'boolean',
-                                    'description' => 'true = allow double periods for theory classes.',
-                                    'example' => true
+                                "day_exceptions" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max periods for specific days of the week",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["day", "max_periods"],
+                                        "properties" => [
+                                            "day" => [
+                                                "type" => "string",
+                                                "enum" => self::DAYS_OF_WEEK,
+                                                "description" => "Specific day of the week"
+                                            ],
+                                            "max_periods" => [
+                                                "type" => "integer",
+                                                "minimum" => 1,
+                                                "maximum" => 20,
+                                                "description" => "Maximum number of periods for this specific day"
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1
                                 ]
                             ],
-                            'required' => ['practicals', 'theory'],
-                            'additionalProperties' => false
+                            "additionalProperties" => false
                         ],
-                        'time_min_gap_between_sessions_hours' => [
-                            'type' => 'number',
-                            'minimum' => 0.5,
-                            'maximum' => 48.0,
-                            'description' => 'Minimum gap in hours between two sessions of the same subject (e.g., 1.0 for short, 24.0 for one-day gap).',
-                            'example' => 1.0
+                        "schedule_max_free_periods_per_day" => [
+                            "type" => "object",
+                            "required" => ["max_free_periods"],
+                            "properties" => [
+                                "max_free_periods" => [
+                                    "type" => "integer",
+                                    "minimum" => 0,
+                                    "maximum" => 10,
+                                    "description" => "Default maximum number of free/gap periods allowed per day for all days. Use 0 to disallow any free periods."
+                                ],
+                                "day_exceptions" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max free periods for specific days of the week",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["day", "max_free_periods"],
+                                        "properties" => [
+                                            "day" => [
+                                                "type" => "string",
+                                                "enum" => self::DAYS_OF_WEEK,
+                                                "description" => "Specific day of the week"
+                                            ],
+                                            "max_free_periods" => [
+                                                "type" => "integer",
+                                                "minimum" => 0,
+                                                "maximum" => 10,
+                                                "description" => "Maximum number of free/gap periods allowed for this specific day. Use 0 to require consecutive scheduling."
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1
+                                ]
+                            ],
+                            "additionalProperties" => false
                         ],
-                        'time_max_subject_frequency_per_day' => [
-                            'type' => 'integer',
-                            'minimum' => 1,
-                            'maximum' => 5,
-                            'description' => 'Maximum times a subject can appear in one day (e.g., 1 or 2).',
-                            'example' => 2
+                        "course_max_daily_frequency" => [
+                            "type" => "object",
+                            "required" => ["max_frequency"],
+                            "properties" => [
+                                "max_frequency" => [
+                                    "type" => "integer",
+                                    "minimum" => 1,
+                                    "maximum" => 10,
+                                    "description" => "Default maximum number of times the same subject/course can appear per day for all courses on all days"
+                                ],
+                                "course_exceptions" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max frequency for specific courses (applies to ALL days for that course)",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["course_id", "max_frequency"],
+                                        "properties" => [
+                                            "course_id" => [
+                                                "type" => "string",
+                                                "minLength" => 1,
+                                                "description" => "Unique identifier for the course/subject"
+                                            ],
+                                            "max_frequency" => [
+                                                "type" => "integer",
+                                                "minimum" => 1,
+                                                "maximum" => 10,
+                                                "description" => "Maximum number of times this specific course can appear per day across all days"
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1,
+                                    "uniqueItems" => true
+                                ],
+                                "course_day_exceptions" => [
+                                    "type" => ["array", "null"],
+                                    "description" => "ONLY include this if user specifies custom max frequency for specific courses on specific days (overrides both default and course_exceptions)",
+                                    "items" => [
+                                        "type" => "object",
+                                        "required" => ["course_id", "day", "max_frequency"],
+                                        "properties" => [
+                                            "course_id" => [
+                                                "type" => "string",
+                                                "minLength" => 1,
+                                                "description" => "Unique identifier for the course/subject"
+                                            ],
+                                            "day" => [
+                                                "type" => "string",
+                                                "enum" => self::DAYS_OF_WEEK,
+                                                "description" => "Specific day of the week for this exception"
+                                            ],
+                                            "max_frequency" => [
+                                                "type" => "integer",
+                                                "minimum" => 1,
+                                                "maximum" => 10,
+                                                "description" => "Maximum number of times this specific course can appear on this specific day"
+                                            ]
+                                        ],
+                                        "additionalProperties" => false
+                                    ],
+                                    "minItems" => 1
+                                ]
+                            ],
+                            "additionalProperties" => false
                         ],
-                        'course_fixed_time_slots' => [
+                        'course_requested_time_slots' => [
                             'type' => 'array',
                             'description' => 'Courses that must be scheduled at very specific days and time slots. These act as high-priority or near-hard constraints — the solver will try to respect them exactly and will report violations or infeasibility if impossible. Useful for lecturer preferences, reserved labs, or recurring events.',
                             'items' => [
@@ -200,158 +480,7 @@ class SoftTimetableConstraints
                             'uniqueItems' => true,
                             'additionalItems' => false
                         ],
-                        'fixed_day_time_slots' => [
-                            'type' => 'array',
-                            'description' => 'Specific time slots on given days that must be occupied by some class. These are high-priority constraints — the solver will try to assign a course to each of these slots. Useful when users want to ensure certain times are used (e.g. "put classes on Friday afternoon").',
-                            'items' => [
-                                'type' => 'object',
-                                'required' => ['day', 'start_time', 'end_time'],
-                                'properties' => [
-                                    'day' => [
-                                        'type' => 'string',
-                                        'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                                        'description' => 'Day of the week (full English name, case-sensitive).'
-                                    ],
-                                    'start_time' => [
-                                        'type' => 'string',
-                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
-                                        'description' => 'Start time in 24-hour HH:MM format.',
-                                        'example' => '13:00'
-                                    ],
-                                    'end_time' => [
-                                        'type' => 'string',
-                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
-                                        'description' => 'End time in 24-hour HH:MM format (must be after start_time).',
-                                        'example' => '15:00'
-                                    ],
-                                    // Optional: allow user to suggest preferred course types or groups
-                                    'preferred_for' => [
-                                        'type' => 'string',
-                                        'description' => 'Optional hint: preferred course type or group (e.g. "theory", "practical", "1st year", "CS department"). Not enforced, just a soft preference.',
-                                        'example' => 'practical'
-                                    ]
-                                ],
-                                'additionalProperties' => false
-                            ],
-                            'uniqueItems' => true
-                        ],
-                        'teacher_time_windows' => [
-                            'type' => 'array',
-                            'description' => 'Time windows for specific teachers — either allowed teaching periods (availability) or forbidden periods (unavailability). These are treated as high-priority / near-hard constraints. The solver will respect them where possible and report violations if impossible.',
-                            'items' => [
-                                'type' => 'object',
-                                'required' => ['teacher_id', 'windows'],
-                                'properties' => [
-                                    'teacher_id' => [
-                                        'type' => 'string',
-                                        'description' => 'Unique identifier of the teacher (must match your internal teacher ID/code).',
-                                        'example' => 'TCH-045'
-                                    ],
-                                    'teacher_name' => [
-                                        'type' => 'string',
-                                        'description' => 'Human-readable name (informational only — for debugging/UI/validation; not used for matching).',
-                                        'example' => 'John Doe'
-                                    ],
-                                    'windows' => [
-                                        'type' => 'array',
-                                        'minItems' => 1,
-                                        'description' => 'One or more time windows on specific days. Use type "allowed" for availability/preferred slots, "forbidden" for unavailability/no-classes periods.',
-                                        'items' => [
-                                            'type' => 'object',
-                                            'required' => ['day', 'start_time', 'end_time'],
-                                            'properties' => [
-                                                'day' => [
-                                                    'type' => 'string',
-                                                    'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                                                    'description' => 'Day of the week.'
-                                                ],
-                                                'start_time' => [
-                                                    'type' => 'string',
-                                                    'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
-                                                    'description' => 'Start of the window (24-hour HH:MM).',
-                                                    'example' => '07:00'
-                                                ],
-                                                'end_time' => [
-                                                    'type' => 'string',
-                                                    'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
-                                                    'description' => 'End of the window (24-hour HH:MM).',
-                                                    'example' => '09:30'
-                                                ],
-                                                'type' => [
-                                                    'type' => 'string',
-                                                    'enum' => ['allowed', 'forbidden'],
-                                                    'default' => 'allowed',
-                                                    'description' => '"allowed" = teacher may/should only teach in this window on this day; "forbidden" = no teaching allowed in this window.'
-                                                ]
-                                            ],
-                                            'additionalProperties' => false
-                                        ],
-                                        'uniqueItems' => true
-                                    ]
-                                ],
-                                'additionalProperties' => false
-                            ],
-                            'uniqueItems' => true
-                        ],
-                        'hall_time_windows' => [
-                            'type' => 'array',
-                            'description' => 'Time windows specifically for classes requiring "hall" rooms (large lecture halls / theory halls / high-capacity rooms). These define allowed or forbidden periods for scheduling hall-type classes. High-priority / near-hard constraints — useful for concentrating hall usage on certain days/times (e.g. "move all hall classes to Friday 10:00–18:00").',
-                            'items' => [
-                                'type' => 'object',
-                                'required' => ['hall_type', 'windows'],
-                                'properties' => [
-                                    'hall_type' => [
-                                        'type' => 'string',
-                                        'description' => 'Identifier for the hall/room type/category (e.g. "hall", "large_lecture", "theory_hall", "auditorium"). Must match your internal room classification.',
-                                        'example' => 'hall'
-                                    ],
-                                    'hall_name' => [
-                                        'type' => 'string',
-                                        'description' => 'Human-readable label for the hall type (informational only).',
-                                        'example' => 'Large Lecture Halls'
-                                    ],
-                                    'windows' => [
-                                        'type' => 'array',
-                                        'minItems' => 1,
-                                        'description' => 'Time windows on specific days. "allowed" = hall classes (or filtered ones) should only be scheduled inside this window; "forbidden" = no hall classes in this window.',
-                                        'items' => [
-                                            'type' => 'object',
-                                            'required' => ['day', 'start_time', 'end_time'],
-                                            'properties' => [
-                                                'day' => [
-                                                    'type' => 'string',
-                                                    'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                                                    'description' => 'Day of the week.'
-                                                ],
-                                                'start_time' => [
-                                                    'type' => 'string',
-                                                    'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
-                                                    'description' => 'Start of the window (24-hour HH:MM).',
-                                                    'example' => '10:00'
-                                                ],
-                                                'end_time' => [
-                                                    'type' => 'string',
-                                                    'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
-                                                    'description' => 'End of the window (24-hour HH:MM).',
-                                                    'example' => '18:00'
-                                                ],
-                                                'type' => [
-                                                    'type' => 'string',
-                                                    'enum' => ['allowed', 'forbidden'],
-                                                    'default' => 'allowed',
-                                                    'description' => '"allowed" = prefer/force hall classes into this window; "forbidden" = block hall classes here.'
-                                                ]
-                                            ],
-                                            'additionalProperties' => false
-                                        ],
-                                        'uniqueItems' => true
-                                    ]
-                                ],
-                                'additionalProperties' => false
-                            ],
-                            'uniqueItems' => true
-                        ],
-                        'fixed_assignments' => [
+                        'requested_assignments' => [
                             'type' => 'array',
                             'description' => 'Fully or partially pre-assigned timetable slots. Each entry forces a specific course (or section) to be taught by a given teacher in a given room/hall on a specific day and time window. These are treated as hard (must-respect) constraints — violations cause infeasibility or explicit conflict reports. Ideal for manual overrides, special arrangements, or very precise user requests like "put course A on Friday for teacher A using hall B".',
                             'items' => [
@@ -412,7 +541,193 @@ class SoftTimetableConstraints
                                 'additionalProperties' => false,
                             ],
                             'uniqueItems' => true
-                        ]
+                        ],
+                        'hall_requested_time_windows' => [
+                            'type' => 'array',
+                            'description' => 'Fully or partially pre-assigned timetable slots. Each entry forces a specific course (or section) to be taught by a given teacher in a given room/hall on a specific day and time window. These are treated as hard (must-respect) constraints — violations cause infeasibility or explicit conflict reports. Ideal for manual overrides, special arrangements, or very precise user requests like "put course A on Friday for teacher A using hall B".',
+                            'items' => [
+                                'type' => 'object',
+                                'required' => ['course_id'],
+                                'properties' => [
+                                    'course_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the course/section being assigned.',
+                                        'example' => 'CS101-L1'
+                                    ],
+                                    'course_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable name (informational only).',
+                                        'example' => 'Algorithms'
+                                    ],
+                                    'teacher_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the teacher who must teach this slot (if omitted, teacher is flexible).',
+                                        'example' => 'TCH-017'
+                                    ],
+                                    'teacher_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable teacher name (informational).'
+                                    ],
+                                    'room_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the room/hall that must be used (if omitted, room is flexible but must match course type).',
+                                        'example' => 'HALL-B-204'
+                                    ],
+                                    'room_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable room/hall name (informational).',
+                                        'example' => 'Lecture Hall B'
+                                    ],
+                                    'day' => [
+                                        'type' => 'string',
+                                        'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                                        'description' => 'Day on which this assignment must occur.'
+                                    ],
+                                    'start_time' => [
+                                        'type' => 'string',
+                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+                                        'description' => 'Start time (24-hour HH:MM).',
+                                        'example' => '10:00'
+                                    ],
+                                    'end_time' => [
+                                        'type' => 'string',
+                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+                                        'description' => 'End time (24-hour HH:MM).'
+                                    ],
+                                    'notes' => [
+                                        'type' => 'string',
+                                        'description' => 'Optional free-text reason/comment (shown in conflict reports/UI).',
+                                        'example' => 'Special guest lecture arrangement'
+                                    ]
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                            'uniqueItems' => true
+                        ],
+                        'teacher_requested_time_windows' => [
+                            'type' => 'array',
+                            'description' => 'Fully or partially pre-assigned timetable slots. Each entry forces a specific course (or section) to be taught by a given teacher in a given room/hall on a specific day and time window. These are treated as hard (must-respect) constraints — violations cause infeasibility or explicit conflict reports. Ideal for manual overrides, special arrangements, or very precise user requests like "put course A on Friday for teacher A using hall B".',
+                            'items' => [
+                                'type' => 'object',
+                                'required' => ['course_id'],
+                                'properties' => [
+                                    'course_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the course/section being assigned.',
+                                        'example' => 'CS101-L1'
+                                    ],
+                                    'course_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable name (informational only).',
+                                        'example' => 'Algorithms'
+                                    ],
+                                    'teacher_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the teacher who must teach this slot (if omitted, teacher is flexible).',
+                                        'example' => 'TCH-017'
+                                    ],
+                                    'teacher_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable teacher name (informational).'
+                                    ],
+                                    'room_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the room/hall that must be used (if omitted, room is flexible but must match course type).',
+                                        'example' => 'HALL-B-204'
+                                    ],
+                                    'room_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable room/hall name (informational).',
+                                        'example' => 'Lecture Hall B'
+                                    ],
+                                    'day' => [
+                                        'type' => 'string',
+                                        'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                                        'description' => 'Day on which this assignment must occur.'
+                                    ],
+                                    'start_time' => [
+                                        'type' => 'string',
+                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+                                        'description' => 'Start time (24-hour HH:MM).',
+                                        'example' => '10:00'
+                                    ],
+                                    'end_time' => [
+                                        'type' => 'string',
+                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+                                        'description' => 'End time (24-hour HH:MM).'
+                                    ],
+                                    'notes' => [
+                                        'type' => 'string',
+                                        'description' => 'Optional free-text reason/comment (shown in conflict reports/UI).',
+                                        'example' => 'Special guest lecture arrangement'
+                                    ]
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                            'uniqueItems' => true
+                        ],
+                        'requested_free_periods' => [
+                            'type' => 'array',
+                            'description' => 'Fully or partially pre-assigned timetable slots. Each entry forces a specific course (or section) to be taught by a given teacher in a given room/hall on a specific day and time window. These are treated as hard (must-respect) constraints — violations cause infeasibility or explicit conflict reports. Ideal for manual overrides, special arrangements, or very precise user requests like "put course A on Friday for teacher A using hall B".',
+                            'items' => [
+                                'type' => 'object',
+                                'required' => ['course_id'],
+                                'properties' => [
+                                    'course_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the course/section being assigned.',
+                                        'example' => 'CS101-L1'
+                                    ],
+                                    'course_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable name (informational only).',
+                                        'example' => 'Algorithms'
+                                    ],
+                                    'teacher_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the teacher who must teach this slot (if omitted, teacher is flexible).',
+                                        'example' => 'TCH-017'
+                                    ],
+                                    'teacher_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable teacher name (informational).'
+                                    ],
+                                    'room_id' => [
+                                        'type' => 'string',
+                                        'description' => 'Unique identifier of the room/hall that must be used (if omitted, room is flexible but must match course type).',
+                                        'example' => 'HALL-B-204'
+                                    ],
+                                    'room_name' => [
+                                        'type' => 'string',
+                                        'description' => 'Human-readable room/hall name (informational).',
+                                        'example' => 'Lecture Hall B'
+                                    ],
+                                    'day' => [
+                                        'type' => 'string',
+                                        'enum' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                                        'description' => 'Day on which this assignment must occur.'
+                                    ],
+                                    'start_time' => [
+                                        'type' => 'string',
+                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+                                        'description' => 'Start time (24-hour HH:MM).',
+                                        'example' => '10:00'
+                                    ],
+                                    'end_time' => [
+                                        'type' => 'string',
+                                        'pattern' => '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
+                                        'description' => 'End time (24-hour HH:MM).'
+                                    ],
+                                    'notes' => [
+                                        'type' => 'string',
+                                        'description' => 'Optional free-text reason/comment (shown in conflict reports/UI).',
+                                        'example' => 'Special guest lecture arrangement'
+                                    ]
+                                ],
+                                'additionalProperties' => false,
+                            ],
+                            'uniqueItems' => true
+                        ],
                     ],
                     'additionalProperties' => false
                 ]
@@ -426,7 +741,6 @@ class SoftTimetableConstraints
     {
         return json_decode(self::getDefaultJson(), true)['soft_constraints'];
     }
-
     public static function getJsonSchemaArray(): array
     {
         return json_decode(self::getJsonSchema(), true);

@@ -116,9 +116,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-timetable')
                 ->group(base_path('routes/Exam/ExamTimetable.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/timetable')
-                ->group(base_path('routes/Specialty/Timetable.php'));
-
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-semester')
                 ->group(base_path('routes/Semester/SchoolSemester.php'));
 
@@ -277,6 +274,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/system-academic-year')
                 ->group(base_path('routes/AcademicYear/SystemAcademicYear.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable')
+                ->group(base_path('routes/SemesterTimetable/SemesterTimetable.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable/version')
+                ->group(base_path('routes/SemesterTimetable/SemesterTimetableVersion.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable/draft')
+                ->group(base_path('routes/SemesterTimetable/SemesterTimetableDraft.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

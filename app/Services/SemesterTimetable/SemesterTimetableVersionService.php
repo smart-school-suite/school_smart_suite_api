@@ -126,4 +126,10 @@ class SemesterTimetableVersionService
         }
         return $slot;
     }
+    public function getTimetableVersions(string $semesterId, object $currentSchool){
+        $timetableVersions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
+                          ->where("school_semester_id", $semesterId)
+                          ->get();
+        return $timetableVersions;
+    }
 }

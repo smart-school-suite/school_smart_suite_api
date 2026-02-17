@@ -3,15 +3,14 @@
 namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
-use App\Models\InstructorAvailabilitySlot;
 use App\Models\SchoolSemester;
 use App\Models\SemesterTimetable\SemesterTimetableDraft;
 use App\Models\SemesterTimetable\SemesterTimetablePrompt;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
-use App\Models\Timetable;
 use App\Services\SemesterTimetableAI\GeminiIntentService;
 use App\Services\SemesterTimetableAI\GeminiJsonService;
 use App\Services\SemesterTimetableScheduler\PreferenceSchedulingClient;
@@ -190,7 +189,10 @@ class GenerateFixedSemesterTimetableService
     private function getHallBusyPeriods(string $branchId, $halls)
     {
         $hallIds = $halls->pluck('hall_id')->toArray();
-        return Timetable::where('school_branch_id', $branchId)
+        return SemesterTimetableSlot::where('school_branch_id', $branchId)
+            ->whereHas('semester', function ($query) {
+                $query->where("end_date", ">=", now());
+            })
             ->whereIn('hall_id', $hallIds)
             ->with('hall')
             ->get();
@@ -198,7 +200,10 @@ class GenerateFixedSemesterTimetableService
 
     private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
     {
-        return Timetable::where('school_branch_id', $branchId)
+        return SemesterTimetableSlot::where('school_branch_id', $branchId)
+            ->whereHas('semester', function ($query) {
+                $query->where("end_date", ">=", now());
+            })
             ->whereIn('teacher_id', $teacherIds)
             ->with('teacher')
             ->get();
@@ -317,7 +322,7 @@ class GenerateFixedSemesterTimetableService
     {
         $generatedSlots = $schedulerResponse->timetable;
         foreach ($generatedSlots as $slot) {
-            Timetable::create([
+            SemesterTimetableSlot::create([
                 'school_branch_id' => $currentSchool->id,
                 'teacher_id' => $slot->teacher_id ?? null,
                 'course_id' => $slot->course_id ?? null,
@@ -325,10 +330,34 @@ class GenerateFixedSemesterTimetableService
                 'day_of_week' => $slot->day,
                 'break' => $slot->break,
                 'duration' => $slot->duration,
-                'start_time' => Carbon::createFromFormat('H:i', $slot->start_time)->format('H:i:s'),
-                'end_time' => Carbon::createFromFormat('H:i', $slot->end_time)->format('H:i:s'),
+                'start_time' => Carbon::createFromFormat('H:i', $slot->start_time)->format('H:i'),
+                'end_time' => Carbon::createFromFormat('H:i', $slot->end_time)->format('H:i'),
                 'timetable_version_id' => $timetableVersionId,
             ]);
         }
+    }
+
+    private static function partialSchedulerResponseMock()
+    {
+        $filePath = public_path("schedulerResponse/partial.response.example.json");
+        $content = file_get_contents($filePath);
+        $data = json_decode($content, true);
+        return $data;
+    }
+
+    private static function optimalSchedulerResponseMock()
+    {
+        $filePath = public_path("schedulerResponse/optimal.response.example.json");
+        $content = file_get_contents($filePath);
+        $data = json_decode($content, true);
+        return $data;
+    }
+
+    private static function failedSchedulerResponseMock()
+    {
+        $filePath = public_path("schedulerResponse/failed.response.example.json");
+        $content = file_get_contents($filePath);
+        $data = json_decode($content, true);
+        return $data;
     }
 }

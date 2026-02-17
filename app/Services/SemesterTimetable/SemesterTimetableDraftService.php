@@ -71,7 +71,7 @@ class SemesterTimetableDraftService
             ->orderBy('draft_count', 'asc')
             ->get();
 
-        $timetableDrafts->map(function ($draft) {
+       return  $timetableDrafts->map(function ($draft) {
             return [
                 'id'             => $draft->id,
                 'name'           => $draft->name,

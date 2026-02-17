@@ -64,7 +64,6 @@ class CreateActiveSemesterTimetableService
             return $activeTimetable;
         }
     }
-
     private function hasOverlaps($slots, $groupByFields)
     {
         $grouped = $slots->groupBy($groupByFields);

@@ -8,12 +8,13 @@ use App\Models\SchoolSemester;
 use App\Models\SemesterTimetable\SemesterTimetableDraft;
 use App\Models\SemesterTimetable\SemesterTimetablePrompt;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
-use App\Models\Timetable;
 use App\Services\SemesterTimetableAI\GeminiIntentService;
 use App\Services\SemesterTimetableAI\GeminiJsonService;
+use App\Services\SemesterTimetableAI\GeminiResponseIntepreterService;
 use App\Services\SemesterTimetableScheduler\PreferenceSchedulingClient;
 use Carbon\Carbon;
 
@@ -23,6 +24,7 @@ class GeneratePreferenceSemesterTimetableService
     public function __construct(
         protected GeminiIntentService $geminiIntentService,
         protected GeminiJsonService $geminiJsonService,
+        protected GeminiResponseIntepreterService $geminiResponseIntepreterService,
         PreferenceSchedulingClient $schedulingClient,
     ) {
         $this->schedulingClient = $schedulingClient;
@@ -30,14 +32,20 @@ class GeneratePreferenceSemesterTimetableService
 
     public function generateTimetable(array $data, object $currentSchool): array
     {
-       if(isset($data['prompt_id']) && isset($data['parent_version_id'])) {
+        return [
+            'optimal_scheduler_response' => self::optimalSchedulerResponseMock(),
+            'failed_scheduler_response' => self::failedSchedulerResponseMock(),
+            'partial_scheduler_response' => self::partialSchedulerResponseMock()["timetable"],
+        ];
+
+        if (isset($data['prompt_id']) && isset($data['parent_version_id'])) {
             $parentVersion = SemesterTimetablePrompt::where('school_branch_id', $currentSchool->id)
                 ->where('id', $data['prompt_id'])
-                ->with(['baseVersion' => function($q){
+                ->with(['baseVersion' => function ($q) {
                     $q->where("id", $data['parent_version_id'] ?? null);
                 }])
                 ->first();
-            if(!$parentVersion || !$parentVersion->baseVersion) {
+            if (!$parentVersion || !$parentVersion->baseVersion) {
                 throw new AppException(
                     "Parent Version Not Found",
                     404,
@@ -45,7 +53,7 @@ class GeneratePreferenceSemesterTimetableService
                     "The specified parent version for the timetable prompt was not found. Please ensure the parent version ID is correct."
                 );
             }
-       }
+        }
 
         if (isset($data['draft_id'])) {
             $draft = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
@@ -139,6 +147,9 @@ class GeneratePreferenceSemesterTimetableService
         $timetableVersion->update([
             'scheduler_status' => "optimal",
         ]);
+
+        $intepretResponse = $this->geminiResponseIntepreterService->interpretResponse($schedulerInput, self::partialSchedulerResponseMock());
+
         return [
             'scheduler_response' => $schedulerResponse,
             'prompt_response' => $promptResponse,
@@ -148,7 +159,6 @@ class GeneratePreferenceSemesterTimetableService
     {
         return SchoolSemester::with(['specialty.level', 'semester'])->findOrFail($id);
     }
-
     private function getTeachers(string $branchId, string $specialtyId)
     {
         $q = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
@@ -210,7 +220,10 @@ class GeneratePreferenceSemesterTimetableService
     private function getHallBusyPeriods(string $branchId, $halls)
     {
         $hallIds = $halls->pluck('hall_id')->toArray();
-        return Timetable::where('school_branch_id', $branchId)
+        return SemesterTimetableSlot::where('school_branch_id', $branchId)
+            ->whereHas('semester', function ($query) {
+                $query->where("end_date", ">=", now());
+            })
             ->whereIn('hall_id', $hallIds)
             ->with('hall')
             ->get();
@@ -218,7 +231,10 @@ class GeneratePreferenceSemesterTimetableService
 
     private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
     {
-        return Timetable::where('school_branch_id', $branchId)
+        return SemesterTimetableSlot::where('school_branch_id', $branchId)
+            ->whereHas('semester', function ($query) {
+                $query->where("end_date", ">=", now());
+            })
             ->whereIn('teacher_id', $teacherIds)
             ->with('teacher')
             ->get();
@@ -250,7 +266,7 @@ class GeneratePreferenceSemesterTimetableService
     private function buildBody($preferred, $teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, $promptResponse): array
     {
         return [
-            'teacher_prefered_teaching_period' => $preferred->map(fn($s) => [
+            'teacher_preferred_period' => $preferred->map(fn($s) => [
                 'start_time' => Carbon::createFromFormat('H:i:s', $s->start_time)->format('H:i'),
                 'end_time' => Carbon::createFromFormat('H:i:s', $s->end_time)->format('H:i'),
                 'day' => $s->day_of_week,
@@ -344,7 +360,7 @@ class GeneratePreferenceSemesterTimetableService
     {
         $generatedSlots = $schedulerResponse->timetable;
         foreach ($generatedSlots as $slot) {
-            Timetable::create([
+            SemesterTimetableSlot::create([
                 'school_branch_id' => $currentSchool->id,
                 'teacher_id' => $slot->teacher_id ?? null,
                 'course_id' => $slot->course_id ?? null,
@@ -357,5 +373,28 @@ class GeneratePreferenceSemesterTimetableService
                 'timetable_version_id' => $timetableVersionId,
             ]);
         }
+    }
+
+    private static function partialSchedulerResponseMock()
+    {
+        $filePath = public_path("schedulerResponse/partial.response.example.json");
+        $content = file_get_contents($filePath);
+        $data = json_decode($content, true);
+        return $data;
+    }
+
+    private static function optimalSchedulerResponseMock()
+    {
+        $filePath = public_path("schedulerResponse/optimal.response.example.json");
+        $content = file_get_contents($filePath);
+        $data = json_decode($content, true);
+        return $data;
+    }
+
+    private static function failedSchedulerResponseMock() {
+        $filePath = public_path("schedulerResponse/failed.response.example.json");
+        $content = file_get_contents($filePath);
+        $data = json_decode($content, true);
+        return $data;
     }
 }

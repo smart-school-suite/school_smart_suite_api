@@ -36,15 +36,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('exam_timetable_slots', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->string('duration');
-            $table->timestamps();
-        });
-
         Schema::create('exam_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->boolean('grades_submitted')->default(false);

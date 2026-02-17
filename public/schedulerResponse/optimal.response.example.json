@@ -1,0 +1,129 @@
+{
+    "status": "OPTIMAL",
+    "timetable": [
+        {
+            "day": "Monday",
+            "slots": [
+                {
+                    "day": "Monday",
+                    "start_time": "08:30",
+                    "end_time": "09:30",
+                    "break": false,
+                    "duration": "1hr",
+                    "teacher_id": "11112222-3333-4444-5555-666677778888",
+                    "teacher_name": "Dr. Perez",
+                    "course_id": "aa11bb22-cc33-dd44-ee55-ff6677889900",
+                    "course_name": "Intro to Programming",
+                    "hall_id": "aaaabbbb-cccc-dddd-eeee-ffffffff1111",
+                    "hall_name": "Small Lecture Room 1"
+                },
+                {
+                    "day": "Monday",
+                    "start_time": "09:30",
+                    "end_time": "10:30",
+                    "break": false,
+                    "duration": "1hr",
+                    "teacher_id": "22223333-4444-5555-6666-777788889999",
+                    "teacher_name": "Ms. Green",
+                    "course_id": "00112233-4455-6677-8899-aabbccddeeff",
+                    "course_name": "Web Development Basics",
+                    "hall_id": "bbbbaaaa-cccc-dddd-eeee-111122223333",
+                    "hall_name": "Computer Lab 2"
+                }
+            ]
+        },
+        {
+            "day": "Tuesday",
+            "slots": [
+                {
+                    "day": "Tuesday",
+                    "start_time": "08:30",
+                    "end_time": "10:00",
+                    "break": false,
+                    "duration": "1hr30min",
+                    "teacher_id": "33334444-5555-6666-7777-88889999aaaa",
+                    "teacher_name": "Dr. Roland",
+                    "course_id": "01a2b3c4-d5e6-7f8g-9h0i-1j2k3l4m5n6p",
+                    "course_name": "Discrete Mathematics for Software Engineers",
+                    "hall_id": "f5e4d3c2-b1a0-9876-5432-1fedcba98765",
+                    "hall_name": "Medium Lecture Hall B"
+                }
+            ]
+        },
+        {
+            "day": "Wednesday",
+            "slots": [
+                {
+                    "day": "Wednesday",
+                    "start_time": "10:00",
+                    "end_time": "11:30",
+                    "break": false,
+                    "duration": "1hr30min",
+                    "teacher_id": "44445555-6666-7777-8888-9999aaaabbbb",
+                    "teacher_name": "Prof. Singh",
+                    "course_id": "bbccddeeff-0011-2233-4455-66778899aabb",
+                    "course_name": "Operating Systems",
+                    "hall_id": "ccccdddd-eeee-ffff-0000-111122223333",
+                    "hall_name": "Main Lecture Theatre C"
+                }
+            ]
+        },
+        {
+            "day": "Thursday",
+            "slots": [
+                {
+                    "day": "Thursday",
+                    "start_time": "13:00",
+                    "end_time": "15:00",
+                    "break": false,
+                    "duration": "2hr",
+                    "teacher_id": "55556666-7777-8888-9999-aaaabbbbcccc",
+                    "teacher_name": "Dr. Kim",
+                    "course_id": "ccddeeff-1122-3344-5566-77889900aabb",
+                    "course_name": "Database Systems",
+                    "hall_id": "ddddcccc-bbbb-aaaa-9999-888877776666",
+                    "hall_name": "Data Lab"
+                }
+            ]
+        },
+        {
+            "day": "Friday",
+            "slots": [
+                {
+                    "day": "Friday",
+                    "start_time": "09:00",
+                    "end_time": "10:30",
+                    "break": false,
+                    "duration": "1hr30min",
+                    "teacher_id": "66667777-8888-9999-aaaa-bbbbccccdddd",
+                    "teacher_name": "Ms Davis",
+                    "course_id": "a7b8c9d0-e1f2-3g4h-5i6j-7k8l9m0n1p2q",
+                    "course_name": "Advanced Data Structures and Algorithms",
+                    "hall_id": "c1d2e3f4-a5b6-7c8d-9e0f-1a2b3c4d5e6f",
+                    "hall_name": "Main Lecture Theatre A"
+                }
+            ]
+        }
+    ],
+    "diagnostics": {
+        "constraints": {
+            "hard": {
+                "status": "PASSED",
+                "failed": []
+            },
+            "soft": {
+                "status": "PASSED",
+                "failed": []
+            }
+        },
+        "summary": {
+            "message": "All constraints satisfied.",
+            "hard_constraints_met": true,
+            "soft_constraints_met": true,
+            "failed_soft_constraints_count": 0
+        }
+    },
+    "metadata": {
+        "solve_time_seconds": 0.12
+    }
+}

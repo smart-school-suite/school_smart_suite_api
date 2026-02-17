@@ -1,0 +1,72 @@
+{
+  "status": "ERROR",
+  "timetable": {
+    "timetable": [
+      {
+        "day": "Saturday",
+        "slots": [
+          {
+            "day": "Saturday",
+            "start_time": "09:00",
+            "end_time": "10:30",
+            "break": false,
+            "duration": "1hr30min",
+            "teacher_id": "cccceeee-ffff-0000-1111-222233334444",
+            "teacher_name": "Mr. O'Neil",
+            "course_id": "55667788-99aa-bbcc-ddee-ff0011223344",
+            "course_name": "Human-Computer Interaction",
+            "hall_id": "40404040-5050-6060-7070-808080808080",
+            "hall_name": "Design Studio"
+          },
+          {
+            "day": "Saturday",
+            "start_time": "10:30",
+            "end_time": "11:30",
+            "break": true,
+            "duration": null
+          },
+          {
+            "day": "Saturday",
+            "start_time": "11:30",
+            "end_time": "13:00",
+            "break": false,
+            "duration": "1hr30min",
+            "teacher_id": "ddddeeee-ffff-1111-2222-333344445555",
+            "teacher_name": "Dr. Grant",
+            "course_id": "66778899-aabb-ccdd-eeff-001122334455",
+            "course_name": "AI Ethics",
+            "hall_id": "50505050-6060-7070-8080-909090909090",
+            "hall_name": "Seminar Room 2"
+          }
+        ]
+      }
+    ],
+    "diagnostics": {
+      "constraints": {
+        "hard": {
+          "status": "FAILED",
+          "failed": [
+            {
+              "title": "No feasible timetable",
+              "description": "Teacher availability conflicts prevent scheduling all courses."
+            }
+          ]
+        },
+        "soft": {
+          "status": "FAILED",
+          "failed": []
+        }
+      },
+      "summary": {
+        "message": "Unable to generate a valid timetable.",
+        "hard_constraints_met": false,
+        "soft_constraints_met": false,
+        "failed_soft_constraints_count": 100,
+        "failed_hard_constraints_count": 25
+      }
+    },
+    "metadata": {
+      "solve_time_seconds": 0.09
+    }
+  }
+}
