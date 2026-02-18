@@ -13,8 +13,6 @@ class SemesterTimetableVersion extends Model
         'version_number',
         'label',
         'scheduler_status',
-        'parent_version_id',
-        'draft_id',
         'school_branch_id',
     ];
 
@@ -26,10 +24,6 @@ class SemesterTimetableVersion extends Model
     {
         return $this->hasMany(SemesterActiveTimetable::class);
     }
-    public function draft()
-    {
-        return $this->belongsTo(SemesterTimetableDraft::class, 'draft_id');
-    }
 
     public function parentVersion()
     {
@@ -39,11 +33,6 @@ class SemesterTimetableVersion extends Model
     public function resultVersion()
     {
         return $this->hasMany(SemesterTimetableVersion::class, 'parent_version_id');
-    }
-
-    public function baseVersion()
-    {
-        return $this->hasMany(SemesterTimetablePrompt::class);
     }
 
     public function timeTableSlot(): HasMany {

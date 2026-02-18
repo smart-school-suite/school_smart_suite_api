@@ -283,6 +283,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable/draft')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableDraft.php'));
+
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/semester-timetable-constraint')
+                 ->group(base_path('routes/Constraint/SemesterTimetableConstraint.php'));
+
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/constraint-category')
+                ->group(base_path('routes/Constraint/ConstraintCategory.php'));
+
+            Route::middleware(['auth:sanctum'])->prefix('api/v1/constraint-type')
+                ->group(base_path('routes/Constraint/ConstraintType.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

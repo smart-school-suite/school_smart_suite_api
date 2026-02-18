@@ -12,9 +12,6 @@ use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
-use App\Services\SemesterTimetableAI\GeminiIntentService;
-use App\Services\SemesterTimetableAI\GeminiJsonService;
-use App\Services\SemesterTimetableAI\GeminiResponseIntepreterService;
 use App\Services\SemesterTimetableScheduler\PreferenceSchedulingClient;
 use Carbon\Carbon;
 
@@ -22,14 +19,10 @@ class GeneratePreferenceSemesterTimetableService
 {
     protected PreferenceSchedulingClient $schedulingClient;
     public function __construct(
-        protected GeminiIntentService $geminiIntentService,
-        protected GeminiJsonService $geminiJsonService,
-        protected GeminiResponseIntepreterService $geminiResponseIntepreterService,
         PreferenceSchedulingClient $schedulingClient,
     ) {
         $this->schedulingClient = $schedulingClient;
     }
-
     public function generateTimetable(array $data, object $currentSchool): array
     {
         return [
@@ -177,7 +170,6 @@ class GeneratePreferenceSemesterTimetableService
 
         return $q;
     }
-
     private function getTeacherPreferredSchedule(string $branchId, string $semesterId, string $specialtyId, array $teacherIds)
     {
         return InstructorAvailabilitySlot::where('school_branch_id', $branchId)
@@ -187,7 +179,6 @@ class GeneratePreferenceSemesterTimetableService
             ->with('teacher')
             ->get();
     }
-
     private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $semester)
     {
         return TeacherCoursePreference::where('school_branch_id', $branchId)
@@ -197,7 +188,6 @@ class GeneratePreferenceSemesterTimetableService
             ->with(['course.types', 'teacher'])
             ->get();
     }
-
     private function getHalls(string $branchId, string $specialtyId)
     {
         $halls = SpecialtyHall::where('school_branch_id', $branchId)
@@ -216,7 +206,6 @@ class GeneratePreferenceSemesterTimetableService
 
         return $halls;
     }
-
     private function getHallBusyPeriods(string $branchId, $halls)
     {
         $hallIds = $halls->pluck('hall_id')->toArray();
@@ -228,7 +217,6 @@ class GeneratePreferenceSemesterTimetableService
             ->with('hall')
             ->get();
     }
-
     private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
@@ -239,7 +227,6 @@ class GeneratePreferenceSemesterTimetableService
             ->with('teacher')
             ->get();
     }
-
     private function buildPromptPayload($teacherCourses, $teachers, $halls): array
     {
         return [
@@ -262,7 +249,6 @@ class GeneratePreferenceSemesterTimetableService
             ]),
         ];
     }
-
     private function buildBody($preferred, $teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, $promptResponse): array
     {
         return [
@@ -374,7 +360,6 @@ class GeneratePreferenceSemesterTimetableService
             ]);
         }
     }
-
     private static function partialSchedulerResponseMock()
     {
         $filePath = public_path("schedulerResponse/partial.response.example.json");
@@ -382,7 +367,6 @@ class GeneratePreferenceSemesterTimetableService
         $data = json_decode($content, true);
         return $data;
     }
-
     private static function optimalSchedulerResponseMock()
     {
         $filePath = public_path("schedulerResponse/optimal.response.example.json");
@@ -390,8 +374,8 @@ class GeneratePreferenceSemesterTimetableService
         $data = json_decode($content, true);
         return $data;
     }
-
-    private static function failedSchedulerResponseMock() {
+    private static function failedSchedulerResponseMock()
+    {
         $filePath = public_path("schedulerResponse/failed.response.example.json");
         $content = file_get_contents($filePath);
         $data = json_decode($content, true);

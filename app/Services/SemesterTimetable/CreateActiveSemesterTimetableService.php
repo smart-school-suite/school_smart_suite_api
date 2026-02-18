@@ -12,7 +12,6 @@ class CreateActiveSemesterTimetableService
     public function createActiveSemesterTimetable(string $timetableVersionId, object $currentSchool)
     {
         $timetableVersions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
-            ->with(["draft"])
             ->get();
 
         $timetableVersion = $timetableVersions->where("id", $timetableVersionId)->first();

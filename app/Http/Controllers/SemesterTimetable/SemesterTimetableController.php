@@ -32,22 +32,17 @@ class SemesterTimetableController extends Controller
     public function generateFixedTimetable(GenerateSemesterTimetableRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $generate = $this->fixedTimetableService->generateTimetable($request->validated(), $currentSchool);
-        return ApiResponseService::success("Timetable generated successfully", $generate, null, 200);
+        // $generate = $this->fixedTimetableService->generateTimetable($request->validated(), $currentSchool);
+        // return ApiResponseService::success("Timetable generated successfully", $generate, null, 200);
     }
-
-    public function getTimetableConversations(
-        SemesterTimetableConversationService $conversationService,
-        Request $request,
-        string $schoolSemesterId
-    ) {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $conversations = $conversationService->getConversationHistory($schoolSemesterId, $currentSchool);
-        return ApiResponseService::success(
-            "Conversation history retrieved successfully.",
-            $conversations,
-            null,
-            200
-        );
+    protected function resolveUser()
+    {
+        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
+            $user = request()->user($guard);
+            if ($user !== null) {
+                return $user;
+            }
+        }
+        return null;
     }
 }

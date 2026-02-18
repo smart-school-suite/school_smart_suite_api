@@ -9,7 +9,7 @@ class PeriodDurationGuide
 {
     public static function make(): ConstraintGuide
     {
-        return ConstraintGuideBuilder::make('schedule_period_duration_minutes')
+        return ConstraintGuideBuilder::make(key: 'schedule_period_duration_minutes')
             ->intent('Defines the standard length (in minutes) of each class period/slot across the timetable.')
             ->whenToUse('Use this constraint when the user specifies the length of periods, "each class is 60 minutes", "periods are 45 minutes long", "double periods on some days", "lessons last 90 minutes", or any statement about the fixed or default duration of timetable slots.')
             ->requiredFields(['duration_minutes'])

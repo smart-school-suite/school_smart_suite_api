@@ -19,23 +19,12 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('timetable_drafts', function (Blueprint $table) {
-            $table->string('school_semester_id');
-            $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-        });
-
         Schema::table('user_badges', function (Blueprint $table) {
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
         Schema::table('timetable_versions', function (Blueprint $table) {
-            $table->string('parent_version_id')->nullable();
-            $table->foreign('parent_version_id')->references('id')->on('timetable_versions')->onDelete('set null');
-            $table->string('draft_id');
-            $table->foreign('draft_id')->references('id')->on('timetable_drafts')->onDelete('cascade');
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
@@ -45,19 +34,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->string('timetable_version_id');
             $table->foreign('timetable_version_id')->references('id')->on('timetable_versions')->onDelete('cascade');
-            $table->string('school_semester_id');
-            $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
-        });
-
-        Schema::table('timetable_prompts', function (Blueprint $table) {
-            $table->string('draft_id')->nullable();
-            $table->foreign('draft_id')->references('id')->on('timetable_drafts')->onDelete('cascade');
-            $table->string('result_version_id')->nullable();
-            $table->foreign('result_version_id')->references('id')->on('timetable_versions')->onDelete('cascade');
-            $table->string('base_version_id')->nullable();
-            $table->foreign('base_version_id')->references('id')->on('timetable_versions')->onDelete('set null');
-            $table->string('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
             $table->string('school_semester_id');
             $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
         });

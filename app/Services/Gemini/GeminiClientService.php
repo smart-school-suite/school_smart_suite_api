@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Services\SemesterTimetableAI;
+namespace App\Services\Gemini;
 
 use GuzzleHttp\Client;
-
-class GeminiClient
+class GeminiClientService
 {
     protected Client $client;
     protected string $apiKey;
