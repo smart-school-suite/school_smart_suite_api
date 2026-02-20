@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Course\CourseSpecialty;
 use App\Models\Course\CourseType;
+use App\Models\Course\JointCourseSlot;
 use App\Models\Course\SchoolCourseType;
+use App\Models\Course\SemesterJointCourse;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,26 +21,35 @@ class Courses extends Model
     protected $fillable = [
         'course_code',
         'course_title',
-        'specialty_id',
-        'department_id',
         'school_branch_id',
         'credit',
         'status',
         'description',
-        'semester_id',
-        'level_id',
+        'semester_id'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'credit' => 'integer',
     ];
     public $keyType = 'string';
     public $table = 'courses';
     public $incrementing = false;
 
+    public function semesterJointCourse(): HasMany
+    {
+        return $this->hasMany(SemesterJointCourse::class);
+    }
+    public function jointCourseSlot(): HasMany
+    {
+        return $this->hasMany(JointCourseSlot::class);
+    }
+    public function courseSpecialty(): HasMany
+    {
+        return $this->hasMany(CourseSpecialty::class, 'course_id');
+    }
     public function teacherCoursePreference(): HasMany
     {
-        return $this->hasMany(TeacherCoursePreference::class, 'teacher_id');
+        return $this->hasMany(TeacherCoursePreference::class, 'course_id');
     }
 
     public function resitmarks(): HasMany
@@ -91,27 +103,6 @@ class Courses extends Model
     {
         return $this->hasMany(Examtimetable::class);
     }
-
-    public function specialty(): BelongsTo
-    {
-        return $this->belongsTo(Specialty::class);
-    }
-
-    public function teacher(): BelongsTo
-    {
-        return $this->belongsTo(Teacher::class);
-    }
-
-    public function timetable(): HasMany
-    {
-        return $this->hasMany(Timetable::class);
-    }
-
-    public function level(): BelongsTo
-    {
-        return $this->belongsTo(Educationlevels::class);
-    }
-
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class);

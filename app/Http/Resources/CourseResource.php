@@ -19,11 +19,11 @@ class CourseResource extends JsonResource
             'course_code' => $this->course_code,
             'course_title' => $this->course_title,
             'credit' => $this->credit,
-            'specialty_name' => $this->specialty->specialty_name ?? null,
-            'department_name' => $this->department->department_name ?? null,
+            'specialty_name' => $this->courseSpecialty[0]->specialty->specialty_name ?? null,
+            'department_name' => $this->courseSpecialty[0]->specialty->department->department_name ?? null,
             'semester_title' => $this->semester->name ?? null,
-            'level_name' => $this->level->name ?? null,
-            'level_number' => $this->level->level ?? null,
+            'level_name' => $this->courseSpecialty[0]->specialty->level->name ?? null,
+            'level_number' => $this->courseSpecialty[0]->specialty->level->level ?? null,
             'status' => $this->status
         ];
     }

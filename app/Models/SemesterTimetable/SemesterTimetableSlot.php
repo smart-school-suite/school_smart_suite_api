@@ -5,6 +5,7 @@ namespace App\Models\SemesterTimetable;
 use App\Models\Courses;
 use App\Models\Educationlevels;
 use App\Models\Hall;
+use App\Models\SchoolSemester;
 use App\Models\Semester;
 use App\Models\Specialty;
 use App\Models\Studentbatch;
@@ -29,7 +30,7 @@ class SemesterTimetableSlot extends Model
         'day_of_week',
         'start_time',
         'end_time',
-        'semester_id',
+        'school_semester_id',
         'break',
         'hall_id',
         'student_batch_id',
@@ -69,9 +70,9 @@ class SemesterTimetableSlot extends Model
     {
         return $this->belongsTo(Educationlevels::class, 'level_id');
     }
-    public function semester(): HasMany
+    public function schoolSemester(): BelongsTo
     {
-        return $this->hasMany(Semester::class, 'semeter_id');
+        return $this->belongsTo(SchoolSemester::class, 'school_semester_id');
     }
     public function studentBatch(): BelongsTo
     {

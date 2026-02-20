@@ -23,7 +23,6 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->date("start_date");
             $table->date("end_date");
-            $table->string("school_year");
             $table->boolean("timetable_published")->default(false);
             $table->enum('status', ['expired', 'active', 'pending'])->default('pending');
             $table->timestamps();

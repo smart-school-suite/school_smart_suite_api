@@ -11,6 +11,49 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::table('semester_joint_course_refs', function (Blueprint $table) {
+            $table->string('semester_joint_course_id');
+            $table->foreign('semester_joint_course_id')->references('id')->on('semester_joint_courses')->onDelete('cascade');
+            $table->string('school_semester_id');
+            $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->unique(['school_branch_id', 'school_semester_id', 'semester_joint_course_id']);
+        });
+
+        Schema::table('course_specialties', function (Blueprint $table) {
+            $table->string('course_id');
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialties')->onDelete('cascade');
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('semester_joint_courses', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('semester_id');
+            $table->foreign('semester_id')->references('id')->on('semesters')->onDelete('cascade');
+            $table->string('course_id');
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->string('school_year_id');
+            $table->foreign('school_year_id')->references('id')->on('school_academic_years')->onDelete('cascade');
+            $table->unique(['school_branch_id', 'school_year_id', 'semester_id', 'course_id']);
+        });
+
+        Schema::table('joint_course_slots', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('course_id');
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->string('hall_id');
+            $table->foreign('hall_id')->references('id')->on('halls')->onDelete('cascade');
+            $table->string('teacher_id');
+            $table->foreign('teacher_id')->references('id')->on('teachers')->onDelete('cascade');
+            $table->string('semester_joint_course_id');
+            $table->foreign('semester_joint_course_id')->references('id')->on('semester_joint_courses')->onDelete('cascade');
+        });
 
         Schema::table('school_academic_years', function (Blueprint $table) {
             $table->string('specialty_id');
@@ -333,8 +376,8 @@ return new class extends Migration
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
             $table->string('teacher_id')->nullable();
             $table->foreign('teacher_id')->references('id')->on('teachers')->onDelete('cascade');
-            $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('school_semesters');
+            $table->string('school_semester_id');
+            $table->foreign('school_semester_id')->references('id')->on('school_semesters');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('levels')->onDelete('cascade');
             $table->string('school_branch_id')->after('id');
@@ -568,6 +611,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_batch_id');
             $table->foreign('student_batch_id')->references('id')->on('student_batches');
+            $table->string('school_year_id');
+            $table->foreign('school_year_id')->references('id')->on('school_academic_years');
         });
 
         Schema::table('tuition_fees', function (Blueprint $table) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Course\JointCourseSlot;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -56,6 +57,10 @@ class Teacher extends Model
         ];
     }
 
+    public function jointCourseSlot(): HasMany
+    {
+        return $this->hasMany(JointCourseSlot::class);
+    }
     public function activationCode(): MorphMany
     {
         return $this->morphMany(ActivationCodeUsage::class, 'actorable');
@@ -75,10 +80,6 @@ class Teacher extends Model
     public function otp()
     {
         return $this->morphMany(Otp::class, 'actorable');
-    }
-    public function userBadge()
-    {
-        return $this->morphMany(UserBadge::class, 'actorable');
     }
     public function vote()
     {
@@ -126,16 +127,6 @@ class Teacher extends Model
     {
         return $this->hasMany(InstructorAvailabilitySlot::class);
     }
-    public function timetable(): HasMany
-    {
-        return $this->hasMany(Timetable::class);
-    }
-
-    public function badges()
-    {
-        return $this->morphMany(BadgeAssignment::class, 'assignable');
-    }
-
     public function eventAudience()
     {
         return $this->morphMany(EventAudience::class, 'audienceable');

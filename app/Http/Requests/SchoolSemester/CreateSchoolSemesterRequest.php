@@ -24,8 +24,8 @@ class CreateSchoolSemesterRequest extends FormRequest
             'start_date' => 'required|date|after_or_equal:start_time',
             'end_date' => 'required|date|after:start_date',
             'school_year' => 'required|string',
+            'school_year_id' => 'required|string|exists:school_academic_years,id',
             'semester_id' => 'required|string|exists:semesters,id',
-            'specialty_id' => 'required|string|exists:specialties,id',
             'student_batch_id' => 'required|string|exists:student_batches,id'
         ];
     }

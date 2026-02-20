@@ -289,6 +289,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/constraint-type')
                 ->group(base_path('routes/Constraint/ConstraintType.php'));
+
+            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/joint-course')
+                ->group(base_path('routes/JointCourse/JointCourse.php'));
+
+            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/joint-course-slot')
+                ->group(base_path('routes/JointCourse/JointCourseSlot.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

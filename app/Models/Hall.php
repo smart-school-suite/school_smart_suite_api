@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Course\JointCourseSlot;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\GeneratesUuid;
@@ -30,7 +31,10 @@ class Hall extends Model
     public $table = 'halls';
     public $incrementing = false;
 
-
+    public function jointCourseSlot(): HasMany
+    {
+        return $this->hasMany(JointCourseSlot::class);
+    }
     public function specialtyHall(): HasMany
     {
         return $this->hasMany(SpecialtyHall::class);

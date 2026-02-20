@@ -15,6 +15,7 @@ use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
 use App\Events\Analytics\OperationalAnalyticsEvent;
 use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
+use App\Models\Course\CourseSpecialty;
 
 class CourseService
 {
@@ -37,12 +38,9 @@ class CourseService
         $course = new Courses();
         $course->course_code = $data['course_code'];
         $course->course_title = $data['course_title'];
-        $course->specialty_id = $specialty->id;
-        $course->department_id = $specialty->department_id;
         $course->credit = $data['credit'];
         $course->school_branch_id = $currentSchool->id;
         $course->semester_id = $data['semester_id'];
-        $course->level_id = $specialty->level_id;
         $course->description = $data['description'] ?? null;
         $course->save();
 
@@ -56,6 +54,13 @@ class CourseService
 
             $course->types()->sync($syncData);
         }
+
+        CourseSpecialty::create([
+            'course_id' => $course->id,
+            'specialty_id' => $data['specialty_id'],
+            'school_branch_id' => $currentSchool->id,
+        ]);
+
         AdminActionEvent::dispatch(
             [
                 "permissions" =>  ["schoolAdmin.course.create"],
@@ -171,7 +176,8 @@ class CourseService
     }
     public function updateCourse(string $courseId, array $data, $currentSchool, $authAdmin)
     {
-        $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
+        $course = Courses::where("school_branch_id", $currentSchool->id)
+            ->find($courseId);
         if (!$course) {
             throw new AppException(
                 "Course not found please try again",
@@ -296,8 +302,10 @@ class CourseService
     }
     public function getCourses($currentSchool)
     {
-        $courses  = Courses::where("school_branch_id", $currentSchool->id)
-            ->with(['department', 'specialty', 'semester', 'level', 'types'])
+        $courses = Courses::where("school_branch_id", $currentSchool->id)
+            ->with(['courseSpecialty.specialty.level', 'courseSpecialty.specialty.department', 'semester', 'types'])
+            ->withCount('courseSpecialty')
+            ->having('course_specialty_count', '=', 1)
             ->get();
 
         if ($courses->isEmpty()) {
@@ -316,7 +324,7 @@ class CourseService
     {
         try {
             $course = Courses::where('school_branch_id', $currentSchool->id)
-                ->with(['department', 'specialty', 'semester', 'level', 'types'])
+                ->with(['courseSpecialty.specialty.level', 'courseSpecialty.specialty.department', 'semester', 'types'])
                 ->findorFail($courseId);
             return $course;
         } catch (ModelNotFoundException $e) {
@@ -340,16 +348,15 @@ class CourseService
     public function getCoursesBySpecialtySemesterAndLevel($currentSchool, string $specialtyId,  string $semesterId)
     {
         try {
-            $specialty = Specialty::findorFail($specialtyId);
 
-            $levelId = $specialty->level->id;
-
-            $coursesData = Courses::where("school_branch_id", $currentSchool->id)
+            $coursesData = CourseSpecialty::where("school_branch_id", $currentSchool->id)
                 ->where("semester_id", $semesterId)
                 ->where("specialty_id", $specialtyId)
-                ->where("level_id", $levelId)
-                ->with(['types'])
-                ->get();
+                ->with(['types', 'course.semester'])
+                ->whereHas('course', function ($query) {
+                    $query->where('status', 'active');
+                })
+                ->pluck('course');
 
             if ($coursesData->isEmpty()) {
                 throw new AppException(
@@ -554,7 +561,7 @@ class CourseService
     {
         $courses = Courses::where("school_branch_id", $currentSchool->id)
             ->where("status", "active")
-            ->with(['department', 'specialty', 'semester', 'level', 'types'])
+            ->with(['courseSpecialty.specialty.level', 'courseSpecialty.specialty.department', 'semester', 'types'])
             ->get();
         if ($courses->isEmpty()) {
             throw new AppException(
@@ -566,17 +573,34 @@ class CourseService
             );
         }
 
-        return $courses;
+        return $courses->map(fn ($course) => [
+            'id' => $course->id,
+            'course_code' => $course->course_code,
+            'course_title' => $course->course_title,
+            'credit' => $course->credit,
+            'specialty_name' => $course->courseSpecialty[0]->specialty->specialty_name ?? null,
+            'specialty_id' => $course->courseSpecialty[0]->specialty->id ?? null,
+            'department_name' => $course->courseSpecialty[0]->specialty->department->department_name ?? null,
+            'semester_title' => $course->semester->name ?? null,
+            'semester_id' => $course->semester->id ?? null,
+            'level_name' => $course->courseSpecialty[0]->specialty->level->name ?? null,
+            'level_number' => $course->courseSpecialty[0]->specialty->level->level ?? null,
+            'status' => $course->status,
+            "joint_course_status" => count($course->courseSpecialty) > 1 ? true : false
+        ]);
     }
     public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
     {
         try {
             $schoolSemester = SchoolSemester::findOrFail($semesterId);
             $specialty = Specialty::findOrFail($specialtyId);
-            $courses = Courses::where("school_branch_id", $currentSchool->id)->where("semester_id", $schoolSemester->semester_id)
-                ->where("specialty_id", $specialty->id)
+            $courses = Courses::where("school_branch_id", $currentSchool->id)
+                ->where("semester_id", $schoolSemester->semester_id)
+                ->whereHas("courseSpecialty", function ($query) use ($specialty) {
+                    $query->where("specialty_id", $specialty->id);
+                })
                 ->where("status", "active")
-                ->with(['types'])
+                ->with(['types', 'semester'])
                 ->get();
             if ($courses->isEmpty()) {
                 throw new AppException(
@@ -633,12 +657,13 @@ class CourseService
             );
         }
 
-        $courses = Courses::where('school_branch_id', $currentSchool->id)
-            ->where('specialty_id', $student->specialty_id)
-            ->where('level_id', $student->level_id)
-            ->where("status", "active")
-            ->with(['semester', 'types'])
-            ->get();
+        $courses = CourseSpecialty::where("school_branch_id", $currentSchool->id)
+            ->where("specialty_id", $student->specialty_id)
+            ->whereHas('course', function ($query) {
+                $query->where('status', 'active');
+            })
+            ->with(['course.types', 'course.semester'])
+            ->pluck('course');
 
         if ($courses->isEmpty()) {
             throw new AppException(
@@ -689,13 +714,14 @@ class CourseService
             );
         }
 
-        $courses = Courses::where('school_branch_id', $currentSchool->id)
+        $courses = CourseSpecialty::where('school_branch_id', $currentSchool->id)
             ->where('specialty_id', $student->specialty_id)
-            ->where('level_id', $student->level_id)
-            ->where("semester_id", $semesterId)
+            ->whereHas('course', function ($query) use ($semesterId) {
+                $query->where('semester_id', $semesterId);
+            })
             ->where("status", "active")
-            ->with('semester')
-            ->get();
+            ->with(['course.types', 'semester'])
+            ->pluck('course');
 
         if ($courses->isEmpty()) {
             throw new AppException(

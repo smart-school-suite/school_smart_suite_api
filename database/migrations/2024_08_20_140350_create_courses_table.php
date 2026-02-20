@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('credit');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text("description")->nullable();
+            $table->boolean('joint_course_status')->default(false);
             $table->timestamps();
         });
 
@@ -36,6 +37,31 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->timestamps();
         });
+
+
+        Schema::create('course_specialties', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
+
+        Schema::create('semester_joint_courses', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
+
+        Schema::create('joint_course_slots', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->string('day');
+            $table->timestamps();
+        });
+
+        Schema::create('semester_joint_course_refs', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->timestamps();
+        });
+
     }
 
     /**
@@ -46,5 +72,9 @@ return new class extends Migration
         Schema::dropIfExists('courses');
         Schema::dropIfExists('course_types');
         Schema::dropIfExists('school_course_types');
+        Schema::dropIfExists('course_specialties');
+        Schema::dropIfExists('semester_joint_courses');
+        Schema::dropIfExists('joint_course_slots');
+        Schema::dropIfExists('semester_joint_course_refs');
     }
 };

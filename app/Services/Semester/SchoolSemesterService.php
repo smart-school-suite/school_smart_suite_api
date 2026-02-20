@@ -9,7 +9,6 @@ use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
 use App\Models\FeeSchedule;
 use App\Models\SchoolSemester;
 use App\Models\Semester;
-use App\Models\Specialty;
 use App\Models\Studentbatch;
 use App\Models\SchoolBranchSetting;
 use Exception;
@@ -22,6 +21,8 @@ use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
+use App\Models\AcademicYear\SchoolAcademicYear;
 
 class SchoolSemesterService
 {
@@ -33,14 +34,26 @@ class SchoolSemesterService
             $schoolSemester = new SchoolSemester();
             $schoolSemesterId = Str::uuid();
 
-            $specialty = Specialty::where("school_branch_id", $currentSchool->id)
-                ->with(['level'])
-                ->findorFail($semesterData['specialty_id']);
+            $schoolYear = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
+                ->with(['systemAcademicYear', 'specialty.level'])
+                ->findOrFail($semesterData['school_year_id']);
+
+            if($semesterData['end_date'] > $schoolYear->end_date || $semesterData['start_date'] < $schoolYear->start_date){
+                throw new AppException(
+                    "The semester dates must fall within the start and end dates of the associated school academic year.",
+                    400,
+                    "Invalid Semester Dates",
+                    "Please ensure that the semester's start and end dates are within the range of the school academic year's start and end dates.",
+                    null
+                );
+            }
+
+            $specialty = $schoolYear->specialty;
 
             $existingSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
                 ->where("specialty_id", $semesterData['specialty_id'])
                 ->where("semester_id", $semesterData['semester_id'])
-                ->where("school_year", $semesterData['school_year'])
+                ->where("school_year_id", $semesterData['school_year_id'])
                 ->where("student_batch_id", $semesterData['student_batch_id'])
                 ->first();
 
@@ -67,9 +80,9 @@ class SchoolSemesterService
                 $schoolSemester->status = 'pending';
             }
 
-            $schoolSemester->school_year = $semesterData["school_year"];
+            $schoolSemester->school_year_id = $semesterData["school_year_id"];
             $schoolSemester->semester_id = $semesterData["semester_id"];
-            $schoolSemester->specialty_id = $semesterData["specialty_id"];
+            $schoolSemester->specialty_id = $specialty->id;
             $schoolSemester->student_batch_id = $semesterData["student_batch_id"];
             $schoolSemester->school_branch_id = $currentSchool->id;
             $schoolSemester->timetable_published = false;
@@ -77,14 +90,14 @@ class SchoolSemesterService
             $schoolSemester->save();
 
             FeeSchedule::create([
-                'specialty_id' => $semesterData['specialty_id'],
+                'specialty_id' => $specialty->id,
                 'level_id' => $specialty->level_id,
                 'school_branch_id' => $currentSchool->id,
                 'school_semester_id' => $schoolSemesterId
             ]);
 
             CreateTeacherAvailabilityJob::dispatch([
-                'specialty_id' => $semesterData['specialty_id'],
+                'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'school_semester_id' => $schoolSemesterId,
                 'level_id' => $specialty->level_id
@@ -120,6 +133,11 @@ class SchoolSemesterService
             CreateInstructorAvailabilityJob::dispatch(
                 $currentSchool->id,
                 $schoolSemesterId
+            );
+
+            CreateJointCourseSemesterJob::dispatch(
+                $schoolSemesterId,
+                $currentSchool
             );
 
             AdminActionEvent::dispatch(
@@ -332,7 +350,7 @@ class SchoolSemesterService
     public function getSchoolSemesters($currentSchool)
     {
         $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
-            ->select('id', 'start_date', 'end_date', 'school_year', 'status', 'specialty_id', 'semester_id', 'timetable_published', 'student_batch_id')
+            ->select('id', 'start_date', 'end_date', 'status', 'specialty_id', 'semester_id', 'timetable_published', 'student_batch_id', 'school_year_id')
             ->with([
                 'specialty' => function (BelongsTo $belongsTo) {
                     $belongsTo->select('id', 'specialty_name', 'level_id');
@@ -343,6 +361,9 @@ class SchoolSemesterService
                 'semester' => function (BelongsTo $belongsTo) {
 
                     $belongsTo->select('id', 'name',);
+                },
+                'schoolYear.systemAcademicYear' => function (BelongsTo $belongsTo) {
+                    $belongsTo->select('id', 'name', 'year_start', 'year_end');
                 },
             ])
             ->get();
@@ -362,7 +383,7 @@ class SchoolSemesterService
                 "id" => $semester->id,
                 "start_date" => $semester->start_date,
                 "end_date" => $semester->end_date,
-                "school_year" => $semester->school_year,
+                "school_year" => $semester->schoolYear->systemAcademicYear->name ?? null,
                 "status" => $semester->status,
                 "student_batch_id" => $semester->student_batch_id,
                 'student_batch' => Studentbatch::find($semester->student_batch_id)->name,
@@ -396,7 +417,7 @@ class SchoolSemesterService
     }
     public function getSchoolSemesterDetail($currentSchool, $semesterId)
     {
-        $schoolSemesterDetails = SchoolSemester::with(['specialty', 'specialty.level', 'semester', 'studentBatch'])
+        $schoolSemesterDetails = SchoolSemester::with(['specialty', 'specialty.level', 'semester', 'studentBatch', 'schoolYear.systemAcademicYear'])
             ->where("school_branch_id", $currentSchool->id)
             ->find($semesterId);
         if ($schoolSemesterDetails === null) {

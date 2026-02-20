@@ -22,7 +22,7 @@ class UpdateSchoolSemesterRequest extends FormRequest
         return [
             'start_date' => 'sometimes|nullable|date|after_or_equal:start_time',
             'end_date' => 'sometimes|nullable|date|after:start_date',
-            'school_year' => 'sometimes|nullable|string',
+            'school_year_id' => 'sometimes|nullable|string|exists:school_academic_years,id',
             'semester_id' => 'sometimes|nullable|string|exists:semesters,id',
             'specialty_id' => 'sometimes|nullable|string|exists:specialties,id',
             'student_batch_id' => 'sometimes|nullable|exists:student_batches,id'

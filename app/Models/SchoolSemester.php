@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Course\SemesterJoinCourseReference;
 use App\Models\SemesterTimetable\SemesterActiveTimetable;
-use App\Models\SemesterTimetable\SemesterTimetableDraft;
+use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +19,7 @@ class SchoolSemester extends Model
         'id',
         'start_date',
         'end_date',
-        'school_year',
+        'school_year_id',
         'semester_id',
         'specialty_id',
         'status',
@@ -35,13 +37,17 @@ class SchoolSemester extends Model
     public $table = 'school_semesters';
     public $keyType = 'string';
 
+    public function semesterJointCourseReference(): HasMany
+    {
+        return $this->hasMany(SemesterJoinCourseReference::class, 'school_semester_id');
+    }
+    public function schoolYear(): BelongsTo
+    {
+        return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
+    }
     public function semesterActiveTimetable(): HasMany
     {
         return $this->hasMany(SemesterActiveTimetable::class);
-    }
-    public function semesterTimetableDraft(): HasMany
-    {
-        return $this->hasMany(SemesterTimetableDraft::class);
     }
     public function instructorAvailability(): HasMany
     {
@@ -73,5 +79,10 @@ class SchoolSemester extends Model
     public function schoolBranch(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
+    }
+
+    public function semesterTimetableSlot(): HasMany
+    {
+        return $this->hasMany(SemesterTimetableSlot::class, 'school_semester_id');
     }
 }

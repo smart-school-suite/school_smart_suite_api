@@ -2,10 +2,14 @@
 
 namespace App\Models\AcademicYear;
 
+use App\Models\Course\JointCourseSlot;
+use App\Models\Course\SemesterJointCourse;
+use App\Models\SchoolSemester;
 use App\Models\Specialty;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use MongoDB\Laravel\Relations\HasMany;
 
 class SchoolAcademicYear extends Model
 {
@@ -22,6 +26,14 @@ class SchoolAcademicYear extends Model
     public $incrementing = false;
     public $keyType = 'string';
 
+    public function schoolSemester(): HasMany
+    {
+        return $this->hasMany(SchoolSemester::class, 'school_year_id');
+    }
+    public function semesterJointCourse(): HasMany
+    {
+        return $this->hasMany(SemesterJointCourse::class);
+    }
     public function systemAcademicYear(): BelongsTo
     {
         return $this->belongsTo(SystemAcademicYear::class, 'system_academic_year_id');

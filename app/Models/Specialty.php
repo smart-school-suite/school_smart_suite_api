@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Course\CourseSpecialty;
+use App\Models\Course\JointCourse;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +37,10 @@ class Specialty extends Model
     public $table = 'specialties';
     public $incrementing = 'false';
 
+    public function courseSpecialty(): HasMany
+    {
+        return $this->hasMany(CourseSpecialty::class, 'specialty_id');
+    }
     public function resitExamRef(): HasMany
     {
         return $this->hasMany(ResitExamRef::class);
@@ -108,10 +114,6 @@ class Specialty extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(Educationlevels::class);
-    }
-    public function courses(): HasMany
-    {
-        return $this->hasMany(Courses::class);
     }
     public function exams(): HasMany
     {
