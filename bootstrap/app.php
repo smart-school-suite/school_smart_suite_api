@@ -295,6 +295,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/joint-course-slot')
                 ->group(base_path('routes/JointCourse/JointCourseSlot.php'));
+
+            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/semester-timetable-interpreter')
+                ->group(base_path('routes/SemesterTimetable/SemesterTimetableInterpreter.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

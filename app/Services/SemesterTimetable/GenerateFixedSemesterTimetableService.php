@@ -23,6 +23,9 @@ class GenerateFixedSemesterTimetableService
         $this->schedulingClient = $schedulingClient;
     }
 
+    public function generateTimetable(object $currentSchool, array $data){
+
+    }
     private function getSchoolSemester(string $id): SchoolSemester
     {
         return SchoolSemester::with(['specialty.level', 'semester'])->findOrFail($id);
@@ -159,32 +162,6 @@ class GenerateFixedSemesterTimetableService
                 'day' => $s->day_of_week,
             ])
         ];
-    }
-    private function createTimetableDraft(array $data, object $currentSchool)
-    {
-        $semesterId = (string) $data['school_semester_id'];
-
-        $existingCount = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
-            ->where('school_semester_id', $semesterId)
-            ->count();
-
-        if ($existingCount > 0) {
-            throw new AppException(
-                "You already have existing timetable draft(s) for this semester. Please select an existing draft to continue editing.",
-                409,
-                "Existing Drafts Found",
-                "Please select an existing draft to continue."
-            );
-        }
-
-        $timetableDraft = SemesterTimetableDraft::create([
-            'name'               => 'Draft 1',
-            'school_semester_id' => $semesterId,
-            'school_branch_id'   => $currentSchool->id,
-            'draft_count'        => 1,
-        ]);
-
-        return $timetableDraft;
     }
     private function createTimetableVersion(array $data, object $currentSchool, string $draftId, $schedulerStatus)
     {

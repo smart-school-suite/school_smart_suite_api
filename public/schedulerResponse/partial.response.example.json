@@ -9,7 +9,6 @@
                     "start_time": "10:00",
                     "end_time": "11:00",
                     "break": false,
-                    "duration": "1hr",
                     "teacher_id": "abababab-cdcd-efef-0101-232323232323",
                     "teacher_name": "Dr. Noor",
                     "course_id": "aabbccdd-eeff-0011-2233-445566778899",
@@ -29,7 +28,6 @@
                     "start_time": "11:15",
                     "end_time": "12:15",
                     "break": false,
-                    "duration": "1hr",
                     "teacher_id": "12121212-3434-5656-7878-909090909090",
                     "teacher_name": "Ms. Patel",
                     "course_id": "22334455-6677-8899-aabb-ccddeeff0011",
@@ -47,7 +45,6 @@
                     "start_time": "15:00",
                     "end_time": "15:45",
                     "break": false,
-                    "duration": "45min",
                     "teacher_id": "13131313-2424-3535-4646-575757575757",
                     "teacher_name": "Dr. Beck",
                     "course_id": "33445566-7788-99aa-bbcc-ddeeff112233",
@@ -67,7 +64,6 @@
                     "start_time": "16:00",
                     "end_time": "17:30",
                     "break": false,
-                    "duration": "1hr30min",
                     "teacher_id": "14141414-2525-3636-4747-585858585858",
                     "teacher_name": "Prof. Ortiz",
                     "course_id": "44556677-8899-aabb-ccdd-eeff33445566",
@@ -78,199 +74,174 @@
             ]
         }
     ],
+    "diagnostic_error_pool": [],
     "diagnostics": {
         "constraints": {
-            "hard": {
-                "status": "PASSED",
-                "failed": []
-            },
-            "soft": {
-                "status": "FAILED",
-                "failed": [
-                    {
-                        "constraint_failed": {
-                            "type": "TEACHER_MAX_DAILY_HOURS",
-                            "details": {
-                                "max_daily_hours": 4
+            "hard": [],
+            "soft": [
+                {
+                    "constraint_failed": {
+                        "constraint": "schedule_max_free_periods_per_day",
+                        "details": {
+                            "max_free_periods": 1,
+                            "day": "monday"
+                        }
+                    },
+                    "blockers": [
+                        {
+                            "type": "operational_period_violation",
+                            "entity": {
+                                "type": "operational_period",
+                                "slots": [
+                                    {
+                                        "day": "monday",
+                                        "start_time": "08:00",
+                                        "end_time": "15:00"
+                                    },
+                                    {
+                                        "day": "tuesday",
+                                        "start_time": "08:00",
+                                        "end_time": "17:00"
+                                    },
+                                    {
+                                        "day": "wednesday",
+                                        "start_time": "08:00",
+                                        "end_time": "17:00"
+                                    },
+                                    {
+                                        "day": "thursday",
+                                        "start_time": "08:00",
+                                        "end_time": "17:00"
+                                    },
+                                    {
+                                        "day": "friday",
+                                        "start_time": "08:00",
+                                        "end_time": "17:00"
+                                    }
+                                ]
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "07:00",
+                                    "end_time": "07:30",
+                                    "day": "monday"
+                                }
+                            },
+                            "evidence": {
+                                "day": "monday",
+                                "start_time": "08:00",
+                                "end_time": "15:00"
                             }
+                        }
+                    ],
+                    "suggestions": [
+                        {
+                            "constraint": "schedule_max_free_periods_per_day",
+                            "suggested_changes": [
+                                {
+                                    "day": "monday",
+                                    "max_free_periods": 2
+                                }
+                            ]
                         },
-                        "blockers": [
-                            {
-                                "type": "TEACHER_OVERBOOKED",
-                                "description": "This specifies the teacher or teachers who have exceeded their maximum daily hour limits",
-                                "workload_summary": [
+                        {
+                            "constraint": "operational_period",
+                            "suggested_changes": [
+                                {
+                                    "day": "monday",
+                                    "start_time": "07:00",
+                                    "end_time": "17:00"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "constraint_failed": {
+                        "constraint": "teacher_requested_time_windows",
+                        "details": {
+                            "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                            "day": "monday",
+                            "start_time": "08:00",
+                            "end_time": "08:20"
+                        }
+                    },
+                    "blockers": [
+                        {
+                            "type": "TEACHER_BUSY",
+                            "entity": {
+                                "type": "teacher",
+                                "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                            },
+                            "conflict": {
+                                "day": "monday",
+                                "start_time": "08:00",
+                                "end_time": "08:20"
+                            },
+                            "evidence": {
+                                "existing_bookings": [
                                     {
                                         "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-                                        "teacher_name": "Dr. John Doe",
-                                        "total_booked_hours": 6,
-                                        "excess_hours": 2,
-                                        "booked_slots": [
-                                            {
-                                                "day": "Monday",
-                                                "start_time": "09:00",
-                                                "end_time": "12:00",
-                                                "course_id": "111e222b-333c-444d-555e-666f777a888b"
-                                            },
-                                            {
-                                                "day": "Monday",
-                                                "start_time": "13:00",
-                                                "end_time": "16:00",
-                                                "course_id": "999d888c-777b-666a-555e-444f333a2221"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "STAFFING_INSUFFICIENCY",
-                                "unavailable_peers": [
-                                    {
-                                        "teacher_id": "a2b3c4d5-e6f7-g8h9-i0j1-k2l3m4n5o6p7",
-                                        "teacher_name": "Dr. Jane Smith",
-                                        "reasons": [
-                                            {
-                                                "reason_type": "MAX_DAILY_HOURS_EXCEEDED",
-                                                "details": {
-                                                    "max_daily_hours": 4,
-                                                    "current_booked_hours": 5
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "teacher_id": "b5c6d7e8-f9g0-h1i2-j3k4-l5m6n7o8p9q0",
-                                        "teacher_name": "Prof. Alan Turing",
-                                        "reasons": [
-                                            {
-                                                "reason_type": "TIME_WINDOW_RESTRICTION",
-                                                "details": {
-                                                    "allowed_windows": [
-                                                        {
-                                                            "day": "Tuesday",
-                                                            "start_time": "10:00",
-                                                            "end_time": "14:00"
-                                                        }
-                                                    ]
-                                                }
-                                            }
-                                        ]
-                                    }
-                                ],
-                                "available_teacher_pool_count": 1
-                            }
-                        ],
-                        "suggestions": [
-                            {
-                                "action": "INCREASE_MAX_DAILY_HOURS",
-                                "recommended_value": 6,
-                                "impact": "Resolves current schedule but may cause fatigue"
-                            },
-                            {
-                                "action": "ALLOCATE_ADDITIONAL_STAFF",
-                                "required_teacher_count": 3,
-                                "message": "Add at least 2 more qualified teachers for this department to stay within 4-hour limits"
-                            }
-                        ]
-                    },
-                    {
-                        "constraint_failed": {
-                            "type": "FIXED_COURSE_SLOT",
-                            "details": {
-                                "course_id": "8f2d9b1a-3e5c-4a7b-9d1e-2f8a0b3c4d5e",
-                                "course_name": "Introduction to Computer Science",
-                                "course_code": "CSE101",
-                                "course_credit": 3,
-                                "fixed_slots": [
-                                    {
-                                        "start_time": "10:00",
-                                        "end_time": "11:00",
-                                        "day": "Monday"
-                                    },
-                                    {
-                                        "start_time": "10:00",
-                                        "end_time": "11:00",
-                                        "day": "Wednesday"
-                                    },
-                                    {
-                                        "start_time": "10:00",
-                                        "end_time": "11:00",
-                                        "day": "Friday"
+                                        "day": "monday",
+                                        "start_time": "08:00",
+                                        "end_time": "09:00"
                                     }
                                 ]
                             }
                         },
-                        "blockers": [
-                            {
-                                "type": "HALL_UNAVAILABLE",
-                                "blocked_slot": [
-                                    {
-                                        "start_time": "10:00",
-                                        "end_time": "11:00",
-                                        "course_id": "8f2d9b1a-3e5c-4a7b-9d1e-2f8a0b3c4d5e",
-                                        "day": "Monday"
-                                    }
-                                ],
-                                "hall_details": [
-                                    {
-                                        "hall_id": "hall-res-001-north",
-                                        "hall_name": "Main Lecture Hall",
-                                        "busy_slots": [
-                                            {
-                                                "start_time": "09:30",
-                                                "end_time": "11:30",
-                                                "day": "Monday"
-                                            }
-                                        ]
-                                    }
-                                ]
+                        {
+                            "type": "TEACHER_UNAVAILABLE",
+                            "entity": {
+                                "type": "teacher",
+                                "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
                             },
-                            {
-                                "type": "TEACHER_BUSY",
-                                "teacher_busy_details": [
-                                    {
-                                        "teacher_id": "prof-5521",
-                                        "teacher_name": "Dr. John Doe",
-                                        "busy_slots": [
-                                            {
-                                                "start_time": "10:00",
-                                                "end_time": "12:00",
-                                                "day": "Monday"
-                                            }
-                                        ]
-                                    }
-                                ]
+                            "conflict": {
+                                "day": "monday",
+                                "start_time": "08:00",
+                                "end_time": "08:20"
                             },
-                            {
-                                "type": "TEACHER_UNAVAILABLE",
-                                "teacher_time_preferences": [
+                            "evidence": {
+                                "teacher_preferred_slots": [
                                     {
-                                        "teacher_id": "prof-5521",
-                                        "teacher_name": "Dr. John Doe",
-                                        "avaliable_slots": [
-                                            {
-                                                "start_time": "13:00",
-                                                "end_time": "17:00",
-                                                "day": "Monday"
-                                            }
-                                        ]
+                                        "day": "monday",
+                                        "start_time": "08:00",
+                                        "end_time": "08:20"
                                     }
                                 ]
                             }
-                        ],
-                        "suggestions": [
-                            {
-                                "course_id": "8f2d9b1a-3e5c-4a7b-9d1e-2f8a0b3c4d5e",
-                                "course_name": "Introduction to Computer Science",
-                                "course_code": "CSE101",
-                                "course_credit": 3,
-                                "start_time": "14:00",
-                                "end_time": "15:00",
-                                "day": "Monday"
-                            }
-                        ]
-                    }
-                ]
-            }
+                        }
+                    ],
+                    "suggestions": [
+                        {
+                            "constraint": "teacher_max_weekly_hours",
+                            "suggested_changes": [
+                                {
+                                    "max_hours": 22
+                                }
+                            ]
+                        },
+                        {
+                            "constraint": "teacher_max_daily_hours",
+                            "suggested_changes": [
+                                {
+                                    "day": "monday",
+                                    "max_hours": 6
+                                }
+                            ]
+                        },
+                        {
+                            "constraint": "operational_period",
+                            "suggested_changes": [
+                                {
+                                    "day": "monday",
+                                    "start_time": "07:00",
+                                    "end_time": "17:00"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         },
         "summary": {
             "message": "Timetable generated, but some preferences could not be met.",
