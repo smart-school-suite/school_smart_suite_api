@@ -21,13 +21,12 @@ class SemesterTimetableSlot extends Model
     use HasFactory, GeneratesUuid;
 
     protected $fillable = [
-        'id',
         'school_branch_id',
         'specialty_id',
         'level_id',
         'course_id',
         'teacher_id',
-        'day_of_week',
+        'day',
         'start_time',
         'end_time',
         'school_semester_id',
@@ -44,7 +43,7 @@ class SemesterTimetableSlot extends Model
     ];
 
     public $keyType = 'string';
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'timetable_slots';
 
     public function hall(): BelongsTo

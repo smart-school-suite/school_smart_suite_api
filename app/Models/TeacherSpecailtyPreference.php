@@ -22,7 +22,7 @@ class TeacherSpecailtyPreference extends Model
 
     public $keyType = 'string';
     public $table = 'teacher_specialty_preferences';
-    public $incrementing = 'false';
+    public $incrementing = false;
 
     public function teacher(): BelongsTo {
         return $this->belongsTo(Teacher::class, 'teacher_id');

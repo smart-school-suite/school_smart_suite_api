@@ -2,13 +2,18 @@
 
 namespace App\Interpreter\SemesterTimetable\Interpreters\Course;
 
-class CourseRequestedTimeSlotInterpreter
+use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
+use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
+
+class CourseRequestedTimeSlotInterpreter implements ConstraintInterpreter
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function supports(string $constraint): bool
     {
-        //
+        return $constraint === 'course_requested_time_slot';
+    }
+
+    public function interpret(array $diagnostic): InterpretedDiagnostic
+    {
+        throw new \Exception('Not implemented');
     }
 }

@@ -8,7 +8,7 @@ use App\Models\Semester;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use MongoDB\Laravel\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SemesterJointCourse extends Model
 {
@@ -19,6 +19,10 @@ class SemesterJointCourse extends Model
         'course_id',
         'school_year_id'
     ];
+
+    public $incrementing = false;
+    public $table = 'semester_joint_courses';
+    public $keyType = 'string';
 
     public function jointCourseSlots(): HasMany
     {

@@ -5,7 +5,7 @@ namespace App\Models\Course;
 use App\Models\SchoolSemester;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
-use MongoDB\Laravel\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SemesterJoinCourseReference extends Model
 {
