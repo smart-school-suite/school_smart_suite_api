@@ -4,9 +4,16 @@ namespace App\Interpreter\SemesterTimetable\Interpreters\Course;
 
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
-
+use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
+use App\Models\Courses;
 class CourseRequestedTimeSlotInterpreter implements ConstraintInterpreter
 {
+    private BaseInterpreter $baseInterpreter;
+    public function __construct(BaseInterpreter $baseInterpreter)
+    {
+        $this->baseInterpreter = $baseInterpreter;
+    }
+
     public function supports(string $constraint): bool
     {
         return $constraint === 'course_requested_time_slot';
@@ -14,6 +21,19 @@ class CourseRequestedTimeSlotInterpreter implements ConstraintInterpreter
 
     public function interpret(array $diagnostic): InterpretedDiagnostic
     {
-        throw new \Exception('Not implemented');
+        return new InterpretedDiagnostic(
+            summary: $this->buildSummary($diagnostic),
+            constraint: 'course_requested_time_slot',
+            severity: 'soft',
+            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? [])
+        );
+    }
+
+    private function buildSummary(array $diagnostic): string
+    {
+        $details = $diagnostic["constraint_failed"]["details"] ?? [];
+        $course = Courses::find($details['course_id'] ?? null);
+        $courseName = $course ? $course->course_title : 'Unknown Course';
+        return "The Schedular was unable to schedule {$courseName} at {$details['start_time']} to {$details['end_time']} on {$details['day']} as requested. The reasons why this happened are listed below";
     }
 }

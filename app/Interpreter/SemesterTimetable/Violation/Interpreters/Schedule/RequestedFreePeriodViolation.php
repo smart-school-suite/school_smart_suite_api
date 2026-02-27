@@ -16,7 +16,6 @@ class RequestedFreePeriodViolation implements ViolationInterpreter
         $entity = $blocker['entity']['protected_free_period'] ?? null;
         $conflict = $blocker['conflict']['attempted_slot'] ?? null;
 
-        return "Free Period Conflict: The requested session on {$conflict['day']} at
-        {$conflict['start_time']} to {$conflict['end_time']} conflicts with a free period on {$entity['day']} from {$entity['start_time']} to {$entity['end_time']}";
+        return "Free Period Conflict: The requested session on {$conflict['day']} at {$conflict['start_time']} to {$conflict['end_time']} conflicts with a free period on {$entity['day']} from {$entity['start_time']} to {$entity['end_time']}";
     }
 }

@@ -16,6 +16,6 @@ class OperationalPeriodViolation implements ViolationInterpreter
         $entity = $blocker['entity'] ?? null;
         $conflict = $blocker['conflict']['requested_slot'] ?? null;
         $evidence = $blocker['evidence']['conflicting_assignment'] ?? null;
-        return "Operational Period Violation: The requested session on {$conflict['day']} from {$conflict['start_time']} to {$conflict['end_time']} falls outside the operational period.";
+        return "Operational Period Violation: The requested session on {$conflict['day']} from {$conflict['start_time']} to {$conflict['end_time']} falls outside the operational period on {$entity['day']} from {$entity['start_time']} to {$entity['end_time']}";
     }
 }

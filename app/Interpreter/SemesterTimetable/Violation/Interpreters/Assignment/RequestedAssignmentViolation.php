@@ -24,10 +24,6 @@ class RequestedAssignmentViolation implements ViolationInterpreter
         $conflictHall = Hall::find($conflict['hall_id']);
         $conflictCourse = Courses::find($conflict['course_id']);
         $conflictTeacher = Teacher::find($conflict['teacher_id']);
-        return "Existing Requested Assignment,
-        A session is already locked in for {$existingRequestedAssignment['day']} from {$existingRequestedAssignment['start_time']}
-        to {$existingRequestedAssignment['end_time']} by {$existingTeacher->name} in {$existingHall->name} for course {$existingCourse->course_title}.
-        Which conglicts with the attempted assigment of {$conflict['day']} from {$conflict['start_time']}
-        to {$conflict['end_time']} by {$conflictTeacher->name} in {$conflictHall->name} for course {$conflictCourse->course_title}.";
+        return "Existing Requested Assignment, A session is already locked in for {$existingRequestedAssignment['day']} from {$existingRequestedAssignment['start_time']} to {$existingRequestedAssignment['end_time']} by {$existingTeacher->name} in {$existingHall->name} for course {$existingCourse->course_title}. Which conflicts with the attempted assigment of {$conflict['day']} from {$conflict['start_time']} to {$conflict['end_time']} by {$conflictTeacher->name} in {$conflictHall->name} for course {$conflictCourse->course_title}.";
     }
 }

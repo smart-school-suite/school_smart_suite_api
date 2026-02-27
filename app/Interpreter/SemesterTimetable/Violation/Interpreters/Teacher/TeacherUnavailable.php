@@ -19,7 +19,6 @@ class TeacherUnavailable implements ViolationInterpreter
         $evidence = $blocker['evidence']['conflicting_assignment'] ?? null;
         $teacher = Teacher::find($entity['teacher_id'] ?? null);
 
-        return "Teacher Unavailable: {$teacher->name} is not available on {$conflict['day']} from
-        {$conflict['start_time']} to {$conflict['end_time']} as it is not within his/her preferred teaching time.";
+        return "Teacher Unavailable: {$teacher->name} is not available on {$conflict['day']} from {$conflict['start_time']} to {$conflict['end_time']} as it is not within his/her preferred teaching time.";
     }
 }

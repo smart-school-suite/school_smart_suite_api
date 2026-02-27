@@ -81,44 +81,252 @@
             "soft": [
                 {
                     "constraint_failed": {
-                        "constraint": "schedule_max_free_periods_per_day",
+                        "constraint": "course_requested_time_slots",
                         "details": {
-                            "max_free_periods": 1,
-                            "day": "monday"
+                            "course_id": "01a727a0-2a4b-4abb-8155-d004710c3b4a",
+                            "day": "friday",
+                            "start_time": "09:00",
+                            "end_time": "11:00"
                         }
                     },
                     "blockers": [
                         {
+                            "type": "max_course_daily_frequency_violation",
+                            "entity": {
+                                "type": "max_course_daily_frequency",
+                                "course_id": "01a727a0-2a4b-4abb-8155-d004710c3b4a"
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "09:00",
+                                    "end_time": "11:00",
+                                    "day": "friday",
+                                    "course_id": "01a727a0-2a4b-4abb-8155-d004710c3b4a"
+                                }
+                            },
+                            "evidence": [
+                                {
+                                    "violated_daily_frequency_rule": {
+                                        "day": "friday",
+                                        "current_daily_count": 3,
+                                        "attempted_add": 1,
+                                        "total_after_add": 4,
+                                        "max_allowed_per_day": 2
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "requested_assignment_violation",
+                            "entity": {
+                                "type": "requested_fixed_assignment",
+                                "fixed_assignment": {
+                                    "hall_id": "89320594-af91-4692-ac3d-f3dbcbfcbf4a",
+                                    "start_time": "14:00",
+                                    "end_time": "16:00",
+                                    "day": "monday",
+                                    "course_id": "02cb1f10-478b-4fec-8d77-8eb763efb0d5",
+                                    "teacher_id": "2e4ea305-cecd-4195-9b57-466b2f14adec"
+                                }
+                            },
+                            "conflict": {
+                                "attempted_assignment": {
+                                    "hall_id": "89320594-af91-4692-ac3d-f3dbcbfcbf4a",
+                                    "start_time": "14:00",
+                                    "end_time": "15:00",
+                                    "day": "monday",
+                                    "course_id": "038870af-bbdb-4ed4-9d06-decf446cd889",
+                                    "teacher_id": "4d310f64-d4d4-47a4-93f7-08a13dda785f"
+                                }
+                            },
+                            "evidence": [
+                                {
+                                    "violated_fixed_assignment": {
+                                        "required": {
+                                            "start_time": "10:00",
+                                            "end_time": "11:00",
+                                            "day": "monday",
+                                            "hall_id": "89320594-af91-4692-ac3d-f3dbcbfcbf4a",
+                                            "teacher_id": "4d310f64-d4d4-47a4-93f7-08a13dda785f"
+                                        },
+                                        "attempted": {
+                                            "start_time": "14:00",
+                                            "end_time": "15:00",
+                                            "day": "monday",
+                                            "hall_id": "89320594-af91-4692-ac3d-f3dbcbfcbf4a",
+                                            "teacher_id": "2e4ea305-cecd-4195-9b57-466b2f14adec"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "max_teacher_weekly_hour_violation",
+                            "entity": {
+                                "type": "teacher_max_weekly_hours",
+                                "teacher_id": "104b348b-1f65-4602-8cdc-73320469d879",
+                                "max_weekly_hours": 20
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday",
+                                    "teacher_id": "104b348b-1f65-4602-8cdc-73320469d879"
+                                }
+                            },
+                            "evidence": {
+                                "violated_teacher_weekly_hours_rule": {
+                                    "current_weekly_hours": 19,
+                                    "hours_if_scheduled": 23,
+                                    "max_allowed_per_week": 20
+                                }
+                            }
+                        },
+                        {
+                            "type": "hall_busy",
+                            "entity": {
+                                "type": "hall",
+                                "hall_id": "e74b0aa5-bf88-4e14-bd34-3ea7f3b80bf6"
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "monday",
+                                    "course_id": "022e1c90-b039-4d8f-9064-471a6d8d0508",
+                                    "hall_id": "e74b0aa5-bf88-4e14-bd34-3ea7f3b80bf6"
+                                }
+                            },
+                            "evidence": {
+                                "conflicting_booking": {
+                                    "hall_id": "e74b0aa5-bf88-4e14-bd34-3ea7f3b80bf6",
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "monday",
+                                    "course_id": "03c20913-df36-4419-aaa4-4e53d433ef25"
+                                }
+                            }
+                        },
+                        {
+                            "type": "teacher_busy",
+                            "entity": {
+                                "type": "teacher",
+                                "teacher_id": "14236b55-0428-4ae6-9dfb-cad1f91c7e66"
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday",
+                                    "course_id": "02f8051e-4194-41fd-be18-e956ade18ef0",
+                                    "teacher_id": "14236b55-0428-4ae6-9dfb-cad1f91c7e66"
+                                }
+                            },
+                            "evidence": {
+                                "conflicting_assignment": {
+                                    "teacher_id": "14236b55-0428-4ae6-9dfb-cad1f91c7e66",
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday",
+                                    "course_id": "038870af-bbdb-4ed4-9d06-decf446cd889",
+                                    "hall_id": "b4e2496e-b549-47eb-b1bb-bb6aa0b2dbca"
+                                }
+                            }
+                        },
+                        {
+                            "type": "teacher_unavailable",
+                            "entity": {
+                                "type": "teacher",
+                                "teacher_id": "ff3d8b9c-6d8f-4e28-b876-046f37d36df1"
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday",
+                                    "course_id": "02d87ca1-c418-4bb0-a164-4de19bead6ba",
+                                    "hall_id": "aeac7586-f1a7-4880-b848-1deccd6a81a6",
+                                    "teacher_id": "ff3d8b9c-6d8f-4e28-b876-046f37d36df1"
+                                }
+                            },
+                            "evidence": {
+                                "conflicting_assignment": {
+                                    "teacher_id": "14236b55-0428-4ae6-9dfb-cad1f91c7e66",
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday"
+                                }
+                            }
+                        },
+                        {
+                            "type": "break_period_violation",
+                            "entity": {
+                                "type": "break_period",
+                                "day": "wednesday",
+                                "start_time": "12:00",
+                                "end_time": "13:00"
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "12:00",
+                                    "end_time": "13:00",
+                                    "day": "wednesday"
+                                }
+                            },
+                            "evidence": [
+                                {
+                                    "protected_break_period": {
+                                        "day": "wednesday",
+                                        "start_time": "12:00",
+                                        "end_time": "13:00"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "joint_course_period_violation",
+                            "entity": {
+                                "type": "joint_course_period",
+                                "fixed_joint_course_slot": {
+                                    "course_id": "0c0a00f9-c36e-4440-9a50-fbe713be2084",
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "monday",
+                                    "hall_id": "50dc5764-26ca-43a2-aa56-93285ce7f6a1",
+                                    "teacher_id": "e9a0482f-4ba6-467f-a48e-021a43139639"
+                                }
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "monday",
+                                    "course_id": "0cfd7477-39cb-457a-a368-3fe25b7b5eed",
+                                    "hall_id": "4577d85c-9c0d-4556-9e6d-b16a598625be",
+                                    "teacher_id": "e06e9636-ae9d-46a0-a701-effa1e715522"
+                                }
+                            },
+                            "evidence": [
+                                {
+                                    "existing_joint_partner": {
+                                        "course_id": "0c0a00f9-c36e-4440-9a50-fbe713be2084",
+                                        "start_time": "10:00",
+                                        "end_time": "11:00",
+                                        "day": "monday",
+                                        "hall_id": "50dc5764-26ca-43a2-aa56-93285ce7f6a1",
+                                        "teacher_id": "e9a0482f-4ba6-467f-a48e-021a43139639"
+                                    }
+                                }
+                            ]
+                        },
+                        {
                             "type": "operational_period_violation",
                             "entity": {
                                 "type": "operational_period",
-                                "slots": [
-                                    {
-                                        "day": "monday",
-                                        "start_time": "08:00",
-                                        "end_time": "15:00"
-                                    },
-                                    {
-                                        "day": "tuesday",
-                                        "start_time": "08:00",
-                                        "end_time": "17:00"
-                                    },
-                                    {
-                                        "day": "wednesday",
-                                        "start_time": "08:00",
-                                        "end_time": "17:00"
-                                    },
-                                    {
-                                        "day": "thursday",
-                                        "start_time": "08:00",
-                                        "end_time": "17:00"
-                                    },
-                                    {
-                                        "day": "friday",
-                                        "start_time": "08:00",
-                                        "end_time": "17:00"
-                                    }
-                                ]
+                                "day": "monday",
+                                "start_time": "08:00",
+                                "end_time": "15:00"
                             },
                             "conflict": {
                                 "requested_slot": {
@@ -127,10 +335,145 @@
                                     "day": "monday"
                                 }
                             },
+                            "evidence": [
+                                {
+                                    "violated_operational_slot": {
+                                        "day": "monday",
+                                        "start_time": "08:00",
+                                        "end_time": "15:00"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "period_duration_violation",
+                            "entity": {
+                                "type": "schedule_period_duration_minutes",
+                                "duration_minutes": 60,
+                                "day": "monday"
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:30",
+                                    "day": "monday"
+                                },
+                                "duration_minutes": 30
+                            },
                             "evidence": {
-                                "day": "monday",
-                                "start_time": "08:00",
-                                "end_time": "15:00"
+                                "violated_duration_rule": {
+                                    "day": "monday",
+                                    "allowed_minutes": 60,
+                                    "requested_duration_minutes": 30
+                                }
+                            }
+                        },
+                        {
+                            "type": "hall_requested_time_slot_violation",
+                            "entity": {
+                                "type": "hall_requested_time_slot",
+                                "preferred_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:30",
+                                    "day": "monday",
+                                    "hall_id": "89320594-af91-4692-ac3d-f3dbcbfcbf4a"
+                                }
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "14:00",
+                                    "end_time": "15:30",
+                                    "day": "monday",
+                                    "hall_id": "89320594-af91-4692-ac3d-f3dbcbfcbf4a"
+                                }
+                            },
+                            "evidence": [
+                                {
+                                    "violated_hall_preference": {
+                                        "preferred_slot": {
+                                            "start_time": "10:00",
+                                            "end_time": "11:30",
+                                            "day": "monday"
+                                        },
+                                        "attempted_slot": {
+                                            "start_time": "14:00",
+                                            "end_time": "15:30",
+                                            "day": "monday"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "max_daily_free_period_violation",
+                            "entity": {
+                                "type": "schedule_max_free_periods_per_day",
+                                "day": "wednesday",
+                                "max_free_periods": 2
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday"
+                                }
+                            },
+                            "evidence": {
+                                "violated_free_periods_rule": {
+                                    "day": "wednesday",
+                                    "current_free_periods": 2,
+                                    "free_periods_after_scheduling": 3,
+                                    "max_allowed_free_periods": 2
+                                }
+                            }
+                        },
+                        {
+                            "type": "max_daily_period_violation",
+                            "entity": {
+                                "type": "schedule_max_periods_per_day",
+                                "day": "wednesday",
+                                "max_periods": 5
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday"
+                                }
+                            },
+                            "evidence": [
+                                {
+                                    "violated_max_periods_rule": {
+                                        "day": "wednesday",
+                                        "current_periods": 5,
+                                        "periods_if_scheduled": 6,
+                                        "max_allowed_per_day": 5
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "max_teacher_daily_hours_violation",
+                            "entity": {
+                                "type": "teacher_max_daily_hours",
+                                "teacher_id": "da29d184-2b18-4c38-8449-19e2dee9fb1a",
+                                "max_daily_hours": 4
+                            },
+                            "conflict": {
+                                "requested_slot": {
+                                    "start_time": "10:00",
+                                    "end_time": "11:00",
+                                    "day": "wednesday",
+                                    "teacher_id": "fa266c74-a226-4473-98e6-a9cd56e098d7"
+                                }
+                            },
+                            "evidence": {
+                                "violated_teacher_daily_hours_rule": {
+                                    "day": "wednesday",
+                                    "current_daily_hours": 4,
+                                    "hours_if_scheduled": 5,
+                                    "max_allowed_per_day": 4
+                                }
                             }
                         }
                     ],
@@ -141,91 +484,6 @@
                                 {
                                     "day": "monday",
                                     "max_free_periods": 2
-                                }
-                            ]
-                        },
-                        {
-                            "constraint": "operational_period",
-                            "suggested_changes": [
-                                {
-                                    "day": "monday",
-                                    "start_time": "07:00",
-                                    "end_time": "17:00"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "constraint_failed": {
-                        "constraint": "teacher_requested_time_windows",
-                        "details": {
-                            "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-                            "day": "monday",
-                            "start_time": "08:00",
-                            "end_time": "08:20"
-                        }
-                    },
-                    "blockers": [
-                        {
-                            "type": "TEACHER_BUSY",
-                            "entity": {
-                                "type": "teacher",
-                                "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-                            },
-                            "conflict": {
-                                "day": "monday",
-                                "start_time": "08:00",
-                                "end_time": "08:20"
-                            },
-                            "evidence": {
-                                "existing_bookings": [
-                                    {
-                                        "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-                                        "day": "monday",
-                                        "start_time": "08:00",
-                                        "end_time": "09:00"
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "type": "TEACHER_UNAVAILABLE",
-                            "entity": {
-                                "type": "teacher",
-                                "teacher_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-                            },
-                            "conflict": {
-                                "day": "monday",
-                                "start_time": "08:00",
-                                "end_time": "08:20"
-                            },
-                            "evidence": {
-                                "teacher_preferred_slots": [
-                                    {
-                                        "day": "monday",
-                                        "start_time": "08:00",
-                                        "end_time": "08:20"
-                                    }
-                                ]
-                            }
-                        }
-                    ],
-                    "suggestions": [
-                        {
-                            "constraint": "teacher_max_weekly_hours",
-                            "suggested_changes": [
-                                {
-                                    "max_hours": 22
-                                }
-                            ]
-                        },
-                        {
-                            "constraint": "teacher_max_daily_hours",
-                            "suggested_changes": [
-                                {
-                                    "day": "monday",
-                                    "max_hours": 6
                                 }
                             ]
                         },

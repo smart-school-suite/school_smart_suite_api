@@ -6,7 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Builder\ViolationBuilder;
 use App\Interpreter\SemesterTimetable\Violation\Core\ViolationRegistry;
 use App\Interpreter\SemesterTimetable\DTOs\Reason;
 
-class BasedInterpreter
+class BaseInterpreter
 {
     private ViolationRegistry $violationRegistry;
 

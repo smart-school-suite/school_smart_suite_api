@@ -13,12 +13,10 @@ class PeriodDurationViolation implements ViolationInterpreter
 
     public function explain(array $blocker): string
     {
-        $entity = $blocker['entity'] ?? null;
         $conflict = $blocker['conflict'] ?? null;
-        $evidence = $blocker['evidence'][0]['violated_period_duration_rule'] ?? null;
+        $requestedSlot = $blocker['conflict']['requested_slot'];
+        $evidence = $blocker['evidence']['violated_duration_rule'] ?? null;
 
-        return "
-        Period Duration Conflict: The requested session on {$conflict['requested_slot']['day']} at
-        {$conflict['requested_slot']['start_time']} to {$conflict['requested_slot']['end_time']} has a duration of {$conflict['requested_duration']} minutes, which violates the allowed duration of {$evidence['allowed_duration']} minutes on {$evidence['day']} if scheduled";
+        return "Period Duration Conflict: The requested session on {$requestedSlot['day']} at {$requestedSlot['start_time']} to {$requestedSlot['end_time']} has a duration of {$conflict['duration_minutes']} minutes, which violates the allowed duration of {$evidence['allowed_minutes']} minutes on {$evidence['day']} if scheduled";
     }
 }

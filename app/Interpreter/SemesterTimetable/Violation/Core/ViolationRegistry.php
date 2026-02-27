@@ -34,7 +34,7 @@ class ViolationRegistry
         'max_course_daily_frequency_violation' => CourseMaxDailyFrequencyViolation::class,
         'max_daily_free_period_violation' =>MaxFreePeriodPerDayViolation::class,
         'max_daily_period_violation' =>  MaxDailyPeriodViolation::class,
-        'max_teacher_daily_hour_violation' => TeacherMaxDailyHourViolation::class,
+        'max_teacher_daily_hours_violation' => TeacherMaxDailyHourViolation::class,
         'max_teacher_weekly_hour_violation' => TeacherMaxWeeklyHourViolation::class,
         'requested_assignment_violation' => RequestedAssignmentViolation::class,
         'requested_free_period_violation' => RequestedFreePeriodViolation::class,

@@ -4,7 +4,7 @@ namespace App\Constant\Violation\SemesterTimetable\Teacher;
 
 class TeacherMaxDailyHours
 {
-    public const KEY = "max_teacher_daily_hour_violation";
+    public const KEY = "max_teacher_daily_hours_violation";
     public const TITLE = "Teacher Max Daily Hour Violation";
 
     public static function toArray(): array {

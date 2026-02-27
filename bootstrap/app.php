@@ -298,6 +298,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/semester-timetable-interpreter')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableInterpreter.php'));
+
+            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/semester-timetable-parser')
+                ->group(base_path('routes/TimetableParser/SemesterTimetableParser.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

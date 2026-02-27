@@ -16,9 +16,6 @@ class BreakPeriodViolation implements ViolationInterpreter
         $entity = $blocker['entity'] ?? null;
         $conflict = $blocker['conflict']['requested_slot'] ?? null;
 
-        return "
-        Break Period Conflict: Break period scheduled on {$entity['day']} at
-        {$entity['start_time']} to {$entity['end_time']} conflicted with the attempted
-        slot on {$conflict['day']} at {$conflict['start_time']} to {$conflict['end_time']}.";
+        return "Break Period Conflict: Break period scheduled on {$entity['day']} at {$entity['start_time']} to {$entity['end_time']} conflicted with the attempted slot on {$conflict['day']} at {$conflict['start_time']} to {$conflict['end_time']}.";
     }
 }
