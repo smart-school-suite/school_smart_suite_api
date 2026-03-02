@@ -2,12 +2,13 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Assignment;
 
+use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Courses;
 use App\Models\Hall;
 use App\Models\Teacher;
 
-class RequestedAssignmentViolation implements ViolationInterpreter
+class RequestedAssignmentViolation extends DiagnosticContext implements ViolationInterpreter
 {
     public static function type(): string
     {

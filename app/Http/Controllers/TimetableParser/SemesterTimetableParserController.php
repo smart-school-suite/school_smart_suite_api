@@ -15,8 +15,10 @@ class SemesterTimetableParserController extends Controller
         $this->semesterTimetableParserService = $semesterTimetableParserService;
     }
 
-    public function interpret(Request $request){
-       $response = $this->semesterTimetableParserService->interpret();
-       return ApiResponseService::success("Timetable Interpreted Successfully", $response, null, 200);
+    public function interpret(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $response = $this->semesterTimetableParserService->interpret($currentSchool);
+        return ApiResponseService::success("Timetable Interpreted Successfully", $response, null, 200);
     }
 }

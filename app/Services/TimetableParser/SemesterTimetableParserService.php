@@ -3,7 +3,7 @@
 namespace App\Services\TimetableParser;
 
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
-use App\Models\Constraint\SemesterTimetableConstraint;
+use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 
 class SemesterTimetableParserService
 {
@@ -13,10 +13,10 @@ class SemesterTimetableParserService
         $this->diagnosticResponseBuilder = $diagnosticResponseBuilder;
     }
 
-    public function interpret()
+    public function interpret(object $currentSchool)
     {
+        DiagnosticContext::setSchool($currentSchool);
         $diagnostics = $this->partialSchedulerResponseMock()["diagnostics"]['constraints']['soft'];
-        // return $diagnostics;
         return $this->diagnosticResponseBuilder->build($diagnostics);
     }
 
