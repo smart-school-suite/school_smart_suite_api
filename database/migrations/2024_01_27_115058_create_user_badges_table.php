@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('badge_categories', function (Blueprint $table) {
@@ -30,22 +27,35 @@ return new class extends Migration
             $table->timestamps();
         });
 
-
         Schema::create('user_badges', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('actorable_type');
             $table->string('actorable_id');
             $table->timestamps();
         });
+
+        Schema::table('user_badges', function (Blueprint $table) {
+            $table->string('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('badge_types');
+        if (Schema::hasTable('user_badges')) {
+            Schema::table('user_badges', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+            });
+        }
+
+        if (Schema::hasTable('badge_types')) {
+            Schema::table('badge_types', function (Blueprint $table) {
+                $table->dropForeign(['badge_category_id']);
+            });
+        }
+
         Schema::dropIfExists('user_badges');
+        Schema::dropIfExists('badge_types');
         Schema::dropIfExists('badge_categories');
     }
 };

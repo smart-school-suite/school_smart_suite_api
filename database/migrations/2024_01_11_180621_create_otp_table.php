@@ -17,15 +17,12 @@ return new class extends Migration
             $table->string('actorable_id')->nullable();
             $table->string('actorable_type')->nullable();
             $table->string('otp')->index();
-            $table->timestamp('expires_at')->nullable(); // OTP expiration time
+            $table->timestamp('expires_at')->nullable();
             $table->boolean('used')->default(false);
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('otp');

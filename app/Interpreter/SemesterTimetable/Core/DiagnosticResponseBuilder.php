@@ -2,14 +2,13 @@
 
 namespace App\Interpreter\SemesterTimetable\Core;
 
-use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
+
 use App\Interpreter\SemesterTimetable\Core\InterpreterRegistry;
 use App\Interpreter\SemesterTimetable\Core\FallBackInterpreter;
 
 class DiagnosticResponseBuilder
 {
     protected InterpreterRegistry $registry;
-    //protected ConstraintInterpreter $constraintInterpreter;
     protected FallBackInterpreter $fallBackInterpreter;
     public function __construct(
         InterpreterRegistry $registry,

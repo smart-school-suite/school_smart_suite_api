@@ -32,7 +32,7 @@ class BulkUpdateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'exams.*.school_year' => 'sometimes|nullable|string',
+            'exams.*.school_year_id' => 'sometimes|nullable|string|exists:school_academic_years,id',
         ];
     }
 }

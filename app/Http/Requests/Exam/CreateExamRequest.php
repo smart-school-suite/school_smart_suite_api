@@ -29,9 +29,7 @@ class CreateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'school_year' => 'required|string',
-            'specialty_id' => 'required|string|exists:specialties,id',
-            'student_batch_id' => 'required|string|exists:student_batches,id'
+            'school_year_id' => 'required|string|exists:school_academic_years,id'
         ];
     }
 }

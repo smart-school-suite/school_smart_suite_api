@@ -2,6 +2,7 @@
 
 namespace App\Services\Semester;
 
+use App\Constant\Enums\SystemState;
 use App\Jobs\DataCreationJob\CreateExamJob;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
@@ -9,10 +10,8 @@ use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
 use App\Models\FeeSchedule;
 use App\Models\SchoolSemester;
 use App\Models\Semester;
-use App\Models\Studentbatch;
 use App\Models\SchoolBranchSetting;
 use Exception;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -38,7 +37,7 @@ class SchoolSemesterService
                 ->with(['systemAcademicYear', 'specialty.level'])
                 ->findOrFail($semesterData['school_year_id']);
 
-            if($semesterData['end_date'] > $schoolYear->end_date || $semesterData['start_date'] < $schoolYear->start_date){
+            if ($semesterData['end_date'] > $schoolYear->end_date || $semesterData['start_date'] < $schoolYear->start_date) {
                 throw new AppException(
                     "The semester dates must fall within the start and end dates of the associated school academic year.",
                     400,
@@ -349,22 +348,24 @@ class SchoolSemesterService
     }
     public function getSchoolSemesters($currentSchool)
     {
-        $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
-            ->select('id', 'start_date', 'end_date', 'status', 'specialty_id', 'semester_id', 'timetable_published', 'student_batch_id', 'school_year_id')
+        $schoolSemesters = SchoolSemester::query()
+            ->where('school_branch_id', $currentSchool->id)
+            ->select([
+                'id',
+                'start_date',
+                'end_date',
+                'specialty_id',
+                'semester_id',
+                'timetable_published',
+                'student_batch_id',
+                'school_year_id',
+            ])
             ->with([
-                'specialty' => function (BelongsTo $belongsTo) {
-                    $belongsTo->select('id', 'specialty_name', 'level_id');
-                },
-                'specialty.level' => function (BelongsTo $belongsTo) {
-                    $belongsTo->select('id', 'level', 'name');
-                },
-                'semester' => function (BelongsTo $belongsTo) {
-
-                    $belongsTo->select('id', 'name',);
-                },
-                'schoolYear.systemAcademicYear' => function (BelongsTo $belongsTo) {
-                    $belongsTo->select('id', 'name', 'year_start', 'year_end');
-                },
+                'studentBatch:id,name',
+                'specialty:id,specialty_name,level_id',
+                'specialty.level:id,level,name',
+                'semester:id,name,semester_name',
+                'schoolYear.systemAcademicYear:id,name,year_start,year_end',
             ])
             ->get();
 
@@ -378,23 +379,37 @@ class SchoolSemesterService
             );
         }
 
-        return $schoolSemesters->map(function ($semester) {
+        $today = now()->startOfDay();
+
+        return $schoolSemesters->map(function ($semester) use ($today) {
+            $start = $semester->start_date ? Carbon::parse($semester->start_date)->startOfDay() : null;
+            $end = $semester->end_date ? Carbon::parse($semester->end_date)->endOfDay() : null;
+
+            $status = null;
+            if ($start && $today->lt($start)) {
+                $status = SystemState::UPCOMING;
+            } elseif ($start && $end && $today->betweenIncluded($start, $end)) {
+                $status = SystemState::ONGOING;
+            } elseif ($end && $today->gt($end)) {
+                $status = SystemState::FINISHED;
+            }
+
             return [
                 "id" => $semester->id,
                 "start_date" => $semester->start_date,
                 "end_date" => $semester->end_date,
-                "school_year" => $semester->schoolYear->systemAcademicYear->name ?? null,
-                "status" => $semester->status,
+                "school_year" => $semester->schoolYear?->systemAcademicYear?->name,
+                "status" => $status,
                 "student_batch_id" => $semester->student_batch_id,
-                'student_batch' => Studentbatch::find($semester->student_batch_id)->name,
+                "student_batch" => $semester->studentBatch?->name,
                 "specialty_id" => $semester->specialty_id,
-                "specialty_name" => $semester->specialty->specialty_name ?? null,
-                "level_name" => $semester->specialty->level->name ?? null,
-                "level" => $semester->specialty->level->level ?? null,
-                "level_id" => $semester->specialty->level->id ?? null,
+                "specialty_name" => $semester->specialty?->specialty_name,
+                "level_name" => $semester->specialty?->level?->name,
+                "level" => $semester->specialty?->level?->level,
+                "level_id" => $semester->specialty?->level?->id,
                 "semester_id" => $semester->semester_id,
                 "timetable_published" => $semester->timetable_published ? "created" : "not created",
-                "semester_name" => $semester->semester->name ?? $semester->semester->semester_name ?? null,
+                "semester_name" => $semester->semester?->name ?? $semester->semester?->semester_name,
             ];
         });
     }
@@ -402,8 +417,10 @@ class SchoolSemesterService
     {
         $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
             ->with(['specialty', 'specialty.level', 'semester', 'studentBatch'])
-            ->where("status", "active")
+            ->where("start_date", "<=", Carbon::now())
+            ->where("end_date", ">=", Carbon::now())
             ->get();
+
         if ($schoolSemesters->isEmpty()) {
             throw new AppException(
                 "No active school semesters found for this school branch.",

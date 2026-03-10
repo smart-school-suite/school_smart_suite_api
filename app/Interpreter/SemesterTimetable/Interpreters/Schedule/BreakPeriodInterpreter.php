@@ -25,7 +25,7 @@ class BreakPeriodInterpreter implements ConstraintInterpreter
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
             constraint: 'break_period',
-            severity: 'soft',
+            severity: 'hard',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? [])
         );
     }
@@ -33,9 +33,6 @@ class BreakPeriodInterpreter implements ConstraintInterpreter
     private function buildSummary(array $diagnostic): string
     {
         $details = $diagnostic["constraint_failed"]["details"] ?? [];
-        return "
-         The Schedular was unable to schedule a break period from {$details['start_time']}
-         to {$details['end_time']} on {$details['day']} as requested. The reasons why
-          this happened are listed below";
+        return "The Schedular was unable to schedule a break period from {$details['start_time']} to {$details['end_time']} on {$details['day']} as requested. The reasons why this happened are listed below";
     }
 }

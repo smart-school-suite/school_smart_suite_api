@@ -31,7 +31,7 @@ class UpdateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'school_year' => 'sometimes|nullable|string',
+            'school_year_id' => 'sometimes|nullable|string|exists:school_academic_years,id',
         ];
     }
 }

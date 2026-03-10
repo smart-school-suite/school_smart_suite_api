@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('school_admins', function (Blueprint $table) {
@@ -29,14 +26,21 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+
+        Schema::table('school_admins', function (Blueprint $table) {
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (Schema::hasTable('school_admins')) {
+            Schema::table('school_admins', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+            });
+        }
+
         Schema::dropIfExists('school_admins');
     }
 };
-

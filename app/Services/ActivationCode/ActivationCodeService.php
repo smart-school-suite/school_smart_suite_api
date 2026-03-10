@@ -2,6 +2,7 @@
 
 namespace App\Services\ActivationCode;
 
+use App\Constant\Enums\SystemState;
 use App\Exceptions\AppException;
 use App\Models\ActivationCode;
 use App\Models\ActivationCodeType;
@@ -29,7 +30,7 @@ class ActivationCodeService
             );
         }
 
-        if ($paymentMethod->status === 'inactive') {
+        if ($paymentMethod->status === SystemState::INACTIVE) {
             throw new AppException(
                 "Payment Method Unavailable",
                 400,

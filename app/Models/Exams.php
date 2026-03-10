@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\AcademicYear\SchoolAcademicYear;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exams extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesUuid;
 
     protected $fillable = [
-        'id',
         'school_branch_id',
         'exam_type_id',
         'start_date',
@@ -22,7 +22,7 @@ class Exams extends Model
         'department_id',
         'weighted_mark',
         'semester_id',
-        'school_year',
+        'school_year_id',
         'status',
         'timetable_published',
         'specialty_id',
@@ -42,9 +42,12 @@ class Exams extends Model
     ];
 
     public $keyType = 'string';
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'exams';
 
+    public function schoolYear(): BelongsTo {
+        return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
+    }
     public function resitExamRef(): HasMany
     {
         return $this->hasMany(ResitExamRef::class);

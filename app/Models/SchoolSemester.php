@@ -22,7 +22,6 @@ class SchoolSemester extends Model
         'school_year_id',
         'semester_id',
         'specialty_id',
-        'status',
         'timetable_published',
         'school_branch_id',
         'student_batch_id'

@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('grade_scales', function (Blueprint $table) {
@@ -18,7 +15,7 @@ return new class extends Migration
             $table->enum('resit_status', ['resit', 'no_resit', 'high_resit_potential', 'low_resit_potential']);
             $table->decimal('minimum_score', 5, 2);
             $table->decimal('maximum_score', 5, 2);
-            $table->string("determinant");
+            $table->string('determinant');
             $table->timestamps();
         });
 
@@ -42,16 +39,44 @@ return new class extends Migration
             $table->enum('exam_type', ['exam', 'resit', 'ca']);
             $table->timestamps();
         });
+
+        Schema::table('grade_scales', function (Blueprint $table) {
+            $table->string('school_branch_id')->after('id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('letter_grade_id');
+            $table->foreign('letter_grade_id')->references('id')->on('letter_grades');
+            $table->string('grades_category_id');
+            $table->foreign('grades_category_id')->references('id')->on('grade_scale_categories');
+        });
+
+        Schema::table('school_grade_scale_categories', function (Blueprint $table) {
+            $table->string('grades_category_id');
+            $table->foreign('grades_category_id')->references('id')->on('grade_scale_categories');
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (Schema::hasTable('grade_scales')) {
+            Schema::table('grade_scales', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+                $table->dropForeign(['letter_grade_id']);
+                $table->dropForeign(['grades_category_id']);
+            });
+        }
+
+        if (Schema::hasTable('school_grade_scale_categories')) {
+            Schema::table('school_grade_scale_categories', function (Blueprint $table) {
+                $table->dropForeign(['grades_category_id']);
+                $table->dropForeign(['school_branch_id']);
+            });
+        }
+
         Schema::dropIfExists('grade_scales');
-        Schema::dropIfExists('letter_grades');
         Schema::dropIfExists('school_grade_scale_categories');
         Schema::dropIfExists('grade_scale_categories');
+        Schema::dropIfExists('letter_grades');
     }
 };

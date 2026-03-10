@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Models\Course\JointCourseSlot;
+
 use App\Models\Course\SemesterJointCourse;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
+use App\Models\Studentresit;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Semester extends Model
@@ -38,7 +38,7 @@ class Semester extends Model
     }
     public function studentResit(): HasMany
     {
-        return $this->hasMany(StudentResit::class);
+        return $this->hasMany(Studentresit::class);
     }
     public function exams(): HasMany
     {

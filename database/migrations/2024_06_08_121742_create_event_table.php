@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('event_categories', function (Blueprint $table) {
@@ -48,8 +45,6 @@ return new class extends Migration
             $table->timestamp('published_at')->nullable();
             $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
-            $table->json('audience');
-            $table->json('tags');
             $table->timestamps();
         });
 
@@ -61,21 +56,58 @@ return new class extends Migration
         });
 
         Schema::create('event_like_statuses', function (Blueprint $table) {
-             $table->string('id')->primary();
-             $table->boolean('status')->default(false);
-             $table->string('likeable_id');
-             $table->string('likeable_type');
-             $table->timestamps();
+            $table->string('id')->primary();
+            $table->boolean('status')->default(false);
+            $table->string('likeable_id');
+            $table->string('likeable_type');
+            $table->timestamps();
         });
 
+        Schema::table('event_categories', function (Blueprint $table) {
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('event_audiences', function (Blueprint $table) {
+            $table->string('event_id')->index();
+            $table->foreign('event_id')->references('id')->on('school_events')->onDelete('cascade');
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        });
+
+        Schema::table('school_events', function (Blueprint $table) {
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('event_category_id')->index();
+            $table->foreign('event_category_id')->references('id')->on('event_categories');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('event_author');
+        if (Schema::hasTable('event_audiences')) {
+            Schema::table('event_audiences', function (Blueprint $table) {
+                $table->dropForeign(['event_id']);
+                $table->dropForeign(['school_branch_id']);
+            });
+        }
+
+        if (Schema::hasTable('school_events')) {
+            Schema::table('school_events', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+                $table->dropForeign(['event_category_id']);
+            });
+        }
+
+        if (Schema::hasTable('event_categories')) {
+            Schema::table('event_categories', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+            });
+        }
+
+        Schema::dropIfExists('event_like_statuses');
+        Schema::dropIfExists('event_authors');
+        Schema::dropIfExists('event_audiences');
         Schema::dropIfExists('school_events');
         Schema::dropIfExists('event_tags');
         Schema::dropIfExists('event_categories');

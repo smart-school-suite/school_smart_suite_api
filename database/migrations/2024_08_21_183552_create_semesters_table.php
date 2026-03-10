@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('semesters', function (Blueprint $table) {
@@ -21,20 +18,40 @@ return new class extends Migration
 
         Schema::create('school_semesters', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->date("start_date");
-            $table->date("end_date");
-            $table->boolean("timetable_published")->default(false);
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->boolean('timetable_published')->default(false);
             $table->enum('status', ['expired', 'active', 'pending'])->default('pending');
             $table->timestamps();
         });
+
+        Schema::table('school_semesters', function (Blueprint $table) {
+            $table->string('semester_id');
+            $table->foreign('semester_id')->references('id')->on('semesters');
+            $table->string('specialty_id');
+            $table->foreign('specialty_id')->references('id')->on('specialties');
+            $table->string('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+            $table->string('student_batch_id');
+            $table->foreign('student_batch_id')->references('id')->on('student_batches');
+            $table->string('school_year_id');
+            $table->foreign('school_year_id')->references('id')->on('school_academic_years');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (Schema::hasTable('school_semesters')) {
+            Schema::table('school_semesters', function (Blueprint $table) {
+                $table->dropForeign(['semester_id']);
+                $table->dropForeign(['specialty_id']);
+                $table->dropForeign(['school_branch_id']);
+                $table->dropForeign(['student_batch_id']);
+                $table->dropForeign(['school_year_id']);
+            });
+        }
+
+        Schema::dropIfExists('school_semesters');
         Schema::dropIfExists('semesters');
-         Schema::dropIfExists('school_semesters');
     }
 };

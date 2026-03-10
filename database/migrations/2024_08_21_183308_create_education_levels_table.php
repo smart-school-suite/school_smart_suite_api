@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('levels', function (Blueprint $table) {
@@ -28,13 +25,22 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
+
+        Schema::table('levels', function (Blueprint $table) {
+            $table->string('level_type_id');
+            $table->foreign('level_type_id')->references('id')->on('level_types');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (Schema::hasTable('levels')) {
+            Schema::table('levels', function (Blueprint $table) {
+                $table->dropForeign(['level_type_id']);
+            });
+        }
+
         Schema::dropIfExists('levels');
+        Schema::dropIfExists('level_types');
     }
 };

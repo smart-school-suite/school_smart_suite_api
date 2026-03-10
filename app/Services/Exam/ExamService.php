@@ -12,7 +12,6 @@ use App\Models\AccessedStudent;
 use App\Models\Examtype;
 use App\Models\Semester;
 use App\Models\Student;
-use App\Models\Specialty;
 use Carbon\Carbon;
 use Exception;
 use App\Exceptions\AppException;
@@ -20,24 +19,28 @@ use App\Models\ResitExam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Grades;
-use App\Jobs\DataCreationJob\UpdateExamStatusJob;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
 use App\Events\Analytics\AcademicAnalyticsEvent;
 use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvent;
+use App\Models\SchoolSemester;
+
 class ExamService
 {
     public function createExam(array $data, $currentSchool, $authAdmin)
     {
         try {
-            $specialty = Specialty::with(['level'])->find($data['specialty_id']);
-            if (!$specialty) {
+            $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
+                ->where("id", $data['school_semester_id'])
+                ->with(['specialty.level', 'schoolYear.systemAcademicYear'])
+                ->first();
+
+            if (!$schoolSemester) {
                 throw new AppException(
-                    "Specialty Not Found",
+                    "School Semester Not Found",
                     404,
-                    "Specialty Not Found",
-                    "Specialty Not Found Check to ensure that specialty exist and is not accidentally deleted",
-                    null
+                    "School Semester Not Found",
+                    "The specified school semester could not be found. Please Ensure that is has not been deleted and try again.",
                 );
             }
             $examType = Examtype::find($data['exam_type_id']);
@@ -53,9 +56,10 @@ class ExamService
 
             $existingExam = Exams::where("school_branch_id", $currentSchool->id)
                 ->where("exam_type_id", $data['exam_type_id'])
-                ->where("specialty_id", $specialty->id)
-                ->where("level_id", $specialty->level_id)
-                ->where("student_batch_id", $data['student_batch_id'])
+                ->where("specialty_id", $schoolSemester->specialty->id)
+                ->where("level_id", $schoolSemester->specialty->level_id)
+                ->where("student_batch_id", $schoolSemester->student_batch_id)
+                ->where("school_year_id", $schoolSemester->school_year_id)
                 ->first();
             if ($existingExam) {
                 throw new AppException(
@@ -71,28 +75,28 @@ class ExamService
             $exam->school_branch_id = $currentSchool->id;
             $exam->start_date = $data["start_date"];
             $exam->end_date = $data["end_date"];
-            $exam->level_id = $specialty->level_id;
+            $exam->level_id = $schoolSemester->specialty->level_id;
             $exam->exam_type_id = $examType->id;
             $exam->weighted_mark = $data["weighted_mark"];
             $exam->semester_id = $examType->semester_id;
-            $exam->school_year = $data["school_year"];
-            $exam->specialty_id = $specialty->id;
-            $exam->student_batch_id = $data["student_batch_id"];
+            $exam->school_year_id = $schoolSemester->school_year_id;
+            $exam->specialty_id = $schoolSemester->specialty->id;
+            $exam->student_batch_id = $schoolSemester->student_batch_id;
             $exam->result_released = false;
             $exam->save();
             $examData =  [
-                'specialty' => $specialty->specialty_name,
-                'level' => $specialty->level->name,
+                'specialty' => $schoolSemester->specialty->specialty_name,
+                'level' => $schoolSemester->specialty->level->name,
                 'startDate' => Carbon::parse($data['start_date'])->format('l, F j, Y'),
                 'endDate' => Carbon::parse($data['end_date'])->format('l, F j, Y'),
-                'school_year' => $data['school_year'],
+                'school_year' => $schoolSemester->schoolYear->systemAcademicYear->name,
                 'semester' => Semester::find($examType->semester_id)->name,
                 'examName' => $examType->exam_name
             ];
             CreateExamCandidateJob::dispatch(
-                $data['specialty_id'],
-                $specialty->level_id,
-                $data['student_batch_id'],
+                $schoolSemester->specialty->id,
+                $schoolSemester->specialty->level->id,
+                $schoolSemester->student_batch_id,
                 $examId
             );
             SendAdminExamCreatedNotificationJob::dispatch(
@@ -113,21 +117,21 @@ class ExamService
             );
             StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => [$specialty->id],
+                'specialtyIds'   => [$schoolSemester->specialty->id],
                 'feature'      => 'examCreate',
                 'message'      => 'Exam Created',
                 'data'         => $exam,
             ]);
             event(new AcademicAnalyticsEvent(
-                 eventType:AcademicEvent::EXAM_CREATED,
-                 version:1,
-                 payload:[
+                eventType: AcademicEvent::EXAM_CREATED,
+                version: 1,
+                payload: [
                     "school_branch_id" => $currentSchool->id,
-                    "specialty_id" => $specialty->id,
-                    "department_id" => $specialty->department_id,
-                    "level_id" => $specialty->level_id,
+                    "specialty_id" => $schoolSemester->specialty->id,
+                    "department_id" => $schoolSemester->specialty->department_id,
+                    "level_id" => $schoolSemester->specialty->level_id,
                     "value" => 1
-                 ]
+                ]
             ));
             return $exam;
         } catch (Exception $e) {
@@ -188,12 +192,9 @@ class ExamService
     }
     private function deleteExamCandidate($examId, $currentSchool)
     {
-        $examCandidates = AccessedStudent::where("school_branch_id", $currentSchool)
+        AccessedStudent::where("school_branch_id", $currentSchool)
             ->where("exam_id", $examId)
-            ->get();
-        foreach ($examCandidates as $examCandidate) {
-            $examCandidate->delete();
-        }
+            ->delete();
     }
     public function bulkDeleteExam(array $examIds, $currentSchool, $authAdmin): array
     {

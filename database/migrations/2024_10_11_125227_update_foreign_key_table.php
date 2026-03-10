@@ -313,6 +313,8 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_type_id');
             $table->foreign('exam_type_id')->references('id')->on('exam_types');
+            $table->string('school_year_id');
+            $table->foreign('school_year_id')->references('id')->on('school_academic_years')->onDelete('cascade');
             $table->string('level_id');
             $table->foreign('level_id')->references('id')->on('levels');
             $table->string('semester_id');
