@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Interpreters\Course;
 
+use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
@@ -16,16 +17,17 @@ class CourseRequestedTimeSlotInterpreter implements ConstraintInterpreter
 
     public function supports(string $constraint): bool
     {
-        return $constraint === 'course_requested_time_slot';
+        return $constraint === CourseRequestedSlot::KEY;
     }
 
     public function interpret(array $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: 'course_requested_time_slot',
+            constraint: CourseRequestedSlot::KEY,
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
         );
     }
 

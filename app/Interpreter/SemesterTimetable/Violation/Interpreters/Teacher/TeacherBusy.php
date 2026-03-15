@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Teacher;
 
+use App\Constant\Violation\SemesterTimetable\Teacher\TeacherBusy as TeacherBusyConstant;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Teacher;
 
@@ -9,7 +10,7 @@ class TeacherBusy implements ViolationInterpreter
 {
     public static function type(): string
     {
-        return 'teacher_busy';
+        return TeacherBusyConstant::KEY;
     }
 
     public function explain(array $blocker): string

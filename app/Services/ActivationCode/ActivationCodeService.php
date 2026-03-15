@@ -340,7 +340,6 @@ class ActivationCodeService
             'expires_at' => $subscriptionExpiresAt,
         ];
     }
-
     public function getActivationCodeUsage($currentSchool)
     {
         return ActivationCodeUsage::where('school_branch_id', $currentSchool->id)
@@ -363,7 +362,6 @@ class ActivationCodeService
             ->values()
             ->all();
     }
-
     public function getStudentActivationStatuses($currentSchool)
     {
         $activationStatus = Student::where("school_branch_id", $currentSchool->id)
@@ -379,7 +377,6 @@ class ActivationCodeService
             "activation_code" => $student->activationCode->first()->activationCode->code ?? null
         ]);
     }
-
     public function getStudentSubscriptionDetail($currentSchool, $studentId)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
@@ -404,7 +401,6 @@ class ActivationCodeService
             "activation_code" => $student->activationCode->first()->activationCode->code ?? null
         ];
     }
-
     public function getTeacherActivationStatuses($currentSchool)
     {
         $activationStatus = Teacher::where("school_branch_id", $currentSchool->id)
@@ -420,7 +416,6 @@ class ActivationCodeService
             "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null
         ]);
     }
-
     public function getTeacherSubscriptionDetail($currentSchool, $teacherId)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)

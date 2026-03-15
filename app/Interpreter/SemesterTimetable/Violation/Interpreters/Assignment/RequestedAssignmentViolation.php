@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Assignment;
 
+use App\Constant\Violation\SemesterTimetable\Assignment\RequestedAssigment;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Courses;
@@ -12,7 +13,7 @@ class RequestedAssignmentViolation extends DiagnosticContext implements Violatio
 {
     public static function type(): string
     {
-        return 'requested_assignment_violation';
+        return RequestedAssigment::KEY;
     }
 
     public function explain(array $blocker): string

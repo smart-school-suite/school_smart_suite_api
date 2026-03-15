@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Interpreters\Teacher;
 
+use App\Constant\Constraint\SemesterTimetable\Teacher\TeacherRequestedTimeSlot;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
@@ -18,16 +19,17 @@ class TeacherRequestedTimeWindowInterpreter implements ConstraintInterpreter
 
     public function supports(string $constraint): bool
     {
-        return $constraint === 'teacher_requested_time_window';
+        return $constraint === TeacherRequestedTimeSlot::KEY;
     }
 
     public function interpret(array $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: 'teacher_requested_time_window',
+            constraint: TeacherRequestedTimeSlot::KEY,
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
         );
     }
 
@@ -36,9 +38,6 @@ class TeacherRequestedTimeWindowInterpreter implements ConstraintInterpreter
         $details = $diagnostic["constraint_failed"]["details"] ?? [];
         $teacher  = Teacher::find($details['teacher_id']);
         $teacherName = $teacher ? $teacher->name : 'Unknown Teacher';
-        return "
-         The Schedular was unable to enforce the requested time window for teacher {$teacherName} on
-          {$details['day']} from {$details['start_time']} to {$details['end_time']}. The reasons why
-          this happened are listed below";
+        return "The Schedular was unable to enforce the requested time window for teacher {$teacherName} on {$details['day']} from {$details['start_time']} to {$details['end_time']}. The reasons why this happened are listed below";
     }
 }

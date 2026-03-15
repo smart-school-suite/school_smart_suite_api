@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Course;
 
+use App\Constant\Violation\SemesterTimetable\Course\RequiredJointCourse;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Courses;
 use App\Models\Hall;
@@ -11,7 +12,7 @@ class RequiredJointCourseViolation implements ViolationInterpreter
 {
     public static function type(): string
     {
-        return 'course_requested_time_slot_violation';
+        return RequiredJointCourse::KEY;
     }
 
     public function explain(array $blocker): string

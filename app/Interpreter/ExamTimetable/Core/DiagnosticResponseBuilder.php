@@ -1,6 +1,6 @@
 <?php
 
-namespace App\interpreter\ExamTimetable\Core;
+namespace App\Interpreter\ExamTimetable\Core;
 
 class DiagnosticResponseBuilder
 {

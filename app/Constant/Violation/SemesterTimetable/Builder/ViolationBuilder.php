@@ -4,22 +4,20 @@
 namespace App\Constant\Violation\SemesterTimetable\Builder;
 
 use App\Constant\Violation\SemesterTimetable\Assignment\RequestedAssigment;
-use App\Constant\Violation\SemesterTimetable\Course\CourseMaxDailyFrequency;
-use App\Constant\Violation\SemesterTimetable\Course\RequestedJointCourse;
+use App\Constant\Violation\SemesterTimetable\Course\CourseDailyFrequency;
+use App\Constant\Violation\SemesterTimetable\Course\RequiredJointCourse;
 use App\Constant\Violation\SemesterTimetable\Course\CourseRequestedSlot;
 use App\Constant\Violation\SemesterTimetable\Hall\HallBusy;
 use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot;
 use App\Constant\Violation\SemesterTimetable\Schedule\BreakPeriod;
-use App\Constant\Violation\SemesterTimetable\Schedule\MaxDailyFreePeriod;
-use App\Constant\Violation\SemesterTimetable\Schedule\MaxDailyPeriod;
+use App\Constant\Violation\SemesterTimetable\Schedule\ScheduleDailyFreePeriod;
+use App\Constant\Violation\SemesterTimetable\Schedule\ScheduleDailyPeriod;
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherBusy;
-use App\Constant\Violation\SemesterTimetable\Teacher\TeacherCourse;
-use App\Constant\Violation\SemesterTimetable\Teacher\TeacherInsufficiency;
-use App\Constant\Violation\SemesterTimetable\Teacher\TeacherMaxDailyHours;
-use App\Constant\Violation\SemesterTimetable\Teacher\TeacherMaxWeeklyHours;
+use App\Constant\Violation\SemesterTimetable\Teacher\TeacherDailyHours;
+use App\Constant\Violation\SemesterTimetable\Teacher\TeacherWeeklyHours;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherRequestedTimeSlot;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherUnavailable;
 
@@ -29,20 +27,18 @@ final class ViolationBuilder
     {
         return [
             TeacherBusy::toArray(),
-            TeacherInsufficiency::toArray(),
-            TeacherCourse::toArray(),
-            TeacherMaxDailyHours::toArray(),
-            TeacherMaxWeeklyHours::toArray(),
+            TeacherDailyHours::toArray(),
+            TeacherWeeklyHours::toArray(),
             TeacherRequestedTimeSlot::toArray(),
             TeacherUnavailable::toArray(),
             HallBusy::toArray(),
             HallRequestedTimeSlot::toArray(),
-            CourseMaxDailyFrequency::toArray(),
-            RequestedJointCourse::toArray(),
+            CourseDailyFrequency::toArray(),
+            RequiredJointCourse::toArray(),
             CourseRequestedSlot::toArray(),
             BreakPeriod::toArray(),
-            MaxDailyFreePeriod::toArray(),
-            MaxDailyPeriod::toArray(),
+            ScheduleDailyFreePeriod::toArray(),
+            ScheduleDailyPeriod::toArray(),
             OperationalPeriod::toArray(),
             PeriodDuration::toArray(),
             RequestedFreePeriod::toArray(),
@@ -65,6 +61,27 @@ final class ViolationBuilder
         return self::titles()[$key] ?? $default;
     }
 
+    public static function violationHandlerMap(): array
+    {
+        $map = [];
+        foreach (self::all() as $violation) {
+            if (isset($violation['violation_handler'])) {
+                $map[$violation['key']] = $violation['violation_handler'];
+            }
+        }
+        return $map;
+    }
+
+    public static function violationSuggestionHandlerMap(): array
+    {
+        $map = [];
+        foreach (self::all() as $violation) {
+            if (isset($violation['violation_suggestion_handler'])) {
+                $map[$violation['key']] = $violation['violation_suggestion_handler'];
+            }
+        }
+        return $map;
+    }
     public static function get(string $key): ?array
     {
         foreach (self::all() as $violation) {
@@ -103,5 +120,4 @@ final class ViolationBuilder
         $violation = self::get($key);
         return $violation && ($violation['category'] ?? null) === $category;
     }
-
 }

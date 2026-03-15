@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Interpreters\Hall;
 
+use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
@@ -16,16 +17,17 @@ class HallRequestedTimeWindowsInterpreter implements ConstraintInterpreter
 
     public function supports(string $constraint): bool
     {
-        return $constraint === 'hall_requested_time_windows';
+        return $constraint === HallRequestedTimeWindow::KEY;
     }
 
     public function interpret(array $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: 'hall_requested_time_windows',
+            constraint: HallRequestedTimeWindow::KEY,
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
         );
     }
 
@@ -34,10 +36,7 @@ class HallRequestedTimeWindowsInterpreter implements ConstraintInterpreter
         $details = $diagnostic["constraint_failed"]["details"] ?? [];
         $hall = Hall::find($details['hall_id'] ?? null);
         $hallName = $hall ? $hall->name : 'Unknown Hall';
-        return "
-         The Schedular was unable to schedule a session in {$hallName} at {$details['start_time']}
-         to {$details['end_time']} on {$details['day']} as requested. The reasons why
-          this happened are listed below";
+        return "The Schedular was unable to schedule a session in {$hallName} at {$details['start_time']} to {$details['end_time']} on {$details['day']} as requested. The reasons why this happened are listed below";
     }
 }
 

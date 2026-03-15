@@ -2,13 +2,14 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Hall;
 
+use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 
 class HallRequestedTimeSlotViolation implements ViolationInterpreter
 {
     public static function type(): string
     {
-        return 'hall_requested_time_slot_violation';
+        return HallRequestedTimeSlot::KEY;
     }
 
     public function explain(array $blocker): string

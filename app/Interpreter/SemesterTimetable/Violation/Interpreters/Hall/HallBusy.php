@@ -2,13 +2,14 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Hall;
 
+use App\Constant\Violation\SemesterTimetable\Hall\HallBusy as HallBusyConstant;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 
 class HallBusy implements ViolationInterpreter
 {
     public static function type(): string
     {
-        return 'hall_busy';
+        return HallBusyConstant::KEY;
     }
 
     public function explain(array $blocker): string

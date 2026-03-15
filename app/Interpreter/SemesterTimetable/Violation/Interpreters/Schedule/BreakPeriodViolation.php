@@ -2,13 +2,14 @@
 
 namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Schedule;
 
+use App\Constant\Violation\SemesterTimetable\Schedule\BreakPeriod;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 
 class BreakPeriodViolation implements ViolationInterpreter
 {
     public static function type(): string
     {
-        return 'break_period_violation';
+        return BreakPeriod::KEY;
     }
 
     public function explain(array $blocker): string

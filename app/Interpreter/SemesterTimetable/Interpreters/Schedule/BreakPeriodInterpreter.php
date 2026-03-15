@@ -2,6 +2,7 @@
 
 namespace App\Interpreter\SemesterTimetable\Interpreters\Schedule;
 
+use App\Constant\Constraint\SemesterTimetable\Schedule\BreakPeriod;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
@@ -17,16 +18,17 @@ class BreakPeriodInterpreter implements ConstraintInterpreter
 
     public function supports(string $constraint): bool
     {
-        return $constraint === 'break_period';
+        return $constraint === BreakPeriod::KEY;
     }
 
     public function interpret(array $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: 'break_period',
+            constraint: BreakPeriod::KEY,
             severity: 'hard',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
         );
     }
 
