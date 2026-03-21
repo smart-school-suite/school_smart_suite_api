@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Schedu
 use App\Constant\Violation\SemesterTimetable\Schedule\BreakPeriod;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 
 class BreakPeriodViolationSuggestion implements BlockerSuggestion
 {
@@ -18,6 +19,7 @@ class BreakPeriodViolationSuggestion implements BlockerSuggestion
         return collect($blockerResolution['suggested_values'] ?? [])
             ->map(function ($suggestedValue) {
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", BreakPeriod::KEY)->first() ?? null,
                     summary: "Schedule Break on {$suggestedValue['day']} from {$suggestedValue['start_time']} to {$suggestedValue['end_time']}",
                     context: [
                         'day'        => $suggestedValue['day'],

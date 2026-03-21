@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Sch
 
 use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 
 class PeriodDurationSuggestion implements ConstraintSuggestion
 {
@@ -17,7 +18,8 @@ class PeriodDurationSuggestion implements ConstraintSuggestion
     {
         return collect($constraintModification['suggested_values'] ?? [])
             ->map(function ($suggestedValue) {
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", PeriodDuration::KEY)->first() ?? null,
                     summary: "Modify the period duration on {$suggestedValue['day']} to {$suggestedValue['duration_minutes']}",
                     context: [
                         'day'        => $suggestedValue['day'],

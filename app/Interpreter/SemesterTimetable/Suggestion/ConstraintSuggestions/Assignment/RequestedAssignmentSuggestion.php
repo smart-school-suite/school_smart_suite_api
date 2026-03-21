@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Ass
 
 use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 
 class RequestedAssignmentSuggestion implements ConstraintSuggestion
@@ -22,7 +23,8 @@ class RequestedAssignmentSuggestion implements ConstraintSuggestion
                 $hall = DB::table('halls')->where('id', $suggestedValue['hall_id'])->first();
                 $teacher = DB::table('teachers')->where('id', $suggestedValue['teacher_id'])->first();
 
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", RequestedAssignment::KEY)->first() ?? null,
                     summary: "Modify Requested Assignment to {$suggestedValue['day']} from {$suggestedValue['start_time']}  to {$suggestedValue['end_time']} in hall {$hall->nmae} for course  {$course->course_title} by teacher {$teacher->name}",
                     context: [
                         'teacher_id' => $suggestedValue['teacher_id'],

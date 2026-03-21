@@ -10,6 +10,10 @@ class BreakPeriod
     public const DESCRIPTION = "Fixed daily break or lunch time during which no classes, exams, sessions or activities can be scheduled. Applies every operational day unless exceptions are specified.";
     public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Schedule\BreakPeriodInterpreter::class;
     public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Schedule\BreakPeriodSuggestion::class;
+    public const CATEGORY = "schedule_constraint";
+    public const VIOLATION = [
+        "operational_period_violation",
+    ];
     public const EXAMPLE = [
         [
             "start_time" => "12:00",
@@ -59,7 +63,8 @@ class BreakPeriod
             'type' => self::TYPE,
             'description' => self::DESCRIPTION,
             'interpreter_handler' => self::INTERPRETER_HANDLER,
-            'suggestion_handler' => self::SUGGESTION_HANDLER
+            'suggestion_handler' => self::SUGGESTION_HANDLER,
+            'category' => self::CATEGORY
         ];
     }
 

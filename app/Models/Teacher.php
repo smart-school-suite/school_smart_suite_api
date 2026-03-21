@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Course\JointCourseSlot;
+use App\Models\Job\SystemJob;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
+use App\Models\OTP;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
@@ -57,6 +59,10 @@ class Teacher extends Model
         ];
     }
 
+    public function systemJob(): MorphMany
+    {
+        return $this->morphMany(SystemJob::class, 'initiatedBy');
+    }
     public function jointCourseSlot(): HasMany
     {
         return $this->hasMany(JointCourseSlot::class);
@@ -79,7 +85,7 @@ class Teacher extends Model
     }
     public function otp()
     {
-        return $this->morphMany(Otp::class, 'actorable');
+        return $this->morphMany(OTP::class, 'actorable');
     }
     public function vote()
     {

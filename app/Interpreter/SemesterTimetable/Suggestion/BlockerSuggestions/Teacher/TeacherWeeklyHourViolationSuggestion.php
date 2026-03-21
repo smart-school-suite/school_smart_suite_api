@@ -1,14 +1,16 @@
 <?php
 
 namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Teacher;
+use App\Constant\Violation\SemesterTimetable\Teacher\TeacherWeeklyHours;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 use Illuminate\Support\Facades\DB;
 class TeacherWeeklyHourViolationSuggestion implements BlockerSuggestion
 {
     public static function type(): string
     {
-        return "teacher_weekly_hours_violation";
+        return TeacherWeeklyHours::KEY;
     }
 
     public function suggest(array $blockerResolution): array
@@ -19,6 +21,7 @@ class TeacherWeeklyHourViolationSuggestion implements BlockerSuggestion
                 $minweeklyHourSuggestion = "Adjust {$teacher->name} minimum weekly hours to {$suggestedValue['min_weekly_hours']}";
                 $maxweeklyHourSuggestion = "Adjust {$teacher->name} maximum weekly hours to {$suggestedValue['max_weekly_hours']}";
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", TeacherWeeklyHours::KEY)->first() ?? null,
                     summary: $suggestedValue['min_weekly_hours'] ? $minweeklyHourSuggestion : $maxweeklyHourSuggestion,
                     context: [
                         'day'  => $suggestedValue['day'],

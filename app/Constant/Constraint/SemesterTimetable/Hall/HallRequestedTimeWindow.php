@@ -7,10 +7,25 @@ class HallRequestedTimeWindow
     public const KEY = "hall_requested_time_windows";
     public const TITLE = "Hall Requested Time Windows";
     public const DESCRIPTION = "Specifies preferred days and/or time windows for scheduling activities in particular halls or rooms. These are soft preferences — the scheduler should try to follow them when possible, but can place activities elsewhere if needed.";
-    public const TYPE = "Soft";
+    public const TYPE = "soft";
     public const HANDLER = \App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow::class;
     public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Hall\HallRequestedTimeWindowsInterpreter::class;
     public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Hall\HallRequestedTimeWindowSuggestion::class;
+    public const CATEGORY = "hall_constraint";
+    public const VIOLATION = [
+      "course_daily_frequency_violation",
+      "course_requested_time_slot_violation",
+      "joint_course_period_violation",
+      "hall_busy",
+      "break_period_violation",
+      "operational_period_violation",
+      "schedule_period_duration_minutes_violation",
+      "schedule_periods_per_day_violation",
+      "teacher_busy",
+      "teacher_daily_hours_violation",
+      "teacher_requested_time_slot_violation",
+      "teacher_unavailable"
+    ];
     public const EXAMPLE = [
         [
             [
@@ -85,7 +100,8 @@ class HallRequestedTimeWindow
             'type' => self::TYPE,
             'description' => self::DESCRIPTION,
             'interpreter_handler' => self::INTERPRETER_HANDLER,
-            'suggestion_handler' => self::SUGGESTION_HANDLER
+            'suggestion_handler' => self::SUGGESTION_HANDLER,
+            'category' => self::CATEGORY
         ];
     }
 

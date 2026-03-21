@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Cou
 
 use App\Constant\Constraint\SemesterTimetable\Course\CourseDailyFrequency;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 class CourseDailyFrequencySuggestion implements ConstraintSuggestion
 {
@@ -20,7 +21,8 @@ class CourseDailyFrequencySuggestion implements ConstraintSuggestion
                 $course = DB::table('courses')->where('id', $suggestedValue['course_id'])->first();
                 $minFrequencySuggestion = "Modify  {$course->course_title} min course frequency to {$suggestedValue['min_frequency']} ";
                 $maxFrequencySuggestion = "Modify {$course->course_title} max course frequency to  {$suggestedValue['max_frequency']} ";
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", CourseDailyFrequency::KEY)->first() ?? null,
                     summary: $suggestedValue['min_frequency'] ? $minFrequencySuggestion : $maxFrequencySuggestion,
                     context: [
                         'course_id'  => $suggestedValue['course_id'],

@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Tea
 
 use App\Constant\Constraint\SemesterTimetable\Teacher\TeacherWeeklyHours;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 
 class TeacherWeeklyHourSuggestion implements ConstraintSuggestion
@@ -21,7 +22,8 @@ class TeacherWeeklyHourSuggestion implements ConstraintSuggestion
                 $teacher = DB::table('teachers')->where('id', $suggestedValue['teacher_id'])->first();
                 $minweeklyHourSuggestion = "Modify the min weekly hours for  {$teacher->name} minimum weekly hours to {$suggestedValue['min_weekly_hours']}";
                 $maxweeklyHourSuggestion = "Modify the max weekly hours for  {$teacher->name} maximum weekly hours to {$suggestedValue['max_weekly_hours']}";
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", TeacherWeeklyHours::KEY)->first() ?? null,
                     summary: $suggestedValue['min_weekly_hours'] ? $minweeklyHourSuggestion : $maxweeklyHourSuggestion,
                     context: [
                         'day'  => $suggestedValue['day'],

@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Services\Constraint;
+namespace App\Services\SemTimetableConstraint;
 
-use App\Models\Constraint\ConstraintType;
+use App\Models\Constraint\SemTimetableConstraintType;
 use App\Exceptions\AppException;
+
 class ConstraintTypeService
 {
     public function getConstraintTypes()
     {
-        $constraintTypes = ConstraintType::all();
+        $constraintTypes = SemTimetableConstraintType::all();
         if ($constraintTypes->isEmpty()) {
             throw new AppException(
                 "No Constraint Types Found",
@@ -21,7 +22,7 @@ class ConstraintTypeService
     }
     public function getConstraintTypeById(string $constraintTypeId)
     {
-        $constraintType = ConstraintType::find($constraintTypeId);
+        $constraintType = SemTimetableConstraintType::find($constraintTypeId);
         if (!$constraintType) {
             throw new AppException(
                 "Constraint Type Not Found",
@@ -35,7 +36,7 @@ class ConstraintTypeService
 
     public function activateConstraintType(string $constraintTypeId)
     {
-        $constraintType  = ConstraintType::find($constraintTypeId);
+        $constraintType  = SemTimetableConstraintType::find($constraintTypeId);
         if (!$constraintType) {
             throw new AppException(
                 "Constraint Type Not Found",
@@ -61,7 +62,7 @@ class ConstraintTypeService
 
     public function deactivateConstraintType(string $constraintTypeId)
     {
-        $constraintType  = ConstraintType::find($constraintTypeId);
+        $constraintType  = SemTimetableConstraintType::find($constraintTypeId);
         if (!$constraintType) {
             throw new AppException(
                 "Constraint Type Not Found",

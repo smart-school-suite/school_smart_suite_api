@@ -6,13 +6,11 @@ use App\Models\Courses;
 use App\Models\Educationlevels;
 use App\Models\Hall;
 use App\Models\SchoolSemester;
-use App\Models\Semester;
 use App\Models\Specialty;
 use App\Models\Studentbatch;
 use App\Models\Teacher;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -33,7 +31,7 @@ class SemesterTimetableSlot extends Model
         'break',
         'hall_id',
         'student_batch_id',
-        'timetable_version_id',
+        'version_id',
     ];
 
     protected $casts = [
@@ -80,6 +78,6 @@ class SemesterTimetableSlot extends Model
 
     public function semesterTimetableVersion(): BelongsTo
     {
-        return $this->belongsTo(SemesterTimetableVersion::class, 'timetable_version_id');
+        return $this->belongsTo(SemesterTimetableVersion::class, 'version_id');
     }
 }

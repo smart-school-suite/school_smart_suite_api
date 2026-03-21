@@ -6,12 +6,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class GenerateSemesterTimetableRequest extends FormRequest
 {
-
     public function rules(): array
     {
         return [
-
-
             "school_semester_id" => "required|string|exists:school_semesters,id",
 
             //break period validation

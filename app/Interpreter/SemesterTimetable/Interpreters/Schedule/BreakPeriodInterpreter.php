@@ -6,7 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\BreakPeriod;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
-
+use App\Models\Constraint\SemTimetableConstraint;
 class BreakPeriodInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -25,10 +25,10 @@ class BreakPeriodInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: BreakPeriod::KEY,
+            constraint: SemTimetableConstraint::where("key", BreakPeriod::KEY)->first(),
             severity: 'hard',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
         );
     }
 

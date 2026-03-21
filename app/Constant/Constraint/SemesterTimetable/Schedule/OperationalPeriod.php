@@ -6,9 +6,10 @@ class OperationalPeriod
 {
     public const KEY = "operational_period";
     public const TITLE = "Operational Period";
-    public const TYPE = "Hard";
+    public const TYPE = "hard";
     public const DESCRIPTION = "Defines the daily opening-to-closing hours of the institution. No classes, exams, activities or any scheduling is allowed outside these hours on any day (unless exceptions are specified).";
     public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Schedule\OperationalPeriodSuggestion::class;
+    public const CATEGORY = "schedule_constraint";
     public const EXAMPLE = [
         [
             "start_time" => "07:00",
@@ -73,7 +74,9 @@ class OperationalPeriod
             'handler' => self::HANDLER,
             'type' => self::TYPE,
             'description' => self::DESCRIPTION,
-            'suggestion_handler' => self::SUGGESTION_HANDLER
+            'suggestion_handler' => self::SUGGESTION_HANDLER,
+            'category' => self::CATEGORY
+
         ];
     }
 

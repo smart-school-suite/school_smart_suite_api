@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Course\CourseDailyFrequency;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 
 class CourseDailyFrequencyInterpreter implements ConstraintInterpreter
@@ -26,10 +27,10 @@ class CourseDailyFrequencyInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: CourseDailyFrequency::KEY,
+            constraint: SemTimetableConstraint::where("key", CourseDailyFrequency::KEY)->first(),
             severity: 'soft',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
         );
     }
     private function buildSummary(array $diagnostic): string {

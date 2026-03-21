@@ -6,22 +6,22 @@ use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ConstraintCategory extends Model
+class SemTimetableBlockerCategory extends Model
 {
     use GeneratesUuid;
     protected $fillable = [
         'name',
+        'key',
         'description',
-        'program_name',
         'status'
     ];
 
     public $incrementing = false;
-    public $table = "constraint_categories";
+    public $table = "sem_blocker_categories";
     public $keyType = 'string';
 
-    public function semesterTimetableConstraint(): HasMany
+    public function blocker(): HasMany
     {
-        return $this->hasMany(SemesterTimetableConstraint::class);
+        return $this->hasMany(SemTimetableBlocker::class);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Models\Job;
 
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
-use MongoDB\Laravel\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SystemJob extends Model
 {
@@ -21,7 +21,8 @@ class SystemJob extends Model
         'type',
         'context_type',
         'context_id',
-        'initiated_by',
+        'initiated_by_type',
+        'initiated_by_id',
         'queue',
         'status',
         'stage',
@@ -30,12 +31,19 @@ class SystemJob extends Model
         'result',
         'error_code',
         'error_message',
+        'started_at'
     ];
+
 
     public $incrementing = false;
     public $table = "system_jobs";
     public  $keyType = 'string';
 
+
+    public function initiatedBy()
+    {
+        return $this->morphTo();
+    }
     public function systemJobEvent(): HasMany
     {
         return $this->hasMany(SystemJobEvent::class);

@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Cou
 
 use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 
 class CourseRequestedTimeSlotSuggestion implements ConstraintSuggestion
@@ -19,7 +20,8 @@ class CourseRequestedTimeSlotSuggestion implements ConstraintSuggestion
         return collect($constraintModification['suggested_values'] ?? [])
             ->map(function ($suggestedValue) {
                 $course = DB::table('courses')->where('id', $suggestedValue['course_id'])->first();
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", CourseRequestedSlot::KEY)->first() ?? null,
                     summary: "Modify Course Requested Time Slot {$course->course_title} from {$suggestedValue['start_time']} to {$suggestedValue['end_time']} on {$suggestedValue['day']}",
                     context: [
                         'course_id'  => $suggestedValue['course_id'],

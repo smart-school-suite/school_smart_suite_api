@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Services\Constraint;
+namespace App\Services\SemTimetableConstraint;
 
-use App\Models\Constraint\ConstraintCategory;
+use App\Models\Constraint\SemTimetableConstraintCategory;
 use App\Exceptions\AppException;
+
 class ConstraintCategoryService
 {
-   public function getConstraintCategories()
-   {
-        $constraintCategories = ConstraintCategory::all();
-        if($constraintCategories->isEmpty()) {
+    public function getConstraintCategories()
+    {
+        $constraintCategories = SemTimetableConstraintCategory::all();
+        if ($constraintCategories->isEmpty()) {
             throw new AppException(
                 "No Constraint Categories Found",
                 404,
@@ -18,11 +19,11 @@ class ConstraintCategoryService
             );
         }
         return $constraintCategories;
-   }
+    }
 
-   public function getConstraintCategoryById(string $constraintCategoryId)
-   {
-        $constraintCategory = ConstraintCategory::find($constraintCategoryId);
+    public function getConstraintCategoryById(string $constraintCategoryId)
+    {
+        $constraintCategory = SemTimetableConstraintCategory::find($constraintCategoryId);
         if (!$constraintCategory) {
             throw new AppException(
                 "Constraint Category Not Found",
@@ -32,11 +33,11 @@ class ConstraintCategoryService
             );
         }
         return $constraintCategory;
-   }
+    }
 
-   public function activateConstraintCategory(string $constraintCategoryId)
-   {
-        $constraintCategory  = ConstraintCategory::find($constraintCategoryId);
+    public function activateConstraintCategory(string $constraintCategoryId)
+    {
+        $constraintCategory  = SemTimetableConstraintCategory::find($constraintCategoryId);
         if (!$constraintCategory) {
             throw new AppException(
                 "Constraint Category Not Found",
@@ -46,7 +47,7 @@ class ConstraintCategoryService
             );
         }
 
-        if($constraintCategory->status === 'active') {
+        if ($constraintCategory->status === 'active') {
             throw new AppException(
                 "Constraint Category Already Active",
                 400,
@@ -58,32 +59,31 @@ class ConstraintCategoryService
         $constraintCategory->status = 'active';
         $constraintCategory->save();
         return $constraintCategory;
-   }
+    }
 
     public function deactivateConstraintCategory(string $constraintCategoryId)
     {
-          $constraintCategory  = ConstraintCategory::find($constraintCategoryId);
-          if (!$constraintCategory) {
-                throw new AppException(
-                 "Constraint Category Not Found",
-                 404,
-                 "The specified constraint category does not exist.",
-                 "The Constraint Category Was Not Found Please Ensure that the constraint category exists and try again"
-                );
-          }
+        $constraintCategory  = SemTimetableConstraintCategory::find($constraintCategoryId);
+        if (!$constraintCategory) {
+            throw new AppException(
+                "Constraint Category Not Found",
+                404,
+                "The specified constraint category does not exist.",
+                "The Constraint Category Was Not Found Please Ensure that the constraint category exists and try again"
+            );
+        }
 
-          if($constraintCategory->status === 'inactive') {
-                throw new AppException(
-                 "Constraint Category Already Inactive",
-                 400,
-                 "The specified constraint category is already inactive.",
-                 "The Constraint Category is Already Inactive Please Ensure that the constraint category is not already inactive and try again"
-                );
-          }
+        if ($constraintCategory->status === 'inactive') {
+            throw new AppException(
+                "Constraint Category Already Inactive",
+                400,
+                "The specified constraint category is already inactive.",
+                "The Constraint Category is Already Inactive Please Ensure that the constraint category is not already inactive and try again"
+            );
+        }
 
-          $constraintCategory->status = 'inactive';
-          $constraintCategory->save();
-          return $constraintCategory;
+        $constraintCategory->status = 'inactive';
+        $constraintCategory->save();
+        return $constraintCategory;
     }
-
 }

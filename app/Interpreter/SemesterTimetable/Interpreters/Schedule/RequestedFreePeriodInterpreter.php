@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\RequestedFreePeriod;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
+use App\Models\Constraint\SemTimetableConstraint;
 class RequestedFreePeriodInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -24,10 +25,10 @@ class RequestedFreePeriodInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: RequestedFreePeriod::KEY,
+            constraint: SemTimetableConstraint::where("key", RequestedFreePeriod::KEY)->first(),
             severity: 'soft',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
         );
     }
 

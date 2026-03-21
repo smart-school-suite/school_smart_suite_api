@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Sch
 
 use App\Constant\Constraint\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 
 class OperationalPeriodSuggestion implements ConstraintSuggestion
 {
@@ -17,7 +18,8 @@ class OperationalPeriodSuggestion implements ConstraintSuggestion
     {
         return collect($constraintModification['suggested_values'] ?? [])
             ->map(function ($suggestedValue) {
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", OperationalPeriod::KEY)->first() ?? null,
                     summary: "Ajust the operational Period on {$suggestedValue['day']} from {$suggestedValue['start_time']} to {$suggestedValue['end_time']} ",
                     context: [
                         'day'        => $suggestedValue['day'],

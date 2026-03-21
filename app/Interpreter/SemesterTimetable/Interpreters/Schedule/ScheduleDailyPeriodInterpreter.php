@@ -6,7 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\ScheduleDailyPeriod;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
-
+use App\Models\Constraint\SemTimetableConstraint;
 class ScheduleDailyPeriodInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -25,10 +25,10 @@ class ScheduleDailyPeriodInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: ScheduleDailyPeriod::KEY,
+            constraint: SemTimetableConstraint::where("key", ScheduleDailyPeriod::KEY)->first(),
             severity: 'soft',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
         );
     }
 

@@ -9,7 +9,12 @@ class RequiredJointCourse
     public const DESCRIPTION = "Ensures that certain courses are scheduled together in the same periods across different department.";
     public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Course\RequiredJointCoursePeriodInterpreter::class;
     public const HANDLER = \App\Constant\Constraint\SemesterTimetable\Course\RequiredJointCourse::class;
-    public const TYPE = "Hard";
+    public const TYPE = "hard";
+    public const CATEGORY = "course_constraint";
+    public const VIOLATION = [
+        "break_period_violation",
+        "operational_period_violation"
+    ];
     public const EXAMPLE = [
         [
             "course_id" => "00d6c93b-4bf9-4634-adc2-293f3c513c18",
@@ -36,7 +41,8 @@ class RequiredJointCourse
             'handler' => self::HANDLER,
             'interpreter_handler' => self::INTERPRETER_HANDLER,
             'type' => self::TYPE,
-            'description' => self::DESCRIPTION
+            'description' => self::DESCRIPTION,
+            'category' => self::CATEGORY
         ];
     }
 

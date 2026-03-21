@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Course\RequiredJointCourse;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 
 class RequiredJointCoursePeriodInterpreter implements ConstraintInterpreter
@@ -25,10 +26,10 @@ class RequiredJointCoursePeriodInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: RequiredJointCourse::KEY,
+            constraint: SemTimetableConstraint::where("key", RequiredJointCourse::KEY)->first(),
             severity: 'hard',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
         );
     }
 

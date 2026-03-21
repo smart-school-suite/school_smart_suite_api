@@ -2,11 +2,13 @@
 
 namespace App\Interpreter\SemesterTimetable\DTOs;
 
+use App\Models\Constraint\SemTimetableConstraint;
+
 class InterpretedDiagnostic
 {
     public function __construct(
         public string $summary,
-        public string $constraint,
+        public SemTimetableConstraint $constraint,
         public string $severity = 'hard',
         public array $reasons = [],
         public array $suggestions = []

@@ -4,7 +4,8 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Sch
 
 use App\Constant\Constraint\SemesterTimetable\Schedule\ScheduleDailyFreePeriod;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\ConstraintSuggestion;
-use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Interpreter\SemesterTimetable\Suggestion\DTO\ConstraintSuggestionDTO;
+use App\Models\Constraint\SemTimetableConstraint;
 
 class DailyFreePeriodSuggestion implements ConstraintSuggestion
 {
@@ -19,7 +20,8 @@ class DailyFreePeriodSuggestion implements ConstraintSuggestion
             ->map(function ($suggestedValue) {
                 $minFrequencySuggestion = "Modify the free period on {$suggestedValue['day']} at least {$suggestedValue['min_frequency']} times a day to satisfy the course's daily frequency requirement.";
                 $maxFrequencySuggestion = "Modify free period on {$suggestedValue['day']} at most {$suggestedValue['max_frequency']} times a day to satisfy the course's daily frequency requirement.";
-                return new BlockerSuggestionDTO(
+                return new ConstraintSuggestionDTO(
+                    constraint: SemTimetableConstraint::where("key", ScheduleDailyFreePeriod::KEY)->first() ?? null,
                     summary: $suggestedValue['min_frequency'] ? $minFrequencySuggestion : $maxFrequencySuggestion,
                     context: [
                         'day'  => $suggestedValue['day'],

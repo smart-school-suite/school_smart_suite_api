@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Schedu
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 
 class PeriodDurationViolationSuggestion implements BlockerSuggestion
 {
@@ -18,6 +19,7 @@ class PeriodDurationViolationSuggestion implements BlockerSuggestion
         return collect($blockerResolution['suggested_values'] ?? [])
             ->map(function ($suggestedValue) {
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", PeriodDuration::KEY)->first() ?? null,
                     summary: "Modify the period duration on {$suggestedValue['day']} to {$suggestedValue['duration_minutes']}",
                     context: [
                         'day'        => $suggestedValue['day'],

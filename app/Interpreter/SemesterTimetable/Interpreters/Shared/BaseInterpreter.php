@@ -6,6 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Builder\ViolationBuilder;
 use App\Interpreter\SemesterTimetable\Violation\Core\ViolationRegistry;
 use App\Interpreter\SemesterTimetable\DTOs\Reason;
 use App\Interpreter\SemesterTimetable\Suggestion\Core\SuggestionEngine;
+use App\Models\Constraint\SemTimetableBlocker;
 
 class BaseInterpreter
 {
@@ -26,6 +27,7 @@ class BaseInterpreter
 
             if ($violation) {
                 $reasons[] = new Reason(
+                    violation: SemTimetableBlocker::where("key", $blocker['type'])->first() ?? null,
                     title: ViolationBuilder::title($blocker['type']),
                     description: $violation->explain($blocker)
                 );

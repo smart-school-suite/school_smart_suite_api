@@ -10,7 +10,11 @@ class PeriodDuration
     public const HANDLER = \App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration::class;
     public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Schedule\PeriodDurationInterpreter::class;
     public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Schedule\PeriodDurationSuggestion::class;
-    public const TYPE = "Hard";
+    public const TYPE = "hard";
+    public const CATEGORY = "schedule_constraint";
+    public const VIOLATION = [
+        "operational_period_violation",
+    ];
     public const EXAMPLE = [
         [
             "duration_minutes" => 60
@@ -59,7 +63,8 @@ class PeriodDuration
             'type' => self::TYPE,
             'description' => self::DESCRIPTION,
             'interpreter_handler' => self::INTERPRETER_HANDLER,
-            'suggestion_handler' => self::SUGGESTION_HANDLER
+            'suggestion_handler' => self::SUGGESTION_HANDLER,
+            'category' => self::CATEGORY
         ];
     }
 

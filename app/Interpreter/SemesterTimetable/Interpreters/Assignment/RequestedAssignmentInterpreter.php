@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment;
 use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
+use App\Models\Constraint\SemTimetableConstraint;
 use Illuminate\Support\Facades\DB;
 
 class RequestedAssignmentInterpreter implements ConstraintInterpreter
@@ -25,7 +26,7 @@ class RequestedAssignmentInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: RequestedAssignment::KEY,
+            constraint: SemTimetableConstraint::where("key", RequestedAssignment::KEY)->first(),
             severity: 'soft',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
             suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])

@@ -7,7 +7,7 @@ use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
 use App\Models\Teacher;
-
+use App\Models\Constraint\SemTimetableConstraint;
 class TeacherRequestedTimeWindowInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -26,10 +26,10 @@ class TeacherRequestedTimeWindowInterpreter implements ConstraintInterpreter
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
-            constraint: TeacherRequestedTimeSlot::KEY,
+            constraint: SemTimetableConstraint::where("key", TeacherRequestedTimeSlot::KEY)->first(),
             severity: 'soft',
             reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions' ?? []])
+            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
         );
     }
 

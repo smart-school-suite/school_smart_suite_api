@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Teache
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherDailyHours;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 use Illuminate\Support\Facades\DB;
 
 class TeacherDailyHourViolationSuggestion implements BlockerSuggestion
@@ -22,6 +23,7 @@ class TeacherDailyHourViolationSuggestion implements BlockerSuggestion
                 $minDailyHourSuggestion = "Adjust {$teacher->name} minimum daily hours to {$suggestedValue['min_daily_hours']}";
                 $maxDailyHourSuggestion = "Adjust {$teacher->name} maximum daily hours to {$suggestedValue['max_daily_hours']}";
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", TeacherDailyHours::KEY)->first() ?? null,
                     summary: $suggestedValue['min_daily_hours'] ? $minDailyHourSuggestion : $maxDailyHourSuggestion,
                     context: [
                         'day'  => $suggestedValue['day'],

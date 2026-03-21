@@ -20,8 +20,8 @@ return new class extends Migration
             $table->foreign('teacher_id')->references('id')->on('teachers')->onDelete('cascade');
             $table->string('school_semester_id');
             $table->foreign('school_semester_id')->references('id')->on('school_semesters');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels')->onDelete('cascade');
+            $table->string('version_id', 64);
+            $table->foreign('version_id')->references('id')->on('timetable_versions');
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('student_batch_id');
@@ -33,6 +33,8 @@ return new class extends Migration
         Schema::table('timetable_versions', function (Blueprint $table) {
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+            $table->string('school_semester_id');
+            $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
         });
 
         Schema::table('active_timetables', function (Blueprint $table) {

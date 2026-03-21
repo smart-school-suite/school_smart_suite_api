@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Schedu
 use App\Constant\Violation\SemesterTimetable\Schedule\ScheduleDailyFreePeriod;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 
 class DailyFreePeriodViolationSuggestion implements BlockerSuggestion
 {
@@ -20,6 +21,7 @@ class DailyFreePeriodViolationSuggestion implements BlockerSuggestion
                 $minFrequencySuggestion = "Schedule A free period on {$suggestedValue['day']} at least {$suggestedValue['min_frequency']} times a day to satisfy the course's daily frequency requirement.";
                 $maxFrequencySuggestion = "Schedule A free period on {$suggestedValue['day']} at most {$suggestedValue['max_frequency']} times a day to satisfy the course's daily frequency requirement.";
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", ScheduleDailyFreePeriod::KEY)->first() ?? null,
                     summary: $suggestedValue['min_frequency'] ? $minFrequencySuggestion : $maxFrequencySuggestion,
                     context: [
                         'day'  => $suggestedValue['day'],

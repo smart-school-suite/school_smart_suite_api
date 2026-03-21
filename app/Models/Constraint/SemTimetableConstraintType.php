@@ -6,23 +6,22 @@ use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ConstraintType extends Model
+class SemTimetableConstraintType extends Model
 {
-
     use GeneratesUuid;
     protected $fillable = [
         'name',
-        'program_name',
-        'status',
-        'description'
+        'key',
+        'description',
+        'status'
     ];
 
-    public $table = "constraint_types";
     public $incrementing = false;
     public $keyType = 'string';
+    public $table = 'constraint_types';
 
-    public function semesterTimetableConstraint(): HasMany
+    public function constraint(): HasMany
     {
-        return $this->hasMany(SemesterTimetableConstraint::class);
+        return $this->hasMany(SemTimetableConstraint::class);
     }
 }

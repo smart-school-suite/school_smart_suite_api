@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
-
+use App\Models\Job\SystemJob;
+use App\Models\OTP;
 class Schooladmin extends Authenticatable
 {
     use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency;
@@ -61,6 +62,10 @@ class Schooladmin extends Authenticatable
         ];
     }
 
+    public function systemJob(): MorphMany
+    {
+        return $this->morphMany(SystemJob::class, 'initiatedBy');
+    }
     public function routeNotificationForFcm()
     {
         return $this->devices()->pluck('token')->toArray();
@@ -93,17 +98,17 @@ class Schooladmin extends Authenticatable
         return $this->belongsTo(School::class, 'school_branch_id');
     }
 
-    public function userBadge()
-    {
-        return $this->morphMany(UserBadge::class, 'actorable');
-    }
+    // public function userBadge()
+    // {
+    //     return $this->morphMany(UserBadge::class, 'actorable');
+    // }
     public function passwordResetTokens()
     {
         return $this->morphMany(PasswordResetToken::class, 'actorable');
     }
     public function otp()
     {
-        return $this->morphMany(Otp::class, 'actorable');
+        return $this->morphMany(OTP::class, 'actorable');
     }
 
     public function announcementAuthor(): MorphMany
@@ -116,10 +121,10 @@ class Schooladmin extends Authenticatable
         return $this->morphMany(EventAuthor::class, 'actorable');
     }
 
-    public function badges()
-    {
-        return $this->morphMany(BadgeAssignment::class, 'assignable');
-    }
+    // public function badges()
+    // {
+    //     return $this->morphMany(BadgeAssignment::class, 'assignable');
+    // }
     public function eventAudience()
     {
         return $this->morphMany(EventAudience::class, 'audienceable');

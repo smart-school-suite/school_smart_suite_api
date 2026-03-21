@@ -6,6 +6,8 @@ use App\Constant\Violation\SemesterTimetable\Course\CourseDailyFrequency;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use Illuminate\Support\Facades\DB;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
+
 class CourseDailyFrequencyViolationSuggestion implements BlockerSuggestion
 {
     public static function type(): string
@@ -21,6 +23,7 @@ class CourseDailyFrequencyViolationSuggestion implements BlockerSuggestion
                 $minFrequencySuggestion = "Schedule {$course->course_title} at least {$suggestedValue['min_frequency']} times a day to satisfy the course's daily frequency requirement.";
                 $maxFrequencySuggestion = "Schedule {$course->course_title} at most {$suggestedValue['max_frequency']} times a day to satisfy the course's daily frequency requirement.";
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", CourseDailyFrequency::KEY)->first() ?? null,
                     summary: $suggestedValue['min_frequency'] ? $minFrequencySuggestion : $maxFrequencySuggestion,
                     context: [
                         'course_id'  => $suggestedValue['course_id'],

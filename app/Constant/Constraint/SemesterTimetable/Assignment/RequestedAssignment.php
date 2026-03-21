@@ -10,6 +10,23 @@ class RequestedAssignment
     public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Assignment\RequestedAssignmentInterpreter::class;
     public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Assignment\RequestedAssignmentSuggestion::class;
     public const TYPE = "soft";
+    public const CATEGORY = "assignment_constraint";
+    public const VIOLATION = [
+      "course_daily_frequency_violation",
+      "course_requested_time_slot_violation",
+      "joint_course_period_violation",
+      "hall_busy",
+      "hall_requested_time_slot_violation",
+      "break_period_violation",
+      "operational_period_violation",
+      "schedule_period_duration_minutes_violation",
+      "schedule_periods_per_day_violation",
+      "teacher_busy",
+      "teacher_daily_hours_violation",
+      "teacher_requested_time_slot_violation",
+      "teacher_unavailable",
+      "teacher_weekly_hours_violation"
+    ];
     public const DESCRIPTION = "Specifies user-preferred assignments of courses to particular teachers, halls/rooms, days and/or time slots. These are soft placement requests — the scheduler should try to respect them when possible, but can assign differently if needed due to conflicts or other rules.";
     public const EXAMPLE = [
         [
@@ -71,7 +88,8 @@ class RequestedAssignment
             'type' => self::TYPE,
             'description' => self::DESCRIPTION,
             'interpreter_handler' => self::INTERPRETER_HANDLER,
-            'suggestion_handler' => self::SUGGESTION_HANDLER
+            'suggestion_handler' => self::SUGGESTION_HANDLER,
+            'category' => self::CATEGORY
         ];
     }
 

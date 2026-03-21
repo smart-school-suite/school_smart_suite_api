@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Schedu
 use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 
 class RequestedFreePeriodViolationSuggestion implements BlockerSuggestion
 {
@@ -18,6 +19,7 @@ class RequestedFreePeriodViolationSuggestion implements BlockerSuggestion
         return collect($blockerResolution['suggested_values'] ?? [])
             ->map(function ($suggestedValue) {
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", RequestedFreePeriod::KEY)->first() ?? null,
                     summary: "Adjust the free period to {$suggestedValue['day']} from {$suggestedValue['start_time']} to {$suggestedValue['end_time']}",
                     context: [
                         'day'        => $suggestedValue['day'],

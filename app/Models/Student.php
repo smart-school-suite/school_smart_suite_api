@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasPermissions;
+use App\Models\OTP;
+use App\Models\Job\SystemJob;
 
 class Student extends Model
 {
@@ -70,6 +72,10 @@ class Student extends Model
         ];
     }
 
+    public function systemJob(): MorphMany
+    {
+        return $this->morphMany(SystemJob::class, 'initiatedBy');
+    }
     public function gender(): BelongsTo
     {
         return $this->belongsTo(Gender::class, 'gender_id');
@@ -131,7 +137,7 @@ class Student extends Model
 
     public function otp()
     {
-        return $this->morphMany(Otp::class, 'actorable');
+        return $this->morphMany(OTP::class, 'actorable');
     }
 
     public function userBadge()
@@ -160,7 +166,7 @@ class Student extends Model
     }
     public function otps()
     {
-        return $this->morphMany(Otp::class, 'otpable');
+        return $this->morphMany(OTP::class, 'otpable');
     }
     public function electionVotes(): HasMany
     {

@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Suggestion\BlockerSuggestions\Assign
 use App\Constant\Violation\SemesterTimetable\Assignment\RequestedAssigment;
 use App\Interpreter\SemesterTimetable\Suggestion\Contracts\BlockerSuggestion;
 use App\Interpreter\SemesterTimetable\Suggestion\DTO\BlockerSuggestionDTO;
+use App\Models\Constraint\SemTimetableBlocker;
 use Illuminate\Support\Facades\DB;
 
 class RequestedAssignmentViolationSuggestion implements BlockerSuggestion
@@ -23,6 +24,7 @@ class RequestedAssignmentViolationSuggestion implements BlockerSuggestion
                 $teacher = DB::table('teachers')->where('id', $suggestedValue['teacher_id'])->first();
 
                 return new BlockerSuggestionDTO(
+                    blocker: SemTimetableBlocker::where("key", RequestedAssigment::KEY)->first() ?? null,
                     summary: "Schedule {$course->name} from {$suggestedValue['start_time']} to {$suggestedValue['end_time']} on {$suggestedValue['day']} for {$teacher->name} in {$hall->name} to satisfy a requested assignment.",
                     context: [
                         'teacher_id' => $suggestedValue['teacher_id'],
