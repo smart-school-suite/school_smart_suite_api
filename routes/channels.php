@@ -32,6 +32,10 @@ BroadCast::channel('schoolBranch.{schoolBranchId}.student.{studentId}.actions', 
       return (string) $user->school_branch_id === (string) $schoolBranchId;
 }, ['guards' => ['student']]);
 
+Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.semesterTimetable', function ($user, $schoolBranchId) {
+    return (string) $user->school_branch_id === (string) $schoolBranchId;
+}, ['guards' => ['schooladmin']]);
+
 
 
 

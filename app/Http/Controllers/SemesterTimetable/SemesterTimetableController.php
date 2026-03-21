@@ -9,7 +9,6 @@ use App\Jobs\SemesterTimetable\GeneratePreferenceSemesterTimetable;
 use App\Models\Job\SystemJob;
 use App\Models\SchoolSemester;
 use App\Services\ApiResponseService;
-// use Illuminate\Http\Request;
 use App\Services\SemesterTimetable\GeneratePreferenceSemesterTimetableService;
 use App\Services\SemesterTimetable\GenerateFixedSemesterTimetableService;
 use App\Services\SemesterTimetable\SemesterTimetableService;
@@ -57,10 +56,12 @@ class SemesterTimetableController extends Controller
         $systemJob = SystemJob::create([
             'type' => "Semester Timetable Generation",
             'context_type' => SchoolSemester::class,
+            'stage' => "Processing",
             'context_id' => $request->validated()['school_semester_id'],
             'initiated_by_id' => $this->resolveUser()->id,
             'initiated_by_type' => $this->resolveUser()::class,
             'queue' => "database",
+            'started_at' => now(),
             'payload' => $request->validated(),
         ]);
         GenerateFixedSemesterTimetable::dispatch(
@@ -71,7 +72,8 @@ class SemesterTimetableController extends Controller
         return ApiResponseService::success("Timetable generation initiated successfully", null, null, 200);
     }
 
-    public function getParsedTimetableDiagnostics(string $timetableVersionId){
+    public function getParsedTimetableDiagnostics(string $timetableVersionId)
+    {
         $parsedDiagnostics = $this->semesterTimetableService->getTimetableParsedDiagnostics($timetableVersionId);
         return ApiResponseService::success("Timetable diagnostics retrieved successfully", $parsedDiagnostics, null, 200);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\SemesterTimetable;
 
+use App\Events\SemesterTimetable\TimetableGenerationEvent;
 use App\Exceptions\AppException;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
@@ -82,6 +83,16 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         $specialty = $schoolSemester->specialty;
         $requestPayload = $this->payload;
 
+        TimetableGenerationEvent::dispatch(
+            $systemJob->initiatedBy,
+            $this->currentSchool,
+            [
+                'stage' => 'Gathering Data....',
+                'percentage' => 10,
+                'details' => 'Fetching teachers, courses, halls, and constraints to prepare for timetable generation.',
+            ]
+        );
+
         $teachers           = $this->getTeachers($branchId, $specialty);
         $teacherIds         = $teachers->pluck('teacher_id')->toArray();
         $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Teachers fetched']);
@@ -103,6 +114,8 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         $jointCourses       = $this->getJointCourses($schoolSemester);
 
+
+
         $body = $this->buildRequestBody(
             $teachers,
             $teacherBusyPeriods,
@@ -116,7 +129,17 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Generating Timetable', 50);
 
+        TimetableGenerationEvent::dispatch(
+            $systemJob->initiatedBy,
+            $this->currentSchool,
+            [
+                'stage' => 'Generating Timetable....',
+                'percentage' => 50,
+                'details' => 'Generating the optimal timetable based on gathered data and constraints.',
+            ]
+        );
         $response = $this->optimalSchedulerResponseMock();
+
 
         $timetableVersionId = $this->createTimetableVersion(
             $this->payload['school_semester_id'],
@@ -131,6 +154,15 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         $finalStatus = $this->isErrorResponse($response) ? 'FAILED' : 'COMPLETED';
 
+        TimetableGenerationEvent::dispatch(
+            $systemJob->initiatedBy,
+            $this->currentSchool,
+            [
+                'stage' => 'Interpreting Results....',
+                'percentage' => 90,
+                'details' => 'Interpreting the results from the timetable generation process.',
+            ]
+        );
         $this->handleDiagnostics($response, $timetableVersionId, $schoolSemester);
         $this->updateJobProgress($systemJob, $finalStatus, 'Done', 100);
     }
@@ -152,7 +184,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         return $teachers;
     }
-
     private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $schoolSemester): Collection
     {
         $courseIds = CourseSpecialty::where('school_branch_id', $branchId)
@@ -200,7 +231,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         return $teacherCourses;
     }
-
     private function getHalls(string $branchId, $specialty)
     {
         $halls = SpecialtyHall::where('school_branch_id', $branchId)
@@ -219,7 +249,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         return $halls;
     }
-
     private function getHallBusyPeriods(string $branchId, $halls)
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
@@ -228,7 +257,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             ->with('hall')
             ->get();
     }
-
     private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
@@ -237,7 +265,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             ->with('teacher')
             ->get();
     }
-
     private function getTeacherPreferredSchedule(string $branchId, $schoolSemester, array $teacherIds)
     {
         return InstructorAvailabilitySlot::where('school_branch_id', $branchId)
@@ -420,7 +447,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         return $version->id;
     }
-
     private function createTimetableSlots(string $versionId, object $currentSchool, array $response, $schoolSemester): void
     {
         $now = Carbon::now();
@@ -450,12 +476,10 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             DB::table('timetable_slots')->insert($chunk);
         }
     }
-
     private function isErrorResponse(array $response): bool
     {
         return Str::lower($response['status'] ?? 'error') === 'error';
     }
-
     private function updateJobProgress(SystemJob $systemJob, string $status, string $stage, int $progress): void
     {
         $systemJob->update([
@@ -482,7 +506,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'message'    => $message,
         ]);
     }
-
     public function failed(Throwable $exception): void
     {
         Log::error("GeneratePreferenceSemesterTimetable job [{$this->jobId}] permanently failed.", [
@@ -500,7 +523,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             $this->failJob($systemJob, $exception->getMessage(), 500);
         }
     }
-
     private function handleDiagnostics(
         array $schedulerResponse,
         string $timetableVersionId,
@@ -534,7 +556,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
             $parsedDiagnostics['summary'][] = [
                 'constraint_id'   => $constraint->id ?? null,
-                'constraint_type' => $constraint->type ?? null,
                 'summary'         => $diagnostic->summary ?? null,
                 'constraint_name' => $constraint->name ?? null,
                 'constraint_key'  => $constraint->key ?? null,
@@ -575,7 +596,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         SemesterTimetableDiagnostic::create($parsedDiagnostics);
     }
-
     private static function optimalSchedulerResponseMock()
     {
         $filePath = public_path("schedulerResponse/optimal/example1.json");
