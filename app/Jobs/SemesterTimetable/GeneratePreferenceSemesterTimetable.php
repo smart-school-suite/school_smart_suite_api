@@ -22,6 +22,7 @@ use App\Models\SpecialtyHall;
 use App\Models\Teacher;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
+use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -78,8 +79,8 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
     {
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Gathering Data', 10);
 
+         $timetableVersionId = $this->payload['version_id'] ?? null;
         $branchId    = $this->currentSchool->id;
-        $semesterId  = $schoolSemester->id;
         $specialty = $schoolSemester->specialty;
         $requestPayload = $this->payload;
 
@@ -127,6 +128,10 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             $teacherPreferredSchedule
         );
 
+        $schedulingEngine = app(SchedularEngine::class);
+        $response = $schedulingEngine->run($body);
+        log::info("Scheduler Engine Response", ['response' => $response]);
+
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Generating Timetable', 50);
 
         TimetableGenerationEvent::dispatch(
@@ -140,13 +145,13 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         );
         $response = $this->optimalSchedulerResponseMock();
 
-
-        $timetableVersionId = $this->createTimetableVersion(
-            $this->payload['school_semester_id'],
-            $this->currentSchool,
-            $response,
-            $requestPayload,
-        );
+        if (is_null($timetableVersionId)) {
+            $timetableVersionId = $this->createTimetableVersion(
+                $this->payload['school_semester_id'],
+                $this->currentSchool,
+                $response
+            );
+        }
 
         if (!$this->isErrorResponse($response)) {
             $this->createTimetableSlots($timetableVersionId, $this->currentSchool, $response, $schoolSemester);
@@ -161,6 +166,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
                 'stage' => 'Interpreting Results....',
                 'percentage' => 90,
                 'details' => 'Interpreting the results from the timetable generation process.',
+                'version' => SemesterTimetableVersion::find($timetableVersionId) ?? null,
             ]
         );
         $this->handleDiagnostics($response, $timetableVersionId, $schoolSemester);
@@ -309,19 +315,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             );
         }
 
-        return $jointCourseSlots
-            ->groupBy(fn($slot) => $slot->course->id . '|' . $slot->teacher->id)
-            ->map(fn($slots) => [
-                'course_id'  => $slots->first()->course->id,
-                'teacher_id' => $slots->first()->teacher->id,
-                'periods'    => $slots->map(fn($slot) => [
-                    'day'        => $slot->day_of_week,
-                    'start_time' => $slot->start_time,
-                    'end_time'   => $slot->end_time,
-                ])->values()->all(),
-            ])
-            ->values()
-            ->all();
+        return $jointCourseSlots->toArray();
     }
     private function buildRequestBody(
         $teachers,
@@ -428,8 +422,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
     private function createTimetableVersion(
         string $schoolSemesterId,
         object $currentSchool,
-        array $response,
-        array $requestPayload,
+        array $response
     ): string {
         $nextVersion = (SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)
             ->where('school_semester_id', $schoolSemesterId)
@@ -441,8 +434,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'school_branch_id' => $currentSchool->id,
             'school_semester_id' => $schoolSemesterId,
             'version_number'   => $nextVersion,
-            'scheduler_input'  => $requestPayload,
-            'scheduler_output' => $response,
         ]);
 
         return $version->id;
@@ -534,7 +525,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         $rawDiagnostics = $isError
             ? $schedulerResponse['diagnostics']['constraints']['hard'] ?? null
             : $schedulerResponse['diagnostics']['constraints']['soft'] ?? null;
-         DiagnosticContext::setSchool($this->currentSchool);
+        DiagnosticContext::setSchool($this->currentSchool);
         $diagnosticResponseBuilder = app(DiagnosticResponseBuilder::class);
         $diagnostics = $diagnosticResponseBuilder->build($rawDiagnostics);
 

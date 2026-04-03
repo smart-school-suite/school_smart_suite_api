@@ -32,6 +32,7 @@ use App\Models\Hall;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Models\Teacher;
+use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
 use Throwable;
 
 class GenerateFixedSemesterTimetable implements ShouldQueue
@@ -76,7 +77,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Gathering Data', 10);
 
         $branchId    = $this->currentSchool->id;
-        $semesterId  = $schoolSemester->id;
+        $timetableVersionId = $this->payload['version_id'] ?? null;
         $specialty = $schoolSemester->specialty;
         $requestPayload = $this->payload;
 
@@ -132,12 +133,15 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $response = $this->optimalSchedulerResponseMock();
 
-        $timetableVersionId = $this->createTimetableVersion(
-            $this->payload['school_semester_id'],
-            $this->currentSchool,
-            $response,
-            $requestPayload,
-        );
+        $timetableGenerator = app(SchedularEngine::class);
+
+        if (is_null($timetableVersionId)) {
+            $timetableVersionId = $this->createTimetableVersion(
+                $this->payload['school_semester_id'],
+                $this->currentSchool,
+                $response
+            );
+        }
 
         if (!$this->isErrorResponse($response)) {
             $this->createTimetableSlots($timetableVersionId, $this->currentSchool, $response, $schoolSemester);
@@ -152,6 +156,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
                 'stage' => 'Interpreting Results....',
                 'percentage' => 90,
                 'details' => 'Interpreting the results from the timetable generation process.',
+                'version' => SemesterTimetableVersion::find($timetableVersionId) ?? null,
             ]
         );
 
@@ -400,7 +405,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         string $schoolSemesterId,
         object $currentSchool,
         array $response,
-        array $requestPayload,
     ): string {
         $nextVersion = (SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)
             ->where('school_semester_id', $schoolSemesterId)
@@ -411,9 +415,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'scheduler_status' => $response['status'] ?? 'error',
             'school_branch_id' => $currentSchool->id,
             'school_semester_id'      => $schoolSemesterId,
-            'version_number'   => $nextVersion,
-            'scheduler_input'  => $requestPayload,
-            'scheduler_output' => $response,
+            'version_number'   => $nextVersion
         ]);
 
         return $version->id;

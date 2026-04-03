@@ -4,8 +4,6 @@ namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
 use App\Models\SchoolSemester;
-use App\Models\SemesterTimetable\SemesterTimetableDraft;
-use App\Models\SemesterTimetable\SemesterTimetablePrompt;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SpecialtyHall;

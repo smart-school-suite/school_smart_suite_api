@@ -10,6 +10,7 @@ class GenerateSemesterTimetableRequest extends FormRequest
     {
         return [
             "school_semester_id" => "required|string|exists:school_semesters,id",
+            'version_id' => 'sometimes|nullable|string|exists:timetable_versions,id',
 
             //break period validation
             "break_period" => ["nullable", "sometimes", "array"],
@@ -26,6 +27,8 @@ class GenerateSemesterTimetableRequest extends FormRequest
             "operational_period" => ["required", "array"],
             "operational_period.start_time" => ["required", "date_format:H:i"],
             "operational_period.end_time" => ["required", "date_format:H:i", "after:operational_period.start_time"],
+            "operational_period.operational_days" => ["required", "array", "min:1"],
+            "operational_period.operational_days.*" => ["required", "string", "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"],
             "operational_period.day_exceptions" => ["sometimes", "nullable", "array", "min:1"],
             "operational_period.day_exceptions.*.day" => ["required_with:operational_period.day_exceptions", "string", "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"],
             "operational_period.day_exceptions.*.start_time" => ["required_with:operational_period.day_exceptions", "date_format:H:i"],
@@ -113,24 +116,34 @@ class GenerateSemesterTimetableRequest extends FormRequest
             ],
 
             //schedule max periods per day validation
-            "schedule_max_periods_per_day" => ["sometimes", "nullable", "array"],
-            "schedule_max_periods_per_day.max_periods" => [
-                "required_with:schedule_max_periods_per_day",
+            "schedule_periods_per_day" => ["sometimes", "required", "array"],
+            "schedule_periods_per_day.max_periods" => [
+                "required_with:schedule_periods_per_day",
                 "integer",
                 "min:0"
             ],
-            "schedule_max_periods_per_day.day_exceptions" => [
+            "schedule_periods_per_day.min_periods" => [
+                "required_with:schedule_periods_per_day",
+                "integer",
+                "min:0"
+            ],
+            "schedule_periods_per_day.day_exceptions" => [
                 "nullable",
                 "array",
                 "min:1"
             ],
-            "schedule_max_periods_per_day.day_exceptions.*.day" => [
-                "required_with:schedule_max_periods_per_day.day_exceptions",
+            "schedule_periods_per_day.day_exceptions.*.day" => [
+                "required_with:schedule_periods_per_day.day_exceptions",
                 "string",
                 "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"
             ],
-            "schedule_max_periods_per_day.day_exceptions.*.max_periods" => [
-                "required_with:schedule_max_periods_per_day.day_exceptions",
+            "schedule_periods_per_day.day_exceptions.*.max_periods" => [
+                "required_with:schedule_periods_per_day.day_exceptions",
+                "integer",
+                "min:0"
+            ],
+            "schedule_periods_per_day.day_exceptions.*.min_periods" => [
+                "required_with:schedule_periods_per_day.day_exceptions",
                 "integer",
                 "min:0"
             ],

@@ -6,7 +6,7 @@ use App\Models\SchoolSemester;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use MongoDB\Laravel\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SemesterTimetableVersion extends Model
 {
@@ -16,32 +16,16 @@ class SemesterTimetableVersion extends Model
         'label',
         'scheduler_status',
         'school_branch_id',
-        'scheduler_input',
-        'scheduler_output',
         'school_semester_id',
     ];
 
     public $incrementing = false;
     public $table = 'timetable_versions';
     public $keyType = 'string';
-    protected $casts = [
-        'scheduler_input' => 'json',
-        'scheduler_output' => 'json',
-    ];
 
     public function semesterActiveTimetable(): HasMany
     {
-        return $this->hasMany(SemesterActiveTimetable::class);
-    }
-
-    public function parentVersion()
-    {
-        return $this->belongsTo(SemesterTimetableVersion::class, 'parent_version_id');
-    }
-
-    public function resultVersion()
-    {
-        return $this->hasMany(SemesterTimetableVersion::class, 'parent_version_id');
+        return $this->hasMany(SemesterActiveTimetable::class, 'timetable_version_id');
     }
 
     public function timeTableSlot(): HasMany

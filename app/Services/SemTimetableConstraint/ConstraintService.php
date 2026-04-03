@@ -10,27 +10,30 @@ class ConstraintService
 {
     public function getConstraintsByCategory()
     {
-        $categories = SemTimetableConstraintCategory::with('constraints.constraintType')->get();
+        $categories = SemTimetableConstraintCategory::query()
+            ->whereHas('constraints', fn($q) => $q->where('status', 'active'))
+            ->with([
+                'constraints' => fn($q) => $q->where('status', 'active')
+                    ->with('constraintType'),
+            ])
+            ->get();
 
-        $result = [];
-        foreach ($categories as $category) {
-            $result[] = [
+        return $categories->map(function ($category) {
+            return [
                 'id' => $category->id,
-                'category' => $category->name ?? null,
-                'key' => $category->key ?? null,
+                'category' => $category->name,
+                'key' => $category->key,
                 'constraints' => $category->constraints->map(function ($constraint) {
                     return [
                         'id' => $constraint->id,
-                        'name' => $constraint->name ?? null,
-                        'key' => $constraint->key ?? null,
-                        'description' => $constraint->description ?? null,
-                        'type' => $constraint->constraintType->name ?? null
+                        'name' => $constraint->name,
+                        'key' => $constraint->key,
+                        'description' => $constraint->description,
+                        'type' => optional($constraint->constraintType)->name,
                     ];
-                })
+                })->values(),
             ];
-        }
-
-        return $result;
+        })->values()->all();
     }
 
     public function getAllConstraints()

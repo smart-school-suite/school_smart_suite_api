@@ -3,81 +3,29 @@
 namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
+use App\Models\Courses;
 use App\Models\InstructorAvailabilitySlot;
 use App\Models\SchoolSemester;
-use App\Models\SemesterTimetable\SemesterTimetableDraft;
-use App\Models\SemesterTimetable\SemesterTimetablePrompt;
-use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
-use App\Services\SemesterTimetableScheduler\PreferenceSchedulingClient;
+use App\Models\Course\JointCourseSlot;
+use App\Models\Course\SemesterJoinCourseReference;
+use App\Models\Course\SemesterJointCourse;
+use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use App\Models\Course\CourseSpecialty;
+use App\Models\Teacher;
+use Illuminate\Support\Arr;
 
 class GeneratePreferenceSemesterTimetableService
 {
-    protected PreferenceSchedulingClient $schedulingClient;
-    public function __construct(
-        PreferenceSchedulingClient $schedulingClient,
-    ) {
-        $this->schedulingClient = $schedulingClient;
-    }
-    public function generateTimetable(array $data, object $currentSchool): array
+    public function generateTimetable(array $requestPayload, object $currentSchool): array
     {
-        return [
-            'optimal_scheduler_response' => self::optimalSchedulerResponseMock(),
-            'failed_scheduler_response' => self::failedSchedulerResponseMock(),
-            'partial_scheduler_response' => self::partialSchedulerResponseMock()["timetable"],
-        ];
 
-        if (isset($data['prompt_id']) && isset($data['parent_version_id'])) {
-            $parentVersion = SemesterTimetablePrompt::where('school_branch_id', $currentSchool->id)
-                ->where('id', $data['prompt_id'])
-                ->with(['baseVersion' => function ($q) {
-                    $q->where("id", $data['parent_version_id'] ?? null);
-                }])
-                ->first();
-            if (!$parentVersion || !$parentVersion->baseVersion) {
-                throw new AppException(
-                    "Parent Version Not Found",
-                    404,
-                    "Parent Version Not Found",
-                    "The specified parent version for the timetable prompt was not found. Please ensure the parent version ID is correct."
-                );
-            }
-        }
-
-        if (isset($data['draft_id'])) {
-            $draft = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
-                ->where('id', $data['draft_id'])
-                ->firstOrFail();
-        } else {
-            $draft = $this->createTimetableDraft($data, $currentSchool);
-        }
-
-        $timetablePrompt = SemesterTimetablePrompt::create([
-            'school_branch_id' => $currentSchool->id,
-            'user_prompt' => $data['prompt'],
-            'school_semester_id' => $data['school_semester_id'],
-            'draft_id' => $draft->id,
-        ]);
-        $stringent = $this->geminiIntentService->classify($data['prompt']);
-
-        if ($stringent['is_unrelated']) {
-            $timetablePrompt->update([
-                'ai_output' => [
-                    'is_unrelated' => true,
-                    'message' => "I’m here to help specifically with semester timetables. You can ask me to create a timetable, adjust class schedules, or add scheduling constraints to fit your academic needs.",
-                ],
-            ]);
-            return [
-                'is_unrelated' => true,
-                'message' => "I’m here to help specifically with semester timetables. You can ask me to create a timetable, adjust class schedules, or add scheduling constraints to fit your academic needs.",
-            ];
-        }
-
-        $semester = $this->getSchoolSemester($data['school_semester_id']);
+        $semester = $this->getSchoolSemester($requestPayload['school_semester_id']);
         $teachers = $this->getTeachers($currentSchool->id, $semester->specialty_id);
         $teacherIds = $teachers->pluck('teacher_id')->toArray();
 
@@ -106,48 +54,26 @@ class GeneratePreferenceSemesterTimetableService
         $hallBusy = $this->getHallBusyPeriods($currentSchool->id, $halls);
         $teacherBusy = $this->getTeacherBusyPeriods($currentSchool->id, $teacherIds);
 
-        $promptResponse = $this->geminiJsonService->generateStructuredJson(
-            $data['prompt'],
-            $this->buildPromptPayload($teacherCourses, $teachers, $halls),
-            $parentVersion?->scheduler_input ?? null
-        );
-
-
-        $timetableVersion = $this->createTimetableVersion($data, $currentSchool, $draft->id, 'in_progress');
-        if (isset($data['parent_version_id'])) {
-            $timetablePrompt->update([
-                'base_version_id' => $data['parent_version_id'],
-                'result_version_id' => $timetableVersion->id,
-                'scheduler_input' => $promptResponse,
-            ]);
-        } else {
-            $timetablePrompt->update([
-                'base_version_id' => null,
-                'result_version_id' => $timetableVersion->id,
-                'scheduler_input' => $promptResponse,
-            ]);
-        }
-        $schedulerInput =  $this->buildBody(
+        $payload =  $this->buildBody(
             $preferred,
             $teachers,
             $teacherBusy,
             $teacherCourses,
             $halls,
             $hallBusy,
-            $promptResponse
+            $requestPayload,
+            $this->getJointCourses($semester)
         );
-        $schedulerResponse = $this->schedulingClient->scheduleWithPreferences($schedulerInput);
-        $timetableVersion->update([
-            'scheduler_status' => "optimal",
-        ]);
 
-        $intepretResponse = $this->geminiResponseIntepreterService->interpretResponse($schedulerInput, self::partialSchedulerResponseMock());
-
+        $schedular = app(SchedularEngine::class);
+        $response = $schedular->run($payload);
         return [
-            'scheduler_response' => $schedulerResponse,
-            'prompt_response' => $promptResponse,
+            "timetable" => $response,
+            "payload" => $payload
         ];
     }
+
+
     private function getSchoolSemester(string $id): SchoolSemester
     {
         return SchoolSemester::with(['specialty.level', 'semester'])->findOrFail($id);
@@ -179,14 +105,52 @@ class GeneratePreferenceSemesterTimetableService
             ->with('teacher')
             ->get();
     }
-    private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $semester)
+    private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $schoolSemester): Collection
     {
-        return TeacherCoursePreference::where('school_branch_id', $branchId)
+        $courseIds = CourseSpecialty::where('school_branch_id', $branchId)
+            ->where('specialty_id', $schoolSemester->specialty_id)
+            ->whereHas(
+                'course',
+                fn($q) => $q
+                    ->where('school_branch_id', $branchId)
+                    ->where('semester_id', $schoolSemester->semester_id)
+                    ->where('status', 'active')
+            )
+            ->whereDoesntHave(
+                'course.courseSpecialty',
+                fn($q) => $q
+                    ->where('school_branch_id', $branchId)
+                    ->whereColumn('course_id', 'course_specialties.course_id')
+                    ->where('specialty_id', '!=', $schoolSemester->specialty_id)
+            )
+            ->pluck('course_id')
+            ->toArray();
+
+        if (empty($courseIds)) {
+            throw new AppException(
+                "No Courses Found",
+                404,
+                "No Courses Found",
+                "No active non-joint courses were found for this specialty and semester.",
+            );
+        }
+
+        $teacherCourses = TeacherCoursePreference::where('school_branch_id', $branchId)
             ->whereIn('teacher_id', $teacherIds)
-            ->whereHas('course', fn($q) => $q->where('semester_id', $semester->semester_id)
-                ->where('specialty_id', $semester->specialty_id))
-            ->with(['course.types', 'teacher'])
+            ->whereIn('course_id', $courseIds)
+            ->with(['course.courseSpecialty', 'teacher'])
             ->get();
+
+        if ($teacherCourses->isEmpty()) {
+            throw new AppException(
+                "No Teacher-Course Assignments Found",
+                404,
+                "No Teacher-Course Assignments Found",
+                "None of the assigned teachers have been matched to any course in this specialty and semester. Please ensure teacher-course preferences are configured.",
+            );
+        }
+
+        return $teacherCourses;
     }
     private function getHalls(string $branchId, string $specialtyId)
     {
@@ -208,51 +172,92 @@ class GeneratePreferenceSemesterTimetableService
     }
     private function getHallBusyPeriods(string $branchId, $halls)
     {
-        $hallIds = $halls->pluck('hall_id')->toArray();
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereHas('semester', function ($query) {
-                $query->where("end_date", ">=", now());
-            })
-            ->whereIn('hall_id', $hallIds)
+            ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())
+            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
             ->with('hall')
             ->get();
     }
     private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereHas('semester', function ($query) {
-                $query->where("end_date", ">=", now());
-            })
+            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
             ->whereIn('teacher_id', $teacherIds)
             ->with('teacher')
             ->get();
     }
-    private function buildPromptPayload($teacherCourses, $teachers, $halls): array
+    private function buildSoftConstraints(array $requestPayload): array
     {
-        return [
-            'courses' => $teacherCourses->map(fn($c) => [
-                'course_id' => $c->course->id,
-                'course_title' => $c->course->course_title,
-                'course_type' => $c->course->types->pluck('name')->toArray(),
-                'credit' => $c->course->credit,
-                'course_code' => $c->course->course_code,
-            ]),
-            'teachers' => $teachers->map(fn($t) => [
-                'teacher_id' => $t->teacher->id,
-                'teacher_name' => $t->teacher->name,
-            ]),
-            'halls' => $halls->map(fn($h) => [
-                'hall_id' => $h->hall->id,
-                'hall_name' => $h->hall->name,
-                'capacity' => $h->hall->capacity,
-                'type' => $h->hall->types->pluck('name')->toArray(),
-            ]),
-        ];
+        return array_filter([
+            'course_daily_frequency'      => $requestPayload['course_daily_frequency'] ?? null,
+            'course_requested_time_slots' => $requestPayload['course_requested_time_slots'] ?? null,
+            'hall_requested_time_windows' => $requestPayload['hall_requested_time_windows'] ?? null,
+            'requested_assignments'            => $requestPayload['requested_assignments'] ?? null,
+            'teacher_daily_hours'              => $requestPayload['teacher_daily_hours'] ?? null,
+            'teacher_requested_time_windows'   => $requestPayload['teacher_requested_time_windows'] ?? null,
+            'teacher_weekly_hours'             => $requestPayload['teacher_weekly_hours'] ?? null,
+            'schedule_periods_per_day'         => $requestPayload['schedule_periods_per_day'] ?? null,
+            'schedule_free_periods_per_day'    => $requestPayload['schedule_free_periods_per_day'] ?? null,
+            'requested_free_periods'           => $requestPayload['requested_free_periods'] ?? null,
+        ], fn($value) => !is_null($value));
     }
-    private function buildBody($preferred, $teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, $promptResponse): array
+    private function buildHardConstraints(array $requestPayload, ?array $jointCourses): array
+    {
+        return array_filter([
+            'required_joint_course_periods'    => Courses::take(3)->get()->map(fn($c) => [
+                'course_id' => $c->id,
+                'teacher_id' => Teacher::all()->random()->id,
+                'hall_id' => SpecialtyHall::all()->random()->hall_id,
+                'start_time' => '08:00',
+                'end_time' => '09:00',
+                "day" => Arr::random(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+                ])->toArray(),
+            'break_period'                     => $requestPayload['break_period'] ?? null,
+            'operational_period'               => $requestPayload['operational_period'] ?? null,
+            'schedule_period_duration_minutes' => $requestPayload['schedule_period_duration_minutes'] ?? null,
+        ], fn($value) => !is_null($value));
+    }
+    private function getJointCourses(SchoolSemester $schoolSemester): ?array
+    {
+        $branchId   = $schoolSemester->school_branch_id;
+        $semesterId = $schoolSemester->id;
+
+        $existingJointCourses = SemesterJointCourse::where('school_branch_id', $branchId)
+            ->where('semester_id', $semesterId)
+            ->exists();
+
+        if (!$existingJointCourses) {
+            return null;
+        }
+
+        $reference = SemesterJoinCourseReference::where('school_branch_id', $branchId)
+            ->where('school_semester_id', $semesterId)
+            ->first();
+
+        if (!$reference) {
+            return null;
+        }
+
+        $jointCourseSlots = JointCourseSlot::where('school_branch_id', $branchId)
+            ->where('semester_joint_course_id', $reference->semester_joint_course_id)
+            ->with(['course', 'teacher', 'hall'])
+            ->get();
+
+        if ($jointCourseSlots->isEmpty()) {
+            throw new AppException(
+                "No Joint Course Slots Found",
+                404,
+                "No Joint Course Slots Found",
+                "Joint courses exist for this semester but no slots have been created. Please create slots for all joint courses before generating the timetable.",
+            );
+        }
+
+        return $jointCourseSlots->toArray();
+    }
+    private function buildBody($preferred, $teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, array $requestPayload, ?array $jointCourses): array
     {
         return [
-            'teacher_preferred_period' => $preferred->map(fn($s) => [
+            'teacher_preferred_periods' => $preferred->map(fn($s) => [
                 'start_time' => Carbon::createFromFormat('H:i:s', $s->start_time)->format('H:i'),
                 'end_time' => Carbon::createFromFormat('H:i:s', $s->end_time)->format('H:i'),
                 'day' => $s->day_of_week,
@@ -263,7 +268,7 @@ class GeneratePreferenceSemesterTimetableService
                 'teacher_id' => $t->teacher->id,
                 'name' => $t->teacher->name,
             ]),
-            'teacher_busy_period' => $teacherBusy->map(fn($s) => [
+            'teacher_busy_periods' => $teacherBusy->map(fn($s) => [
                 'start_time' => $s->start_time,
                 'end_time' => $s->end_time,
                 'day' => $s->day_of_week,
@@ -292,93 +297,8 @@ class GeneratePreferenceSemesterTimetableService
                 'end_time' => $s->end_time,
                 'day' => $s->day_of_week,
             ]),
-            'break_period' => collect($promptResponse['hard_constraints'])->get('break_period'),
-            'operational_period' => collect($promptResponse['hard_constraints'])->get('operational_period'),
-            'periods' => collect($promptResponse['hard_constraints'])->get('periods'),
-            'soft_constrains' => collect($promptResponse['soft_constraints']),
+            'soft_constraints'     => $this->buildSoftConstraints($requestPayload),
+            'hard_constraints'     => $this->buildHardConstraints($requestPayload, $jointCourses),
         ];
-    }
-    private function createTimetableDraft(array $data, object $currentSchool)
-    {
-        $semesterId = (string) $data['school_semester_id'];
-
-        $existingCount = SemesterTimetableDraft::where('school_branch_id', $currentSchool->id)
-            ->where('school_semester_id', $semesterId)
-            ->count();
-
-        if ($existingCount > 0) {
-            throw new AppException(
-                "You already have existing timetable draft(s) for this semester. Please select an existing draft to continue editing.",
-                409,
-                "Existing Drafts Found",
-                "Please select an existing draft to continue."
-            );
-        }
-
-        $timetableDraft = SemesterTimetableDraft::create([
-            'name'               => 'Draft 1',
-            'school_semester_id' => $semesterId,
-            'school_branch_id'   => $currentSchool->id,
-            'draft_count'        => 1,
-        ]);
-
-        return $timetableDraft;
-    }
-    private function createTimetableVersion(array $data, object $currentSchool, string $draftId, $schedulerStatus)
-    {
-        $timetableVersions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
-            ->where("draft_id", $draftId)
-            ->count();
-        $versionNumber = $timetableVersions + 1;
-        $timetableVersion = SemesterTimetableVersion::create([
-            'name'               => "version {$versionNumber}",
-            'parent_version_id' => $data['parent_version_id'] ?? null,
-            'version_number'      => $versionNumber,
-            'draft_id'           => $draftId,
-            'school_branch_id'   => $currentSchool->id,
-            'version_count'      => $versionNumber,
-            'scheduler_status' => $schedulerStatus ?? 'partial'
-        ]);
-
-        return $timetableVersion;
-    }
-    private function createTimetableVersionSlots(string $timetableVersionId, object $currentSchool, $schedulerResponse)
-    {
-        $generatedSlots = $schedulerResponse->timetable;
-        foreach ($generatedSlots as $slot) {
-            SemesterTimetableSlot::create([
-                'school_branch_id' => $currentSchool->id,
-                'teacher_id' => $slot->teacher_id ?? null,
-                'course_id' => $slot->course_id ?? null,
-                'hall_id' => $slot->hall_id ?? null,
-                'day_of_week' => $slot->day,
-                'break' => $slot->break,
-                'duration' => $slot->duration,
-                'start_time' => Carbon::createFromFormat('H:i', $slot->start_time)->format('H:i:s'),
-                'end_time' => Carbon::createFromFormat('H:i', $slot->end_time)->format('H:i:s'),
-                'timetable_version_id' => $timetableVersionId,
-            ]);
-        }
-    }
-    private static function partialSchedulerResponseMock()
-    {
-        $filePath = public_path("schedulerResponse/partial.response.example.json");
-        $content = file_get_contents($filePath);
-        $data = json_decode($content, true);
-        return $data;
-    }
-    private static function optimalSchedulerResponseMock()
-    {
-        $filePath = public_path("schedulerResponse/optimal.response.example.json");
-        $content = file_get_contents($filePath);
-        $data = json_decode($content, true);
-        return $data;
-    }
-    private static function failedSchedulerResponseMock()
-    {
-        $filePath = public_path("schedulerResponse/failed.response.example.json");
-        $content = file_get_contents($filePath);
-        $data = json_decode($content, true);
-        return $data;
     }
 }

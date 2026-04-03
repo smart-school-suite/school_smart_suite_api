@@ -15,63 +15,34 @@ class SemesterTimetableVersionController extends Controller
         $this->semesterTimetableVersionService = $semesterTimetableVersionService;
     }
 
-    public function getTimetableVersions(Request $request, string $schoolSemesterId, string $versionId)
+    public function getTimetableVersions(Request $request, string $schoolSemesterId)
     {
-        $currentSchool = $request->get("currentSchool");
-        $timetableVersions = $this->semesterTimetableVersionService->getTimetableSlotsVersionId($schoolSemesterId, $versionId, $currentSchool);
-        return ApiResponseService::success(
-            "Timetable version retrieved successfully.",
-            $timetableVersions,
-            null,
-            200
-        );
+        $currentSchool = $request->attributes->get('currentSchool');
+        $timetableVersions = $this->semesterTimetableVersionService->getVersionSchoolSemesterId($currentSchool, $schoolSemesterId);
+        return ApiResponseService::success("Timetable Versions Fetched Successfully", $timetableVersions, null, 200);
     }
 
-    public function deleteTimetableVersion(Request $request, string $schoolSemesterId, string $versionId)
+    public function deleteTimetableVersion(Request $request, string $versionId)
     {
-        $currentSchool = $request->get("currentSchool");
-        $timetableVersions = $this->semesterTimetableVersionService->deleteTimetableVersion($versionId, $schoolSemesterId, $currentSchool);
-        return ApiResponseService::success(
-            "Timetable Version Deleted Successfully.",
-            $timetableVersions,
-            null,
-            200
-        );
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteVersion = $this->semesterTimetableVersionService->deleteVersion($currentSchool, $versionId);
+        return ApiResponseService::success("Timetable Version Deleted Successfully", $deleteVersion, null, 200);
     }
 
-    public function deleteTimetableVersionSlot(Request $request, string $slotId)
+    public function createTimetableVersion(Request $request)
     {
-        $currentSchool = $request->get("currentSchool");
-        $timetableSlot = $this->semesterTimetableVersionService->deleteTimetableVersionSlot($slotId, $currentSchool);
-        return ApiResponseService::success(
-            "Timetable Slot Deleted Successfully.",
-            $timetableSlot,
-            null,
-            200
-        );
+        $currentSchool = $request->attributes->get('currentSchool');
+        $data = $request->validate([
+            'school_semester_id' => 'required|string',
+        ]);
+        $createVersion = $this->semesterTimetableVersionService->createVersion($currentSchool, $data);
+        return ApiResponseService::success("Timetable Version Created Successfully", $createVersion, null, 201);
     }
 
-    public function getTimetableVersionSlotDetail(Request $request, string $slotId)
+    public function getSemesterTimetableSlotsVersionId(Request $request, string $versionId)
     {
-        $currentSchool = $request->get("currentSchool");
-        $timetableSlot = $this->semesterTimetableVersionService->getTimetableVersionSlotDetail($slotId, $currentSchool);
-        return ApiResponseService::success(
-            "Timetable Slot Retrieved Successfully.",
-            $timetableSlot,
-            null,
-            200
-        );
-    }
-
-    public function getTimetableSlotsVersionId(Request $request, string $schoolSemesterId, string $versionId)
-    {
-        $currentSchool = $request->get("currentSchool");
-        $timetableVersions = $this->semesterTimetableVersionService->getTimetableSlotsVersionId($schoolSemesterId, $versionId, $currentSchool);
-        return ApiResponseService::success(
-            "Timetable version retrieved successfully.",
-            $timetableVersions,
-            null,
-            200
-        );
+        $currentSchool = $request->attributes->get('currentSchool');
+        $timetableSlots = $this->semesterTimetableVersionService->getTimetableSlotsVersionId($versionId, $currentSchool);
+        return ApiResponseService::success("Timetable Slots Fetched Successfully", $timetableSlots, null, 200);
     }
 }

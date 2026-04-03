@@ -9,12 +9,12 @@ use App\Models\SemesterTimetable\SemesterTimetableVersion;
 
 class CreateActiveSemesterTimetableService
 {
-    public function createActiveSemesterTimetable(string $timetableVersionId, object $currentSchool)
+    public function createActiveSemesterTimetable(object $currentSchool, array $data)
     {
         $timetableVersions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
             ->get();
 
-        $timetableVersion = $timetableVersions->where("id", $timetableVersionId)->first();
+        $timetableVersion = $timetableVersions->where("id", $data['timetable_version_id'])->first();
         if (!$timetableVersion) {
             throw new AppException(
                 "Semester Timetable Version not found",
@@ -24,7 +24,7 @@ class CreateActiveSemesterTimetableService
             );
         }
 
-        $slots = SemesterTimetableSlot::where("timetable_version_id", $timetableVersionId)
+        $slots = SemesterTimetableSlot::where("timetable_version_id", $data['timetable_version_id'])
             ->where("school_branch_id", $currentSchool->id)
             ->get();
 

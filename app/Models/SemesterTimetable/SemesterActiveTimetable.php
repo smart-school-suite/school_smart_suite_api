@@ -5,6 +5,7 @@ namespace App\Models\SemesterTimetable;
 use App\Models\SchoolSemester;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Relations\BelongsTo;
 
 class SemesterActiveTimetable extends Model
 {
@@ -19,12 +20,12 @@ class SemesterActiveTimetable extends Model
     protected $table = 'active_timetables';
     protected $keyType = 'string';
 
-    public function timetableVersion()
+    public function timetableVersion(): BelongsTo
     {
         return $this->belongsTo(SemesterTimetableVersion::class, 'timetable_version_id');
     }
 
-    public function schoolSemester()
+    public function schoolSemester(): BelongsTo
     {
         return $this->belongsTo(SchoolSemester::class, 'school_semester_id');
     }

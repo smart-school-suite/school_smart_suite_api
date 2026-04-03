@@ -15,6 +15,8 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Exams;
 use App\Models\ExamType;
 use App\Models\AccessedStudent;
+use App\Models\Constraint\SemTimetableConstraint;
+use App\Models\Constraint\SemTimetableConstraintType;
 use App\Models\Course\CourseSpecialty;
 use App\Models\Course\CourseType;
 use App\Models\Courses;
@@ -35,7 +37,12 @@ class test extends Seeder
 {
     public function run(): void
     {
-
+        $type = SemTimetableConstraintType::where("key", "soft")->first();
+        $constraints = SemTimetableConstraint::all();
+        foreach($constraints as $constraint) {
+            $constraint->where("constraint_type_id", $type->id)->update(["status" => "inactive"]);
+            $constraint->where("constraint_type_id", "!=", $type->id)->update(["status" => "active"]);
+        }
     }
 
 

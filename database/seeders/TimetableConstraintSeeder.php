@@ -118,9 +118,8 @@ class TimetableConstraintSeeder extends Seeder
         foreach ($constraints as $constraint) {
             $category = SemTimetableConstraintCategory::where("key", $constraint["category"])->first();
             $type = SemTimetableConstraintType::where("key", $constraint["type"])->first();
-
             SemTimetableConstraint::updateOrCreate(
-                ['key' => $constraint['key']],
+                ['key' => $constraint['key']], // Unique identifier
                 [
                     "name" => $constraint["title"],
                     "description" => $constraint["description"],

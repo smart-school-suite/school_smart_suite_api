@@ -4,15 +4,76 @@ namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
+use Carbon\Carbon;
 
 class SemesterTimetableVersionService
 {
-    public function getTimetableSlotsVersionId(string $semesterId, string $versionId, object $currentSchool)
+    public function getVersionSchoolSemesterId(object $currentSchool, string $schoolSemesterId)
+    {
+        $versions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
+            ->where("school_semester_id", $schoolSemesterId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $latestId = $versions->first()?->id;
+
+        return $versions->map(function ($version) use ($latestId) {
+            return [
+                'id' => $version->id,
+                'version_number' => $version->version_number,
+                'label' => $version->label,
+                'scheduler_status' => $version->scheduler_status,
+                'is_latest' => $version->id === $latestId,
+                'created_at' => $version->created_at,
+                'updated_at' => $version->updated_at,
+            ];
+        });
+    }
+    public function createVersion(object $currentSchool, array $data)
+    {
+        $latest = SemesterTimetableVersion::where([
+            'school_branch_id'   => $currentSchool->id,
+            'school_semester_id' => $data['school_semester_id'],
+        ])
+            ->max('version_number');
+
+        $nextNumber = ($latest ?? 0) + 1;
+
+        return SemesterTimetableVersion::create([
+            'version_number'     => $nextNumber,
+            'label'              => "Version $nextNumber",
+            'school_branch_id'   => $currentSchool->id,
+            'school_semester_id' => $data['school_semester_id'],
+        ]);
+    }
+
+    public function deleteVersion(object $currentSchool, string $versionId)
+    {
+        $version = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
+            ->where("id", $versionId)
+            ->first();
+        if (!$version) {
+            throw new AppException(
+                "Timetable Version Not Found",
+                404,
+                "Not Found",
+                "The Timetable Version Your Trying to delete was not found please ensure that it has not been deleted and try again"
+            );
+        }
+
+        $version->delete();
+        return $version;
+    }
+
+    public function getTimetableSlotsVersionId(string $versionId, object $currentSchool)
     {
         $timetableVersion = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
-            ->where("school_semester_id", $semesterId)
-            ->with(['semesterActiveTimetable', 'timeTableSlot.course.types', 'timeTableSlot.teacher', 'timeTableSlot.hall.types'])
+            ->with([
+                'semesterActiveTimetable',
+                'timeTableSlot.course.types',
+                'timeTableSlot.teacher',
+                'timeTableSlot.hall.types'
+            ])
             ->find($versionId);
 
         if (!$timetableVersion) {
@@ -26,110 +87,45 @@ class SemesterTimetableVersionService
 
         $slots = $timetableVersion->timeTableSlot;
 
-        $daysMap = [
-            1 => 'monday',
-            2 => 'tuesday',
-            3 => 'wednesday',
-            4 => 'thursday',
-            5 => 'friday',
-            6 => 'saturday',
-            0 => 'sunday',
-        ];
-
-        $grouped = $slots->groupBy('day_of_week');
-
-        $timetable = [];
-
-        foreach ($grouped as $dayNumber => $daySlots) {
-            if ($daySlots->isEmpty()) {
-                continue;
-            }
-
-            $dayName = $daysMap[$dayNumber] ?? null;
-
-            if (!$dayName) {
-                continue;
-            }
-
-            $sortedSlots = $daySlots->sortBy('start_time')->values();
-
-            $formatted = $sortedSlots->map(function ($slot) {
+        $formattedSlots = $slots
+            ->groupBy('day')
+            ->map(function ($daySlots, $day) {
                 return [
-                    'id'              => $slot->id,
-                    'course_id'       => $slot->course_id,
-                    'course_name'     => $slot->course?->name ?? null,
-                    'course_code'     => $slot->course?->code ?? null,
-                    'course_credit'   => $slot->course?->credit ?? null,
-                    'course_types'    => $slot->course?->types->pluck('name')->toArray() ?? null,
-                    'teacher_id'      => $slot->teacher_id,
-                    'teacher_name'    => $slot->teacher?->name ?? null,
-                    'hall_id'         => $slot->hall_id,
-                    'hall_name'       => $slot->hall?->name ?? null,
-                    'hall_types'      => $slot->hall?->types->pluck('name')->toArray() ?? null,
-                    'start_time'      => $slot->start_time,
-                    'end_time'        => $slot->end_time,
-                    'break'           => $slot->break,
-                    'student_batch_id' => $slot->student_batch_id,
-                ];
-            })->all();
+                    'day' => $day,
+                    'slots' => $daySlots
+                        ->sortBy(fn($slot) => $slot->start_time ? Carbon::parse($slot->start_time)->timestamp : PHP_INT_MAX)
+                        ->values()
+                        ->map(function ($slot) {
+                            return [
+                                'id' => $slot->id ?? null,
+                                'day' => $slot->day ?? null,
 
-            $timetable[$dayName] = $formatted;
-        }
+                                'start_time' => $slot->start_time ? Carbon::parse($slot->start_time)->format('H:i') : null,
+                                'end_time' => $slot->end_time ? Carbon::parse($slot->end_time)->format('H:i') : null,
+                                'break' => (bool) ($slot->break ?? false),
+
+                                'teacher_id' => $slot->teacher_id ?? null,
+                                'teacher_name' => $slot->teacher?->name ?? null,
+                                'teacher_avatar' => $slot->teacher?->profile_picture ?? null,
+
+                                'course_id' => $slot->course_id ?? null,
+                                'course_title' => $slot->course?->course_title ?? null,
+                                'course_code' => $slot->course?->course_code ?? null,
+                                'course_types' => $slot->course?->types->pluck('name')->toArray() ?? [],
+
+                                'hall_id' => $slot->hall_id ?? null,
+                                'hall_name' => $slot->hall?->name ?? null,
+                                'hall_types' => $slot->hall?->types->pluck('name')->toArray() ?? [],
+                                'hall_location' => $slot->hall?->location ?? null,
+                            ];
+                        }),
+                ];
+            })
+            ->values();
 
         return [
-            'version_id'     => $timetableVersion->id,
-            'version_name'   => $timetableVersion->name ?? null,
-            'is_active'      => $timetableVersion->semesterActiveTimetable !== null,
-            'timetable'      => $timetable,
-            'days_with_slots' => array_keys($timetable),
+            'version' => $timetableVersion->only(['id', 'version_number', 'label', 'scheduler_status']),
+            'timetable' => $formattedSlots,
         ];
-    }
-    public function deleteTimetableVersion(string $versionId, string $semesterId, object $currentSchool)
-    {
-        $version = SemesterTimetableVersion::where('id', $versionId)
-            ->where('school_branch_id', $currentSchool->id)
-            ->where('school_semester_id', $semesterId)
-            ->firstOrFail();
-
-        $version->delete();
-        return $version;
-    }
-    public function deleteTimetableVersionSlot(string $slotId, object $currentSchool)
-    {
-        $slot = SemesterTimetableSlot::where('id', $slotId)
-            ->where('school_branch_id', $currentSchool->id)
-            ->first();
-        if (!$slot) {
-            throw new AppException(
-                "Timetable slot not found.",
-                404,
-                "Timetable Slot Not Found",
-                "The timetable slot you are trying to delete does not exist or has been deleted."
-            );
-        }
-        $slot->delete();
-        return $slot;
-    }
-    public function getTimetableVersionSlotDetail(string $slotId, object $currentSchool)
-    {
-        $slot = SemesterTimetableSlot::where('id', $slotId)
-            ->where('school_branch_id', $currentSchool->id)
-            ->with(['course.types', 'teacher', 'hall.types'])
-            ->first();
-        if (!$slot) {
-            throw new AppException(
-                "Timetable slot not found.",
-                404,
-                "Timetable Slot Not Found",
-                "The timetable slot you are trying to access does not exist or has been deleted."
-            );
-        }
-        return $slot;
-    }
-    public function getTimetableVersions(string $semesterId, object $currentSchool){
-        $timetableVersions = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
-                          ->where("school_semester_id", $semesterId)
-                          ->get();
-        return $timetableVersions;
     }
 }

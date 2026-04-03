@@ -7,6 +7,7 @@ use App\Models\SchoolBranchSetting;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Events\Actions\AdminActionEvent;
+
 class TimetableSettingService
 {
     public function updateTimetableSetting($currentSchool, $updateData, $authAdmin)
@@ -47,17 +48,17 @@ class TimetableSettingService
             }
 
             DB::commit();
-                                                                    AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.promotionSetting.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolSettingManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $setting,
-                "message" => "Timetable  Setting Updated",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.promotionSetting.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "schoolSettingManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $setting,
+                    "message" => "Timetable  Setting Updated",
+                ]
+            );
             return $setting;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

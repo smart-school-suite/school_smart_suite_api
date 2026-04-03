@@ -364,7 +364,7 @@ class SchoolSemesterService
                 'studentBatch:id,name',
                 'specialty:id,specialty_name,level_id',
                 'specialty.level:id,level,name',
-                'semester:id,name,semester_name',
+                'semester:id,name,count',
                 'schoolYear.systemAcademicYear:id,name,year_start,year_end',
             ])
             ->get();
