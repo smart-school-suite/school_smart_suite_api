@@ -54,6 +54,15 @@ class RequestedAssignmentValidator implements ValidatorInterface
                     'end_time'   => $aEnd->format('H:i'),
                     'teacher_id' => $assignment['teacher_id'] ?? null,
                     'hall_id'    => $assignment['hall_id'] ?? null,
+                    "conflict" => array_filter([
+                        "course_id" => $params["course_id"] ?? null,
+                        "hall_id" => $params["hall_id"] ?? null,
+                        "slot_type" => $params["slot_type"] ?? null,
+                        "teacher_id" => $params["teacher_id"] ?? null,
+                        "day" => $params["day"] ?? null,
+                        "start_time" => $params["start_time"] ?? null,
+                        "end_time" => $params["end_time"] ?? null,
+                    ])
                 ];
             }
         }

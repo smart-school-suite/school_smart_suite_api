@@ -11,13 +11,14 @@ class OperationalPeriodValidator implements ValidatorInterface
 {
     public function check(ConstraintContext $context, array $params): ?array
     {
-        $day   = strtolower($params['day']);
-        $start = Carbon::createFromFormat('H:i', $params['start_time']);
-        $end   = Carbon::createFromFormat('H:i', $params['end_time']);
+        $day = strtolower($params['day']);
 
-        $opWin      = $context->operationalWindow($day);
-        $opStart    = Carbon::createFromFormat('H:i', $opWin['start']);
-        $opEnd      = Carbon::createFromFormat('H:i', $opWin['end']);
+        $start = Carbon::parse($params['start_time']);
+        $end   = Carbon::parse($params['end_time']);
+
+        $opWin   = $context->operationalWindow($day);
+        $opStart = Carbon::parse($opWin['start']);
+        $opEnd   = Carbon::parse($opWin['end']);
 
         if ($start->lessThan($opStart) || $end->greaterThan($opEnd)) {
             return [
@@ -25,9 +26,18 @@ class OperationalPeriodValidator implements ValidatorInterface
                 'day'        => $day,
                 'start_time' => $opWin['start'],
                 'end_time'   => $opWin['end'],
+                "conflict"   => array_filter([
+                    "course_id"  => $params["course_id"] ?? null,
+                    "start_time" => $params["start_time"] ?? null,
+                    "end_time"   => $params["end_time"] ?? null,
+                    "day"        => $params["day"] ?? null,
+                    "slot_type"  => $params["slot_type"] ?? null,
+                    "teacher_id" => $params["teacher_id"] ?? null,
+                    "hall_id"    => $params["hall_id"] ?? null,
+                ])
             ];
         }
 
-        return null;
+        return [];
     }
 }

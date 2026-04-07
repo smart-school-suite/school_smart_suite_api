@@ -2,34 +2,34 @@
 
 namespace App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Diagnostics\Course;
 
+use App\Constant\Constraint\SemesterTimetable\Course\CourseDailyFrequency;
 use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Contracts\DiagnosticBuilder;
 use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
-
+use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Core\BlockerRegistry;
 class CourseDailyFrequencyDiagnostic implements DiagnosticBuilder
 {
     public static function type(): string
     {
-        return "course_daily_frequency";
+        return CourseDailyFrequency::KEY;
     }
 
-    public function build($blocker): DiagnosticDTO {
-        $diagnostic = new DiagnosticDTO();
-        $diagnostic->constraint_failed = [
-            "type" => "course_daily_frequency",
+    public function build($diagnostic): DiagnosticDTO
+    {
+        $diagnosticDTO = new DiagnosticDTO();
+        $constraintFailed = $diagnostic["constraint_failed"];
+        $blockerEngine = app(BlockerRegistry::class);
+        $diagnosticDTO->constraint_failed = [
+            "type" => CourseDailyFrequency::KEY,
             "details" => [
-                "course_id" => $blocker["course_id"],
-                "frequency" => $blocker["frequency"],
-                "day" => $blocker["day"],
+                "day" => $constraintFailed["day"] ?? null,
+                "breach" => $constraintFailed["breach"] ?? null,
+                "min" => $constraintFailed["min"] ?? null,
+                "max" => $constraintFailed["max"] ?? null,
+                "course_id" => $constraintFailed["course_id"] ?? null
             ]
         ];
-        $diagnostic->blockers = [
-            [
-                "course_id" => $blocker["course_id"],
-                "period_id" => $blocker["period_id"],
-                "day" => $blocker["day"],
-            ],
-        ];
-        $diagnostic->suggestions = [];
-        return $diagnostic;
+        $diagnosticDTO->blockers = [];
+        $diagnosticDTO->suggestions = [];
+        return $diagnosticDTO;
     }
 }

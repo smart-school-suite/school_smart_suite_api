@@ -6,6 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Course\CourseRequestedSlot;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Contracts\ValidatorInterface;
 use Carbon\Carbon;
+
 class CourseRequestedTimeSlotValidator implements ValidatorInterface
 {
     public function check(ConstraintContext $context, array $params): array
@@ -56,6 +57,15 @@ class CourseRequestedTimeSlotValidator implements ValidatorInterface
                     'course_id'  => $rts['course_id'] ?? null,
                     'start_time' => $rtsStart->format('H:i'),
                     'end_time'   => $rtsEnd->format('H:i'),
+                    "conflict" => array_filter([
+                        "course_id" => $params["course_id"] ?? null,
+                        "hall_id" => $params["hall_id"] ?? null,
+                        "slot_type" => $params["slot_type"] ?? null,
+                        "teacher_id" => $params["teacher_id"] ?? null,
+                        "day" => $params["day"] ?? null,
+                        "start_time" => $params["start_time"] ?? null,
+                        "end_time" => $params["end_time"] ?? null,
+                    ])
                 ];
             }
         }

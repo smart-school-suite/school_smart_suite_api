@@ -1,33 +1,34 @@
 <?php
 
-namespace App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Schedule;
+namespace App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Hall;
 
-use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodBlockerConstant;
-use App\Constant\Constraint\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodConstraintConstant;
+use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot as HallRequestedTimeSlotViolationConstant;
+use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as HallRequestedTimeSlotConstraintConstant;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
-class RequestedFreePeriodBlocker implements BlockerBuilder
+class HallRequestedTimeSlotBlocker implements BlockerBuilder
 {
     public static function type(): string
     {
-        return RequestedFreePeriodBlockerConstant::KEY;
+        return HallRequestedTimeSlotViolationConstant::KEY;
     }
 
     public function build($blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
-        $violation->type = RequestedFreePeriodBlockerConstant::KEY;
+        $violation->type = self::type();
         $violation->entity = [
-            "type" => RequestedFreePeriodConstraintConstant::KEY,
-            'day' => $blocker['day'],
-            'start_time' => $blocker['start_time'],
-            'end_time' => $blocker['end_time'],
+            "type" => HallRequestedTimeSlotConstraintConstant::KEY,
+            "hall_id" => $blocker['hall_id'],
+            "day" => $blocker['day'],
+            "start_time" => $blocker['start_time'],
+            "end_time" => $blocker['end_time'],
         ];
         $violation->evidence = [
-            'day' => $blocker['day'],
-            'start_time' => $blocker['start_time'],
-            'end_time' => $blocker['end_time'],
+            "day" => $blocker['day'],
+            "start_time" => $blocker['start_time'],
+            "end_time" => $blocker['end_time'],
         ];
         $violation->conflict = array_filter([
             "type" => $blocker["conflict"]["slot_type"] ?? null,

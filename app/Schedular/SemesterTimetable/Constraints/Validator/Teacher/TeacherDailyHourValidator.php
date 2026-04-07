@@ -108,7 +108,7 @@ class TeacherDailyHourValidator implements ValidatorInterface
         if ($maxHours !== null && $totalHours >= $maxHours) {
             return [
                 'key'             => Violation::KEY,
-                'breach'          => 'over',
+                'breach'          => 'max',
                 'teacher_id'      => $teacherId,
                 'day'             => $day,
                 'slot_type'       => $slotType,
@@ -123,7 +123,7 @@ class TeacherDailyHourValidator implements ValidatorInterface
         if ($minHours !== null && $totalHours < $minHours) {
             return [
                 'key'             => Violation::KEY,
-                'breach'          => 'under',
+                'breach'          => 'min',
                 'teacher_id'      => $teacherId,
                 'day'             => $day,
                 'slot_type'       => $slotType,

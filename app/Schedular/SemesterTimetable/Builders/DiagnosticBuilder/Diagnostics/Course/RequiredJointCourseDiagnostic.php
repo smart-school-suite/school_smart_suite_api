@@ -6,7 +6,6 @@ use App\Constant\Constraint\SemesterTimetable\Course\RequiredJointCourse;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Core\BlockerRegistry;
 use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Contracts\DiagnosticBuilder;
 use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
-use Illuminate\Support\Facades\Log;
 
 class RequiredJointCourseDiagnostic implements DiagnosticBuilder
 {
@@ -21,7 +20,6 @@ class RequiredJointCourseDiagnostic implements DiagnosticBuilder
         $blockerEngine = app(BlockerRegistry::class);
         $constraintFailed = $diagnostic["constraint_failed"];
         $blockers = $diagnostic["blockers"];
-        Log::info('Building RequiredJointCourseDiagnostic', ['constraintFailed' => $constraintFailed, 'blockers' => $blockers]); // Debug log
         $diagnosticDTO->constraint_failed = [
             "constraint" => RequiredJointCourse::KEY,
             "details" => [

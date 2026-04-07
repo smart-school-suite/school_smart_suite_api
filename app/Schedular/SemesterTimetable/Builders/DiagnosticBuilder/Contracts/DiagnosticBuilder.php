@@ -7,5 +7,5 @@ use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
 interface DiagnosticBuilder
 {
     public static function type(): string;
-    public function build($blocker): DiagnosticDTO;
+    public function build($diagnostic): DiagnosticDTO;
 }

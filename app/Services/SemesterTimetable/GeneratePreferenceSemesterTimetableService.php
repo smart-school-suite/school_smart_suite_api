@@ -26,10 +26,10 @@ class GeneratePreferenceSemesterTimetableService
     {
 
         $semester = $this->getSchoolSemester($requestPayload['school_semester_id']);
-        $teachers = $this->getTeachers($currentSchool->id, $semester->specialty_id);
+        $teachers = $this->getTeachers($currentSchool->id, $semester->specialty);
         $teacherIds = $teachers->pluck('teacher_id')->toArray();
 
-        $preferred = $this->getTeacherPreferredSchedule($currentSchool->id, $semester->id, $semester->specialty_id, $teacherIds);
+        $preferred = $this->getTeacherPreferredSchedule($currentSchool->id, $semester, $teacherIds);
         if ($preferred->isEmpty()) {
             throw new AppException(
                 "Teacher Prefered Teaching Slot Not Added",
@@ -72,38 +72,27 @@ class GeneratePreferenceSemesterTimetableService
             "payload" => $payload
         ];
     }
-
-
     private function getSchoolSemester(string $id): SchoolSemester
     {
         return SchoolSemester::with(['specialty.level', 'semester'])->findOrFail($id);
     }
-    private function getTeachers(string $branchId, string $specialtyId)
+    private function getTeachers(string $branchId, $specialty)
     {
-        $q = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
-            ->where('specialty_id', $specialtyId)
-            ->with('teacher')
+        $teachers = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
+            ->where('specialty_id', $specialty->id)
+            ->with(['teacher' => fn($q) => $q->where('status', 'active')])
             ->get();
 
-        if ($q->isEmpty()) {
+        if ($teachers->isEmpty()) {
             throw new AppException(
                 "No Teachers Found",
                 404,
                 "No Teachers Found",
-                "No Teachers Found for specialty {$specialtyId} — please make sure teachers have been assigned to this specialty before creating the timetable"
+                "No teachers are assigned to {$specialty->specialty_name} {$specialty->level->name}. Please assign teachers before generating a timetable.",
             );
         }
 
-        return $q;
-    }
-    private function getTeacherPreferredSchedule(string $branchId, string $semesterId, string $specialtyId, array $teacherIds)
-    {
-        return InstructorAvailabilitySlot::where('school_branch_id', $branchId)
-            ->where('specialty_id', $specialtyId)
-            ->where('school_semester_id', $semesterId)
-            ->whereIn('teacher_id', $teacherIds)
-            ->with('teacher')
-            ->get();
+        return $teachers;
     }
     private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $schoolSemester): Collection
     {
@@ -151,6 +140,16 @@ class GeneratePreferenceSemesterTimetableService
         }
 
         return $teacherCourses;
+    }
+    private function getTeacherPreferredSchedule(string $branchId, $schoolSemester, array $teacherIds)
+    {
+        $preferred = InstructorAvailabilitySlot::where('school_branch_id', $branchId)
+            ->where('specialty_id', $schoolSemester->specialty_id)
+            ->where('school_semester_id', $schoolSemester->id)
+            ->whereIn('teacher_id', $teacherIds)
+            ->with('teacher')
+            ->get();
+            return $preferred;
     }
     private function getHalls(string $branchId, string $specialtyId)
     {
@@ -211,7 +210,7 @@ class GeneratePreferenceSemesterTimetableService
                 'start_time' => '08:00',
                 'end_time' => '09:00',
                 "day" => Arr::random(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
-                ])->toArray(),
+            ])->toArray(),
             'break_period'                     => $requestPayload['break_period'] ?? null,
             'operational_period'               => $requestPayload['operational_period'] ?? null,
             'schedule_period_duration_minutes' => $requestPayload['schedule_period_duration_minutes'] ?? null,

@@ -6,6 +6,7 @@ use App\Schedular\SemesterTimetable\Constraints\Validator\Contracts\ValidatorInt
 use App\Constant\Violation\SemesterTimetable\Course\RequiredJointCourse;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use Carbon\Carbon;
+
 class JointCoursePeriodValidator implements ValidatorInterface
 {
     public function check(ConstraintContext $context, array $params): array
@@ -53,6 +54,15 @@ class JointCoursePeriodValidator implements ValidatorInterface
                     'hall_id'    => $jc['hall_id']    ?? null,
                     'start_time' => $jcStart->format('H:i'),
                     'end_time'   => $jcEnd->format('H:i'),
+                    "conflict" => array_filter([
+                        "course_id" => $params["course_id"] ?? null,
+                        "hall_id" => $params["hall_id"] ?? null,
+                        "slot_type" => $params["slot_type"] ?? null,
+                        "teacher_id" => $params["teacher_id"] ?? null,
+                        "day" => $params["day"] ?? null,
+                        "start_time" => $params["start_time"] ?? null,
+                        "end_time" => $params["end_time"] ?? null,
+                    ])
                 ];
             }
         }

@@ -22,11 +22,13 @@ class DailyPeriodDiagnostic implements DiagnosticBuilder
         $diagnosticDTO->constraint_failed = [
             "type" => ScheduleDailyPeriod::KEY,
             "details" => [
-                "day" => $constraintFailed["day"],
-                ""
+                "day" => $constraintFailed["day"] ?? null,
+                "breach" => $constraintFailed["breach"] ?? null,
+                "min" => $constraintFailed["min"] ?? null,
+                "max" => $constraintFailed["max"] ?? null,
             ]
         ];
-        $diagnosticDTO->blockers = $blockerEngine->build($constraintFailed["blockers"])->toArray();
+        $diagnosticDTO->blockers = [];
         $diagnosticDTO->suggestions = [];
         return $diagnosticDTO;
     }
