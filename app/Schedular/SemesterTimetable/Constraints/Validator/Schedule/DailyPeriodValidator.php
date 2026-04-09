@@ -5,7 +5,6 @@ namespace App\Schedular\SemesterTimetable\Constraints\Validator\Schedule;
 use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment;
 use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot;
 use App\Constant\Constraint\SemesterTimetable\Teacher\TeacherRequestedTimeSlot;
-use App\Constant\Violation\SemesterTimetable\Schedule\DailyPeriod as Violation;
 use App\Constant\Violation\SemesterTimetable\Schedule\ScheduleDailyPeriod;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Contracts\ValidatorInterface;

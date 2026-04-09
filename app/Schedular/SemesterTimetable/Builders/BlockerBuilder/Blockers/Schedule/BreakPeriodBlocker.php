@@ -25,9 +25,9 @@ class BreakPeriodBlocker implements BlockerBuilder
             "day" => $blocker["day"],
         ];
         $violation->evidence = [
-            "course" => $blocker["course"],
-            "period" => $blocker["period"],
-            "day" => $blocker["day"] ?? null,
+            "start_time" => $blocker["start_time"],
+            "end_time" => $blocker["end_time"],
+            "day" => $blocker["day"],
         ];
         $violation->conflict = array_filter([
             "type" => $blocker["conflict"]["slot_type"] ?? null,

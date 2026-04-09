@@ -64,7 +64,7 @@ class BlockerRegistry
     public function build($blockers): Collection {
         $violations = collect();
         foreach ($blockers as $blocker) {
-            $type = $blocker["key"];
+            $type = $blocker["key"] ?? null;
             if (isset($this->builderMap[$type])) {
                 $builderClass = $this->builderMap[$type];
                 $builder = new $builderClass();

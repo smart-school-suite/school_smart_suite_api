@@ -17,14 +17,14 @@ class HallRequestedTimeSlotValidator implements ValidatorInterface
         $endRaw   = $params['end_time'] ?? null;
 
         if ($day === '' || empty($startRaw) || empty($endRaw)) {
-            return null;
+            return [];
         }
 
         $reqStart = Carbon::parse($startRaw);
         $reqEnd   = Carbon::parse($endRaw);
 
         if ($reqEnd->lessThanOrEqualTo($reqStart)) {
-            return null;
+            return [];
         }
 
         foreach ($context->hRequestedWindowsFor($day) as $hrw) {
@@ -64,6 +64,6 @@ class HallRequestedTimeSlotValidator implements ValidatorInterface
             }
         }
 
-        return null;
+        return [];
     }
 }

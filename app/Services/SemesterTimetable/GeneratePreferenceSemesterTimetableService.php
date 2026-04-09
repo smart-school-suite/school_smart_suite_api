@@ -19,7 +19,6 @@ use Illuminate\Support\Collection;
 use App\Models\Course\CourseSpecialty;
 use App\Models\Teacher;
 use Illuminate\Support\Arr;
-
 class GeneratePreferenceSemesterTimetableService
 {
     public function generateTimetable(array $requestPayload, object $currentSchool): array
@@ -209,7 +208,7 @@ class GeneratePreferenceSemesterTimetableService
                 'hall_id' => SpecialtyHall::all()->random()->hall_id,
                 'start_time' => '08:00',
                 'end_time' => '09:00',
-                "day" => Arr::random(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+                "day" => strtolower(Arr::random(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']))
             ])->toArray(),
             'break_period'                     => $requestPayload['break_period'] ?? null,
             'operational_period'               => $requestPayload['operational_period'] ?? null,
@@ -298,6 +297,6 @@ class GeneratePreferenceSemesterTimetableService
             ]),
             'soft_constraints'     => $this->buildSoftConstraints($requestPayload),
             'hard_constraints'     => $this->buildHardConstraints($requestPayload, $jointCourses),
-        ];
+            ];
     }
 }

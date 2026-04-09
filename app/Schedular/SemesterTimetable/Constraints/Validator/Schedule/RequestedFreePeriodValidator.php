@@ -63,7 +63,6 @@ class RequestedFreePeriodValidator implements ValidatorInterface
                 ];
             }
         }
-
         return $blockers;
     }
 }

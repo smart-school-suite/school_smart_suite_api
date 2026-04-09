@@ -16,7 +16,6 @@ class BreakPeriodValidator implements ValidatorInterface
         $end   = Carbon::parse($params['end_time']);
 
         $breakWin = $context->breakWindow($day);
-
         if ($breakWin === null) {
             return [];
         }

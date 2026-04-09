@@ -18,14 +18,24 @@ class PeriodDurationBlocker implements BlockerBuilder
         $violation = new BlockerDTO();
         $violation->type = PeriodDuration::KEY;
         $violation->entity = [
-            "type" => PeriodDurationConstraint::KEY
+            "type" => PeriodDurationConstraint::KEY,
+            "day" => $blocker["day"] ?? null,
+            "period_duration" => $blocker["expected_duration"] ?? null,
         ];
-        $violation->evidence = [
+        $violation->conflict = [
             "expected_duration" => $blocker["expected_duration"] ?? null,
             "actual_duration" => $blocker["actual_duration"] ?? null,
             "day" => $blocker["day"] ?? null,
         ];
-        $violation->conflict = [];
+        $violation->evidence = array_filter([
+            "course_id"  => $blocker["conflict"]["course_id"] ?? null,
+            "start_time" => $blocker["conflict"]["start_time"] ?? null,
+            "end_time"   => $blocker["conflict"]["end_time"] ?? null,
+            "day"        => $blocker["conflict"]["day"] ?? null,
+            "slot_type"  => $blocker["conflict"]["slot_type"] ?? null,
+            "teacher_id" => $blocker["conflict"]["teacher_id"] ?? null,
+            "hall_id"    => $blocker["conflict"]["hall_id"] ?? null,
+        ]);
         return $violation;
     }
 }

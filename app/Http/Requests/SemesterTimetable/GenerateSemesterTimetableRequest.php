@@ -52,44 +52,42 @@ class GenerateSemesterTimetableRequest extends FormRequest
             //course requested time slots validation
             "course_requested_time_slots" => ["sometimes", "nullable", "array"],
             "course_requested_time_slots.*.course_id" => ["required", "string", "exists:courses,id"],
-            "course_requested_time_slots.*.slots" => ["required", "array"],
-            "course_requested_time_slots.*.slots.*.day" => [
+            "course_requested_time_slots.*.day" => [
                 "nullable",
                 "string",
                 "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"
             ],
-            "course_requested_time_slots.*.slots.*.start_time" => [
+            "course_requested_time_slots.*.start_time" => [
                 "nullable",
-                "required_with:course_requested_time_slots.*.slots.*.end_time",
+                "required_with:course_requested_time_slots.*.end_time",
                 "date_format:H:i"
             ],
-            "course_requested_time_slots.*.slots.*.end_time" => [
+            "course_requested_time_slots.*.end_time" => [
                 "nullable",
-                "required_with:course_requested_time_slots.*.slots.*.start_time",
+                "required_with:course_requested_time_slots.*.start_time",
                 "date_format:H:i",
-                "after:course_requested_time_slots.*.slots.*.start_time"
+                "after:course_requested_time_slots.*.start_time"
             ],
 
 
             //hall requested time windows validation
             "hall_requested_time_windows" => ["sometimes", "nullable", "array"],
             "hall_requested_time_windows.*.hall_id" => ["required", "string", "exists:halls,id"],
-            "hall_requested_time_windows.*.windows" => ["required", "array", "min:1"],
-            "hall_requested_time_windows.*.windows.*.day" => [
+            "hall_requested_time_windows.*.day" => [
                 "nullable",
                 "string",
                 "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"
             ],
-            "hall_requested_time_windows.*.windows.*.start_time" => [
+            "hall_requested_time_windows.*.start_time" => [
                 "nullable",
                 "date_format:H:i",
                 "required_with:hall_requested_time_windows.*.windows.*.end_time"
             ],
-            "hall_requested_time_windows.*.windows.*.end_time" => [
+            "hall_requested_time_windows.*.end_time" => [
                 "nullable",
                 "date_format:H:i",
-                'required_with:hall_requested_time_windows.*.windows.*.start_time',
-                "after:hall_requested_time_windows.*.windows.*.start_time"
+                'required_with:hall_requested_time_windows.*.start_time',
+                "after:hall_requested_time_windows.*.start_time"
             ],
 
             //schedule max free periods per day validation
@@ -206,22 +204,21 @@ class GenerateSemesterTimetableRequest extends FormRequest
             //teacher requested time windows validation
             "teacher_requested_time_windows" => ["sometimes", "nullable", "array"],
             "teacher_requested_time_windows.*.teacher_id" => ["required", "string", "exists:teachers,id"],
-            "teacher_requested_time_windows.*.time_windows" => ["required", "array", "min:1"],
-            "teacher_requested_time_windows.*.time_windows.*.day" => [
+            "teacher_requested_time_windows.*.day" => [
                 "nullable",
                 "string",
                 "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"
             ],
-            "teacher_requested_time_windows.*.time_windows.*.start_time" => [
+            "teacher_requested_time_windows.*.start_time" => [
                 "nullable",
                 "date_format:H:i",
-                "required_with:teacher_requested_time_windows.*.time_windows.*.end_time"
+                "required_with:teacher_requested_time_windows.*.end_time"
             ],
-            "teacher_requested_time_windows.*.time_windows.*.end_time" => [
+            "teacher_requested_time_windows.*.end_time" => [
                 "nullable",
                 "date_format:H:i",
-                "after:teacher_requested_time_windows.*.time_windows.*.start_time",
-                "required_with:teacher_requested_time_windows.*.time_windows.*.start_time"
+                "after:teacher_requested_time_windows.*.start_time",
+                "required_with:teacher_requested_time_windows.*.start_time"
             ]
         ];
     }

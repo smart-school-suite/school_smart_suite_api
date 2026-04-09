@@ -13,47 +13,45 @@ class ConstraintContext
     public static function fromPayload(array $requestPayload): self
     {
         return new self([
-            'hard' => self::parseHard($requestPayload['hard_constraint']  ?? []),
+            'hard' => self::parseHard($requestPayload['hard_constraints']  ?? [], $requestPayload),
             'soft' => self::parseSoft($requestPayload['soft_constraints'] ?? []),
         ]);
     }
 
-    // ─── Parsers ──────────────────────────────────────────────────────────
-
-    private static function parseHard(array $hc): array
+    private static function parseHard(array $hc, array $requestPayload): array
     {
         return [
-            'teachers'        => $hc['teachers']                  ?? [],
-            'halls'           => $hc['halls']                     ?? [],
-            'tBusySlots'      => $hc['teacher_busy_periods']      ?? [],
-            'hBusySlots'      => $hc['hall_busy_periods']         ?? [],
-            'tCourses'        => $hc['teacher_courses']           ?? [],
-            'tPreferredSlots' => $hc['teacher_preferred_periods'] ?? [],
+            'teachers'        => $requestPayload['teachers']                  ?? [],
+            'halls'           => $requestPayload['halls']                     ?? [],
+            'tBusySlots'      => $requestPayload['teacher_busy_periods']      ?? [],
+            'hBusySlots'      => $requestPayload['hall_busy_periods']         ?? [],
+            'tCourses'        => $requestPayload['teacher_courses']           ?? [],
+            'tPreferredSlots' => $requestPayload['teacher_preferred_periods'] ?? [],
 
             'opStartTime'     => $hc['operational_hours']['start_time']      ?? '08:00',
             'opEndTime'       => $hc['operational_hours']['end_time']         ?? '17:00',
             'opDays'          => collect($hc['operational_hours']['operational_days'] ?? [])
-                                    ->map(fn($d) => strtolower($d))
-                                    ->values()
-                                    ->all(),
+                ->map(fn($d) => strtolower($d))
+                ->values()
+                ->all(),
             'opDayExceptions' => self::indexByDay($hc['operational_hours']['day_exceptions'] ?? []),
 
             'periodDuration'  => (int) ($hc['schedule_period_duration_minutes']['duration_minutes'] ?? 60),
             'pdExceptions'    => self::indexByDay(
-                                     $hc['schedule_period_duration_minutes']['day_exceptions'] ?? [],
-                                     valueKey: 'duration_minutes'
-                                 ),
+                $hc['schedule_period_duration_minutes']['day_exceptions'] ?? [],
+                valueKey: 'duration_minutes'
+            ),
 
             'bpStartTime'     => $hc['break_period']['start_time']          ?? null,
             'bpEndTime'       => $hc['break_period']['end_time']            ?? null,
             'noBp'            => $hc['break_period']['no_break_exceptions'] ?? false,
-            'bpDayExceptions' => self::indexByDay($hc['break_period']['break_day_exceptions'] ?? []),
+            'bpDayExceptions' => $hc['break_period']['day_exceptions'] ?? [],
 
             'jointCourses'    => self::indexByDay(
-                                     $hc['required_joint_course_periods'] ?? [],
-                                     valueKey: null,
-                                     groupMultiple: true
-                                 ),
+                $hc['required_joint_course_periods'] ?? [],
+                valueKey: null,
+                groupMultiple: true
+            ),
         ];
     }
 
@@ -127,7 +125,7 @@ class ConstraintContext
     {
         return $this->tCourses()
             ->filter(fn($tc) => $tc['teacher_id'] === $teacherId)
-            ->pluck('course_ids')
+            ->pluck('course_id')
             ->flatten()
             ->values();
     }
@@ -417,28 +415,36 @@ class ConstraintContext
     private function resolveBreakWindow(string $day): ?array
     {
         $hard = $this->parsed['hard'];
+        $bpDayExceptions = collect($hard["bpDayExceptions"] ?? []);
+        $day = strtolower($day);
 
-        if ($this->dayHasNoBreak($day, $hard['noBp'])) {
+        if ($this->dayHasNoBreak($day)) {
             return null;
         }
 
-        if (isset($hard['bpDayExceptions'][$day])) {
-            $ex = $hard['bpDayExceptions'][$day];
-            return ['start' => $ex['start_time'], 'end' => $ex['end_time']];
+        if ($bpDayExceptions->contains(fn($value) => strtolower($value['day']) === strtolower($day))) {
+            $ex = $bpDayExceptions->firstWhere(fn($value) => strtolower($value['day']) === strtolower($day));
+            return [
+                'start' => $ex['start_time'],
+                'end'   => $ex['end_time']
+            ];
         }
 
-        if ($hard['bpStartTime'] && $hard['bpEndTime']) {
-            return ['start' => $hard['bpStartTime'], 'end' => $hard['bpEndTime']];
+        if (!empty($hard['bpStartTime']) && !empty($hard['bpEndTime'])) {
+            return [
+                'start' => $hard['bpStartTime'],
+                'end'   => $hard['bpEndTime']
+            ];
         }
 
         return null;
     }
 
-    private function dayHasNoBreak(string $day, bool|array $noBp): bool
+    private function dayHasNoBreak(string $day): bool
     {
-        return is_bool($noBp)
-            ? $noBp
-            : collect($noBp)->map(fn($d) => strtolower($d))->contains($day);
+        $noBp = collect($this->parsed['hard']['noBp'] ?? []);
+        return $noBp->map(fn($d) => strtolower($d))
+            ->contains(strtolower($day));
     }
 
     // ─── Index helper ─────────────────────────────────────────────────────
