@@ -5,6 +5,8 @@ namespace App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Hall;
 use App\Constant\Violation\SemesterTimetable\Hall\HallBusy;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
+
 class HallBusyBlocker implements BlockerBuilder
 {
     public static function type(): string
@@ -16,6 +18,13 @@ class HallBusyBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = self::type();
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => HallBusy::KEY,
+            "hall_id" => $blocker['hall_id'],
+            "day" => $blocker['day'],
+            "start_time" => $blocker['start_time'],
+            "end_time" => $blocker['end_time'],
+        ]);
         $violation->entity = [
             "type" => HallBusy::KEY,
             "hall_id" => $blocker['hall_id'],

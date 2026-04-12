@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Core\BlockerRegistry;
 use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Contracts\DiagnosticBuilder;
 use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class RequestedAssignmentDiagnostic implements DiagnosticBuilder
 {
@@ -21,6 +22,15 @@ class RequestedAssignmentDiagnostic implements DiagnosticBuilder
         $blockerEngine = app(BlockerRegistry::class);
         $diagnosticDTO->constraint_failed = [
             "type" => self::type(),
+            "id" => app(GenerateId::class)->generateId([
+                "type" => self::type(),
+                "day" => $constraintFailed["day"],
+                "start_time" => $constraintFailed["start_time"],
+                "end_time" => $constraintFailed["end_time"],
+                "hall_id" => $constraintFailed["hall_id"],
+                "course_id" => $constraintFailed["course_id"],
+                "teacher_id" => $constraintFailed["teacher_id"]
+            ]),
             "details" => [
                 "day" => $constraintFailed["day"],
                 "start_time" => $constraintFailed["start_time"],

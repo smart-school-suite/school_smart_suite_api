@@ -6,6 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Course\RequiredJointCourse as Requi
 use App\Constant\Constraint\SemesterTimetable\Course\RequiredJointCourse as RequiredJointCourseConstraintConstant;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class RequiredJointCourseBlocker implements BlockerBuilder
 {
@@ -18,6 +19,15 @@ class RequiredJointCourseBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = self::type();
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => RequiredJointCourseConstraintConstant::KEY,
+            "course_id" => $blocker['course_id'],
+            "hall_id" => $blocker['hall_id'],
+            "day" => $blocker['day'],
+            "start_time" => $blocker['start_time'],
+            "end_time" => $blocker['end_time'],
+            "teacher_id" => $blocker['teacher_id']
+        ]);
         $violation->entity = [
             "type" => RequiredJointCourseConstraintConstant::KEY,
             "course_id" => $blocker['course_id'],

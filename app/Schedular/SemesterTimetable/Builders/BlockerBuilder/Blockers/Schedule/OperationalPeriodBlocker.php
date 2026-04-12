@@ -6,6 +6,7 @@ use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBui
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Constant\Constraint\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodConstraint;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class OperationalPeriodBlocker implements BlockerBuilder
 {
@@ -18,6 +19,12 @@ class OperationalPeriodBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = OperationalPeriod::KEY;
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => OperationalPeriodConstraint::KEY,
+            "start_time" => $blocker["start_time"] ?? null,
+            "end_time" => $blocker["end_time"] ?? null,
+            "day" => $blocker["day"] ?? null,
+        ]);
         $violation->entity = [
             "type" => OperationalPeriodConstraint::KEY,
             "start_time" => $blocker["start_time"] ?? null,

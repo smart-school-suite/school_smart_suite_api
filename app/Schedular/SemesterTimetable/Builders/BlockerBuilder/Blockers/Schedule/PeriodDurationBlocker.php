@@ -6,6 +6,8 @@ use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBui
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationConstraint;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
+
 class PeriodDurationBlocker implements BlockerBuilder
 {
     public static function type(): string
@@ -17,6 +19,11 @@ class PeriodDurationBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = PeriodDuration::KEY;
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => PeriodDurationConstraint::KEY,
+            "day" => $blocker["day"] ?? null,
+            "period_duration" => $blocker["expected_duration"] ?? null,
+        ]);
         $violation->entity = [
             "type" => PeriodDurationConstraint::KEY,
             "day" => $blocker["day"] ?? null,

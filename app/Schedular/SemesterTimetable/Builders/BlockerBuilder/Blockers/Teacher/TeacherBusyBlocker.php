@@ -5,6 +5,7 @@ namespace App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Teach
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherBusy;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class TeacherBusyBlocker implements BlockerBuilder
 {
@@ -17,6 +18,12 @@ class TeacherBusyBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = TeacherBusy::KEY;
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => TeacherBusy::KEY,
+            "start_time" => $blocker["start_time"],
+            "end_time" => $blocker["end_time"],
+            "day" => $blocker["day"],
+        ]);
         $violation->entity = [
             "type" => TeacherBusy::KEY,
             "start_time" => $blocker["start_time"],

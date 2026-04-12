@@ -6,6 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod as Req
 use App\Constant\Constraint\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodConstraintConstant;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class RequestedFreePeriodBlocker implements BlockerBuilder
 {
@@ -18,6 +19,12 @@ class RequestedFreePeriodBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = RequestedFreePeriodBlockerConstant::KEY;
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => RequestedFreePeriodConstraintConstant::KEY,
+            'day' => $blocker['day'],
+            'start_time' => $blocker['start_time'],
+            'end_time' => $blocker['end_time'],
+        ]);
         $violation->entity = [
             "type" => RequestedFreePeriodConstraintConstant::KEY,
             'day' => $blocker['day'],

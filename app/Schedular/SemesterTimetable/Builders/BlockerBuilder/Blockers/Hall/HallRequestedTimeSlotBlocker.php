@@ -6,6 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot as HallR
 use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as HallRequestedTimeSlotConstraintConstant;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class HallRequestedTimeSlotBlocker implements BlockerBuilder
 {
@@ -18,6 +19,13 @@ class HallRequestedTimeSlotBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = self::type();
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => HallRequestedTimeSlotConstraintConstant::KEY,
+            "hall_id" => $blocker['hall_id'],
+            "day" => $blocker['day'],
+            "start_time" => $blocker['start_time'],
+            "end_time" => $blocker['end_time'],
+        ]);
         $violation->entity = [
             "type" => HallRequestedTimeSlotConstraintConstant::KEY,
             "hall_id" => $blocker['hall_id'],

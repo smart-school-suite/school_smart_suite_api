@@ -5,6 +5,7 @@ namespace App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Teach
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherUnavailable as TeacherUnavailableViolationConstant;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class TeacherUnavailableBlocker implements BlockerBuilder
 {
@@ -17,6 +18,13 @@ class TeacherUnavailableBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = TeacherUnavailableViolationConstant::KEY;
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => "teacher_unavailable",
+            "teacher_id" => $blocker["teacher_id"] ?? null,
+            "start_time" => $blocker["start_time"],
+            "end_time" => $blocker["end_time"],
+            "day" => $blocker["day"],
+        ]);
         $violation->entity = [
             "type" => "teacher_unavailable",
             "teacher_id" => $blocker["teacher_id"] ?? null,

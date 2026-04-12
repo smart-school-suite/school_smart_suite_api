@@ -6,6 +6,8 @@ use App\Constant\Violation\SemesterTimetable\Course\CourseRequestedSlot as Cours
 use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot as CourseRequestedTimeSlotConstraintConstant;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
+
 class CourseRequestedTimeSlotBlocker implements BlockerBuilder
 {
     public static function type(): string
@@ -17,6 +19,13 @@ class CourseRequestedTimeSlotBlocker implements BlockerBuilder
     {
         $violation = new BlockerDTO();
         $violation->type = self::type();
+        $violation->id = app(GenerateId::class)->generateId([
+            "type" => CourseRequestedTimeSlotConstraintConstant::KEY,
+            "course_id" => $blocker['course_id'],
+            "day" => $blocker['day'],
+            "start_time" => $blocker['start_time'],
+            "end_time" => $blocker['end_time'],
+        ]);
         $violation->entity = [
             "type" => CourseRequestedTimeSlotConstraintConstant::KEY,
             "course_id" => $blocker['course_id'],
