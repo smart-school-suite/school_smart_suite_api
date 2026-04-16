@@ -24,12 +24,14 @@ class TeacherRequestedTimeSlotBlocker implements BlockerBuilder
             "start_time" => $blocker["start_time"],
             "end_time" => $blocker["end_time"],
             "day" => $blocker["day"],
+            "teacher_id" => $blocker["teacher_id"]
         ]);
         $violation->entity = [
             "type" => TeacherRequestedTimeSlotConstraintConstant::KEY,
             "start_time" => $blocker["start_time"],
             "end_time" => $blocker["end_time"],
             "day" => $blocker["day"],
+            "teacher_id" => $blocker["teacher_id"]
         ];
         $violation->evidence = [
             "start_time" => $blocker["start_time"],

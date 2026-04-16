@@ -17,11 +17,11 @@ class GraphBuilder
 
             $graph->addNode($source);
 
-            foreach ($diag['blockers'] as $blocker) {
+            foreach ($diag->blockers as $blocker) {
 
                 $target = new Node(
-                    $blocker['id'],
-                    $blocker['type'],
+                    $blocker->id,
+                    $blocker->type,
                     $blocker
                 );
 

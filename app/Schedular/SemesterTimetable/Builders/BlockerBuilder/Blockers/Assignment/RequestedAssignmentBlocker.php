@@ -20,7 +20,7 @@ class RequestedAssignmentBlocker implements BlockerBuilder
         $violation = new BlockerDTO();
         $violation->type = self::type();
         $violation->id = app(GenerateId::class)->generateId([
-             "type" => RequestedAssignmentConstraintConstant::KEY,
+            "type" => RequestedAssignmentConstraintConstant::KEY,
             "course_id" => $blocker['course_id'],
             "teacher_id" => $blocker['teacher_id'],
             "hall_id" => $blocker['hall_id'],

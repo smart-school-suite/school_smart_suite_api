@@ -6,6 +6,7 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRe
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use App\Schedular\SemesterTimetable\DTO\ResponseDTO;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 
 class ResponseBuilder
 {
@@ -19,15 +20,21 @@ class ResponseBuilder
             default => "optimal",
         };
         $response->timetable = $this->formatAndGroupTimetableByDay($state->grid);
-        $response->diagnostics = [
+        $diagnostics = [
             "constraints" => [
                 "hard" => $diagnosticBuilder->build($state->violations["hard"] ?? []),
                 "soft" => $diagnosticBuilder->build($state->violations["soft"] ?? [])
             ]
         ];
+        $this->seedSuggestionContext($state, $diagnostics);
+        $response->diagnostics = $diagnostics;
         return $response;
     }
 
+    private function seedSuggestionContext($state, $diagnostics){
+        SuggestionContext::setTimetableGrid($state->grid);
+        SuggestionContext::setDiagnostics($diagnostics);
+    }
     private function formatAndGroupTimetableByDay(array $grid): array
     {
         $groupedByDay = [];
