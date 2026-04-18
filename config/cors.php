@@ -17,17 +17,48 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        // --- Tauri desktop app ---
+        'tauri://localhost',
+        'https://tauri.localhost',
 
-    'allowed_origins_patterns' => [],
+        // --- React Native (Expo Go / dev builds) ---
+        'http://localhost:8081',
+        'http://localhost:19000',
+        'http://localhost:19006',
+        'exp://localhost:8081',
 
-    'allowed_headers' => ['*'],
+        // --- Your production web/API domain (add yours) ---
+        // 'https://app.yourdomain.com',
+        // 'https://yourdomain.com',
+    ],
 
-    'exposed_headers' => [],
+    'allowed_origins_patterns' => [
+        // Allows any Expo dev-client URL on the local network (e.g. exp://192.168.x.x:8081)
+        '#^exp://\d+\.\d+\.\d+\.\d+:\d+$#',
 
-    'max_age' => 0,
+        // Tauri custom protocol variations across platforms
+        '#^tauri://[a-zA-Z0-9\-\.]+$#',
+    ],
+
+    'allowed_headers' => [
+        'Accept',
+        'Authorization',
+        'Content-Type',
+        'X-Requested-With',
+        'X-XSRF-TOKEN',    // Required for Sanctum CSRF cookie flow
+        'Origin',
+    ],
+
+    'exposed_headers' => [
+        'Authorization',   // Lets the client read the token from responses
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+    ],
+
+    'max_age' => 86400,    // Cache preflight for 24h — reduces OPTIONS requests
 
     'supports_credentials' => true,
 

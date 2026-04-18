@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Graph;
 
+
 class GraphBuilder
 {
     public function build($diagnostics): ConflictGraph
@@ -10,9 +11,9 @@ class GraphBuilder
         foreach ($diagnostics as $diag) {
 
             $source = new Node(
-                $diag['id'],
-                $diag['type'],
-                $diag
+                $diag->constraint_failed["id"],
+                $diag->constraint_failed["type"],
+                [$diag]
             );
 
             $graph->addNode($source);
@@ -22,12 +23,12 @@ class GraphBuilder
                 $target = new Node(
                     $blocker->id,
                     $blocker->type,
-                    $blocker
+                    [$blocker]
                 );
 
                 $graph->addNode($target);
 
-                $graph->addEdge($source, $target, $diag['reason']);
+                $graph->addEdge($source, $target);
             }
         }
 

@@ -7,12 +7,14 @@ use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use App\Schedular\SemesterTimetable\DTO\ResponseDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
+use App\Schedular\SemesterTimetable\Suggestion\Engine\SuggestionEngine;
 
 class ResponseBuilder
 {
     public function build(State $state): ResponseDTO
     {
         $diagnosticBuilder = app(DiagnosticRegistry::class);
+        $suggestionEngine = app(SuggestionEngine::class);
         $response = new ResponseDTO();
         $response->status = match (true) {
             !empty($state->violations["hard"]) => "error",
@@ -28,6 +30,7 @@ class ResponseBuilder
         ];
         $this->seedSuggestionContext($state, $diagnostics);
         $response->diagnostics = $diagnostics;
+        $response->suggestions = $suggestionEngine->generate($diagnostics["constraints"]["soft"]->toArray() ?? []);
         return $response;
     }
 

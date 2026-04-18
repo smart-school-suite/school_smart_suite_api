@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Registry\HandlerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\State\SolutionState;
 
@@ -17,33 +18,13 @@ class ScenarioBuilder
 
     public function build(array $groups, array $dependencies): array
     {
-        // 1. generate base scenarios from conflicts
-        $scenarios = $this->buildFromGroups($groups);
-
-        // 2. enforce dependencies
-        $scenarios = $this->applyDependencies($scenarios, $dependencies);
-
-        // 3. validate scenarios
-        return $this->validate($scenarios);
-    }
-
-    protected function buildFromGroups(array $groups): array
-    {
-        if (empty($groups)) {
-            return [[]];
-        }
-
         $scenarios = [];
 
         foreach ($groups as $group) {
-            $groupScenarios = $this->buildGroup($group);
-
-            $scenarios = empty($scenarios)
-                ? $groupScenarios
-                : $this->merge($scenarios, $groupScenarios);
+            $scenarios = array_merge($scenarios, $this->buildGroup($group));
         }
 
-        return $scenarios;
+        return $this->applyDependencies($scenarios, $dependencies);
     }
 
     protected function buildGroup(array $group): array
@@ -61,7 +42,27 @@ class ScenarioBuilder
                 $handler = $this->registry->get($node->type);
                 if (!$handler) continue;
 
-                $options = $handler->generate($node);
+                $allowed = $handler->allowedActions();
+
+                $options = [];
+
+                if (in_array('remove', $allowed)) {
+                    $options[] = new SuggestionDTO(
+                        action: 'remove',
+                        target: $node,
+                        label: 'Remove conflicting constraint'
+                    );
+                }
+
+                if (in_array('modify', $allowed)) {
+                    $result = $handler->generate($node);
+                    $options = array_merge($options, $result['modify_self'] ?? []);
+                }
+
+                if (empty($options)) {
+                    $combinations = [];
+                    break;
+                }
 
                 $newCombos = [];
 
@@ -76,66 +77,57 @@ class ScenarioBuilder
 
             foreach ($combinations as $combo) {
                 $scenarios[] = array_merge([
-                    [
-                        'action' => 'keep',
-                        'target' => $keepNode
-                    ]
+                    new SuggestionDTO('keep', $keepNode)
                 ], $combo);
             }
         }
 
         return $scenarios;
     }
-
     protected function applyDependencies(array $scenarios, array $dependencies): array
     {
-        $result = [];
+        $final = [];
 
         foreach ($scenarios as $scenario) {
 
-            $expanded = [$scenario];
+            $keptNodes = collect($scenario)
+                ->filter(fn($s) => $s->action === 'keep')
+                ->map(fn($s) => $s->target);
 
-            foreach ($dependencies as $edge) {
+            foreach ($keptNodes as $node) {
 
-                $sourceId = $edge->from->id;
-                $blocker = $edge->to;
+                $blockers = [];
 
-                $isSourceKept = collect($scenario)->contains(function ($s) use ($sourceId) {
-                    return $s['action'] === 'keep' && $s['target']->id === $sourceId;
-                });
+                foreach ($dependencies as $edge) {
+                    if ($edge->from->id === $node->id) {
+                        $blockers[] = $edge->to;
+                    }
+                }
 
-                if (!$isSourceKept) continue;
-
-                $handler = $this->registry->get($blocker->type);
+                $handler = $this->registry->get($node->type);
                 if (!$handler) continue;
 
-                $options = $handler->generate($blocker);
+                $result = $handler->generate($node, $blockers);
 
-                if ($handler->isExclusive()) {
-                    // 🔴 forced fix
-                    foreach ($expanded as &$s) {
-                        $s[] = $options[0];
-                    }
-                } else {
-                    // 🟢 branching
-                    $newExpanded = [];
-
-                    foreach ($expanded as $s) {
-                        foreach ($options as $opt) {
-                            $newExpanded[] = array_merge($s, [$opt]);
-                        }
-                    }
-
-                    $expanded = $newExpanded;
+                // 🟢 Resolve blockers
+                foreach ($result['resolve_blockers'] ?? [] as $fix) {
+                    $final[] = array_merge($scenario, [$fix]);
                 }
-            }
 
-            foreach ($expanded as $s) {
-                $result[] = $s;
+                // 🔵 Modify self (skip blockers)
+                foreach ($result['modify_self'] ?? [] as $mod) {
+
+                    $filtered = array_filter(
+                        $scenario,
+                        fn($s) => $s->target->id !== $node->id
+                    );
+
+                    $final[] = array_merge($filtered, [$mod]);
+                }
             }
         }
 
-        return $result;
+        return $final;
     }
     protected function merge(array $a, array $b): array
     {
