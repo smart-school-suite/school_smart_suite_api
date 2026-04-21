@@ -56,10 +56,10 @@ class CourseRequestedSlot implements ConstraintHandler
                 $state->violations['soft'][] = [
                     'constraint_failed' => [
                         'key'        => CourseRequestedSlotConstraint::KEY,
-                        'course_id'  => $requestPayload['course_id'],
-                        'start_time' => $requestPayload['start_time'],
-                        'end_time'   => $requestPayload['end_time'],
-                        'day'        => $requestPayload['day'],
+                        'course_id'  => $cRequestedWindow['course_id'] ?? null,
+                        'start_time' => $cRequestedWindow['start_time'] ?? null,
+                        'end_time'   => $cRequestedWindow['end_time'] ?? null,
+                        'day'        => $cRequestedWindow['day'] ?? null,
                     ],
                     'blockers' => array_values($blockers),
                 ];

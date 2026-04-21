@@ -68,7 +68,7 @@ class GeneratePreferenceSemesterTimetableService
         $response = $schedular->run($payload);
         return [
             "timetable" => $response,
-            // "payload" => $payload
+             "payload" => $payload
         ];
     }
     private function getSchoolSemester(string $id): SchoolSemester

@@ -2,19 +2,19 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
-use App\Schedular\SemesterTimetable\Suggestion\Graph\GraphBuilder;
-
 class DayProcessor
 {
-   public function process($diagnostic): array {
-         $graph = (new GraphBuilder())->build($diagnostic);
-         $groups = $graph->getConflictGroups();
-         $dependencies = $graph->getDependencies();
-        //  $builder = new ScenarioBuilder();
-        //  return $builder->build($groups, $dependencies);
+    public function process($diagnostic, $day): array
+    {
+        $constraintMap = app(ConstraintMapBuilder::class)->build($diagnostic);
+        $groupBuilder = app(ConflictGroupBuilder::class)->build($constraintMap);
+        $scenarioBuilder = app(ScenarioBuilder::class)->build($groupBuilder);
+
         return [
-             "groups" => $groups,
-             "dependencies" => $dependencies
+            "constraint_map" => $constraintMap,
+            "conflict_groups" => $groupBuilder,
+            "scenarios" => $scenarioBuilder,
+            "day" => $day
         ];
-   }
+    }
 }

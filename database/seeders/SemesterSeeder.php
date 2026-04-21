@@ -28,12 +28,9 @@ class SemesterSeeder extends Seeder
 
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
-            Log::info('CSV Header: ', $header);
-
             $semesters = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
 
                 if (count($data) >= 2) {

@@ -2,19 +2,18 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 
-use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationBlocker;
-use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationConstraint;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
+use App\Constant\Violation\SemesterTimetable\Schedule\BreakPeriod as BreakPeriodBlocker;
+use App\Constant\Constraint\SemesterTimetable\Schedule\BreakPeriod as BreakPeriodConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
-use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
-class PeriodDurationHandler implements SuggestionHandler
+use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+
+class BreakPeriodHandler implements SuggestionHandler
 {
     public function supports(string $type): string
     {
-        return $type === PeriodDurationBlocker::KEY || $type === PeriodDurationConstraint::KEY;
+        return $type === BreakPeriodBlocker::KEY || $type === BreakPeriodConstraint::KEY;
     }
-
     public function isExclusive(): bool
     {
         return true;
@@ -22,14 +21,15 @@ class PeriodDurationHandler implements SuggestionHandler
 
     public function allowedActions(): array
     {
-        return ["keep", "modify"];
+        return ["modify", "remove", "keep"];
     }
+
     public function conflictOptions($constraint): array
     {
         return [
             new SuggestionOptionDTO(
                 action: 'modify',
-                label: 'Modify period duration',
+                label: 'Move Break Period to another time',
                 meta: ['field' => 'time']
             )
         ];

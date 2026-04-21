@@ -2,9 +2,9 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 
-use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
-use App\Schedular\SemesterTimetable\Suggestion\DTO\ChangeDTO;
-use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionDTO;
+use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodBlocker;
+use App\Constant\Constraint\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodConstraint;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 
@@ -12,7 +12,7 @@ class OperationalPeriodHandler implements SuggestionHandler
 {
     public function supports(string $type): string
     {
-        return OperationalPeriod::KEY;
+        return $type === OperationalPeriodBlocker::KEY || $type === OperationalPeriodConstraint::KEY;
     }
 
     public function isExclusive(): bool
@@ -24,22 +24,19 @@ class OperationalPeriodHandler implements SuggestionHandler
         return ["keep", "modify"];
     }
 
-    public function generate(Node $node, $blockers = []): array
+    public function conflictOptions($constraint): array
     {
         return [
-            "modify_self" => [
-                 new SuggestionDTO(
-                    "modify",
-                    $node,
-                    [
-                         new ChangeDTO(
-                            "end_time",
-                            "modify",
-                            "Operational Period Violated"
-                         )
-                    ]
-                 )
-            ]
+            new SuggestionOptionDTO(
+                action: 'modify',
+                label: 'Change Operational Period  to another time',
+                meta: ['field' => 'time']
+            )
         ];
+    }
+
+    public function dependencyOptions($constraint, array $blockers): array
+    {
+        return [];
     }
 }

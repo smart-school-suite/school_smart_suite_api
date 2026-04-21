@@ -16,7 +16,7 @@ class SuggestionEngine
 
         foreach ($grouped as $day => $dayDiagnostics) {
             $processor = new DayProcessor();
-            $results[$day] = $processor->process($dayDiagnostics);
+            $results[$day] = $processor->process($dayDiagnostics, $day);
         }
 
         return $results;
