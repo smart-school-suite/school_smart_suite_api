@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use App\Models\Course\CourseSpecialty;
 use App\Models\Teacher;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use Illuminate\Support\Arr;
 class GeneratePreferenceSemesterTimetableService
 {
@@ -64,11 +65,11 @@ class GeneratePreferenceSemesterTimetableService
             $this->getJointCourses($semester)
         );
 
+        TimetableContext::setPreferenceMode(true);
         $schedular = app(SchedularEngine::class);
         $response = $schedular->run($payload);
         return [
-            "timetable" => $response,
-             "payload" => $payload
+            "timetable" => $response
         ];
     }
     private function getSchoolSemester(string $id): SchoolSemester

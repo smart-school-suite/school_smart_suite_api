@@ -2,10 +2,12 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
+use App\Schedular\SemesterTimetable\Suggestion\DTO\DecisionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\ResolutionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Registry\HandlerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\Engine\DependencyExtractor;
+use App\Schedular\SemesterTimetable\Suggestion\Normalization\ScenarioNormalizationEngine;
 
 class ScenarioBuilder
 {
@@ -36,6 +38,7 @@ class ScenarioBuilder
             );
         }
 
+        app(ScenarioNormalizationEngine::class)->normalize($scenarios);
         return $scenarios;
     }
 
@@ -55,17 +58,26 @@ class ScenarioBuilder
                 'dependency',
                 $depOption->blocker->id,
                 $depOption->blocker->type,
-                [$depOption]
+                [
+                    "field" => $depOption->field,
+                    "type" => $depOption->type,
+                    "reason" => $depOption->reason,
+                    "proposals" => $depOption->proposals ?? []
+                ],
+                [
+                    "blocker" => $depOption->blocker
+                ]
             );
         }
 
         return new ScenarioDTO(
             id: uniqid('scenario_'),
-            decision: [
-                'type' => 'fix_constraint',
-                'target_id' => $constraint['id'],
-                'target_type' => $constraint['type']
-            ],
+            decision: new DecisionDTO(
+                type:'fix_constraint',
+                target_id: $constraint['id'],
+                target_type : $constraint['type'],
+                target_details : $constraint["details"]
+            ),
             resolutions: $resolutions
         );
     }
@@ -96,7 +108,10 @@ class ScenarioBuilder
                         'conflict',
                         $node['id'],
                         $node['type'],
-                        $options
+                        $options,
+                        [
+                            "blocker" => $node
+                        ]
                     );
                 }
             }
@@ -111,17 +126,26 @@ class ScenarioBuilder
                     'dependency',
                     $depOption->blocker->id,
                     $depOption->blocker->type,
-                    [$depOption]
+                    [
+                        "field" => $depOption->field,
+                        "type" => $depOption->type,
+                        "reason" => $depOption->reason,
+                        "proposals" => $depOption->proposals ?? []
+                    ],
+                    [
+                        "blocker" => $depOption->blocker
+                    ]
                 );
             }
 
             $scenarios[] = new ScenarioDTO(
                 id: uniqid('scenario_'),
-                decision: [
-                    'type' => 'keep',
-                    'target_id' => $kept['id'],
-                    'target_type' => $kept['type']
-                ],
+                decision: new DecisionDTO(
+                   type: 'keep',
+                   target_id: $kept['id'],
+                   target_type: $kept['type'],
+                   target_details: $kept['details']
+                ),
                 resolutions: $resolutions
             );
         }

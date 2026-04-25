@@ -4,7 +4,6 @@ namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Hall;
 
 use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot as HallRequestedTimeSlotBlocker;
 use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as HallRequestedTimeSlotConstraint;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;

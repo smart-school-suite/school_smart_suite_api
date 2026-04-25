@@ -17,10 +17,10 @@ class TeacherUnavailableSuggestion implements BlockerSuggestion
     public function getBlockerSuggestion(BlockerDTO $blocker): ChangeDTO
     {
         return new ChangeDTO(
-            field: 'teacher_id',
-            type: 'replace',
-            reason: TeacherUnavailable::KEY,
-            blocker: $blocker
+            'teacher_id',
+            'replace',
+            TeacherUnavailable::KEY,
+            $blocker
         );
     }
 }

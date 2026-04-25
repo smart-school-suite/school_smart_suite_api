@@ -18,9 +18,10 @@ use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherRequest
 use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherUnavailableValidator;
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use App\Schedular\SemesterTimetable\Helpers\GetHallByAvailabilityScore;
 
-class CourseRequestedSlot implements ConstraintHandler
+class CourseRequestedSlot extends TimetableContext implements ConstraintHandler
 {
     public static function supports(): string
     {
@@ -39,7 +40,7 @@ class CourseRequestedSlot implements ConstraintHandler
             ];
 
             $blockers = array_filter([
-                app(TeacherUnavailableValidator::class)->check($context, $params),
+                self::isWithPreference() ? app(TeacherUnavailableValidator::class)->check($context, $params) : [],
                 app(BreakPeriodValidator::class)->check($context, $params),
                 app(OperationalPeriodValidator::class)->check($context, $params),
                 app(PeriodDurationValidator::class)->check($context, $params),

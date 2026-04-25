@@ -30,7 +30,7 @@ class AssignmentHandler implements SuggestionHandler
         return [
             new SuggestionOptionDTO(
                 action: 'remove',
-                label: 'Remove assignment'
+                label: 'Remove assignment',
             ),
             new SuggestionOptionDTO(
                 action: 'modify',

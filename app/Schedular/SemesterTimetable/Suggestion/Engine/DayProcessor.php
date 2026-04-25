@@ -9,7 +9,6 @@ class DayProcessor
         $constraintMap = app(ConstraintMapBuilder::class)->build($diagnostic);
         $groupBuilder = app(ConflictGroupBuilder::class)->build($constraintMap);
         $scenarioBuilder = app(ScenarioBuilder::class)->build($groupBuilder);
-
         return [
             "constraint_map" => $constraintMap,
             "conflict_groups" => $groupBuilder,

@@ -8,6 +8,7 @@ class ResolutionDTO
         public string $type, // conflict | dependency
         public string $target_id,
         public string $target_type,
-        public array $options // SuggestionOptionDTO[]
+        public array $options, // SuggestionOptionDTO[]
+        public array $meta
     ) {}
 }

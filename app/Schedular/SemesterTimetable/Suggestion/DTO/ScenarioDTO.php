@@ -6,7 +6,7 @@ class ScenarioDTO
 {
     public function __construct(
         public string $id,
-        public array $decision, // ['type' => 'keep', 'target_id' => ...]
+        public DecisionDTO $decision,
         public array $resolutions // ResolutionDTO[]
     ) {}
 }

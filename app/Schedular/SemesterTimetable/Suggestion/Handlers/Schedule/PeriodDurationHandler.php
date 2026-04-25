@@ -4,7 +4,6 @@ namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationBlocker;
 use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationConstraint;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;

@@ -15,7 +15,6 @@ use App\Schedular\SemesterTimetable\Constraints\Validator\Schedule\PeriodDuratio
 use App\Schedular\SemesterTimetable\Constraints\Validator\Schedule\RequestedFreePeriodValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherBusyValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherRequestedTimeSlotValidator;
-use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherUnavailableValidator;
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use App\Schedular\SemesterTimetable\Helpers\GetTeacherByWorkLoadScore;
@@ -41,7 +40,7 @@ class HallRequestedTimeWindow implements ConstraintHandler
             ];
 
             $blockers = array_filter([
-                app(TeacherUnavailableValidator::class)->check($context, $params),
+                //app(TeacherUnavailableValidator::class)->check($context, $params),
                 app(BreakPeriodValidator::class)->check($context, $params),
                 app(OperationalPeriodValidator::class)->check($context, $params),
                 app(PeriodDurationValidator::class)->check($context, $params),

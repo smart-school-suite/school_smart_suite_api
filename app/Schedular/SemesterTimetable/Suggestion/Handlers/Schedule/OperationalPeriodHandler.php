@@ -5,7 +5,6 @@ namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodBlocker;
 use App\Constant\Constraint\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 
 class OperationalPeriodHandler implements SuggestionHandler

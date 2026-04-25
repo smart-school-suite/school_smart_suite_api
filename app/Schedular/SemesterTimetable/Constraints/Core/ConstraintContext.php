@@ -104,6 +104,11 @@ class ConstraintContext
         )->values();
     }
 
+    public function tBusySlotsForDay(string $day): Collection {
+          return $this->tBusySlots()->filter(
+            fn($s) => strtolower($s['day']) === strtolower($day)
+        )->values();
+    }
     public function hBusySlots(): Collection
     {
         return collect($this->parsed['hard']['hBusySlots']);
@@ -113,6 +118,12 @@ class ConstraintContext
     {
         return $this->hBusySlots()->filter(
             fn($s) => strtolower($s['day']) === strtolower($day)
+        )->values();
+    }
+
+    public function hBusySlotsForHallIdDay(string $hallId, string $day): Collection {
+        return $this->hBusySlots()->filter(
+            fn($s) => strtolower($s['day']) === strtolower($day) && $s["hall_id"] === $hallId
         )->values();
     }
 
@@ -147,6 +158,12 @@ class ConstraintContext
     {
         return $this->tPreferredSlots()->filter(
             fn($s) => $s['teacher_id'] === $teacherId && strtolower($s['day']) === strtolower($day)
+        )->values();
+    }
+
+    public function tPreferredSlotsForDay(string $day): Collection {
+         return $this->tPreferredSlots()->filter(
+            fn($s) => strtolower($s['day']) === strtolower($day)
         )->values();
     }
 
@@ -392,7 +409,7 @@ class ConstraintContext
 
     // ─── Internal resolvers ───────────────────────────────────────────────
 
-    private function resolveOperationalWindow(string $day): array
+    public function resolveOperationalWindow(string $day): array
     {
         $hard = $this->parsed['hard'];
 
@@ -404,7 +421,7 @@ class ConstraintContext
         return ['start' => $hard['opStartTime'], 'end' => $hard['opEndTime']];
     }
 
-    private function resolvePeriodDuration(string $day): int
+    public function resolvePeriodDuration(string $day): int
     {
         $hard = $this->parsed['hard'];
         return isset($hard['pdExceptions'][$day])
@@ -412,7 +429,7 @@ class ConstraintContext
             : (int) $hard['periodDuration'];
     }
 
-    private function resolveBreakWindow(string $day): ?array
+    public function resolveBreakWindow(string $day): ?array
     {
         $hard = $this->parsed['hard'];
         $bpDayExceptions = collect($hard["bpDayExceptions"] ?? []);

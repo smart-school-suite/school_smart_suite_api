@@ -6,8 +6,6 @@ use App\Constant\Violation\SemesterTimetable\Course\RequiredJointCourse as Requi
 use App\Constant\Constraint\SemesterTimetable\Course\RequiredJointCourse as RequiredJointCourseConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
-use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
 
 class RequiredJointCourseHandler implements SuggestionHandler
 {

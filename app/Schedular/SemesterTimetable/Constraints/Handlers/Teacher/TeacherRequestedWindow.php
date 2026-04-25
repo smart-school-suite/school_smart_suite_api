@@ -17,12 +17,12 @@ use App\Schedular\SemesterTimetable\Constraints\Validator\Schedule\PeriodDuratio
 use App\Schedular\SemesterTimetable\Constraints\Validator\Schedule\RequestedFreePeriodValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherBusyValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Teacher\TeacherUnavailableValidator;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use App\Schedular\SemesterTimetable\Helpers\GetHallByAvailabilityScore;
 use Illuminate\Support\Arr;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
-use Illuminate\Support\Facades\Log;
 
-class TeacherRequestedWindow implements ConstraintHandler
+class TeacherRequestedWindow extends TimetableContext implements ConstraintHandler
 {
     public static function supports(): string
     {
@@ -42,7 +42,7 @@ class TeacherRequestedWindow implements ConstraintHandler
             ];
 
             $blockers = array_filter([
-                app(TeacherUnavailableValidator::class)->check($context, $params),
+                self::isWithPreference() ? app(TeacherUnavailableValidator::class)->check($context, $params) : [],
                 app(BreakPeriodValidator::class)->check($context, $params),
                 app(OperationalPeriodValidator::class)->check($context, $params),
                 app(PeriodDurationValidator::class)->check($context, $params),
