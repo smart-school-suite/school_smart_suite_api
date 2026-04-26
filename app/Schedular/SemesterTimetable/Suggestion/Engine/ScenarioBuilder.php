@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
+use App\Constant\Constraint\SemesterTimetable\Builder\ConstraintBuilder;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\DecisionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\ResolutionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
@@ -73,10 +74,10 @@ class ScenarioBuilder
         return new ScenarioDTO(
             id: uniqid('scenario_'),
             decision: new DecisionDTO(
-                type:'fix_constraint',
+                type: 'fix_constraint',
                 target_id: $constraint['id'],
-                target_type : $constraint['type'],
-                target_details : $constraint["details"]
+                target_type: $constraint['type'],
+                target_details: $constraint["details"]
             ),
             resolutions: $resolutions
         );
@@ -93,7 +94,6 @@ class ScenarioBuilder
 
             $resolutions = [];
 
-            // 🔴 Resolve conflicts
             foreach ($group as $node) {
 
                 if ($node['id'] === $kept['id']) continue;
@@ -116,7 +116,6 @@ class ScenarioBuilder
                 }
             }
 
-            // 🔵 Resolve dependencies
             $blockers = $this->dependencyExtractor->get($kept, $group);
 
             $depOptions = $handler->dependencyOptions($kept, $blockers);
@@ -141,15 +140,20 @@ class ScenarioBuilder
             $scenarios[] = new ScenarioDTO(
                 id: uniqid('scenario_'),
                 decision: new DecisionDTO(
-                   type: 'keep',
-                   target_id: $kept['id'],
-                   target_type: $kept['type'],
-                   target_details: $kept['details']
+                    type: 'keep',
+                    target_id: $kept['id'],
+                    target_type: $kept['type'],
+                    target_details: $kept['details']
                 ),
                 resolutions: $resolutions
             );
         }
 
         return $scenarios;
+    }
+
+    protected function getConstraintType(string $constraintType): string
+    {
+        return  app(ConstraintBuilder::class)->getConstraintType($constraintType);
     }
 }

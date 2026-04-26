@@ -27,11 +27,16 @@ class BreakPeriodHandler implements SuggestionHandler
     public function conflictOptions($constraint): array
     {
         return [
+              new SuggestionOptionDTO(
+                action: 'remove',
+                label: 'Remove Break Period Constraint'
+            ),
             new SuggestionOptionDTO(
                 action: 'modify',
                 label: 'Move Break Period to another time',
                 meta: ['field' => 'time']
-            )
+            ),
+
         ];
     }
 

@@ -10,6 +10,7 @@ use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class RequestedAssignmentRes extends SuggestionContext implements ResolutionContract
 {
@@ -27,6 +28,7 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
 
         $intentDetails = $resolution->meta['blocker']->details;
         $iDay          = strtolower($intentDetails['day']);
+        Log::info("Intent Details",  [$intentDetails]);
         $iStartTime    = $intentDetails['start_time'];
 
         $intentStart = Carbon::createFromFormat('H:i', $iStartTime);
@@ -92,12 +94,7 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
                 ->diffInMinutes($intentStart, absolute: true)
         )->values();
 
-        return [
-            'key'         => RequestedAssignmentConstraint::KEY,
-            'intent_day'  => $iDay,
-            'intent_time' => $iStartTime,
-            'suggestions' => $ranked->all(),
-        ];
+        return $ranked->all();
     }
 
     // ─── Available teachers ───────────────────────────────────────────────

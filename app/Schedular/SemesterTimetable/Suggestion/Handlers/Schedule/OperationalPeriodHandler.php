@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 
+use App\Constant\Action\AppActions;
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodBlocker;
 use App\Constant\Constraint\SemesterTimetable\Schedule\OperationalPeriod as OperationalPeriodConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
@@ -27,7 +28,7 @@ class OperationalPeriodHandler implements SuggestionHandler
     {
         return [
             new SuggestionOptionDTO(
-                action: 'modify',
+                action: AppActions::MODIFY,
                 label: 'Change Operational Period  to another time',
                 meta: ['field' => 'time']
             )

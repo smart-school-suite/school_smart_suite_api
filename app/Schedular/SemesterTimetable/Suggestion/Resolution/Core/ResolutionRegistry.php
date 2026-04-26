@@ -8,6 +8,7 @@ use App\Schedular\SemesterTimetable\Suggestion\Resolution\Hall\HallBusyRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Hall\HallRequestedTimeSlotRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Schedule\BreakPeriodRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Schedule\OperationalPeriodRes;
+use App\Schedular\SemesterTimetable\Suggestion\Resolution\Schedule\RequestedFreePeriodRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Schedule\SchedulePeriodDurationRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Teacher\TeacherBusyRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Teacher\TeacherRequestedTimeSlotRes;
@@ -16,16 +17,17 @@ use App\Schedular\SemesterTimetable\Suggestion\Resolution\Teacher\TeacherUnavail
 class ResolutionRegistry
 {
     protected array $map = [
-        new RequestedAssignmentRes(),
-        new CourseRequestedTimeSlotRes(),
-        new HallBusyRes(),
-        new HallRequestedTimeSlotRes(),
-        new BreakPeriodRes(),
-        new OperationalPeriodRes(),
-        new SchedulePeriodDurationRes(),
-        new TeacherBusyRes(),
-        new TeacherRequestedTimeSlotRes(),
-        new TeacherUnavailableRes()
+        RequestedAssignmentRes::class,
+        CourseRequestedTimeSlotRes::class,
+        HallBusyRes::class,
+        HallRequestedTimeSlotRes::class,
+        BreakPeriodRes::class,
+        OperationalPeriodRes::class,
+        SchedulePeriodDurationRes::class,
+        RequestedFreePeriodRes::class,
+        TeacherBusyRes::class,
+        TeacherRequestedTimeSlotRes::class,
+        TeacherUnavailableRes::class
     ];
 
     public function handle($resolution){

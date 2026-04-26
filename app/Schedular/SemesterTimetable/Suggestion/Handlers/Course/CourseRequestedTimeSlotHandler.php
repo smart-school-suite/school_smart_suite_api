@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Course;
 
+use App\Constant\Action\AppActions;
 use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot as CourseRequestedSlotConstraint;
 use App\Constant\Violation\SemesterTimetable\Course\CourseRequestedSlot as CourseRequestedSlotBlocker;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
@@ -29,11 +30,11 @@ class CourseRequestedTimeSlotHandler implements SuggestionHandler
     {
         return [
             new SuggestionOptionDTO(
-                action: 'remove',
+                action: AppActions::REMOVE,
                 label: 'Remove Course Requested Slot'
             ),
             new SuggestionOptionDTO(
-                action: 'modify',
+                action: AppActions::MODIFY,
                 label: 'Move Requested Slot  to another time',
                 meta: ['field' => 'time']
             )

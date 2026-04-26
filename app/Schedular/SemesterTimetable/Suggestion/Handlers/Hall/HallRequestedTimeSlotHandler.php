@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Hall;
 
+use App\Constant\Action\AppActions;
 use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot as HallRequestedTimeSlotBlocker;
 use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as HallRequestedTimeSlotConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
@@ -29,11 +30,11 @@ class HallRequestedTimeSlotHandler implements SuggestionHandler
     {
         return [
             new SuggestionOptionDTO(
-                action: 'remove',
+                action: AppActions::REMOVE,
                 label: 'Remove Hall Requested Slot'
             ),
             new SuggestionOptionDTO(
-                action: 'modify',
+                action: AppActions::MODIFY,
                 label: 'Move Hall Slot  to another time',
                 meta: ['field' => 'time']
             )

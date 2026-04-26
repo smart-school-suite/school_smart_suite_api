@@ -15,6 +15,14 @@ class BreakPeriodRes implements ResolutionContract
 
     public function resolve($resolution, $params): array
     {
-        throw new \Exception('Not implemented');
+        $pSlot  = $params['preserve_slot'];
+        $pStart = $pSlot['start_time'];
+        $pEnd   = $pSlot['end_time'];
+        $pDay   = strtolower($pSlot['day']);
+        return  [
+            "day" => $pDay,
+            "start_time" => $pStart,
+            "end_time" => $pEnd
+        ];
     }
 }

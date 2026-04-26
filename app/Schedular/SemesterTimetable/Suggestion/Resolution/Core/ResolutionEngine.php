@@ -2,6 +2,8 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Resolution\Core;
 
+use App\Constant\Action\AppActions;
+
 class ResolutionEngine
 {
     protected string $conflict = "conflict";
@@ -10,7 +12,7 @@ class ResolutionEngine
     {
         foreach ($scenarios as $scenario) {
             $params = [
-                "perserve_slot" => $scenario->decision->preserved_slot,
+                "preserve_slot" => $scenario->decision->preserved_slot,
                 "scenario" => $scenario
             ];
             foreach ($scenario->resolutions as $resolution) {
@@ -18,11 +20,11 @@ class ResolutionEngine
                 $resolver = app(ResolutionRegistry::class)->handle($resolution);
                 $solution = $resolver->resolve($resolution, $params);
                 if ($resolution->type === $this->conflict) {
-                    $modOption = collect($resolution->options)->firstWhere("action", "modify");
-                    $modOption->proposals = $solution;
+                    $modOption = collect($resolution->options)->firstWhere("action", AppActions::MODIFY);
+                    $modOption->proposals[] = $solution;
                 }
                 if ($resolution->type === $this->dependency) {
-                    $resolution->options->proposals = $solution;
+                    $resolution->options["proposals"][] = $solution;
                 }
             }
         }

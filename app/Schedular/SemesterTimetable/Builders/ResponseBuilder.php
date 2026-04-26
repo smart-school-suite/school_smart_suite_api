@@ -31,7 +31,10 @@ class ResponseBuilder extends TimetableContext
         ];
         $this->seedSuggestionContext($state, $diagnostics);
         $response->diagnostics = $diagnostics;
-        $response->suggestions = $suggestionEngine->generate($diagnostics["constraints"]["soft"]->toArray() ?? []);
+        $response->suggestions = $suggestionEngine->generate([
+            ...$diagnostics["constraints"]["soft"]->toArray(),
+            ...$diagnostics["constraints"]["hard"]->toArray()
+        ] ?? []);
         return $response;
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 
+use App\Constant\Action\AppActions;
 use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodBlocker;
 use App\Constant\Constraint\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
@@ -28,11 +29,11 @@ class RequestedFreePeriodHandler implements SuggestionHandler
     {
         return [
             new SuggestionOptionDTO(
-                action: 'remove',
+                action: AppActions::REMOVE,
                 label: 'Remove Requested Free Period'
             ),
             new SuggestionOptionDTO(
-                action: 'modify',
+                action: AppActions::MODIFY,
                 label: 'Move Requested Free Period to another time',
                 meta: ['field' => 'time']
             )

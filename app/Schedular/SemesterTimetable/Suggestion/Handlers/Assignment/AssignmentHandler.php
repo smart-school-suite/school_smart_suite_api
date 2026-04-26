@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Assignment;
 
+use App\Constant\Action\AppActions;
 use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment as RequestedAssignmentConstraint;
 use App\Constant\Violation\SemesterTimetable\Assignment\RequestedAssigment as RequestedAssigmentBlocker;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
@@ -29,11 +30,11 @@ class AssignmentHandler implements SuggestionHandler
     {
         return [
             new SuggestionOptionDTO(
-                action: 'remove',
+                action: AppActions::REMOVE,
                 label: 'Remove assignment',
             ),
             new SuggestionOptionDTO(
-                action: 'modify',
+                action: AppActions::MODIFY,
                 label: 'Move assignment to another time',
                 meta: ['field' => 'time']
             )

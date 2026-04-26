@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Schedule;
 
+use App\Constant\Action\AppActions;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationBlocker;
 use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationConstraint;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
@@ -27,7 +28,7 @@ class PeriodDurationHandler implements SuggestionHandler
     {
         return [
             new SuggestionOptionDTO(
-                action: 'modify',
+                action: AppActions::MODIFY,
                 label: 'Modify period duration',
                 meta: ['field' => 'time']
             )

@@ -10,9 +10,7 @@ class ConflictGroupBuilder
         $visited = [];
 
         foreach ($constraints as $A) {
-
             if (isset($visited[$A['id']])) continue;
-
             $group = [$A];
             $visited[$A['id']] = true;
 
