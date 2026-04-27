@@ -1,0 +1,112 @@
+name: Deploy to VPS (Docker)
+
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: "VPS public IP / hostname"
+        required: true
+        type: string
+      user:
+        description: "SSH user (e.g. ubuntu, root)"
+        required: true
+        type: string
+      port:
+        description: "SSH port"
+        required: false
+        default: "22"
+        type: string
+      deploy_path:
+        description: "Remote deploy directory"
+        required: false
+        default: "/opt/school-smart"
+        type: string
+      image_tag:
+        description: "Image tag to deploy (default: git sha)"
+        required: false
+        default: ""
+        type: string
+  push:
+    branches: [devops]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image name + tag
+        id: img
+        shell: bash
+        run: |
+          IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          TAG="${{ inputs.image_tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_SHA}"; fi
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Render docker-compose.yml
+        shell: bash
+        run: |
+          cat > docker-compose.vps.yml <<EOF
+          services:
+            app:
+              image: ${{ steps.img.outputs.image }}:${{ steps.img.outputs.tag }}
+              container_name: school-smart-api
+              restart: unless-stopped
+              ports:
+                - "80:80"
+              env_file:
+                - .env.production
+          EOF
+
+      - name: Upload compose + env to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ inputs.host }}
+          username: ${{ inputs.user }}
+          port: ${{ inputs.port }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.vps.yml"
+          target: "${{ inputs.deploy_path }}/"
+
+      - name: Write env file and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ inputs.host }}
+          username: ${{ inputs.user }}
+          port: ${{ inputs.port }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            DEPLOY_PATH="${{ inputs.deploy_path }}"
+            mkdir -p "$DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
+
+            # Write .env.production from secret (multi-line)
+            if [ -n "${{ secrets.VPS_ENV_PRODUCTION }}" ]; then
+              cat > .env.production <<'EOF'
+            ${{ secrets.VPS_ENV_PRODUCTION }}
+            EOF
+              chmod 600 .env.production
+            fi
+
+            # Login to GHCR (required for private images)
+            if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            fi
+
+            mv docker-compose.vps.yml docker-compose.yml
+
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            docker image prune -f || true
