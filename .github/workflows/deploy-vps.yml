@@ -1,31 +1,9 @@
-name: Deploy to VPS (Docker)
+name: Deploy to VPS
 
 on:
+  push:
+    branches: [devops]
   workflow_dispatch:
-    inputs:
-      host:
-        description: "VPS public IP / hostname"
-        required: true
-        type: string
-      user:
-        description: "SSH user (e.g. ubuntu, root)"
-        required: true
-        type: string
-      port:
-        description: "SSH port"
-        required: false
-        default: "2222"
-        type: string
-      deploy_path:
-        description: "Remote deploy directory"
-        required: false
-        default: "/opt/school-smart"
-        type: string
-      image_tag:
-        description: "Image tag to deploy (default: git sha)"
-        required: false
-        default: ""
-        type: string
 
 permissions:
   contents: read
@@ -36,58 +14,46 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
-      - name: Compute image name + tag
-        id: img
+      - name: Login to GHCR
+        shell: bash
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+      - name: Write environment file
         shell: bash
         run: |
-          IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-          TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ]; then TAG="${GITHUB_SHA}"; fi
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          set -e
+          mkdir -p /opt/school-smart
+          cat > /opt/school-smart/.env <<'EOF'
+          ${{ secrets.VPS_ENV_PRODUCTION }}
+          EOF
+          chmod 600 /opt/school-smart/.env
 
-      - name: Deploy (pull from GHCR on VPS)
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ inputs.host }}
-          username: ${{ inputs.user }}
-          port: ${{ inputs.port }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -e
+      - name: Deploy latest container
+        shell: bash
+        run: |
+          set -e
+          cd /opt/school-smart
 
-            DEPLOY_PATH="${{ inputs.deploy_path }}"
-            IMAGE="${{ steps.img.outputs.image }}"
-            TAG="${{ steps.img.outputs.tag }}"
+          IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${GITHUB_SHA}"
 
-            mkdir -p "$DEPLOY_PATH"
-            cd "$DEPLOY_PATH"
+          docker pull "$IMAGE"
 
-            cat > .env <<'EOF'
-            ${{ secrets.VPS_ENV_PRODUCTION }}
-            EOF
-            chmod 600 .env
+          cat > docker-compose.yml <<EOF
+          services:
+            app:
+              image: $IMAGE
+              container_name: school-smart-app
+              restart: unless-stopped
+              ports:
+                - "80:80"
+              env_file:
+                - .env
+          EOF
 
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-
-            docker pull "${IMAGE}:${TAG}"
-
-            cat > docker-compose.yml <<EOF
-            services:
-              app:
-                image: ${IMAGE}:${TAG}
-                container_name: school-smart-app
-                restart: unless-stopped
-                ports:
-                  - "80:80"
-                env_file:
-                  - .env
-            EOF
-
-            docker compose down || true
-            docker compose up -d
-            docker image prune -af || true
+          docker compose down || true
+          docker compose up -d
+          docker image prune -af || true
