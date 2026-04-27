@@ -14,7 +14,7 @@ on:
       port:
         description: "SSH port"
         required: false
-        default: "22"
+        default: "2222"
         type: string
       deploy_path:
         description: "Remote deploy directory"
@@ -26,6 +26,8 @@ on:
         required: false
         default: ""
         type: string
+  push:
+    branches: [devops]
 
 permissions:
   contents: read
@@ -50,32 +52,7 @@ jobs:
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Render docker-compose.yml
-        shell: bash
-        run: |
-          cat > docker-compose.vps.yml <<EOF
-          services:
-            app:
-              image: ${{ steps.img.outputs.image }}:${{ steps.img.outputs.tag }}
-              container_name: school-smart-api
-              restart: unless-stopped
-              ports:
-                - "80:80"
-              env_file:
-                - .env.production
-          EOF
-
-      - name: Upload compose + env to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ inputs.host }}
-          username: ${{ inputs.user }}
-          port: ${{ inputs.port }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.vps.yml"
-          target: "${{ inputs.deploy_path }}/"
-
-      - name: Write env file and deploy
+      - name: Deploy (pull from GHCR on VPS)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ inputs.host }}
@@ -83,26 +60,36 @@ jobs:
           port: ${{ inputs.port }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -euo pipefail
+            set -e
 
             DEPLOY_PATH="${{ inputs.deploy_path }}"
+            IMAGE="${{ steps.img.outputs.image }}"
+            TAG="${{ steps.img.outputs.tag }}"
+
             mkdir -p "$DEPLOY_PATH"
             cd "$DEPLOY_PATH"
 
-            # Write .env.production from secret (multi-line)
-            cat > .env.production <<'EOF'
+            cat > .env <<'EOF'
             ${{ secrets.VPS_ENV_PRODUCTION }}
             EOF
-            chmod 600 .env.production
+            chmod 600 .env
 
-            # Login to GHCR (required for private images)
-            if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
-              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-            fi
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-            mv docker-compose.vps.yml docker-compose.yml
+            docker pull "${IMAGE}:${TAG}"
 
-            docker compose pull
-            docker compose up -d --remove-orphans
+            cat > docker-compose.yml <<EOF
+            services:
+              app:
+                image: ${IMAGE}:${TAG}
+                container_name: school-smart-app
+                restart: unless-stopped
+                ports:
+                  - "80:80"
+                env_file:
+                  - .env
+            EOF
 
-            docker image prune -f || true
+            docker compose down || true
+            docker compose up -d
+            docker image prune -af || true
