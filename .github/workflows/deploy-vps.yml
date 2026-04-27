@@ -2,6 +2,12 @@ name: Deploy to VPS
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "GHCR image tag to deploy (default: full commit SHA of this run)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -32,11 +38,19 @@ jobs:
 
       - name: Deploy latest container
         shell: bash
+        env:
+          IMAGE_TAG_INPUT: ${{ inputs.image_tag }}
         run: |
           set -e
           cd /opt/school-smart
 
-          IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${GITHUB_SHA}"
+          REPO_LC="$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          if [ -n "$IMAGE_TAG_INPUT" ]; then
+            TAG="$IMAGE_TAG_INPUT"
+          else
+            TAG="${GITHUB_SHA}"
+          fi
+          IMAGE="ghcr.io/${REPO_LC}:${TAG}"
 
           docker pull "$IMAGE"
 
