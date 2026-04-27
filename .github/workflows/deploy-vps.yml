@@ -90,12 +90,10 @@ jobs:
             cd "$DEPLOY_PATH"
 
             # Write .env.production from secret (multi-line)
-            if [ -n "${{ secrets.VPS_ENV_PRODUCTION }}" ]; then
-              cat > .env.production <<'EOF'
+            cat > .env.production <<'EOF'
             ${{ secrets.VPS_ENV_PRODUCTION }}
             EOF
-              chmod 600 .env.production
-            fi
+            chmod 600 .env.production
 
             # Login to GHCR (required for private images)
             if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
