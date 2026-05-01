@@ -11,6 +11,7 @@ use App\Constant\Violation\SemesterTimetable\Schedule\BreakPeriod;
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Normalization\Helpers\Methods;
 use Carbon\Carbon;
 
@@ -25,9 +26,9 @@ class CourseRequestedSlotResolver extends SuggestionContext implements ResolverC
 
     public function supports(string $type): bool
     {
-        return $type === CourseRequestedSlotBlocker::KEY || CourseRequestedSlotConstraint::KEY;
+        return $type === CourseRequestedSlotBlocker::KEY || $type === CourseRequestedSlotConstraint::KEY;
     }
-    public function normalize($scenario)
+    public function normalize(ScenarioDTO $scenario)
     {
         $context          = ConstraintContext::fromPayload(self::$requestPayload);
         $isWithPreference = self::isWithPreference();

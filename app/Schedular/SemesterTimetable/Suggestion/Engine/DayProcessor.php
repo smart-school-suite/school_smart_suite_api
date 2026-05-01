@@ -4,16 +4,30 @@ namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
 class DayProcessor
 {
-    public function process($diagnostic, $day): array
+    public function process(array $diagnostic, string $day): array
     {
-        $constraintMap = app(ConstraintMapBuilder::class)->build($diagnostic);
-        $groupBuilder = app(ConflictGroupBuilder::class)->build($constraintMap);
-        $scenarioBuilder = app(ScenarioBuilder::class)->build($groupBuilder);
-        return [
-            "constraint_map" => $constraintMap,
-            "conflict_groups" => $groupBuilder,
-            "scenarios" => $scenarioBuilder,
-            "day" => $day
-        ];
+        $result = [];
+
+        // Process soft constraints if not empty
+        if (!empty($diagnostic['soft'])) {
+            $softConstraintMap = app(ConstraintMapBuilder::class)->build($diagnostic['soft']);
+            $softGroupBuilder = app(ConflictGroupBuilder::class)->buildSoft($softConstraintMap);
+            $softScenarioBuilder = app(ScenarioBuilder::class)->buildSoft($softGroupBuilder);
+
+            // $result["soft_groups"] = $softGroupBuilder;
+            $result[] = $softScenarioBuilder;
+        }
+
+        // Process hard constraints if not empty
+        if (!empty($diagnostic['hard'])) {
+            $hardConstraintMap = app(ConstraintMapBuilder::class)->build($diagnostic['hard']);
+            $hardGroupBuilder = app(ConflictGroupBuilder::class)->buildHard($hardConstraintMap);
+            $hardScenarioBuilder = app(ScenarioBuilder::class)->buildHard($hardGroupBuilder);
+
+            // $result["hard_groups"] = $hardGroupBuilder;
+            $result[] = $hardScenarioBuilder;
+        }
+
+        return array_filter($result);
     }
 }

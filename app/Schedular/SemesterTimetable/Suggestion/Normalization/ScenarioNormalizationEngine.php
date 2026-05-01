@@ -18,6 +18,6 @@ class ScenarioNormalizationEngine extends SuggestionContext
             $resolver->normalize($scenario);
         }
 
-        app(ResolutionEngine::class)->resolve($scenarios);
+       app(ResolutionEngine::class)->resolve($scenarios);
     }
 }

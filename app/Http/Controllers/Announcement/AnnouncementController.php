@@ -36,13 +36,13 @@ class AnnouncementController extends Controller
         $this->updateDraftAnnouncementService->updateDraftAnnouncement($currentSchool, $authenticatedUser, $request->validated());
         return ApiResponseService::success("Announcement Draft Updated Successfully", null, null, 200);
     }
-    public function getAnnouncementEngagementOverview(Request $request, $announcementId)
+    public function getAnnouncementEngagementOverview(Request $request, string $announcementId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $engagementStats = $this->announcementService->getAnnouncementEngagementOverview($currentSchool, $announcementId);
         return ApiResponseService::success("Annoucement Engagement Stats Fetched Successfully", $engagementStats, null, 200);
     }
-    public function getAnnouncementReadUnreadList(Request $request, $announcementId)
+    public function getAnnouncementReadUnreadList(Request $request, string $announcementId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $list = $this->announcementService->getAnnouncementReadUnreadList($currentSchool, $announcementId);
@@ -55,7 +55,7 @@ class AnnouncementController extends Controller
         $this->createAnnouncementService->createAnnouncement($currentSchool,  $authenticatedUser, $request->validated());
         return ApiResponseService::success("Announcement Created Successfully", null, null, 200);
     }
-    public function getAnnouncementDetails(Request $request, $announcementId)
+    public function getAnnouncementDetails(Request $request, string $announcementId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $announcementDetails = $this->announcementService->getAnnouncementDetails($currentSchool, $announcementId);
@@ -68,14 +68,14 @@ class AnnouncementController extends Controller
         $updateAnnouncementContent = $this->announcementService->updateAnnouncementContent($request->validated(), $currentSchool, $announcementId, $authenticatedUser['authUser']);
         return ApiResponseService::success("Announcement Content Updated Successfully", $updateAnnouncementContent, null, 200);
     }
-    public function deleteAnnouncement(Request $request, $announcementId)
+    public function deleteAnnouncement(Request $request, string $announcementId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authenticatedUser = $this->getAuthenticatedUser();
         $deleteAnnouncement = $this->announcementService->deleteAnnouncement($announcementId, $currentSchool, $authenticatedUser['authUser']);
         return ApiResponseService::success("Announcement Deleted Successfully", $deleteAnnouncement, null, 200);
     }
-    public function getAnnouncementByState(Request $request, $status)
+    public function getAnnouncementByState(Request $request, string $status)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getAnnouncement = $this->announcementService->getAnnoucementsByState($currentSchool, $status);
@@ -90,13 +90,13 @@ class AnnouncementController extends Controller
         return ApiResponseService::success("Student Announcements Fetched Successfully", $announcements, null, 200);
     }
 
-    public function getAllStudentAnnouncementLabelId(Request $request, $labelId){
+    public function getAllStudentAnnouncementLabelId(Request $request, string $labelId){
         $currentSchool = $request->attributes->get('currentSchool');
         $authenticatedUser = $this->getAuthenticatedUser();
         $announcements = $this->announcementService->getStudentAnnouncementLabelId($currentSchool, $authenticatedUser['authUser'], $labelId);
         return ApiResponseService::success("Student Announcements Fetched Successfully", $announcements, null, 200);
     }
-    private function getAuthenticatedUser()
+    private function getAuthenticatedUser(): array
     {
         $user = Auth::user();
 

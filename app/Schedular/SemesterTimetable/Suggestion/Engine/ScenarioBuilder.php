@@ -2,10 +2,10 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
-use App\Constant\Constraint\SemesterTimetable\Builder\ConstraintBuilder;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\DecisionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\ResolutionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Registry\HandlerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\Engine\DependencyExtractor;
 use App\Schedular\SemesterTimetable\Suggestion\Normalization\ScenarioNormalizationEngine;
@@ -21,7 +21,52 @@ class ScenarioBuilder
         $this->dependencyExtractor = new DependencyExtractor();
     }
 
-    public function build(array $groups): array
+    public function buildHard(array $groups): array
+    {
+        $allScenarios = [];
+
+        foreach ($groups as $group) {
+
+            foreach ($group as $kept) {
+                $resolutions = [];
+
+                foreach ($group as $node) {
+                    if ($node['id'] === $kept['id']) continue;
+
+                    $h = $this->registry->get($node['type']);
+                    if (!$h) continue;
+
+                    $options = $h->conflictOptions($node);
+                    $resolutions[] = new ResolutionDTO(
+                        type: 'conflict',
+                        target_id: $node['id'],
+                        target_type: $node['type'] ?? 'entity',
+                        options: $options,
+                        meta: [
+                            "constraint_failed" => $node
+                        ]
+                    );
+                }
+
+                // Create the Scenario for this "Keep" decision
+                $allScenarios[] = new ScenarioDTO(
+                    id: uniqid('scenario_'),
+                    decision: new DecisionDTO(
+                        type: 'keep',
+                        target_id: $kept['id'],
+                        target_type: $kept['type'] ?? 'entity',
+                        target_details: $kept,
+                        original_slot: $kept
+                    ),
+                    resolutions: $resolutions
+                );
+            }
+        }
+        SuggestionContext::setScenarioMode(true); // processing hard constraints only
+        app(ScenarioNormalizationEngine::class)->normalize($allScenarios);
+        return $allScenarios;
+    }
+    public function buildSoft(array $groups): array
     {
         $scenarios = [];
 
@@ -38,11 +83,10 @@ class ScenarioBuilder
                 $this->buildConflictGroup($group)
             );
         }
-
+        SuggestionContext::setScenarioMode(false); // processing soft constraints only
         app(ScenarioNormalizationEngine::class)->normalize($scenarios);
         return $scenarios;
     }
-
     protected function buildStandalone(array $constraint): ?ScenarioDTO
     {
         $handler = $this->registry->get($constraint['type']);
@@ -66,7 +110,7 @@ class ScenarioBuilder
                     "proposals" => $depOption->proposals ?? []
                 ],
                 [
-                    "blocker" => $depOption->blocker
+                    ...$depOption->blocker->entity
                 ]
             );
         }
@@ -82,7 +126,6 @@ class ScenarioBuilder
             resolutions: $resolutions
         );
     }
-
     protected function buildConflictGroup(array $group): array
     {
         $scenarios = [];
@@ -110,7 +153,8 @@ class ScenarioBuilder
                         $node['type'],
                         $options,
                         [
-                            "blocker" => $node
+                            ...$node["details"],
+                            "type" => $node['type']
                         ]
                     );
                 }
@@ -132,7 +176,7 @@ class ScenarioBuilder
                         "proposals" => $depOption->proposals ?? []
                     ],
                     [
-                        "blocker" => $depOption->blocker
+                        ...$depOption->blocker->entity
                     ]
                 );
             }
@@ -150,10 +194,5 @@ class ScenarioBuilder
         }
 
         return $scenarios;
-    }
-
-    protected function getConstraintType(string $constraintType): string
-    {
-        return  app(ConstraintBuilder::class)->getConstraintType($constraintType);
     }
 }

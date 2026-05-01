@@ -53,7 +53,7 @@ class GenerateSemesterTimetableRequest extends FormRequest
             "course_requested_time_slots" => ["sometimes", "nullable", "array"],
             "course_requested_time_slots.*.course_id" => ["required", "string", "exists:courses,id"],
             "course_requested_time_slots.*.day" => [
-                "nullable",
+                "required_with:course_requested_time_slots.*.day",
                 "string",
                 "in:monday,tuesday,wednesday,thursday,friday,saturday,sunday"
             ],

@@ -11,7 +11,7 @@ class SchedulePeriodDurationRes extends SuggestionContext implements ResolutionC
 {
     public function supports(string $type): bool
     {
-        return $type === PeriodDurationViolation::KEY || PeriodDurationConstraint::KEY;
+        return $type === PeriodDurationViolation::KEY || $type === PeriodDurationConstraint::KEY;
     }
 
     public function resolve($resolution, $params): array

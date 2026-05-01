@@ -25,22 +25,23 @@ class RequestedFreePeriodHandler implements SuggestionHandler
     {
         return ["keep", "modify", "remove"];
     }
-    public function conflictOptions($constraint): array
+    public function conflictOptions(array $constraint): array
     {
         return [
             new SuggestionOptionDTO(
                 action: AppActions::REMOVE,
-                label: 'Remove Requested Free Period'
+                label: 'Remove Requested Free Period',
+                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
             ),
             new SuggestionOptionDTO(
                 action: AppActions::MODIFY,
                 label: 'Move Requested Free Period to another time',
-                meta: ['field' => 'time']
+                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
             )
         ];
     }
 
-    public function dependencyOptions($constraint, array $blockers): array
+    public function dependencyOptions(array $constraint, array $blockers): array
     {
         $resolveChanges = app(BlockerRegistry::class)->generateBlockerSuggestions($blockers);
         return $resolveChanges;

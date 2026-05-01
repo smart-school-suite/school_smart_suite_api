@@ -24,22 +24,23 @@ class TeacherRequestedTimeSlotHandler implements SuggestionHandler
         return ["keep", "modify", "remove"];
     }
 
-    public function conflictOptions($constraint): array
+    public function conflictOptions(array $constraint): array
     {
         return [
             new SuggestionOptionDTO(
                 action: 'remove',
-                label: 'Remove Teacher Requested Slot'
+                label: 'Remove Teacher Requested Slot',
+                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
             ),
             new SuggestionOptionDTO(
                 action: 'modify',
                 label: 'Move Teacher Requested Slot to another time',
-                meta: ['field' => 'time']
+                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
             )
         ];
     }
 
-    public function dependencyOptions($constraint, array $blockers): array
+    public function dependencyOptions(array $constraint, array $blockers): array
     {
         $resolveChanges = app(BlockerRegistry::class)->generateBlockerSuggestions($blockers);
         return $resolveChanges;

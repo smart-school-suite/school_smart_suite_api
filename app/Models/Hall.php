@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Models\Course\JointCourseSlot;
+use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Hall extends Model
@@ -24,13 +24,17 @@ class Hall extends Model
         'assignment_status'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'capacity' => 'integer'
     ];
     public $keyType = 'string';
     public $table = 'halls';
     public $incrementing = false;
 
+    public function examSessionHall(): HasMany
+    {
+        return $this->hasMany(ExamSessionHall::class);
+    }
     public function jointCourseSlot(): HasMany
     {
         return $this->hasMany(JointCourseSlot::class);
@@ -39,10 +43,7 @@ class Hall extends Model
     {
         return $this->hasMany(SpecialtyHall::class);
     }
-    public function schoolBranch(): BelongsTo
-    {
-        return $this->belongsTo(SchoolBranches::class, 'school_branch_id');
-    }
+
     public function semesterTimetableSlot(): HasMany
     {
         return $this->hasMany(SemesterTimetableSlot::class);

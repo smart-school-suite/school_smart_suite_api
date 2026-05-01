@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Resolution\Core;
 
+use App\Schedular\SemesterTimetable\Suggestion\DTO\ResolutionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Assignment\RequestedAssignmentRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Course\CourseRequestedTimeSlotRes;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Hall\HallBusyRes;
@@ -19,6 +20,7 @@ class ResolutionRegistry
     protected array $map = [
         RequestedAssignmentRes::class,
         CourseRequestedTimeSlotRes::class,
+        TeacherRequestedTimeSlotRes::class,
         HallBusyRes::class,
         HallRequestedTimeSlotRes::class,
         BreakPeriodRes::class,
@@ -26,11 +28,10 @@ class ResolutionRegistry
         SchedulePeriodDurationRes::class,
         RequestedFreePeriodRes::class,
         TeacherBusyRes::class,
-        TeacherRequestedTimeSlotRes::class,
         TeacherUnavailableRes::class
     ];
 
-    public function handle($resolution){
+    public function handle(ResolutionDTO $resolution){
          foreach($this->map as $resolver){
              $resolver = new $resolver();
              if($resolver->supports($resolution->target_type)){

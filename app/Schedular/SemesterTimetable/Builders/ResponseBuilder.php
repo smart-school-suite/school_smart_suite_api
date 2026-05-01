@@ -32,13 +32,14 @@ class ResponseBuilder extends TimetableContext
         $this->seedSuggestionContext($state, $diagnostics);
         $response->diagnostics = $diagnostics;
         $response->suggestions = $suggestionEngine->generate([
-            ...$diagnostics["constraints"]["soft"]->toArray(),
-            ...$diagnostics["constraints"]["hard"]->toArray()
+            "hard" => $diagnostics["constraints"]["hard"]->toArray() ?? [],
+            "soft" => $diagnostics["constraints"]["soft"]->toArray() ?? []
         ] ?? []);
         return $response;
     }
 
-    private function seedSuggestionContext($state, $diagnostics){
+    private function seedSuggestionContext(State $state, array $diagnostics)
+    {
         SuggestionContext::setTimetableGrid($state->grid);
         SuggestionContext::setDiagnostics($diagnostics["constraints"]);
         SuggestionContext::setPreferenceMode(self::isWithPreference());

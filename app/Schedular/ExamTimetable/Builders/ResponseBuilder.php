@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Schedular\SemesterTimetable\Suggestion\State;
+namespace App\Schedular\ExamTimetable\Builders;
 
-class ChangeState
+class ResponseBuilder
 {
     /**
      * Create a new class instance.

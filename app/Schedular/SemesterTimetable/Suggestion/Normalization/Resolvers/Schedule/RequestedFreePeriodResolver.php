@@ -10,6 +10,7 @@ use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodBlocker;
 use App\Constant\Constraint\SemesterTimetable\Schedule\RequestedFreePeriod as RequestedFreePeriodConstraint;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Normalization\Helpers\Methods;
 use Carbon\Carbon;
 
@@ -24,10 +25,10 @@ class RequestedFreePeriodResolver extends SuggestionContext implements ResolverC
 
     public function supports(string $type): bool
     {
-        return $type === RequestedFreePeriodBlocker::KEY || RequestedFreePeriodConstraint::KEY;
+        return $type === RequestedFreePeriodBlocker::KEY ||  $type === RequestedFreePeriodConstraint::KEY;
     }
 
-    public function normalize($scenario)
+    public function normalize(ScenarioDTO $scenario)
     {
         $intent      = $scenario->decision->target_details;
         $day         = strtolower($intent['day']);

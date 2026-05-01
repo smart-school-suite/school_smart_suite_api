@@ -2,7 +2,8 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Resolution\Hall;
 
-use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow;
+use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as HallRequestedTimeWindowConstraint;
+use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot as HallRequestedTimeWindowBlocker;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
@@ -13,7 +14,7 @@ class HallRequestedTimeSlotRes extends SuggestionContext implements ResolutionCo
 {
     public function supports(string $type): bool
     {
-        return $type === HallRequestedTimeWindow::KEY;
+        return $type === HallRequestedTimeWindowConstraint::KEY || $type === HallRequestedTimeWindowBlocker::KEY;
     }
 
     public function resolve($resolution, $params): array
@@ -23,7 +24,7 @@ class HallRequestedTimeSlotRes extends SuggestionContext implements ResolutionCo
         $pEnd   = $pSlot['end_time'];
         $pDay   = strtolower($pSlot['day']);
 
-        $intentDetails = $resolution->meta['blocker']["details"];
+        $intentDetails = $resolution->meta;
         $iDay          = strtolower($intentDetails['day']);
         $iStartTime    = $intentDetails['start_time'];
 

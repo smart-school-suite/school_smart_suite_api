@@ -7,6 +7,7 @@ use App\Models\Course\CourseType;
 use App\Models\Course\JointCourseSlot;
 use App\Models\Course\SchoolCourseType;
 use App\Models\Course\SemesterJointCourse;
+use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -115,5 +116,10 @@ class Courses extends Model
     public function semesterTimetableSlot(): HasMany
     {
         return $this->hasMany(SemesterTimetableSlot::class);
+    }
+
+    public function examTimetableSlot(): HasMany
+    {
+        return $this->hasMany(ExamTimetableSlot::class);
     }
 }

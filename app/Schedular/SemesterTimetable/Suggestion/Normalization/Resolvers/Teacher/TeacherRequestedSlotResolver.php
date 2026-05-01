@@ -11,6 +11,7 @@ use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherRequestedTimeSlot as TeacherRequestedTimeSlotBlocker;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Normalization\Helpers\Methods;
 use Carbon\Carbon;
 
@@ -27,7 +28,7 @@ class TeacherRequestedSlotResolver extends SuggestionContext implements Resolver
     {
         return $type === TeacherRequestedTimeSlotBlocker::KEY || TeacherRequestedTimeSlotConstraint::KEY;
     }
-    public function normalize($scenario)
+    public function normalize(ScenarioDTO $scenario)
     {
         $context          = ConstraintContext::fromPayload(self::$requestPayload);
         $isWithPreference = self::isWithPreference();

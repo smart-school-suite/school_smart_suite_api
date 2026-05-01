@@ -26,9 +26,8 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
         $pEnd   = $pSlot['end_time'];
         $pDay   = strtolower($pSlot['day']);
 
-        $intentDetails = $resolution->meta['blocker']->details;
+        $intentDetails = $resolution->meta;
         $iDay          = strtolower($intentDetails['day']);
-        Log::info("Intent Details",  [$intentDetails]);
         $iStartTime    = $intentDetails['start_time'];
 
         $intentStart = Carbon::createFromFormat('H:i', $iStartTime);

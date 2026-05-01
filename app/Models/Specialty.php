@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Course\CourseSpecialty;
-use App\Models\Course\JointCourse;
+use App\Models\ExamTimetable\ExamSessionHall;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +28,7 @@ class Specialty extends Model
         'num_assigned_hall'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'school_fee' => 'decimal:2',
         'registration_fee' => 'decimal:2',
         'num_assigned_hall' => 'integer'
@@ -37,6 +37,10 @@ class Specialty extends Model
     public $table = 'specialties';
     public $incrementing = 'false';
 
+    public function examSessionHall(): HasMany
+    {
+        return $this->hasMany(ExamSessionHall::class);
+    }
     public function courseSpecialty(): HasMany
     {
         return $this->hasMany(CourseSpecialty::class, 'specialty_id');

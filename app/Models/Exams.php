@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\ExamTimetable\ExamTimetableSlot;
+use App\Models\ExamTimetable\ExamTimetableVersion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,7 +35,7 @@ class Exams extends Model
         'result_published'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'weighted_mark' => 'decimal:2',
@@ -45,7 +47,8 @@ class Exams extends Model
     public $incrementing = false;
     public $table = 'exams';
 
-    public function schoolYear(): BelongsTo {
+    public function schoolYear(): BelongsTo
+    {
         return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
     }
     public function resitExamRef(): HasMany
@@ -128,6 +131,11 @@ class Exams extends Model
         return $this->hasMany(Examtimetable::class, 'exam_id');
     }
 
+    public function examTimetableVersion(): HasMany
+    {
+        return $this->hasMany(ExamTimetableVersion::class, 'exam_id');
+    }
+
     public function studentresit(): HasMany
     {
         return $this->hasMany(Studentresit::class);
@@ -135,5 +143,10 @@ class Exams extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(Educationlevels::class);
+    }
+
+    public function examTimetableSlots(): HasMany
+    {
+        return $this->hasMany(ExamTimetableSlot::class);
     }
 }

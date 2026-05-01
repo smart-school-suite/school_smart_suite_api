@@ -4,7 +4,7 @@ namespace App\Constant\Constraint\ExamTimetable\Course;
 
 class CourseTimeRequest
 {
-    public const KEY = "course_time_requests";
+    public const KEY = "course_time_request";
     public const TITLE = "Course Time Request";
     // public const HANDLER = \App\Constant\Constraint\SemesterTimetable\Course\CourseDailyFrequency::class;
     // public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Course\CourseDailyFrequencyInterpreter::class;

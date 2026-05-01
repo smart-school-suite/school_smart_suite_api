@@ -11,18 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('exam_timetable_draft', function (Blueprint $table) {
-            $table->string('exam_id')->index();
-            $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-        });
 
         Schema::table('exam_timetable_versions', function (Blueprint $table) {
-            $table->string('exam_timetable_draft_id');
-            $table->foreign('exam_timetable_draft_id')->references('id')->on('exam_timetable_draft');
-            $table->string('parent_version_id');
-            $table->foreign('parent_version_id')->references('id')->on('exam_timetable_versions');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('school_branch_id');
@@ -32,14 +22,8 @@ return new class extends Migration
         Schema::table('exam_timetable_slots', function (Blueprint $table) {
             $table->string('course_id');
             $table->foreign('course_id')->references('id')->on('courses');
-            $table->string('exam_timetable_version_id');
-            $table->foreign('exam_timetable_version_id')->references('id')->on('exam_timetable_versions');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batches');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels');
+            $table->string('version_id');
+            $table->foreign('version_id')->references('id')->on('exam_timetable_versions');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('school_branch_id');
@@ -47,19 +31,44 @@ return new class extends Migration
         });
 
         Schema::table('active_exam_timetable', function (Blueprint $table) {
-            $table->string('exam_timetable_version_id');
-            $table->foreign('exam_timetable_version_id')->references('id')->on('exam_timetable_versions');
+            $table->string('version_id');
+            $table->foreign('version_id')->references('id')->on('exam_timetable_versions');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
-        Schema::table('exam_invigilators', function (Blueprint $table) {
-            $table->string('school_branch_id');
+        Schema::table('exam_invigs', function (Blueprint $table) {
+            $table->string('school_branch_id', 64)->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
+            $table->string('invigilator_id');
+            $table->foreign('invigilator_id')->references('id')->on('invigilators');
+        });
+
+        Schema::table('invigilators', function (Blueprint $table) {
+            $table->string('school_branch_id', 64)->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('exam_session_halls', function (Blueprint $table) {
+            $table->string('exam_slot_id', 64);
+            $table->foreign('exam_slot_id')->references('id')->on('exam_timetable_slots');
+            $table->string('specialty_id', 64);
+            $table->foreign('specialty_id')->references('id')->on('specialties');
+            $table->string('hall_id', 64);
+            $table->foreign('hall_id')->references('id')->on('halls');
+            $table->string('school_branch_id', 64)->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('exam_session_invigs', function (Blueprint $table) {
+            $table->string('exam_slot_id', 64);
+            $table->foreign('exam_slot_id')->references('id')->on('exam_timetable_slots');
+            $table->string('invigilator_id');
+            $table->foreign('invigilator_id')->references('id')->on('exam_invigs');
         });
     }
 
@@ -68,8 +77,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('exam_invigilators')) {
-            Schema::table('exam_invigilators', function (Blueprint $table) {
+        if (Schema::hasTable('exam_invigs')) {
+            Schema::table('exam_invigs', function (Blueprint $table) {
                 $table->dropForeign(['exam_id']);
                 $table->dropForeign(['school_branch_id']);
             });
@@ -77,7 +86,7 @@ return new class extends Migration
 
         if (Schema::hasTable('active_exam_timetable')) {
             Schema::table('active_exam_timetable', function (Blueprint $table) {
-                $table->dropForeign(['exam_timetable_version_id']);
+                $table->dropForeign(['version_id']);
                 $table->dropForeign(['exam_id']);
                 $table->dropForeign(['school_branch_id']);
             });
@@ -86,10 +95,7 @@ return new class extends Migration
         if (Schema::hasTable('exam_timetable_slots')) {
             Schema::table('exam_timetable_slots', function (Blueprint $table) {
                 $table->dropForeign(['course_id']);
-                $table->dropForeign(['exam_timetable_version_id']);
-                $table->dropForeign(['specialty_id']);
-                $table->dropForeign(['student_batch_id']);
-                $table->dropForeign(['level_id']);
+                $table->dropForeign(['version_id']);
                 $table->dropForeign(['exam_id']);
                 $table->dropForeign(['school_branch_id']);
             });
@@ -97,17 +103,35 @@ return new class extends Migration
 
         if (Schema::hasTable('exam_timetable_versions')) {
             Schema::table('exam_timetable_versions', function (Blueprint $table) {
-                $table->dropForeign(['exam_timetable_draft_id']);
-                $table->dropForeign(['parent_version_id']);
+                $table->dropForeign(['version_id']);
                 $table->dropForeign(['exam_id']);
                 $table->dropForeign(['school_branch_id']);
             });
         }
 
-        if (Schema::hasTable('exam_timetable_draft')) {
-            Schema::table('exam_timetable_draft', function (Blueprint $table) {
-                $table->dropForeign(['exam_id']);
+        if (Schema::hasTable('exam_invigs')) {
+            Schema::table('exam_invigs', function (Blueprint $table) {
                 $table->dropForeign(['school_branch_id']);
+                $table->dropForeign(['exam_id']);
+                // Optionally drop the columns if they were created in this migration
+                // $table->dropColumn(['school_branch_id', 'exam_id']);
+            });
+        }
+
+        if (Schema::hasTable('exam_session_halls')) {
+            Schema::table('exam_session_halls', function (Blueprint $table) {
+                $table->dropForeign(['exam_slot_id']);
+                $table->dropForeign(['specialty_id']);
+                $table->dropForeign(['hall_id']);
+                $table->dropForeign(['school_branch_id']);
+                // $table->dropColumn(['exam_slot_id', 'candidate', 'specialty_id', 'hall_id', 'school_branch_id']);
+            });
+        }
+
+        if (Schema::hasTable('exam_session_invigs')) {
+            Schema::table('exam_session_invigs', function (Blueprint $table) {
+                $table->dropForeign(['exam_slot_id']);
+                // $table->dropColumn(['exam_slot_id']);
             });
         }
     }

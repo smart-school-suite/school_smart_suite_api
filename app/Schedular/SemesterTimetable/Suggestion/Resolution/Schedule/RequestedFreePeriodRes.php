@@ -23,7 +23,7 @@ class RequestedFreePeriodRes extends SuggestionContext implements ResolutionCont
         $pEnd   = $pSlot['end_time'];
         $pDay   = strtolower($pSlot['day']);
 
-        $intentDetails = $resolution->meta['blocker']["details"];
+        $intentDetails = $resolution->meta;
         $iStartTime    = $intentDetails['start_time'];
         $intentStart   = Carbon::createFromFormat('H:i', $iStartTime);
 

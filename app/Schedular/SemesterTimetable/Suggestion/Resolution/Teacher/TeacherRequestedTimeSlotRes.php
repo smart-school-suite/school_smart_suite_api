@@ -10,11 +10,13 @@ use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+
 class TeacherRequestedTimeSlotRes extends SuggestionContext implements ResolutionContract
 {
     public function supports(string $type): bool
     {
-        return $type === TeacherRequestedTimeSlotConstraint::KEY || TeacherRequestedTimeSlotViolation::KEY ;
+        return $type === TeacherRequestedTimeSlotConstraint::KEY || $type === TeacherRequestedTimeSlotViolation::KEY;
     }
 
     public function resolve($resolution, $params): array
@@ -24,11 +26,11 @@ class TeacherRequestedTimeSlotRes extends SuggestionContext implements Resolutio
         $pEnd   = $pSlot['end_time'];
         $pDay   = strtolower($pSlot['day']);
 
-        $intentDetails = $resolution->meta['blocker']["details"];
+        $intentDetails = $resolution->meta;
         $iDay          = strtolower($intentDetails['day']);
         $iStartTime    = $intentDetails['start_time'];
 
-        $intentStart = Carbon::createFromFormat('H:i', $iStartTime);
+        $intentStart = Carbon::parse($iStartTime);
 
         $context         = ConstraintContext::fromPayload(self::$requestPayload);
         $isWithPreference = self::isWithPreference();
@@ -104,6 +106,7 @@ class TeacherRequestedTimeSlotRes extends SuggestionContext implements Resolutio
                 ->diffInMinutes($intentStart, absolute: true)
         )->values();
 
+        Log::info("Teacher Requested Time Slot Values:", $enriched->toArray());
         return $ranked->all();
     }
 
