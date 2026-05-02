@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Course\JointCourseSlot;
+use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,11 @@ class Hall extends Model
     public $keyType = 'string';
     public $table = 'halls';
     public $incrementing = false;
+
+    public function examJcSessionHall(): HasMany
+    {
+        return $this->hasMany(ExamJCSessionHall::class);
+    }
 
     public function examSessionHall(): HasMany
     {

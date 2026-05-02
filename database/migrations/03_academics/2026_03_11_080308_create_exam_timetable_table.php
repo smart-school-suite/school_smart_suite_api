@@ -51,6 +51,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->timestamps();
         });
+
+
     }
 
     public function down(): void

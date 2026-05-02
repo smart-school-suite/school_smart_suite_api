@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\ExamJointCourse\ExamJointCourseRef;
 use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Models\ExamTimetable\ExamTimetableVersion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -47,6 +48,10 @@ class Exams extends Model
     public $incrementing = false;
     public $table = 'exams';
 
+    public function examJcRef(): HasMany
+    {
+        return $this->hasMany(ExamJointCourseRef::class);
+    }
     public function schoolYear(): BelongsTo
     {
         return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');

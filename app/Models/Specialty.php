@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Course\CourseSpecialty;
+use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,6 +38,10 @@ class Specialty extends Model
     public $table = 'specialties';
     public $incrementing = 'false';
 
+    public function examJcSessionHall(): HasMany
+    {
+        return $this->hasMany(ExamJCSessionHall::class);
+    }
     public function examSessionHall(): HasMany
     {
         return $this->hasMany(ExamSessionHall::class);

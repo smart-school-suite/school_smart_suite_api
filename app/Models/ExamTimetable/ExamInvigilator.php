@@ -2,6 +2,7 @@
 
 namespace App\Models\ExamTimetable;
 
+use App\Models\ExamJointCourse\ExamJCSessionInvig;
 use App\Models\Exams;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,10 @@ class ExamInvigilator extends Model
     public $incrementing = false;
     public $keyType = 'string';
 
+    public function examJcSessionInvig(): HasMany
+    {
+        return $this->hasMany(ExamJCSessionInvig::class);
+    }
     public function invigilator(): BelongsTo
     {
         return $this->belongsTo(Invigilator::class, 'invigilator_id');

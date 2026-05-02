@@ -7,6 +7,7 @@ use App\Models\Course\CourseType;
 use App\Models\Course\JointCourseSlot;
 use App\Models\Course\SchoolCourseType;
 use App\Models\Course\SemesterJointCourse;
+use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Traits\GeneratesUuid;
@@ -36,6 +37,10 @@ class Courses extends Model
     public $table = 'courses';
     public $incrementing = false;
 
+    public function examJointCourse(): HasMany
+    {
+        return $this->hasMany(ExamJointCourse::class);
+    }
     public function semesterJointCourse(): HasMany
     {
         return $this->hasMany(SemesterJointCourse::class);

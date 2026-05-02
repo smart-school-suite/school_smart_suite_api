@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use App\Models\Course\SemesterJointCourse;
+use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\Studentresit;
 use App\Traits\GeneratesUuid;
@@ -28,6 +29,10 @@ class Semester extends Model
     public $incrementing = 'false';
     public $table = 'semesters';
 
+    public function examJointCourse(): HasMany
+    {
+        return $this->hasMany(ExamJointCourse::class);
+    }
     public function semesterJointCourse(): HasMany
     {
         return $this->hasMany(SemesterJointCourse::class, 'semester_id');
