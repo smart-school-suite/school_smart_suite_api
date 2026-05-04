@@ -10,7 +10,7 @@ use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class RequestedAssignmentRes extends SuggestionContext implements ResolutionContract
 {
@@ -19,7 +19,7 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
         return $type === RequestedAssignmentConstraint::KEY || $type === RequestedAssignmentBlocker::KEY;
     }
 
-    public function resolve($resolution, $params): array
+    public function resolve(object $resolution, array $params): array
     {
         $pSlot  = $params['preserve_slot'];
         $pStart = $pSlot['start_time'];
@@ -44,10 +44,11 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
         // ── Build candidate slots ─────────────────────────────────────────
         // All regular slots on the preserve day excluding the preserved slot
         $candidates = collect(self::getTimetableGrid())
-            ->filter(fn($slot) =>
+            ->filter(
+                fn($slot) =>
                 $slot->type  === GridSlotDTO::TYPE_REGULAR &&
-                $slot->day   === $pDay &&
-                !($slot->start_time === $pStart && $slot->end_time === $pEnd)
+                    $slot->day   === $pDay &&
+                    !($slot->start_time === $pStart && $slot->end_time === $pEnd)
             )
             ->map(fn($slot) => [
                 'day'        => $slot->day,
@@ -58,19 +59,30 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
         // ── Enrich each candidate with available teachers and halls ───────
         $enriched = $candidates
             ->map(function ($slot) use (
-                $teachers, $tBusy, $tPreferred,
-                $halls, $hallBusy, $isWithPreference
+                $teachers,
+                $tBusy,
+                $tPreferred,
+                $halls,
+                $hallBusy,
+                $isWithPreference
             ) {
                 $start = Carbon::createFromFormat('H:i', $slot['start_time']);
                 $end   = Carbon::createFromFormat('H:i', $slot['end_time']);
 
                 $availableTeachers = $this->availableTeachers(
-                    $teachers, $tBusy, $tPreferred,
-                    $start, $end, $isWithPreference
+                    $teachers,
+                    $tBusy,
+                    $tPreferred,
+                    $start,
+                    $end,
+                    $isWithPreference
                 );
 
                 $availableHalls = $this->availableHalls(
-                    $halls, $hallBusy, $start, $end
+                    $halls,
+                    $hallBusy,
+                    $start,
+                    $end
                 );
 
                 // slot only qualifies if it has at least one teacher and one hall
@@ -79,6 +91,7 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
                 }
 
                 return [
+                    "id" => Str::uuid()->toString(),
                     ...$slot,
                     'available_teachers' => $availableTeachers->values()->all(),
                     'available_halls'    => $availableHalls->values()->all(),
@@ -88,7 +101,8 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
             ->values();
 
         // ── Rank by proximity to user intent start time ───────────────────
-        $ranked = $enriched->sortBy(fn($slot) =>
+        $ranked = $enriched->sortBy(
+            fn($slot) =>
             Carbon::createFromFormat('H:i', $slot['start_time'])
                 ->diffInMinutes($intentStart, absolute: true)
         )->values();
@@ -113,9 +127,10 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
                 // must not be busy at this slot
                 $isBusy = $tBusy
                     ->filter(fn($b) => $b['teacher_id'] === $teacherId)
-                    ->some(fn($b) =>
+                    ->some(
+                        fn($b) =>
                         $start->lessThan(Carbon::createFromFormat('H:i', $b['end_time'])) &&
-                        $end->greaterThan(Carbon::createFromFormat('H:i', $b['start_time']))
+                            $end->greaterThan(Carbon::createFromFormat('H:i', $b['start_time']))
                     );
 
                 if ($isBusy) {
@@ -133,15 +148,17 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
                     return true; // no preference defined → always available
                 }
 
-                return $prefs->some(fn($pref) =>
+                return $prefs->some(
+                    fn($pref) =>
                     $start->greaterThanOrEqualTo(Carbon::createFromFormat('H:i', $pref['start_time'])) &&
-                    $end->lessThanOrEqualTo(Carbon::createFromFormat('H:i', $pref['end_time']))
+                        $end->lessThanOrEqualTo(Carbon::createFromFormat('H:i', $pref['end_time']))
                 );
             })
             ->map(function ($teacher) use ($tBusy) {
                 $busyMinutes = $tBusy
                     ->filter(fn($b) => $b['teacher_id'] === $teacher['teacher_id'])
-                    ->sum(fn($b) =>
+                    ->sum(
+                        fn($b) =>
                         Carbon::createFromFormat('H:i', $b['start_time'])
                             ->diffInMinutes(Carbon::createFromFormat('H:i', $b['end_time']))
                     );
@@ -164,9 +181,10 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
             ->filter(function ($hall) use ($hallBusy, $start, $end) {
                 $isBusy = $hallBusy
                     ->filter(fn($b) => $b['hall_id'] === $hall['hall_id'])
-                    ->some(fn($b) =>
+                    ->some(
+                        fn($b) =>
                         $start->lessThan(Carbon::createFromFormat('H:i', $b['end_time'])) &&
-                        $end->greaterThan(Carbon::createFromFormat('H:i', $b['start_time']))
+                            $end->greaterThan(Carbon::createFromFormat('H:i', $b['start_time']))
                     );
 
                 return !$isBusy;
@@ -174,7 +192,8 @@ class RequestedAssignmentRes extends SuggestionContext implements ResolutionCont
             ->map(function ($hall) use ($hallBusy) {
                 $busyMinutes = $hallBusy
                     ->filter(fn($b) => $b['hall_id'] === $hall['hall_id'])
-                    ->sum(fn($b) =>
+                    ->sum(
+                        fn($b) =>
                         Carbon::createFromFormat('H:i', $b['start_time'])
                             ->diffInMinutes(Carbon::createFromFormat('H:i', $b['end_time']))
                     );

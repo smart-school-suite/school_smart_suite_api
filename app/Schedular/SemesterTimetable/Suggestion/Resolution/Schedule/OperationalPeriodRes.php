@@ -8,6 +8,7 @@ use App\Schedular\SemesterTimetable\Suggestion\DTO\ResolutionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class OperationalPeriodRes extends SuggestionContext implements ResolutionContract
 {
@@ -30,9 +31,12 @@ class OperationalPeriodRes extends SuggestionContext implements ResolutionContra
         $pEnd   = $pSlot['end_time'];
         $pDay   = strtolower($pSlot['day']);
         return  [
-            "day" => $pDay,
-            "start_time" => $pStart,
-            "end_time" => $pEnd
+            [
+                "id" => Str::uuid()->toString(),
+                "day" => $pDay,
+                "start_time" => $pStart,
+                "end_time" => $pEnd
+            ]
         ];
     }
 
@@ -46,9 +50,12 @@ class OperationalPeriodRes extends SuggestionContext implements ResolutionContra
         $intent = $resolution->meta["constraint_failed"];
         $intentStart = Carbon::parse($intent["start_time"]);
         return [
-            "day" => $pDay,
-            "start_time" => $intentStart->format('H:s'),
-            "end_time" => $pEnd->format('H:s')
+            [
+                "id" => Str::uuid()->toString(),
+                "day" => $pDay,
+                "start_time" => $intentStart->format('H:s'),
+                "end_time" => $pEnd->format('H:s')
+            ]
         ];
     }
 }

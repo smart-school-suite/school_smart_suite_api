@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionCon
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 
 class CourseRequestedTimeSlotRes extends SuggestionContext implements ResolutionContract
@@ -17,7 +18,7 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
     {
         return $type  === CourseRequestedSlotConstraint::KEY || $type === CourseRequestedSlotBlocker::KEY;
     }
-    public function resolve($resolution, $params): array
+    public function resolve(object $resolution, array $params): array
     {
         $pSlot  = $params['preserve_slot'];
         $pStart = $pSlot['start_time'];
@@ -40,7 +41,6 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
         $halls        = $context->halls();
 
         // ── Build candidate slots ─────────────────────────────────────────
-        // All regular slots on the preserve day excluding the preserved slot
         $candidates = collect(self::getTimetableGrid())
             ->filter(
                 fn($slot) =>
@@ -54,7 +54,6 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
                 'end_time'   => $slot->end_time,
             ]);
 
-        // ── Enrich each candidate with available teachers and halls ───────
         $enriched = $candidates
             ->map(function ($slot) use (
                 $teachers,
@@ -83,21 +82,20 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
                     $end
                 );
 
-                // slot only qualifies if it has at least one teacher and one hall
                 if ($availableTeachers->isEmpty() || $availableHalls->isEmpty()) {
                     return null;
                 }
 
                 return [
+                    "id" => Str::uuid()->toString(),
                     ...$slot,
                     'available_teachers' => $availableTeachers->values()->all(),
                     'available_halls'    => $availableHalls->values()->all(),
                 ];
             })
-            ->filter() // remove null (unqualified) slots
+            ->filter()
             ->values();
 
-        // ── Rank by proximity to user intent start time ───────────────────
         $ranked = $enriched->sortBy(
             fn($slot) =>
             Carbon::createFromFormat('H:i', $slot['start_time'])
@@ -107,7 +105,6 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
         return $ranked->all();
     }
 
-    // ─── Available teachers ───────────────────────────────────────────────
 
     private function availableTeachers(
         Collection $teachers,
@@ -134,7 +131,6 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
                     return false;
                 }
 
-                // preference check only when required
                 if (!$isWithPreference) {
                     return true;
                 }
@@ -142,7 +138,7 @@ class CourseRequestedTimeSlotRes extends SuggestionContext implements Resolution
                 $prefs = $tPreferred->filter(fn($p) => $p['teacher_id'] === $teacherId);
 
                 if ($prefs->isEmpty()) {
-                    return true; // no preference defined → always available
+                    return true;
                 }
 
                 return $prefs->some(

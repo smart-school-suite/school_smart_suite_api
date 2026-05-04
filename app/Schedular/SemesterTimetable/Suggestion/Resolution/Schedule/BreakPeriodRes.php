@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
 use Carbon\Carbon;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
+use Illuminate\Support\Str;
 
 class BreakPeriodRes extends SuggestionContext implements ResolutionContract
 {
@@ -31,9 +32,12 @@ class BreakPeriodRes extends SuggestionContext implements ResolutionContract
         $pEnd   = $pSlot['end_time'];
         $pDay   = strtolower($pSlot['day']);
         return  [
-            "day" => $pDay,
-            "start_time" => $pStart,
-            "end_time" => $pEnd
+            [
+                'id' => Str::uuid()->toString(),
+                "day" => $pDay,
+                "start_time" => $pStart,
+                "end_time" => $pEnd
+            ]
         ];
     }
 
@@ -91,6 +95,7 @@ class BreakPeriodRes extends SuggestionContext implements ResolutionContract
         );
 
         return [
+            'id' => Str::uuid()->toString(),
             'start_time' => $normalizedSlot['start_time'],
             'end_time' => $normalizedSlot['end_time'],
             'day' => $pDay
@@ -174,16 +179,20 @@ class BreakPeriodRes extends SuggestionContext implements ResolutionContract
         if ($bestStart === null) {
             $fallbackStart = $boundaryEnd->copy()->subMinutes($duration);
             return [
-                'start_time' => $fallbackStart->format('H:i'),
-                'end_time' => $boundaryEnd->format('H:i'),
-                'day' => strtolower($boundaryStart->format('l'))
+                [
+                    'start_time' => $fallbackStart->format('H:i'),
+                    'end_time' => $boundaryEnd->format('H:i'),
+                    'day' => strtolower($boundaryStart->format('l'))
+                ]
             ];
         }
 
         return [
-            'start_time' => $bestStart->format('H:i'),
-            'end_time' => $bestStart->copy()->addMinutes($duration)->format('H:i'),
-            'day' => strtolower($boundaryStart->format('l'))
+            [
+                'start_time' => $bestStart->format('H:i'),
+                'end_time' => $bestStart->copy()->addMinutes($duration)->format('H:i'),
+                'day' => strtolower($boundaryStart->format('l'))
+            ]
         ];
     }
 

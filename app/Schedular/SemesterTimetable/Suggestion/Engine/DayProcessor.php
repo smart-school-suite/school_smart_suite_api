@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
+use App\Schedular\SemesterTimetable\Suggestion\Solution\Core\SolutionPathEngine;
 
 class DayProcessor
 {
@@ -8,26 +9,27 @@ class DayProcessor
     {
         $result = [];
 
-        // Process soft constraints if not empty
         if (!empty($diagnostic['soft'])) {
             $softConstraintMap = app(ConstraintMapBuilder::class)->build($diagnostic['soft']);
             $softGroupBuilder = app(ConflictGroupBuilder::class)->buildSoft($softConstraintMap);
             $softScenarioBuilder = app(ScenarioBuilder::class)->buildSoft($softGroupBuilder);
 
-            // $result["soft_groups"] = $softGroupBuilder;
             $result[] = $softScenarioBuilder;
         }
 
-        // Process hard constraints if not empty
         if (!empty($diagnostic['hard'])) {
             $hardConstraintMap = app(ConstraintMapBuilder::class)->build($diagnostic['hard']);
             $hardGroupBuilder = app(ConflictGroupBuilder::class)->buildHard($hardConstraintMap);
-            $hardScenarioBuilder = app(ScenarioBuilder::class)->buildHard($hardGroupBuilder);
+            $hardScenarioBuilder = app(ConflictGroupBuilder::class)->buildHard($hardGroupBuilder);
 
-            // $result["hard_groups"] = $hardGroupBuilder;
             $result[] = $hardScenarioBuilder;
         }
-
-        return array_filter($result);
+        $scenarios = array_merge(...$result);
+        $solutionPaths = app(SolutionPathEngine::class)->generateSolutionPaths($scenarios);
+        return [
+            'day' => $day,
+            'scenarios' => array_merge(...$result),
+            'solution_paths' => $solutionPaths
+        ];
     }
 }

@@ -65,7 +65,7 @@ class GeneratePreferenceSemesterTimetableService
             $this->getJointCourses($semester)
         );
 
-        TimetableContext::setPreferenceMode(false);
+        TimetableContext::setPreferenceMode(true);
         $schedular = app(SchedularEngine::class);
         $response = $schedular->run($payload);
         return [

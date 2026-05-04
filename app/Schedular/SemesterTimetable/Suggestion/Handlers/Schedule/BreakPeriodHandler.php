@@ -7,6 +7,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\BreakPeriod as BreakPerio
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+use Illuminate\Support\Str;
 
 class BreakPeriodHandler implements SuggestionHandler
 {
@@ -24,23 +25,30 @@ class BreakPeriodHandler implements SuggestionHandler
         return ["modify", "remove", "keep"];
     }
 
-    public function conflictOptions($constraint): array
+    public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
         return [
               new SuggestionOptionDTO(
                 action: 'remove',
-                label: 'Remove Break Period Constraint'
+                label: 'Remove Break Period Constraint',
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
+
             ),
             new SuggestionOptionDTO(
                 action: 'modify',
                 label: 'Move Break Period to another time',
-                meta: ['field' => 'time']
+                meta: $metaData
             ),
 
         ];
     }
 
-    public function dependencyOptions($constraint, array $blockers): array
+    public function dependencyOptions(array $constraint, array $blockers): array
     {
         $resolveChanges = app(BlockerRegistry::class)->generateBlockerSuggestions($blockers);
         return $resolveChanges;

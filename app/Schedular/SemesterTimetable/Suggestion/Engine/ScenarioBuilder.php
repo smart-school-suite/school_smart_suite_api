@@ -48,7 +48,6 @@ class ScenarioBuilder
                     );
                 }
 
-                // Create the Scenario for this "Keep" decision
                 $allScenarios[] = new ScenarioDTO(
                     id: uniqid('scenario_'),
                     decision: new DecisionDTO(
@@ -62,7 +61,7 @@ class ScenarioBuilder
                 );
             }
         }
-        SuggestionContext::setScenarioMode(true); // processing hard constraints only
+        SuggestionContext::setScenarioMode(true);
         app(ScenarioNormalizationEngine::class)->normalize($allScenarios);
         return $allScenarios;
     }
@@ -83,7 +82,7 @@ class ScenarioBuilder
                 $this->buildConflictGroup($group)
             );
         }
-        SuggestionContext::setScenarioMode(false); // processing soft constraints only
+        SuggestionContext::setScenarioMode(false);
         app(ScenarioNormalizationEngine::class)->normalize($scenarios);
         return $scenarios;
     }

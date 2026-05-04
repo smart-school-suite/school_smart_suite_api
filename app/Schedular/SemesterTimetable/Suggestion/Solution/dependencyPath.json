@@ -1,0 +1,52 @@
+{
+    "scenario_id": "scenario_keep_assignment",
+    "decision": {
+        "type": "keep",
+        "target_id": "assignment_1",
+        "target_type": "requested_assignment"
+    },
+    "flow": [
+        {
+            "step_id": "step_A",
+            "resolution_type": "dependency",
+            "target_id": "course_slot",
+            "target_type": "teacher_unavailable",
+            "options": [
+                {
+                    "option_id": "A.modify.1",
+                    "action": "modify",
+                    "label": "replace teacher",
+                    "proposal": {
+                        "teacher_id": ""
+                    }
+                },
+                {
+                    "option_id": "A.modify.2",
+                    "action": "modify",
+                    "label": "replace teacher",
+                    "proposal": {
+                        "teacher_id": ""
+                    }
+                }
+            ]
+        },
+        {
+            "step_id": "step_A",
+            "resolution_type": "dependency",
+            "target_id": "course_slot",
+            "target_type": "operational_period_violation",
+            "options": [
+                {
+                    "option_id": "A.modify.1",
+                    "action": "modify",
+                    "label": "Modify Slot",
+                    "proposal": {
+                        "day": "tuesday",
+                        "start_time": "16:00",
+                        "end_time": "17:00"
+                    }
+                }
+            ]
+        }
+    ]
+}

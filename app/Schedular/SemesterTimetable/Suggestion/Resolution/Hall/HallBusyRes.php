@@ -14,7 +14,7 @@ class HallBusyRes extends SuggestionContext implements ResolutionContract
         return $type === HallBusy::KEY;
     }
 
-    public function resolve($resolution, $params): array
+    public function resolve(object $resolution, array $params): array
     {
         $pSlot     = $params['preserve_slot'];
         $startTime = Carbon::createFromFormat('H:i', $pSlot['start_time']);

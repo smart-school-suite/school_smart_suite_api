@@ -8,6 +8,7 @@ use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as Ha
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+use Illuminate\Support\Str;
 
 class HallRequestedTimeSlotHandler implements SuggestionHandler
 {
@@ -26,22 +27,28 @@ class HallRequestedTimeSlotHandler implements SuggestionHandler
         return ["keep", "modify", "remove"];
     }
 
-    public function conflictOptions($constraint): array
+    public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
         return [
             new SuggestionOptionDTO(
                 action: AppActions::REMOVE,
-                label: 'Remove Hall Requested Slot'
+                label: 'Remove Hall Requested Slot',
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
             ),
             new SuggestionOptionDTO(
                 action: AppActions::MODIFY,
                 label: 'Move Hall Slot  to another time',
-                meta: ['field' => 'time']
+                meta: $metaData
             )
         ];
     }
 
-    public function dependencyOptions($constraint, array $blockers): array
+    public function dependencyOptions(array $constraint, array $blockers): array
     {
         $resolveChanges = app(BlockerRegistry::class)->generateBlockerSuggestions($blockers);
         return $resolveChanges;

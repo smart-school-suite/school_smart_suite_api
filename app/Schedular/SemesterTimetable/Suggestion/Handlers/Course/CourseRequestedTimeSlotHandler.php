@@ -7,6 +7,7 @@ use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot as Cour
 use App\Constant\Violation\SemesterTimetable\Course\CourseRequestedSlot as CourseRequestedSlotBlocker;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
+use Illuminate\Support\Str;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
 
 class CourseRequestedTimeSlotHandler implements SuggestionHandler
@@ -28,16 +29,21 @@ class CourseRequestedTimeSlotHandler implements SuggestionHandler
 
     public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
         return [
             new SuggestionOptionDTO(
                 action: AppActions::REMOVE,
                 label: 'Remove Course Requested Slot',
-                meta: [...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"]]
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
             ),
             new SuggestionOptionDTO(
                 action: AppActions::MODIFY,
                 label: 'Move Requested Slot  to another time',
-                meta: [...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"]]
+                meta: $metaData
             )
         ];
     }

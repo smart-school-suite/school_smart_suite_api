@@ -10,6 +10,7 @@ use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class TeacherRequestedTimeSlotRes extends SuggestionContext implements ResolutionContract
@@ -19,7 +20,7 @@ class TeacherRequestedTimeSlotRes extends SuggestionContext implements Resolutio
         return $type === TeacherRequestedTimeSlotConstraint::KEY || $type === TeacherRequestedTimeSlotViolation::KEY;
     }
 
-    public function resolve($resolution, $params): array
+    public function resolve(object $resolution, array $params): array
     {
         $pSlot  = $params['preserve_slot'];
         $pStart = $pSlot['start_time'];
@@ -91,6 +92,7 @@ class TeacherRequestedTimeSlotRes extends SuggestionContext implements Resolutio
                 }
 
                 return [
+                    "id" => Str::uuid()->toString(),
                     ...$slot,
                     'available_teachers' => $availableTeachers->values()->all(),
                     'available_halls'    => $availableHalls->values()->all(),

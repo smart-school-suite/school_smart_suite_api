@@ -6,6 +6,7 @@ use App\Constant\Violation\SemesterTimetable\Teacher\TeacherBusy;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class TeacherBusyRes extends SuggestionContext implements ResolutionContract
@@ -15,7 +16,7 @@ class TeacherBusyRes extends SuggestionContext implements ResolutionContract
         return $type === TeacherBusy::KEY;
     }
 
-    public function resolve($resolution, $params): array
+    public function resolve(object $resolution, array $params): array
     {
         $pSlot      = $params['preserve_slot'];
         $startTime  = $pSlot['start_time'];
@@ -74,6 +75,7 @@ class TeacherBusyRes extends SuggestionContext implements ResolutionContract
                     );
 
                 return [
+                    'id' => Str::uuid()->toString(),
                     ...$teacher,
                     'busy_minutes' => $busyMinutes,
                 ];

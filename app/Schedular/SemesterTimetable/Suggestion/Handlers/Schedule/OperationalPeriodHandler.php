@@ -24,18 +24,19 @@ class OperationalPeriodHandler implements SuggestionHandler
         return ["keep", "modify"];
     }
 
-    public function conflictOptions($constraint): array
+    public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"],  "type" => $constraint["type"] ];
         return [
             new SuggestionOptionDTO(
                 action: AppActions::MODIFY,
                 label: 'Change Operational Period  to another time',
-                meta: ['field' => 'time']
+                meta: $metaData
             )
         ];
     }
 
-    public function dependencyOptions($constraint, array $blockers): array
+    public function dependencyOptions(array $constraint, array $blockers): array
     {
         return [];
     }

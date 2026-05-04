@@ -7,6 +7,7 @@ use App\Constant\Constraint\SemesterTimetable\Teacher\TeacherRequestedTimeSlot a
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+use Illuminate\Support\Str;
 
 class TeacherRequestedTimeSlotHandler implements SuggestionHandler
 {
@@ -26,16 +27,21 @@ class TeacherRequestedTimeSlotHandler implements SuggestionHandler
 
     public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"]];
         return [
             new SuggestionOptionDTO(
                 action: 'remove',
                 label: 'Remove Teacher Requested Slot',
-                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
             ),
             new SuggestionOptionDTO(
                 action: 'modify',
                 label: 'Move Teacher Requested Slot to another time',
-                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
+                meta: $metaData,
             )
         ];
     }

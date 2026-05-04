@@ -8,6 +8,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\RequestedFreePeriod as Re
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+use Illuminate\Support\Str;
 
 class RequestedFreePeriodHandler implements SuggestionHandler
 {
@@ -27,16 +28,21 @@ class RequestedFreePeriodHandler implements SuggestionHandler
     }
     public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
         return [
             new SuggestionOptionDTO(
                 action: AppActions::REMOVE,
                 label: 'Remove Requested Free Period',
-                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
             ),
             new SuggestionOptionDTO(
                 action: AppActions::MODIFY,
                 label: 'Move Requested Free Period to another time',
-                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
+                meta:  $metaData
             )
         ];
     }

@@ -8,7 +8,7 @@ use App\Constant\Violation\SemesterTimetable\Assignment\RequestedAssigment as Re
 use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
-
+use Illuminate\Support\Str;
 class AssignmentHandler implements SuggestionHandler
 {
     public function supports(string $type): string
@@ -28,16 +28,21 @@ class AssignmentHandler implements SuggestionHandler
 
     public function conflictOptions(array $constraint): array
     {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
         return [
             new SuggestionOptionDTO(
                 action: AppActions::REMOVE,
                 label: 'Remove assignment',
-                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
             ),
             new SuggestionOptionDTO(
                 action: AppActions::MODIFY,
                 label: 'Move assignment to another time',
-                meta:[...$constraint["details"], "id" => $constraint['id'], "type" => $constraint["type"] ]
+                meta: $metaData
             )
         ];
     }

@@ -23,10 +23,12 @@ class ResolutionEngine
                 $solution = $resolver->resolve($resolution, $params);
 
                 $hasResolver = (bool) $resolver;
-                $defaultProposal = $hasResolver ? [$solution] : [[]];
+
+                $defaultProposal = $hasResolver ? $solution : [];
 
                 if ($resolution->type === $this->conflict) {
                     $modOption = collect($resolution->options)->firstWhere("action", AppActions::MODIFY);
+
                     if ($modOption) {
                         $modOption->proposals = array_merge(
                             $modOption->proposals ?? [],
@@ -36,10 +38,10 @@ class ResolutionEngine
                 }
 
                 if ($resolution->type === $this->dependency) {
-                    $resolution->options["proposals"] = array_merge(
-                        $resolution->options["proposals"] ?? [],
-                        $defaultProposal
-                    );
+                    $resolution->options["proposals"] = [
+                        ...($resolution->options["proposals"] ?? []),
+                        ...$defaultProposal
+                    ];
                 }
             }
         }
