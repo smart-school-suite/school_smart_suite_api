@@ -27,7 +27,7 @@ use App\Models\SchoolSemester;
 
 class ExamService
 {
-    public function createExam(array $data, $currentSchool, $authAdmin)
+    public function createExam(array $data, object $currentSchool, array $authAdmin)
     {
         try {
             $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
@@ -144,7 +144,7 @@ class ExamService
             );
         }
     }
-    public function deleteExam(string $examId, Object $currentSchool, $authAdmin)
+    public function deleteExam(string $examId, Object $currentSchool, array $authAdmin)
     {
         try {
 
@@ -190,13 +190,13 @@ class ExamService
             );
         }
     }
-    private function deleteExamCandidate($examId, $currentSchool)
+    private function deleteExamCandidate(string $examId, object $currentSchool)
     {
         AccessedStudent::where("school_branch_id", $currentSchool)
             ->where("exam_id", $examId)
             ->delete();
     }
-    public function bulkDeleteExam(array $examIds, $currentSchool, $authAdmin): array
+    public function bulkDeleteExam(array $examIds, object $currentSchool, array $authAdmin): array
     {
         $deletedExams = [];
 
@@ -253,7 +253,7 @@ class ExamService
             );
         }
     }
-    public function updateExam(string $examId, $currentSchool, array $data, $authAdmin)
+    public function updateExam(string $examId, object $currentSchool, array $data, array  $authAdmin)
     {
         try {
             $exam = Exams::where("school_branch_id", $currentSchool->id)
@@ -303,7 +303,7 @@ class ExamService
             );
         }
     }
-    public function bulkUpdateExam($examUpdateList, $currentSchool, $authAdmin)
+    public function bulkUpdateExam(array $examUpdateList, object $currentSchool, array $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -344,7 +344,7 @@ class ExamService
             throw $e;
         }
     }
-    public function getExams($currentSchool)
+    public function getExams(object $currentSchool)
     {
         $exams = Exams::where('school_branch_id', $currentSchool->id)
             ->with(['examtype', 'semester', 'specialty', 'level', 'studentBatch'])
@@ -362,7 +362,7 @@ class ExamService
 
         return $exams;
     }
-    public function examDetails($currentSchool, string $examId)
+    public function examDetails(object $currentSchool, string $examId)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)
             ->with(['examtype', 'semester', 'specialty', 'level', 'studentBatch'])
@@ -380,7 +380,7 @@ class ExamService
 
         return $exam;
     }
-    public function getAssociateWeightedMarkLetterGrades(string $examId, $currentSchool)
+    public function getAssociateWeightedMarkLetterGrades(string $examId, object $currentSchool)
     {
         $results = [];
 
@@ -419,7 +419,7 @@ class ExamService
 
         return $results;
     }
-    public function addExamGrading(string $examId, $currentSchool, $gradesConfigId, $authAdmin)
+    public function addExamGrading(string $examId, object $currentSchool, string $gradesConfigId, array $authAdmin)
     {
 
         $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
@@ -482,7 +482,7 @@ class ExamService
         ]);
         return $exam;
     }
-    public function bulkAddExamGrading($examGradingList, $currentSchool, $authAdmin)
+    public function bulkAddExamGrading(array $examGradingList, object $currentSchool, array $authAdmin)
     {
         $result = [];
         try {
@@ -568,7 +568,7 @@ class ExamService
             );
         }
     }
-    public function getExamsByStudentIdSemesterId($currentSchool, $studentId, $semesterId)
+    public function getExamsByStudentIdSemesterId(object $currentSchool, string $studentId, string $semesterId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->findOrFail($studentId);
@@ -630,7 +630,7 @@ class ExamService
 
         return $result;
     }
-    public function getExamGradeScale(string $examId, $currentSchool)
+    public function getExamGradeScale(string $examId,  object $currentSchool)
     {
         $exam = Exams::where('school_branch_id', $currentSchool->id)
             ->with([
@@ -674,7 +674,7 @@ class ExamService
 
         return $result;
     }
-    public function getUpcomingExams($currentSchool, $student)
+    public function getUpcomingExams(object $currentSchool, $student)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->find($student->id);
@@ -736,7 +736,7 @@ class ExamService
         $sorted = $allUpcoming->sortBy('start_date')->values();
         return $sorted;
     }
-    public function getAllExamsByStudentId($currentSchool, $studentId)
+    public function getAllExamsByStudentId(object $currentSchool, string $studentId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->findOrFail($studentId);

@@ -282,7 +282,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableVersion.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester-timetable/constraints')
-                 ->group(base_path('routes/SemTimetableConstraint/Constraint.php'));
+                ->group(base_path('routes/SemTimetableConstraint/Constraint.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester-timetable/constraints-category')
                 ->group(base_path('routes/SemTimetableConstraint/ConstraintCategory.php'));
@@ -290,17 +290,23 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester-timetable/constraints-type')
                 ->group(base_path('routes/SemTimetableConstraint/ConstraintType.php'));
 
-            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/joint-course')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/joint-course')
                 ->group(base_path('routes/JointCourse/JointCourse.php'));
 
-            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/joint-course-slot')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/joint-course-slot')
                 ->group(base_path('routes/JointCourse/JointCourseSlot.php'));
 
-            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/semester-timetable-interpreter')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable-interpreter')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableInterpreter.php'));
 
-            Route::middleware([IdentifyTenant::class,'auth:sanctum'])->prefix('api/v1/semester-timetable-parser')
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable-parser')
                 ->group(base_path('routes/TimetableParser/SemesterTimetableParser.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/invigilator')
+                ->group(base_path('routes/Invigilator/Invigilator.php'));
+
+            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-invigilator')
+                ->group(base_path('routes/Invigilator/ExamInvigilator.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

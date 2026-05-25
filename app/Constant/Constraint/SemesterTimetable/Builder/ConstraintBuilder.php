@@ -54,6 +54,18 @@ class ConstraintBuilder
         return self::titles()[$key] ?? $default;
     }
 
+    public static function getConstraintType(string $key): ?string
+    {
+        $constraints = self::all();
+
+        foreach ($constraints as $constraint) {
+            if (isset($constraint['key']) && $constraint['key'] === $key) {
+                return $constraint['type'] ?? '';
+            }
+        }
+
+        return null;
+    }
     public static function constraintInterpreterMap(): array
     {
         $map = [];
@@ -65,14 +77,15 @@ class ConstraintBuilder
         return $map;
     }
 
-    public static function constraintSuggestionMap(): array {
-         $map = [];
-         foreach(self::all()  as $suggestion) {
-             if(isset($suggestion['suggestion_handler'])){
-                 $map[$suggestion['key']] = $suggestion['suggestion_handler'];
-             }
-         }
-         return $map;
+    public static function constraintSuggestionMap(): array
+    {
+        $map = [];
+        foreach (self::all()  as $suggestion) {
+            if (isset($suggestion['suggestion_handler'])) {
+                $map[$suggestion['key']] = $suggestion['suggestion_handler'];
+            }
+        }
+        return $map;
     }
     public static function get(string $key): ?array
     {

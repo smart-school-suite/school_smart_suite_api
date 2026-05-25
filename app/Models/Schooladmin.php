@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\ExamTimetable\Invigilator;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Job\SystemJob;
 use App\Models\OTP;
+
 class Schooladmin extends Authenticatable
 {
     use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency;
@@ -36,7 +38,7 @@ class Schooladmin extends Authenticatable
         'status'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'date_of_birth' => 'date'
     ];
 
@@ -96,6 +98,11 @@ class Schooladmin extends Authenticatable
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class, 'school_branch_id');
+    }
+
+    public function examInvigilator()
+    {
+        return $this->morphMany(Invigilator::class, 'invigilatable');
     }
 
     // public function userBadge()

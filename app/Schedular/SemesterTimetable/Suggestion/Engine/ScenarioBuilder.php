@@ -2,177 +2,196 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
 
+use App\Schedular\SemesterTimetable\Suggestion\DTO\DecisionDTO;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\ResolutionDTO;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\ScenarioDTO;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Registry\HandlerRegistry;
-use App\Schedular\SemesterTimetable\Suggestion\State\SolutionState;
-
-// use App\Schedular\SemesterTimetable\Suggestion\State\SolutionState;
+use App\Schedular\SemesterTimetable\Suggestion\Engine\DependencyExtractor;
+use App\Schedular\SemesterTimetable\Suggestion\Normalization\ScenarioNormalizationEngine;
 
 class ScenarioBuilder
 {
     protected HandlerRegistry $registry;
+    protected DependencyExtractor $dependencyExtractor;
+
     public function __construct()
     {
         $this->registry = new HandlerRegistry();
+        $this->dependencyExtractor = new DependencyExtractor();
     }
 
-    public function build(array $groups, array $dependencies): array
+    public function buildHard(array $groups): array
     {
-        // 1. generate base scenarios from conflicts
-        $scenarios = $this->buildFromGroups($groups);
+        $allScenarios = [];
 
-        // 2. enforce dependencies
-        $scenarios = $this->applyDependencies($scenarios, $dependencies);
+        foreach ($groups as $group) {
 
-        // 3. validate scenarios
-        return $this->validate($scenarios);
-    }
+            foreach ($group as $kept) {
+                $resolutions = [];
 
-    protected function buildFromGroups(array $groups): array
-    {
-        if (empty($groups)) {
-            return [[]];
+                foreach ($group as $node) {
+                    if ($node['id'] === $kept['id']) continue;
+
+                    $h = $this->registry->get($node['type']);
+                    if (!$h) continue;
+
+                    $options = $h->conflictOptions($node);
+                    $resolutions[] = new ResolutionDTO(
+                        type: 'conflict',
+                        target_id: $node['id'],
+                        target_type: $node['type'] ?? 'entity',
+                        options: $options,
+                        meta: [
+                            "constraint_failed" => $node
+                        ]
+                    );
+                }
+
+                $allScenarios[] = new ScenarioDTO(
+                    id: uniqid('scenario_'),
+                    decision: new DecisionDTO(
+                        type: 'keep',
+                        target_id: $kept['id'],
+                        target_type: $kept['type'] ?? 'entity',
+                        target_details: $kept,
+                        original_slot: $kept
+                    ),
+                    resolutions: $resolutions
+                );
+            }
         }
-
+        SuggestionContext::setScenarioMode(true);
+        app(ScenarioNormalizationEngine::class)->normalize($allScenarios);
+        return $allScenarios;
+    }
+    public function buildSoft(array $groups): array
+    {
         $scenarios = [];
 
         foreach ($groups as $group) {
-            $groupScenarios = $this->buildGroup($group);
 
-            $scenarios = empty($scenarios)
-                ? $groupScenarios
-                : $this->merge($scenarios, $groupScenarios);
+            if (count($group) === 1) {
+                $scenario = $this->buildStandalone($group[0]);
+                if ($scenario) $scenarios[] = $scenario;
+                continue;
+            }
+
+            $scenarios = array_merge(
+                $scenarios,
+                $this->buildConflictGroup($group)
+            );
         }
-
+        SuggestionContext::setScenarioMode(false);
+        app(ScenarioNormalizationEngine::class)->normalize($scenarios);
         return $scenarios;
     }
+    protected function buildStandalone(array $constraint): ?ScenarioDTO
+    {
+        $handler = $this->registry->get($constraint['type']);
+        if (!$handler) return null;
 
-    protected function buildGroup(array $group): array
+        $blockers = $constraint['blockers'];
+
+        $resolutions = [];
+
+        $depOptions = $handler->dependencyOptions($constraint, $blockers);
+
+        foreach ($depOptions as $depOption) {
+            $resolutions[] = new ResolutionDTO(
+                'dependency',
+                $depOption->blocker->id,
+                $depOption->blocker->type,
+                [
+                    "field" => $depOption->field,
+                    "type" => $depOption->type,
+                    "reason" => $depOption->reason,
+                    "proposals" => $depOption->proposals ?? []
+                ],
+                [
+                    ...$depOption->blocker->entity
+                ]
+            );
+        }
+
+        return new ScenarioDTO(
+            id: uniqid('scenario_'),
+            decision: new DecisionDTO(
+                type: 'fix_constraint',
+                target_id: $constraint['id'],
+                target_type: $constraint['type'],
+                target_details: $constraint["details"]
+            ),
+            resolutions: $resolutions
+        );
+    }
+    protected function buildConflictGroup(array $group): array
     {
         $scenarios = [];
 
-        foreach ($group as $keepNode) {
+        foreach ($group as $kept) {
 
-            $others = array_filter($group, fn($n) => $n->id !== $keepNode->id);
+            $handler = $this->registry->get($kept['type']);
+            if (!$handler) continue;
 
-            $combinations = [[]];
+            $resolutions = [];
 
-            foreach ($others as $node) {
+            foreach ($group as $node) {
 
-                $handler = $this->registry->get($node->type);
-                if (!$handler) continue;
+                if ($node['id'] === $kept['id']) continue;
 
-                $options = $handler->generate($node);
+                $h = $this->registry->get($node['type']);
+                if (!$h) continue;
 
-                $newCombos = [];
+                $options = $h->conflictOptions($node);
 
-                foreach ($combinations as $combo) {
-                    foreach ($options as $option) {
-                        $newCombos[] = array_merge($combo, [$option]);
-                    }
+                if (!empty($options)) {
+                    $resolutions[] = new ResolutionDTO(
+                        'conflict',
+                        $node['id'],
+                        $node['type'],
+                        $options,
+                        [
+                            ...$node["details"],
+                            "type" => $node['type']
+                        ]
+                    );
                 }
-
-                $combinations = $newCombos;
             }
 
-            foreach ($combinations as $combo) {
-                $scenarios[] = array_merge([
+            $blockers = $this->dependencyExtractor->get($kept, $group);
+
+            $depOptions = $handler->dependencyOptions($kept, $blockers);
+
+            foreach ($depOptions as $depOption) {
+                $resolutions[] = new ResolutionDTO(
+                    'dependency',
+                    $depOption->blocker->id,
+                    $depOption->blocker->type,
                     [
-                        'action' => 'keep',
-                        'target' => $keepNode
+                        "field" => $depOption->field,
+                        "type" => $depOption->type,
+                        "reason" => $depOption->reason,
+                        "proposals" => $depOption->proposals ?? []
+                    ],
+                    [
+                        ...$depOption->blocker->entity
                     ]
-                ], $combo);
+                );
             }
+
+            $scenarios[] = new ScenarioDTO(
+                id: uniqid('scenario_'),
+                decision: new DecisionDTO(
+                    type: 'keep',
+                    target_id: $kept['id'],
+                    target_type: $kept['type'],
+                    target_details: $kept['details']
+                ),
+                resolutions: $resolutions
+            );
         }
 
         return $scenarios;
-    }
-
-    protected function applyDependencies(array $scenarios, array $dependencies): array
-    {
-        $result = [];
-
-        foreach ($scenarios as $scenario) {
-
-            $expanded = [$scenario];
-
-            foreach ($dependencies as $edge) {
-
-                $sourceId = $edge->from->id;
-                $blocker = $edge->to;
-
-                $isSourceKept = collect($scenario)->contains(function ($s) use ($sourceId) {
-                    return $s['action'] === 'keep' && $s['target']->id === $sourceId;
-                });
-
-                if (!$isSourceKept) continue;
-
-                $handler = $this->registry->get($blocker->type);
-                if (!$handler) continue;
-
-                $options = $handler->generate($blocker);
-
-                if ($handler->isExclusive()) {
-                    // 🔴 forced fix
-                    foreach ($expanded as &$s) {
-                        $s[] = $options[0];
-                    }
-                } else {
-                    // 🟢 branching
-                    $newExpanded = [];
-
-                    foreach ($expanded as $s) {
-                        foreach ($options as $opt) {
-                            $newExpanded[] = array_merge($s, [$opt]);
-                        }
-                    }
-
-                    $expanded = $newExpanded;
-                }
-            }
-
-            foreach ($expanded as $s) {
-                $result[] = $s;
-            }
-        }
-
-        return $result;
-    }
-    protected function merge(array $a, array $b): array
-    {
-        $merged = [];
-
-        foreach ($a as $x) {
-            foreach ($b as $y) {
-                $merged[] = array_merge($x, $y);
-            }
-        }
-
-        return $merged;
-    }
-    protected function validate(array $scenarios): array
-    {
-        $valid = [];
-
-        foreach ($scenarios as $scenario) {
-
-            $state = new SolutionState();
-            $ok = true;
-
-            foreach ($scenario as $change) {
-
-                if (!$state->canApply($change)) {
-                    $ok = false;
-                    break;
-                }
-
-                $state->apply($change);
-            }
-
-            if ($ok) {
-                $valid[] = $scenario;
-            }
-        }
-
-        return $valid;
     }
 }

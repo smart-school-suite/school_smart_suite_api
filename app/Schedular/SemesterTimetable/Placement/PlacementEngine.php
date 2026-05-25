@@ -4,11 +4,13 @@ namespace App\Schedular\SemesterTimetable\Placement;
 
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use App\Schedular\SemesterTimetable\Placement\Contracts\ScorerInterface;
 use App\Schedular\SemesterTimetable\Placement\Indexes\PlacementIndex;
 use App\Schedular\SemesterTimetable\Placement\Scoring\LoadBasedScorer;
 use App\Schedular\SemesterTimetable\Placement\Support\TimeHelper;
-class PlacementEngine
+
+class PlacementEngine extends TimetableContext
 {
     private ScorerInterface $scorer;
 
@@ -60,6 +62,7 @@ class PlacementEngine
         $candidates = [];
 
         foreach ($index->courseTeachers() as $courseId => $teacherIds) {
+
             foreach ($teacherIds as $teacherId) {
 
                 if (!$this->teacherFitsPreference($teacherId, $day, $slotStart, $slotEnd, $index)) {
@@ -91,9 +94,11 @@ class PlacementEngine
 
     public function selectBest(array $candidates, string $day, PlacementIndex $index): array
     {
-        usort($candidates, fn($a, $b) =>
+        usort(
+            $candidates,
+            fn($a, $b) =>
             $this->scorer->score($b, $day, $index)
-            <=> $this->scorer->score($a, $day, $index)
+                <=> $this->scorer->score($a, $day, $index)
         );
 
         return $candidates[0];
@@ -125,6 +130,9 @@ class PlacementEngine
     ): bool {
         $preferences = $index->teacherPreferences($teacherId);
 
+        if (TimetableContext::isWithoutPreference()) {
+            return true;
+        }
         if (empty($preferences)) {
             return true; // no preference defined → all slots valid
         }

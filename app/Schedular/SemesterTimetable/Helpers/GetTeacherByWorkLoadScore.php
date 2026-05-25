@@ -4,10 +4,11 @@ namespace App\Schedular\SemesterTimetable\Helpers;
 
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\Core\State;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class GetTeacherByWorkLoadScore
+class GetTeacherByWorkLoadScore extends TimetableContext
 {
     public function getTeacherByAvailabilityScore(array $requestPayload, array $params, State $state): Collection
     {
@@ -30,6 +31,10 @@ class GetTeacherByWorkLoadScore
 
                 if ($isBusy) {
                     return false;
+                }
+
+                if (TimetableContext::isWithoutPreference()) {
+                    return true;
                 }
 
                 $prefs = $context->tPreferredSlotsFor($teacherId, $day);

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\SemesterTimetable\PeriodDuration;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -35,5 +36,6 @@ class DatabaseSeeder extends Seeder
         $this->call(StudentCredentials::class);
         $this->call(UserBadgeSeeder::class);
         $this->call(SystemAcademicYearSeeder::class);
+        $this->call(PeriodDuration::class);
     }
 }

@@ -4,10 +4,11 @@ namespace App\Schedular\SemesterTimetable\Helpers;
 
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
 use App\Schedular\SemesterTimetable\Core\State;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class GetHallByAvailabilityScore
+class GetHallByAvailabilityScore extends TimetableContext
 {
     public function getHallByAvailabilityScore(array $requestPayload, array $params, State $state): Collection
     {

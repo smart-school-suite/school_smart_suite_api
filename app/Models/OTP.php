@@ -30,9 +30,5 @@ class OTP extends Model
     {
         return now()->greaterThan($this->expires_at);
     }
-    public function scopeValid($query)
-    {
-        return $query->where('used', false)
-            ->where('expires_at', '>', now());
-    }
+
 }

@@ -6,13 +6,16 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRe
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use App\Schedular\SemesterTimetable\DTO\ResponseDTO;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
+use App\Schedular\SemesterTimetable\Suggestion\Engine\SuggestionEngine;
 
-class ResponseBuilder
+class ResponseBuilder extends TimetableContext
 {
     public function build(State $state): ResponseDTO
     {
         $diagnosticBuilder = app(DiagnosticRegistry::class);
+        $suggestionEngine = app(SuggestionEngine::class);
         $response = new ResponseDTO();
         $response->status = match (true) {
             !empty($state->violations["hard"]) => "error",
@@ -28,12 +31,18 @@ class ResponseBuilder
         ];
         $this->seedSuggestionContext($state, $diagnostics);
         $response->diagnostics = $diagnostics;
+        $response->suggestions = $suggestionEngine->generate([
+            "hard" => $diagnostics["constraints"]["hard"]->toArray() ?? [],
+            "soft" => $diagnostics["constraints"]["soft"]->toArray() ?? []
+        ] ?? []);
         return $response;
     }
 
-    private function seedSuggestionContext($state, $diagnostics){
+    private function seedSuggestionContext(State $state, array $diagnostics)
+    {
         SuggestionContext::setTimetableGrid($state->grid);
-        SuggestionContext::setDiagnostics($diagnostics);
+        SuggestionContext::setDiagnostics($diagnostics["constraints"]);
+        SuggestionContext::setPreferenceMode(self::isWithPreference());
     }
     private function formatAndGroupTimetableByDay(array $grid): array
     {

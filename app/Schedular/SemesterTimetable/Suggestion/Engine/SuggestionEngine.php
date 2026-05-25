@@ -6,13 +6,19 @@ class SuggestionEngine
 {
     public function generate(array $diagnostics): array
     {
-        $grouped = collect($diagnostics)->groupBy('day');
-
         $results = [];
 
-        foreach ($grouped as $day => $dayDiagnostics) {
+        foreach ($diagnostics as $type => $list) {
+            foreach ($list as $diagnostic) {
+                $day = $diagnostic->constraint_failed['details']['day'] ?? 'unknown';
+                $results[$day][$type][] = $diagnostic;
+            }
+        }
+
+        foreach ($results as $day => $structuredDiagnostics) {
             $processor = new DayProcessor();
-            $results[$day] = $processor->process($day, $dayDiagnostics->toArray());
+            //['hard' => [...], 'soft' => [...]]
+            $results[$day] = $processor->process($structuredDiagnostics, $day);
         }
 
         return $results;

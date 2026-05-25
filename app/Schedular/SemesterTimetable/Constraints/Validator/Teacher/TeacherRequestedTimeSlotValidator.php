@@ -50,7 +50,7 @@ class TeacherRequestedTimeSlotValidator implements ValidatorInterface
             if ($overlaps) {
                 $blockers[] = [
                     'key'        => TeacherRequestedTimeSlot::KEY,
-                    'teacher_id' => $teacherId,
+                    'teacher_id' => $trw["teacher_id"],
                     'day'        => $day,
                     'start_time' => $reqStart->format('H:i'),
                     'end_time'   => $reqEnd->format('H:i'),

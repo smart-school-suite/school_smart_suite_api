@@ -62,7 +62,7 @@ class Student extends Model
     public $keyType = 'string';
     public $table = 'students';
     public $incrementing = 'false';
-    protected $authTokenColumn = 'token';
+    // protected $authTokenColumn = 'token';
 
     protected function casts(): array
     {

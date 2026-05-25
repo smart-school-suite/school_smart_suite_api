@@ -2,15 +2,19 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Hall;
 
-use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
+use App\Constant\Action\AppActions;
+use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot as HallRequestedTimeSlotBlocker;
+use App\Constant\Constraint\SemesterTimetable\Hall\HallRequestedTimeWindow as HallRequestedTimeSlotConstraint;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
+use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+use Illuminate\Support\Str;
 
 class HallRequestedTimeSlotHandler implements SuggestionHandler
 {
     public function supports(string $type): string
     {
-        return HallRequestedTimeSlot::KEY;
+        return $type === HallRequestedTimeSlotBlocker::KEY || $type === HallRequestedTimeSlotConstraint::KEY;
     }
 
     public function isExclusive(): bool
@@ -18,8 +22,35 @@ class HallRequestedTimeSlotHandler implements SuggestionHandler
         return false;
     }
 
-    public function generate(Node $node): array
+    public function allowedActions(): array
     {
-        return [];
+        return ["keep", "modify", "remove"];
+    }
+
+    public function conflictOptions(array $constraint): array
+    {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
+        return [
+            new SuggestionOptionDTO(
+                action: AppActions::REMOVE,
+                label: 'Remove Hall Requested Slot',
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
+            ),
+            new SuggestionOptionDTO(
+                action: AppActions::MODIFY,
+                label: 'Move Hall Slot  to another time',
+                meta: $metaData
+            )
+        ];
+    }
+
+    public function dependencyOptions(array $constraint, array $blockers): array
+    {
+        $resolveChanges = app(BlockerRegistry::class)->generateBlockerSuggestions($blockers);
+        return $resolveChanges;
     }
 }

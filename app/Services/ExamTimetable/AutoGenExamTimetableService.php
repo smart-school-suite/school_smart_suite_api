@@ -1,336 +1,308 @@
 <?php
 
 namespace App\Services\ExamTimetable;
-use App\Models\Courses;
-use App\Models\Exams;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
+
+
+use App\Schedular\ExamTimetable\Engine\SchedularEngine;
+
+
 class AutoGenExamTimetableService
 {
-       public function autoGenExamTimetable($currentSchool, $data)
+    public function generateExamTimetable(): array
     {
-        try {
-            // --- Initial Data Retrieval and Validation ---
-            $exam = Exams::where("school_branch_id", $currentSchool->id)->find($data['exam_id']);
-
-            if (!$exam) {
-                Log::error('Exam not found', ['exam_id' => $data['exam_id'], 'school_id' => $currentSchool->id]);
-                return ['error' => 'Exam not found'];
-            }
-
-            $courses = Courses::where("school_branch_id", $currentSchool->id)
-                              ->where("semester_id", $exam->semester_id)
-                              ->where("specialty_id", $exam->specialty_id)
-                              ->get();
-
-            if ($courses->isEmpty()) {
-                Log::warning('No courses found for semester', ['semester_id' => $exam->semester_id]);
-                return ['error' => 'No courses found for this semester'];
-            }
-
-            $startTime = $data['start_time'];
-            $endTime = $data['end_time'];
-            $startDate = $exam->start_date;
-            $endDate = $exam->end_date;
-            $minCoursePerDay = max(1, (int)$data['min_course_per_day']); // Ensure minimum is at least 1
-            $maxCoursePerDay = max($minCoursePerDay, (int)$data['max_course_per_day']); // Ensure max >= min
-            $courseDuration = max(30, (int)$data['course_duration']); // Minimum 30 minutes
-
-            Log::info('Timetable generation started', [
-                'courses_count' => $courses->count(),
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'min_courses_per_day' => $minCoursePerDay,
-                'max_courses_per_day' => $maxCoursePerDay,
-                'course_duration' => $courseDuration
-            ]);
-
-            // --- Validate time constraints ---
-            // Parse times ensuring they're on the same day
-            $baseDate = Carbon::today();
-            $startCarbonTime = Carbon::createFromFormat('Y-m-d H:i', $baseDate->format('Y-m-d') . ' ' . $startTime);
-            $endCarbonTime = Carbon::createFromFormat('Y-m-d H:i', $baseDate->format('Y-m-d') . ' ' . $endTime);
-
-            // If the above fails, try alternative parsing
-            if (!$startCarbonTime) {
-                $startCarbonTime = $baseDate->copy()->setTimeFromTimeString($startTime);
-            }
-            if (!$endCarbonTime) {
-                $endCarbonTime = $baseDate->copy()->setTimeFromTimeString($endTime);
-            }
-
-            // Ensure end time is after start time (handle same day)
-            if ($endCarbonTime->lte($startCarbonTime)) {
-                $endCarbonTime->addDay();
-            }
-
-            $totalAvailableMinutes = $startCarbonTime->diffInMinutes($endCarbonTime);
-
-            Log::info('Time validation', [
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'start_time_parsed' => $startCarbonTime->format('H:i'),
-                'end_time_parsed' => $endCarbonTime->format('H:i'),
-                'total_available_minutes' => $totalAvailableMinutes,
-                'course_duration' => $courseDuration
-            ]);
-
-            if ($totalAvailableMinutes < $courseDuration) {
-                Log::error('Not enough time in day for course duration', [
-                    'available_minutes' => $totalAvailableMinutes,
-                    'course_duration' => $courseDuration,
-                    'start_time_parsed' => $startCarbonTime->format('H:i'),
-                    'end_time_parsed' => $endCarbonTime->format('H:i')
-                ]);
-                return ['error' => "Course duration ({$courseDuration} min) exceeds available daily time ({$totalAvailableMinutes} min)"];
-            }
-
-            // --- Algorithm Start ---
-            $generatedTimetable = [];
-            $remainingCourses = $courses->shuffle()->all();
-            $allDates = [];
-
-            // Step 1: Generate list of exam dates
-            $currentDate = Carbon::parse($startDate);
-            $endCarbonDate = Carbon::parse($endDate);
-
-            if ($currentDate->gt($endCarbonDate)) {
-                Log::error('Start date is after end date', [
-                    'start_date' => $startDate,
-                    'end_date' => $endDate
-                ]);
-                return ['error' => 'Invalid date range: start date is after end date'];
-            }
-
-            while ($currentDate->lte($endCarbonDate)) {
-                $allDates[] = $currentDate->toDateString();
-                $currentDate->addDay();
-            }
-
-            if (empty($allDates)) {
-                Log::error('No valid exam dates generated');
-                return ['error' => 'No valid exam dates available'];
-            }
-
-            shuffle($allDates);
-            Log::info('Generated exam dates', ['dates_count' => count($allDates)]);
-
-            // Step 2: Schedule courses across dates
-            $dateIndex = 0;
-            $maxAttempts = count($allDates) * 2; // Prevent infinite loops
-            $attempts = 0;
-
-            while (!empty($remainingCourses) && $dateIndex < count($allDates) && $attempts < $maxAttempts) {
-                $attempts++;
-                $currentExamDate = $allDates[$dateIndex];
-
-                // Determine courses to schedule today
-                $coursesToScheduleToday = min(
-                    rand($minCoursePerDay, $maxCoursePerDay),
-                    count($remainingCourses)
-                );
-
-                Log::debug('Scheduling for date', [
-                    'date' => $currentExamDate,
-                    'courses_to_schedule' => $coursesToScheduleToday,
-                    'remaining_courses' => count($remainingCourses)
-                ]);
-
-                $scheduledToday = 0;
-                $usedTimeSlots = []; // Track used time slots to avoid conflicts
-
-                // Step 3: Schedule courses for current day
-                for ($i = 0; $i < $coursesToScheduleToday && !empty($remainingCourses); $i++) {
-                    $courseToSchedule = array_shift($remainingCourses);
-
-                    // Generate random start time with conflict checking
-                    $examTimes = $this->generateRandomExamTime(
-                        $startTime,
-                        $endTime,
-                        $courseDuration,
-                        $usedTimeSlots
-                    );
-
-                    if ($examTimes === null) {
-                        // No available time slot, put course back and try next date
-                        array_unshift($remainingCourses, $courseToSchedule);
-                        break;
-                    }
-
-                    // Add to used time slots
-                    $usedTimeSlots[] = [
-                        'start' => $examTimes['start_carbon'],
-                        'end' => $examTimes['end_carbon']
-                    ];
-
-                    // Add to timetable
-                    $generatedTimetable[] = [
-                        'course_id' => $courseToSchedule->id,
-                        'course_name' => $courseToSchedule->course_title,
-                        'course_code' => $courseToSchedule->course_code,
-                        'course_credit' => $courseToSchedule->credit,
-                        'exam_date' => $currentExamDate,
-                        'duration' => $this->formatDuration($data['course_duration'], true),
-                        'start_time' => $examTimes['start_time'],
-                        'end_time' => $examTimes['end_time']
-                    ];
-
-                    $scheduledToday++;
-                }
-
-                Log::debug('Scheduled courses for date', [
-                    'date' => $currentExamDate,
-                    'scheduled_count' => $scheduledToday
-                ]);
-
-                $dateIndex++;
-            }
-
-            // Check if all courses were scheduled
-            if (!empty($remainingCourses)) {
-                Log::warning('Not all courses could be scheduled', [
-                    'remaining_courses' => count($remainingCourses),
-                    'scheduled_courses' => count($generatedTimetable)
-                ]);
-            }
-
-            Log::info('Timetable generation completed', [
-                'total_scheduled' => count($generatedTimetable),
-                'remaining_unscheduled' => count($remainingCourses)
-            ]);
-
-            // Step 4: Group by date and format
-            $groupedTimetable = $this->groupTimetableByDate($generatedTimetable);
-            return $groupedTimetable;
-
-        } catch (\Exception $e) {
-            Log::error('Error generating exam timetable', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return ['error' => 'An error occurred while generating the timetable: ' . $e->getMessage()];
-        }
+ // ~2 weeks of exam period
+        $payload = $this->buildPayload();
+        $schedularEngine = app(SchedularEngine::class)->run($payload);
+        return [
+            "timetable" => $schedularEngine
+        ];
     }
 
-    /**
-     * Generate a random exam time that doesn't conflict with existing time slots
-     */
-    private function generateRandomExamTime($startTime, $endTime, $courseDuration, $usedTimeSlots, $maxAttempts = 50)
+    protected function buildPayload(): array
     {
-        // Parse times ensuring they're on the same day
-        $baseDate = Carbon::today();
-        $startCarbonTime = Carbon::createFromFormat('Y-m-d H:i', $baseDate->format('Y-m-d') . ' ' . $startTime);
-        $endCarbonTime = Carbon::createFromFormat('Y-m-d H:i', $baseDate->format('Y-m-d') . ' ' . $endTime);
+        return [
+            "start_date" => "2026-10-15",
+            "end_date"   => "2026-10-25",
+            "specialty_id" => "0d84a028-f49c-49a4-86e4-47442c1f8986",
 
-        // Fallback to alternative parsing if format parsing fails
-        if (!$startCarbonTime) {
-            $startCarbonTime = $baseDate->copy()->setTimeFromTimeString($startTime);
-        }
-        if (!$endCarbonTime) {
-            $endCarbonTime = $baseDate->copy()->setTimeFromTimeString($endTime);
-        }
+            "candidate_count" => random_int(50, 90),
 
-        // Ensure end time is after start time
-        if ($endCarbonTime->lte($startCarbonTime)) {
-            $endCarbonTime->addDay();
-        }
+            "courses"               => $this->courses(),
+            "invigilators"          => $this->invigilators(),
+            "invigilator_busy_slots" => $this->invigilatorBusySlots(),
+            "halls"                 =>  $this->halls(),
+            "hall_busy_slots"       => $this->hallBusySlots(), // Can be extended later
 
-        $totalAvailableMinutes = $startCarbonTime->diffInMinutes($endCarbonTime);
-        $maxStartTimeOffset = $totalAvailableMinutes - $courseDuration;
-
-        if ($maxStartTimeOffset < 0) {
-            Log::warning('Cannot fit course in time window', [
-                'available_minutes' => $totalAvailableMinutes,
-                'course_duration' => $courseDuration,
-                'start_time' => $startTime,
-                'end_time' => $endTime
-            ]);
-            return null;
-        }
-
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            $randomStartMinute = rand(0, $maxStartTimeOffset);
-            $examStartDateTime = $startCarbonTime->copy()->addMinutes($randomStartMinute);
-            $examEndDateTime = $examStartDateTime->copy()->addMinutes($courseDuration);
-
-            // Check for conflicts with existing time slots
-            $hasConflict = false;
-            foreach ($usedTimeSlots as $usedSlot) {
-                if ($this->timeSlotsOverlap($examStartDateTime, $examEndDateTime, $usedSlot['start'], $usedSlot['end'])) {
-                    $hasConflict = true;
-                    break;
-                }
-            }
-
-            if (!$hasConflict) {
-                return [
-                    'start_time' => $examStartDateTime->format('g:i A'),
-                    'end_time' => $examEndDateTime->format('g:i A'),
-                    'start_carbon' => $examStartDateTime,
-                    'end_carbon' => $examEndDateTime
-                ];
-            }
-        }
-
-        Log::warning('Could not find non-conflicting time slot after maximum attempts', [
-            'max_attempts' => $maxAttempts,
-            'used_slots_count' => count($usedTimeSlots)
-        ]);
-
-        return null; // Could not find a non-conflicting time slot
+            "hard_constraints" => [
+                "required_joint_course_periods" => $this->jointCourses(),
+                "operational_hours" => $this->operationalHours(),
+                "session_duration"  => $this->sessionDuration(),
+            ]
+        ];
     }
+    public function invigilatorBusySlots(): array
+{
+    return [
+        [
+            // Dr. Aristhène Ngueko
+            "invigilator_id" => "d1111111-e89b-12d3-a456-426614174000",
+            "date" => "2026-10-15",
+            "slots" => [
+                [
+                    "hall_id" => "883e4567-e89b-12d3-a456-426614174001", // Grand Assembly Hall
+                    "course_id" => "550e8400-e29b-41d4-a716-446655440000", // Intro to SE
+                    "specialty_id" => "spec-swe-001",
+                    "start_time" => "09:00",
+                    "end_time" => "11:00"
+                ]
+            ]
+        ],
+        [
+            // Prof. Sarah Jenkins
+            "invigilator_id" => "d2222222-e89b-12d3-a456-426614174000",
+            "date" => "2026-10-15",
+            "slots" => [
+                [
+                    "hall_id" => "883e4567-e89b-12d3-a456-426614174001", // Grand Assembly Hall
+                    "course_id" => "550e8400-e29b-41d4-a716-446655440000", // Intro to SE
+                    "specialty_id" => "spec-swe-001",
+                    "start_time" => "09:00",
+                    "end_time" => "11:00"
+                ]
+            ]
+        ],
+        [
+            // Engr. Michael Chen
+            "invigilator_id" => "d3333333-e89b-12d3-a456-426614174000",
+            "date" => "2026-10-15",
+            "slots" => [
+                [
+                    "hall_id" => "993e4567-e89b-12d3-a456-426614174002", // Engineering Block A
+                    "course_id" => "a4e2baec-1672-4306-974a-4463205e4d21", // Cyber Security
+                    "specialty_id" => "spec-nsc-009",
+                    "start_time" => "13:00",
+                    "end_time" => "15:00"
+                ]
+            ]
+        ]
+    ];
+}
+public function hallBusySlots(): array
+{
+    return [
+        [
+            // Targeting the Grand Assembly Hall (Capacity 300)
+            "hall_id" => "883e4567-e89b-12d3-a456-426614174001",
+            "date" => "2026-10-15",
+            "slots" => [
+                [
+                    "start_time" => "09:00",
+                    "end_time" => "11:00",
+                    "invigilators" => [
+                        "d1111111-e89b-12d3-a456-426614174000", // Dr. Aristhène Ngueko
+                        "d2222222-e89b-12d3-a456-426614174000"  // Prof. Sarah Jenkins
+                    ],
+                    "candidate_groups" => [
+                        [
+                            "specialty_id" => "spec-swe-001",
+                            "course_id" => "550e8400-e29b-41d4-a716-446655440000", // Intro to SE
+                            "candidate_count" => 150
+                        ],
+                        [
+                            "specialty_id" => "spec-swe-002",
+                            "course_id" => "6ba7b810-9dad-11d1-80b4-00c04fd430c8", // Data Structures
+                            "candidate_count" => 100
+                        ]
+                    ]
+                ]
+            ]
+        ],
+        [
+            // Targeting Engineering Block A (Capacity 150)
+            "hall_id" => "993e4567-e89b-12d3-a456-426614174002",
+            "date" => "2026-10-15",
+            "slots" => [
+                [
+                    "start_time" => "13:00",
+                    "end_time" => "15:00",
+                    "invigilators" => [
+                        "d3333333-e89b-12d3-a456-426614174000" // Engr. Michael Chen
+                    ],
+                    "candidate_groups" => [
+                        [
+                            "specialty_id" => "spec-nsc-009",
+                            "course_id" => "a4e2baec-1672-4306-974a-4463205e4d21", // Cyber Security
+                            "candidate_count" => 60
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
 
-    /**
-     * Check if two time slots overlap
-     */
-    private function timeSlotsOverlap($start1, $end1, $start2, $end2)
-    {
-        return $start1->lt($end2) && $end1->gt($start2);
+   public function invigilators(): array
+{
+    return [
+        [
+            "invigilator_id" => "d1111111-e89b-12d3-a456-426614174000",
+            "name" => "Dr. Aristhène Ngueko",
+            "course_taught" => [
+                "550e8400-e29b-41d4-a716-446655440000", // Intro to SE
+                "f47ac10b-58cc-4372-a567-0e02b2c3d479"  // System Architecture
+            ]
+        ],
+        [
+            "invigilator_id" => "d2222222-e89b-12d3-a456-426614174000",
+            "name" => "Prof. Sarah Jenkins",
+            "course_taught" => [
+                "6ba7b810-9dad-11d1-80b4-00c04fd430c8", // Data Structures
+                "e10e8400-e29b-41d4-a716-446655440000"  // Functional English
+            ]
+        ],
+        [
+            "invigilator_id" => "d3333333-e89b-12d3-a456-426614174000",
+            "name" => "Engr. Michael Chen",
+            "course_taught" => [
+                "25db8220-7a31-4d3e-8c6c-8a9d1f3b20c1", // Distributed Systems
+                "1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed"  // Full-Stack Dev
+            ]
+        ],
+        [
+            "invigilator_id" => "d4444444-e89b-12d3-a456-426614174000",
+            "name" => "Barrister Elena Rodriguez",
+            "course_taught" => [
+                "l30e8400-e29b-41d4-a716-446655442222", // IP Law
+                "a4e2baec-1672-4306-974a-4463205e4d21"  // Cyber Security
+            ]
+        ]
+    ];
+}
+       public function jointCourses(): array
+{
+    return [
+        [
+            "course_id" => "e10e8400-e29b-41d4-a716-446655440000",
+            "course_name" => "Functional English",
+            "date" => "2026-10-15",
+            "start_time" => "09:00",
+            "end_time" => "11:00"
+        ],
+        [
+            "course_id" => "f20e8400-e29b-41d4-a716-446655441111",
+            "course_name" => "Professional French",
+            "date" => "2026-10-16",
+            "start_time" => "12:00",
+            "end_time" => "13:00"
+        ],
+        [
+            "course_id" => "l30e8400-e29b-41d4-a716-446655442222",
+            "course_name" => "Intellectual Property Law",
+            "date" => "2026-10-18",
+            "start_time" => "09:00",
+            "end_time" => "11:00"
+        ]
+    ];
+}
+    public function operationalHours() {
+          return  [
+               "start_time" => "09:00",
+            "end_time" => "17:00",
+            "date_exceptions" => [
+                [
+                    "date" => "2026-10-15",
+                    "start_time" => "10:00",
+                    "end_time"=>  "16:00"
+                ]
+            ]
+          ];
     }
+    public function halls(): array
+{
+    return [
+        [
+            "hall_id" => "883e4567-e89b-12d3-a456-426614174001",
+            "hall_name" => "Grand Assembly Hall",
+            "capacity" => 300
+        ],
+        [
+            "hall_id" => "993e4567-e89b-12d3-a456-426614174002",
+            "hall_name" => "Engineering Block A",
+            "capacity" => 150
+        ],
+        [
+            "hall_id" => "aa3e4567-e89b-12d3-a456-426614174003",
+            "hall_name" => "IT Complex Lab 1",
+            "capacity" => 100
+        ],
+        [
+            "hall_id" => "bb3e4567-e89b-12d3-a456-426614174004",
+            "hall_name" => "Science Lecture Theater",
+            "capacity" => 200
+        ],
+        [
+            "hall_id" => "cc3e4567-e89b-12d3-a456-426614174005",
+            "hall_name" => "Post-Grad Seminar Room",
+            "capacity" => 50
+        ]
+    ];
+}
+    public function courses(): array
+{
+    return [
+        [
+            "course_id" => "550e8400-e29b-41d4-a716-446655440000",
+            "course_name" => "Introduction to Software Engineering",
+            "candidate_count" => 280
+        ],
+        [
+            "course_id" => "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+            "course_name" => "Data Structures & Advanced Algorithms",
+            "candidate_count" => 120
+        ],
+        [
+            "course_id" => "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "course_name" => "High-Level System Architecture & Design",
+            "candidate_count" => 85
+        ],
+        [
+            "course_id" => "25db8220-7a31-4d3e-8c6c-8a9d1f3b20c1",
+            "course_name" => "Distributed Systems & Cloud Computing",
+            "candidate_count" => 150
+        ],
+        [
+            "course_id" => "9e107d9d-3cc1-470a-9102-27072450b7a6",
+            "course_name" => "Discrete Mathematics for Engineers",
+            "candidate_count" => 210
+        ],
+        [
+            "course_id" => "1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
+            "course_name" => "Full-Stack Web Development (Laravel/React)",
+            "candidate_count" => 95
+        ],
+        [
+            "course_id" => "a4e2baec-1672-4306-974a-4463205e4d21",
+            "course_name" => "Network Security & Cryptography",
+            "candidate_count" => 60
+        ],
+        [
+            "course_id" => "7c9e66ab-1d45-420a-953e-3f538562d93e",
+            "course_name" => "Artificial Intelligence & Machine Learning",
+            "candidate_count" => 180
+        ]
+    ];
+}
 
-    /**
-     * Group timetable entries by formatted date
-     */
-    private function groupTimetableByDate($generatedTimetable)
-    {
-        $groupedTimetable = [];
+public function sessionDuration(){
+     return [
+         "duration_minutes" => 60,
+            "course_exceptions" => [
+                [
+                    "course_id" => "7c9e66ab-1d45-420a-953e-3f538562d93e",
+                    "duration_minutes" => 120
+                ]
+            ]
+     ];
+}
 
-        foreach ($generatedTimetable as $examEntry) {
-            $formattedDate = Carbon::parse($examEntry['exam_date'])->format('D d M Y');
-
-            $groupedTimetable[$formattedDate][] = $examEntry;
-        }
-
-        // Sort each day's exams by start time
-        foreach ($groupedTimetable as $date => &$dayExams) {
-            usort($dayExams, function($a, $b) {
-                $timeA = Carbon::parse($a['start_time']);
-                $timeB = Carbon::parse($b['start_time']);
-                return $timeA->timestamp <=> $timeB->timestamp;
-            });
-        }
-
-        return $groupedTimetable;
-    }
-
-    private function formatDuration($minutes, $detailed = true)
-    {
-        if ($minutes < 60) {
-            return "$minutes min";
-        }
-
-        $hours = intdiv($minutes, 60);
-        $remainingMinutes = $minutes % 60;
-
-        if ($remainingMinutes === 0) {
-            return  "$hours h";
-        }
-
-        if ($detailed) {
-            return "$hours h $remainingMinutes min";
-        } else {
-            return "$hours h";
-        }
-    }
 }

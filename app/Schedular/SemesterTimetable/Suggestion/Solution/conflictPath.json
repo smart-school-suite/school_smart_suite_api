@@ -1,0 +1,188 @@
+{
+    "scenario_id": "scenario_keep_assignment",
+    "decision": {
+        "type": "keep",
+        "target_id": "assignment_1",
+        "target_type": "requested_assignment"
+    },
+    "flow": [
+        {
+            "step": 1,
+            "step_id": "step_A",
+            "resolution_type": "conflict",
+            "target_id": "course_slot",
+            "target_type": "course_requested_slot",
+            "options": [
+                {
+                    "option_id": "A.remove",
+                    "action": "remove",
+                    "condition": [],
+                    "params": {
+                        "day": "tuesday",
+                        "start_time": "17:00",
+                        "end_time": "18:00",
+                        "course_id": "e91afc2b-8526-4a1c-8df8-971d1a40fc11",
+                        "type": "course_requested_slot"
+                    }
+                },
+                {
+                    "option_id": "A.modify.1",
+                    "action": "modify",
+                    "condition": [],
+                    "params": {
+                        "day": "tuesday",
+                        "start_time": "16:00",
+                        "end_time": "17:00",
+                        "course_id": "e91afc2b-8526-4a1c-8df8-971d1a40fc11",
+                        "type": "course_requested_slot"
+                    }
+                },
+                {
+                    "option_id": "A.modify.2",
+                    "action": "modify",
+                    "condition": [],
+                    "params": {
+                        "day": "tuesday",
+                        "start_time": "16:00",
+                        "end_time": "17:00",
+                        "course_id": "e91afc2b-8526-4a1c-8df8-971d1a40fc11",
+                        "type": "course_requested_slot"
+                    }
+                }
+            ]
+        },
+        {
+            "step": 2,
+            "step_id": "step_C",
+            "resolution_type": "conflict",
+            "target_id": "teacher_slot",
+            "target_type": "teacher_requested_slot",
+            "depends_on": ["step_A"],
+            "options": [
+                {
+                    "condition": ["A.remove"],
+                    "options": [
+                        {
+                            "option_id": "C.remove",
+                            "action": "remove",
+                            "params": {
+                                "day": "tuesday",
+                                "start_time": "17:00",
+                                "end_time": "18:00",
+                                "teacher_id": "d1c9b8e5-8a3e-4c9b-9f1e-2a1b2c3d4e5f",
+                                "type": "teacher_requested_slot"
+                            }
+                        },
+                        {
+                            "option_id": "C.modify.1",
+                            "action": "modify",
+                            "params": {
+                                "day": "tuesday",
+                                "start_time": "16:00",
+                                "end_time": "17:00",
+                                "teacher_id": "d1c9b8e5-8a3e-4c9b-9f1e-2a1b2c3d4e5f",
+                                "type": "teacher_requested_slot"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "condition": [
+                        "A.modify.1"
+                    ],
+                    "options": [
+                        {
+                            "option_id": "C.modify.1",
+                            "action": "modify",
+                            "params": {
+                                "day": "tuesday",
+                                "start_time": "16:00",
+                                "end_time": "17:00",
+                                "teacher_id": "d1c9b8e5-8a3e-4c9b-9f1e-2a1b2c3d4e5f",
+                                "type": "teacher_requested_slot"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "step": 2,
+            "step_id": "step_E",
+            "resolution_type": "conflict",
+            "target_id": "teacher_slot",
+            "target_type": "requested_free_period",
+            "depends_on": ["step_A", "step_C"],
+            "options": [
+                {
+                    "condition": [
+                        "A.remove",
+                        "C.remove"
+                    ],
+                    "options": [
+                        {
+                            "option_id": "E.remove",
+                            "action": "remove",
+                            "params": {
+                                "day": "tuesday",
+                                "start_time": "17:00",
+                                "end_time": "18:00",
+                                "teacher_id": "d1c9b8e5-8a3e-4c9b-9f1e-2a1b2c3d4e5f",
+                                "type": "requested_free_period"
+                            }
+                        },
+                        {
+                            "option_id": "E.modify.1",
+                            "action": "modify",
+                            "params": {
+                                "day": "tuesday",
+                                "start_time": "16:00",
+                                "end_time": "17:00",
+                                "teacher_id": "d1c9b8e5-8a3e-4c9b-9f1e-2a1b2c3d4e5f",
+                                "type": "requested_free_period"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "condition": [
+                        "A.modify.1",
+                        "C.modify.1"
+                    ],
+                    "options": [
+                        {
+                            "option_id": "E.modify.1",
+                            "action": "modify",
+                            "params": {
+                                "day": "tuesday",
+                                "start_time": "16:00",
+                                "end_time": "17:00",
+                                "teacher_id": "d1c9b8e5-8a3e-4c9b-9f1e-2a1b2c3d4e5f",
+                                "type": "teacher_requested_slot"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "step": 3,
+            "step_id": "step_A",
+            "resolution_type": "dependency",
+            "target_id": "course_slot",
+            "target_type": "operational_period_violation",
+            "options": [
+                {
+                    "option_id": "A.modify.1",
+                    "action": "modify",
+                    "label": "Modify Slot",
+                    "proposal": {
+                        "day": "tuesday",
+                        "start_time": "16:00",
+                        "end_time": "17:00"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -2,9 +2,10 @@
 
 namespace App\Models\AcademicYear;
 
+use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
-use MongoDB\Laravel\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SystemAcademicYear extends Model
 {
@@ -22,5 +23,10 @@ class SystemAcademicYear extends Model
     public function schoolAcademicYear(): HasMany
     {
         return $this->hasMany(SchoolAcademicYear::class, 'school_year_id');
+    }
+
+    public function examJointCourse(): HasMany
+    {
+        return $this->hasMany(ExamJointCourse::class);
     }
 }

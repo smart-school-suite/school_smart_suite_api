@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Constant\Constraint\ExamTimetable\Builder;
+
+use App\Constant\Constraint\ExamTimetable\Assignment\RequestedAssignment;
+use App\Constant\Constraint\ExamTimetable\Course\CourseTimeRequest;
+use App\Constant\Constraint\ExamTimetable\Course\RequiredJointCourseSession;
+use App\Constant\Constraint\ExamTimetable\Invigilator\InvigilatorRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Schedule\SessionDuration;
+use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
+
+class ConstraintBuilder
+{
+    public static function all(): array
+    {
+        return [
+            RequestedAssignment::toArray(),
+            CourseTimeRequest::toArray(),
+            RequiredJointCourseSession::toArray(),
+            InvigilatorRequestedSlot::toArray(),
+            OperationalPeriod::toArray(),
+            SessionDuration::toArray()
+        ];
+    }
+
+    public static function keys(): array
+    {
+        return array_column(self::all(), 'key');
+    }
+
+    public static function titles(): array
+    {
+        return array_column(self::all(), 'title', 'key');
+    }
+
+    public static function title(string $key, string $default = 'Unknown violation'): string
+    {
+        return self::titles()[$key] ?? $default;
+    }
+
+    public static function getConstraintType(string $key): ?string
+    {
+        $constraints = self::all();
+
+        foreach ($constraints as $constraint) {
+            if (isset($constraint['key']) && $constraint['key'] === $key) {
+                return $constraint['type'] ?? '';
+            }
+        }
+
+        return null;
+    }
+    public static function constraintInterpreterMap(): array
+    {
+        $map = [];
+        foreach (self::all() as $violation) {
+            if (isset($violation['interpreter_handler'])) {
+                $map[$violation['key']] = $violation['interpreter_handler'];
+            }
+        }
+        return $map;
+    }
+
+    public static function constraintSuggestionMap(): array
+    {
+        $map = [];
+        foreach (self::all()  as $suggestion) {
+            if (isset($suggestion['suggestion_handler'])) {
+                $map[$suggestion['key']] = $suggestion['suggestion_handler'];
+            }
+        }
+        return $map;
+    }
+    public static function get(string $key): ?array
+    {
+        foreach (self::all() as $violation) {
+            if ($violation['key'] === $key) {
+                return $violation;
+            }
+        }
+        return null;
+    }
+
+    public static function has(string $key): bool
+    {
+        return in_array($key, self::keys(), true);
+    }
+
+    public static function categories(): array
+    {
+        $categories = array_column(self::all(), 'category');
+        return array_values(array_unique($categories));
+    }
+
+    public static function byCategory(): array
+    {
+        $grouped = [];
+
+        foreach (self::all() as $violation) {
+            $cat = $violation['category'] ?? 'other';
+            $grouped[$cat][] = $violation;
+        }
+
+        return $grouped;
+    }
+
+    public static function isOfCategory(string $key, string $category): bool
+    {
+        $violation = self::get($key);
+        return $violation && ($violation['category'] ?? null) === $category;
+    }
+}

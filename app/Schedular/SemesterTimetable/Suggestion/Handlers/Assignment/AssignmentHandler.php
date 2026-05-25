@@ -2,18 +2,18 @@
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Handlers\Assignment;
 
-use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment;
-use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
-use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
-use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
-use App\Schedular\SemesterTimetable\Suggestion\Graph\Node;
+use App\Constant\Action\AppActions;
+use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment as RequestedAssignmentConstraint;
+use App\Constant\Violation\SemesterTimetable\Assignment\RequestedAssigment as RequestedAssigmentBlocker;
+use App\Schedular\SemesterTimetable\Suggestion\Blockers\Core\BlockerRegistry;
+use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionOptionDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Contracts\SuggestionHandler;
-
-class AssignmentHandler extends SuggestionContext implements SuggestionHandler
+use Illuminate\Support\Str;
+class AssignmentHandler implements SuggestionHandler
 {
     public function supports(string $type): string
     {
-        return $type === RequestedAssignment::KEY;
+        return $type === RequestedAssignmentConstraint::KEY || $type === RequestedAssigmentBlocker::KEY;
     }
 
     public function isExclusive(): bool
@@ -21,36 +21,35 @@ class AssignmentHandler extends SuggestionContext implements SuggestionHandler
         return false;
     }
 
-    public function generate(Node $node): array
+    public function allowedActions(): array
     {
+        return ["keep", "modify", "remove"];
+    }
+
+    public function conflictOptions(array $constraint): array
+    {
+        $metaData = [...$constraint["details"], "type" => $constraint["type"] ];
         return [
-            [
-                'action' => 'remove',
-                'target' => $node,
-                'label' => 'Remove assignment'
-            ],
-            [
-                'action' => 'modify',
-                'target' => $node,
-                'label' => 'Move assignment',
-                'payload' => []
-            ]
+            new SuggestionOptionDTO(
+                action: AppActions::REMOVE,
+                label: 'Remove assignment',
+                meta: $metaData,
+                proposals: [
+                    "id" => Str::uuid()->toString(),
+                    ...$metaData
+                ]
+            ),
+            new SuggestionOptionDTO(
+                action: AppActions::MODIFY,
+                label: 'Move assignment to another time',
+                meta: $metaData
+            )
         ];
     }
 
-    private function handleModification($node)
+    public function dependencyOptions(array $constraint, array $blockers): array
     {
-        //we are modifying an existing assignment, so we need to find potential slots for this assignment
-        $day = $node->meta->entity->day;
-        $teacherId = $node->meta->entity->teacher_id;
-        $hallId = $node->meta->entity->hall_id;
-
-
-        $context = ConstraintContext::fromPayload(self::$requestPayload);
-        //get potential slots for suggestion
-        $slots = collect(self::$timetableGrid)->filter(fn($slot) => (strtolower($slot->day) == strtolower($day) &&
-            (strtolower($slot->type) === GridSlotDTO::TYPE_REGULAR)));
-
-
+        $resolveChanges = app(BlockerRegistry::class)->generateBlockerSuggestions($blockers);
+        return $resolveChanges;
     }
 }
