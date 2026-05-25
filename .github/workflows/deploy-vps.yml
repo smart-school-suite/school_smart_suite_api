@@ -48,8 +48,8 @@ jobs:
               image: $IMAGE
               container_name: school-smart-app
               restart: unless-stopped
-              ports:
-                - "80:80"
+              expose:
+                - "80"
               env_file:
                 - .env
           EOF

@@ -310,6 +310,11 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->replace(
+            \Illuminate\Http\Middleware\TrustProxies::class,
+            \App\Http\Middleware\TrustProxies::class,
+        );
+
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
