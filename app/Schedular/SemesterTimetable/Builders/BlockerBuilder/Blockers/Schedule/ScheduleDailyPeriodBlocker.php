@@ -13,7 +13,7 @@ class ScheduleDailyPeriodBlocker implements BlockerBuilder
         return ScheduleDailyPeriod::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = ScheduleDailyPeriod::KEY;

@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('exam_timetable_versions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->unsignedSmallInteger('version_number');
-            $table->string('name');
+            $table->string('label', 150);
             $table->timestamps();
         });
 
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('active_exam_timetable', function (Blueprint $table) {
+        Schema::create('active_exam_timetables', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->timestamps();
         });

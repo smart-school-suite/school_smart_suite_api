@@ -8,5 +8,6 @@ class ResponseDTO
     public array $timetable;
     public array $diagnostics;
     public array $suggestions;
+    public array $options;
     public function __construct() {}
 }

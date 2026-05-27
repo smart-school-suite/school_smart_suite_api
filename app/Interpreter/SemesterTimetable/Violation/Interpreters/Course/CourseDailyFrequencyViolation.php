@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Course;
 use App\Constant\Violation\SemesterTimetable\Course\CourseDailyFrequency;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 use Illuminate\Support\Facades\DB;
 
 class CourseDailyFrequencyViolation extends DiagnosticContext implements ViolationInterpreter
@@ -14,12 +15,12 @@ class CourseDailyFrequencyViolation extends DiagnosticContext implements Violati
         return CourseDailyFrequency::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
         $currentSchool = self::getSchool();
-        $conflict = $blocker['conflict']['requested_slot'] ?? null;
-        $evidence = $blocker['evidence'][0]['violated_daily_frequency_rule'] ?? null;
-        $entity = $blocker['entity'];
+        $conflict = $blocker->conflict ?? null;
+        $evidence = $blocker->evidence ?? null;
+        $entity = $blocker->entity;
         $course = DB::table('courses')
             ->where("school_branch_id", $currentSchool->id)
             ->where('id', $entity['course_id'] ?? null)

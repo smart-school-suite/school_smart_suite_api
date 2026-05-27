@@ -4,6 +4,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Schedule;
 
 use App\Constant\Violation\SemesterTimetable\Schedule\RequestedFreePeriod;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class RequestedFreePeriodViolation implements ViolationInterpreter
 {
@@ -12,11 +13,11 @@ class RequestedFreePeriodViolation implements ViolationInterpreter
         return RequestedFreePeriod::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $entity = $blocker['entity']['protected_free_period'] ?? null;
-        $conflict = $blocker['conflict']['attempted_slot'] ?? null;
+        $entity = $blocker->entity ?? null;
+        $conflict = $blocker->conflict ?? null;
 
-        return "Free Period Conflict: The requested session on {$conflict['day']} at {$conflict['start_time']} to {$conflict['end_time']} conflicts with a free period on {$entity['day']} from {$entity['start_time']} to {$entity['end_time']}";
+        return "Free Period Conflict: The requested session on ";
     }
 }

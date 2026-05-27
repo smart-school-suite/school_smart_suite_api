@@ -15,7 +15,7 @@ class RequiredJointCourseDiagnostic implements DiagnosticBuilder
         return RequiredJointCourse::KEY;
     }
 
-    public function build($diagnostic): DiagnosticDTO
+    public function build(array $diagnostic): DiagnosticDTO
     {
         $diagnosticDTO = new DiagnosticDTO();
         $blockerEngine = app(BlockerRegistry::class);

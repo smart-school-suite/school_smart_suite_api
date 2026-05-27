@@ -15,6 +15,7 @@ class ExamTimetableVersion extends Model
     protected $fillable = [
         'version_number',
         'number',
+        'label',
         'exam_id',
         'school_branch_id'
     ];

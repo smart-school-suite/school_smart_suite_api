@@ -3,7 +3,6 @@
 namespace App\Jobs\SemesterTimetable;
 
 use App\Events\SemesterTimetable\TimetableGenerationEvent;
-use App\Models\SemesterTimetable\SemesterTimetableDiagnostic;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Exceptions\AppException;
@@ -25,24 +24,22 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Courses;
-use App\Models\Hall;
-use Illuminate\Support\Arr;
+use App\Models\SemesterTimetable\SemesterTimetable;
 use Illuminate\Support\Str;
-use App\Models\Teacher;
 use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
 use Throwable;
 
 class GenerateFixedSemesterTimetable implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
     public int $tries = 3;
     public int $timeout = 120;
     public int $backoff = 30;
 
+    protected const PARTIAL = "partial";
+    protected const ERROR = "error";
+    protected const OPTIMAL = "optimal";
     public function __construct(
         protected readonly object $currentSchool,
         protected readonly array $payload,
@@ -131,9 +128,8 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             ]
         );
 
-        $response = $this->optimalSchedulerResponseMock();
-
-        $timetableGenerator = app(SchedularEngine::class);
+        $schedulingEngine = app(SchedularEngine::class);
+        $response = $schedulingEngine->run($body);
 
         if (is_null($timetableVersionId)) {
             $timetableVersionId = $this->createTimetableVersion(
@@ -143,9 +139,16 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             );
         }
 
-        if (!$this->isErrorResponse($response)) {
-            $this->createTimetableSlots($timetableVersionId, $this->currentSchool, $response, $schoolSemester);
-        }
+        SemesterTimetable::create([
+            'school_semester_id' => $schoolSemester->id,
+            'timetable_version_id' => $timetableVersionId,
+            'status' => $response->status,
+            'timetable_slots' => $response->timetable,
+            'request_payload' => $this->payload,
+            'raw_diagnostics' => $response->diagnostics,
+            "raw_suggestions" => $response->suggestions
+        ]);
+
 
         $finalStatus = $this->isErrorResponse($response) ? 'FAILED' : 'COMPLETED';
 
@@ -163,7 +166,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $this->handleDiagnostics($response, $timetableVersionId, $schoolSemester);
         $this->updateJobProgress($systemJob, $finalStatus, 'Done', 100);
     }
-    private function getTeachers(string $branchId, $specialty)
+    private function getTeachers(string $branchId, object $specialty)
     {
         $teachers = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
             ->where('specialty_id', $specialty->id)
@@ -228,7 +231,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         return $teacherCourses;
     }
-    private function getHalls(string $branchId, $specialty)
+    private function getHalls(string $branchId, object $specialty)
     {
         $halls = SpecialtyHall::where('school_branch_id', $branchId)
             ->where('specialty_id', $specialty->id)
@@ -246,7 +249,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         return $halls;
     }
-    private function getHallBusyPeriods(string $branchId, $halls)
+    private function getHallBusyPeriods(string $branchId, Collection $halls)
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
             ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())
@@ -312,13 +315,13 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             ->all();
     }
     private function buildRequestBody(
-        $teachers,
-        $teacherBusyPeriods,
-        $teacherCourses,
-        $halls,
-        $hallBusyPeriods,
+        Collection $teachers,
+        Collection  $teacherBusyPeriods,
+        Collection $teacherCourses,
+        Collection $halls,
+        Collection  $hallBusyPeriods,
         array $requestPayload,
-        $jointCourses,
+        ?array $jointCourses,
     ): array {
         return [
             'teachers'             => $this->formatTeachers($teachers),
@@ -330,14 +333,14 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'hard_constraints'     => $this->buildHardConstraints($requestPayload, $jointCourses),
         ];
     }
-    private function formatTeachers($teachers): array
+    private function formatTeachers(Collection $teachers): array
     {
         return $teachers->map(fn($t) => [
             'teacher_id' => $t->teacher->id,
             'name'       => $t->teacher->name,
         ])->all();
     }
-    private function formatTeacherBusyPeriods($busyPeriods): array
+    private function formatTeacherBusyPeriods(Collection $busyPeriods): array
     {
         return $busyPeriods->map(fn($s) => [
             'start_time'   => $s->start_time,
@@ -347,7 +350,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'teacher_name' => $s->teacher->name,
         ])->all();
     }
-    private function formatTeacherCourses($teacherCourses): array
+    private function formatTeacherCourses(Collection $teacherCourses): array
     {
         return $teacherCourses->map(fn($c) => [
             'course_id'     => $c->course->id,
@@ -358,7 +361,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'teacher_name'  => $c->teacher->name,
         ])->all();
     }
-    private function formatHalls($halls): array
+    private function formatHalls(Collection $halls): array
     {
         return $halls->map(fn($h) => [
             'hall_name'     => $h->hall->name,
@@ -367,7 +370,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'hall_type'     => $h->hall->types->pluck('name')->all(),
         ])->all();
     }
-    private function formatHallBusyPeriods($busyPeriods): array
+    private function formatHallBusyPeriods(Collection $busyPeriods): array
     {
         return $busyPeriods->map(fn($s) => [
             'hall_id'    => $s->hall->id,
@@ -404,7 +407,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     private function createTimetableVersion(
         string $schoolSemesterId,
         object $currentSchool,
-        array $response,
+        object $response,
     ): string {
         $nextVersion = (SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)
             ->where('school_semester_id', $schoolSemesterId)
@@ -412,7 +415,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $version = SemesterTimetableVersion::create([
             'label'            => "Version {$nextVersion}",
-            'scheduler_status' => $response['status'] ?? 'error',
+            'scheduler_status' => $response->status ?? 'error',
             'school_branch_id' => $currentSchool->id,
             'school_semester_id'      => $schoolSemesterId,
             'version_number'   => $nextVersion
@@ -420,38 +423,9 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         return $version->id;
     }
-    private function createTimetableSlots(string $versionId, object $currentSchool, array $response, $schoolSemester): void
+    private function isErrorResponse(object $response): bool
     {
-        $now = Carbon::now();
-
-        $slots = collect($response['timetable'])
-            ->flatMap(fn($day) => $day['slots'])
-            ->map(fn($slot) => [
-                'id'               => Str::uuid()->toString(),
-                'school_branch_id' => $currentSchool->id,
-                'school_semester_id' => $schoolSemester->id,
-                'student_batch_id' => $schoolSemester->student_batch_id,
-                'specialty_id'    => $schoolSemester->specialty_id,
-                'version_id'       => $versionId,
-                'course_id'        => Arr::random(Courses::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray()) ?? null,
-                'teacher_id'       => Arr::random(Teacher::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray()) ?? null,
-                'hall_id'          => Arr::random(Hall::where("school_branch_id", $currentSchool->id)->pluck('id')->toArray()) ?? null,
-                'day'              => $slot['day'],
-                'start_time'       => $slot['start_time'],
-                'end_time'         => $slot['end_time'],
-                'break'     => $slot['break'] ?? false,
-                'created_at'       => $now,
-                'updated_at'       => $now,
-            ])
-            ->all();
-
-        foreach (array_chunk($slots, 500) as $chunk) {
-            DB::table('timetable_slots')->insert($chunk);
-        }
-    }
-    private function isErrorResponse(array $response): bool
-    {
-        return Str::lower($response['status'] ?? 'error') === 'error';
+        return Str::lower($response->status ?? self::ERROR) === self::ERROR;
     }
     private function updateJobProgress(SystemJob $systemJob, string $status, string $stage, int $progress): void
     {
@@ -463,77 +437,35 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         ]);
     }
     private function handleDiagnostics(
-        array $schedulerResponse,
-        string $timetableVersionId,
-        $schoolSemester
+        object $schedulerResponse,
+        string $timetableVersionId
     ): void {
-        $status = $schedulerResponse['status'] ?? 'error';
-        $isError = $status === 'error';
+        $status = $schedulerResponse->status ?? self::ERROR;
 
-        $rawDiagnostics = $isError
-            ? $schedulerResponse['diagnostics']['constraints']['hard'] ?? null
-            : $schedulerResponse['diagnostics']['constraints']['soft'] ?? null;
-        DiagnosticContext::setSchool($this->currentSchool);
-        $diagnosticResponseBuilder = app(DiagnosticResponseBuilder::class);
-        $diagnostics = $diagnosticResponseBuilder->build($rawDiagnostics);
+        if ($status === self::OPTIMAL) {
+            return;
+        }
+        $isError = $status === self::ERROR;
+        $isPartial = $status === self::PARTIAL;
 
-        $parsedDiagnostics = [
-            'timetable_version_id'              => $timetableVersionId,
-            'school_semester_id'                => $schoolSemester->id ?? null,
-            'generated_at'                      => Carbon::now(),
-            'status'                            => $status,
-            'summary'                           => [],
-            'violations'                        => [],
-            'constraint_modification_suggestions' => [],
-            'blocker_resolution_suggestions'    => [],
-            'meta'                              => $schedulerResponse['diagnostics']['summary'] ?? [],
-            'diagnostic_hash'                   => Str::random(40),
-        ];
+        if ($isError || $isPartial) {
+            $rawDiagnostics = $isError
+                ? $schedulerResponse->diagnostics['hard']->toArray() ?? null
+                : $schedulerResponse->diagnostics['soft']->toArray() ?? null;
 
-        foreach ($diagnostics as $diagnostic) {
-            $constraint = $diagnostic->constraint ?? null;
-
-            $parsedDiagnostics['summary'][] = [
-                'constraint_id'   => $constraint->id ?? null,
-                'summary'         => $diagnostic->summary ?? null,
-                'constraint_name' => $constraint->name ?? null,
-                'constraint_key'  => $constraint->key ?? null,
-            ];
-
-            foreach ($diagnostic->reasons as $blocker) {
-                $parsedDiagnostics['violations'][] = [
-                    'violation_id'  => $blocker->violation->id ?? null,
-                    'constraint_id' => $constraint->id ?? null,
-                    'violation_name' => $blocker->violation->name ?? null,
-                    'violation_key' => $blocker->violation->key ?? null,
-                    'context'       => $blocker->context ?? null,
-                    "title" => $blocker->title ?? null,
-                    "description" => $blocker->description ?? null,
-                ];
-            }
-
-            foreach ($diagnostic->suggestions['constraint_modification'] as $modification) {
-                $parsedDiagnostics['constraint_modification_suggestions'][] = [
-                    'constraint_id' => $constraint->id ?? null,
-                    'summary'       => $modification->summary ?? null,
-                    'context'       => $modification->context ?? null,
-                ];
-            }
-
-            foreach ($diagnostic->suggestions['blocker_resolution'] as $resolutions) {
-                foreach ($resolutions as $resolution) {
-                    $parsedDiagnostics['blocker_resolution_suggestions'][] = [
-                        'violation_id'  => $resolution->blocker->id ?? null,
-                        'violation_key' => $resolution->blocker->key ?? null,
-                        'constraint_id' => $constraint->id ?? null,
-                        'summary'       => $resolution->summary ?? null,
-                        'context'       => $resolution->context ?? null,
-                    ];
-                }
+            DiagnosticContext::setSchool($this->currentSchool);
+            DiagnosticContext::setVersion($timetableVersionId);
+            $diagnosticResponseBuilder = app(DiagnosticResponseBuilder::class);
+            $diagnostics = $diagnosticResponseBuilder->build($rawDiagnostics);
+            $semesterTimetable =  SemesterTimetable::where("school_branch_id", $this->currentSchool->id)
+                ->where("timetable_version_id", $timetableVersionId)
+                ->first();
+            if ($semesterTimetable) {
+                $semesterTimetable->update([
+                    'parsed_diagnostics' => $diagnostics
+                ]);
             }
         }
-
-        SemesterTimetableDiagnostic::create($parsedDiagnostics);
     }
     private function failJob(SystemJob $systemJob, string $message, int|string $code): void
     {
@@ -553,8 +485,14 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     }
     public function failed(Throwable $exception): void
     {
+        $errorSource = $this->getErrorSource($exception);
+
         Log::error("GenerateFixedSemesterTimetable job [{$this->jobId}] permanently failed.", [
             'exception' => $exception->getMessage(),
+            'error_source' => $errorSource,
+            'error_file' => $exception->getFile(),
+            'error_line' => $exception->getLine(),
+            'error_trace' => $exception->getTraceAsString(),
             'school_id' => $this->currentSchool->id,
             'payload'   => $this->payload,
         ]);
@@ -565,11 +503,49 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             $this->failJob($systemJob, $exception->getMessage(), 500);
         }
     }
-    private static function optimalSchedulerResponseMock()
+    private function getErrorSource(Throwable $exception): string
     {
-        $filePath = public_path("schedulerResponse/optimal/example1.json");
-        $content = file_get_contents($filePath);
-        $data = json_decode($content, true);
-        return $data;
+        $trace = $exception->getTrace();
+
+        if (isset($trace[0])) {
+            $class = $trace[0]['class'] ?? 'Unknown';
+            $method = $trace[0]['function'] ?? 'Unknown';
+
+            if ($class === self::class || str_contains($class, 'GenerateFixedSemesterTimetable')) {
+                return "Job method: {$class}@{$method}";
+            }
+        }
+
+        foreach ($trace as $index => $frame) {
+            $class = $frame['class'] ?? '';
+            $method = $frame['function'] ?? '';
+
+            if (str_contains($class, 'Controller')) {
+                return "Controller: {$class}@{$method} (trace index: {$index})";
+            }
+
+            if (str_contains($class, 'Service')) {
+                return "Service: {$class}@{$method} (trace index: {$index})";
+            }
+
+            if (str_contains($class, 'Repository')) {
+                return "Repository: {$class}@{$method} (trace index: {$index})";
+            }
+
+            if (str_contains($class, 'Job')) {
+                return "Job: {$class}@{$method} (trace index: {$index})";
+            }
+        }
+        $firstFrame = $trace[0] ?? null;
+        if ($firstFrame) {
+            return sprintf(
+                "Frame 0: %s@%s (line: %s)",
+                $firstFrame['class'] ?? 'Unknown',
+                $firstFrame['function'] ?? 'Unknown',
+                $firstFrame['line'] ?? 'Unknown'
+            );
+        }
+
+        return "Unknown source (no trace available)";
     }
 }

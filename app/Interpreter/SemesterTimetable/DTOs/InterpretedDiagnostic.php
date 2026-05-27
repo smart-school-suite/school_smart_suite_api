@@ -11,7 +11,6 @@ class InterpretedDiagnostic
         public SemTimetableConstraint $constraint,
         public string $severity = 'hard',
         public array $reasons = [],
-        public array $suggestions = []
     ) {}
 
     public function toArray(): array
@@ -21,7 +20,6 @@ class InterpretedDiagnostic
             'constraint' => $this->constraint,
             'severity' => $this->severity,
             'reasons' => $this->reasons,
-            'suggestions' => $this->suggestions,
         ];
     }
 }

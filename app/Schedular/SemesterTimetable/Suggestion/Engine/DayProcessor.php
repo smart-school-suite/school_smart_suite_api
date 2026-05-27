@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Schedular\SemesterTimetable\Suggestion\Engine;
+
 use App\Schedular\SemesterTimetable\Suggestion\Solution\Core\SolutionPathEngine;
 
 class DayProcessor
 {
-    public function process(array $diagnostic, string $day): array
+    public function process(array $diagnostic): array
     {
         $result = [];
 
@@ -26,10 +27,6 @@ class DayProcessor
         }
         $scenarios = array_merge(...$result);
         $solutionPaths = app(SolutionPathEngine::class)->generateSolutionPaths($scenarios);
-        return [
-            'day' => $day,
-            'scenarios' => array_merge(...$result),
-            'solution_paths' => $solutionPaths
-        ];
+        return $solutionPaths;
     }
 }

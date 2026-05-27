@@ -15,7 +15,7 @@ class BreakPeriodDiagnostic implements DiagnosticBuilder
         return BreakPeriod::KEY;
     }
 
-    public function build($diagnostic): DiagnosticDTO
+    public function build(array $diagnostic): DiagnosticDTO
     {
         $diagnosticDTO = new DiagnosticDTO();
         $blockerEngine = app(BlockerRegistry::class);
@@ -35,7 +35,6 @@ class BreakPeriodDiagnostic implements DiagnosticBuilder
             ]
         ];
         $diagnosticDTO->blockers = $blockerEngine->build($diagnostic["blockers"])->toArray();
-        $diagnosticDTO->suggestions = [];
         return $diagnosticDTO;
     }
 }

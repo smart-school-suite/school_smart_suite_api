@@ -4,6 +4,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Hall;
 
 use App\Constant\Violation\SemesterTimetable\Hall\HallRequestedTimeSlot;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class HallRequestedTimeSlotViolation implements ViolationInterpreter
 {
@@ -12,10 +13,10 @@ class HallRequestedTimeSlotViolation implements ViolationInterpreter
         return HallRequestedTimeSlot::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $entity = $blocker['entity']['preferred_slot'] ?? null;
-        $conflict = $blocker['conflict']['requested_slot'] ?? null;
-        return "Hall Requested Time Slot Violation: The requested session on {$conflict['day']} from {$conflict['start_time']} to {$conflict['end_time']} conflicts with an existing assignment in the same hall on {$entity['day']} from {$entity['start_time']} to {$entity['end_time']}.";
+        $entity = $blocker->entity ?? null;
+        $conflict = $blocker->conflict ?? null;
+        return "Hall Requested Time Slot Violation: ";
     }
 }

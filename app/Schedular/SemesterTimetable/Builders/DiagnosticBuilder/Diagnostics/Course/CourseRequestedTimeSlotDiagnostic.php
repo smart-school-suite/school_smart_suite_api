@@ -15,7 +15,7 @@ class CourseRequestedTimeSlotDiagnostic implements DiagnosticBuilder
         return CourseRequestedSlot::KEY;
     }
 
-    public function build($diagnostic): DiagnosticDTO
+    public function build(array $diagnostic): DiagnosticDTO
     {
         $diagnosticDTO = new DiagnosticDTO();
         $constraintFailed = $diagnostic["constraint_failed"];
@@ -37,7 +37,6 @@ class CourseRequestedTimeSlotDiagnostic implements DiagnosticBuilder
             ]
         ];
         $diagnosticDTO->blockers = $blockerEngine->build($diagnostic["blockers"])->toArray();
-        $diagnosticDTO->suggestions = [];
         return $diagnosticDTO;
     }
 }

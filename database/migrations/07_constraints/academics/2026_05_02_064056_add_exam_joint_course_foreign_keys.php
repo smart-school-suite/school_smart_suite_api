@@ -34,24 +34,6 @@ return new class extends Migration
             $table->uuid('exam_js_id');
             $table->foreign('exam_js_id')->references('id')->on('exam_jcs');
         });
-
-        Schema::table('exam_jc_session_halls', function (Blueprint $table) {
-            $table->uuid('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->uuid('hall_id');
-            $table->foreign('hall_id')->references('id')->on('halls');
-            $table->uuid('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->uuid('exam_jc_slot_id');
-            $table->foreign('exam_jc_slot_id')->references('id')->on('exam_jc_slots');
-        });
-
-        Schema::table('exam_session_jc_invigs', function (Blueprint $table) {
-            $table->uuid('exam_jc_session_hall_id');
-            $table->foreign('exam_jc_session_hall_id')->references('id')->on('exam_jc_session_halls');
-            $table->uuid('invigilator_id');
-            $table->foreign('invigilator_id')->references('id')->on('exam_invigs');
-        });
     }
 
     public function down(): void
@@ -77,23 +59,6 @@ return new class extends Migration
                 $table->dropForeign(['school_branch_id']);
                 $table->dropForeign(['exam_id']);
                 $table->dropForeign(['exam_js_id']);
-            });
-        }
-
-        if (Schema::hasTable('exam_jc_session_hall')) {
-            Schema::table('exam_jc_session_hall', function (Blueprint $table) {
-                $table->dropForeign(['school_branch_id']);
-                $table->dropForeign(['hall_id']);
-                $table->dropForeign(['specialty_id']);
-                $table->dropForeign(['exam_jc_slot_id']);
-            });
-        }
-
-        if (Schema::hasTable('exam_session_jc_invigs')) {
-            Schema::table('exam_session_jc_invigs', function (Blueprint $table) {
-                $table->dropForeign(['school_branch_id']);
-                $table->dropForeign(['invigilator_id']);
-                $table->dropForeign(['exam_jc_session_hall_id']);
             });
         }
     }

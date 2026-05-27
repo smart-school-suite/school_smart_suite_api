@@ -7,5 +7,5 @@ use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 interface BlockerBuilder
 {
     public static function type(): string;
-    public function build($blocker): BlockerDTO;
+    public function build(array $blocker): BlockerDTO;
 }

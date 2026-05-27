@@ -14,7 +14,7 @@ class PeriodDurationDiagnostic implements DiagnosticBuilder
         return PeriodDuration::KEY;
     }
 
-    public function build($diagnostics): DiagnosticDTO
+    public function build(array $diagnostics): DiagnosticDTO
     {
         $diagnostic = new DiagnosticDTO();
         $blockerEngine = app(BlockerRegistry::class);
@@ -28,7 +28,6 @@ class PeriodDurationDiagnostic implements DiagnosticBuilder
             ]
         ];
         $diagnostic->blockers = $blockerEngine->build($blockers)->toArray();
-        $diagnostic->suggestions = [];
         return $diagnostic;
     }
 }

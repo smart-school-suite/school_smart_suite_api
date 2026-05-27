@@ -45,11 +45,11 @@ class SemesterTimetableDiagnostic extends Model
         return $column;
     }
 
-    public function scopeForVersion($query, $versionId)
+    public function scopeForVersion(object $query, string $versionId)
     {
         return $query->where('timetable_version_id', $versionId);
     }
-    public function scopeForSemester($query, $schoolSemesterId)
+    public function scopeForSemester(object $query, string $schoolSemesterId)
     {
         return $query->where('school_semester_id', $schoolSemesterId);
     }

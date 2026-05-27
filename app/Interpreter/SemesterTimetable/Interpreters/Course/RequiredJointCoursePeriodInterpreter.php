@@ -7,6 +7,7 @@ use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
 use App\Models\Constraint\SemTimetableConstraint;
+use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
 use Illuminate\Support\Facades\DB;
 
 class RequiredJointCoursePeriodInterpreter implements ConstraintInterpreter
@@ -22,20 +23,19 @@ class RequiredJointCoursePeriodInterpreter implements ConstraintInterpreter
         return $constraint === RequiredJointCourse::KEY;
     }
 
-    public function interpret(array $diagnostic): InterpretedDiagnostic
+    public function interpret(DiagnosticDTO $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
             constraint: SemTimetableConstraint::where("key", RequiredJointCourse::KEY)->first(),
             severity: 'hard',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic->blockers ?? []),
         );
     }
 
-    private function buildSummary(array $diagnostic): string
+    private function buildSummary(DiagnosticDTO $diagnostic): string
     {
-        $details = $diagnostic["constraint_failed"]["details"] ?? [];
+        $details = $diagnostic->constraint_failed["details"] ?? [];
         $course = DB::table('courses')->where("id", $details['course_id'] ?? null)->first();
         $hall = DB::table('halls')->where("id", $details['hall_id'] ?? null)->first();
         $teacher = DB::table("teachers")->where("id", $details['teacher_id'] ?? null)->first();

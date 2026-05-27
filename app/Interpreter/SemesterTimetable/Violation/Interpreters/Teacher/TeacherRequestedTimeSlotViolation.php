@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Teacher;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherRequestedTimeSlot;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Teacher;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class TeacherRequestedTimeSlotViolation implements ViolationInterpreter
 {
@@ -13,15 +14,13 @@ class TeacherRequestedTimeSlotViolation implements ViolationInterpreter
         return TeacherRequestedTimeSlot::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $entity = $blocker['entity'] ?? null;
-        $conflict = $blocker['conflict']['requested_slot'] ?? null;
-        $evidence = $blocker['evidence']['conflicting_assignment'] ?? null;
+        $entity = $blocker->entity ?? null;
+        $conflict = $blocker->conflict ?? null;
+        $evidence = $blocker->evidence ?? null;
         $teacher = Teacher::find($entity['teacher_id'] ?? null);
 
-        return "Teacher Requested Time Slot Violation: {$teacher->name} has requested a time slot on {$conflict['day']} from
-        {$conflict['start_time']} to {$conflict['end_time']}, which conflicts with an assignment on
-        {$evidence['day']} from {$evidence['start_time']} to {$evidence['end_time']}.";
+        return "Teacher Requested Time Slot Violation: ";
     }
 }

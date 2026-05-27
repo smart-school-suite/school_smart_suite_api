@@ -61,7 +61,7 @@ class BlockerRegistry
         TeacherUnavailable::KEY => TeacherUnavailableBlocker::class
     ];
 
-    public function build($blockers): Collection {
+    public function build(array $blockers): Collection {
         $violations = collect();
         foreach ($blockers as $blocker) {
             $type = $blocker["key"] ?? null;

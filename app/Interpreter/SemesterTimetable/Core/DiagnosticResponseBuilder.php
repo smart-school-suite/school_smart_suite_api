@@ -22,8 +22,8 @@ class DiagnosticResponseBuilder
     {
         return collect($diagnostics)
             ->map(function ($diagnostic) {
-                $constraint = $diagnostic['constraint_failed']['constraint'];
-                $interpreter = $this->registry->resolve($constraint);
+                $constraintFailed = $diagnostic->constraint_failed['type'];
+                $interpreter = $this->registry->resolve($constraintFailed);
 
                 return $interpreter
                     ? $interpreter->interpret($diagnostic)

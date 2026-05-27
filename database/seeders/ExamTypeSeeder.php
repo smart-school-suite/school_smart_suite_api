@@ -20,7 +20,6 @@ class ExamTypeSeeder extends Seeder
     }
     private function createExamType(): void
     {
-        Log::info('Exam Type Seeder has started.');
         $timestamp = now();
         $filePath = public_path("data/exam_type.csv");
         if (!file_exists($filePath) || !is_readable($filePath)) {
@@ -29,12 +28,10 @@ class ExamTypeSeeder extends Seeder
 
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
-            Log::info('CSV Header: ', $header);
 
             $exam_type = [];
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data);
                 $uuid = Str::uuid()->toString();
                 if (count($data) >= 2) {
                     $exam_type[] = [
@@ -53,11 +50,9 @@ class ExamTypeSeeder extends Seeder
 
             fclose($handle);
 
-            Log::info('Exam Type Array: ', $exam_type);
 
             if (!empty($exam_type)) {
                 DB::table('exam_types')->insert($exam_type);
-                Log::info('Inserted Exam Types: ' . count($exam_type) . ' entries.');
             } else {
                 Log::warning('No Exam types to insert.');
             }

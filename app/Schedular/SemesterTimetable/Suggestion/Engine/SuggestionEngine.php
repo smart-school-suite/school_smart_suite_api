@@ -17,8 +17,7 @@ class SuggestionEngine
 
         foreach ($results as $day => $structuredDiagnostics) {
             $processor = new DayProcessor();
-            //['hard' => [...], 'soft' => [...]]
-            $results[$day] = $processor->process($structuredDiagnostics, $day);
+            $results[$day] = $processor->process($structuredDiagnostics);
         }
 
         return $results;

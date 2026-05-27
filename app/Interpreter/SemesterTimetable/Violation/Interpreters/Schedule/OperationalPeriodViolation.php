@@ -4,6 +4,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Schedule;
 
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class OperationalPeriodViolation implements ViolationInterpreter
 {
@@ -12,11 +13,11 @@ class OperationalPeriodViolation implements ViolationInterpreter
         return OperationalPeriod::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $entity = $blocker['entity'] ?? null;
-        $conflict = $blocker['conflict']['requested_slot'] ?? null;
-        $evidence = $blocker['evidence']['conflicting_assignment'] ?? null;
-        return "Operational Period Violation: The requested session on {$conflict['day']} from {$conflict['start_time']} to {$conflict['end_time']} falls outside the operational period on {$entity['day']} from {$entity['start_time']} to {$entity['end_time']}";
+        $entity = $blocker->entity ?? null;
+        $conflict = $blocker->conflict ?? null;
+        $evidence = $blocker->evidence ?? null;
+        return "Operational Period Violation: The requested session on";
     }
 }

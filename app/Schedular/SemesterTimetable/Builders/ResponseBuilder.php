@@ -4,7 +4,6 @@ namespace App\Schedular\SemesterTimetable\Builders;
 
 use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRegistry;
 use App\Schedular\SemesterTimetable\Core\State;
-use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use App\Schedular\SemesterTimetable\DTO\ResponseDTO;
 use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
@@ -24,24 +23,42 @@ class ResponseBuilder extends TimetableContext
         };
         $response->timetable = $this->formatAndGroupTimetableByDay($state->grid);
         $diagnostics = [
-            "constraints" => [
-                "hard" => $diagnosticBuilder->build($state->violations["hard"] ?? []),
-                "soft" => $diagnosticBuilder->build($state->violations["soft"] ?? [])
-            ]
+            "hard" => $diagnosticBuilder->build($state->violations["hard"] ?? []),
+            "soft" => $diagnosticBuilder->build($state->violations["soft"] ?? [])
         ];
         $this->seedSuggestionContext($state, $diagnostics);
         $response->diagnostics = $diagnostics;
-        $response->suggestions = $suggestionEngine->generate([
-            "hard" => $diagnostics["constraints"]["hard"]->toArray() ?? [],
-            "soft" => $diagnostics["constraints"]["soft"]->toArray() ?? []
+        $generatedSuggestions = $suggestionEngine->generate([
+            "hard" => $diagnostics["hard"]->toArray() ?? [],
+            "soft" => $diagnostics["soft"]->toArray() ?? []
         ] ?? []);
+        $response->suggestions = $generatedSuggestions;
+        $response->options = $this->formatOptions($generatedSuggestions) ?? [];
         return $response;
     }
 
+    private function formatOptions(array $suggestions)
+    {
+       return  collect($suggestions)
+            ->map(function ($scenarios, $day) {
+                return collect($scenarios)
+                    ->flatMap(function ($scenario) {
+                        return collect($scenario->flow ?? [])
+                            ->flatMap(function ($step) {
+                                return $step['options'] ?? [];
+                            });
+                    })
+                    ->unique('option_id')
+                    ->values()
+                    ->all();
+            })
+            ->filter()
+            ->all();
+    }
     private function seedSuggestionContext(State $state, array $diagnostics)
     {
         SuggestionContext::setTimetableGrid($state->grid);
-        SuggestionContext::setDiagnostics($diagnostics["constraints"]);
+        SuggestionContext::setDiagnostics($diagnostics);
         SuggestionContext::setPreferenceMode(self::isWithPreference());
     }
     private function formatAndGroupTimetableByDay(array $grid): array
@@ -61,9 +78,10 @@ class ResponseBuilder extends TimetableContext
                 'teacher_id' => $slot->teacher_id ?? null,
                 'course_id' => $slot->course_id ?? null,
                 'hall_id' => $slot->hall_id ?? null,
-                "slot_type" => ($slot->teacher_id === null && $slot->course_id === null && $slot->hall_id === null)
-                    ? GridSlotDTO::TYPE_FREE
-                    : $slot->type,
+                // "slot_type" => ($slot->teacher_id === null && $slot->course_id === null && $slot->hall_id === null)
+                //     ? GridSlotDTO::TYPE_FREE
+                //     : $slot->type,
+                "slot_type" => $slot->type,
             ];
 
             $groupedByDay[$day][] = $formattedSlot;

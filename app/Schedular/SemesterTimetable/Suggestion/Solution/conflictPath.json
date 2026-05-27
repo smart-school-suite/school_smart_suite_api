@@ -8,13 +8,13 @@
     "flow": [
         {
             "step": 1,
-            "step_id": "step_A",
+            "step_id": "67634877-b6b8-46fc-af31-b945f1c1297f",
             "resolution_type": "conflict",
             "target_id": "course_slot",
             "target_type": "course_requested_slot",
             "options": [
                 {
-                    "option_id": "A.remove",
+                    "option_id": "9b5d55f8-7518-4c3b-8266-e5fabe4afa7a",
                     "action": "remove",
                     "condition": [],
                     "params": {
@@ -26,19 +26,7 @@
                     }
                 },
                 {
-                    "option_id": "A.modify.1",
-                    "action": "modify",
-                    "condition": [],
-                    "params": {
-                        "day": "tuesday",
-                        "start_time": "16:00",
-                        "end_time": "17:00",
-                        "course_id": "e91afc2b-8526-4a1c-8df8-971d1a40fc11",
-                        "type": "course_requested_slot"
-                    }
-                },
-                {
-                    "option_id": "A.modify.2",
+                    "option_id": "59850f94-927d-4627-9557-3844dd84f993",
                     "action": "modify",
                     "condition": [],
                     "params": {
@@ -53,17 +41,17 @@
         },
         {
             "step": 2,
-            "step_id": "step_C",
+            "step_id": "625a9ef5-3294-4a96-8275-bc394db43ffe",
             "resolution_type": "conflict",
             "target_id": "teacher_slot",
             "target_type": "teacher_requested_slot",
-            "depends_on": ["step_A"],
+            "depends_on": ["67634877-b6b8-46fc-af31-b945f1c1297f"],
             "options": [
                 {
-                    "condition": ["A.remove"],
+                    "condition": ["9b5d55f8-7518-4c3b-8266-e5fabe4afa7a"],
                     "options": [
                         {
-                            "option_id": "C.remove",
+                            "option_id": "03411218-80e1-4943-b3df-92f25c2591e8",
                             "action": "remove",
                             "params": {
                                 "day": "tuesday",
@@ -74,7 +62,7 @@
                             }
                         },
                         {
-                            "option_id": "C.modify.1",
+                            "option_id": "eedcf952-fdf1-4c49-a494-1803ac433917",
                             "action": "modify",
                             "params": {
                                 "day": "tuesday",

@@ -8,6 +8,8 @@ use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
 use App\Models\Teacher;
 use App\Models\Constraint\SemTimetableConstraint;
+use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
+
 class TeacherWeeklyHourInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -22,20 +24,19 @@ class TeacherWeeklyHourInterpreter implements ConstraintInterpreter
         return $constraint === TeacherWeeklyHours::KEY;
     }
 
-    public function interpret(array $diagnostic): InterpretedDiagnostic
+    public function interpret(DiagnosticDTO $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
             constraint: SemTimetableConstraint::where("key", TeacherWeeklyHours::KEY)->first(),
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic->blockers ?? []),
         );
     }
 
-    private function buildSummary(array $diagnostic): string
+    private function buildSummary(DiagnosticDTO $diagnostic): string
     {
-        $details = $diagnostic["constraint_failed"]["details"] ?? [];
+        $details = $diagnostic->constraint_failed["details"] ?? [];
         $teacher  = Teacher::find($details['teacher_id']);
         $teacherName = $teacher ? $teacher->name : 'Unknown Teacher';
         return "The Schedular was unable to enforce the maximum weekly hour limit of {$details['max_hours']} for teacher {$teacherName}. The reasons why this happened are listed below";

@@ -2,6 +2,7 @@
 
 namespace App\Services\SemesterTimetable;
 
+use App\Models\SemesterTimetable\SemesterTimetable;
 use App\Models\SemesterTimetable\SemesterTimetableDiagnostic;
 
 class SemesterTimetableService
@@ -87,4 +88,28 @@ class SemesterTimetableService
             'generated_at' => $diagnostic->generated_at,
         ];
     }
+
+    public function getTimetableStatus(string $versionId, object $currentSchool): ?string
+    {
+        return SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->school_branch_id)
+            ->first()
+            ->pluck('status');
+    }
+
+    public function getTimetableSlots(string $versionId, object $currentSchool): array{
+        return  SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->school_branch_id)
+            ->first()
+            ->pluck('timetable_slots')->toArray();
+    }
+
+    public function getRequestPayload(string $versionId, object $currentSchool): array {
+        return  SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->school_branch_id)
+            ->first()
+            ->pluck('request_payload')->toArray();
+    }
+
+
 }
