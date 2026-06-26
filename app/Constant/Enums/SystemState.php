@@ -12,6 +12,8 @@ enum SystemState: string
     case ENDED = 'ended';
     case UPCOMING = 'upcoming';
     case FINISHED = 'finished';
+    case AVAILABLE = 'available';
+    case UNAVAILABLE = 'unavailable';
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

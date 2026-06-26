@@ -8,7 +8,9 @@ use App\Models\PeriodDuration\PeriodDuration;
 use App\Models\SchoolSemester;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SpecialtyHall;
+use App\Models\Course\CourseSpecialty;
 use App\Models\TeacherSpecailtyPreference;
+use App\Models\TeacherCoursePreference;
 use Carbon\Carbon;
 
 class SemesterTimetableHelperService
@@ -281,10 +283,24 @@ class SemesterTimetableHelperService
             ->unique('id')
             ->values();
 
+        // Load course counts for each teacher
+        $teachers->each(function ($teacher) use ($currentSchool, $schoolSemester) {
+            $teacher->courses_count = TeacherCoursePreference::where("school_branch_id", $currentSchool->id)
+                ->where('teacher_id', $teacher->id)
+                ->whereHas('course', function ($q) use ($schoolSemester) {
+                    $q->where("semester_id", $schoolSemester->semester_id)
+                        ->whereHas('courseSpecialty', function ($q2) use ($schoolSemester) {
+                            $q2->where("specialty_id", $schoolSemester->specialty_id);
+                        });
+                })
+                ->count();
+        });
+
         return $teachers->map(fn($teacher) => [
             'teacher_id' => $teacher->id,
             'teacher_name' => $teacher->name,
-            'profile_picture' => $teacher->profile_picture
+            'profile_picture' => $teacher->profile_picture,
+            'courses_count' => $teacher->courses_count
         ]);
     }
 
@@ -371,8 +387,6 @@ class SemesterTimetableHelperService
             ]
         ];
     }
-
-    //halls
     public function getAvailableHalls(object $currentSchool, array $params): array
     {
         $startTime = Carbon::parse($params['start_time']);
@@ -476,5 +490,49 @@ class SemesterTimetableHelperService
                 ]
             ]
         ];
+    }
+    public function getCourses(object $currentSchool, array $params)
+    {
+        $schoolSemesterId = $params['school_semester_id'] ?? null;
+        $teacherId = $params['teacher_id'] ?? null;
+
+        $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
+            ->find($schoolSemesterId);
+
+        if (!$schoolSemester) {
+            throw new AppException(
+                "missing_school_semester",
+                400,
+                "School Semester Required",
+                "School Semester Not Found is required to generate time slots."
+            );
+        }
+
+        if ($teacherId) {
+            $courses = TeacherCoursePreference::where("school_branch_id", $currentSchool->id)
+                ->where('teacher_id', $teacherId)
+                ->whereHas('course', function ($q) use ($schoolSemester) {
+                    $q->where("semester_id", $schoolSemester->id)
+                        ->with(['courseSpecialty', function ($query) use ($schoolSemester) {
+                            $query->where("specialty_id", $schoolSemester->specialty_id);
+                        }]);
+                })
+                ->with(['course.types'])
+                ->get()
+                ->pluck('course');
+
+            return $courses;
+        }
+
+        $courses = CourseSpecialty::where("school_branch_id", $currentSchool->id)
+            ->where("specialty_id", $schoolSemester->specialty_id)
+            ->whereHas('course', function ($q) use ($schoolSemester) {
+                $q->where("semester_id", $schoolSemester->semester_id);
+            })
+            ->with(['course.types'])
+            ->get()
+            ->pluck('course');
+
+        return $courses;
     }
 }

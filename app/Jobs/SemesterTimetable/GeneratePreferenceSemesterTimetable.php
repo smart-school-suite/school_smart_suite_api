@@ -54,7 +54,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         $systemJob = SystemJob::with('initiatedBy')->find($this->jobId);
 
         if (!$systemJob) {
-            Log::warning("GeneratePreferenceSemesterTimetable: SystemJob [{$this->jobId}] not found. Aborting.");
             return;
         }
 
@@ -76,6 +75,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
     private function process(SystemJob $systemJob, SchoolSemester $schoolSemester): void
     {
+
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Gathering Data', 10);
 
         $timetableVersionId = $this->payload['version_id'] ?? null;
@@ -158,7 +158,10 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'status' => $response->status,
             'timetable_slots' => $response->timetable,
             'request_payload' => $this->payload,
-            'raw_diagnostics' => $response->diagnostics,
+            'raw_diagnostics' => [
+                "hard" => $response->diagnostics['hard']->toArray(),
+                "soft" => $response->diagnostics['soft']->toArray()
+            ],
             "raw_suggestions" => $response->suggestions
         ]);
 
@@ -257,6 +260,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
                 "No Halls Found For This Specialty",
                 "No halls are assigned to {$specialty->specialty_name} {$specialty->level->name}. Please assign halls before generating a timetable.",
             );
+
         }
 
         return $halls;

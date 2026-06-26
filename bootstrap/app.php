@@ -197,10 +197,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-event')
                 ->group(base_path("routes/Event/SchoolEvent.php"));
 
-            Route::prefix('api/v1/student-promotion')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student-promotion')
                 ->group(base_path("routes/Student/StudentPromotion.php"));
 
-            Route::prefix('api/v1/teacher-preference')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/teacher-preference')
                 ->group(base_path("routes/Teacher/TeacherSpecialtyPerference.php"));
 
             Route::prefix('api/v1/school-grade')
@@ -275,7 +275,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/system-academic-year')
                 ->group(base_path('routes/AcademicYear/SystemAcademicYear.php'));
 
-            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/semester-timetable')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetable.php'));
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable/version')
@@ -317,6 +317,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-timetable/version')
                 ->group(base_path('routes/Exam/ExamTimetableVersion.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])
+                ->prefix('api/v1/semester-timetable-helpers')
+                ->group(base_path('routes/SemesterTimetable/SemesterTimetableHelper.php'));
+
+            Route::middleware(['auth:sanctum'])
+                ->prefix('api/v1/qualification')
+                ->group(base_path('routes/Qualification/Qualification.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

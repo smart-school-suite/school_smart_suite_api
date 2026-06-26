@@ -4,7 +4,6 @@ namespace App\Services\Specialty;
 
 use App\Exceptions\AppException;
 use App\Jobs\NotificationJobs\SendAdminSpecialtyCreatedNotificationJob;
-use App\Jobs\StatisticalJobs\OperationalJobs\SpecialtyStatJob;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +13,7 @@ use App\Events\Actions\AdminActionEvent;
 
 class SpecialtyService
 {
-    public function createSpecialty(array $data, $currentSchool, $authAdmin)
+    public function createSpecialty(array $data, object $currentSchool, $authAdmin)
     {
         try {
             $existingSpecialty = Specialty::where("school_branch_id", $currentSchool->id)
@@ -46,17 +45,17 @@ class SpecialtyService
             $specialty->save();
 
             SendAdminSpecialtyCreatedNotificationJob::dispatch($currentSchool->id, $data);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Created",
-                ]
-            );
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.specialty.create"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "specialtyManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $specialty,
+            //         "message" => "Specialty Created",
+            //     ]
+            // );
             return $specialty;
         } catch (AppException $e) {
             throw $e;
@@ -556,6 +555,29 @@ class SpecialtyService
             );
         }
     }
+    public function getSpecialtyLevel(object $currentSchool)
+    {
+        $specialties = Specialty::where("school_branch_id", $currentSchool->id)
+            ->with(['level'])
+            ->get();
 
-
+        $groupedSpecialties = $specialties->groupBy('level_id')
+            ->map(function ($items, $levelId) {
+                $firstItem = $items->first();
+                return [
+                    'level_id' => $levelId,
+                    'level_name' => $firstItem->level->name ?? 'N/A',
+                    'level' => $firstItem->level->level ?? 'N/A',
+                    'program_name' => $firstItem->level->program_name ?? 'N/A',
+                    'specialties' => $items->map(function ($specialty) {
+                        return [
+                            'id' => $specialty->id,
+                            'specialty_name' => $specialty->specialty_name,
+                        ];
+                    })->values()
+                ];
+            })
+            ->values();
+        return $groupedSpecialties;
+    }
 }

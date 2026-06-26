@@ -7,9 +7,8 @@ use App\Exceptions\AppException;
 use App\Models\Specialty;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
-use App\Events\Analytics\OperationalAnalyticsEvent;
-use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
-use App\Models\Course\CourseSpecialty;
+// use App\Events\Analytics\OperationalAnalyticsEvent;
+// use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 use Illuminate\Support\Facades\DB;
 
 class JointCourseService
@@ -64,44 +63,53 @@ class JointCourseService
             $course->types()->sync($syncData);
         }
 
-        foreach ($specialties as $specialty) {
-            CourseSpecialty::create([
-                'school_branch_id' => $specialty->school_branch_id,
-                'specialty_id' => $specialty->id,
-                'course_id' => $course->id
-            ]);
-        }
+        if(!empty($data["specialtyIds"])){
+              $syncData = collect($data['specialtyIds'])
+                ->mapWithKeys(fn($specialtyId) => [
+                    $specialtyId => ['school_branch_id' => $currentSchool->id],
+                ])
+                ->toArray();
 
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.course.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "courseManagement",
-                "action" => "course.created",
-                "authAdmin" => $authAdmin,
-                "data" => $course,
-                "message" => "Course Created",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$specialty->id],
-            'feature'       => 'courseCreate',
-            'message'       => "New Course Created",
-            'data'          => $course,
-        ]);
-        event(new OperationalAnalyticsEvent(
-            eventType: OperationalEvent::COURSE_CREATED,
-            version: 1,
-            payload: [
-                "school_branch_id" => $currentSchool,
-                "specialty_id" => $specialty->id,
-                "department_id" => $specialty->department_id,
-                "level_id" => $specialty->level_id,
-                "value" => 1
-            ]
-        ));
+            $course->specialties()->sync($syncData);
+        }
+        // foreach ($specialties as $specialty) {
+        //     CourseSpecialty::create([
+        //         'school_branch_id' => $specialty->school_branch_id,
+        //         'specialty_id' => $specialty->id,
+        //         'course_id' => $course->id
+        //     ]);
+        // }
+
+        // AdminActionEvent::dispatch(
+        //     [
+        //         "permissions" =>  ["schoolAdmin.course.create"],
+        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+        //         "schoolBranch" =>  $currentSchool->id,
+        //         "feature" => "courseManagement",
+        //         "action" => "course.created",
+        //         "authAdmin" => $authAdmin,
+        //         "data" => $course,
+        //         "message" => "Course Created",
+        //     ]
+        // );
+        // StudentActionEvent::dispatch([
+        //     'schoolBranch'  => $currentSchool->id,
+        //     'specialtyIds'  => [$specialty->id],
+        //     'feature'       => 'courseCreate',
+        //     'message'       => "New Course Created",
+        //     'data'          => $course,
+        // ]);
+        // event(new OperationalAnalyticsEvent(
+        //     eventType: OperationalEvent::COURSE_CREATED,
+        //     version: 1,
+        //     payload: [
+        //         "school_branch_id" => $currentSchool,
+        //         "specialty_id" => $specialty->id,
+        //         "department_id" => $specialty->department_id,
+        //         "level_id" => $specialty->level_id,
+        //         "value" => 1
+        //     ]
+        // ));
         return $course;
     }
     public function updateJointCourse(array $updateData, string $jointCourseId, $authAdmin, object $currentSchool)
@@ -297,9 +305,9 @@ class JointCourseService
     public function getJointCourses(object $currentSchool)
     {
         $courses = Courses::where("school_branch_id", $currentSchool->id)
-            ->with(['courseSpecialty.specialty.level', 'courseSpecialty.specialty.department', 'semester', 'types'])
-            ->withCount('courseSpecialty')
-            ->having('course_specialty_count', '>', 1)
+            ->with(['specialties.level', 'semester'])
+            ->withCount('specialties')
+            ->having('specialties_count', '>', 1)
             ->get();
 
         if($courses->isEmpty()){
@@ -312,13 +320,14 @@ class JointCourseService
             );
         }
 
-        return $courses->map(fn($course) => [
-            'id' => $course->id,
-            'course_code' => $course->course_code,
-            'course_title' => $course->course_title,
-            'credit' => $course->credit,
-            'semester_title' => $course->semester->name ?? null,
-            'specialty_count' => $course->courseSpecialty->count(),
-        ])->toArray();
+       return $courses->map(fn($course) => [
+            "id" => $course->id ?? null,
+            "course_code" => $course->course_code ?? null,
+            "course_title" => $course->course_title ?? null,
+            "course_credit" => $course->credit ?? null,
+            "semester_title" => $course->semester->name ?? null,
+            "specialty_count" => $course->specialties->count() ?? null,
+            "status" => $course->status ?? null,
+        ]);
     }
 }

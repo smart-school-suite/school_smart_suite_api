@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
-use App\Models\Course\CourseSpecialty;
 use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
+use App\Models\Course\CourseSpecialty;
 use App\Traits\GeneratesUuid;
+use App\Models\Courses;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,14 +26,11 @@ class Specialty extends Model
         'status',
         'description',
         'school_branch_id',
-        'hall_assignment_status',
-        'num_assigned_hall'
     ];
 
     protected $casts = [
         'school_fee' => 'decimal:2',
-        'registration_fee' => 'decimal:2',
-        'num_assigned_hall' => 'integer'
+        'registration_fee' => 'decimal:2'
     ];
     public $keyType = 'string';
     public $table = 'specialties';
@@ -46,9 +44,17 @@ class Specialty extends Model
     {
         return $this->hasMany(ExamSessionHall::class);
     }
-    public function courseSpecialty(): HasMany
+    public function courses()
     {
-        return $this->hasMany(CourseSpecialty::class, 'specialty_id');
+        return $this->belongsToMany(
+            Courses::class,              // Related model
+            'course_specialties',         // Pivot table name
+            'specialty_id',             // Foreign key on pivot for this model
+            'course_id'                 // Foreign key on pivot for the related model
+        )
+            ->using(CourseSpecialty::class)
+            ->withPivot(['id'])
+            ->withTimestamps();
     }
     public function resitExamRef(): HasMany
     {
@@ -139,11 +145,6 @@ class Specialty extends Model
     public function schoolbranches(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class);
-    }
-
-    public function specialty(): HasMany
-    {
-        return $this->hasMany(Specialty::class);
     }
 
     public function student(): HasMany

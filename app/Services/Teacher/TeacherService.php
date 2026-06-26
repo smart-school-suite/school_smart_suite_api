@@ -8,7 +8,6 @@ use App\Models\TeacherSpecailtyPreference;
 use App\Notifications\SpecialtyAssignedToTeacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Models\Timetable;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Throwable;
@@ -17,12 +16,12 @@ use App\Events\Actions\AdminActionEvent;
 
 class TeacherService
 {
-    public function getTeacherDetails($teacherId)
+    public function getTeacherDetails(string $teacherId)
     {
-        $find_teacher = Teacher::findOrFail($teacherId);
+        $find_teacher = Teacher::with(['qualifications', 'levels'])->findOrFail($teacherId);
         return $find_teacher;
     }
-    public function deletetTeacher($teacherId, $currentSchool, $authAdmin)
+    public function deletetTeacher(string $teacherId, object $currentSchool, object $authAdmin)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
@@ -40,7 +39,7 @@ class TeacherService
         );
         return $teacher;
     }
-    public function updateTeacher(array $data, $teacherId, $currentSchool, $authAdmin)
+    public function updateTeacher(array $data, string $teacherId, object $currentSchool, object $authAdmin)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
@@ -59,19 +58,19 @@ class TeacherService
         );
         return $teacher;
     }
-    public function getTeacherSchedule($teacherId, $currentSchool)
+    public function getTeacherSchedule(string $teacherId, $currentSchool)
     {
-        $teacher_timetable_data = Timetable::where('school_branch_id', $currentSchool->id)
-            ->where('teacher_id', $teacherId)
-            ->with(['specialty', 'course', 'level'])
-            ->get();
+        // $teacher_timetable_data = Timetable::where('school_branch_id', $currentSchool->id)
+        //     ->where('teacher_id', $teacherId)
+        //     ->with(['specialty', 'course', 'level'])
+        //     ->get();
 
-        if ($teacher_timetable_data->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No records found'
-            ], 409);
-        }
+        // if ($teacher_timetable_data->isEmpty()) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'No records found'
+        //     ], 409);
+        // }
 
         $time_table = [
             "monday" => [],
@@ -81,29 +80,32 @@ class TeacherService
             "friday" => []
         ];
 
-        foreach ($teacher_timetable_data as $entry) {
-            $day = strtolower($entry->day_of_week);
+        // foreach ($teacher_timetable_data as $entry) {
+        //     $day = strtolower($entry->day_of_week);
 
-            if (array_key_exists($day, $time_table)) {
-                $time_table[$day][] = [
-                    'level_name' => $entry->level->name,
-                    'level' => $entry->level->level,
-                    "specialty" => $entry->specialty->specialty_name,
-                    "course" => $entry->course->course_title,
-                    "start_time" => Carbon::parse($entry->start_time)->format('g:i A'),
-                    "end_time" => Carbon::parse($entry->end_time)->format('g:i A'),
-                    "teacher" => $entry->teacher->name
-                ];
-            }
-        }
+        //     if (array_key_exists($day, $time_table)) {
+        //         $time_table[$day][] = [
+        //             'level_name' => $entry->level->name,
+        //             'level' => $entry->level->level,
+        //             "specialty" => $entry->specialty->specialty_name,
+        //             "course" => $entry->course->course_title,
+        //             "start_time" => Carbon::parse($entry->start_time)->format('g:i A'),
+        //             "end_time" => Carbon::parse($entry->end_time)->format('g:i A'),
+        //             "teacher" => $entry->teacher->name
+        //         ];
+        //     }
+        // }
 
         return $time_table;
     }
-    public function getAllTeachers($currentSchool)
+    public function getAllTeachers(object $currentSchool)
     {
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
-            ->with(['gender'])
+            ->with(['gender', 'specialtyPreference.specailty']) // Fixed typo: 'specailty' to 'specialty'
+            ->withCount(['specialtyPreference as num_assigned_specialties']) // Count specialty preferences
+            //  ->withCount(['teacherCoursePreferences as num_assigned_courses']) // Count assigned courses if needed
             ->get();
+
         return $getInstructors->map(fn($teacher) => [
             "id" => $teacher->id,
             "first_name" => $teacher->first_name ?? null,
@@ -114,13 +116,18 @@ class TeacherService
             "email" => $teacher->email ?? null,
             "status" => $teacher->status ?? null,
             "phone" => $teacher->phone ?? null,
-            'num_assigned_courses' => $teacher->num_assigned_courses ?? 0,
-            'course_assignment_status' => $teacher->course_assignment_status ?? null,
             'num_assigned_specialties' => $teacher->num_assigned_specialties ?? 0,
-            'specialty_assignment_status' => $teacher->specialty_assignment_status ?? null
+            'specialty_assignment_status' => $teacher->specialty_assignment_status ?? $this->getSpecialtyAssignmentStatus($teacher->num_assigned_specialties ?? 0)
         ]);
     }
-    public function addSpecailtyPreference(array $preferenceData, $currentSchool)
+    private function getSpecialtyAssignmentStatus(int $count): string
+    {
+        if ($count >= 1) {
+            return "assigned";
+        }
+        return "unassigned";
+    }
+    public function addSpecailtyPreference(array $preferenceData, object $currentSchool)
     {
         $result = [];
         $teacher = null;
@@ -149,7 +156,7 @@ class TeacherService
         $teacher->notify(new SpecialtyAssignedToTeacher($specialties));
         return $result;
     }
-    public function deactivateTeacher($teacherId, $currentSchool, $authAdmin)
+    public function deactivateTeacher(string $teacherId, object $currentSchool, object $authAdmin)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
@@ -168,7 +175,7 @@ class TeacherService
         );
         return $teacher;
     }
-    public function activateTeacher($teacherId, $currentSchool, $authAdmin)
+    public function activateTeacher(string $teacherId, object $currentSchool, object $authAdmin)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
@@ -187,7 +194,7 @@ class TeacherService
         );
         return $teacher;
     }
-    public function bulkDeactivateTeacher($teacherIds, $currentSchool, $authAdmin)
+    public function bulkDeactivateTeacher(array $teacherIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
@@ -219,7 +226,7 @@ class TeacherService
             throw $e;
         }
     }
-    public function bulkActivateTeacher($teacherIds, $currentSchool, $authAdmin)
+    public function bulkActivateTeacher(array $teacherIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
@@ -251,7 +258,7 @@ class TeacherService
             throw $e;
         }
     }
-    public function bulkDeleteTeacher($teacherIds, $currentSchool, $authAdmin)
+    public function bulkDeleteTeacher(array $teacherIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
@@ -282,7 +289,7 @@ class TeacherService
             throw $e;
         }
     }
-    public function bulkUpdateTeacher($updateDataList, $currentSchool, $authAdmin)
+    public function bulkUpdateTeacher(array $updateDataList, object $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
@@ -321,7 +328,7 @@ class TeacherService
             throw $e;
         }
     }
-    public function uploadProfilePicture($request, $authTeacher)
+    public function uploadProfilePicture(object $request, object $authTeacher)
     {
 
         try {
@@ -343,7 +350,7 @@ class TeacherService
             throw $e;
         }
     }
-    public function deleteProfilePicture($authTeacher)
+    public function deleteProfilePicture(object $authTeacher)
     {
         try {
             $teacher = Teacher::findOrFail($authTeacher->id);
@@ -360,17 +367,38 @@ class TeacherService
             throw $e;
         }
     }
-    public function getTeachersBySpecialtyPreference($specialtyId, $currentSchool)
+    public function getTeachersBySpecialtyPreference(string $specialtyId, object $currentSchool)
     {
         $teachers = TeacherSpecailtyPreference::where('specialty_id', $specialtyId)
             ->where('school_branch_id', $currentSchool->id)
-            ->with('teacher')
+            ->with(['teacher.specialtyPreference', 'teacher.teacherCoursePreference', 'teacher.qualifications', 'teacher.levels'])
             ->get();
 
         if ($teachers->isEmpty()) {
             return ApiResponseService::error('No teachers found for this specialty', null, 404);
         }
 
-        return $teachers->pluck('teacher');
+        return $teachers->map(function ($teacherPreference) {
+            $teacher = $teacherPreference->teacher;
+            $numSpecialties = $teacher->specialtyPreference->count();
+            $numCourses = $teacher->teacherCoursePreference->count();
+
+            return [
+                'id' => $teacher->id,
+                'school_branch_id' => $teacherPreference->school_branch_id,
+                'name' => $teacher->name,
+                'first_name' => $teacher->first_name,
+                'last_name' => $teacher->last_name,
+                'profile_picture' => $teacher->profile_picture,
+                'username' => $teacher->username ?? null,
+                'address' => $teacher->address,
+                'qualifications' => $teacher->qualifications ?? null,
+                'levels' => $teacher->levels ?? null,
+                'num_assigned_courses' => $numCourses,
+                'course_assignment_status' => $numCourses > 0 ? 'assigned' : 'unassigned',
+                'num_assigned_specialties' => $numSpecialties,
+                'specialty_assignment_status' => $numSpecialties > 0 ? 'assigned' : 'unassigned',
+            ];
+        });
     }
 }

@@ -170,7 +170,7 @@ class SchoolAcademicYearService
     public function getSchoolAcademicYears(object $currentSchool)
     {
         $schoolAcademicYears = SchoolAcademicYear::where('school_branch_id', $currentSchool->id)
-            ->with(['systemAcademicYear', 'specialty'])
+            ->with(['systemAcademicYear', 'specialty.level'])
             ->orderBy('start_date', 'desc')
             ->get();
 
@@ -189,13 +189,21 @@ class SchoolAcademicYearService
             $start = Carbon::parse($year->start_date)->startOfDay();
             $end   = Carbon::parse($year->end_date)->endOfDay();
 
-            $year->status = match (true) {
-                $today < $start  => 'upcoming',
-                $today <= $end   => 'ongoing',
-                default          => 'expired'
-            };
+            $status = match (true) {
+            $today < $start  => 'upcoming',
+            $today <= $end   => 'ongoing',
+            default          => 'expired'
+        };
 
-            return $year;
+            return [
+                "id" => $year->id,
+                "start_date" => $year->start_date,
+                "end_date" => $year->end_date,
+                "specialty_name" => $year->specialty->specialty_name ?? null,
+                "level_name" => $year->specialty->level->name ?? null,
+                "status" => $status,
+                "school_year" => $year->systemAcademicYear->name ?? null
+            ];
         });
 
         return $schoolAcademicYears;

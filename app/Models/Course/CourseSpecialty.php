@@ -2,13 +2,13 @@
 
 namespace App\Models\Course;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Courses;
 use App\Models\Specialty;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class CourseSpecialty extends Model
+class CourseSpecialty extends Pivot
 {
     use GeneratesUuid;
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Course;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Course\ChangeTeacherCourseRequest;
 use App\Http\Requests\Course\CreateTeacherCoursePreferenceRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class TeacherCoursePreferenceController extends Controller
         $this->teacherCoursePreferenceService = $teacherCoursePreferenceService;
     }
 
-    public function getAssignableTeacherCourses(Request $request, $teacherId)
+    public function getAssignableTeacherCourses(Request $request, string $teacherId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $assignableCourses = $this->teacherCoursePreferenceService->getAssignableTeacherCourses($currentSchool, $teacherId);
@@ -39,11 +40,18 @@ class TeacherCoursePreferenceController extends Controller
         return ApiResponseService::success("Teacher Course Preference removed Successfully", $removeTeacherCourse, null, 200);
     }
 
-    public function getAssignedTeacherCourses(Request $request, $teacherId)
+    public function getAssignedTeacherCourses(Request $request, string $teacherId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $assignedCourses = $this->teacherCoursePreferenceService->getAssignedTeacherCourses($currentSchool, $teacherId);
         return ApiResponseService::success("Assigned Teacher Courses Fetched Successfully", $assignedCourses, null, 200);
+    }
+
+    public function changeTeacherForCourse(ChangeTeacherCourseRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $changeTeacher = $this->teacherCoursePreferenceService->changeTeacherForCourse($currentSchool, $request->validated());
+        return ApiResponseService::success("Teacher Changed Successfully", $changeTeacher, null, 200);
     }
 
     protected function resolveUser()

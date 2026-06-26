@@ -7,6 +7,7 @@ use App\Models\Course\SemesterJoinCourseReference;
 use App\Models\SemesterTimetable\SemesterActiveTimetable;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,18 +15,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolSemester extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
-        'id',
         'start_date',
         'end_date',
         'school_year_id',
         'semester_id',
-        'specialty_id',
         'timetable_published',
         'school_branch_id',
-        'student_batch_id'
     ];
 
     protected $cast = [
@@ -33,7 +31,7 @@ class SchoolSemester extends Model
         'end_date' => 'date'
     ];
 
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'school_semesters';
     public $keyType = 'string';
 
@@ -57,11 +55,6 @@ class SchoolSemester extends Model
     {
         return $this->hasMany(FeeSchedule::class);
     }
-    public function specialty(): BelongsTo
-    {
-        return $this->belongsTo(Specialty::class, 'specialty_id');
-    }
-
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class, 'semester_id');
@@ -71,11 +64,6 @@ class SchoolSemester extends Model
     {
         return $this->hasMany(InstructorAvailabilitySlot::class, 'school_semester_id');
     }
-    public function studentBatch(): BelongsTo
-    {
-        return $this->belongsTo(Studentbatch::class, 'student_batch_id');
-    }
-
     public function schoolBranch(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');

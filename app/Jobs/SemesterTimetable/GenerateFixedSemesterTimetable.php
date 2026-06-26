@@ -12,11 +12,14 @@ use App\Models\Course\SemesterJoinCourseReference;
 use App\Models\Course\SemesterJointCourse;
 use App\Models\Job\SystemJob;
 use App\Models\SchoolSemester;
+use App\Models\Hall;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
+use App\Models\SemesterTimetable\SemesterTimetableError;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
+use App\Models\Teacher;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,22 +43,23 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     protected const PARTIAL = "partial";
     protected const ERROR = "error";
     protected const OPTIMAL = "optimal";
+    protected Collection $userErrors;
     public function __construct(
         protected readonly object $currentSchool,
         protected readonly array $payload,
         protected readonly string $jobId,
-    ) {}
+    ) {
+        $this->userErrors = collect();
+    }
     public function handle(): void
     {
         $systemJob = SystemJob::with('initiatedBy')->find($this->jobId);
-
         if (!$systemJob) {
-            Log::warning("GenerateFixedSemesterTimetable: SystemJob [{$this->jobId}] not found. Aborting.");
             return;
         }
 
         $schoolSemester = SchoolSemester::where('school_branch_id', $this->currentSchool->id)
-            ->with(['semester', 'specialty.level'])
+            ->with(['semester', 'schoolYear.specialty.level'])
             ->where('id', $this->payload['school_semester_id'])
             ->firstOrFail();
 
@@ -64,6 +68,14 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         } catch (AppException $e) {
             $this->failJob($systemJob, $e->getMessage(), $e->getCode());
             $this->fail($e);
+            Log::error('AppException in process method: ' . $e->getMessage());
+            Log::error('Exception details: ' . json_encode([
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]));
         } catch (Throwable $e) {
             $this->failJob($systemJob, $e->getMessage(), 500);
             $this->fail($e);
@@ -75,7 +87,8 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $branchId    = $this->currentSchool->id;
         $timetableVersionId = $this->payload['version_id'] ?? null;
-        $specialty = $schoolSemester->specialty;
+        Log::info("timetable version: {$timetableVersionId}");
+        $specialty = $schoolSemester->schoolYear->specialty;
         $requestPayload = $this->payload;
 
         TimetableGenerationEvent::dispatch(
@@ -106,6 +119,44 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $jointCourses       = $this->getJointCourses($schoolSemester);
 
+        if ($timetableVersionId == null) {
+            $timetableVersionId = $this->createTimetableVersion(
+                $this->payload['school_semester_id'],
+                $this->currentSchool
+            );
+        }
+
+        if ($this->hasUserErrors()) {
+            $this->createUserError($timetableVersionId, $schoolSemester->id);
+            $version = SemesterTimetableVersion::find($timetableVersionId);
+            $errorCount = $this->userErrors->count();
+
+            TimetableGenerationEvent::dispatch(
+                $systemJob->initiatedBy,
+                $this->currentSchool,
+                [
+                    'stage' => 'Validation Failed',
+                    'percentage' => 90,
+                    'status' => 'failed',
+                    'details' => "Timetable generation failed due to {$errorCount} issue(s)",
+                    'errors' => $this->userErrors->toArray(),
+                    'error_count' => $errorCount,
+                    'version' => $version ?? null,
+                ]
+            );
+
+            if ($version) {
+                $version->update(['scheduler_status' => 'error']);
+            }
+
+            throw new AppException(
+                "Validation Process Failed: {$errorCount} error(s) found",
+                422,
+                "Validation Error",
+                "Please fix the following issues"
+            );
+        }
+
         $body = $this->buildRequestBody(
             $teachers,
             $teacherBusyPeriods,
@@ -131,24 +182,24 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $schedulingEngine = app(SchedularEngine::class);
         $response = $schedulingEngine->run($body);
 
-        if (is_null($timetableVersionId)) {
-            $timetableVersionId = $this->createTimetableVersion(
-                $this->payload['school_semester_id'],
-                $this->currentSchool,
-                $response
-            );
-        }
+
 
         SemesterTimetable::create([
             'school_semester_id' => $schoolSemester->id,
             'timetable_version_id' => $timetableVersionId,
+            'school_branch_id' => $this->currentSchool->id,
             'status' => $response->status,
             'timetable_slots' => $response->timetable,
             'request_payload' => $this->payload,
-            'raw_diagnostics' => $response->diagnostics,
+            'raw_diagnostics' => [
+                "hard" => $response->diagnostics['hard']->toArray(),
+                "soft" => $response->diagnostics['soft']->toArray()
+            ],
             "raw_suggestions" => $response->suggestions
         ]);
 
+        $version = SemesterTimetableVersion::find($timetableVersionId);
+        $version->update(['scheduler_status' => $response->status]);
 
         $finalStatus = $this->isErrorResponse($response) ? 'FAILED' : 'COMPLETED';
 
@@ -163,93 +214,363 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             ]
         );
 
-        $this->handleDiagnostics($response, $timetableVersionId, $schoolSemester);
+        $this->handleDiagnostics($response, $timetableVersionId);
         $this->updateJobProgress($systemJob, $finalStatus, 'Done', 100);
     }
-    private function getTeachers(string $branchId, object $specialty)
+    private function getTeachers(string $branchId, object $specialty): Collection
     {
-        $teachers = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
+        $teacherPreferences = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
             ->where('specialty_id', $specialty->id)
             ->with(['teacher' => fn($q) => $q->where('status', 'active')])
             ->get();
 
-        if ($teachers->isEmpty()) {
-            throw new AppException(
-                "No Teachers Found",
-                404,
-                "No Teachers Found",
-                "No teachers are assigned to {$specialty->specialty_name} {$specialty->level->name}. Please assign teachers before generating a timetable.",
+        if ($teacherPreferences->isEmpty()) {
+            $this->addUserError(
+                'No Teachers Assigned',
+                "No teachers have been assigned to {$specialty->specialty_name} {$specialty->level->name}. Please assign teachers to this specialty before generating a timetable.",
+                [
+                    'specialty_name' => $specialty->specialty_name,
+                    'level_name' => $specialty->level->name,
+                    'specialty_id' => $specialty->id,
+                    'reason' => 'no_assignments',
+                    "path" => "/teacher-specialty"
+                ]
             );
+            return collect();
         }
 
-        return $teachers;
+        $activeTeachers = $teacherPreferences->filter(function ($preference) {
+            return $preference->teacher && $preference->teacher->status === 'active';
+        });
+
+        $inactiveTeachers = $teacherPreferences->filter(function ($preference) {
+            return !$preference->teacher || $preference->teacher->status !== 'active';
+        });
+
+        if ($activeTeachers->isEmpty()) {
+            $inactiveCount = $inactiveTeachers->count();
+            $inactiveTeacherNames = $inactiveTeachers->pluck('teacher.name')->filter()->values()->toArray();
+
+            $this->addUserError(
+                'No Active Teachers Available',
+                "{$specialty->specialty_name} {$specialty->level->name} has {$inactiveCount} teacher(s) assigned, but none are active. Please activate at least one teacher before generating a timetable. Inactive teachers: {$inactiveTeacherNames}",
+                [
+                    'specialty_name' => $specialty->specialty_name,
+                    'level_name' => $specialty->level->name,
+                    'specialty_id' => $specialty->id,
+                    'total_assigned_teachers' => $teacherPreferences->count(),
+                    'inactive_teacher_count' => $inactiveCount,
+                    'inactive_teacher_names' => $inactiveTeacherNames,
+                    "path" => "/teacher-course"
+                ]
+            );
+            return collect();
+        }
+
+        return $activeTeachers;
     }
     private function getTeacherCourses(string $branchId, array $teacherIds, SchoolSemester $schoolSemester): Collection
     {
-        $courseIds = CourseSpecialty::where('school_branch_id', $branchId)
-            ->where('specialty_id', $schoolSemester->specialty_id)
+        $specialty = $schoolSemester->schoolYear->specialty;
+        $level = $schoolSemester->schoolYear->specialty->level;
+        $specialtyId = $schoolSemester->schoolYear->specialty->id;
+        $semesterId = $schoolSemester->semester_id;
+        $semester = $schoolSemester->semester;
+        $allCoursesForSpecialty = CourseSpecialty::where('school_branch_id', $branchId)
+            ->where('specialty_id', $specialtyId)
+            ->whereHas('course', fn($q) => $q->where('school_branch_id', $branchId)->where('semester_id', $semesterId))
+            ->with(['course'])
+            ->get();
+
+        if ($allCoursesForSpecialty->isEmpty()) {
+            $this->addUserError(
+                'No Courses Created',
+                "No courses have been created for {$specialty->specialty_name} {$level->name} in {$semester->name}. Please create and assign courses to this specialty before generating a timetable.",
+                [
+                    'specialty_name' => $specialty->specialty_name ?? null,
+                    'level_name' => $level->name ?? null,
+                    'semester_name' => $semester->name ?? null,
+                    'specialty_id' => $specialtyId ?? null,
+                    'semester_id' => $semesterId ?? null,
+                    'branch_id' => $branchId,
+                    'reason' => 'no_courses_created',
+                    'path' => "/courses"
+                ]
+            );
+            return collect();
+        }
+
+        // FIXED: Get active course IDs using a more reliable approach
+        // First, get all course IDs for this specialty that have active status
+        $activeCourseIds = CourseSpecialty::where('school_branch_id', $branchId)
+            ->where('specialty_id', $specialtyId)
             ->whereHas(
                 'course',
                 fn($q) => $q
                     ->where('school_branch_id', $branchId)
-                    ->where('semester_id', $schoolSemester->semester_id)
+                    ->where('semester_id', $semesterId)
                     ->where('status', 'active')
-            )
-            ->whereDoesntHave(
-                'course.courseSpecialty',
-                fn($q) => $q
-                    ->where('school_branch_id', $branchId)
-                    ->whereColumn('course_id', 'course_specialties.course_id')
-                    ->where('specialty_id', '!=', $schoolSemester->specialty_id)
             )
             ->pluck('course_id')
             ->toArray();
 
-        if (empty($courseIds)) {
-            throw new AppException(
-                "No Courses Found",
-                404,
-                "No Courses Found",
-                "No active non-joint courses were found for this specialty and semester.",
+        // Then, filter out courses that are also assigned to other specialties
+        $courseIdsWithOtherSpecialties = CourseSpecialty::where('school_branch_id', $branchId)
+            ->whereIn('course_id', $activeCourseIds)
+            ->where('specialty_id', '!=', $specialtyId)
+            ->pluck('course_id')
+            ->unique()
+            ->toArray();
+
+        // Remove courses that belong to other specialties
+        $activeCourseIds = array_values(array_diff($activeCourseIds, $courseIdsWithOtherSpecialties));
+
+        $deactivatedCourses = $allCoursesForSpecialty->filter(function ($courseSpecialty) use ($activeCourseIds) {
+            return !in_array($courseSpecialty->course_id, $activeCourseIds);
+        });
+
+        if (empty($activeCourseIds) && $deactivatedCourses->isNotEmpty()) {
+            $deactivatedCourseNames = $deactivatedCourses->pluck('course.course_title')->filter()->values()->toArray();
+
+            $this->addUserError(
+                'All Courses Are Deactivated',
+                "There are " . $deactivatedCourses->count() . " course(s) assigned to {$specialty->specialty_name} {$level->name}, but all are deactivated. Please activate at least one course before generating a timetable. Deactivated courses: " . implode(', ', array_slice($deactivatedCourseNames, 0, 3)) . ($deactivatedCourses->count() > 3 ? " and " . ($deactivatedCourses->count() - 3) . " more" : ""),
+                [
+                    'specialty_name' => $specialty->specialty_name ?? null,
+                    'level_name' => $level->name ?? null,
+                    'semester_name' => $semester->name ?? null,
+                    'total_courses' => $allCoursesForSpecialty->count(),
+                    'deactivated_course_count' => $deactivatedCourses->count(),
+                    'deactivated_course_names' => $deactivatedCourseNames,
+                    'specialty_id' => $specialtyId,
+                    'semester_id' => $semesterId,
+                    'branch_id' => $branchId,
+                    'reason' => 'all_courses_deactivated',
+                    'path' => '/courses?status=inactive'
+                ]
             );
+            return collect();
+        }
+
+        if (empty($activeCourseIds)) {
+            $this->addUserError(
+                'No Active Courses Available',
+                "No active courses found for {$specialty->specialty_name} {$level->name} in {$semester->name}. Please ensure courses are assigned to this specialty and are active.",
+                [
+                    'specialty_name' => $specialty->specialty_name ?? null,
+                    'level_name' => $level->name ?? null,
+                    'semester_name' => $semester->name ?? null,
+                    'specialty_id' => $specialtyId ?? null,
+                    'semester_id' => $semesterId ?? null,
+                    'branch_id' => $branchId,
+                    'reason' => 'no_active_courses',
+                    'path' => '/courses?status=active'
+                ]
+            );
+            return collect();
         }
 
         $teacherCourses = TeacherCoursePreference::where('school_branch_id', $branchId)
             ->whereIn('teacher_id', $teacherIds)
-            ->whereIn('course_id', $courseIds)
+            ->whereIn('course_id', $activeCourseIds)
             ->with(['course.courseSpecialty', 'teacher'])
             ->get();
 
-        if ($teacherCourses->isEmpty()) {
-            throw new AppException(
-                "No Teacher-Course Assignments Found",
-                404,
-                "No Teacher-Course Assignments Found",
-                "None of the assigned teachers have been matched to any course in this specialty and semester. Please ensure teacher-course preferences are configured.",
-            );
+        $assignedCourseIds = $teacherCourses->pluck('course_id')->unique()->toArray();
+        $unassignedCourses = collect($activeCourseIds)->filter(function ($courseId) use ($assignedCourseIds) {
+            return !in_array($courseId, $assignedCourseIds);
+        });
+
+        if ($teacherCourses->isEmpty() && $unassignedCourses->isNotEmpty()) {
+            $activeCourseNames = $allCoursesForSpecialty->filter(function ($courseSpecialty) use ($activeCourseIds) {
+                return in_array($courseSpecialty->course_id, $activeCourseIds);
+            })->pluck('course.course_title')->filter()->values()->toArray();
+
+            $teachers = Teacher::whereIn('id', $teacherIds)->get();
+            $activeTeachers = $teachers->filter(fn($teacher) => $teacher->status === 'active');
+            $inactiveTeachers = $teachers->filter(fn($teacher) => $teacher->status !== 'active');
+
+            if ($activeTeachers->isEmpty() && $inactiveTeachers->isNotEmpty()) {
+                $this->addUserError(
+                    'All Teachers Are Inactive',
+                    "There are " . count($teacherIds) . " teacher(s) assigned to {$specialty->specialty_name} {$level->name}, but all are inactive. Please activate at least one teacher before generating a timetable.",
+                    [
+                        'total_teachers' => count($teacherIds),
+                        'inactive_teacher_count' => $inactiveTeachers->count(),
+                        'inactive_teacher_names' => $inactiveTeachers->pluck('name')->values()->toArray(),
+                        'active_course_count' => count($activeCourseIds),
+                        'active_course_names' => $activeCourseNames,
+                        'specialty_id' => $specialtyId,
+                        'semester_id' => $semesterId,
+                        'branch_id' => $branchId,
+                        'reason' => 'all_teachers_inactive_for_courses',
+                        'path' => "/teacher-course"
+                    ]
+                );
+            } else {
+                $this->addUserError(
+                    'No Teachers Assigned to Courses',
+                    "There are " . count($activeCourseIds) . " active course(s) that need to be taught, but no teachers have been assigned to any of them. Please assign teachers to courses before generating a timetable.",
+                    [
+                        'active_course_count' => count($activeCourseIds),
+                        'active_course_names' => $activeCourseNames,
+                        'total_teachers_available' => count($teacherIds),
+                        'active_teachers_count' => $activeTeachers->count(),
+                        'specialty_id' => $specialtyId,
+                        'semester_id' => $semesterId,
+                        'branch_id' => $branchId,
+                        'reason' => 'no_teacher_course_assignments',
+                        'path' => "/teacher-course"
+                    ]
+                );
+            }
+            return collect();
+        }
+
+        if ($unassignedCourses->isNotEmpty()) {
+            $unassignedCourseNames = $allCoursesForSpecialty->filter(function ($courseSpecialty) use ($unassignedCourses) {
+                return in_array($courseSpecialty->course_id, $unassignedCourses->toArray());
+            })->pluck('course.course_title')->filter()->values()->toArray();
+
+            // Check if specific courses have teachers but they are inactive
+            $courseTeacherAssignments = TeacherCoursePreference::where('school_branch_id', $branchId)
+                ->whereIn('course_id', $unassignedCourses->toArray())
+                ->with(['teacher'])
+                ->get();
+
+            $coursesWithInactiveTeachers = [];
+            foreach ($unassignedCourses as $courseId) {
+                $assignments = $courseTeacherAssignments->where('course_id', $courseId);
+                if ($assignments->isNotEmpty()) {
+                    $hasActiveTeacher = $assignments->contains(fn($assignment) => $assignment->teacher && $assignment->teacher->status === 'active');
+                    if (!$hasActiveTeacher) {
+                        $course = $allCoursesForSpecialty->firstWhere('course_id', $courseId);
+                        if ($course) {
+                            $coursesWithInactiveTeachers[] = $course->course->course_title;
+                        }
+                    }
+                }
+            }
+
+            if (!empty($coursesWithInactiveTeachers)) {
+                $this->addUserError(
+                    'Teachers for Some Courses Are Inactive',
+                    count($coursesWithInactiveTeachers) . " course(s) have teachers assigned, but those teachers are inactive. Please activate the teachers or assign different teachers to these courses.",
+                    [
+                        'unassigned_course_count' => $unassignedCourses->count(),
+                        'unassigned_course_names' => $unassignedCourseNames,
+                        'courses_with_inactive_teachers' => $coursesWithInactiveTeachers,
+                        'specialty_id' => $specialtyId,
+                        'semester_id' => $semesterId,
+                        'branch_id' => $branchId,
+                        'reason' => 'courses_have_inactive_teachers',
+                        'is_warning' => true,
+                        'path' => "/courses"
+                    ]
+                );
+            } else {
+                $this->addUserError(
+                    'Some Courses Have No Teachers',
+                    count($unassignedCourses) . " active course(s) have no teachers assigned. These courses will be skipped during timetable generation. Please assign teachers to these courses.",
+                    [
+                        'total_active_courses' => count($activeCourseIds),
+                        'assigned_course_count' => count($assignedCourseIds),
+                        'unassigned_course_count' => $unassignedCourses->count(),
+                        'unassigned_course_names' => $unassignedCourseNames,
+                        'specialty_id' => $specialtyId,
+                        'semester_id' => $semesterId,
+                        'branch_id' => $branchId,
+                        'reason' => 'some_courses_unassigned',
+                        'is_warning' => true,
+                        'path' => '/teacher-course'
+                    ]
+                );
+            }
         }
 
         return $teacherCourses;
     }
-    private function getHalls(string $branchId, object $specialty)
+    private function getHalls(string $branchId, object $specialty): Collection
     {
-        $halls = SpecialtyHall::where('school_branch_id', $branchId)
+        $specialtyHalls = SpecialtyHall::where('school_branch_id', $branchId)
             ->where('specialty_id', $specialty->id)
-            ->with('hall.types')
+            ->with([
+                'hall' => function ($query) {
+                    $query->where('status', 'available');
+                },
+                'hall.types'
+            ])
             ->get();
 
-        if ($halls->isEmpty()) {
-            throw new AppException(
-                "No Halls Found",
-                404,
-                "No Halls Found For This Specialty",
-                "No halls are assigned to {$specialty->specialty_name} {$specialty->level->name}. Please assign halls before generating a timetable.",
-            );
+        if ($specialtyHalls->isEmpty()) {
+            $anyHalls = Hall::where('school_branch_id', $branchId)->exists();
+
+            if (!$anyHalls) {
+                $this->addUserError(
+                    'No Halls Created',
+                    "No halls have been created for this school branch. Please create halls before generating a timetable.",
+                    [
+                        'branch_id' => $branchId,
+                        'specialty_name' => $specialty->specialty_name ?? null,
+                        'level_name' => $specialty->level->name ?? null,
+                        'reason' => 'no_halls_created',
+                        'path' => "/hall"
+                    ]
+                );
+            } else {
+                $hallsNotAssigned = Hall::where('school_branch_id', $branchId)
+                    ->whereDoesntHave('specialtyHall', fn($q) => $q->where('specialty_id', $specialty->id))
+                    ->get();
+
+                if ($hallsNotAssigned->isNotEmpty()) {
+                    $hallNames = $hallsNotAssigned->pluck('name')->filter()->values()->toArray();
+
+                    $this->addUserError(
+                        'No Halls Assigned to Specialty',
+                        "There are " . $hallsNotAssigned->count() . " hall(s) available, but none are assigned to {$specialty->specialty_name} {$specialty->level->name}. Please assign halls to this specialty before generating a timetable.",
+                        [
+                            'specialty_name' => $specialty->specialty_name ?? null,
+                            'level_name' => $specialty->level->name ?? null,
+                            'specialty_id' => $specialty->id,
+                            'total_halls_available' => $hallsNotAssigned->count(),
+                            'available_hall_names' => $hallNames,
+                            'branch_id' => $branchId,
+                            'reason' => 'no_halls_assigned_to_specialty',
+                            'path' => "/specialty-hall"
+                        ]
+                    );
+                }
+            }
+
+            return collect();
         }
 
-        return $halls;
+        $halls = $specialtyHalls->pluck('hall')->filter();
+
+        $availableHalls = $halls->filter(function ($hall) {
+            return $hall->types->isNotEmpty();
+        });
+
+        if ($availableHalls->isEmpty()) {
+            $this->addUserError(
+                'No Halls Available',
+                "All " . $halls->count() . " hall(s) assigned to {$specialty->specialty_name} {$specialty->level->name} have no available hall types. Please ensure at least one hall has a hall type with status 'available'.",
+                [
+                    'specialty_name' => $specialty->specialty_name ?? null,
+                    'level_name' => $specialty->level->name ?? null,
+                    'total_halls_assigned' => $halls->count(),
+                    'specialty_id' => $specialty->id,
+                    'branch_id' => $branchId,
+                    'reason' => 'no_halls_available',
+                    'path' => "/hall"
+                ]
+            );
+            return collect();
+        }
+
+        return $availableHalls;
     }
-    private function getHallBusyPeriods(string $branchId, Collection $halls)
+    private function getHallBusyPeriods(string $branchId, Collection $halls): Collection
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
             ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())
@@ -257,7 +578,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             ->with('hall')
             ->get();
     }
-    private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
+    private function getTeacherBusyPeriods(string $branchId, array $teacherIds): Collection
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
             ->whereIn('teacher_id', $teacherIds)
@@ -363,11 +684,11 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     }
     private function formatHalls(Collection $halls): array
     {
-        return $halls->map(fn($h) => [
-            'hall_name'     => $h->hall->name,
-            'hall_id'       => $h->hall->id,
-            'hall_capacity' => $h->hall->capacity,
-            'hall_type'     => $h->hall->types->pluck('name')->all(),
+        return $halls->map(fn($hall) => [
+            'hall_name'     => $hall->name,
+            'hall_id'       => $hall->id,
+            'hall_capacity' => $hall->capacity,
+            'hall_type'     => $hall->types->pluck('name')->all(),
         ])->all();
     }
     private function formatHallBusyPeriods(Collection $busyPeriods): array
@@ -406,8 +727,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     }
     private function createTimetableVersion(
         string $schoolSemesterId,
-        object $currentSchool,
-        object $response,
+        object $currentSchool
     ): string {
         $nextVersion = (SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)
             ->where('school_semester_id', $schoolSemesterId)
@@ -415,7 +735,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $version = SemesterTimetableVersion::create([
             'label'            => "Version {$nextVersion}",
-            'scheduler_status' => $response->status ?? 'error',
+            'scheduler_status' => null,
             'school_branch_id' => $currentSchool->id,
             'school_semester_id'      => $schoolSemesterId,
             'version_number'   => $nextVersion
@@ -547,5 +867,38 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         }
 
         return "Unknown source (no trace available)";
+    }
+    private function addUserError(string $title, string $description, array $params = [])
+    {
+        $this->userErrors->push([
+            'title' => $title,
+            'description' => $description,
+            'additional_params' => $params,
+        ]);
+    }
+    private function hasUserErrors(): bool
+    {
+        return $this->userErrors->isNotEmpty();
+    }
+    private function createUserError(string $versionId, string $schoolSemesterId)
+    {
+        if ($this->userErrors->isEmpty()) {
+            return;
+        }
+
+        SemesterTimetableError::create([
+            'id' => Str::uuid()->toString(),
+            'school_semester_id' => $schoolSemesterId,
+            'timetable_version_id' => $versionId,
+            'school_branch_id' => $this->currentSchool->id,
+            'status' => "failed",
+            'request_payload' => $this->payload,
+            'errors' => $this->userErrors->toArray()
+        ]);
+
+        $version = SemesterTimetableVersion::find($versionId);
+        $version->update([
+            "scheduler_status" => "failed"
+        ]);
     }
 }

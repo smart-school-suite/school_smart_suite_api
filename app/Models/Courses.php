@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Course\CourseSpecialty;
 use App\Models\Course\CourseType;
 use App\Models\Course\JointCourseSlot;
 use App\Models\Course\SchoolCourseType;
 use App\Models\Course\SemesterJointCourse;
+use App\Models\Course\CourseSpecialty;
+use App\Models\Specialty;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
@@ -49,9 +50,22 @@ class Courses extends Model
     {
         return $this->hasMany(JointCourseSlot::class);
     }
+
     public function courseSpecialty(): HasMany
     {
-        return $this->hasMany(CourseSpecialty::class, 'course_id');
+        return $this->hasMany(CourseSpecialty::class, 'course_id', 'id');
+    }
+    public function specialties()
+    {
+        return $this->belongsToMany(
+            Specialty::class,
+            'course_specialties',
+            'course_id',
+            'specialty_id'
+        )
+            ->using(CourseSpecialty::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
     }
     public function teacherCoursePreference(): HasMany
     {

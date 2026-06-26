@@ -3,7 +3,7 @@
 namespace App\Services\Semester;
 
 use App\Constant\Enums\SystemState;
-use App\Jobs\DataCreationJob\CreateExamJob;
+//use App\Jobs\DataCreationJob\CreateExamJob;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
 use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
@@ -13,7 +13,6 @@ use App\Models\Semester;
 use App\Models\SchoolBranchSetting;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
 use Carbon\Carbon;
@@ -25,13 +24,12 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 
 class SchoolSemesterService
 {
-    public function createSchoolSemester($semesterData, $currentSchool, $authAdmin)
+    public function createSchoolSemester(array $semesterData, object $currentSchool, $authAdmin)
     {
         try {
             DB::beginTransaction();
 
             $schoolSemester = new SchoolSemester();
-            $schoolSemesterId = Str::uuid();
 
             $schoolYear = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
                 ->with(['systemAcademicYear', 'specialty.level'])
@@ -50,10 +48,8 @@ class SchoolSemesterService
             $specialty = $schoolYear->specialty;
 
             $existingSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
-                ->where("specialty_id", $semesterData['specialty_id'])
                 ->where("semester_id", $semesterData['semester_id'])
                 ->where("school_year_id", $semesterData['school_year_id'])
-                ->where("student_batch_id", $semesterData['student_batch_id'])
                 ->first();
 
             if ($existingSemester) {
@@ -66,23 +62,10 @@ class SchoolSemesterService
                 );
             }
 
-            $schoolSemester->id = $schoolSemesterId;
             $schoolSemester->start_date = $semesterData["start_date"];
             $schoolSemester->end_date = $semesterData["end_date"];
-
-            $now = now();
-            $startDate = Carbon::parse($semesterData['start_date']);
-
-            if ($startDate->isPast()) {
-                $schoolSemester->status = 'active';
-            } else {
-                $schoolSemester->status = 'pending';
-            }
-
             $schoolSemester->school_year_id = $semesterData["school_year_id"];
             $schoolSemester->semester_id = $semesterData["semester_id"];
-            $schoolSemester->specialty_id = $specialty->id;
-            $schoolSemester->student_batch_id = $semesterData["student_batch_id"];
             $schoolSemester->school_branch_id = $currentSchool->id;
             $schoolSemester->timetable_published = false;
 
@@ -92,13 +75,13 @@ class SchoolSemesterService
                 'specialty_id' => $specialty->id,
                 'level_id' => $specialty->level_id,
                 'school_branch_id' => $currentSchool->id,
-                'school_semester_id' => $schoolSemesterId
+                'school_semester_id' => $schoolSemester->id
             ]);
 
             CreateTeacherAvailabilityJob::dispatch([
                 'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
-                'school_semester_id' => $schoolSemesterId,
+                'school_semester_id' => $schoolSemester->id,
                 'level_id' => $specialty->level_id
             ]);
 
@@ -109,54 +92,54 @@ class SchoolSemesterService
                 'endDate' => $semesterData['end_date'],
                 'semester' => Semester::find($semesterData['semester_id'])->name,
                 'level' => $specialty->level->name,
-                'schoolYear' => $semesterData['school_year']
+                'school_year_id' => $semesterData['school_year_id']
             ];
 
             $autoCreateExamSetting = $this->getSettingByKey($currentSchool->id, "exam.auto_create");
             if ($autoCreateExamSetting->value === true) {
-                CreateExamJob::dispatch([
-                    'specialty_id' => $semesterData['specialty_id'],
-                    'student_batch_id' => $semesterData['student_batch_id'],
-                    'semester_id' => $semesterData['semester_id'],
-                    'level_id' => $specialty->level_id,
-                    'school_year' => $semesterData['school_year']
-                ], $currentSchool->id);
+                // CreateExamJob::dispatch([
+                //     'specialty_id' => $semesterData['specialty_id'],
+                //     'student_batch_id' => $semesterData['student_batch_id'],
+                //     'semester_id' => $semesterData['semester_id'],
+                //     'level_id' => $specialty->level_id,
+                //     'school_year_id' => $semesterData['school_year_id']
+                // ], $currentSchool->id);
             }
 
             SendNewSemesterAvialableNotificationJob::dispatch(
-                $semesterData['specialty_id'],
+                $schoolYear->specialty_id,
                 $currentSchool->id,
                 $data
             );
 
             CreateInstructorAvailabilityJob::dispatch(
                 $currentSchool->id,
-                $schoolSemesterId
+                $schoolSemester->id
             );
 
             CreateJointCourseSemesterJob::dispatch(
-                $schoolSemesterId,
+                $schoolSemester->id,
                 $currentSchool
             );
 
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolSemester.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolSemesterManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $schoolSemester,
-                    "message" => "School Semester Created ",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => [$semesterData['specialty_id']],
-                'feature'      => 'semesterCreated',
-                'message'      => 'Semester Created',
-                'data'         => $schoolSemester,
-            ]);
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.schoolSemester.create"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "schoolSemesterManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $schoolSemester,
+            //         "message" => "School Semester Created ",
+            //     ]
+            // );
+            // StudentActionEvent::dispatch([
+            //     'schoolBranch' => $currentSchool->id,
+            //     'specialtyIds'   => [$semesterData['specialty_id']],
+            //     'feature'      => 'semesterCreated',
+            //     'message'      => 'Semester Created',
+            //     'data'         => $schoolSemester,
+            // ]);
             return $schoolSemester;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -169,16 +152,27 @@ class SchoolSemesterService
             );
         } catch (Exception $e) {
             DB::rollBack();
+
+            // Get detailed error information
+            $errorDetails = [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'code' => $e->getCode()
+            ];
+
+
             throw new AppException(
                 "An error occurred while creating the semester. Please try again.",
                 500,
                 "Creation Error",
-                "We encountered an issue while trying to create the semester. Error: " . $e->getMessage(),
+                "We encountered an issue while trying to create the semester. Error: " . $e->getMessage() . " in " . basename($e->getFile()) . " on line " . $e->getLine(),
                 null
             );
         }
     }
-    public function updateSchoolSemester($semesterData, $currentSchool, $schoolSemesterId, $authAdmin)
+    public function updateSchoolSemester(array $semesterData, object $currentSchool, string $schoolSemesterId, $authAdmin)
     {
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->find($schoolSemesterId);
         if (!$schoolSemester) {
@@ -207,7 +201,7 @@ class SchoolSemesterService
         ]);
         return $schoolSemester;
     }
-    public function bulkUpdateSchoolSemester(array $updateSemesterList, $currentSchool, $authAdmin)
+    public function bulkUpdateSchoolSemester(array $updateSemesterList, object $currentSchool, $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -247,7 +241,7 @@ class SchoolSemesterService
             throw $e;
         }
     }
-    public function deleteSchoolSemester($schoolSemesterId, $currentSchool, $authAdmin)
+    public function deleteSchoolSemester(string $schoolSemesterId, object $currentSchool, $authAdmin)
     {
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
             ->find($schoolSemesterId);
@@ -281,7 +275,7 @@ class SchoolSemesterService
         ]);
         return $schoolSemester;
     }
-    public function bulkDeleteSchoolSemester(array $schoolSemesterIds, $currentSchool, $authAdmin): array
+    public function bulkDeleteSchoolSemester(array $schoolSemesterIds, object $currentSchool, $authAdmin): array
     {
         $deletedSemesters = [];
         $specialtyIds = [];
@@ -346,7 +340,7 @@ class SchoolSemesterService
             );
         }
     }
-    public function getSchoolSemesters($currentSchool)
+    public function getSchoolSemesters(object $currentSchool)
     {
         $schoolSemesters = SchoolSemester::query()
             ->where('school_branch_id', $currentSchool->id)
@@ -354,16 +348,13 @@ class SchoolSemesterService
                 'id',
                 'start_date',
                 'end_date',
-                'specialty_id',
                 'semester_id',
                 'timetable_published',
-                'student_batch_id',
                 'school_year_id',
             ])
             ->with([
-                'studentBatch:id,name',
-                'specialty:id,specialty_name,level_id',
-                'specialty.level:id,level,name',
+                'schoolYear.specialty:id,specialty_name,level_id',
+                'schoolYear.specialty.level:id,level,name',
                 'semester:id,name,count',
                 'schoolYear.systemAcademicYear:id,name,year_start,year_end',
             ])
@@ -396,24 +387,18 @@ class SchoolSemesterService
 
             return [
                 "id" => $semester->id,
-                "start_date" => $semester->start_date,
-                "end_date" => $semester->end_date,
+                "start_date" => $start ? $start->format('Y-m-d') : null,
+                "end_date" => $end ? $end->format('Y-m-d') : null,
                 "school_year" => $semester->schoolYear?->systemAcademicYear?->name,
                 "status" => $status,
-                "student_batch_id" => $semester->student_batch_id,
-                "student_batch" => $semester->studentBatch?->name,
-                "specialty_id" => $semester->specialty_id,
-                "specialty_name" => $semester->specialty?->specialty_name,
-                "level_name" => $semester->specialty?->level?->name,
-                "level" => $semester->specialty?->level?->level,
-                "level_id" => $semester->specialty?->level?->id,
-                "semester_id" => $semester->semester_id,
+                "specialty_name" => $semester->schoolYear->specialty?->specialty_name,
+                "level_name" => $semester->schoolYear->specialty?->level?->name,
                 "timetable_published" => $semester->timetable_published ? "created" : "not created",
                 "semester_name" => $semester->semester?->name ?? $semester->semester?->semester_name,
             ];
         });
     }
-    public function getActiveSchoolSemesters($currentSchool)
+    public function getActiveSchoolSemesters(object $currentSchool)
     {
         $schoolSemesters = SchoolSemester::where("school_branch_id", $currentSchool->id)
             ->with(['specialty', 'specialty.level', 'semester', 'studentBatch'])
@@ -432,7 +417,7 @@ class SchoolSemesterService
         }
         return $schoolSemesters;
     }
-    public function getSchoolSemesterDetail($currentSchool, $semesterId)
+    public function getSchoolSemesterDetail(object $currentSchool, string $semesterId)
     {
         $schoolSemesterDetails = SchoolSemester::with(['specialty', 'specialty.level', 'semester', 'studentBatch', 'schoolYear.systemAcademicYear'])
             ->where("school_branch_id", $currentSchool->id)
@@ -448,7 +433,7 @@ class SchoolSemesterService
         }
         return $schoolSemesterDetails;
     }
-    private function getSettingByKey($schoolBranchId, $key)
+    private function getSettingByKey(string $schoolBranchId, string $key)
     {
         return SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
             ->whereHas('settingDefination', fn($query) => $query->where("key", $key))

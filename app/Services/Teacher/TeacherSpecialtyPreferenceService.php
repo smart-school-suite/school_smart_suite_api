@@ -5,7 +5,6 @@ namespace App\Services\Teacher;
 use App\Exceptions\AppException;
 use App\Models\Specialty;
 use App\Models\TeacherSpecailtyPreference;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Teacher;

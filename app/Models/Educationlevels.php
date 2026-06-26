@@ -117,4 +117,16 @@ class Educationlevels extends Model
     {
         return $this->hasMany(SemesterTimetableSlot::class);
     }
+
+    public function teacher()
+    {
+        return $this->belongsToMany(
+            Teacher::class,
+            'teacher_levels',
+            'level_id',
+            'teacher_id'
+        )->using(TeacherLevel::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
+    }
 }

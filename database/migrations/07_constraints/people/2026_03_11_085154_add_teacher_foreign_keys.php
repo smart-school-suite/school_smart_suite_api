@@ -63,6 +63,24 @@ return new class extends Migration
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialties');
         });
+
+        Schema::table('teacher_qualifications', function (Blueprint $table) {
+            $table->uuid('teacher_id');
+            $table->foreign('teacher_id')->references('id')->on('teachers');
+            $table->uuid('qualification_id');
+            $table->foreign('qualification_id')->references('id')->on('qualifications');
+            $table->uuid('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
+
+        Schema::table('teacher_levels', function (Blueprint $table) {
+            $table->uuid('teacher_id');
+            $table->foreign('teacher_id')->references('id')->on('teachers');
+            $table->uuid('level_id');
+            $table->foreign('level_id')->references('id')->on('levels');
+            $table->uuid('school_branch_id')->index();
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
     }
 
     /**
@@ -70,6 +88,20 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (Schema::hasTable('teacher_qualifications')) {
+            Schema::table('teacher_qualifications', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+                $table->dropForeign(['qualification_id']);
+                $table->dropForeign(['teacher_id']);
+            });
+        }
+        if (Schema::hasTable('teacher_levels')) {
+            Schema::table('teacher_levels', function (Blueprint $table) {
+                $table->dropForeign(['school_branch_id']);
+                $table->dropForeign(['level_id']);
+                $table->dropForeign(['teacher_id']);
+            });
+        }
         if (Schema::hasTable('teacher_availability_slots')) {
             Schema::table('teacher_availability_slots', function (Blueprint $table) {
                 $table->dropForeign(['school_branch_id']);

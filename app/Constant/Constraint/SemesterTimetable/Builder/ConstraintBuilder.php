@@ -66,6 +66,19 @@ class ConstraintBuilder
 
         return null;
     }
+
+    public static function getConstraintTitle(string $key): ?string
+    {
+        $constraints = self::all();
+
+        foreach ($constraints as $constraint) {
+            if (isset($constraint['key']) && $constraint['key'] === $key) {
+                return $constraint['title'] ?? '';
+            }
+        }
+
+        return null;
+    }
     public static function constraintInterpreterMap(): array
     {
         $map = [];

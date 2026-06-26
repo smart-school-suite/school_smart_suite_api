@@ -27,6 +27,10 @@ class SemesterTimetable extends Model
         'parsed_suggestions'
     ];
 
+    protected $casts = [
+        'timetable_version_id' => 'string',
+        'status' => 'string'
+    ];
     public function getTable()
     {
         return 'semester_timetable';

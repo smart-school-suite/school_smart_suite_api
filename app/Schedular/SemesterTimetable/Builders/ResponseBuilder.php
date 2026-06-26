@@ -2,6 +2,9 @@
 
 namespace App\Schedular\SemesterTimetable\Builders;
 
+use App\Models\Courses;
+use App\Models\Hall;
+use App\Models\Teacher;
 use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRegistry;
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\ResponseDTO;
@@ -39,7 +42,7 @@ class ResponseBuilder extends TimetableContext
 
     private function formatOptions(array $suggestions)
     {
-       return  collect($suggestions)
+        return  collect($suggestions)
             ->map(function ($scenarios, $day) {
                 return collect($scenarios)
                     ->flatMap(function ($scenario) {
@@ -72,11 +75,23 @@ class ResponseBuilder extends TimetableContext
                 $groupedByDay[$day] = [];
             }
 
+            $hall = Hall::with(['types'])->find($slot->hall_id);
+            $course = Courses::with(['types'])->find($slot->course_id);
+            $teacher = Teacher::find($slot->teacher_id);
             $formattedSlot = [
                 'start_time' => $slot->start_time ?? null,
                 'end_time' => $slot->end_time ?? null,
                 'teacher_id' => $slot->teacher_id ?? null,
+                'teacher_name' => $teacher->name ?? null,
+                'teacher_picture' => $teacher->profile_picture ?? null,
                 'course_id' => $slot->course_id ?? null,
+                'course_name' => $course->course_title ?? null,
+                'course_credit' => $course->credit ?? null,
+                'course_type' => $course->types ?? null,
+                'hall_name' => $hall->name ?? null,
+                'hall_capacity' => $hall->capacity ?? null,
+                'hall_type' => $hall->types ?? null,
+                'hall_location' => $hall->location ?? null,
                 'hall_id' => $slot->hall_id ?? null,
                 // "slot_type" => ($slot->teacher_id === null && $slot->course_id === null && $slot->hall_id === null)
                 //     ? GridSlotDTO::TYPE_FREE
