@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Teacher;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherDailyHours;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Teacher;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class TeacherDailyHourViolation implements ViolationInterpreter
 {
@@ -13,13 +14,13 @@ class TeacherDailyHourViolation implements ViolationInterpreter
         return TeacherDailyHours::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $entity = $blocker['entity'] ?? null;
-        $conflict = $blocker['conflict']['requested_slot'] ?? null;
-        $evidence = $blocker['evidence']['violated_teacher_daily_hours_rule'] ?? null;
+        $entity = $blocker->entity ?? null;
+        $conflict = $blocker->conflict ?? null;
+        $evidence = $blocker->evidence ?? null;
         $teacher = Teacher::find($entity['teacher_id'] ?? null);
 
-        return "Max Teacher Daily Hours Violation: Sheduling A Session from {$conflict['start_time']} to {$conflict['end_time']} on {$conflict['day']} for teacher {$teacher->name} exceeds the maximum allowed daily hours {$evidence['max_allowed_per_day']}";
+        return "Max Teacher Daily Hours Violation: Sheduling A Session from ";
     }
 }

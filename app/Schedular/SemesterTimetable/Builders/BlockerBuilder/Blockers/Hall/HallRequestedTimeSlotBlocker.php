@@ -15,7 +15,7 @@ class HallRequestedTimeSlotBlocker implements BlockerBuilder
         return HallRequestedTimeSlotViolationConstant::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = self::type();

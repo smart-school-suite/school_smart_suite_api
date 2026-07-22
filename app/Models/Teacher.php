@@ -8,6 +8,7 @@ use App\Models\Job\SystemJob;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\OTP;
 use App\Traits\Currency;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,10 +21,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
+    use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency, HasUuids;
 
     protected $fillable = [
-        'id',
         'school_branch_id',
         'email',
         'name',
@@ -33,11 +33,8 @@ class Teacher extends Model
         'status',
         'profile_picture',
         'address',
+        'username',
         'gender_id',
-        'num_assigned_courses',
-        'course_assignment_status',
-        'num_assigned_specialties',
-        'specialty_assignment_status',
         'sub_status'
     ];
 
@@ -46,7 +43,7 @@ class Teacher extends Model
     ];
 
     public $keyType = 'string';
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'teachers';
     protected $authTokenColumn = 'token';
 
@@ -55,8 +52,6 @@ class Teacher extends Model
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'num_assigned_courses' => 'integer',
-            'num_assigned_specialties' => 'integer'
         ];
     }
 
@@ -155,5 +150,28 @@ class Teacher extends Model
     public function semesterTimetableSlot(): HasMany
     {
         return $this->hasMany(SemesterTimetableSlot::class);
+    }
+    public function qualifications()
+    {
+        return $this->belongsToMany(
+            Qualification::class,
+            'teacher_qualifications',
+            'teacher_id',
+            'qualification_id'
+        )->using(TeacherQualification::class)
+            ->withPivot(['id', 'school_branch_id', 'field_of_study'])
+            ->withTimestamps();
+    }
+
+    public function levels()
+    {
+        return $this->belongstoMany(
+            Educationlevels::class,
+            'teacher_levels',
+            'teacher_id',
+            'level_id'
+        )->using(TeacherLevel::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
     }
 }

@@ -25,21 +25,21 @@ class TeacherController extends Controller
         $getInstructorsBySchool = $this->teacherService->getAllTeachers($currentSchool);
         return ApiResponseService::success("Teacher Fetched Successfully", $getInstructorsBySchool, null, 200);
     }
-    public function deleteInstructor(Request $request, $teacherId)
+    public function deleteInstructor(Request $request, string $teacherId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
         $deleteTeacher = $this->teacherService->deletetTeacher($teacherId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Teacher Deleted Sucessfully", $deleteTeacher, null, 200);
     }
-    public function updateInstructor(UpdateTeacherRequest $request, $teacherId)
+    public function updateInstructor(UpdateTeacherRequest $request, string $teacherId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
         $updateTeacher = $this->teacherService->updateTeacher($request->all(), $teacherId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Teacher Updated Sucessfully", $updateTeacher, null, 200);
     }
-    public function getTimettableByTeacher(Request $request, $teacherId)
+    public function getTimettableByTeacher(Request $request, string $teacherId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $teacherId = $request->route('teacherId');
@@ -59,14 +59,14 @@ class TeacherController extends Controller
         return ApiResponseService::success("Teacher Specailty Preference Added Sucessfully", $assignTeacherSpecailtyPreference, null, 200);
     }
 
-    public function deactivateTeacher(Request $request, $teacherId)
+    public function deactivateTeacher(Request $request, string $teacherId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
         $deactivateTeacher = $this->teacherService->deactivateTeacher($teacherId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Teacher Account Deactivated Successfully", $deactivateTeacher, null, 200);
     }
-    public function activateTeacher(Request $request, $teacherId)
+    public function activateTeacher(Request $request, string $teacherId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
@@ -110,7 +110,7 @@ class TeacherController extends Controller
         return ApiResponseService::success("Profile Picture Deleted Successfully", $deleteProfilePicture, null, 200);
     }
 
-    public function getTeacherBySpecialtyPreference(Request $request, $specialtyId)
+    public function getTeacherBySpecialtyPreference(Request $request, string $specialtyId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getTeachersBySpecialty = $this->teacherService->getTeachersBySpecialtyPreference($specialtyId, $currentSchool);

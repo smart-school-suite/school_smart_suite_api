@@ -6,6 +6,7 @@ use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
 use App\Exceptions\AppException;
 use App\Models\Courses;
+use App\Models\Course\CourseSpecialty;
 use Illuminate\Support\Facades\DB;
 use App\Events\Actions\AdminActionEvent;
 use Illuminate\Support\Str;
@@ -15,7 +16,7 @@ use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalE
 
 class TeacherCoursePreferenceService
 {
-    public function assignTeacherCoursePreference($currentSchool, $data, $authAdmin): array
+    public function assignTeacherCoursePreference(object $currentSchool, array $data,  $authAdmin): array
     {
         return DB::transaction(function () use ($currentSchool, $data, $authAdmin) {
             $schoolBranchId = $currentSchool->id;
@@ -69,7 +70,9 @@ class TeacherCoursePreferenceService
             }
 
             $validCourseIds = Courses::where('school_branch_id', $schoolBranchId)
-                ->whereIn('specialty_id', $allowedSpecialties)
+                ->with(['courseSpecialty', function ($query) use ($allowedSpecialties) {
+                    $query->whereIn('specialty_id', $allowedSpecialties);
+                }])
                 ->whereIn('id', $requestedCourseIds)
                 ->pluck('id')
                 ->toArray();
@@ -108,21 +111,21 @@ class TeacherCoursePreferenceService
                 $teacher->save();
             }
 
-            AdminActionEvent::dispatch([
-                "permissions"  => ["schoolAdmin.teacherCoursePreference.assign"],
-                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature"      => "teacherCoursePreferenceManagement",
-                "action"       => "teacherCourse.assigned",
-                "authAdmin"    => $authAdmin,
-                "data"         => [
-                    'teacher_id'   => $teacher->id,
-                    'teacher_name' => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
-                    'courses_assigned' => $assignedCount,
-                    'course_ids'   => $requestedCourseIds->toArray(),
-                ],
-                "message" => "Courses assigned to teacher successfully",
-            ]);
+            // AdminActionEvent::dispatch([
+            //     "permissions"  => ["schoolAdmin.teacherCoursePreference.assign"],
+            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+            //     "schoolBranch" => $currentSchool->id,
+            //     "feature"      => "teacherCoursePreferenceManagement",
+            //     "action"       => "teacherCourse.assigned",
+            //     "authAdmin"    => $authAdmin,
+            //     "data"         => [
+            //         'teacher_id'   => $teacher->id,
+            //         'teacher_name' => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
+            //         'courses_assigned' => $assignedCount,
+            //         'course_ids'   => $requestedCourseIds->toArray(),
+            //     ],
+            //     "message" => "Courses assigned to teacher successfully",
+            // ]);
             foreach ($requestedCourseIds as $courseId) {
                 event(new OperationalAnalyticsEvent(
                     eventType: OperationalEvent::TEACHER_COURSE_ASSIGNED,
@@ -145,7 +148,7 @@ class TeacherCoursePreferenceService
             ];
         });
     }
-    public function getAssignableTeacherCourses($currentSchool, $teacherId)
+    public function getAssignableTeacherCourses(object $currentSchool, string $teacherId)
     {
         $schoolBranchId = $currentSchool->id;
 
@@ -163,33 +166,44 @@ class TeacherCoursePreferenceService
             );
         }
 
-        $courses = Courses::where('school_branch_id', $schoolBranchId)
-            ->whereIn('specialty_id', $preferredSpecialtyIds)
-            ->with(['specialty', 'level', 'types'])
-            ->select('id', 'course_code', 'course_title', 'credit', 'specialty_id', 'level_id');
-
-
-        $courses->whereNotExists(function ($query) use ($teacherId, $schoolBranchId) {
-            $query->select(DB::raw(1))
-                ->from('teacher_course_preferences')
-                ->whereColumn('teacher_course_preferences.course_id', 'courses.id')
-                ->where('teacher_course_preferences.teacher_id', $teacherId)
-                ->where('teacher_course_preferences.school_branch_id', $schoolBranchId);
-        });
+        $courses = Courses::where('courses.school_branch_id', $schoolBranchId)
+            ->whereHas('courseSpecialty', function ($query) use ($preferredSpecialtyIds) {
+                $query->whereIn('specialty_id', $preferredSpecialtyIds);
+            })
+            ->with([
+                'courseSpecialty' => function ($query) use ($preferredSpecialtyIds) {
+                    $query->whereIn('specialty_id', $preferredSpecialtyIds)
+                        ->with(['specialty.level']);
+                },
+                'types'
+            ])
+            ->select('id', 'course_code', 'course_title', 'credit')
+            ->whereNotExists(function ($query) use ($teacherId, $schoolBranchId) {
+                $query->select(DB::raw(1))
+                    ->from('teacher_course_preferences')
+                    ->whereColumn('teacher_course_preferences.course_id', 'courses.id')
+                    ->where('teacher_course_preferences.teacher_id', $teacherId)
+                    ->where('teacher_course_preferences.school_branch_id', $schoolBranchId);
+            });
 
         return $courses->get()->map(function ($course) {
+            // Get the first matching course specialty (since we filtered by preferred specialties)
+            $courseSpecialty = $course->courseSpecialty->first();
+            $specialty = $courseSpecialty->specialty ?? null;
+            $level = $specialty->level ?? null;
+
             return [
-                'id'       => $course->id,
-                'course_code'     => $course->course_code,
-                'course_title'    => $course->course_title,
-                'credit'          => $course->credit ?? 0,
-                'specialty_name'  => $course->specialty?->specialty_name ?? 'N/A',
-                'level_name'      => $course->level?->name ?? 'N/A',
+                'id' => $course->id,
+                'course_code' => $course->course_code,
+                'course_title' => $course->course_title,
+                'credit' => $course->credit ?? 0,
+                'specialty_name' => $specialty->specialty_name ?? 'N/A',
+                'level_name' => $level->name ?? 'N/A',
                 'type' => $course->types ?? null
             ];
         })->values();
     }
-    public function removeTeacherAssignedCourses($currentSchool, $data, $authAdmin): array
+    public function removeTeacherAssignedCourses(object $currentSchool, array $data, $authAdmin): array
     {
         return DB::transaction(function () use ($currentSchool, $data, $authAdmin) {
             $schoolBranchId = $currentSchool->id;
@@ -316,5 +330,129 @@ class TeacherCoursePreferenceService
                 'type'           => $course->types ?? null
             ];
         })->filter()->values();
+    }
+    public function changeTeacherForCourse(object $currentSchool, array $data): array
+    {
+        return DB::transaction(function () use ($currentSchool, $data) {
+            $schoolBranchId = $currentSchool->id;
+            $courseId = $data['course_id'];
+            $newTeacherId = $data['new_teacher_id'];
+            $oldTeacherId = $data['old_teacher_id'] ?? null;
+
+            $course = Courses::where('id', $courseId)
+                ->where('school_branch_id', $schoolBranchId)
+                ->firstOrFail();
+
+            $newTeacher = Teacher::where('id', $newTeacherId)
+                ->where('school_branch_id', $schoolBranchId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $courseSpecialties = CourseSpecialty::where('course_id', $courseId)
+                ->pluck('specialty_id')
+                ->toArray();
+
+            $teacherSpecialties = TeacherSpecailtyPreference::where('school_branch_id', $schoolBranchId)
+                ->where('teacher_id', $newTeacherId)
+                ->pluck('specialty_id')
+                ->toArray();
+
+            $hasMatchingSpecialty = !empty(array_intersect($courseSpecialties, $teacherSpecialties));
+
+            if (!$hasMatchingSpecialty) {
+                throw new AppException(
+                    "Specialty Mismatch",
+                    403,
+                    "Teacher cannot teach this course",
+                    "The new teacher does not have the required specialty preferences for this course."
+                );
+            }
+
+            $currentAssignments = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
+                ->where('course_id', $courseId);
+
+            if ($oldTeacherId) {
+                $currentAssignments->where('teacher_id', $oldTeacherId);
+            }
+
+            $currentAssignmentsList = $currentAssignments->get();
+
+            if ($currentAssignmentsList->isEmpty()) {
+                throw new AppException(
+                    "No Assignment Found",
+                    404,
+                    "Course has no assigned teacher",
+                    "This course is not currently assigned to any teacher."
+                );
+            }
+
+            if (!$oldTeacherId && $currentAssignmentsList->count() > 1) {
+                throw new AppException(
+                    "Multiple Teachers",
+                    400,
+                    "Course has multiple teachers",
+                    "Please specify which teacher to replace using 'old_teacher_id'."
+                );
+            }
+
+            $oldTeacherIdToUse = $oldTeacherId ?? $currentAssignmentsList->first()->teacher_id;
+            $oldTeacher = Teacher::where('id', $oldTeacherIdToUse)
+                ->where('school_branch_id', $schoolBranchId)
+                ->first();
+
+            $alreadyAssigned = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
+                ->where('course_id', $courseId)
+                ->where('teacher_id', $newTeacherId)
+                ->exists();
+
+            if ($alreadyAssigned) {
+                throw new AppException(
+                    "Already Assigned",
+                    409,
+                    "Teacher already assigned to this course",
+                    "The new teacher is already assigned to this course."
+                );
+            }
+
+            TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
+                ->where('course_id', $courseId)
+                ->where('teacher_id', $oldTeacherIdToUse)
+                ->delete();
+
+            if ($oldTeacher) {
+                $oldTeacher->decrement('num_assigned_courses', 1);
+
+                $oldTeacherRemainingCourses = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
+                    ->where('teacher_id', $oldTeacherIdToUse)
+                    ->count();
+
+                if ($oldTeacherRemainingCourses == 0) {
+                    $oldTeacher->course_assignment_status = 'unassigned';
+                    $oldTeacher->save();
+                }
+            }
+
+            TeacherCoursePreference::create([
+                'id' => Str::uuid()->toString(),
+                'course_id' => $courseId,
+                'teacher_id' => $newTeacherId,
+                'school_branch_id' => $schoolBranchId,
+            ]);
+
+            $newTeacher->increment('num_assigned_courses', 1);
+
+            if ($newTeacher->course_assignment_status === 'unassigned') {
+                $newTeacher->course_assignment_status = 'assigned';
+                $newTeacher->save();
+            }
+
+            return [
+                'course_id' => $courseId,
+                'old_teacher_id' => $oldTeacherIdToUse,
+                'new_teacher_id' => $newTeacherId,
+                'school_branch_id' => $schoolBranchId,
+                'message' => 'Teacher changed successfully for the course'
+            ];
+        });
     }
 }

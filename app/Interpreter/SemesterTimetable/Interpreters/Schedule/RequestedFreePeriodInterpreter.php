@@ -7,6 +7,8 @@ use App\Interpreter\SemesterTimetable\Contracts\ConstraintInterpreter;
 use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
 use App\Models\Constraint\SemTimetableConstraint;
+use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
+
 class RequestedFreePeriodInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -21,20 +23,19 @@ class RequestedFreePeriodInterpreter implements ConstraintInterpreter
         return $constraint === RequestedFreePeriod::KEY;
     }
 
-    public function interpret(array $diagnostic): InterpretedDiagnostic
+    public function interpret(DiagnosticDTO $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
             constraint: SemTimetableConstraint::where("key", RequestedFreePeriod::KEY)->first(),
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic->blockers ?? []),
         );
     }
 
-    private function buildSummary(array $diagnostic): string
+    private function buildSummary(DiagnosticDTO $diagnostic): string
     {
-        $details = $diagnostic["constraint_failed"]["details"] ?? [];
+        $details = $diagnostic->constraint_failed["details"] ?? [];
         return "The Schedular was unable to schedule the requested free period on {$details['day']} from {$details['start_time']} to {$details['end_time']}. The reasons why this happened are listed below";
     }
 }

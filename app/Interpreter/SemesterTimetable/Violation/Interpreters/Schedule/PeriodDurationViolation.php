@@ -4,6 +4,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Schedule;
 
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class PeriodDurationViolation implements ViolationInterpreter
 {
@@ -11,13 +12,11 @@ class PeriodDurationViolation implements ViolationInterpreter
     {
         return PeriodDuration::KEY;
     }
-
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $conflict = $blocker['conflict'] ?? null;
-        $requestedSlot = $blocker['conflict']['requested_slot'];
-        $evidence = $blocker['evidence']['violated_duration_rule'] ?? null;
+        $conflict = $blocker->conflict ?? null;
+        $evidence = $blocker->evidence ?? null;
 
-        return "Period Duration Conflict: The requested session on {$requestedSlot['day']} at {$requestedSlot['start_time']} to {$requestedSlot['end_time']} has a duration of {$conflict['duration_minutes']} minutes, which violates the allowed duration of {$evidence['allowed_minutes']} minutes on {$evidence['day']} if scheduled";
+        return "Period Duration Conflict: The requested session on";
     }
 }

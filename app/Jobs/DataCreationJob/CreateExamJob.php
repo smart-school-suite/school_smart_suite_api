@@ -57,7 +57,7 @@ class CreateExamJob implements ShouldQueue
                     ->where('exam_type_id', $examType->id)
                     ->where('semester_id', $semesterDetails['semester_id'])
                     ->where('specialty_id', $specialty->id)
-                    ->where('school_year', $semesterDetails['school_year'])
+                    //->where('school_year', $semesterDetails['school_year'])
                     ->exists();
 
                 if (!$exists) {

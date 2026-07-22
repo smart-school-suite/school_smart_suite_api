@@ -17,7 +17,7 @@ use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalE
 
 class DepartmentService
 {
-    public function createDepartment(array $data, $currentSchool, $authAdmin)
+    public function createDepartment(array $data, object $currentSchool, object $authAdmin)
     {
         try {
             $department = new Department();
@@ -41,25 +41,25 @@ class DepartmentService
             $department->save();
             DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
             SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->id, $data);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Created",
-                ]
-            );
-            event(new OperationalAnalyticsEvent(
-                eventType:OperationalEvent::DEPARTMENT_CREATED,
-                version:1,
-                payload:[
-                    "school_branch_id" => $currentSchool->id,
-                    "value" => 1
-                ]
-            ));
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.department.create"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "departmentManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $department,
+            //         "message" => "Department Created",
+            //     ]
+            // );
+            // event(new OperationalAnalyticsEvent(
+            //     eventType:OperationalEvent::DEPARTMENT_CREATED,
+            //     version:1,
+            //     payload:[
+            //         "school_branch_id" => $currentSchool->id,
+            //         "value" => 1
+            //     ]
+            // ));
             return $department;
         } catch (Exception $e) {
             throw new AppException(
@@ -73,7 +73,7 @@ class DepartmentService
             throw $e;
         }
     }
-    public function updateDepartment(string $departmentId, array $data, $currentSchool, $authAdmin)
+    public function updateDepartment(string $departmentId, array $data, object $currentSchool, object $authAdmin)
     {
         try {
             $department = Department::where("school_branch_id", $currentSchool->id)->find($departmentId);
@@ -143,7 +143,7 @@ class DepartmentService
             );
         }
     }
-    public function deleteDepartment(string $departmentId, $currentSchool, $authAdmin)
+    public function deleteDepartment(string $departmentId, object $currentSchool, object $authAdmin)
     {
         try {
             $department = Department::where("school_branch_id", $currentSchool->id)->findOrFail($departmentId);
@@ -180,7 +180,7 @@ class DepartmentService
             );
         }
     }
-    public function getDepartments($currentSchool)
+    public function getDepartments(object $currentSchool)
     {
         $departmentData = Department::where("school_branch_id", $currentSchool->id)
             ->get();
@@ -195,7 +195,7 @@ class DepartmentService
         }
         return $departmentData;
     }
-    public function getDepartmentDetails($currentSchool, $departmentId)
+    public function getDepartmentDetails(object $currentSchool, string $departmentId)
     {
         $findDeparment = Department::where("school_branch_id", $currentSchool->id)
             ->find($departmentId);
@@ -210,7 +210,7 @@ class DepartmentService
         }
         return $findDeparment;
     }
-    public function deactivateDepartment(string $departmentId, $currentSchool, $authAdmin)
+    public function deactivateDepartment(string $departmentId, object $currentSchool, object $authAdmin)
     {
         try {
             $department = Department::where("school_branch_id", $currentSchool->id)
@@ -256,7 +256,7 @@ class DepartmentService
             );
         }
     }
-    public function activateDepartment(string $departmentId, $currentSchool, $authAdmin)
+    public function activateDepartment(string $departmentId, object $currentSchool, object $authAdmin)
     {
         try {
             $department = Department::where("school_branch_id", $currentSchool->id)
@@ -310,7 +310,7 @@ class DepartmentService
             );
         }
     }
-    public function bulkDeactivateDepartment(array $departmentIds, $currentSchool, $authAdmin)
+    public function bulkDeactivateDepartment(array $departmentIds, object $currentSchool, object $authAdmin)
     {
         try {
             foreach ($departmentIds as $departmentId) {
@@ -361,7 +361,7 @@ class DepartmentService
             );
         }
     }
-    public function bulkActivateDepartment(array $departmentIds, $currentSchool, $authAdmin)
+    public function bulkActivateDepartment(array $departmentIds, object $currentSchool, object $authAdmin)
     {
         try {
             foreach ($departmentIds as $departmentId) {
@@ -413,7 +413,7 @@ class DepartmentService
             );
         }
     }
-    public function bulkUpdateDepartment(array $updateDataList, $currentSchool, $authAdmin): array
+    public function bulkUpdateDepartment(array $updateDataList, object $currentSchool, object $authAdmin): array
     {
         $result = [];
         try {
@@ -450,7 +450,7 @@ class DepartmentService
             throw $e;
         }
     }
-    public function bulkDeleteDepartment(array $departmentIds, $currentSchool, $authAdmin)
+    public function bulkDeleteDepartment(array $departmentIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         DB::beginTransaction();
@@ -495,7 +495,7 @@ class DepartmentService
             );
         }
     }
-    public function getActiveDepartment($currentSchool)
+    public function getActiveDepartment(object $currentSchool)
     {
         try {
             $departmentData = Department::where("school_branch_id", $currentSchool->id)

@@ -13,7 +13,7 @@ class TeacherDailyHour implements DiagnosticBuilder
         return TeacherDailyHours::KEY;
     }
 
-    public function build($diagnostic): DiagnosticDTO
+    public function build(array $diagnostic): DiagnosticDTO
     {
         $diagnosticDTO = new DiagnosticDTO();
         $constraintFailed = $diagnostic["constraint_failed"];
@@ -29,7 +29,6 @@ class TeacherDailyHour implements DiagnosticBuilder
             ]
         ];
         $diagnosticDTO->blockers = [];
-        $diagnosticDTO->suggestions = [];
         return $diagnosticDTO;
     }
 }

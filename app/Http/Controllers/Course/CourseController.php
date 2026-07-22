@@ -48,7 +48,7 @@ class CourseController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $courses = $this->courseService->getCourses($currentSchool);
-        return ApiResponseService::success('Courses fetched succefully', CourseResource::collection($courses), null, 200);
+        return ApiResponseService::success('Courses fetched succefully', $courses, null, 200);
     }
     public function getCourseDetails(Request $request)
     {
@@ -151,6 +151,13 @@ class CourseController extends Controller
             ->where("semester_id", $semesterId)
             ->get();
         return ApiResponseService::success("Courses By Specialty Semester Fetched Successfully", CourseResource::collection($courses), null, 200);
+    }
+
+    public function getCoursesGSemesterBspecialtyId(Request $request, string $specialtyId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $courses =  $this->courseService->getCoursesGSemesterBspecialtyId($currentSchool, $specialtyId);
+        return ApiResponseService::success("Courses Grouped By Semester Fetched Successfully", $courses, null, 200);
     }
 
     protected function resolveUser()

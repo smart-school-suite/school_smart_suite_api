@@ -2,89 +2,73 @@
 
 namespace App\Services\SemesterTimetable;
 
-use App\Models\SemesterTimetable\SemesterTimetableDiagnostic;
+use App\Constant\Constraint\SemesterTimetable\Builder\ConstraintBuilder;
+use App\Models\SemesterTimetable\SemesterTimetable;
+use App\Models\SemesterTimetable\SemesterTimetableError;
 
 class SemesterTimetableService
 {
-    public function getTimetableParsedDiagnostics(string $timetableVersionId): array
+    public function getTimetableStatus(string $versionId, object $currentSchool): ?string
     {
-        $diagnostic = SemesterTimetableDiagnostic::forVersion($timetableVersionId)
-            ->latest('generated_at')
+        $semesterTimetable = SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->id)
+            ->first();
+        return $semesterTimetable->status;
+    }
+
+    public function getTimetableSlots(string $versionId, object $currentSchool): ?array
+    {
+        $semesterTimetable =  SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->id)
+            ->first();
+        return $semesterTimetable->timetable_slots;
+    }
+
+    public function getRequestPayload(string $versionId, object $currentSchool): ?array
+    {
+        $semesterTimetable =  SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->id)
+            ->first();
+        return $semesterTimetable->request_payload;
+    }
+
+    public function getParsedDiagnostics(string $versionId, object $currentSchool): ?array
+    {
+        $semesterTimetable = SemesterTimetable::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->id)
             ->first();
 
-        if (!$diagnostic) {
-            return [];
-        }
+        return $semesterTimetable->parsed_diagnostics;
+    }
 
-        $summary = $diagnostic->summary ?? [];
-        $violations = $diagnostic->violations ?? [];
-        $constraintSuggestions = $diagnostic->constraint_modification_suggestions ?? [];
-        $blockerSuggestions = $diagnostic->blocker_resolution_suggestions ?? [];
-
-        $constraintSuggestionsByConstraintId = [];
-        foreach ($constraintSuggestions as $s) {
-            $cid = $s['constraint_id'] ?? null;
-            if ($cid === null) continue;
-            $constraintSuggestionsByConstraintId[$cid][] = $s;
-        }
-
-        $blockerSuggestionsByPair = [];
-        foreach ($blockerSuggestions as $s) {
-            $cid = $s['constraint_id'] ?? null;
-            $vid = $s['violation_id'] ?? null;
-            if ($cid === null || $vid === null) continue;
-
-            $key = $cid . '|' . $vid;
-            $blockerSuggestionsByPair[$key][] = $s;
-        }
-
-        $summaryGrouped = [];
-        foreach ($summary as $item) {
-            $cid = $item['constraint_id'] ?? null;
-            $groupKey = $cid ?? '__unknown__';
-
-            if (!isset($summaryGrouped[$groupKey])) {
-                $summaryGrouped[$groupKey] = [
-                    'constraint_id' => $cid,
-                    'constraint_key' => $item['constraint_key'] ?? null,
-                    'constraint_name' => $item['constraint_name'] ?? null,
-                    'constraint_type' => $item['constraint_type'] ?? null,
-                    'constraint_failed' => [],
-                    'suggestions' => [],
-                ];
-            }
-
-            $summaryGrouped[$groupKey]['constraint_failed'][] = $item;
-        }
-        foreach ($summaryGrouped as $groupKey => $group) {
-            $cid = $group['constraint_id'];
-            if ($cid !== null && isset($constraintSuggestionsByConstraintId[$cid])) {
-                $summaryGrouped[$groupKey]['suggestions'] = $constraintSuggestionsByConstraintId[$cid];
-            }
-        }
-
-        $summaryGrouped = array_values($summaryGrouped);
-
-        $violationsWithSuggestions = [];
-        foreach ($violations as $v) {
-            $cid = $v['constraint_id'] ?? null;
-            $vid = $v['violation_id'] ?? null;
-
-            $key = ($cid !== null && $vid !== null) ? ($cid . '|' . $vid) : null;
-
-            $v['suggestions'] = ($key !== null && isset($blockerSuggestionsByPair[$key]))
-                ? $blockerSuggestionsByPair[$key]
-                : [];
-
-            $violationsWithSuggestions[] = $v;
-        }
-
-        return [
-            'status' => $diagnostic->status,
-            'summary' => $summaryGrouped,
-            'violations' => $violationsWithSuggestions,
-            'meta' => $diagnostic->meta ?? null,
-            'generated_at' => $diagnostic->generated_at,
+    public function getRawDiagnostics(string $versionId, object $currentSchool): ?array
+    {
+        $result = [];
+        $semesterTimetable = SemesterTimetable::where("timetable_version_id",  $versionId)
+            ->where("school_branch_id", $currentSchool->id)
+            ->first();
+        $diagnostics = [
+            ...$semesterTimetable->raw_diagnostics['hard'],
+            ...$semesterTimetable->raw_diagnostics['soft']
         ];
+        foreach ($diagnostics as $diagnostic) {
+            $result[] = [
+                "constraint_key" => $diagnostic["constraint_failed"]['type'],
+                "constraint_id" => $diagnostic['constraint_failed']["id"],
+                "constraint_title" => ConstraintBuilder::getConstraintTitle($diagnostic["constraint_failed"]['type']),
+                "constraint_type" => ConstraintBuilder::getConstraintType($diagnostic["constraint_failed"]['type']),
+                ...$diagnostic["constraint_failed"]["details"],
+                "blocker_count" => count($diagnostic['blockers'])
+            ];
+        }
+        return $result;
+    }
+
+    public function getErrors(string $versionId, object $currentSchool): ?array
+    {
+        $errors = SemesterTimetableError::where("timetable_version_id", $versionId)
+            ->where("school_branch_id", $currentSchool->id)
+            ->first();
+        return $errors->errors;
     }
 }

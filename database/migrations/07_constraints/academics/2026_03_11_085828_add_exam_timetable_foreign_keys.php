@@ -30,7 +30,7 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
 
-        Schema::table('active_exam_timetable', function (Blueprint $table) {
+        Schema::table('active_exam_timetables', function (Blueprint $table) {
             $table->string('version_id');
             $table->foreign('version_id')->references('id')->on('exam_timetable_versions');
             $table->string('exam_id');

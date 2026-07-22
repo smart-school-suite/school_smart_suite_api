@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,7 +19,6 @@ class LetterGradeSeeder extends Seeder
 
     private function createLetterGrades()
     {
-        Log::info('LetterGradeTableSeeder has started.');
         $timestamp = now();
         $filePath = public_path("data/letter_grade.csv");
         if (!file_exists($filePath) || !is_readable($filePath)) {
@@ -29,12 +27,10 @@ class LetterGradeSeeder extends Seeder
 
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle); // Read the header
-            Log::info('CSV Header: ', $header); // Log the header for debugging
 
             $letter_grade = []; // Initialize an empty array for countries
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Current Row Data: ', $data); // Log current row data for debugging
                 $uuid = Str::uuid()->toString();
                 $id = substr(md5($uuid), 0, 10);
                 // Ensure the row has at least two columns
@@ -50,12 +46,9 @@ class LetterGradeSeeder extends Seeder
 
             fclose($handle);
 
-            Log::info('Letter Grades Array: ', $letter_grade); // Log the countries array after completion
-
             // Insert the countries into the database
             if (!empty($letter_grade)) {
                 DB::table('letter_grades')->insert($letter_grade);
-                Log::info('Inserted Grades: ' . count($letter_grade) . ' entries.');
             } else {
                 Log::warning('No Grades to insert.');
             }

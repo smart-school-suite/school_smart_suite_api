@@ -27,7 +27,12 @@ class CreateTeacherRequest extends FormRequest
             'email' => 'required|email|string',
             'phone' => 'required|string',
             'address' => 'sometimes|nullable|string',
-            'gender_id' => 'required|string|exists:genders,id'
+            'gender_id' => 'required|string|exists:genders,id',
+            'level_ids' => 'required|array|min:1',
+            'level_ids.*' => 'required|uuid|exists:levels,id',
+            'qualifications' => "required|array|min:1",
+            'qualifications.*.qualification_id' => 'required|uuid|exists:qualifications,id',
+            'qualifications.*.field_of_study' => 'required|string'
         ];
     }
 }

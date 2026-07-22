@@ -6,181 +6,142 @@ use App\Constant\Action\AppActions;
 use App\Schedular\SemesterTimetable\Suggestion\Solution\DTO\SolutionPathDTO;
 use App\Schedular\SemesterTimetable\Suggestion\Solution\Handlers\Registry\SolutionHandlerRegistry;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SolutionPathEngine
 {
+    protected const RESOLUTION_CONFLICT = "conflict";
+    protected const RESOLUTION_DEPENDENCY = "dependency";
     public function generateSolutionPaths(array $scenarios): array
     {
         $paths = [];
+        $solutionHandlerRegistry = app(SolutionHandlerRegistry::class);
 
         foreach ($scenarios as $scenario) {
-            $scenarioPaths = $this->generatePathsForScenario($scenario);
-            $paths = array_merge($paths, $scenarioPaths);
-        }
+            $steps = [];
+            $optionsPool = collect([]);
 
-        return $paths;
-    }
-    protected function generatePathsForScenario(object $scenario): array
-    {
-        $resolutions = collect($scenario->resolutions);
+            foreach ($scenario->resolutions as $index => $resolution) {
+                $step = $index + 1;
 
-        if ($resolutions->isEmpty()) {
-            return [$this->createEmptyPath($scenario)];
-        }
+                if ($resolution->type === self::RESOLUTION_CONFLICT) {
+                    if ($index == 0) {
+                        $options = [
+                            ...$this->getModificationOptions($resolution),
+                            ...$this->getRemoveOption($resolution)
+                        ];
+                    } else {
+                        $options = [];
+                        $resolvePaths = $this->generateResolvePaths($optionsPool);
+                        $stepKey = "step_{$step}";
+                        $optionsPool->put($stepKey, []);
 
-        $allPaths = [];
-        $this->buildConditionalTree(
-            resolutions: $resolutions,
-            scenario: $scenario,
-            currentPath: [],
-            currentIndex: 0,
-            resolvedSteps: [],
-            allPaths: $allPaths
-        );
+                        foreach ($resolvePaths as $resolvePath) {
+                            $handler = $solutionHandlerRegistry->getHandler($resolution->target_type);
+                            $availableOptions = $handler->getSolution($resolution, $resolvePath);
 
-        return $allPaths;
-    }
-    protected function buildConditionalTree(
-        Collection $resolutions,
-        object $scenario,
-        array $currentPath,
-        int $currentIndex,
-        array $resolvedSteps,
-        array &$allPaths
-    ): void {
+                            if (collect($availableOptions)->isEmpty()) {
+                                continue;
+                            }
 
-        if ($currentIndex >= $resolutions->count()) {
-            $allPaths[] = $this->createPathDTO($scenario, $currentPath);
-            return;
-        }
+                            $options[] = [
+                                "conditions" => collect($resolvePath)->pluck('option_id')->toArray(),
+                                "options"    => $availableOptions
+                            ];
 
-        $currentResolution = $resolutions[$currentIndex];
-        $handler = app(SolutionHandlerRegistry::class)->getHandler($currentResolution->target_type);
+                            $currentOptions = $optionsPool->get($stepKey, []);
+                            $merged = array_merge($currentOptions, $availableOptions);
+                            $uniqueOptions = $this->removeDuplicateOptions($merged);
+                            $optionsPool->put($stepKey, $uniqueOptions);
+                        }
+                    }
 
-        // Get available options from handler based on resolved steps
-        $availableOptions = $handler ?
-            $handler->getSolution($currentResolution, $resolvedSteps) :
-            $this->getAllOptions($currentResolution);
+                    // Populate pool for step 0 conflict (was missing before)
+                    if ($index == 0) {
+                        $optionsPool->put("step_{$step}", $options);
+                    }
 
-        if (empty($availableOptions)) {
-            return; // No options available, path dies
-        }
+                    $steps[] = [
+                        "step"            => $step,
+                        "step_id"         => Str::uuid()->toString(),
+                        "resolution_type" => $resolution->type,
+                        "target_id"       => $resolution->target_id,
+                        'target_type'     => $resolution->target_type,
+                        'options'         => $options
+                    ];
+                } elseif ($resolution->type === self::RESOLUTION_DEPENDENCY) {
+                    // ← this branch was completely missing for index > 0
+                    $dependencyOptions = $this->getDependencyOptions($resolution);
 
-        // Build step with conditional options
-        $step = [
-            'step' => $currentIndex + 1,
-            'step_id' => $this->generateStepId($currentIndex, $currentResolution->type),
-            'resolution_type' => $currentResolution->type,
-            'target_id' => $currentResolution->target_id,
-            'target_type' => $currentResolution->target_type,
-        ];
+                    $optionsPool->put("step_{$step}", $dependencyOptions); // ← always populate pool
 
-        // Add depends_on if there are previous steps
-        if (!empty($resolvedSteps)) {
-            $step['depends_on'] = $this->getDependencies($resolvedSteps);
-        }
-
-        // Group options by their conditions
-        $step['options'] = $this->buildConditionalOptions($availableOptions, $resolvedSteps);
-
-        // For each possible selection, create a branch
-        foreach ($availableOptions as $option) {
-            $selectedOptionId = $option['option_id'];
-            $newResolvedSteps = array_merge($resolvedSteps, [$selectedOptionId]);
-
-            // Recursively build the rest of the tree
-            $this->buildConditionalTree(
-                resolutions: $resolutions,
-                scenario: $scenario,
-                currentPath: array_merge($currentPath, [$step]),
-                currentIndex: $currentIndex + 1,
-                resolvedSteps: $newResolvedSteps,
-                allPaths: $allPaths
-            );
-        }
-    }
-    protected function buildConditionalOptions(array $availableOptions, array $resolvedSteps): array
-    {
-        $conditionalOptions = [];
-
-        // Group options by their condition patterns
-        $groupedByCondition = [];
-
-        foreach ($availableOptions as $option) {
-            $conditionKey = $this->getConditionKey($option, $resolvedSteps);
-
-            if (!isset($groupedByCondition[$conditionKey])) {
-                $groupedByCondition[$conditionKey] = [
-                    'condition' => $option['condition'] ?? [],
-                    'options' => []
-                ];
-            }
-
-            $groupedByCondition[$conditionKey]['options'][] = [
-                'option_id' => $option['option_id'],
-                'action' => $option['action'],
-                'params' => $option['params'] ?? [],
-            ];
-        }
-
-        // Convert to array format
-        foreach ($groupedByCondition as $group) {
-            $conditionalOptions[] = $group;
-        }
-
-        return $conditionalOptions;
-    }
-    protected function getConditionKey(array $option, array $resolvedSteps): string
-    {
-        if (isset($option['condition']) && !empty($option['condition'])) {
-            return implode('|', $option['condition']);
-        }
-        return 'default';
-    }
-    protected function getDependencies(array $resolvedSteps): array
-    {
-        $dependencies = [];
-
-        foreach ($resolvedSteps as $index => $stepId) {
-            $dependencies[] = $this->generateStepId($index, 'conflict');
-        }
-
-        return $dependencies;
-    }
-    protected function getAllOptions(object $resolution): array
-    {
-        $options = [];
-        if ($resolution->type === "conflict") {
-            $modificationOptions = collect($resolution->options)->where("action", AppActions::MODIFY)->first();
-            if ($modificationOptions) {
-                foreach ($modificationOptions->proposals as $proposal) {
-                    $options[] = [
-                        "type" => "conflict",
-                        'option_id' => $proposal["id"] ?? null,
-                        'action' => $modificationOptions->action,
-                        'condition' => [],
-                        'params' => collect($proposal)->except('id')->toArray(),
+                    $steps[] = [
+                        "step"            => $step,
+                        "step_id"         => Str::uuid()->toString(),
+                        "resolution_type" => $resolution->type,
+                        "target_id"       => $resolution->target_id,
+                        'target_type'     => $resolution->target_type,
+                        'options'         => $dependencyOptions
                     ];
                 }
             }
 
-            $removeOption = collect($resolution->options)->where("action", AppActions::REMOVE)->first();
-            if ($removeOption) {
-                $options[] = [
-                    "type" => "conflict",
-                    'option_id' => $removeOption->proposals["id"] ?? null,
-                    'action' => $removeOption->action,
-                    'condition' => [],
-                    'params' => collect($removeOption->proposals)->except('id')->toArray(),
-                ];
+            $paths[] = new SolutionPathDTO(
+                scenarioId: $scenario->id,
+                decision: (array) $scenario->decision,
+                flow: $steps
+            );
+        }
+
+        return $paths;
+    }
+
+    protected function removeDuplicateOptions(array $options): array
+    {
+        $seen = [];
+        $unique = [];
+
+        foreach ($options as $option) {
+            $key = $option['option_id'] ?? null;
+
+            if ($key === null) {
+                $key = md5(json_encode($option));
+            }
+
+            if (!isset($seen[$key])) {
+                $seen[$key] = true;
+                $unique[] = $option;
             }
         }
-        if ($resolution->type === "dependency") {
-            foreach ($resolution->options['proposals'] as $proposal) {
+
+        return $unique;
+    }
+    protected function getDependencyOptions(object $resolution): array
+    {
+        $options = [];
+        Log::info("Resolution", [$resolution->options]);
+        foreach ($resolution->options['proposals'] as $proposal) {
+            $options[] = [
+                "type" => "dependency",
+                'option_id' => $proposal["id"] ?? null,
+                'action' => AppActions::MODIFY,
+                'condition' => [],
+                'params' => collect($proposal)->except('id')->toArray(),
+            ];
+        }
+        return $options;
+    }
+    protected function getModificationOptions(object $resolution): array
+    {
+        $options = [];
+        $modificationOptions = collect($resolution->options)->where("action", AppActions::MODIFY)->first();
+
+        if ($modificationOptions) {
+            foreach ($modificationOptions->proposals as $proposal) {
                 $options[] = [
-                    "type" => "dependency",
                     'option_id' => $proposal["id"] ?? null,
-                    'action' => AppActions::MODIFY,
+                    'action' => $modificationOptions->action,
                     'condition' => [],
                     'params' => collect($proposal)->except('id')->toArray(),
                 ];
@@ -189,30 +150,41 @@ class SolutionPathEngine
 
         return $options;
     }
-    protected function createPathDTO(object $scenario, array $flow): SolutionPathDTO
+    protected function getRemoveOption(object $resolution): ?array
     {
-        return new SolutionPathDTO(
-            scenarioId: $scenario->id,
-            decision: (array) $scenario->decision,
-            flow: $flow
-        );
+        $option = [];
+        $removeOption = collect($resolution->options)->where("action", AppActions::REMOVE)->first();
+        if ($removeOption) {
+            $option[] = [
+                'option_id' => $removeOption->proposals["id"] ?? null,
+                'action' => $removeOption->action,
+                'condition' => [],
+                'params' => collect($removeOption->proposals)->except('id')->toArray(),
+            ];
+            return $option;
+        }
+        return $option;
     }
-    protected function createEmptyPath(object $scenario): SolutionPathDTO
+    protected function generateResolvePaths(Collection $optionsPool): array
     {
-        return new SolutionPathDTO(
-            scenarioId: $scenario->id,
-            decision: (array) $scenario->decision,
-            flow: []
-        );
-    }
-    protected function generateStepId(int $index, string $type): string
-    {
-        $letter = $index < 26 ? chr(65 + $index) : 'Z' . ($index - 25);
+        $arrays = $optionsPool->values()->all();
 
-        if ($type === 'conflict') {
-            return "step_{$letter}";
+        if (empty($arrays)) {
+            return [];
         }
 
-        return "step_dep_{$letter}";
+        $result = [[]];
+
+        foreach ($arrays as $options) {
+            $newResult = [];
+            foreach ($result as $combination) {
+                foreach ($options as $option) {
+                    $newResult[] = array_merge($combination, [$option]);
+                }
+            }
+            $result = $newResult;
+        }
+
+        return $result;
     }
 }

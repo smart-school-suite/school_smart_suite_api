@@ -9,6 +9,8 @@ Route::post('/', [SpecialtyController::class, 'createSpecialty'])
 Route::get('/', [SpecialtyController::class, 'getSpecialtiesBySchoolBranch'])
     ->name('specialties.index');
 
+Route::get('/specialty/level', [SpecialtyController::class, 'getSpecialtyLevels'])->name('specialty.level.get');
+
 Route::get('/{specialtyId}', [SpecialtyController::class, 'getSpecialtyDetails'])
     ->name('specialties.show');
 

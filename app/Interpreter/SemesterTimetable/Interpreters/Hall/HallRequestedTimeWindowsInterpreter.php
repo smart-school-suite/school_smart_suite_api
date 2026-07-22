@@ -8,6 +8,8 @@ use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
 use App\Models\Hall;
 use App\Models\Constraint\SemTimetableConstraint;
+use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
+
 class HallRequestedTimeWindowsInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -21,23 +23,21 @@ class HallRequestedTimeWindowsInterpreter implements ConstraintInterpreter
         return $constraint === HallRequestedTimeWindow::KEY;
     }
 
-    public function interpret(array $diagnostic): InterpretedDiagnostic
+    public function interpret(DiagnosticDTO $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
             constraint: SemTimetableConstraint::where("key", HallRequestedTimeWindow::KEY)->first(),
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic->blockers ?? []),
         );
     }
 
-    private function buildSummary(array $diagnostic): string
+    private function buildSummary(DiagnosticDTO $diagnostic): string
     {
-        $details = $diagnostic["constraint_failed"]["details"] ?? [];
+        $details = $diagnostic->constraint_failed["details"] ?? [];
         $hall = Hall::find($details['hall_id'] ?? null);
         $hallName = $hall ? $hall->name : 'Unknown Hall';
         return "The Schedular was unable to schedule a session in {$hallName} at {$details['start_time']} to {$details['end_time']} on {$details['day']} as requested. The reasons why this happened are listed below";
     }
 }
-

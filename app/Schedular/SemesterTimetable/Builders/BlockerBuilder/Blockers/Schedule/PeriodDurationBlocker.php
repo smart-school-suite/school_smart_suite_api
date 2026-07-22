@@ -15,7 +15,7 @@ class PeriodDurationBlocker implements BlockerBuilder
         return PeriodDuration::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = PeriodDuration::KEY;

@@ -23,6 +23,7 @@ return [
         // --- Tauri desktop app ---
         'tauri://localhost',
         'https://tauri.localhost',
+        'http://localhost:1420',
 
         // --- React Native (Expo Go / dev builds) ---
         'http://localhost:8081',
@@ -50,6 +51,8 @@ return [
         'X-Requested-With',
         'X-XSRF-TOKEN',    // Required for Sanctum CSRF cookie flow
         'Origin',
+        'api-key',
+        'otp_token_header'
     ],
 
     'exposed_headers' => [

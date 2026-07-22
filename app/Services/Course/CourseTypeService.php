@@ -5,7 +5,7 @@ use App\Models\Course\CourseType;
 use App\Exceptions\AppException;
 class CourseTypeService
 {
-    public function createCourseType($data)
+    public function createCourseType(array $data)
     {
         $existingType = CourseType::Where("name", $data["name"])
             ->first();
@@ -28,8 +28,7 @@ class CourseTypeService
 
         return $courseType;
     }
-
-    public function updateCourseType(array $data, $id)
+    public function updateCourseType(array $data, string $id)
     {
         $courseType = CourseType::find($id);
 
@@ -65,8 +64,7 @@ class CourseTypeService
 
         return $courseType->fresh();
     }
-
-    public function deactivateCourseType($courseTypeId)
+    public function deactivateCourseType(string $courseTypeId)
     {
         $courseType = CourseType::find($courseTypeId);
         if (!$courseType) {
@@ -91,8 +89,7 @@ class CourseTypeService
         $courseType->save();
         return $courseType;
     }
-
-    public function activateCourseType($courseTypeId)
+    public function activateCourseType(string $courseTypeId)
     {
         $courseType = CourseType::find($courseTypeId);
         if (!$courseType) {
@@ -117,20 +114,17 @@ class CourseTypeService
         $courseType->save();
         return $courseType;
     }
-
     public function getAllCourseTypes()
     {
         $courseTypes = CourseType::all();
         return $courseTypes;
     }
-
     public function getActiveCourseTypes()
     {
         $activeCourseTypes = CourseType::where("status", "active")->get();
         return $activeCourseTypes;
     }
-
-    public function deleteCourseType($courseTypeId)
+    public function deleteCourseType(string $courseTypeId)
     {
         $courseType = CourseType::find($courseTypeId);
         if (!$courseType) {

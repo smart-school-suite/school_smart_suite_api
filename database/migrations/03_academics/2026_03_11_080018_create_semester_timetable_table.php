@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->integer('version_number');
             $table->string('label');
-            $table->enum('scheduler_status', ['optimal', 'partial', 'failed', 'in_progress'])->default('in_progress');
+            $table->enum('scheduler_status', ['optimal', 'partial', 'failed', 'error'])->default(null)->nullable();
             $table->json('scheduler_input')->nullable();
             $table->json('scheduler_output')->nullable();
             $table->timestamps();

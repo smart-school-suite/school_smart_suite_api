@@ -25,17 +25,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->timestamps();
         });
-
-        Schema::create('exam_jc_session_halls', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->unsignedMediumInteger('candidate_count');
-            $table->timestamps();
-        });
-
-        Schema::create('exam_session_jc_invigs', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->timestamps();
-        });
     }
 
     public function down(): void
@@ -43,7 +32,5 @@ return new class extends Migration
         Schema::dropIfExists('exam_jc_slot');
         Schema::dropIfExists('exam_jc');
         Schema::dropIfExists('exam_jc_refs');
-        Schema::dropIfExists('exam_jc_session_hall');
-        Schema::dropIfExists('exam_session_jc_invigs');
     }
 };

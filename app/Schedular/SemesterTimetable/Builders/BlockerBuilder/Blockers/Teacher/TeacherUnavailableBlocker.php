@@ -14,7 +14,7 @@ class TeacherUnavailableBlocker implements BlockerBuilder
         return TeacherUnavailableViolationConstant::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = TeacherUnavailableViolationConstant::KEY;

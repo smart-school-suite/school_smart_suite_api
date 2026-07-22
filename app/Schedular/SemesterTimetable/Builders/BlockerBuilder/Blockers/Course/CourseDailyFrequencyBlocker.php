@@ -12,7 +12,7 @@ class CourseDailyFrequencyBlocker implements BlockerBuilder
         return CourseDailyFrequency::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = CourseDailyFrequency::KEY;

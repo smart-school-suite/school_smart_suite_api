@@ -32,6 +32,7 @@ class RequestContext  extends ExamTimetableContext
             'opStartTime'     => $hc['operational_hours']['start_time']      ?? '08:00',
             'opEndTime'       => $hc['operational_hours']['end_time']         ?? '17:00',
             'opDayExceptions' => $hc['operational_hours']['date_exceptions'] ?? [],
+            'opDateExclusion'  => $hc['operational_hours']['date_exclusions'] ?? [],
 
             'sessionDuration'  => (int) ($hc['session_duration']['duration_minutes'] ?? 60),
             'sdExceptions'    => $hc['session_duration']['course_exceptions'] ?? [],
@@ -45,7 +46,7 @@ class RequestContext  extends ExamTimetableContext
             'requestedAssignments'   => $sc['requested_assignments']          ?? [],
             'iRequestedSlot'            => $sc['invigilator_requested_slot']            ?? null,
             'cRequestedSlot'      => $sc['requested_course_slot'] ?? [],
-            'sDailyLoadRange'           => $sc['student_daily_load_range']       ?? null,
+            'sDailyLoadRange'           => $sc['student_daily_load_range']       ?? null
         ];
     }
 
@@ -60,8 +61,8 @@ class RequestContext  extends ExamTimetableContext
         $sDailyLoadRange = $this->parsed['soft']['sDailyLoadRange'];
 
         return [
-            'min_sessions' => $sDailyLoadRange['max_sessions'] ?? null,
-            'max_sessions' => $sDailyLoadRange['min_sessions'] ?? null,
+            'min_sessions' => $sDailyLoadRange['min_sessions'] ?? null,
+            'max_sessions' => $sDailyLoadRange['max_sessions'] ?? null,
         ];
     }
     public function sDailyLoadRangeDate(string $date): ?array
@@ -75,8 +76,8 @@ class RequestContext  extends ExamTimetableContext
         $dateException = collect($sDailyLoadRange['date_exceptions'] ?? [])->firstWhere('date', $date);
 
         return $dateException ? [
-            'min_sessions' => $dateException['max_sessions'] ?? null,
-            'max_sessions' => $dateException['min_sessions'] ?? null,
+            'min_sessions' => $dateException['min_sessions'] ?? null,
+            'max_sessions' => $dateException['max_sessions'] ?? null,
         ] : $sDailyLoadRange;
     }
     public function courseRequestedSlots(): Collection
@@ -95,9 +96,9 @@ class RequestContext  extends ExamTimetableContext
     {
         return collect($this->requestedAssignments())->where('date', $date) ?? collect([]);
     }
-    public function invigilatorRequestedSlot(): ?array
+    public function invigilatorRequestedSlot(): Collection
     {
-        return $this->parsed['soft']['iRequestedSlot'];
+        return collect($this->parsed['soft']['iRequestedSlot']);
     }
     public function invigRequestedSlotDate(string $date): ?array
     {
@@ -179,9 +180,38 @@ class RequestContext  extends ExamTimetableContext
             'end_time' => $this->parsed['hard']['opEndTime'],
         ];
     }
-    public function operationalHourDate(string $date): array
+    public function operationalHourDate(string $date): ?array
     {
-        return collect($this->parsed['hard']['opDayExceptions'])->firstWhere('date', $date) ?? $this->operationalHours();
+        if (collect($this->parsed['hard']['opDateExclusion'])->contains($date)) {
+            return null;
+        }
+        return collect($this->parsed['hard']['opDayExceptions'])->firstWhere('date', $date)
+            ?? $this->operationalHours();
+    }
+
+    public function isOperationalDate(string $date): bool
+    {
+        return collect($this->operationalDates())->contains($date);
+    }
+
+    public function operationalDates(): array
+    {
+        $exludedDates = collect($this->parsed['hard']['opDateExclusion']);
+        $startDate = $this->parsed['hard']['startDate'];
+        $endDate = $this->parsed['hard']['endDate'];
+
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+
+        $dates = [];
+
+        foreach ($period as $date) {
+            $formattedDate = $date->format('Y-m-d');
+            if (!$exludedDates->contains($formattedDate)) {
+                $dates[] = $formattedDate;
+            }
+        }
+
+        return $dates;
     }
 
     public function invigilatorBusySlots(string $invigilatorId): Collection

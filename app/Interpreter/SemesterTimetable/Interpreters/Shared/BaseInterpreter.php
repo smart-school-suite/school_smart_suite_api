@@ -23,12 +23,12 @@ class BaseInterpreter
         $reasons = [];
         foreach ($blockers as $blocker) {
             $violation = $this->violationRegistry
-                ->resolve($blocker['type']);
+                ->resolve($blocker->type);
 
             if ($violation) {
                 $reasons[] = new Reason(
-                    violation: SemTimetableBlocker::where("key", $blocker['type'])->first() ?? null,
-                    title: ViolationBuilder::title($blocker['type']),
+                    violation: SemTimetableBlocker::where("key", $blocker->type)->first() ?? null,
+                    title: ViolationBuilder::title($blocker->type),
                     description: $violation->explain($blocker)
                 );
             }

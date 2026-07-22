@@ -12,23 +12,19 @@ use App\Models\SchoolSemester;
 use App\Services\ApiResponseService;
 use App\Services\SemesterTimetable\CreateActiveSemesterTimetableService;
 use App\Services\SemesterTimetable\GeneratePreferenceSemesterTimetableService;
-use App\Services\SemesterTimetable\GenerateFixedSemesterTimetableService;
 use App\Services\SemesterTimetable\SemesterTimetableService;
 use Illuminate\Http\Request;
 
 class SemesterTimetableController extends Controller
 {
     protected GeneratePreferenceSemesterTimetableService $preferenceTimetableService;
-    protected GenerateFixedSemesterTimetableService $fixedTimetableService;
     protected SemesterTimetableService $semesterTimetableService;
 
     public function __construct(
         GeneratePreferenceSemesterTimetableService $preferenceTimetableService,
-        GenerateFixedSemesterTimetableService $fixedTimetableService,
         SemesterTimetableService $semesterTimetableService
     ) {
         $this->preferenceTimetableService = $preferenceTimetableService;
-        $this->fixedTimetableService = $fixedTimetableService;
         $this->semesterTimetableService = $semesterTimetableService;
     }
 
@@ -43,7 +39,7 @@ class SemesterTimetableController extends Controller
         }
     }
 
-    protected function generatePreferenceTimetable($currentSchool, $request)
+    protected function generatePreferenceTimetable(object $currentSchool, object $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $systemJob = SystemJob::create([
@@ -64,7 +60,7 @@ class SemesterTimetableController extends Controller
         );
         return ApiResponseService::success("Timetable generation initiated successfully", null, null, 200);
     }
-   protected function generateFixedTimetable($currentSchool, $request)
+    protected function generateFixedTimetable(object $currentSchool, object $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $systemJob = SystemJob::create([
@@ -94,14 +90,10 @@ class SemesterTimetableController extends Controller
         return ApiResponseService::success("Timetable generated successfully", $response, null, 200);
     }
 
-    public function getParsedTimetableDiagnostics(string $timetableVersionId)
-    {
-        $parsedDiagnostics = $this->semesterTimetableService->getTimetableParsedDiagnostics($timetableVersionId);
-        return ApiResponseService::success("Timetable diagnostics retrieved successfully", $parsedDiagnostics, null, 200);
-    }
-
-    public function createActiveSemesterTimetable(Request $request, CreateActiveSemesterTimetableService $createActiveSemesterTimetable)
-    {
+    public function createActiveSemesterTimetable(
+        Request $request,
+        CreateActiveSemesterTimetableService $createActiveSemesterTimetable
+    ) {
         $currentSchool = $request->attributes->get('currentSchool');
         $data = $request->validate([
             'school_semester_id' => 'required|string',
@@ -121,8 +113,9 @@ class SemesterTimetableController extends Controller
         return null;
     }
 
-    private function getTimetableSetting($currentSchool){
-         $settings = SchoolBranchSetting::where("school_branch_id", $currentSchool->id)
+    private function getTimetableSetting(object $currentSchool)
+    {
+        $settings = SchoolBranchSetting::where("school_branch_id", $currentSchool->id)
             ->with(['settingDefination'])
             ->whereHas('settingDefination', function ($query) {
                 $query->whereIn('key', ['timetable.ignore_teacher_preference', 'timetable.respect_teacher_preference']);
@@ -132,5 +125,44 @@ class SemesterTimetableController extends Controller
                 return [$setting->settingDefination->key => $setting->value];
             });
         return $settings;
+    }
+    public function getTimetableStatus(Request $request, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $status = $this->semesterTimetableService->getTimetableStatus($versionId, $currentSchool);
+        return ApiResponseService::success("Timetable Status Fetched Successfully", $status, null, 200);
+    }
+    public function getTimetableSlots(Request $request, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $slots = $this->semesterTimetableService->getTimetableSlots($versionId, $currentSchool);
+        return ApiResponseService::success("Timetable Slots Fetched Successfully", $slots, null, 200);
+    }
+    public function getTimetableRequestPayload(Request $request, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $payload = $this->semesterTimetableService->getRequestPayload($versionId, $currentSchool);
+        return ApiResponseService::success("Timetable Request Payload Fetched Successfully", $payload, null, 200);
+    }
+
+    public function getParsedDiagnostics(Request $request, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $parsedDiagnostics = $this->semesterTimetableService->getParsedDiagnostics($versionId, $currentSchool);
+        return ApiResponseService::success("Parsed Timetable Diagnostics Fetched Successfully", $parsedDiagnostics, null, 200);
+    }
+
+    public function getRawDiagnostics(Request $request, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $rawDiagnostics = $this->semesterTimetableService->getRawDiagnostics($versionId, $currentSchool);
+        return ApiResponseService::success("Raw Timetable Diagnostics Fetched Successfully", $rawDiagnostics, null, 200);
+    }
+
+    public function getErrors(Request $request, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $errors = $this->semesterTimetableService->getErrors($versionId, $currentSchool);
+        return ApiResponseService::success("Timetable Errors Fetched Successfully", $errors, null, 200);
     }
 }

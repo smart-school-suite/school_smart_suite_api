@@ -10,20 +10,16 @@ return new class extends Migration
     {
         Schema::create('teachers', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('name', 150);
+            $table->string('first_name', 50);
+            $table->string('last_name', 50);
             $table->string('password');
+            $table->string('username', 150)->index();
             $table->string('profile_picture')->nullable();
             $table->string('phone');
             $table->string('email');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('address')->nullable();
-            $table->integer('num_assigned_courses')->default(0);
-            $table->enum('course_assignment_status', ['assigned', 'unassigned'])->default('unassigned');
-            $table->integer('num_assigned_specialties')->default(0);
-            $table->enum('specialty_assignment_status', ['assigned', 'unassigned'])->default('unassigned');
-            $table->enum('sub_status', ['subscribed', 'expired', 'renewed', 'pending'])->default('pending');
             $table->timestamps();
         });
 
@@ -48,6 +44,16 @@ return new class extends Migration
 
         Schema::create('teacher_specialty_preferences', function (Blueprint $table) {
             $table->string('id')->primary();
+            $table->timestamps();
+        });
+
+        Schema::create('teacher_qualifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('field_of_study', 150);
+            $table->timestamps();
+        });
+        Schema::create('teacher_levels', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
     }

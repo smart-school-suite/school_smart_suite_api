@@ -15,7 +15,7 @@ class BreakPeriodBlocker implements BlockerBuilder
         return BreakPeriodBlockerConstant::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = BreakPeriodBlockerConstant::KEY;

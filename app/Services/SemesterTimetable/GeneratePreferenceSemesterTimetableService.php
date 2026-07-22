@@ -76,7 +76,7 @@ class GeneratePreferenceSemesterTimetableService
     {
         return SchoolSemester::with(['specialty.level', 'semester'])->findOrFail($id);
     }
-    private function getTeachers(string $branchId, $specialty)
+    private function getTeachers(string $branchId, object $specialty)
     {
         $teachers = TeacherSpecailtyPreference::where('school_branch_id', $branchId)
             ->where('specialty_id', $specialty->id)
@@ -141,7 +141,7 @@ class GeneratePreferenceSemesterTimetableService
 
         return $teacherCourses;
     }
-    private function getTeacherPreferredSchedule(string $branchId, $schoolSemester, array $teacherIds)
+    private function getTeacherPreferredSchedule(string $branchId, object $schoolSemester, array $teacherIds)
     {
         $preferred = InstructorAvailabilitySlot::where('school_branch_id', $branchId)
             ->where('specialty_id', $schoolSemester->specialty_id)
@@ -169,7 +169,7 @@ class GeneratePreferenceSemesterTimetableService
 
         return $halls;
     }
-    private function getHallBusyPeriods(string $branchId, $halls)
+    private function getHallBusyPeriods(string $branchId, Collection $halls)
     {
         return SemesterTimetableSlot::where('school_branch_id', $branchId)
             ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())

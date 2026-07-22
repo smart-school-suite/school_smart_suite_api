@@ -27,40 +27,40 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/school-admin')
                 ->group(base_path('routes/Notification/SchoolAdminNotification.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/student')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student')
                 ->group(base_path('routes/Notification/StudentNotification.php'));
 
             Route::prefix('api/v1/auth/teacher')
                 ->group(base_path('routes/Auth/Teacher.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/teacher')
                 ->group(base_path('routes/Teacher/Teacher.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/pdf')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/pdf')
                 ->group(base_path('routes/PDF/Pdf.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-branch-setting')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-branch-setting')
                 ->group(base_path('routes/Setting/SchoolBranchSetting.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/resit-candidate')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-candidate')
                 ->group(base_path('routes/Exam/ResitExamCandidate.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-admin')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-admin')
                 ->group(base_path('routes/SchoolAdmin/SchoolAdmin.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/student')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student')
                 ->group(base_path('routes/Student/Student.php'));
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/role')
                 ->group(base_path('routes/RoleAndPermission/Role.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/hall')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/hall')
                 ->group(base_path("routes/Hall/Hall.php"));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/hall-type')
                 ->group(base_path('routes/Hall/HallType.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/specialty-hall')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/specialty-hall')
                 ->group(base_path('routes/Hall/SpecialtyHall.php'));
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/permission')
@@ -81,102 +81,102 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/country')
                 ->group(base_path('routes/Country/Country.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/department')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/department')
                 ->group(base_path('routes/Department/Department.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/specialty')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/specialty')
                 ->group(base_path('routes/Specialty/Specialty.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/course')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/course')
                 ->group(base_path('routes/Course/Course.php'));
             Route::middleware(['auth:sanctum'])->prefix('api/v1/course-type')
                 ->group(base_path('routes/Course/CourseType.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/parent')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/parent')
                 ->group(base_path('routes/Parent/Parent.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/mark')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/mark')
                 ->group(base_path('routes/Mark/Mark.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher-avialability')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/teacher-avialability')
                 ->group(base_path('routes/Teacher/TeacherAvialability.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/level')
                 ->group(base_path('routes/Level/Level.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/grade')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/grade')
                 ->group(base_path('routes/Grade/Grade.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/grade-category')
                 ->group(base_path('routes/Grade/GradeCategory.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam')
                 ->group(base_path('routes/Exam/Exam.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-timetable')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-timetable')
                 ->group(base_path('routes/Exam/ExamTimetable.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-semester')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-semester')
                 ->group(base_path('routes/Semester/SchoolSemester.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester')
                 ->group(base_path('routes/Semester/Semester.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election-role')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election-role')
                 ->group(base_path("routes/Election/ElectionRole.php"));
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election-candidate')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election-candidate')
                 ->group(base_path('routes/Election/ElectionCandidate.php'));
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election-type')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election-type')
                 ->group(base_path('routes/Election/ElectionType.php'));
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election')
                 ->group(base_path('routes/Election/Election.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/election-application')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election-application')
                 ->group(base_path("routes/Election/ElectionApplication.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/fee-schedule')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/fee-schedule')
                 ->group(base_path('routes/Fee/FeePaymentSchedule.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/fee-waiver')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/fee-waiver')
                 ->group(base_path("routes/Fee/FeeWaiver.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/additional-fees')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/additional-fees')
                 ->group(base_path("routes/Fee/AdditionalFee.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/student-batch')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student-batch')
                 ->group(base_path("routes/Student/StudentBatch.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/additional-fee-category')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/additional-fee-category')
                 ->group(base_path("routes/Fee/AdditionalFeeCategory.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/tuition-fee')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/tuition-fee')
                 ->group(base_path('routes/Fee/FeePayment.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/letter-grade')
                 ->group(base_path("routes/Grade/LetterGrade.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-type')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-type')
                 ->group(base_path("routes/Exam/ExamType.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/expenses-category')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/expenses-category')
                 ->group(base_path("routes/SchoolExpenses/SchoolExpensesCategory.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-expenses')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-expenses')
                 ->group(base_path("routes/SchoolExpenses/SchoolExpenses.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/resit-timetable')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-timetable')
                 ->group(base_path("routes/Resit/ResitTimetable.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/student-resit')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student-resit')
                 ->group(base_path("routes/Resit/StudentResit.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-candidate')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-candidate')
                 ->group(base_path("routes/Exam/ExamCandidates.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/activation-code-transaction')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/activation-code-transaction')
                 ->group(base_path("routes/ActivationCode/ActivationCodeTransaction.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-results')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-results')
                 ->group(base_path("routes/Exam/ExamResults.php"));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/student-parent-relationship')
@@ -194,58 +194,58 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/school-subscription')
                 ->group(base_path("routes/Subscription/SchoolSubscription.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-event')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-event')
                 ->group(base_path("routes/Event/SchoolEvent.php"));
 
-            Route::prefix('api/v1/student-promotion')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student-promotion')
                 ->group(base_path("routes/Student/StudentPromotion.php"));
 
-            Route::prefix('api/v1/teacher-preference')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/teacher-preference')
                 ->group(base_path("routes/Teacher/TeacherSpecialtyPerference.php"));
 
             Route::prefix('api/v1/school-grade')
                 ->group(base_path("routes/Grade/SchoolGrades.php"));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/academic-stats')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/academic-stats')
                 ->group(base_path('routes/Stats/AcademicStats.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/financial-stats')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/financial-stats')
                 ->group(base_path('routes/Stats/FinancialStats.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/operational-stats')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/operational-stats')
                 ->group(base_path('routes/Stats/OperationalStats.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/resit-exam')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-exam')
                 ->group(base_path("routes/Exam/ResitExam.php"));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/announcement-label')
                 ->group(base_path('routes/Annnouncement/AnnouncementLabel.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement-tag')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/announcement-tag')
                 ->group(base_path('routes/Annnouncement/AnnouncementTag.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement-category')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/announcement-category')
                 ->group(base_path('routes/Annnouncement/AnnouncementCategory.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/announcement')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/announcement')
                 ->group(base_path('routes/Annnouncement/Announcement.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/event-category')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/event-category')
                 ->group(base_path('routes/Event/SchoolEventCategory.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/event-tag')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/event-tag')
                 ->group(base_path('routes/Event/SchoolEventTag.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/teacher-course')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/teacher-course')
                 ->group(base_path('routes/Course/TeacherCoursePreference.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/fee-installment')
                 ->group(base_path('routes/FeeInstallment/FeeInstallment.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/feature')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/feature')
                 ->group(base_path('routes/SubscriptionPlan/Feature.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/feature-plan')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/feature-plan')
                 ->group(base_path('routes/SubscriptionPlan/FeaturePlan.php'));
 
             Route::prefix('api/v1/plan')
@@ -269,16 +269,16 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum'])->prefix('api/v1/gender')
                 ->group(base_path('routes/Gender/Gender.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/school-academic-year')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-academic-year')
                 ->group(base_path('routes/AcademicYear/SchoolAcademicYear.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/system-academic-year')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/system-academic-year')
                 ->group(base_path('routes/AcademicYear/SystemAcademicYear.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetable.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable/version')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable/version')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableVersion.php'));
 
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester-timetable/constraints')
@@ -290,23 +290,41 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum'])->prefix('api/v1/semester-timetable/constraints-type')
                 ->group(base_path('routes/SemTimetableConstraint/ConstraintType.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/joint-course')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/joint-course')
                 ->group(base_path('routes/JointCourse/JointCourse.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/joint-course-slot')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/joint-course-slot')
                 ->group(base_path('routes/JointCourse/JointCourseSlot.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable-interpreter')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable-interpreter')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableInterpreter.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/semester-timetable-parser')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable-parser')
                 ->group(base_path('routes/TimetableParser/SemesterTimetableParser.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/invigilator')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/invigilator')
                 ->group(base_path('routes/Invigilator/Invigilator.php'));
 
-            Route::middleware([IdentifyTenant::class, 'auth:sanctum'])->prefix('api/v1/exam-invigilator')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-invigilator')
                 ->group(base_path('routes/Invigilator/ExamInvigilator.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/period-duration-type')
+                ->group(base_path('routes/PeriodDuration/PeriodDurationType.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])
+                ->prefix('api/v1/period-duration')
+                ->group(base_path('routes/PeriodDuration/PeriodDuration.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-timetable/version')
+                ->group(base_path('routes/Exam/ExamTimetableVersion.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])
+                ->prefix('api/v1/semester-timetable-helpers')
+                ->group(base_path('routes/SemesterTimetable/SemesterTimetableHelper.php'));
+
+            Route::middleware(['auth:sanctum'])
+                ->prefix('api/v1/qualification')
+                ->group(base_path('routes/Qualification/Qualification.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

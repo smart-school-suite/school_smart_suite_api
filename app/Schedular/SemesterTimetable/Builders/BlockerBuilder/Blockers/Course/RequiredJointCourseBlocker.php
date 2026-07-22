@@ -15,7 +15,7 @@ class RequiredJointCourseBlocker implements BlockerBuilder
         return RequiredJointCourseBlockerConstant::KEY;
     }
 
-    public function build($blocker): BlockerDTO
+    public function build(array $blocker): BlockerDTO
     {
         $violation = new BlockerDTO();
         $violation->type = self::type();

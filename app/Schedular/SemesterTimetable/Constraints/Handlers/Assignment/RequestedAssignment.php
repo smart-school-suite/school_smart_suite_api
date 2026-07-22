@@ -76,7 +76,7 @@ class RequestedAssignment extends TimetableContext implements ConstraintHandler
         }
     }
 
-    public function enforce(State $state, $requestedAssignment): void
+    public function enforce(State $state, array $requestedAssignment): void
     {
         $day = $requestedAssignment["day"];
         $startTime = $requestedAssignment["start_time"];

@@ -2,11 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Schoolbranches;
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\SchoolBranchApiKey;
 use App\Services\ApiResponseService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyTenant
@@ -18,17 +20,17 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $providedKey = $request->header('API-KEY');
+        $authUser = Auth::user();
 
-        $apiKeyRecord = SchoolBranchApiKey::with('schoolBranch.school.country')
-            ->where('api_key', $providedKey)
-            ->first();
-
-        if (!$apiKeyRecord?->schoolBranch) {
-            return ApiResponseService::error("school branch not found or api key invalid", null, 404);
+        if (!$authUser) {
         }
 
-        $request->attributes->set('currentSchool', $apiKeyRecord->schoolBranch);
+        $schoolBranch = Schoolbranches::find($authUser->school_branch_id);
+        if (!$schoolBranch) {
+            return ApiResponseService::error("School Branch Not found", null, 404);
+        }
+
+        $request->attributes->set('currentSchool', $schoolBranch);
 
         return $next($request);
     }

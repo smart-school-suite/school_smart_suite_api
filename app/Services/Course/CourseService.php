@@ -13,15 +13,15 @@ use App\Models\Student;
 use Illuminate\Database\Eloquent\Collection;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
-use App\Events\Analytics\OperationalAnalyticsEvent;
-use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
+// use App\Events\Analytics\OperationalAnalyticsEvent;
+// use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 use App\Models\Course\CourseSpecialty;
 
 class CourseService
 {
-    public function createCourse(array $data, $currentSchool, $authAdmin): Courses
+    public function createCourse(array $data, object $currentSchool, object  $authAdmin): Courses
     {
-        $specialty = Specialty::findOrFail($data['specialty_id']);
+        // $specialty = Specialty::findOrFail($data['specialty_id']);
         $courses = Courses::where("school_branch_id", $currentSchool->id)
             ->where("course_code", $data['course_code'])
             ->where("course_title", $data['course_title'])
@@ -55,45 +55,48 @@ class CourseService
             $course->types()->sync($syncData);
         }
 
-        CourseSpecialty::create([
-            'course_id' => $course->id,
-            'specialty_id' => $data['specialty_id'],
-            'school_branch_id' => $currentSchool->id,
-        ]);
 
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.course.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "courseManagement",
-                "action" => "course.created",
-                "authAdmin" => $authAdmin,
-                "data" => $course,
-                "message" => "Course Created",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$specialty->id],
-            'feature'       => 'courseCreate',
-            'message'       => "New Course Created",
-            'data'          => $course,
-        ]);
-        event(new OperationalAnalyticsEvent(
-            eventType: OperationalEvent::COURSE_CREATED,
-            version: 1,
-            payload: [
-                "school_branch_id" => $currentSchool,
-                "specialty_id" => $specialty->id,
-                "department_id" => $specialty->department_id,
-                "level_id" => $specialty->level_id,
-                "value" => 1
-            ]
-        ));
+        if (!empty($data['specialty_id'])) {
+            $course->specialties()->sync([
+                $data['specialty_id'] => [
+                    'school_branch_id' => $currentSchool->id
+                ]
+            ]);
+        }
+
+        // AdminActionEvent::dispatch(
+        //     [
+        //         "permissions" =>  ["schoolAdmin.course.create"],
+        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+        //         "schoolBranch" =>  $currentSchool->id,
+        //         "feature" => "courseManagement",
+        //         "action" => "course.created",
+        //         "authAdmin" => $authAdmin,
+        //         "data" => $course,
+        //         "message" => "Course Created",
+        //     ]
+        // );
+        // StudentActionEvent::dispatch([
+        //     'schoolBranch'  => $currentSchool->id,
+        //     'specialtyIds'  => [$specialty->id],
+        //     'feature'       => 'courseCreate',
+        //     'message'       => "New Course Created",
+        //     'data'          => $course,
+        // ]);
+        // event(new OperationalAnalyticsEvent(
+        //     eventType: OperationalEvent::COURSE_CREATED,
+        //     version: 1,
+        //     payload: [
+        //         "school_branch_id" => $currentSchool,
+        //         "specialty_id" => $specialty->id,
+        //         "department_id" => $specialty->department_id,
+        //         "level_id" => $specialty->level_id,
+        //         "value" => 1
+        //     ]
+        // ));
         return $course;
     }
-    public function deleteCourse(string $courseId, $currentSchool, $authAdmin)
+    public function deleteCourse(string $courseId, object $currentSchool, array $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if (!$course) {
@@ -127,7 +130,7 @@ class CourseService
         ]);
         return $course;
     }
-    public function bulkDeleteCourse($coursesIds, $currentSchool, $authAdmin)
+    public function bulkDeleteCourse(array $coursesIds, object $currentSchool, array $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -174,7 +177,7 @@ class CourseService
             );
         }
     }
-    public function updateCourse(string $courseId, array $data, $currentSchool, $authAdmin)
+    public function updateCourse(string $courseId, array $data, object $currentSchool, array $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)
             ->find($courseId);
@@ -246,7 +249,7 @@ class CourseService
         ]);
         return $course;
     }
-    public function bulkUpdateCourse($updateCourseList, $currentSchool, $authAdmin)
+    public function bulkUpdateCourse(array $updateCourseList, object $currentSchool, array $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -300,13 +303,14 @@ class CourseService
             );
         }
     }
-    public function getCourses($currentSchool)
+    public function getCourses(object $currentSchool)
     {
         $courses = Courses::where("school_branch_id", $currentSchool->id)
-            ->with(['courseSpecialty.specialty.level', 'courseSpecialty.specialty.department', 'semester', 'types'])
-            ->withCount('courseSpecialty')
-            ->having('course_specialty_count', '=', 1)
+            ->with(['specialties.level', 'semester', 'types'])
+            ->withCount('specialties')
+            ->having('specialties_count', '=', 1)
             ->get();
+
 
         if ($courses->isEmpty()) {
             throw new AppException(
@@ -318,9 +322,19 @@ class CourseService
             );
         }
 
-        return $courses;
+        return $courses->map(fn($course) => [
+            "id" => $course->id ?? null,
+            "course_code" => $course->course_code ?? null,
+            "course_title" => $course->course_title ?? null,
+            "course_credit" => $course->credit ?? null,
+            "semester_title" => $course->semester->name ?? null,
+            "specialty_name" => $course->specialties->first()->specialty_name ?? null,
+            "level_name" => $course->specialties->first()->level->name ?? null,
+            "level_number" => $course->specialties->first()->level->level ?? null,
+            "status" => $course->status ?? null,
+        ]);
     }
-    public function courseDetails(string $courseId, $currentSchool)
+    public function courseDetails(string $courseId, object $currentSchool)
     {
         try {
             $course = Courses::where('school_branch_id', $currentSchool->id)
@@ -345,7 +359,7 @@ class CourseService
             );
         }
     }
-    public function getCoursesBySpecialtySemesterAndLevel($currentSchool, string $specialtyId,  string $semesterId)
+    public function getCoursesBySpecialtySemesterAndLevel(object $currentSchool, string $specialtyId,  string $semesterId)
     {
         try {
 
@@ -388,7 +402,7 @@ class CourseService
             );
         }
     }
-    public function deactivateCourse($currentSchool, string $courseId, $authAdmin)
+    public function deactivateCourse(object $currentSchool, string $courseId, array $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if ($course->status === "inactive") {
@@ -421,7 +435,7 @@ class CourseService
 
         return $course;
     }
-    public function bulkDeactivateCourse($coursesIds, $currentSchool, $authAdmin)
+    public function bulkDeactivateCourse(array $coursesIds, object $currentSchool, array $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -477,7 +491,7 @@ class CourseService
             );
         }
     }
-    public function activateCourse($currentSchool, string $courseId, $authAdmin)
+    public function activateCourse(object $currentSchool, string $courseId, array $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if ($course->status === "active") {
@@ -509,7 +523,7 @@ class CourseService
         ]);
         return $course;
     }
-    public function bulkActivateCourse($courseIds, $currentSchool, $authAdmin)
+    public function bulkActivateCourse(array $courseIds, object $currentSchool, array $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -557,7 +571,7 @@ class CourseService
             );
         }
     }
-    public function getActiveCourses($currentSchool)
+    public function getActiveCourses(object $currentSchool)
     {
         $courses = Courses::where("school_branch_id", $currentSchool->id)
             ->where("status", "active")
@@ -573,7 +587,7 @@ class CourseService
             );
         }
 
-        return $courses->map(fn ($course) => [
+        return $courses->map(fn($course) => [
             'id' => $course->id,
             'course_code' => $course->course_code,
             'course_title' => $course->course_title,
@@ -589,7 +603,7 @@ class CourseService
             "joint_course_status" => count($course->courseSpecialty) > 1 ? true : false
         ]);
     }
-    public function getCoursesBySchoolSemester($currentSchool, string $semesterId, string $specialtyId)
+    public function getCoursesBySchoolSemester(object $currentSchool, string $semesterId, string $specialtyId)
     {
         try {
             $schoolSemester = SchoolSemester::findOrFail($semesterId);
@@ -689,7 +703,7 @@ class CourseService
 
         return $groupedCourses;
     }
-    public function getCoursesByStudentIdSemesterId($currentSchool, string $studentId, string $semesterId)
+    public function getCoursesByStudentIdSemesterId(object $currentSchool, string $studentId, string $semesterId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->find($studentId);
@@ -762,5 +776,64 @@ class CourseService
         })->values();
 
         return $formatted->toArray();
+    }
+
+    public function getCoursesGSemesterBspecialtyId(object $currentSchool, string $specialtyId)
+    {
+        $courses = Courses::where("school_branch_id", $currentSchool->id)
+            ->whereHas('specialties', function ($query) use ($specialtyId) {
+                $query->where('specialty_id', $specialtyId);
+            })
+            ->withCount('specialties') // Add count of specialties
+            ->having('specialties_count', '=', 1) // Only courses with exactly one specialty
+            ->with([
+                'semester',
+                'types',
+                'teacherCoursePreference.teacher'
+            ])
+            ->get();
+
+        $groupedBySemester = $courses->groupBy('semester_id')->map(function ($semesterCourses) {
+            $semester = $semesterCourses->first()->semester;
+
+            $formattedCourses = $semesterCourses->map(function ($course) {
+                $teacherPreferences = $course->teacherCoursePreference;
+                $isAssigned = $teacherPreferences->isNotEmpty();
+
+                $formattedCourse = [
+                    'course_id' => $course->id,
+                    'course_code' => $course->course_code,
+                    'course_title' => $course->course_title,
+                    'course_credit' => $course->credit,
+                    'description' => $course->description,
+                    'types' => $course->types,
+                    'assignment_status' => $isAssigned ? 'assigned' : 'unassigned'
+                ];
+
+                // Add all assigned teachers if any
+                if ($isAssigned) {
+                    $formattedCourse['teachers'] = $teacherPreferences->map(function ($preference) {
+                        return [
+                            'id' => $preference->teacher->id,
+                            'name' => $preference->teacher->name,
+                            'first_name' => $preference->teacher->first_name,
+                            'profile_picture' => $preference->teacher->profile_picture,
+                            'email' => $preference->teacher->email,
+                            'username' => $preference->teacher->username ?? null
+                        ];
+                    })->values()->all();
+                }
+
+                return $formattedCourse;
+            });
+
+            return [
+                'semester_id' => $semester->id,
+                'semester_name' => $semester->name,
+                'courses' => $formattedCourses->values()->all()
+            ];
+        })->values()->all();
+
+        return $groupedBySemester;
     }
 }

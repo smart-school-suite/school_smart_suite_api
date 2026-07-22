@@ -33,7 +33,7 @@ class SemesterTimetableVersionController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $data = $request->validate([
-            'school_semester_id' => 'required|string',
+            'school_semester_id' => 'required|uuid|exists:school_semesters,id',
         ]);
         $createVersion = $this->semesterTimetableVersionService->createVersion($currentSchool, $data);
         return ApiResponseService::success("Timetable Version Created Successfully", $createVersion, null, 201);

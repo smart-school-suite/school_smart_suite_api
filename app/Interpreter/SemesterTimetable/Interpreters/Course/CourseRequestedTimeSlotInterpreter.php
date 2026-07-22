@@ -8,6 +8,8 @@ use App\Interpreter\SemesterTimetable\DTOs\InterpretedDiagnostic;
 use App\Interpreter\SemesterTimetable\Interpreters\Shared\BaseInterpreter;
 use App\Models\Constraint\SemTimetableConstraint;
 use App\Models\Courses;
+use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
+
 class CourseRequestedTimeSlotInterpreter implements ConstraintInterpreter
 {
     private BaseInterpreter $baseInterpreter;
@@ -21,20 +23,19 @@ class CourseRequestedTimeSlotInterpreter implements ConstraintInterpreter
         return $constraint === CourseRequestedSlot::KEY;
     }
 
-    public function interpret(array $diagnostic): InterpretedDiagnostic
+    public function interpret(DiagnosticDTO $diagnostic): InterpretedDiagnostic
     {
         return new InterpretedDiagnostic(
             summary: $this->buildSummary($diagnostic),
             constraint: SemTimetableConstraint::where("key", CourseRequestedSlot::KEY)->first(),
             severity: 'soft',
-            reasons: $this->baseInterpreter->buildReason($diagnostic['blockers'] ?? []),
-            suggestions: $this->baseInterpreter->buildSuggestion($diagnostic['suggestions'] ?? [])
+            reasons: $this->baseInterpreter->buildReason($diagnostic->blockers ?? []),
         );
     }
 
-    private function buildSummary(array $diagnostic): string
+    private function buildSummary(DiagnosticDTO $diagnostic): string
     {
-        $details = $diagnostic["constraint_failed"]["details"] ?? [];
+        $details = $diagnostic->constraint_failed["details"] ?? [];
         $course = Courses::find($details['course_id'] ?? null);
         $courseName = $course ? $course->course_title : 'Unknown Course';
         return "The Schedular was unable to schedule {$courseName} at {$details['start_time']} to {$details['end_time']} on {$details['day']} as requested. The reasons why this happened are listed below";

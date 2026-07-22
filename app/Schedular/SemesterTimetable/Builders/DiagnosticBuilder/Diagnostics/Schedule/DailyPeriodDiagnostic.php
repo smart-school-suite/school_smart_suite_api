@@ -14,7 +14,7 @@ class DailyPeriodDiagnostic implements DiagnosticBuilder
         return ScheduleDailyPeriod::KEY;
     }
 
-    public function build($diagnostic): DiagnosticDTO
+    public function build(array $diagnostic): DiagnosticDTO
     {
         $diagnosticDTO = new DiagnosticDTO();
         $constraintFailed = $diagnostic["constraint_failed"];
@@ -29,7 +29,6 @@ class DailyPeriodDiagnostic implements DiagnosticBuilder
             ]
         ];
         $diagnosticDTO->blockers = [];
-        $diagnosticDTO->suggestions = [];
         return $diagnosticDTO;
     }
 }

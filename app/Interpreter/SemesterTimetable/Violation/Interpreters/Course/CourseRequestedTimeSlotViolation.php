@@ -5,6 +5,7 @@ namespace App\Interpreter\SemesterTimetable\Violation\Interpreters\Course;
 use App\Constant\Violation\SemesterTimetable\Course\CourseRequestedSlot;
 use App\Interpreter\SemesterTimetable\Violation\Contracts\ViolationInterpreter;
 use App\Models\Courses;
+use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
 
 class CourseRequestedTimeSlotViolation implements ViolationInterpreter
 {
@@ -13,16 +14,13 @@ class CourseRequestedTimeSlotViolation implements ViolationInterpreter
         return CourseRequestedSlot::KEY;
     }
 
-    public function explain(array $blocker): string
+    public function explain(BlockerDTO $blocker): string
     {
-        $entity = $blocker['entity']['preferred_slot'] ?? null;
-        $conflict = $blocker['conflict']['requested_slot'] ?? null;
+        $entity = $blocker->entity ?? null;
+        $conflict = $blocker->conflict ?? null;
         $courseEntity = Courses::find($entity['course_id'] ?? null);
         $conflictingCourse = Courses::find($conflict['course_id'] ?? null);
 
-        return "Requested Course Time Slot Violation: The requested session on {$conflict['day']} at
-        {$conflict['start_time']} to {$conflict['end_time']} for course {$courseEntity->course_title}
-         conflicts with an existing session for course {$conflictingCourse->course_title} on {$conflict['day']}
-         at {$conflict['start_time']} to {$conflict['end_time']}.";
+        return "Requested Course Time Slot Violation: The requested session on ";
     }
 }
