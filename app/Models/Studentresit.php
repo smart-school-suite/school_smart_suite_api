@@ -2,28 +2,23 @@
 
 namespace App\Models;
 
-use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class Studentresit extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'school_branch_id',
         'student_id',
         'course_id',
         'exam_id',
-        'specialty_id',
-        'level_id',
-        'paid_status',
-        'student_batch_id',
-        'resit_fee',
-        'attempt_number',
-        'semester_id',
+        'payment_status',
+        'fee',
+        'attempts',
         'iscarry_over'
     ];
 
@@ -41,14 +36,6 @@ class Studentresit extends Model
     public function courses(): BelongsTo
     {
         return $this->belongsTo(Courses::class, 'course_id');
-    }
-    public function level(): BelongsTo
-    {
-        return $this->belongsTo(Educationlevels::class, 'level_id');
-    }
-    public function specialty(): BelongsTo
-    {
-        return $this->belongsTo(Specialty::class, 'specialty_id');
     }
     public function student(): BelongsTo
     {

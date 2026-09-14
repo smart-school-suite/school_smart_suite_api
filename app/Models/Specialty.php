@@ -70,10 +70,6 @@ class Specialty extends Model
          ->withPivot(['id', 'school_branch_id'])
          ->withTimestamps();
     }
-    public function resitExamRef(): HasMany
-    {
-        return $this->hasMany(ResitExamRef::class);
-    }
     public function specialtyHall(): HasMany
     {
         return $this->hasMany(SpecialtyHall::class);
@@ -164,10 +160,6 @@ class Specialty extends Model
     public function marks(): HasMany
     {
         return $this->hasMany(Marks::class, 'specialty_id');
-    }
-    public function studentresit(): HasMany
-    {
-        return $this->hasMany(Studentresit::class);
     }
 
     public function eventAudience()

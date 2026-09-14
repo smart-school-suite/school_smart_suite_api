@@ -7,6 +7,7 @@ use App\Models\Course\JointCourseSlot;
 use App\Models\Course\SchoolCourseType;
 use App\Models\Course\SemesterJointCourse;
 use App\Models\Course\CourseSpecialty;
+use App\Models\Exam\ExamScore;
 use App\Models\Specialty;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\ExamTimetable\ExamTimetableSlot;
@@ -91,9 +92,9 @@ class Courses extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function marks(): HasMany
+    public function examScore(): HasMany
     {
-        return $this->hasMany(Marks::class, 'courses_id');
+        return $this->hasMany(ExamScore::class, 'course_id');
     }
 
     public function types()

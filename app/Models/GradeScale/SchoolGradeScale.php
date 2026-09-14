@@ -2,10 +2,12 @@
 
 namespace App\Models\GradeScale;
 
+use App\Models\Exam\ExamScore;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolGradeScale extends Model
 {
@@ -32,6 +34,10 @@ class SchoolGradeScale extends Model
     public $incrementing = 'false';
     public $table = 'grade_scales';
 
+    public function examScore(): HasMany
+    {
+        return $this->hasMany(ExamScore::class, 'grade_id');
+    }
     public function schoolGradeScaleCategory(): BelongsTo
     {
         return $this->belongsTo(SchoolGradeScaleCategory::class, 'grades_category_id');

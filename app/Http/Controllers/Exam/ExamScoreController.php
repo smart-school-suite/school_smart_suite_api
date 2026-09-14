@@ -89,21 +89,4 @@ class ExamScoreController extends Controller
         $prepareExamResults = $this->examScoreService->prepareExamData($currentSchool, $studentId, $examId);
         return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareExamResults, null, 200);
     }
-
-    public function getCaEvaluationHelperData(Request $request)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $examId = $request->route("examId");
-        $evaluationData = $this->examScoreService->getCaExamEvaluationHelperData($currentSchool, $examId);
-        return ApiResponseService::success("CA Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
-    }
-
-    public function getExamEvaluationHelperData(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $examId = $request->route('examId');
-        $studentId = $request->route("studentId");
-        $evaluationData = $this->examScoreService->getExamEvaluationHelperData($currentSchool, $examId, $studentId);
-        return ApiResponseService::success("Exam Evaluation Helper Data Fetched Successfully", $evaluationData, null, 200);
-    }
 }

@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('student_resits', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('paid_status')->default('unpaid');
-            $table->decimal('resit_fee', 8, 2)->default(3000.00);
-            $table->unsignedInteger('attempt_number')->default(0);
+            $table->enum('payment_status', ['unpaid','paid'])->default('unpaid');
+            $table->decimal('fee', 12, 2)->default(3000.00);
+            $table->unsignedInteger('attempts')->default(0);
             $table->unsignedInteger('iscarry_over')->default(false);
             $table->timestamps();
         });

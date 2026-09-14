@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\CAEvaluation;
+namespace App\Services\ExamEvaluation;
 
 use App\Models\Courses;
 use Exception;

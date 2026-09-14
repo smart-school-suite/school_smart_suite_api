@@ -16,23 +16,17 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('grades_category_id')->nullable();
             $table->foreign('grades_category_id')->references('id')->on('grade_scale_categories');
+            $table->string('exam_type_id');
+            $table->foreign('exam_type_id')->references('id')->on('exam_types');
+            $table->string('school_year_id')->index();
+            $table->foreign('school_year_id')->references('id')->on('school_academic_years')->onDelete('cascade');
         });
 
         Schema::table('resit_exam_references', function (Blueprint $table) {
             $table->string('school_branch_id')->after('id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('exam_type_id');
-            $table->foreign('exam_type_id')->references('id')->on('exam_types');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels');
             $table->string('exam_id');
             $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('semesters');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batches');
             $table->string('resit_exam_id');
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
         });

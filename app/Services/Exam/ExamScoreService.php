@@ -4,20 +4,18 @@ namespace App\Services\Exam;
 
 use App\Exceptions\AppException;
 use App\Models\Marks;
-use App\Models\Examtype;
 use Exception;
 use App\Models\Student;
 use App\Models\Examtimetable;
 use App\Models\Exams;
 use App\Models\Grades;
 use App\Models\StudentResults;
-use App\Models\Courses;
 use App\Models\AccessedStudent;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExamScoreService
 {
-    public function getMarksByCandidate(string $candidateId, $currentSchool)
+    public function getMarksByCandidate(string $candidateId, object $currentSchool)
     {
         try {
             $candidate = AccessedStudent::findorFail($candidateId);
@@ -55,7 +53,7 @@ class ExamScoreService
             );
         }
     }
-    public function getCaMarksByExamCandidate(string $candidateId, $currentSchool)
+    public function getCaMarksByExamCandidate(string $candidateId, object $currentSchool)
     {
         try {
             $candidate = AccessedStudent::find($candidateId);
@@ -139,7 +137,7 @@ class ExamScoreService
             );
         }
     }
-    public function getExamMarksByExamCandidate(string $candidateId, $currentSchool)
+    public function getExamMarksByExamCandidate(string $candidateId, object $currentSchool)
     {
         try {
             $candidate = AccessedStudent::find($candidateId);
@@ -261,7 +259,7 @@ class ExamScoreService
             );
         }
     }
-    public function deleteMark(string $markId, $currentSchool)
+    public function deleteMark(string $markId, object $currentSchool)
     {
 
         $markExists = Marks::Where('school_branch_id', $currentSchool->id)->find($markId);
@@ -277,7 +275,7 @@ class ExamScoreService
         $markExists->delete();
         return $markExists;
     }
-    public function getStudentScores(string $studentId, $currentSchool, string $examId)
+    public function getStudentScores(string $studentId, object $currentSchool, string $examId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->find($studentId);
@@ -312,7 +310,7 @@ class ExamScoreService
 
         return $scoresData;
     }
-    public function getScoreDetails(string $markId, $currentSchool)
+    public function getScoreDetails(string $markId, object $currentSchool)
     {
         $findScore = Marks::where("school_branch_id", $currentSchool->id)
             ->with(['student', 'course', 'exams', 'specialty', 'level'])
@@ -328,7 +326,7 @@ class ExamScoreService
         }
         return $findScore;
     }
-    public function getAcessedCourses(string $examId, string $studentId, $currentSchool)
+    public function getAcessedCourses(string $examId, string $studentId, object $currentSchool)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->find($studentId);
@@ -377,12 +375,12 @@ class ExamScoreService
             'courses' => $examCourses
         ];
     }
-    public function getAllStudentsScores($currentSchool)
+    public function getAllStudentsScores(object $currentSchool)
     {
         $studentScores = Marks::where("school_branch_id", $currentSchool->id)->with(['course', 'student', 'exams.examtype', 'level', 'specialty'])->get();
         return $studentScores;
     }
-    public function prepareCaDataByExam($currentSchool, $studentId, $examId): array
+    public function prepareCaDataByExam(object $currentSchool, string $studentId, string $examId): array
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
         if (!$exam) {
@@ -441,7 +439,7 @@ class ExamScoreService
             'caResult' => $caResult,
         ];
     }
-    public function prepareCaData($currentSchool, $examId, $studentId): array
+    public function prepareCaData(object $currentSchool, string $examId, string $studentId): array
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
         if (!$exam) {
@@ -500,7 +498,7 @@ class ExamScoreService
             'ca_result' => $caResult
         ];
     }
-    public function prepareExamData($currentSchool, $examId, $studentId)
+    public function prepareExamData(object $currentSchool,string $examId, string $studentId)
     {
         $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
         if (!$exam) {
@@ -586,187 +584,5 @@ class ExamScoreService
             'ca_result' => $caResult
         ];
     }
-    private function findExamsBasedOnCriteria(string $examId)
-    {
-        $exam = Exams::with('examType')->findOrFail($examId);
-        if ($exam->examType->type !== 'exam') {
-            throw new AppException(
-                'Invalid Exam Type',
-                400,
-                'Exam Type Error',
-                'The provided exam ID does not correspond to a formal exam. Please provide a valid exam ID of type "exam".',
-                '/exams'
-            );
-        }
 
-        $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
-            ->where('type', 'ca')
-            ->firstOrFail();
-        if (!$caExamType) {
-            throw new AppException(
-                'No CA Exam Type Found',
-                404,
-                'CA Exam Type Not Found',
-                'No CA exam type found for the semester associated with the provided exam. Please ensure that a CA exam type is set up for this semester.',
-                '/exam-types'
-            );
-        }
-
-        $additionalExam = Exams::where('exam_type_id', $caExamType->id)
-            ->where('specialty_id', $exam->specialty_id)
-            ->where('level_id', $exam->level_id)
-            ->where('semester_id', $exam->semester_id)
-            ->where("student_batch_id", $exam->student_batch_id)
-            ->first();
-
-        if (!$additionalExam) {
-            throw new AppException(
-                'No CA Exam Found',
-                404,
-                'CA Exam Not Found',
-                'No CA exam found matching the criteria of the provided exam. Please ensure that a corresponding CA exam has been created.',
-                '/exams'
-            );
-        }
-
-        return $additionalExam;
-    }
-    public function getCaExamEvaluationHelperData($currentSchool, $examId)
-    {
-        try {
-            $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
-            if (!$exam) {
-                throw new AppException(
-                    "The exam with the provided ID was not found.",
-                    404,
-                    "Exam Not Found",
-                    "Please verify that the exam ID is correct and that the exam exists in the system.",
-                    "/exams"
-                );
-            }
-            if ($exam->grades_category_id === null) {
-                throw new AppException(
-                    'Exam Grading Not Set',
-                    400,
-                    'Grading Not Set',
-                    'The grading category for this exam has not been set. Please set the grading category in the exam settings to proceed.',
-                    "/exams/{$exam->id}/edit"
-                );
-            }
-            $examGrades = Grades::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $exam->grades_category_id)
-                ->with(['lettergrade'])
-                ->get();
-            if ($examGrades->isEmpty()) {
-                throw new AppException(
-                    'Exam Grading Not Found',
-                    404,
-                    'Grading Not Found',
-                    'No grading records found for the grading category associated with this exam. Please ensure that grades have been set up for this category.',
-                    "/grades-categories"
-                );
-            }
-
-            if ($exam->timetable_published == false) {
-                throw new AppException(
-                    'Exam Timetable Not Created',
-                    400,
-                    'Timetable Not Created',
-                    'The exam timetable for this exam has not been created yet. Please publish the timetable to proceed with the evaluation.',
-                    "/exam-timetables"
-                );
-            }
-            $timetableSlots = Examtimetable::where("school_branch_id", $currentSchool->id)
-                ->where("specialty_id", $exam->specialty_id)
-                ->where("student_batch_id", $exam->student_batch_id)
-                ->where("level_id", $exam->level_id)
-                ->where("exam_id", $exam->id)
-                ->pluck('course_id')->toArray();
-
-
-            if (empty($timetableSlots)) {
-                throw new AppException(
-                    'No Courses Found in Exam Timetable',
-                    404,
-                    'No Courses Found',
-                    'No courses found in the exam timetable for the specified exam, specialty, student batch, and level. Please ensure that the exam timetable has been set up correctly.',
-                    "/exam-timetables"
-                );
-            }
-            $courses  = Courses::where("school_branch_id", $currentSchool->id)
-                ->whereIn('id', array_unique($timetableSlots))
-                ->get();
-
-            return [
-                'exam_grading' => $examGrades,
-                'courses' => $courses,
-                'max_gpa' => $currentSchool->max_gpa ?? 4.00
-            ];
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
-    public function getExamEvaluationHelperData($currentSchool, $examId, $studentId)
-    {
-        try {
-            $exam = Exams::where("school_branch_id", $currentSchool->id)->find($examId);
-            if (!$exam) {
-                throw new AppException(
-                    "The exam with the provided ID was not found.",
-                    404,
-                    "Exam Not Found",
-                    "Please verify that the exam ID is correct and that the exam exists in the system.",
-                    "/exams"
-                );
-            }
-            if ($exam->grades_category_id === null) {
-                throw new AppException(
-                    'Exam Grading Not Set',
-                    400,
-                    'Grading Not Set',
-                    'The grading category for this exam has not been set. Please set the grading category in the exam settings to proceed.',
-                    "/exams/{$exam->id}/edit"
-                );
-            }
-            $relatedCA = $this->findExamsBasedOnCriteria($examId);
-            $examGrades = Grades::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $exam->grades_category_id)
-                ->with(['lettergrade'])
-                ->get();
-
-            if ($examGrades->isEmpty()) {
-                throw new AppException(
-                    'Exam Grading Not Found',
-                    404,
-                    'Grading Not Found',
-                    'No grading records found for the grading category associated with this exam. Please ensure that grades have been set up for this category.',
-                    "/grades-categories"
-                );
-            }
-
-            $caScores = Marks::where("school_branch_id", $currentSchool->id)
-                ->where("student_id", $studentId)
-                ->where('exam_id', $relatedCA->id)
-                ->with(['course'])
-                ->get();
-
-            if ($caScores->isEmpty()) {
-                throw new AppException(
-                    'No CA marks found for this student in the related CA exam.',
-                    404,
-                    'No CA Marks Found',
-                    'There are no CA marks available for the selected student in relation to the CA exam associated with the specified exam. It might be that the student has not been evaluated yet or the marks have been deleted by mistake.',
-                    '/marks'
-                );
-            }
-
-            return [
-                'exam_grading' => $examGrades,
-                'ca_scores' => $caScores,
-                'max_gpa' => $currentSchool->max_gpa ?? 4.00
-            ];
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
 }

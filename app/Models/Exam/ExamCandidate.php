@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExamCandidate extends Model
 {
@@ -28,9 +29,12 @@ class ExamCandidate extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
+    public function examScores(): HasMany
+    {
+        return $this->hasMany(ExamScore::class, 'candidate_id');
+    }
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class, 'exam_id');
     }
-
 }

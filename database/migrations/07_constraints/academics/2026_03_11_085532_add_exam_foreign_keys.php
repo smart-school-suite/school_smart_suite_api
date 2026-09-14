@@ -36,21 +36,17 @@ return new class extends Migration
             $table->foreign('student_id')->references('id')->on('students');
         });
 
-        Schema::table('marks', function (Blueprint $table) {
-            $table->string('school_branch_id')->after('id');
+        Schema::table('exam_scores', function (Blueprint $table) {
+            $table->uuid('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('student_id');
-            $table->foreign('student_id')->references('id')->on('students');
-            $table->string('courses_id');
-            $table->foreign('courses_id')->references('id')->on('courses');
-            $table->string('exam_id');
+            $table->uuid('candidate_id')->index();
+            $table->foreign('candidate_id')->references('id')->on('exam_candidates');
+            $table->uuid('course_id')->index();
+            $table->foreign('course_id')->references('id')->on('courses');
+            $table->uuid('exam_id')->index();
             $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batches');
+            $table->uuid('grade_id')->index();
+            $table->foreign('grade_id')->references('id')->on('grade_scales');
         });
 
         Schema::table('student_results', function (Blueprint $table) {

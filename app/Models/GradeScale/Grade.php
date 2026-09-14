@@ -21,6 +21,6 @@ class Grade extends Model
 
     public function schoolGradeScale(): HasMany
     {
-        return $this->hasMany(SchoolGradeScale::class);
+        return $this->hasMany(SchoolGradeScale::class, 'letter_grade_id');
     }
 }

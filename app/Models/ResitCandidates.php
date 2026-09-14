@@ -12,21 +12,14 @@ class ResitCandidates extends Model
     use HasFactory, GeneratesUuid;
 
     protected $fillable = [
-        'id',
         'resit_exam_id',
         'student_id',
-        'school_branch_id',
-        'grades_submitted',
-        'student_accessed',
+        'school_branch_id'
     ];
 
     public $incrementing = false;
     public $table = 'resit_candidates';
     public $keyType = 'string';
-    protected $casts = [
-        'grades_submitted' => 'boolean',
-        'student_accessed' => 'boolean',
-    ];
     public function resitExam()
     {
         return $this->belongsTo(ResitExam::class, 'resit_exam_id');

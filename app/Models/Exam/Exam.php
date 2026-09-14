@@ -6,7 +6,6 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\Examtype;
 use App\Models\GradeScale\SchoolGradeScaleCategory;
-use App\Models\Marks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,7 +42,7 @@ class Exam extends Model
     }
     public function examScore(): HasMany
     {
-        return $this->hasMany(Marks::class, 'exam_id');
+        return $this->hasMany(ExamScore::class, 'exam_id');
     }
 
     public function schoolYear(): BelongsTo

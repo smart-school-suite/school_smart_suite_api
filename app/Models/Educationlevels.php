@@ -25,10 +25,6 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'levels';
 
-    public function resitExamRef(): HasMany
-    {
-        return $this->hasMany(ResitExamRef::class);
-    }
     public function specialtyHall(): HasMany
     {
         return $this->hasMany(SpecialtyHall::class);
@@ -94,10 +90,6 @@ class Educationlevels extends Model
     public function exam(): HasMany
     {
         return $this->hasMany(Exams::class);
-    }
-    public function studentresit(): HasMany
-    {
-        return $this->hasMany(Studentresit::class);
     }
 
     public function levelType(): BelongsTo

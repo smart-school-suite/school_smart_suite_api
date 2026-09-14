@@ -20,10 +20,10 @@ class UpdateExamScoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'scores_entries' => 'required|array',
-            'scores_entries.*.mark_id' => 'required|string|exists:marks,id',
-            'scores_entries.*.course_id' => 'required|string|exists:courses,id',
-            'scores_entries.*.score' => [
+            'scores' => 'required|array',
+            'scores.*.score_id' => 'required|string|exists:exam_scores,id',
+            'scores.*.course_id' => 'required|string|exists:courses,id',
+            'scores.*.score' => [
                 'sometimes',
                 'nullable',
                 'numeric',

@@ -20,18 +20,16 @@ class CreateExamScoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'scores_entries' => 'required|array',
-            'scores_entries.*.student_id' => 'required|string|exists:students,id',
-            'scores_entries.*.course_id' => 'required|string|exists:courses,id',
-            'scores_entries.*.accessment_id' => 'required|string|exists:exam_candidates,id',
-            'scores_entries.*.score' => [
+            "candidate_id" => "required|uuid|exists:exam_candidates,id",
+            "scores" => "required|array|min:1",
+            "scores.*.course_id" => "required|uuid|exists:courses,id",
+            "scores.*.score" => [
                 'required',
                 'numeric',
                 'regex:/^\d{1,3}(\.\d{1,2})?$/',
                 'min:0',
                 'max:999.99'
-            ],
-            'scores_entries.*.exam_id' => 'required|string|exists:exams,id'
+            ]
         ];
     }
 }

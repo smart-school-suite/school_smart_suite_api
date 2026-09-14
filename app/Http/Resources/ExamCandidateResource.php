@@ -16,7 +16,8 @@ class ExamCandidateResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'is_student_evaluated' => $this->exam?->examScore?->isNotEmpty() ?? false,
+            'is_student_evaluated' =>  $this->examScores?->isNotEmpty() ?? false,
+            'scores' => $this->examScores,
             'student_name' => $this->student?->name,
             'level_number' => $this->exam?->schoolYear?->specialty?->level?->level,
             'level_name' => $this->exam?->schoolYear?->specialty?->level?->name,

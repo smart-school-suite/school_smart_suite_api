@@ -4,6 +4,7 @@ namespace App\Models\AcademicYear;
 
 use App\Models\Course\SemesterJointCourse;
 use App\Models\Exam\Exam;
+use App\Models\ResitExam;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -26,6 +27,10 @@ class SchoolAcademicYear extends Model
     public $incrementing = false;
     public $keyType = 'string';
 
+    public function resitExam(): HasMany
+    {
+        return $this->hasMany(ResitExam::class, 'school_year_id');
+    }
     public function schoolSemester(): HasMany
     {
         return $this->hasMany(SchoolSemester::class, 'school_year_id');

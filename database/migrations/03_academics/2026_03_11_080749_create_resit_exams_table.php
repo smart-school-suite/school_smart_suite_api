@@ -12,13 +12,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->decimal('weighted_mark', 6, 2)->nullable();
-            $table->boolean('timetable_published')->default(false);
-            $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
-            $table->boolean('grading_added')->default(false);
-            $table->integer('expected_candidate_number')->default(0);
-            $table->integer('evaluated_candidate_number')->default(0);
-            $table->string('school_year')->nullable();
+            $table->decimal('max_score', 7, 2)->nullable();
             $table->timestamps();
         });
 
@@ -29,8 +23,6 @@ return new class extends Migration
 
         Schema::create('resit_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->boolean('grades_submitted')->default(false);
-            $table->boolean('student_accessed')->default(false);
             $table->timestamps();
         });
 

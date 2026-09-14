@@ -20,7 +20,7 @@ class ExamCandidateService
                     'exam.schoolYear.specialty.level',
                     'exam.examType.semesters',
                     'exam.schoolYear.systemAcademicYear',
-                    'exam.examScore'
+                    'examScores'
                 ])
                 ->get();
 
