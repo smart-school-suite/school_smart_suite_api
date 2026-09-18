@@ -118,14 +118,6 @@ class Student extends Model
     {
         return $this->belongsTo(CurrentElectionWinners::class);
     }
-    public function resitmarks(): HasMany
-    {
-        return $this->hasMany(ResitMarks::class, 'student_id');
-    }
-    public function accessedStudent(): HasMany
-    {
-        return $this->hasMany(AccessedStudent::class);
-    }
 
     public function studentResults(): HasMany
     {

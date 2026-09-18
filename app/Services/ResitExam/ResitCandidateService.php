@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Resit;
+namespace App\Services\ResitExam;
 
 use App\Models\ResitCandidates;
 use App\Exceptions\AppException;
@@ -8,10 +8,16 @@ use App\Events\Actions\AdminActionEvent;
 
 class ResitCandidateService
 {
-    public function getResitCandidates($currentSchool)
+    public function getResitCandidates(object $currentSchool)
     {
         $resitCandidates = ResitCandidates::where("school_branch_id", $currentSchool->id)
-            ->with(['resitExam.examtype', 'student.level', 'student.specialty'])
+            ->with([
+                'resitExam.examType',
+                'resitExam.schoolYear.specialty',
+                'resitExam.schoolYear.systemAcademicYear',
+                'student',
+                'resitScores'
+            ])
             ->get();
         if ($resitCandidates->isEmpty()) {
             throw new AppException(
@@ -25,7 +31,7 @@ class ResitCandidateService
         return $resitCandidates;
     }
 
-    public function deleteCandidates($currentSchool, $candidateId, $authAdmin)
+    public function deleteCandidates(object $currentSchool, string $candidateId, object $authAdmin)
     {
         $candidate = ResitCandidates::where("school_branch_id", $currentSchool->id)
             ->find($candidateId);

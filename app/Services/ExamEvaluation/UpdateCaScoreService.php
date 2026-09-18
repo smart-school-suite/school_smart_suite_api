@@ -2,247 +2,183 @@
 
 namespace App\Services\ExamEvaluation;
 
-use App\Models\Courses;
-use Exception;
-use App\Models\Marks;
-use Illuminate\Support\Facades\DB;
+use App\Exceptions\AppException;
+use App\Models\Exam\ExamCandidate;
+use App\Models\Exam\ExamScore;
 use App\Models\Grades;
-use App\Models\Exams;
-use App\Models\Student;
-use App\Models\StudentResults;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UpdateCaScoreService
 {
-    public function updateCaScore(array $updateData, $currentSchool, $authAdmin): array
+    public function updateCaScore(array $payload, object $currentSchool): array
     {
-        $results = [];
-        $exam = null;
-        $student = null;
+        $candidateId = $payload['candidate_id'] ?? null;
+        $submittedScores = collect($payload['scores'] ?? []);
 
-        DB::beginTransaction();
+        if ($submittedScores->isEmpty()) {
+            throw new AppException(
+                'No scores submitted.',
+                400,
+                'No Scores',
+                'Please provide at least one course score to submit.',
+                '/scores/ca'
+            );
+        }
+
         try {
-            foreach ($updateData as $data) {
-                $score = Marks::where("school_branch_id", $currentSchool->id)->findOrFail($data['mark_id']);
+            DB::beginTransaction();
 
-                if (!$exam) {
-                    $exam = Exams::findOrFail($score->exam_id);
-                }
-                if (!$student) {
-                    $student = Student::findOrFail($score->student_id);
-                }
+            $candidate = ExamCandidate::where('school_branch_id', $currentSchool->id)
+                ->with([
+                    'exam.examGradeScale.schoolGradeScale.grade',
+                    'exam.schoolYear.schoolSemester.semester',
+                    'exam.schoolYear.specialty',
+                    'examScores',
+                    'student',
+                ])
+                ->find($candidateId);
 
-                $course = Courses::findOrFail($data['course_id']);
-
-                $letterGrades = $this->determineLetterGrade($data['score'], $exam->id, $currentSchool->id);
-
-                $updatedScore = $this->updateMarkRecord($letterGrades, $score, $course);
-
-                $results[] = $updatedScore;
+            if (! $candidate) {
+                throw new AppException(
+                    'The selected candidate could not be found.',
+                    404,
+                    'Candidate Not Found',
+                    'Please verify that the selected candidate exists or has not been removed.',
+                    '/candidates'
+                );
             }
 
-            $this->getAllStudentScoresForExam(
-                $student,
-                $exam,
-                $currentSchool,
-                $results
-            );
+            if ($candidate->examScores->isEmpty()) {
+                throw new AppException(
+                    'The CA Exam Candidate Not Accessed.',
+                    400,
+                    'CA Exam Candidate Not Accessed',
+                    'The CA Exam Candidate has not been accessed or configured for score submissions.',
+                    '/accessed-students'
+                );
+            }
 
-            $totalScoreAndGpa = $this->recalculateGpa($results);
+            $exam = $candidate->exam;
+            $scoreIds = $submittedScores->pluck('score_id')->filter()->toArray();
 
-            $examStatus = $this->determineExamResultStatus($results);
+            $examScores = ExamScore::where('school_branch_id', $currentSchool->id)
+                ->where('exam_id', $exam->id)
+                ->whereIn('id', $scoreIds)
+                ->get()
+                ->keyBy('id');
 
-            $this->updateStudentResultsRecord(
-                $student,
-                $currentSchool,
-                $totalScoreAndGpa,
-                $exam,
-                $results,
-                $examStatus
-            );
+            $gradeScales = Grades::with('lettergrade')
+                ->where('school_branch_id', $currentSchool->id)
+                ->where('grades_category_id', $exam->grades_category_id)
+                ->orderBy('minimum_score', 'desc')
+                ->get();
+
+            if ($gradeScales->isEmpty()) {
+                throw new AppException(
+                    'Exam Grade Scale Not Configured',
+                    404,
+                    'Grade Scale Not Configured',
+                    'The grade scale has been set for this exam, but this grade scale has not been configured yet.',
+                    '/grades-categories'
+                );
+            }
+
+            $updatedCount = 0;
+
+            foreach ($submittedScores as $scoreItem) {
+                $scoreValue = (float) ($scoreItem['score'] ?? 0);
+                $scoreId = $scoreItem['score_id'] ?? null;
+
+                $this->validateCaMark($exam, $scoreValue);
+
+                $gradeId = $this->determineGrade($scoreValue, $gradeScales);
+
+                if ($gradeId === null) {
+                    throw new AppException(
+                        'No matching grade found.',
+                        400,
+                        'Grade Not Matched',
+                        'One or more entered scores fall outside the configured grading scale.',
+                        '/grades-categories'
+                    );
+                }
+
+                $targetScoreRecord = $examScores->get($scoreId);
+
+                if (! $targetScoreRecord) {
+                    throw new AppException(
+                        'Invalid score entry.',
+                        400,
+                        'Record Not Found',
+                        'One of the requested score records could not be updated.',
+                        '/scores/ca'
+                    );
+                }
+
+                $targetScoreRecord->update([
+                    'score' => $scoreValue,
+                    'grade_id' => $gradeId,
+                ]);
+
+                $updatedCount++;
+            }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.examEvaluation.updateScore"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "examEvaluation",
-                    "authAdmin" => $authAdmin,
-                    "data" => $results,
-                    "message" => "Student CA Results Updated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$student->id],
-                'feature'      => 'examResultUpdate',
-                'message'      => 'Exam Result Updated',
-                'data'         => $results,
-            ]);
-            return $results;
-        } catch (Exception $e) {
+
+            return [
+                'status' => 'success',
+                'message' => 'CA scores updated successfully.',
+                'records_updated' => $updatedCount,
+            ];
+
+        } catch (AppException|ModelNotFoundException $e) {
             DB::rollBack();
             throw $e;
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to update CA scores.', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'candidate_id' => $candidateId,
+                'school_branch_id' => $currentSchool->id ?? null,
+            ]);
+
+            throw new AppException(
+                'An unexpected error occurred while updating CA scores.',
+                500,
+                'Server Error',
+                'We encountered an issue saving the scores. Please try again or contact support.',
+                null
+            );
         }
     }
-    private function getAllStudentScoresForExam(Student $student, Exams $exam, $currentSchool, array &$results)
+
+    private function validateCaMark(object $exam, float $score): void
     {
-        $marks = Marks::with('course')
-            ->where('school_branch_id', $currentSchool->id)
-            ->where('student_id', $student->id)
-            ->where('student_batch_id', $student->student_batch_id)
-            ->where('exam_id', $exam->id)
-            ->where('specialty_id', $student->specialty_id)
-            ->where('level_id', $student->level_id)
-            ->get();
-        foreach ($marks as $mark) {
-            $courseId = $mark->course->id;
-            $courseAlreadyExists = false;
-
-            foreach ($results as $result) {
-                if ($result['course_id'] === $courseId) {
-                    $courseAlreadyExists = true;
-                    break;
-                }
-            }
-
-            if (!$courseAlreadyExists) {
-                $results[] = [
-                    'course_id' => $courseId,
-                    'course_name' => $mark->course->course_title,
-                    'course_code' => $mark->course->course_code,
-                    'score' => $mark->score,
-                    'grade' => $mark->grade,
-                    'grade_status' => $mark->grade_status,
-                    'gratification' => $mark->gratification,
-                    'grade_points' => $mark->grade_points,
-                    'resit_status' => $mark->resit_status,
-                    'course_credit' => $mark->course->credit,
-                ];
-            }
+        if ($score < 0 || $score > $exam->max_score) {
+            throw new AppException(
+                'Score exceeds maximum exam mark.',
+                400,
+                'Validation Error',
+                "The entered score of {$score} exceeds the maximum allowed mark of {$exam->max_score} for this exam.",
+                '/exam'
+            );
         }
     }
-    private function determineLetterGrade(float $score, string $examId, string $schoolId): array
+
+    private function determineGrade(float $score, Collection $gradeScales): ?string
     {
-        $exam = Exams::findOrFail($examId);
-        $grades = Grades::with('lettergrade')
-            ->where('school_branch_id', $schoolId)
-            ->where('grades_category_id', $exam->grades_category_id)
-            ->orderBy('minimum_score', 'desc')
-            ->get();
-
-        if ($grades->isEmpty()) {
-            throw new Exception("No grades found for school ID: {$schoolId} and exam ID: {$examId}");
-        }
-
-        foreach ($grades as $grade) {
-            if ($score >= $grade->minimum_score && $score <= $grade->maximum_score) {
-                return [
-                    'letterGrade' => $grade->lettergrade->letter_grade ?? 'N/A',
-                    'gradeStatus' => $grade->grade_status,
-                    'gradePoints' => $grade->grade_points,
-                    'resitStatus' => $grade->resit_status,
-                    'gratification' => $grade->determinant,
-                    'score' => $score,
-                ];
+        foreach ($gradeScales as $gradeScale) {
+            if ($score >= $gradeScale->minimum_score && $score <= $gradeScale->maximum_score) {
+                return (string) $gradeScale->id;
             }
         }
 
-        return [
-            'letterGrade' => 'F',
-            'gradeStatus' => 'fail',
-            'gratification' => 'poor',
-            'score' => $score,
-            'resitStatus' => 'high_resit_potential',
-            'gradePoints' => 0.0,
-        ];
-    }
-
-    private function updateMarkRecord(array $updateScoreData, object $score, object $course): array
-    {
-        $score->score = $updateScoreData['score'];
-        $score->grade_status = $updateScoreData['gradeStatus'];
-        $score->gratification = $updateScoreData['gratification'];
-        $score->grade = $updateScoreData['letterGrade'];
-        $score->grade_points = $updateScoreData['gradePoints'];
-        $score->resit_status = $updateScoreData['resitStatus'];
-        $score->save();
-
-        return [
-            'course_id' => $course->id,
-            'course_name' => $course->course_title,
-            'course_code' => $course->course_code,
-            'score' => $updateScoreData['score'],
-            'grade' => $updateScoreData['letterGrade'],
-            'grade_status' => $updateScoreData['gradeStatus'],
-            'gratification' => $updateScoreData['gratification'],
-            'grade_points' => $updateScoreData['gradePoints'],
-            'resit_status' => $updateScoreData['resitStatus'],
-            'course_credit' => $course->credit,
-        ];
-    }
-
-    private function recalculateGpa(array $results): array
-    {
-        $totalWeightedPoints = 0;
-        $totalCredits = 0;
-        $overallTotalScore = 0;
-
-        foreach ($results as $mark) {
-            $credits = $mark['course_credit'];
-            $gradePoints = $mark['grade_points'];
-            $overallTotalScore += $mark['score'];
-            $totalWeightedPoints += $gradePoints * $credits;
-            $totalCredits += $credits;
-        }
-
-        $gpa = $totalCredits > 0 ? round($totalWeightedPoints / $totalCredits, 2) : 0.00;
-
-        return [
-            'totalScore' => round($overallTotalScore, 2),
-            'gpa' => $gpa,
-        ];
-    }
-
-    private function updateStudentResultsRecord(Student $student, $currentSchool, array $totalScoreAndGpa, Exams $exam, array $results, array $examStatus): StudentResults
-    {
-        $studentResult = StudentResults::where("school_branch_id", $currentSchool->id)
-            ->where("student_id", $student->id)
-            ->where("exam_id", $exam->id)
-            ->where("specialty_id", $student->specialty_id)
-            ->where("level_id", $student->level_id)
-            ->where("student_batch_id", $student->student_batch_id)
-            ->firstOrFail();
-
-        $studentResult->gpa = $totalScoreAndGpa['gpa'];
-        $studentResult->total_score = $totalScoreAndGpa['totalScore'];
-        $studentResult->exam_status = $examStatus['passed'] ? 'passed' : 'failed';
-        $studentResult->score_details = json_encode($results);
-        $studentResult->save();
-
-        return $studentResult;
-    }
-
-    private function determineExamResultStatus(array $results): array
-    {
-        $failedCourses = array_filter($results, function ($result) {
-            return ($result['grade_status'] ?? '') === 'failed';
-        });
-
-        if (empty($failedCourses)) {
-            return [
-                'exam_status' => 'Passed',
-                'passed' => true,
-                'failed' => false,
-            ];
-        }
-
-        return [
-            'exam_status' => 'Failed',
-            'passed' => false,
-            'failed' => true,
-        ];
+        return null;
     }
 }

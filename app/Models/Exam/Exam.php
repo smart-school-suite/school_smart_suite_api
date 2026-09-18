@@ -6,6 +6,7 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\Examtype;
 use App\Models\GradeScale\SchoolGradeScaleCategory;
+use App\Models\Studentresit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,6 +37,10 @@ class Exam extends Model
     public $incrementing = false;
     public $table = 'exams';
 
+    public function resit(): HasMany
+    {
+        return $this->hasMany(Studentresit::class, "exam_id");
+    }
     public function examInvigilator(): HasMany
     {
         return $this->hasMany(ExamInvigilator::class, 'exam_id');

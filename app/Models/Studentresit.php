@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Exam\Exam;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,9 +27,6 @@ class Studentresit extends Model
     public $table = 'student_resits';
     public $incrementing = 'false';
 
-    public function semester(): BelongsTo {
-         return $this->belongsTo(Semester::class, 'semester_id');
-    }
     public function studentResitTransactions(): HasMany
     {
         return $this->hasMany(ResitFeeTransactions::class, 'resitfee_id');
@@ -43,7 +41,7 @@ class Studentresit extends Model
     }
     public function exam(): BelongsTo
     {
-        return $this->belongsTo(Exams::class, 'exam_id');
+        return $this->belongsTo(Exam::class, 'exam_id');
     }
 
 }

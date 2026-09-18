@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\GradeScale\SchoolGradeScaleCategory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,13 +18,15 @@ class ResitExam extends Model
         'end_date',
         'max_score',
         'school_year_id',
-        'grades_category_id'
+        'grades_category_id',
+        'school_branch_id',
+        'exam_type_id'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'max_score' => 'decimal:2',
+        'max_score' => 'float',
     ];
     public $incrementing = 'false';
     public $table = 'resit_exams';
@@ -57,8 +60,13 @@ class ResitExam extends Model
     {
         return $this->hasMany(ResitCandidates::class, 'resit_exam_id');
     }
-    public function gradesCategory(): BelongsTo
+     public function examGradeScale(): BelongsTo
     {
-        return $this->belongsTo(GradesCategory::class, 'grades_category_id');
+        return $this->belongsTo(SchoolGradeScaleCategory::class, 'grades_category_id');
+    }
+
+    public function examType(): BelongsTo
+    {
+        return $this->belongsTo(Examtype::class, "exam_type_id");
     }
 }

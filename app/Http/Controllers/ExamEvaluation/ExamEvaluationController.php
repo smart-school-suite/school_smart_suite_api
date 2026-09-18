@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\ExamEvaluation;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ExamScore\CreateExamScoreRequest;
-use App\Http\Requests\ExamScore\UpdateExamScoreRequest;
+use App\Http\Requests\ExamEvaluation\UpdateExamScoreRequest;
+use App\Http\Requests\ExamEvaluation\CreateExamScoreRequest;
 use App\Services\ApiResponseService;
 use App\Services\ExamEvaluation\AddExamScoreService;
 use App\Services\ExamEvaluation\UpdateExamScoreService;
@@ -39,8 +39,7 @@ class ExamEvaluationController extends Controller
     public function updateCaMark(UpdateExamScoreRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $results = $this->updateCaScoresService->updateCaScore($request->validated(), $currentSchool, $authAdmin);
+        $results = $this->updateCaScoresService->updateCaScore($request->validated(), $currentSchool);
         return ApiResponseService::success("MarkS Updated Sucessfully", $results, null, 201);
     }
     public function createExamMark(CreateExamScoreRequest $request)

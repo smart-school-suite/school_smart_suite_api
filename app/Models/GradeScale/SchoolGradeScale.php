@@ -3,6 +3,7 @@
 namespace App\Models\GradeScale;
 
 use App\Models\Exam\ExamScore;
+use App\Models\ResitMarks;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +35,10 @@ class SchoolGradeScale extends Model
     public $incrementing = 'false';
     public $table = 'grade_scales';
 
+    public function resitScore(): HasMany
+    {
+        return $this->hasMany(ResitMarks::class, "resit_exam_id");
+    }
     public function examScore(): HasMany
     {
         return $this->hasMany(ExamScore::class, 'grade_id');

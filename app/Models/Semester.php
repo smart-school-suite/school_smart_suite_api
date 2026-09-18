@@ -37,10 +37,6 @@ class Semester extends Model
     {
         return $this->hasMany(SemesterJointCourse::class, 'semester_id');
     }
-    public function studentResit(): HasMany
-    {
-        return $this->hasMany(Studentresit::class);
-    }
     public function exams(): HasMany
     {
         return $this->hasMany(Exams::class);

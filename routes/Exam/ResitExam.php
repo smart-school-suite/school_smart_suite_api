@@ -16,10 +16,10 @@ Route::put('/{resitExamId}', [ResitExamController::class, 'updateResitExam'])
 Route::delete('/{resitExamId}', [ResitExamController::class, 'deleteResitExam'])
     ->name('resit-exams.destroy');
 
-Route::post('/{resitExamId}/grading-configs/{gradesConfigId}', [ResitExamController::class, 'addResitExamGrading'])
-    ->name('resit-exams.grading-configs.store');
+Route::post('/{resitExamId}/grade-scale-category/{gradeScaleCategoryId}/add', [ResitExamController::class, 'addResitExamGradeScale'])
+    ->name('resit-exams.gradeScale.add');
 
-Route::post('/bulk-add-grading-configs', [ResitExamController::class, 'bulkAddExamGrading'])
+Route::post('/grade-scale/bulk-add', [ResitExamController::class, 'bulkAddExamGrading'])
     ->name('resit-exams.grading-configs.bulk-store');
 
 Route::put('/bulk-update', [ResitExamController::class, 'bulkUpdateResitExam'])

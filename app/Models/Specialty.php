@@ -99,10 +99,6 @@ class Specialty extends Model
     {
         return $this->hasMany(StudentFeeSchedule::class);
     }
-    public function resitmarks(): HasMany
-    {
-        return $this->hasMany(ResitMarks::class, 'specialty_id');
-    }
     public function studentResults(): HasMany
     {
         return $this->hasMany(StudentResults::class, 'specialty_id');

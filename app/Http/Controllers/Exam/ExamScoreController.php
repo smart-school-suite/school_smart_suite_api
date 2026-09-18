@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Exam;
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
 use App\Services\Exam\ExamScoreService;
-use Throwable;
 use Illuminate\Http\Request;
 
 class ExamScoreController extends Controller
@@ -16,77 +15,31 @@ class ExamScoreController extends Controller
         $this->examScoreService = $examScoreService;
     }
 
-    public function getExamMarksByCandidate(Request $request, $candidateId)
+    public function getExamScoreCandidateId(Request $request, string $candidateId)
     {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $examResults = $this->examScoreService->getExamMarksByExamCandidate($candidateId, $currentSchool);
-            return ApiResponseService::success("Exam Marks Fetched Successfully", $examResults, null, 200);
-        } catch (Throwable $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-    public function getCaMarksByExamCandidate(Request $request, $candidateId)
-    {
-        try {
-            $currentSchool = $request->attributes->get('currentSchool');
-            $examResults = $this->examScoreService->getCaMarksByExamCandidate($candidateId, $currentSchool);
-            return ApiResponseService::success("CA Marks Fetched Successfully", $examResults, null, 200);
-        } catch (Throwable $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
+        $currentSchool = $request->attributes->get('currentSchool');
+        $scores = $this->examScoreService->getExamScoresCandidateId($candidateId, $currentSchool);
+        return ApiResponseService::success("Exam Scores Fetched Successfully", $scores, null, 200);
     }
 
-    public function deleteMark(Request $request, $markId)
+    public function getCaExamScoreCandidateId(Request $request, string $candidateId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $deleteScore = $this->examScoreService->deleteMark($markId, $currentSchool);
-        return ApiResponseService::success('Student Mark Deleted Sucessfully', $deleteScore, null, 200);
-    }
-    public function getMarksByExamStudent(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $examId = $request->route('examId');
-        $studentId = $request->route('studentId');
-        $allStudentScores = $this->examScoreService->getStudentScores($studentId, $currentSchool, $examId);
-        return ApiResponseService::success('Scores Fetched Sucessfully', $allStudentScores, null, 200);
-    }
-    public function getAllMarks(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $studentDetails = $this->examScoreService->getAllStudentsScores($currentSchool);
-        return ApiResponseService::success("Student Scores Fetched Succesfully", $studentDetails, null, 200);
-    }
-    public function getMarkDetails(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $markId = $request->route("markId");
-        $markDetails = $this->examScoreService->getScoreDetails($currentSchool, $markId);
-        return ApiResponseService::success("Scores Detailed Fetched Successfully", $markDetails, null, 200);
+        $scores = $this->examScoreService->getCaExamScoresCandidateId($candidateId, $currentSchool);
+        return ApiResponseService::success("Ca Exam Scores Fetched Successfully", $scores, null, 200);
     }
 
-    public function prepareCaResultsByExam(Request $request)
+    public function deleteExamScores(Request $request, string $candidateId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $examId = $request->route("examId");
-        $studentId = $request->route("studentId");
-        $prepareCaResults = $this->examScoreService->prepareCaDataByExam($currentSchool, $studentId, $examId);
-        return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareCaResults, null, 200);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteScore = $this->examScoreService->deleteExamScoresCandidateId($candidateId, $currentSchool);
+        return ApiResponseService::success("Exam Scores Deleted Successfully", $deleteScore, null, 200);
     }
-    public function prepareCaData(Request $request)
+
+    public function deleteCaScores(Request $request, string $candidateId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $examId = $request->route("examId");
-        $studentId = $request->route("studentId");
-        $prepareCaResults = $this->examScoreService->prepareCaData($currentSchool, $studentId, $examId);
-        return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareCaResults, null, 200);
-    }
-    public function prepareExamData(Request $request)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $examId = $request->route("examId");
-        $studentId = $request->route("studentId");
-        $prepareExamResults = $this->examScoreService->prepareExamData($currentSchool, $studentId, $examId);
-        return ApiResponseService::success("Scores Detailed Fetched Successfully", $prepareExamResults, null, 200);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $deleteScore = $this->examScoreService->deleteCaExamScoresCandidateId($candidateId, $currentSchool);
+        return ApiResponseService::success("Ca Exam Scores Deleted Successfully", $deleteScore, null, 200);
     }
 }

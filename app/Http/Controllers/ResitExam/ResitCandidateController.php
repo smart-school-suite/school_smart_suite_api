@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ResitExamCandidateResource;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
-use App\Services\Resit\ResitCandidateService;
+use App\Services\ResitExam\ResitCandidateService;
 
 class ResitCandidateController extends Controller
 {
@@ -26,7 +26,7 @@ class ResitCandidateController extends Controller
             200
         );
     }
-    public function deleteResitCandidate(Request $request, $candidateId)
+    public function deleteResitCandidate(Request $request, string $candidateId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');

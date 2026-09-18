@@ -39,9 +39,11 @@ class ExamResource extends JsonResource
             'timetable_published' => $this->timetable_published ? 'created' : 'not created',
             'school_year' => $this->schoolYear->systemAcademicYear->name ?? null,
             'academic_year_start' => $this->schoolYear->start_date ?? null,
-            'academic_year_end' => $this->schoolYear->end_data ?? null,
+            'academic_year_end' => $this->schoolYear->end_date ?? null,
             'max_score' => $this->max_score,
-            'is_grade_scale_configured' => $this->grades_category_id ? true : false
-        ];
+            'is_grade_scale_configured' => $this->grades_category_id ? true : false,
+            "created_at" => $this->created_at ?? null,
+            "updated_at" => $this->updated_at ?? null
+         ];
     }
 }

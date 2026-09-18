@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('resit_exams', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->decimal('max_score', 7, 2)->nullable();
@@ -17,27 +17,23 @@ return new class extends Migration
         });
 
         Schema::create('resit_exam_references', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
 
         Schema::create('resit_candidates', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
 
         Schema::create('resit_marks', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->decimal('score', 5, 2);
-            $table->enum('grade_status', ['passed', 'failed'])->nullable();
-            $table->decimal('grade_points', 5, 2);
-            $table->string('gratification');
-            $table->string('grade');
+            $table->uuid('id')->primary();
+            $table->decimal('score', 6, 2);
             $table->timestamps();
         });
 
         Schema::create('resit_results', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->decimal('former_ca_gpa', 4, 2);
             $table->decimal('new_ca_gpa', 4, 2);
             $table->decimal('former_exam_gpa', 4, 2);
@@ -48,7 +44,7 @@ return new class extends Migration
         });
 
         Schema::create('resit_exam_timetable_slots', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->date('date');
             $table->time('start_time');
             $table->time('end_time');

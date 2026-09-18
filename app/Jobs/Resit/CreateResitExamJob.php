@@ -15,7 +15,8 @@ use App\Models\Studentresit;
 class CreateResitExamJob implements ShouldQueue
 {
     use Queueable;
-
+    public int $tries = 3;
+    public int $backoff = 10;
     protected string $examId;
     protected string $schoolBranchId;
 
@@ -29,7 +30,7 @@ class CreateResitExamJob implements ShouldQueue
     {
         $exam = Exam::where('school_branch_id', $this->schoolBranchId)
             ->with([
-                'schoolYear.schoolSemester.specialty',
+                'schoolYear.specialty',
                 'examType.semesters',
             ])
             ->find($this->examId);
@@ -47,9 +48,9 @@ class CreateResitExamJob implements ShouldQueue
         }
 
         $examCourseIds = CourseSpecialty::where(
-                'school_branch_id',
-                $this->schoolBranchId
-            )
+            'school_branch_id',
+            $this->schoolBranchId
+        )
             ->where(
                 'specialty_id',
                 $exam->schoolYear->specialty->id
@@ -65,9 +66,9 @@ class CreateResitExamJob implements ShouldQueue
             ->values();
 
         $studentResits = Studentresit::where(
-                'school_branch_id',
-                $this->schoolBranchId
-            )
+            'school_branch_id',
+            $this->schoolBranchId
+        )
             ->whereIn('course_id', $examCourseIds)
             ->whereNotNull('exam_id')
             ->get();

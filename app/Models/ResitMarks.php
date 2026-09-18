@@ -2,29 +2,23 @@
 
 namespace App\Models;
 
-use App\Traits\GeneratesUuid;
+use App\Models\GradeScale\SchoolGradeScale;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ResitMarks extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
-        'student_id',
-        'courses_id',
-        'student_batch_id',
-        'resit_exam_id',
-        'level_id',
-        'score',
-        'specialty_id',
         'school_branch_id',
-        'grade',
-        'grade_status',
-        'grade_points',
-        'gratification',
+        'candidate_id',
+        'course_id',
+        'resit_exam_id',
+        'grade_id',
+        'score'
     ];
 
     protected $cast = [
@@ -34,24 +28,27 @@ class ResitMarks extends Model
     public $incrementing = 'false';
     public $table = 'resit_marks';
 
-    public function resitExam()
+    public function resitExam(): BelongsTo
     {
         return $this->belongsTo(ResitExam::class, 'resit_exam_id');
     }
-    public function course(): BelongsTo {
+    public function course(): BelongsTo
+    {
         return $this->belongsTo(Courses::class, 'courses_id');
     }
 
-    public function student(): BelongsTo {
+    public function student(): BelongsTo
+    {
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-
-    public function level(): BelongsTo {
-        return $this->belongsTo(Educationlevels::class, 'level_id');
+    public function candidate(): BelongsTo
+    {
+        return $this->belongsTo(ResitCandidates::class,  'candidate_id');
     }
 
-    public function specialty(): BelongsTo {
-        return $this->belongsTo(Specialty::class, 'specialty_id');
+    public function grade(): BelongsTo
+    {
+        return $this->belongsTo(SchoolGradeScale::class, 'grade_id');
     }
 }

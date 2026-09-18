@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ResitCandidates extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'resit_exam_id',
@@ -20,14 +20,16 @@ class ResitCandidates extends Model
     public $incrementing = false;
     public $table = 'resit_candidates';
     public $keyType = 'string';
+    public function resitScores(): HasMany
+    {
+        return $this->hasMany(ResitMarks::class, "candidate_id");
+    }
     public function resitExam()
     {
         return $this->belongsTo(ResitExam::class, 'resit_exam_id');
     }
-
     public function student()
     {
         return $this->belongsTo(Student::class, 'student_id');
     }
-
 }

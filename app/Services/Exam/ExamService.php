@@ -658,7 +658,7 @@ class ExamService
 
         return $result;
     }
-    public function getUpcomingExams(object $currentSchool, $student)
+    public function getUpcomingExams(object $currentSchool, object $student)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->find($student->id);

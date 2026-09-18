@@ -15,15 +15,29 @@ class ExamEvaluationHelperController extends Controller
         $this->examEvalutionHelperService = $examEvalutionHelperService;
     }
 
-    public function getCaExamEvaluationHelperData(Request $request, string $candidateId) {
-         $currentSchool = $request->attributes->get('currentSchool');
-         $helperData = $this->examEvalutionHelperService->getCaExamEvaluationHelperData($currentSchool, $candidateId);
-         return ApiResponseService::success("Ca Exam Evaluation Helper Data Fetched Successfully", $helperData, null, 200);
+    public function getExamUpdateHelperData(Request $request, string $candidateId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $helperData = $this->examEvalutionHelperService->getExamUpdateHelperData($currentSchool, $candidateId);
+        return ApiResponseService::success("Exam Helper Data Fetched Successfully", $helperData, null, 200);
+    }
+    public function getCaExamUpdateHelperData(Request $request, string $candidateId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $helperData = $this->examEvalutionHelperService->getCaExamUpdateHelperData($currentSchool, $candidateId);
+        return ApiResponseService::success("Exam Update Helper Data Fetched Successfully", $helperData, null, 200);
+    }
+    public function getCaExamEvaluationHelperData(Request $request, string $candidateId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $helperData = $this->examEvalutionHelperService->getCaExamEvaluationHelperData($currentSchool, $candidateId);
+        return ApiResponseService::success("Ca Exam Evaluation Helper Data Fetched Successfully", $helperData, null, 200);
     }
 
-    public function getExamEvaluationHelperData(Request $request, string $candidateId){
-         $currentSchool = $request->attributes->get('currentSchool');
-         $helperData = $this->examEvalutionHelperService->getExamEvaluationHelperData($currentSchool, $candidateId);
-         return ApiResponseService::success("Exam Evaluation Helper Data Fetched Successfully", $helperData, null, 200);
+    public function getExamEvaluationHelperData(Request $request, string $candidateId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $helperData = $this->examEvalutionHelperService->getExamEvaluationHelperData($currentSchool, $candidateId);
+        return ApiResponseService::success("Exam Evaluation Helper Data Fetched Successfully", $helperData, null, 200);
     }
 }

@@ -17,7 +17,6 @@ class ExamCandidateResource extends JsonResource
         return [
             'id' => $this->id,
             'is_student_evaluated' =>  $this->examScores?->isNotEmpty() ?? false,
-            'scores' => $this->examScores,
             'student_name' => $this->student?->name,
             'level_number' => $this->exam?->schoolYear?->specialty?->level?->level,
             'level_name' => $this->exam?->schoolYear?->specialty?->level?->name,
@@ -26,6 +25,8 @@ class ExamCandidateResource extends JsonResource
             'exam_name' => $this->exam?->examType?->exam_name,
             'exam_type' => $this->exam?->examType?->type,
             'academic_year' => $this->exam?->schoolYear?->systemAcademicYear?->name,
+            "created_at" => $this->created_at ?? null,
+            "updated_at" => $this->updated_at ?? null
         ];
     }
 }
