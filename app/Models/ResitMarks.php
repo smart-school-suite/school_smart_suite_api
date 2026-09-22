@@ -15,7 +15,7 @@ class ResitMarks extends Model
     protected $fillable = [
         'school_branch_id',
         'candidate_id',
-        'course_id',
+        'resit_id',
         'resit_exam_id',
         'grade_id',
         'score'
@@ -32,14 +32,9 @@ class ResitMarks extends Model
     {
         return $this->belongsTo(ResitExam::class, 'resit_exam_id');
     }
-    public function course(): BelongsTo
+    public function resit(): BelongsTo
     {
-        return $this->belongsTo(Courses::class, 'courses_id');
-    }
-
-    public function student(): BelongsTo
-    {
-        return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(Studentresit::class, "resit_id");
     }
 
     public function candidate(): BelongsTo

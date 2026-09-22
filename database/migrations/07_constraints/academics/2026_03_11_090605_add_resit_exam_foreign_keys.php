@@ -45,30 +45,14 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->uuid('candidate_id')->index();
             $table->foreign('candidate_id')->references('id')->on('resit_candidates');
-            $table->uuid('course_id')->index();
-            $table->foreign('course_id')->references('id')->on('courses');
+            $table->uuid('resit_id')->index();
+            $table->foreign('resit_id')->references('id')->on('student_resits');
             $table->uuid('resit_exam_id')->index();
             $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
             $table->uuid('grade_id')->index();
             $table->foreign('grade_id')->references('id')->on('grade_scales');
         });
 
-        Schema::table('resit_results', function (Blueprint $table) {
-            $table->uuid('student_id');
-            $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batches');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels');
-            $table->uuid('resit_exam_id');
-            $table->foreign('resit_exam_id')->references('id')->on('resit_exams');
-            $table->string('failed_exam_id');
-            $table->foreign('failed_exam_id')->references('id')->on('exams');
-            $table->uuid('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-        });
 
         Schema::table('resit_exam_timetable_slots', function (Blueprint $table) {
             $table->uuid('school_branch_id')->index();

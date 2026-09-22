@@ -14,6 +14,7 @@ return new class extends Migration
             $table->decimal('fee', 12, 2)->default(3000.00);
             $table->unsignedInteger('attempts')->default(0);
             $table->unsignedInteger('iscarry_over')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
 

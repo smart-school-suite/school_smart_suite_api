@@ -18,7 +18,7 @@ use App\Events\Actions\AdminActionEvent;
 
 class ResitService
 {
-    public function updateStudentResit(array $data, $currentSchool, $studentResitId, $authAdmin)
+    public function updateStudentResit(array $data, object $currentSchool, string $studentResitId, object $authAdmin)
     {
         $studentResitExists = Studentresit::where("school_branch_id", $currentSchool->id)->find($studentResitId);
         if (!$studentResitExists) {
@@ -39,7 +39,7 @@ class ResitService
         );
         return $studentResitExists;
     }
-    public function deleteStudentResit($studentResitId, $currentSchool, $authAdmin)
+    public function deleteStudentResit(string $studentResitId, object $currentSchool, object $authAdmin)
     {
         $studentResitExists = Studentresit::where("school_branch_id", $currentSchool->id)->find($studentResitId);
         if (!$studentResitExists) {
@@ -63,6 +63,7 @@ class ResitService
     {
         try {
             $resitableCourses = Studentresit::where('school_branch_id', $currentSchool->id)
+                ->whereNull('deleted_at')
                 ->with([
                     'exam.schoolYear.specialty.level',
                     'courses',

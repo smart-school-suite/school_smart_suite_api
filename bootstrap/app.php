@@ -98,6 +98,15 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-score')
                 ->group(base_path('routes/Exam/ExamScore.php'));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-evaluation')
+            ->group(base_path('routes/Resit/ResitEvaluation.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-evaluation-helper')
+            ->group(base_path('routes/Resit/ResitEvaluationHelper.php'));
+
+           Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-score')
+            ->group(base_path('routes/Resit/ResitScore.php'));
+
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/teacher-avialability')
                 ->group(base_path('routes/Teacher/TeacherAvialability.php'));
 

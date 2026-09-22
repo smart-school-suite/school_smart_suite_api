@@ -73,10 +73,6 @@ class Courses extends Model
         return $this->hasMany(TeacherCoursePreference::class, 'course_id');
     }
 
-    public function resitmarks(): HasMany
-    {
-        return $this->hasMany(ResitMarks::class, 'course_id');
-    }
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);

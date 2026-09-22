@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Studentresit extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'school_branch_id',
@@ -23,10 +25,18 @@ class Studentresit extends Model
         'iscarry_over'
     ];
 
+    protected $casts = [
+        'fee' => "float",
+        'deleted_at' => 'datetime',
+    ];
     public $keyType = 'string';
     public $table = 'student_resits';
     public $incrementing = 'false';
 
+    public function resitMark(): HasMany
+    {
+        return $this->hasMany(ResitMarks::class, "resit_id");
+    }
     public function studentResitTransactions(): HasMany
     {
         return $this->hasMany(ResitFeeTransactions::class, 'resitfee_id');
@@ -43,5 +53,4 @@ class Studentresit extends Model
     {
         return $this->belongsTo(Exam::class, 'exam_id');
     }
-
 }
