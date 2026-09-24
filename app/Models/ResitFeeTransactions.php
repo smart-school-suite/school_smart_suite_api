@@ -19,8 +19,8 @@ class ResitFeeTransactions extends Model
         'school_branch_id',
     ];
 
-    protected $cast = [
-         'amount' => 'decimal:2'
+    protected $casts = [
+         'amount' => 'float'
     ];
     public $keyType = 'string';
     public $incrementing = 'false';

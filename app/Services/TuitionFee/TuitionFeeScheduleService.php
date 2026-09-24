@@ -13,9 +13,10 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+
 class TuitionFeeScheduleService
 {
-    public function autoCreateFeePaymentSchedule($currentSchool, $data)
+    public function autoCreateFeePaymentSchedule(object $currentSchool, array $data)
     {
         try {
             $feeSchedule = FeeSchedule::where("school_branch_id", $currentSchool->id)
@@ -122,11 +123,16 @@ class TuitionFeeScheduleService
         return round($decimalValue, 2);
     }
 
-    public function getFeeSchedule($currentSchool)
+    public function getFeeSchedule(object $currentSchool)
     {
         try {
             $feeSchedule = FeeSchedule::where("school_branch_id", $currentSchool->id)
-                ->with(['specialty.level', 'schoolSemester.semester'])
+                ->with([
+                    'schoolYear.systemAcademicYear',
+                    'feeScheduleSlot',
+                    'schoolYear.specialty.department',
+                    'schoolYear.specialty.level'
+                ])
                 ->get();
 
             if ($feeSchedule->isEmpty()) {
@@ -168,7 +174,7 @@ class TuitionFeeScheduleService
                 "message" => "Tuition Fee Schedule Deleted",
             ]
         );
-                StudentActionEvent::dispatch([
+        StudentActionEvent::dispatch([
             'schoolBranch' => $currentSchool->id,
             'specialtyIds'   => [$feeSchedule->specialty_id],
             'feature'      => 'tuitionFeeScheduleDelete',

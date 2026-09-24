@@ -18,7 +18,7 @@ use App\Events\Actions\StudentActionEvent;
 
 class AnnouncementService
 {
-    public function getAnnouncementEngagementOverview($currentSchool, $announcementId)
+    public function getAnnouncementEngagementOverview(object $currentSchool, string $announcementId)
     {
         $engagmentOverview = AnnouncementEngagementStat::where("school_branch_id", $currentSchool->id)
             ->where("announcement_id", $announcementId)
@@ -37,7 +37,7 @@ class AnnouncementService
         return $engagmentOverview;
     }
 
-    public function getAnnouncementReadUnreadList($currentSchool, $announcementId)
+    public function getAnnouncementReadUnreadList(object $currentSchool, string $announcementId)
     {
         $studentAnnouncement = StudentAnnouncement::where("school_branch_id", $currentSchool->id)
             ->where("announcement_id", $announcementId)
@@ -69,7 +69,7 @@ class AnnouncementService
         ];
     }
 
-    public function updateAnnouncementContent($announcementData, $currentSchool, $announcementId, $authAdmin)
+    public function updateAnnouncementContent(array $announcementData, object $currentSchool, string $announcementId, object $authAdmin)
     {
         try {
             $announcement = Announcement::where("school_branch_id", $currentSchool->id)
@@ -119,7 +119,7 @@ class AnnouncementService
         }
     }
 
-    public function deleteAnnouncement($announcementId, $currentSchool, $authAdmin)
+    public function deleteAnnouncement(string $announcementId, object $currentSchool, object $authAdmin)
     {
         try {
             $annoucement = Announcement::where("school_branch_id", $currentSchool->id)
@@ -167,50 +167,9 @@ class AnnouncementService
         }
     }
 
-    public function getAnnoucementsByState(object $currentSchool, string $status)
-    {
-        $validStatuses = ["active", "scheduled", "draft", "expired"];
-        $status = strtolower($status);
 
-        if (!in_array($status, $validStatuses)) {
-            throw new AppException(
-                "Invalid announcement status provided",
-                400,
-                "Invalid Status",
-                "The provided status '$status' is not a valid announcement state. Valid states are: " . implode(', ', $validStatuses) . ".",
-                "/announcements"
-            );
-        }
 
-        try {
-            $announcements = Announcement::where("school_branch_id", $currentSchool->id)
-                ->where("status", $status)
-                ->with(['announcementCategory', 'announcementLabel'])
-                ->get();
-
-            if ($announcements->isEmpty()) {
-                throw new AppException(
-                    "No $status announcements found",
-                    404,
-                    ucwords($status) . " Announcements Missing",
-                    "There are no $status announcements available for this school branch.",
-                    "/announcements"
-                );
-            }
-
-            return $announcements;
-        } catch (Throwable $e) {
-            throw new AppException(
-                "Failed to retrieve announcements",
-                500,
-                "Retrieval Error",
-                "An unexpected error occurred while attempting to fetch $status announcements.",
-                "/announcements"
-            );
-        }
-    }
-
-    public function getAnnouncementDetails($currentSchool, $announcementId)
+    public function getAnnouncementDetails(object $currentSchool, string $announcementId)
     {
         $announcement = Announcement::where("school_branch_id", $currentSchool->id)
             ->with(['announcementLabel', 'announcementCategory'])
@@ -251,7 +210,7 @@ class AnnouncementService
         return $tags;
     }
 
-    public function getAllStudentAnnouncements($currentSchool, $student)
+    public function getAllStudentAnnouncements(object $currentSchool, object $student)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->find($student->id);
@@ -270,7 +229,7 @@ class AnnouncementService
         return $announcements->sortBy('announcement.created_at')->values();
     }
 
-    public function getStudentAnnouncementLabelId($currentSchool, $student, $labelId)
+    public function getStudentAnnouncementLabelId(object $currentSchool, object $student, string $labelId)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->find($student->id);
@@ -293,5 +252,53 @@ class AnnouncementService
             ->get();
 
         return $announcements->sortBy('announcement.created_at')->values();
+    }
+
+
+    public function getAnnoucementsByState(object $currentSchool, string $status)
+    {
+        $validStatuses = ["active", "scheduled", "draft", "expired", "all"];
+        $status = strtolower($status);
+
+        if (!in_array($status, $validStatuses)) {
+            throw new AppException(
+                "Invalid announcement status provided",
+                400,
+                "Invalid Status",
+                "The provided status '$status' is not a valid announcement state. Valid states are: " . implode(', ', $validStatuses) . ".",
+                "/announcements"
+            );
+        }
+
+        try {
+            $announcements = Announcement::where("school_branch_id", $currentSchool->id)
+                ->when($status !== 'all', function ($query) use ($status) {
+                    return $query->where("status", $status);
+                })
+                ->with(['announcementCategory', 'announcementLabel'])
+                ->get();
+
+            if ($announcements->isEmpty()) {
+                throw new AppException(
+                    "No $status announcements found",
+                    404,
+                    ucwords($status) . " Announcements Missing",
+                    "There are no $status announcements available for this school branch.",
+                    "/announcements"
+                );
+            }
+
+            return $announcements;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new AppException(
+                "Failed to retrieve announcements",
+                500,
+                "Retrieval Error",
+                "An unexpected error occurred while attempting to fetch $status announcements.",
+                "/announcements"
+            );
+        }
     }
 }

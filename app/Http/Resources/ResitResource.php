@@ -22,7 +22,7 @@ class ResitResource extends JsonResource
             'specialty_name' => $this->exam->schoolYear->specialty->specialty_name ?? null,
             'level_name' => $this->exam->schoolYear->specialty->level->name ?? null,
             'level_number' => $this->exam->schoolYear->specialty->level->level ?? null,
-            'payment_status' => $this->paid_status === 'Paid' ? 'paid' : 'unpaid',
+            'payment_status' => $this->payment_status,
             'student_name' => $this->student->name ?? null,
             "school_year" => $this->exam->schoolYear->systemAcademicYear->name ?? null,
             "exam_name" => $this->exam->examType->exam_name ?? null,

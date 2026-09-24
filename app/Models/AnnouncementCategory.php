@@ -15,6 +15,7 @@ class AnnouncementCategory extends Model
     protected $fillable = [
         'name',
         'description',
+        'status',
         'school_branch_id'
     ];
 

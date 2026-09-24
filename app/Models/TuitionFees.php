@@ -2,27 +2,28 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TuitionFees extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'id',
         'student_id',
         'school_branch_id',
         'specialty_id',
-        'level_id',
         'amount_paid',
-        'amount_left',
-        'tution_fee_total',
-        'status'
+        'tution_fee_total'
     ];
 
+    protected $casts = [
+        'amount_paid' => "float",
+        'tuition_fee_total' => "float"
+    ];
     public $incrementing = 'false';
     public $keyType = 'string';
     public $table = 'tuition_fees';

@@ -90,12 +90,11 @@ class StudentService
         $studentDetails = Student::where("school_branch_id", $currentSchool->id)
             ->with([
                 'guardian',
-                'specialty',
-                'level',
+                'specialty.level',
                 'gender',
                 'studentSource',
                 'studentBatch',
-                'studentParentRelationship'
+                'relationship'
             ])
             ->find($studentId);
         return $studentDetails;
@@ -561,10 +560,10 @@ class StudentService
             throw $e;
         }
     }
-    public function getStudentProfileDetails($currentSchool, $studentId)
+    public function getStudentProfileDetails(object $currentSchool, string $studentId)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
-            ->with(['department', 'specialty', 'guardian', 'level', 'schoolbranches'])
+            ->with(['department', 'specialty.level', 'guardian', 'level'])
             ->find($studentId);
         return $student;
     }

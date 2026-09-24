@@ -5,6 +5,7 @@ namespace App\Services\ResitExam;
 use App\Models\ResitCandidates;
 use App\Exceptions\AppException;
 use App\Models\ResitMarks;
+use Illuminate\Support\Facades\DB;
 
 class ResitScoreService
 {
@@ -96,37 +97,54 @@ class ResitScoreService
     }
     public function deleteResitScoresCandidateId(string $candidateId, object $currentSchool)
     {
-        $candidate = ResitCandidates::where("school_branch_id", $currentSchool->id)
-            ->with('resitScores')
-            ->find($candidateId);
+        return DB::transaction(function () use ($candidateId, $currentSchool) {
+            $candidate = ResitCandidates::where("school_branch_id", $currentSchool->id)
+                ->with(['resitScores.resit' => fn($query) => $query->withTrashed()])
+                ->find($candidateId);
 
-        if (!$candidate) {
-            throw new AppException(
-                "Candidate not found.",
-                404,
-                "Candidate Not Found",
-                "The requested exam candidate record could not be found for this school branch.",
-                "/candidates"
-            );
-        }
+            if (!$candidate) {
+                throw new AppException(
+                    "Candidate not found.",
+                    404,
+                    "Candidate Not Found",
+                    "The requested exam candidate record could not be found for this school branch.",
+                    "/candidates"
+                );
+            }
 
-        if ($candidate->resitScores->isEmpty()) {
-            throw new AppException(
-                "No marks found for this candidate.",
-                404,
-                "No Marks Found",
-                "There are no marks available to delete for the selected candidate.",
-                "/candidates"
-            );
-        }
+            if ($candidate->resitScores->isEmpty()) {
+                throw new AppException(
+                    "No marks found for this candidate.",
+                    404,
+                    "No Marks Found",
+                    "There are no marks available to delete for the selected candidate.",
+                    "/candidates"
+                );
+            }
 
-        $deletedCount = ResitMarks::where('candidate_id', $candidateId)
-            ->where('school_branch_id', $currentSchool->id)
-            ->delete();
+            foreach ($candidate->resitScores as $resitMark) {
+                $resit = $resitMark->resit;
 
-        return [
-            "message" => "Successfully deleted all exam scores for the candidate.",
-            "deleted_count" => $deletedCount
-        ];
+                if ($resit) {
+                    if ($resit->trashed()) {
+                        $resit->restore();
+                    }
+
+                    $resit->update([
+                        'payment_status' => 'unpaid',
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            $deletedCount = ResitMarks::where('candidate_id', $candidateId)
+                ->where('school_branch_id', $currentSchool->id)
+                ->delete();
+
+            return [
+                "message" => "Successfully deleted all exam scores for the candidate.",
+                "deleted_count" => $deletedCount
+            ];
+        });
     }
 }

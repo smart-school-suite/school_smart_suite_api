@@ -5,7 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Examtype;
 use App\Models\Exam\Exam;
+use App\Models\TuitionFees;
+use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Jobs\Resit\CreateResitExamJob;
+use App\Models\FeeSchedule;
 
 class test extends Seeder
 {
@@ -20,12 +23,19 @@ class test extends Seeder
 
     public function run(): void
     {
-        $examId = "a2b2a30e-340f-4347-b044-0c5d956b14cc";
-        $schoolId = "50207b5e-65fb-46ca-b507-963931071777";
-        $isEvaluated = $this->isExamFullyEvaluated($examId);
-        CreateResitExamJob::dispatch($examId, $schoolId);
-        $statusText = $isEvaluated ? 'TRUE' : 'FALSE';
-        $this->command->info("Is Exam Fully Evaluated: {$statusText}");
+        $academicYears = SchoolAcademicYear::all();
+        foreach($academicYears as $academicYear){
+             FeeSchedule::create([
+                 "school_branch_id" => $academicYear->school_branch_id,
+                 "school_year_id" => $academicYear->id
+             ]);
+        }
+        // $examId = "a2b2a30e-340f-4347-b044-0c5d956b14cc";
+        // $schoolId = "50207b5e-65fb-46ca-b507-963931071777";
+        // $isEvaluated = $this->isExamFullyEvaluated($examId);
+        // CreateResitExamJob::dispatch($examId, $schoolId);
+        // $statusText = $isEvaluated ? 'TRUE' : 'FALSE';
+        // $this->command->info("Is Exam Fully Evaluated: {$statusText}");
         // $exams = [
         //     [
         //         'exam_name' => 'First Semester CA (Continuous Assessment)',

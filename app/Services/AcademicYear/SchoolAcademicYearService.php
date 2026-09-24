@@ -5,7 +5,9 @@ namespace App\Services\AcademicYear;
 use App\Exceptions\AppException;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\AcademicYear\SystemAcademicYear;
+use App\Models\FeeSchedule;
 use Carbon\Carbon;
+
 class SchoolAcademicYearService
 {
     public function createSchoolAcademicYear(array $data, object $currentSchool)
@@ -31,6 +33,11 @@ class SchoolAcademicYearService
             'system_academic_year_id' => $data['system_academic_year_id'],
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
+        ]);
+
+        FeeSchedule::create([
+            'school_branch_id' => $currentSchool->id,
+            'school_year_id' => $academicYear->id
         ]);
 
         return $academicYear;
@@ -190,10 +197,10 @@ class SchoolAcademicYearService
             $end   = Carbon::parse($year->end_date)->endOfDay();
 
             $status = match (true) {
-            $today < $start  => 'upcoming',
-            $today <= $end   => 'ongoing',
-            default          => 'expired'
-        };
+                $today < $start  => 'upcoming',
+                $today <= $end   => 'ongoing',
+                default          => 'expired'
+            };
 
             return [
                 "id" => $year->id,

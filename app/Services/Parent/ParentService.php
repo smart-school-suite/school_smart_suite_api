@@ -10,15 +10,15 @@ use App\Events\Actions\AdminActionEvent;
 
 class ParentService
 {
-    public function createParent($parentData, $currentSchool, $authAdmin)
+    public function createParent(array $payload,  object $currentSchool, object $authAdmin)
     {
         $parent = Parents::create([
             'school_branch_id' => $currentSchool->id,
-            'name' => $parentData['name'],
-            'address' => $parentData['address'],
-            "phone" => $parentData['phone'],
-            "preferred_language" => $parentData['preferred_language'],
-            "preferred_contact_method" => $parentData["preferred_contact_method"]
+            'name' => $payload['name'],
+            'address' => $payload['address'],
+            "phone" => $payload['phone'],
+            "preferred_language" => $payload['preferred_language'],
+            "preferred_contact_method" => $payload["preferred_contact_method"]
         ]);
         AdminActionEvent::dispatch(
             [
@@ -40,7 +40,7 @@ class ParentService
         return $parents;
     }
 
-    public function deleteParent($parentId, $currentSchool, $authAdmin)
+    public function deleteParent(string $parentId, object $currentSchool, object $authAdmin)
     {
         $parentExist = Parents::where("school_branch_id", $currentSchool->id)->find($parentId);
         if (!$parentExist) {
@@ -62,7 +62,7 @@ class ParentService
         return $parentExist;
     }
 
-    public function bulkDeleteParent($parentIds, $currentSchool, $authAdmin)
+    public function bulkDeleteParent(array $parentIds, object  $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
@@ -94,13 +94,13 @@ class ParentService
         }
     }
 
-    public function updateParent(array $data, $parentId, $currentSchool, $authAdmin)
+    public function updateParent(array $payload, string $parentId, object $currentSchool, object $authAdmin)
     {
         $parentExist = Parents::where("school_branch_id", $currentSchool->id)->find($parentId);
         if (!$parentExist) {
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
-        $filterData = array_filter($data);
+        $filterData = array_filter($payload);
         $parentExist->update($filterData);
         AdminActionEvent::dispatch(
             [
@@ -117,12 +117,12 @@ class ParentService
         return $parentExist;
     }
 
-    public function bulkUpdateParent(array $updateDataArray, $currentSchool, $authAdmin)
+    public function bulkUpdateParent(array $payload, object $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
             DB::beginTransaction();
-            foreach ($updateDataArray as $updateData) {
+            foreach ($payload as $updateData) {
                 $parent = Parents::findOrFail($updateData['parent_id']);
                 $filterData = array_filter($updateData);
                 $parent->update($filterData);
@@ -148,11 +148,11 @@ class ParentService
         }
     }
 
-    public function getParentDetails($parentId, $currentSchool)
+    public function getParentDetails(string $parentId, object $currentSchool)
     {
         $parentDetails = Parents::where("school_branch_id", $currentSchool->id)
             ->where("id", $parentId)
-            ->with(['student.specialty', 'student.level'])
+            ->with(['student.specialty.level'])
             ->get();
         if (!$parentDetails) {
             return ApiResponseService::error("Parent not found", null, 404);

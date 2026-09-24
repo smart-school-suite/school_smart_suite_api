@@ -10,7 +10,7 @@ use App\Events\Actions\AdminActionEvent;
 
 class AnnouncementCategoryService
 {
-    public function createCategory(array $categoryData, $currentSchool, $authAdmin)
+    public function createCategory(array $categoryData, object $currentSchool, object $authAdmin)
     {
         $existingCategory = AnnouncementCategory::where('school_branch_id', $currentSchool->id)
             ->where('name', $categoryData['name'])
@@ -56,7 +56,7 @@ class AnnouncementCategoryService
             );
         }
     }
-    public function updateCategory(array $categoryData, $currentSchool, $categoryId, $authAdmin)
+    public function updateCategory(array $categoryData, object $currentSchool, string $categoryId, object $authAdmin)
     {
         try {
             $announcementCategory = AnnouncementCategory::where("school_branch_id", $currentSchool->id)
@@ -115,7 +115,7 @@ class AnnouncementCategoryService
             );
         }
     }
-    public function getCategories($currentSchool)
+    public function getCategories(object $currentSchool)
     {
         try {
             $announcementCategories = AnnouncementCategory::where("school_branch_id", $currentSchool->id)->get();
@@ -143,7 +143,7 @@ class AnnouncementCategoryService
             );
         }
     }
-    public function deleteCategory($currentSchool, $categoryId, $authAdmin)
+    public function deleteCategory(object $currentSchool, string $categoryId, object $authAdmin)
     {
         $categoryName = 'Unknown Category';
 
@@ -198,7 +198,7 @@ class AnnouncementCategoryService
             );
         }
     }
-    public function getCategoryDetails($currentSchool, $categoryid)
+    public function getCategoryDetails(object $currentSchool, string $categoryid)
     {
         try {
             $category = AnnouncementCategory::where("school_branch_id", $currentSchool->id)

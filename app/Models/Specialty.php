@@ -6,7 +6,6 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\Course\CourseSpecialty;
-use App\Traits\GeneratesUuid;
 use App\Models\Courses;
 use App\Models\Teacher\TeacherSpecialty;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -17,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Specialty extends Model
 {
-    use HasFactory, GeneratesUuid, HasUuids;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'department_id',
@@ -117,7 +116,7 @@ class Specialty extends Model
     }
     public function tuitionFees(): HasMany
     {
-        return $this->hasMany(TuitionFees::class, 'student_id');
+        return $this->hasMany(TuitionFees::class, 'specialty_id');
     }
     public function department(): BelongsTo
     {

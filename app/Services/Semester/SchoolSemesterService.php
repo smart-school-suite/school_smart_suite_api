@@ -7,7 +7,7 @@ use App\Constant\Enums\SystemState;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
 use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
-use App\Models\FeeSchedule;
+
 use App\Models\SchoolSemester;
 use App\Models\Semester;
 use App\Models\SchoolBranchSetting;
@@ -71,12 +71,7 @@ class SchoolSemesterService
 
             $schoolSemester->save();
 
-            FeeSchedule::create([
-                'specialty_id' => $specialty->id,
-                'level_id' => $specialty->level_id,
-                'school_branch_id' => $currentSchool->id,
-                'school_semester_id' => $schoolSemester->id
-            ]);
+
 
             CreateTeacherAvailabilityJob::dispatch([
                 'specialty_id' => $specialty->id,

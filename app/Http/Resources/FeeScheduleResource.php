@@ -14,20 +14,31 @@ class FeeScheduleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $slots = $this->feeScheduleSlot ?? $this->fee_schedule_slots ?? null;
+
+        $isConfigured = false;
+        if ($slots !== null) {
+            $isConfigured = $slots instanceof \Illuminate\Support\Collection
+                ? $slots->isNotEmpty()
+                : !empty($slots);
+        }
+
+        $specialty = $this->schoolYear?->specialty;
+
         return [
             'id' => $this->id,
-            'config_status' => $this->config_status,
-            'status' => $this->status,
-            'specialty_id' => $this->specialty->id,
-            'specialty_name' => $this->specialty->specialty_name,
-            'level_name' => $this->specialty->level->name,
-            'level_id' => $this->specialty->level_id,
-            'semester' => $this->schoolSemester->semester->name,
-            'tuition_fee' => $this->specialty->school_fee,
-            'school_semester_id' => $this->schoolSemester->id,
-            'start_date' => $this->schoolSemester->start_date,
-            'end_date' => $this->schoolSemester->end_date,
-            'student_batch_id' => $this->schoolSemester->student_batch_id
-        ];
+            'config_status' => $isConfigured,
+            'status' => $this->status ?? 'active',
+            'specialty_name' => $specialty?->specialty_name,
+            'department_name' => $specialty?->department?->department_name,
+            'level_name' => $specialty?->level?->name,
+            'level_number' => $specialty?->level?->level,
+            'tuition_fee' => (float) ($specialty?->school_fee ?? 0),
+            'start_date' => $this->schoolYear?->start_date ?? $this->schoolYear?->start_date,
+            'end_date' => $this->schoolYear?->end_date ?? $this->schoolYear?->end_date,
+            'academic_year' => $this->schoolYear?->systemAcademicYear?->name,
+            'created_at' => $this->created_at ?? null,
+            'updated_at' => $this->updated_at ?? null
+         ];
     }
 }

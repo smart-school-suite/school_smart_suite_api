@@ -32,20 +32,20 @@ class ResitPaymentController extends Controller
         $getResitTransactions = $this->resitPaymentService->getResitPaymentTransactions($currentSchool);
         return ApiResponseService::success("Student Resit Payment Transactions Fetched Succefully", StudentResitTransResource::collection($getResitTransactions), null, 200);
     }
-    public function deleteFeePaymentTransaction(Request $request, $transactionId)
+    public function deleteFeePaymentTransaction(Request $request, string $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();
         $deleteTransaction = $this->resitPaymentService->deleteResitFeeTransaction($currentSchool, $transactionId, $authAdmin);
         return ApiResponseService::success("Transaction Deleted Succesfully", $deleteTransaction, null, 200);
     }
-    public function getTransactionDetails(Request $request, $transactionId)
+    public function getTransactionDetails(Request $request, string $transactionId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $transactionDetails = $this->resitPaymentService->getTransactionDetails($currentSchool, $transactionId);
         return ApiResponseService::success("Transaction Details Fetched Succesfully", $transactionDetails, null, 200);
     }
-    public function reverseTransaction(Request $request, $transactionId)
+    public function reverseTransaction(Request $request, string  $transactionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();

@@ -242,10 +242,6 @@ class Student extends Model
         return $this->hasMany(Studentresit::class);
     }
 
-    public function studentParentRelationship()
-    {
-        return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
-    }
 
     public function examCandidate(): HasMany
     {

@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('announcement_categories', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text('description')->nullable();
             $table->boolean('status')->default(true);
             $table->timestamps();
@@ -90,7 +91,6 @@ return new class extends Migration
             $table->enum('status', ['unseen', 'seen'])->default('unseen');
             $table->timestamps();
         });
-
     }
 
     public function down(): void

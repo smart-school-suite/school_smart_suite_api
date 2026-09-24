@@ -4,18 +4,18 @@ namespace App\Services\TuitionFee;
 
 use App\Models\Student;
 use App\Models\TuitionFees;
-use App\Models\Feepayment;
 use Exception;
 use Throwable;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
+
 class TuitionFeeService
 {
     public function getFeesPaid(object $currentSchool)
     {
         try {
-            $paidFeesData = Feepayment::where('school_branch_id', $currentSchool->id)
+            $paidFeesData = TuitionFees::where('school_branch_id', $currentSchool->id)
                 ->with(['student.specialty.level', 'student.specialty.department'])
                 ->get();
 
@@ -42,10 +42,10 @@ class TuitionFeeService
             );
         }
     }
-    public function deleteFeePayment(string $feeId, object $currentSchool, $authAdmin)
+    public function deleteFeePayment(string $feeId, object $currentSchool, object $authAdmin)
     {
         try {
-            $findFeePayment = Feepayment::where('school_branch_id', $currentSchool->id)
+            $findFeePayment = TuitionFees::where('school_branch_id', $currentSchool->id)
                 ->find($feeId);
 
             if (!$findFeePayment) {
@@ -70,7 +70,7 @@ class TuitionFeeService
                     "message" => "Tuition Fee Payment Deleted",
                 ]
             );
-                        StudentActionEvent::dispatch([
+            StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
                 'studentIds'   => [$findFeePayment->student_id],
                 'feature'      => 'tuitionFeeDelete',
@@ -115,7 +115,7 @@ class TuitionFeeService
     {
         try {
             $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
-                ->with(['student.specialty.level'])
+                ->with(['specialty.level', 'student', 'specialty.department'])
                 ->get();
 
             if ($tuitionFees->isEmpty()) {
