@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegistrationFee extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'id',
@@ -17,12 +18,11 @@ class RegistrationFee extends Model
         'status',
         'student_id',
         'school_branch_id',
-        'specialty_id',
-        'level_id'
+        'specialty_id'
     ];
 
-    protected $cast = [
-        'amount' => 'decimal:2'
+    protected $casts = [
+        'amount' => 'float'
     ];
 
     public $incrementing = 'false';
@@ -43,8 +43,4 @@ class RegistrationFee extends Model
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
-    public function level()
-    {
-        return $this->belongsTo(Educationlevels::class, 'level_id');
-    }
 }

@@ -20,8 +20,8 @@ class RegistrationFeeResource extends JsonResource
             'amount' => $this->amount ?? null,
             'title' => $this->title ?? null,
             'student_name' => $this->student->name ?? null,
-            'level_name' => $this->level->name ?? null,
-            'level_number' => $this->level->level ?? null,
+            'level_name' => $this->specialty->level->name ?? null,
+            'level_number' => $this->specialty->level->level ?? null,
             'specialty_name' => $this->specialty->specialty_name ?? null,
             'created_at' => $this->created_at ?? null,
             'updated_at' => $this->updated_at ?? null

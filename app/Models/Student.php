@@ -20,12 +20,6 @@ use App\Models\Job\SystemJob;
 class Student extends Model
 {
     use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'id',
         'name',
@@ -49,12 +43,6 @@ class Student extends Model
         'relationship_id',
         'student_source_id'
     ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -63,7 +51,6 @@ class Student extends Model
     public $keyType = 'string';
     public $table = 'students';
     public $incrementing = 'false';
-    // protected $authTokenColumn = 'token';
 
     protected function casts(): array
     {

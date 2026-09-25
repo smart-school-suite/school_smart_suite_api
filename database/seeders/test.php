@@ -9,6 +9,7 @@ use App\Models\TuitionFees;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Jobs\Resit\CreateResitExamJob;
 use App\Models\FeeSchedule;
+use App\Models\RegistrationFee;
 
 class test extends Seeder
 {
@@ -23,12 +24,11 @@ class test extends Seeder
 
     public function run(): void
     {
-        $academicYears = SchoolAcademicYear::all();
-        foreach($academicYears as $academicYear){
-             FeeSchedule::create([
-                 "school_branch_id" => $academicYear->school_branch_id,
-                 "school_year_id" => $academicYear->id
-             ]);
+        $registrationFees = RegistrationFee::with(['student'])->get();
+        foreach ($registrationFees as $registrationFee) {
+            $registrationFee->update([
+                'specialty_id' => $registrationFee->student->specialty_id
+            ]);
         }
         // $examId = "a2b2a30e-340f-4347-b044-0c5d956b14cc";
         // $schoolId = "50207b5e-65fb-46ca-b507-963931071777";

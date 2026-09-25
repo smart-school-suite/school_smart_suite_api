@@ -17,7 +17,7 @@ class RegistrationFeeService
     {
         try {
             $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
-                ->with(['student', 'specialty', 'level'])
+                ->with(['student', 'specialty.level'])
                 ->get();
 
             if ($registrationFees->isEmpty()) {
@@ -43,7 +43,7 @@ class RegistrationFeeService
             );
         }
     }
-    public function bulkDeleteRegistrationFee($feeIds, $currentSchool, $authAdmin)
+    public function bulkDeleteRegistrationFee(array $feeIds, object $currentSchool, object $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -89,7 +89,7 @@ class RegistrationFeeService
             throw $e;
         }
     }
-    public function deleteRegistrationFee($feeId, $currentSchool, $authAdmin)
+    public function deleteRegistrationFee(string $feeId, object $currentSchool, object $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -132,7 +132,7 @@ class RegistrationFeeService
             throw $e;
         }
     }
-    public function getRegistrationFeeDetails($currentSchool, $registrationFeeId)
+    public function getRegistrationFeeDetails(object $currentSchool, string $registrationFeeId)
     {
         try {
             $registrationFee = RegistrationFee::where('school_branch_id', $currentSchool->id)
@@ -163,7 +163,7 @@ class RegistrationFeeService
         }
     }
 
-    public function getStudentRegistratonFees($currentSchool, $student)
+    public function getStudentRegistratonFees(object $currentSchool, object $student)
     {
         $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $student->id)

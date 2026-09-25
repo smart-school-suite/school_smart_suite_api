@@ -70,10 +70,6 @@ class Educationlevels extends Model
     {
         return $this->hasMany(Specialty::class);
     }
-    public function registrationFee(): HasMany
-    {
-        return $this->hasMany(RegistrationFee::class, 'level_id');
-    }
     public function mark(): HasMany
     {
         return $this->hasMany(Marks::class, 'level_id');

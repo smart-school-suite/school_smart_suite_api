@@ -22,9 +22,10 @@ class AdditionalFeeResource extends JsonResource
             'username' => $this->student->username ?? null,
             'profile_picture' => $this->student->profile_picture ?? null,
             'specialty_name' => $this->specialty->specialty_name ??  null,
-            'level_name' => $this->level->name ?? null,
-            'level_number' => $this->level->level ?? null,
+            'level_name' => $this->specialty->level->name ?? null,
+            'level_number' => $this->specialty->level->level ?? null,
             'due_date' => $this->due_date ?? null,
+            'reason' => $this->reason ?? null,
             'category' => $this->feeCategory->title ?? null,
             'created_at' => $this->created_at ?? null,
             'updated_at' => $this->updated_at ?? null

@@ -86,7 +86,6 @@ class CreateStudentService
             $registrationFeeId = Str::uuid();
             RegistrationFee::create([
                 'id' => $registrationFeeId,
-                'level_id' => $specialty->level_id,
                 'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'amount' => $specialty->registration_fee,

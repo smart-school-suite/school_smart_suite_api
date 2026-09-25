@@ -158,7 +158,7 @@ class TuitionFeeScheduleService
             );
         }
     }
-    public function deleteFeeShedule($currentSchool, $feeScheduleId, $authAdmin)
+    public function deleteFeeShedule(object $currentSchool, string $feeScheduleId, object $authAdmin)
     {
         $feeSchedule = FeeSchedule::where("school_branch_id", $currentSchool->id)
             ->findOrFail($feeScheduleId);
@@ -183,7 +183,7 @@ class TuitionFeeScheduleService
         ]);
         return $feeSchedule;
     }
-    public function getFeeScheduleStudentId($currentSchool, string $studentId): Collection
+    public function getFeeScheduleStudentId(object $currentSchool, string $studentId): Collection
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->findOrFail($studentId);
@@ -216,7 +216,7 @@ class TuitionFeeScheduleService
 
         return $formattedSchedule;
     }
-    public function getStudentFeeSchedule($currentSchool, $student): array
+    public function getStudentFeeSchedule(object $currentSchool, object $student): array
     {
         $studentFeeSchedule = StudentFeeSchedule::select('student_fee_schedules.*')
             ->join('levels', 'levels.id', '=', 'student_fee_schedules.level_id')
@@ -263,7 +263,7 @@ class TuitionFeeScheduleService
 
         return $formattedOutput;
     }
-    public function getStudentFeeScheduleLevelId($currentSchool, $student, $levelId): array
+    public function getStudentFeeScheduleLevelId(object $currentSchool, object $student, string $levelId): array
     {
         $studentFeeSchedule = StudentFeeSchedule::select('student_fee_schedules.*')
             ->join('levels', 'levels.id', '=', 'student_fee_schedules.level_id')

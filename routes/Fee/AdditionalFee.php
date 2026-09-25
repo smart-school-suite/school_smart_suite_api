@@ -37,20 +37,20 @@ Route::post('/bulk-pay', [AdditionalFeePaymentController::class, 'bulkPayFees'])
 Route::get('/additional-fee-transactions', [AdditionalFeePaymentController::class, 'getAdditionalFeesTransactions'])
     ->name('additional-fee-transactions.index');
 
-Route::get('/additional-fee-transactions/{transactionId}', [AdditionalFeePaymentController::class, 'getTransactionDetails'])
+Route::get('/transaction/{transactionId}', [AdditionalFeePaymentController::class, 'getTransactionDetails'])
     ->name('additional-fee-transactions.show');
 
-Route::delete('/additional-fee-transactions/{transactionId}', [AdditionalFeePaymentController::class, 'deleteTransaction'])
+Route::delete('/transaction/{transactionId}', [AdditionalFeePaymentController::class, 'deleteTransaction'])
     ->name('additional-fee-transactions.destroy');
 
-Route::delete('/additional-fee-transactions/{transactionId}/reverse', [AdditionalFeePaymentController::class, 'reverseAdditionalFeesTransaction'])
+Route::delete('/transaction/{transactionId}/reverse', [AdditionalFeePaymentController::class, 'reverseAdditionalFeesTransaction'])
     ->name('additional-fee-transactions.reverse');
 
-Route::post('/additional-fee-transactions/bulk-reverse', [AdditionalFeePaymentController::class, 'bulkReverseTransaction'])
+Route::post('/transaction/bulk-reverse', [AdditionalFeePaymentController::class, 'bulkReverseTransaction'])
     ->name('additional-fee-transactions.bulk-reverse');
 
 
-Route::post('/additional-fee-transactions/bulk-delete', [AdditionalFeePaymentController::class, 'bulkDeleteTransaction'])
+Route::post('/transaction/bulk-delete', [AdditionalFeePaymentController::class, 'bulkDeleteTransaction'])
     ->name('additional-fee-transactions.bulk-delete');
 
 Route::patch('/bulk-update', [AdditionalFeeController::class, "bulkUpdateAdditionalFee"])->name('bulk.update.additional.fee');
