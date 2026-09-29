@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Educationlevels extends Model
 {
@@ -68,7 +69,7 @@ class Educationlevels extends Model
     }
     public function specialty(): HasMany
     {
-        return $this->hasMany(Specialty::class);
+        return $this->hasMany(Specialty::class, 'level_id');
     }
     public function mark(): HasMany
     {
@@ -94,6 +95,10 @@ class Educationlevels extends Model
         return $this->hasMany(SemesterTimetableSlot::class);
     }
 
+    public function students(): HasManyThrough
+    {
+        return $this->hasManyThrough(Student::class, Specialty::class, 'level_id', 'specialty_id', 'id', 'id');
+    }
     public function teacher()
     {
         return $this->belongsToMany(

@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Collection;
 
 class Department extends Model
 {
@@ -45,9 +46,22 @@ class Department extends Model
       return $this->hasMany(Specialty::class);
     }
 
+    public function students(): HasManyThrough {
+         return $this->hasManyThrough(Student::class, Specialty::class, 'department_id', 'specialty_id', 'id', 'id');
+    }
 
     public function teacher(): HasMany {
       return $this->hasMany(Teacher::class);
+    }
+
+    public function getTeachersAttribute(): Collection
+    {
+        $this->loadMissing('specialties.teachers');
+
+        return $this->specialties
+            ->flatMap->teachers
+            ->unique('id')
+            ->values();
     }
 
 }
