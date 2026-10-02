@@ -8,6 +8,14 @@ use Illuminate\Validation\Validator;
 class CreateAnnouncementRequest extends FormRequest
 {
     /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -22,34 +30,50 @@ class CreateAnnouncementRequest extends FormRequest
             'category_id' => ['required', 'string', 'exists:announcement_categories,id'],
             'label_id' => ['required', 'string', 'exists:labels,id'],
             'tag_ids' => 'required|array',
-            'tag_ids.*.tag_id' => 'string|exists:tags,id',
+            'tag_ids.*.tag_id' => 'required|string|exists:tags,id',
 
-            'teacher_ids' => 'nullable|array',
-            'teacher_ids.*.teacher_id' => 'required|string|exists:teachers,id',
-            'school_admin_ids' => 'nullable|array',
-            'school_admin_ids.*.school_admin_id' => 'required|string|exists:school_admins,id',
+            // Admin Audience
+            'admin_audience' => 'nullable|array',
+            'admin_audience.*.individual_ids' => 'nullable|array',
+            'admin_audience.*.individual_ids.*' => 'uuid|exists:school_admins,id',
 
+            // Student Audience
             'student_audience' => 'nullable|array',
-            'student_audience.*.student_audience_id' => 'required|string|exists:specialties,id',
+            'student_audience.*.department_ids' => 'nullable|array',
+            'student_audience.*.department_ids.*' => 'uuid|exists:departments,id',
+            'student_audience.*.specialty_ids' => 'nullable|array',
+            'student_audience.*.specialty_ids.*' => 'uuid|exists:specialties,id',
+            'student_audience.*.level_ids' => 'nullable|array',
+            'student_audience.*.level_ids.*' => 'uuid|exists:levels,id',
+            'student_audience.*.individual_ids' => 'nullable|array',
+            'student_audience.*.individual_ids.*' => 'uuid|exists:students,id',
+
+            // Teacher Audience
+            'teacher_audience' => 'nullable|array',
+            'teacher_audience.*.department_ids' => 'nullable|array',
+            'teacher_audience.*.department_ids.*' => 'uuid|exists:departments,id',
+            'teacher_audience.*.specialty_ids' => 'nullable|array',
+            'teacher_audience.*.specialty_ids.*' => 'uuid|exists:specialties,id',
+            'teacher_audience.*.level_ids' => 'nullable|array',
+            'teacher_audience.*.level_ids.*' => 'uuid|exists:levels,id',
+            'teacher_audience.*.individual_ids' => 'nullable|array',
+            'teacher_audience.*.individual_ids.*' => 'uuid|exists:teachers,id',
         ];
     }
 
     /**
      * Configure the validator instance for custom checks.
-     *
-     * @param  \Illuminate\Validation\Validator  $validator
-     * @return void
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
             $data = $this->all();
 
-            $hasTeacherAudience = !empty($data['teacher_ids']);
-            $hasSchoolAdminAudience = !empty($data['school_admin_ids']);
-            // Parent Audience check removed
-            $hasStudentAudience = !empty($data['student_audience']);
-            if (!$hasTeacherAudience && !$hasSchoolAdminAudience && !$hasStudentAudience) {
+            $hasAdminAudience = !empty(array_filter($data['admin_audience'] ?? []));
+            $hasStudentAudience = !empty(array_filter($data['student_audience'] ?? []));
+            $hasTeacherAudience = !empty(array_filter($data['teacher_audience'] ?? []));
+
+            if (!$hasAdminAudience && !$hasStudentAudience && !$hasTeacherAudience) {
                 $validator->errors()->add(
                     'audience',
                     'You must select at least one recipient audience (Teachers, School Admins, or Students) for the announcement.'
@@ -67,19 +91,6 @@ class CreateAnnouncementRequest extends FormRequest
     {
         return [
             'audience' => 'Recipient Audience',
-        ];
-    }
-
-    /**
-     * Get the error messages for the defined validation rules.
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            // Custom message for the collective audience check, updated
-            'audience.required' => 'The **Recipient Audience** field is required. You must select at least one of the available recipient groups (Teachers, School Admins, or Students).'
         ];
     }
 }

@@ -2,31 +2,25 @@
 
 namespace App\Services\Announcement;
 
-use App\Jobs\DataCreationJob\CreateAnnouncementReciepientJob;
+use App\Exceptions\AppException;
 use App\Jobs\NotificationJobs\SendAdminAnnouncementScheduleReminderNotiJob;
 use App\Jobs\NotificationJobs\SendAdminScheduledAnnouncementNotiJob;
-use App\Jobs\StatisticalJobs\OperationalJobs\AnnouncementStatJob;
 use App\Models\Announcement;
-use App\Models\AnnouncementEngagementStat;
+use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\AnnouncementTag;
+use App\Models\AnnouncementAuthor;
 use App\Models\Schooladmin;
 use App\Models\Student;
 use App\Models\Teacher;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
-use App\Exceptions\AppException;
-use App\Jobs\DataCleanupJobs\UpdateAnnouncementStatusJob;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
-use App\Models\AnnouncementAudience;
-use App\Models\Specialty;
 
 class CreateAnnouncementService
 {
-    public function createAnnouncement($currentSchool, $authenticatedUser, $data)
+    public function createAnnouncement(object $currentSchool, array $authenticatedUser, array $data)
     {
         $recipients = $this->collectRecipients($currentSchool, $data);
         $tags = $this->getTags($data);
@@ -36,19 +30,21 @@ class CreateAnnouncementService
                 "No Recipients Found",
                 400,
                 "No Recipients Found",
-                "No valid recipients were found for the selected audience. Please ensure that at least one valid student, teacher, or admin is selected.",
+                "No valid recipients were found for the selected audience configuration. Please check your selections.",
                 null
             );
         }
+
         return $this->createAnnouncementContent($currentSchool, $authenticatedUser, $data, $tags, $recipients);
     }
+
     protected function getTags(array $data): Collection
     {
         if (empty($data['tag_ids'])) {
             return collect();
         }
 
-        $tagIds = collect($data['tag_ids'])->pluck('tag_id')->unique()->toArray();
+        $tagIds = collect($data['tag_ids'])->pluck('tag_id')->filter()->unique()->toArray();
         $tags = AnnouncementTag::whereIn("id", $tagIds)->get();
 
         if ($tags->count() < count($tagIds)) {
@@ -63,60 +59,125 @@ class CreateAnnouncementService
 
         return $tags;
     }
-    protected function collectRecipients($currentSchool, array $data): Collection
+
+    protected function collectRecipients(object $currentSchool, array $data): Collection
     {
         $recipients = collect();
-        if (!empty($data['student_audience'])) {
-            $studentAudienceIds = collect($data['student_audience'])->pluck('student_audience_id')->unique()->toArray();
-            $students = $this->studentAudience($currentSchool, $studentAudienceIds);
-            $recipients = $recipients->merge($students);
-        }
 
-        if (!empty($data['school_admin_ids'])) {
-            $adminIds = collect($data['school_admin_ids'])->pluck('school_admin_id')->unique()->toArray();
-            $admins = $this->schoolAdminAudience($currentSchool, $adminIds);
-
-            if ($admins->count() < count($adminIds)) {
-                throw new AppException(
-                    "Some School Admins Not Found",
-                    404,
-                    "Some School Admins Not Found",
-                    "One or more selected school admins could not be found. Please check that the admins exist and have not been deleted.",
-                    null
-                );
-            }
-
+        if (!empty($data['admin_audience'])) {
+            $admins = $this->resolveAdminAudience($currentSchool, $data['admin_audience']);
             $recipients = $recipients->merge($admins);
         }
 
-        if (!empty($data['teacher_ids'])) {
-            $teacherIds = collect($data['teacher_ids'])->pluck('teacher_id')->unique()->toArray();
-            $teachers = $this->teacherAudience($currentSchool, $teacherIds);
-
-            if ($teachers->count() < count($teacherIds)) {
-                throw new AppException(
-                    "Some Teachers Not Found",
-                    404,
-                    "Some Teachers Not Found",
-                    "One or more selected teachers could not be found. Please check that the teachers exist and have not been deleted.",
-                    null
-                );
-            }
-
+        if (!empty($data['teacher_audience'])) {
+            $teachers = $this->resolveTeacherAudience($currentSchool, $data['teacher_audience']);
             $recipients = $recipients->merge($teachers);
         }
 
-        return $recipients->unique('id');
+        if (!empty($data['student_audience'])) {
+            $students = $this->resolveStudentAudience($currentSchool, $data['student_audience']);
+            $recipients = $recipients->merge($students);
+        }
+
+        return $recipients->unique(function ($actor) {
+            return get_class($actor) . '_' . $actor->id;
+        });
     }
-    public function createAnnouncementContent($currentSchool, $authenticatedUser, $data, $tags, $recipients)
+
+    private function resolveAdminAudience(object $currentSchool, array $audienceBlocks): Collection
+    {
+        $individualIds = collect($audienceBlocks)->pluck('individual_ids')->flatten()->filter()->unique()->toArray();
+
+        if (empty($individualIds)) {
+            return collect();
+        }
+
+        $admins = Schooladmin::where("school_branch_id", $currentSchool->id)
+            ->whereIn("id", $individualIds)
+            ->get();
+
+        if ($admins->count() < count($individualIds)) {
+            throw new AppException(
+                "Some School Admins Not Found",
+                404,
+                "Some School Admins Not Found",
+                "One or more selected school admins were not found for this school branch.",
+                null
+            );
+        }
+
+        return $admins;
+    }
+
+    private function resolveTeacherAudience(object $currentSchool, array $audienceBlocks): Collection
+    {
+        $blocks = collect($audienceBlocks);
+
+        $departmentIds = $blocks->pluck('department_ids')->flatten()->filter()->unique()->toArray();
+        $specialtyIds  = $blocks->pluck('specialty_ids')->flatten()->filter()->unique()->toArray();
+        $levelIds      = $blocks->pluck('level_ids')->flatten()->filter()->unique()->toArray();
+        $individualIds = $blocks->pluck('individual_ids')->flatten()->filter()->unique()->toArray();
+
+        $query = Teacher::where("school_branch_id", $currentSchool->id)
+            ->where(function ($q) use ($departmentIds, $specialtyIds, $levelIds, $individualIds) {
+                if (!empty($individualIds)) {
+                    $q->orWhereIn('id', $individualIds);
+                }
+
+                if (!empty($specialtyIds)) {
+                    $q->orWhereHas('specialty', fn($sq) => $sq->whereIn('id', $specialtyIds));
+                }
+
+                if (!empty($departmentIds)) {
+                    $q->orWhereHas('specialty.department', fn($dq) => $dq->whereIn('id', $departmentIds));
+                }
+
+                if (!empty($levelIds)) {
+                    $q->orWhereHas('specialty.level', fn($lq) => $lq->whereIn('id', $levelIds));
+                }
+            });
+
+        return $query->get();
+    }
+
+    private function resolveStudentAudience(object $currentSchool, array $audienceBlocks): Collection
+    {
+        $blocks = collect($audienceBlocks);
+
+        $departmentIds = $blocks->pluck('department_ids')->flatten()->filter()->unique()->toArray();
+        $specialtyIds  = $blocks->pluck('specialty_ids')->flatten()->filter()->unique()->toArray();
+        $levelIds      = $blocks->pluck('level_ids')->flatten()->filter()->unique()->toArray();
+        $individualIds = $blocks->pluck('individual_ids')->flatten()->filter()->unique()->toArray();
+
+        $query = Student::where("school_branch_id", $currentSchool->id)
+            ->where(function ($q) use ($departmentIds, $specialtyIds, $levelIds, $individualIds) {
+                if (!empty($individualIds)) {
+                    $q->orWhereIn('id', $individualIds);
+                }
+
+                if (!empty($specialtyIds)) {
+                    $q->orWhereIn('specialty_id', $specialtyIds);
+                }
+
+                if (!empty($departmentIds)) {
+                    $q->orWhereHas('specialty', fn($sq) => $sq->whereIn('department_id', $departmentIds));
+                }
+
+                if (!empty($levelIds)) {
+                    $q->orWhereHas('specialty', fn($sq) => $sq->whereIn('level_id', $levelIds));
+                }
+            });
+
+        return $query->get();
+    }
+
+    public function createAnnouncementContent(object $currentSchool, array $authenticatedUser, array $data, Collection $tags, Collection $recipients)
     {
         try {
             return DB::transaction(function () use ($currentSchool, $authenticatedUser, $data, $tags, $recipients) {
-                $announcementId = Str::uuid()->toString();
-
-                $isDraft = $data['status'] === 'draft';
+                $isDraft = ($data['status'] ?? null) === 'draft';
                 $hasPublishedAt = !empty($data['published_at']);
-                $intendedScheduled = $data['status'] === 'scheduled' || ($hasPublishedAt && Carbon::parse($data['published_at'])->isFuture());
+                $intendedScheduled = ($data['status'] ?? null) === 'scheduled' || ($hasPublishedAt && Carbon::parse($data['published_at'])->isFuture());
 
                 if ($intendedScheduled && !$hasPublishedAt) {
                     throw new AppException(
@@ -153,7 +214,7 @@ class CreateAnnouncementService
 
                 $status = $isDraft ? 'draft' : ($isScheduled ? 'scheduled' : 'active');
 
-                if ($data['status'] === 'scheduled' && $status !== 'scheduled') {
+                if (($data['status'] ?? null) === 'scheduled' && $status !== 'scheduled') {
                     throw new AppException(
                         "Invalid Scheduled Configuration",
                         400,
@@ -165,8 +226,7 @@ class CreateAnnouncementService
 
                 $expiresAt = $isDraft ? null : $publishedAt->copy()->addDays(7);
 
-                $announcementData = [
-                    'id' => $announcementId,
+                $announcement = Announcement::create([
                     'title' => $data['title'],
                     'content' => $data['content'],
                     'status' => $status,
@@ -175,91 +235,30 @@ class CreateAnnouncementService
                     'category_id' => $data['category_id'],
                     'label_id' => $data['label_id'],
                     'notification_sent_at' => null,
+                    'audience' => json_encode([
+                        'admin_audience' => $data['admin_audience'] ?? [],
+                        'student_audience' => $data['student_audience'] ?? [],
+                        'teacher_audience' => $data['teacher_audience'] ?? [],
+                    ]),
                     'tags' => json_encode($tags->toArray()),
                     'school_branch_id' => $currentSchool->id,
-                ];
-
-                $announcement = Announcement::create($announcementData);
-
-                $totalStudents = $recipients->whereInstanceOf(Student::class)->count();
-                $totalTeachers = $recipients->whereInstanceOf(Teacher::class)->count();
-                $totalAdmins = $recipients->whereInstanceOf(Schooladmin::class)->count();
-                $totalRecipients = $totalStudents + $totalTeachers + $totalAdmins;
-
-                AnnouncementEngagementStat::create([
-                    'total_reciepient' => $totalRecipients,
-                    'total_student' => $totalStudents,
-                    'total_school_admin' => $totalAdmins,
-                    'total_teacher' => $totalTeachers,
-                    'total_seen' => 0,
-                    'total_unseen' => $totalRecipients,
-                    'announcement_id' => $announcementId,
-                    'school_branch_id' => $currentSchool->id
                 ]);
 
-                $this->createAudience($currentSchool, $announcementId, [
-                    'teachers' => $data['teacher_ids'] ?? null,
-                    'admins' => $data['school_admin_ids'] ?? null,
-                    'students' => $data['student_audience'] ?? null,
+                $this->seedAudienceTable($currentSchool, $announcement->id, $recipients);
+
+                AnnouncementAuthor::create([
+                    'school_branch_id' => $currentSchool->id,
+                    'authorable_id' => $authenticatedUser['userId'],
+                    'authorable_type' => $authenticatedUser['userType'],
+                    'announcement_id' => $announcement->id,
                 ]);
 
-                if ($status === 'active') {
-                    AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
-                    CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId);
-                    UpdateAnnouncementStatusJob::dispatch($announcementId, $currentSchool->id)->delay($expiresAt);
-                    AdminActionEvent::dispatch(
-                        [
-                            "permissions" =>  ["schoolAdmin.announcement.create"],
-                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                            "schoolBranch" =>  $currentSchool->id,
-                            "feature" => "announcementManagement",
-                            "action" => "announcement.published",
-                            "authAdmin" => $authenticatedUser,
-                            "data" => $announcement,
-                            "message" => "Announcement Published",
-                        ]
-                    );
-                    if (!empty($data['student_audience'])) {
+                if ($status === 'scheduled') {
+                    SendAdminScheduledAnnouncementNotiJob::dispatch($announcement->id, $authenticatedUser, $currentSchool->id);
 
-                        StudentActionEvent::dispatch([
-                            'schoolBranch' => $currentSchool->id,
-                            'specialtyIds'   => $data['student_audience'],
-                            'feature'      => 'announcementCreate',
-                            'message'      => 'Announcement Created',
-                            'data'         =>  $announcement,
-                        ]);
-                    }
-                } elseif ($status === 'scheduled') {
-                    AnnouncementStatJob::dispatch($currentSchool->id, $announcementId);
-                    CreateAnnouncementReciepientJob::dispatch($currentSchool->id, $recipients, $announcementId)
-                        ->delay($publishedAt);
-                    SendAdminScheduledAnnouncementNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id);
                     if ($publishedAt->greaterThan(now()->addMinutes(10))) {
-                        SendAdminAnnouncementScheduleReminderNotiJob::dispatch($announcementId, $authenticatedUser, $currentSchool->id)
+                        SendAdminAnnouncementScheduleReminderNotiJob::dispatch($announcement->id, $authenticatedUser, $currentSchool->id)
                             ->delay($publishedAt->copy()->subMinutes(5));
-                    }
-                    UpdateAnnouncementStatusJob::dispatch($announcementId, $currentSchool->id)->delay($expiresAt);
-                    AdminActionEvent::dispatch(
-                        [
-                            "permissions" =>  ["schoolAdmin.announcement.create"],
-                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                            "schoolBranch" =>  $currentSchool->id,
-                            "feature" => "announcementManagement",
-                            "action" => "announcement.Scheduled",
-                            "authAdmin" => $authenticatedUser,
-                            "data" => $announcement,
-                            "message" => "Announcement Scheduled",
-                        ]
-                    );
-                    if (!empty($data['student_audience'])) {
-
-                        StudentActionEvent::dispatch([
-                            'schoolBranch' => $currentSchool->id,
-                            'specialtyIds'   => $data['student_audience'],
-                            'feature'      => 'announcementCreate',
-                            'message'      => 'Announcement Created',
-                            'data'         =>  $announcement,
-                        ]);
                     }
                 }
 
@@ -270,76 +269,27 @@ class CreateAnnouncementService
         }
     }
 
-    private function createAudience($currentSchool, $announcementId, $audience)
+    private function seedAudienceTable(object $currentSchool, string $announcementId, Collection $recipients): void
     {
-        $audienceList = [];
-        if (!empty($audience['teachers'])) {
-            $teacherIds = $audience['teachers'];
-            foreach ($teacherIds as $teacherId) {
-                $audienceList[] = [
-                    "id" => Str::uuid()->toString(),
-                    "announcement_id" => $announcementId,
-                    "school_branch_id" => $currentSchool->id,
-                    "audienceable_id" => $teacherId['teacher_id'],
-                    'audienceable_type' => Teacher::class
-                ];
-            }
-        }
-        if (!empty($audience['admins'])) {
-            $adminIds = $audience['admins'];
-            foreach ($adminIds as $adminId) {
-                $audienceList[] = [
-                    "id" => Str::uuid()->toString(),
-                    "announcement_id" => $announcementId,
-                    "school_branch_id" => $currentSchool->id,
-                    "audienceable_id" => $adminId['school_admin_id'],
-                    'audienceable_type' => Schooladmin::class
-                ];
-            }
-        }
+        $now = Carbon::now();
 
-        if (!empty($audience['students'])) {
-            $studentIds = $audience['students'];
-            foreach ($studentIds as $studentId) {
-                $audienceList[] = [
-                    "id" => Str::uuid()->toString(),
-                    "announcement_id" => $announcementId,
-                    "school_branch_id" => $currentSchool->id,
-                    "audienceable_id" => $studentId['student_audience_id'],
-                    'audienceable_type' => Specialty::class
-                ];
-            }
-        }
-        AnnouncementAudience::insert($audienceList);
-    }
-    private function studentAudience($currentSchool, $studentAudienceIds)
-    {
-        $students = Student::where("school_branch_id", $currentSchool->id)
-            ->whereIn("specialty_id", $studentAudienceIds)
-            ->get();
+        $records = $recipients->map(function ($actor) use ($currentSchool, $announcementId, $now) {
+            $morphType = method_exists($actor, 'getMorphClass') ? $actor->getMorphClass() : get_class($actor);
 
-        if ($students->isEmpty() && !empty($studentAudienceIds)) {
-            throw new AppException(
-                "No Students Found for Selected Specialties",
-                404,
-                "No Students Found",
-                "No students were found for the selected specialties. Please ensure the specialties exist and have enrolled students.",
-                null
-            );
-        }
+            return [
+                "id" => Str::uuid()->toString(),
+                "announcement_id" => $announcementId,
+                "school_branch_id" => $currentSchool->id,
+                "recipient_id" => $actor->id,
+                "recipient_type" => $morphType,
+                "seen_at" => null,
+                "created_at" => $now,
+                "updated_at" => $now,
+            ];
+        })->toArray();
 
-        return $students;
-    }
-    private function schoolAdminAudience($currentSchool, $schoolAdminIds)
-    {
-        return Schooladmin::where("school_branch_id", $currentSchool->id)
-            ->whereIn("id", $schoolAdminIds)
-            ->get();
-    }
-    private function teacherAudience($currentSchool, $teacherIds)
-    {
-        return Teacher::where("school_branch_id", $currentSchool->id)
-            ->whereIn("id", $teacherIds)
-            ->get();
+        if (!empty($records)) {
+            AnnouncementRecipient::insert($records);
+        }
     }
 }

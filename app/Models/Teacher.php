@@ -19,6 +19,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Announcement\AnnouncementRecipient;
 
 class Teacher extends Model
 {
@@ -147,6 +148,11 @@ class Teacher extends Model
     public function semesterTimetableSlot(): HasMany
     {
         return $this->hasMany(SemesterTimetableSlot::class);
+    }
+
+    public function announcementRecipient()
+    {
+        return $this->morphMany(AnnouncementRecipient::class, 'recipient');
     }
 
     public function specialties()

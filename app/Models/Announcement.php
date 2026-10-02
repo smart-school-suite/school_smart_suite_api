@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Announcement\AnnouncementRecipient;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\Json;
+
 class Announcement extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
-        'id',
         'title',
         'content',
         'status',
@@ -29,42 +30,56 @@ class Announcement extends Model
     protected $casts = [
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
-        'audience' => 'json',
-        'tags' => 'json'
+        'audience' => 'array',
+        'tags' => 'array',
     ];
 
     public $table = 'announcements';
-
     public $incrementing = false;
     protected $keyType = 'string';
 
-    public function announcementEngagementStat(): HasMany {
-         return $this->hasMany(AnnouncementEngagementStat::class);
+    public function announcementAuthor(): HasMany
+    {
+        return $this->hasMany(AnnouncementAuthor::class, 'announcement_id');
     }
-     public function schoolAdminAnnouncement(): HasMany {
-         return $this->hasMany(SchoolAdminAnnouncement::class);
+    public function announcementEngagementStat(): HasMany
+    {
+        return $this->hasMany(AnnouncementEngagementStat::class);
     }
-    public function teacherAnnouncement(): HasMany {
+    public function schoolAdminAnnouncement(): HasMany
+    {
+        return $this->hasMany(SchoolAdminAnnouncement::class);
+    }
+    public function teacherAnnouncement(): HasMany
+    {
         return $this->hasMany(TeacherAnnouncement::class);
     }
-    public function studentAnnouncement(): HasMany {
-         return $this->hasMany(StudentAnnouncement::class);
+    public function studentAnnouncement(): HasMany
+    {
+        return $this->hasMany(StudentAnnouncement::class);
     }
-    public function announcementCategory(): BelongsTo {
+    public function announcementCategory(): BelongsTo
+    {
         return $this->belongsTo(AnnouncementCategory::class, 'category_id');
     }
 
-    public function announcementLabel(): BelongsTo {
+    public function announcementLabel(): BelongsTo
+    {
         return $this->belongsTo(AnnouncementLabel::class, 'label_id');
     }
 
-    public function schoolBranch(): BelongsTo {
-        return $this->belongsTo(SchoolBranches::class, 'school_branch_id');
+    public function schoolBranch(): BelongsTo
+    {
+        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 
-    public function annnouncementAudience(): HasMany {
-         return $this->hasMany(AnnouncementAudience::class);
+    public function annnouncementAudience(): HasMany
+    {
+        return $this->hasMany(AnnouncementAudience::class);
+    }
+
+    public function recipient(): HasMany
+    {
+        return $this->hasMany(AnnouncementRecipient::class, 'announcement_id');
     }
 }
-
-

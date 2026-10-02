@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -134,6 +135,11 @@ class Schooladmin extends Authenticatable
     public function eventAudience()
     {
         return $this->morphMany(EventAudience::class, 'audienceable');
+    }
+
+    public function announcementRecipient()
+    {
+        return $this->morphMany(AnnouncementRecipient::class, 'recipient');
     }
     public function announcementAudience()
     {

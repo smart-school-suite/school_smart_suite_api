@@ -25,7 +25,9 @@ class ElectionResource extends JsonResource
             'status' => $this->status,
             'voting_status' => $this->voting_status,
             'application_status' => $this->application_status,
-            'results_published' => $this->is_results_published
+            'results_published' => $this->is_results_published,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

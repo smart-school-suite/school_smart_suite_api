@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasPermissions;
+use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\OTP;
 use App\Models\Job\SystemJob;
 
@@ -229,6 +230,10 @@ class Student extends Model
         return $this->hasMany(Studentresit::class);
     }
 
+     public function announcementRecipient()
+    {
+        return $this->morphMany(AnnouncementRecipient::class, 'recipient');
+    }
 
     public function examCandidate(): HasMany
     {

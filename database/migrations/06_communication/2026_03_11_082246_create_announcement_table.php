@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('announcement_categories', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text('description')->nullable();
@@ -18,14 +18,14 @@ return new class extends Migration
         });
 
         Schema::create('tags', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
         Schema::create('labels', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->text('description')->nullable();
             $table->boolean('status')->default(true);
@@ -35,70 +35,36 @@ return new class extends Migration
         });
 
         Schema::create('announcements', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('title');
-            $table->text('content');
+            $table->uuid('id')->primary();
+            $table->string('title')->nullable();
+            $table->text('content')->nullable();
             $table->enum('status', ['draft', 'scheduled', 'active', 'expired'])->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->timestamp('notification_sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
-            $table->json('tags');
+            $table->json('tags')->nullable();
+            $table->json('audience')->nullable();
             $table->timestamps();
         });
 
-        Schema::create('announcement_audiences', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('audienceable_id');
-            $table->string('audienceable_type');
+        Schema::create('announcement_recipients', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('recipient_type');
+            $table->uuid('recipient_id');
+            $table->timestamp('seen_at')->nullable();
             $table->timestamps();
         });
 
         Schema::create('annoucement_authors', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('authorable_id')->nullable();
             $table->string('authorable_type')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('announcement_engagement_stats', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->integer('total_reciepient')->default(0);
-            $table->integer('total_student')->default(0);
-            $table->integer('total_school_admin')->default(0);
-            $table->integer('total_teacher')->default(0);
-            $table->integer('total_seen')->default(0);
-            $table->integer('total_unseen')->default(0);
-            $table->timestamps();
-        });
-
-        Schema::create('student_announcements', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamp('seen_at')->nullable();
-            $table->enum('status', ['unseen', 'seen'])->default('unseen');
-            $table->timestamps();
-        });
-
-        Schema::create('teacher_announcements', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamp('seen_at')->nullable();
-            $table->enum('status', ['unseen', 'seen'])->default('unseen');
-            $table->timestamps();
-        });
-
-        Schema::create('school_admin_announcements', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamp('seen_at')->nullable();
-            $table->enum('status', ['unseen', 'seen'])->default('unseen');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('school_admin_announcements');
-        Schema::dropIfExists('teacher_announcements');
-        Schema::dropIfExists('student_announcements');
-        Schema::dropIfExists('announcement_engagement_stats');
         Schema::dropIfExists('announcement_audiences');
         Schema::dropIfExists('annoucement_authors');
         Schema::dropIfExists('announcements');

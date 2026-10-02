@@ -8,8 +8,12 @@ use App\Models\Exam\Exam;
 use App\Models\TuitionFees;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Jobs\Resit\CreateResitExamJob;
+use App\Models\Announcement;
+use App\Models\AnnouncementAuthor;
 use App\Models\FeeSchedule;
 use App\Models\RegistrationFee;
+use App\Models\Schooladmin;
+use App\Models\Student;
 
 class test extends Seeder
 {
@@ -24,12 +28,22 @@ class test extends Seeder
 
     public function run(): void
     {
-        $registrationFees = RegistrationFee::with(['student'])->get();
-        foreach ($registrationFees as $registrationFee) {
-            $registrationFee->update([
-                'specialty_id' => $registrationFee->student->specialty_id
+        $schoolAdmin = Schooladmin::where("email", "chongongprecious@gmail.com")->first();
+        $announcements = Announcement::all();
+        foreach ($announcements as $a) {
+            AnnouncementAuthor::create([
+                'school_branch_id' => $a->school_branch_id,
+                'authorable_id' => $schoolAdmin->id,
+                'authorable_type' => Schooladmin::class,
+                'announcement_id' => $a->id,
             ]);
         }
+        // $registrationFees = RegistrationFee::with(['student'])->get();
+        // foreach ($registrationFees as $registrationFee) {
+        //     $registrationFee->update([
+        //         'specialty_id' => $registrationFee->student->specialty_id
+        //     ]);
+        // }
         // $examId = "a2b2a30e-340f-4347-b044-0c5d956b14cc";
         // $schoolId = "50207b5e-65fb-46ca-b507-963931071777";
         // $isEvaluated = $this->isExamFullyEvaluated($examId);

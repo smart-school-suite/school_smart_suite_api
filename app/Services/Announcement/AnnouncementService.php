@@ -89,30 +89,7 @@ class AnnouncementService
             }
 
             $announcement->update($dataToUpdate);
-            //
-            $specialtyIds = collect(json_decode($announcement->audience)->students)->pluck('student_audience_id')->toArray();
-            if (!empty($specialtyIds)) {
 
-                StudentActionEvent::dispatch([
-                    'schoolBranch' => $currentSchool->id,
-                    'specialtyIds'   => $specialtyIds,
-                    'feature'      => 'announcementUpdate',
-                    'message'      => 'Announcement Content Updated',
-                    'data'         =>  $announcement,
-                ]);
-            }
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.announcement.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "announcementManagement",
-                    "action" => "announcement.updated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $announcement,
-                    "message" => "Announcement Content Updated",
-                ]
-            );
             return $announcement;
         } catch (Throwable $e) {
             throw $e;
@@ -136,7 +113,7 @@ class AnnouncementService
                     "message" => "Announcement Deleted",
                 ]
             );
-            $specialtyIds = collect(json_decode($annoucement->audience)->students)->pluck('student_audience_id')->toArray();
+            //$specialtyIds = collect(json_decode($annoucement->audience)->students)->pluck('student_audience_id')->toArray();
             if (!empty($specialtyIds)) {
 
                 StudentActionEvent::dispatch([
@@ -172,7 +149,7 @@ class AnnouncementService
     public function getAnnouncementDetails(object $currentSchool, string $announcementId)
     {
         $announcement = Announcement::where("school_branch_id", $currentSchool->id)
-            ->with(['announcementLabel', 'announcementCategory'])
+            ->with(['announcementLabel', 'announcementCategory', 'announcementAuthor.authorable'])
             ->find($announcementId);
 
         if (is_null($announcement)) {
@@ -224,7 +201,7 @@ class AnnouncementService
         }
         $announcements = StudentAnnouncement::where("school_branch_id", $currentSchool->id)
             ->where("student_id", $student->id)
-            ->with(['announcement.announcementCategory', 'announcement.announcementLabel'])
+            ->with(['announcement.announcementCategory', 'announcement.announcementLabel',])
             ->get();
         return $announcements->sortBy('announcement.created_at')->values();
     }
@@ -275,7 +252,8 @@ class AnnouncementService
                 ->when($status !== 'all', function ($query) use ($status) {
                     return $query->where("status", $status);
                 })
-                ->with(['announcementCategory', 'announcementLabel'])
+                ->withCount('recipient')
+                ->with(['announcementCategory', 'announcementLabel', 'announcementAuthor.authorable'])
                 ->get();
 
             if ($announcements->isEmpty()) {
