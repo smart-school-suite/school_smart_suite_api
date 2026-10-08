@@ -13,8 +13,6 @@ class ActivationCode extends Model
     protected $fillable = [
         'code',
         'code_type',
-        'status',
-        'used',
         'price',
         'duration',
         'expires_at',
@@ -29,7 +27,7 @@ class ActivationCode extends Model
 
     protected $casts = [
         'duration' => 'integer',
-        "used" => "boolean"
+        'price' => 'float'
     ];
     public function country(): BelongsTo
     {

@@ -27,11 +27,12 @@ class CreateAnnouncementRequest extends FormRequest
             'content' => 'required|string|max:5000',
             'status' => 'nullable|string|in:draft,published,scheduled,active',
             'published_at' => 'nullable|date_format:Y-m-d H:i|after_or_equal:today',
-            'category_id' => ['required', 'string', 'exists:announcement_categories,id'],
-            'label_id' => ['required', 'string', 'exists:labels,id'],
-            'tag_ids' => 'required|array',
-            'tag_ids.*.tag_id' => 'required|string|exists:tags,id',
+            'category_id' => ['nullable', 'string', 'exists:announcement_categories,id'],
+            'label_id' => ['nullable', 'string', 'exists:labels,id'],
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*.tag_id' => 'nullable|string|exists:tags,id',
 
+            'school_wide' => 'nullable|boolean',
             // Admin Audience
             'admin_audience' => 'nullable|array',
             'admin_audience.*.individual_ids' => 'nullable|array',

@@ -96,8 +96,6 @@ class ActivationCodeService
                 'id' => Str::uuid(),
                 'code' => 'TEA-' . strtoupper(Str::random(8)),
                 'code_type' => 'teacher',
-                'status' => 'active',
-                'used' => false,
                 'price' => $teacherPrice,
                 'duration' => 365,
                 'expires_at' => $expiresAt,
@@ -113,8 +111,6 @@ class ActivationCodeService
                 'id' => Str::uuid(),
                 'code' => 'STU-' . strtoupper(Str::random(8)),
                 'code_type' => 'student',
-                'status' => 'active',
-                'used' => false,
                 'price' => $studentPrice,
                 'duration' => 365,
                 'expires_at' => $expiresAt,
@@ -165,21 +161,33 @@ class ActivationCodeService
     }
     public function getSchoolBranchActivationCodes(object $currentSchool)
     {
-        $activationCodes = ActivationCode::Where("school_branch_id", $currentSchool->id)
-            ->with(['country', 'activationCodeType'])
+        $activationCodes = ActivationCode::where("school_branch_id", $currentSchool->id)
+            ->with(['country', 'activationCodeType', 'activationCodeUsage'])
             ->get();
-        return $activationCodes->map(fn($a) => [
-            "id" => $a->id,
-            "created_at" => $a->created_at,
-            "updated_at" => $a->updated_at,
-            'code' => $a->code,
-            'code_type' => $a->code_type,
-            'status' => $a->status,
-            'used' => $a->used,
-            'price' => $a->price,
-            'duration' => $a->duration,
-            'expires_at' => $a->expires_at,
-        ]);
+
+        return $activationCodes->map(function ($a) {
+            $now = now();
+            $isUsed = $a->activationCodeUsage->isNotEmpty();
+            $isExpired = $a->expires_at && $now->greaterThan($a->expires_at);
+
+            return [
+                "id" => $a->id,
+                "created_at" => $a->created_at,
+                "updated_at" => $a->updated_at,
+                'code' => $a->code,
+                'code_type' => $a->code_type,
+                'status' => $isExpired ? 'expired' : 'active',
+                'used_status' => $isUsed ? "used" : "unused",
+                'price' => $a->price,
+                'duration' => $a->duration,
+                'expires_at' => $a->expires_at,
+                'expires_in' => (!$isUsed && $a->expires_at) ? $now->diffForHumans($a->expires_at, [
+                    'parts' => 2,
+                    'short' => false,
+                    'syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW,
+                ]) : null,
+            ];
+        });
     }
     public function activateStudentAccount(array $payload, object $currentSchool)
     {

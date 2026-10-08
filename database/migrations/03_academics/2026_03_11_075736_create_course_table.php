@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('courses', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('course_code');
             $table->string('course_title');
             $table->integer('credit');
@@ -20,7 +20,7 @@ return new class extends Migration
         });
 
         Schema::create('course_types', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name', 150);
             $table->string('key', 100);
             $table->char('text_color', 8)->nullable();
@@ -31,22 +31,22 @@ return new class extends Migration
         });
 
         Schema::create('school_course_types', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
 
         Schema::create('course_specialties', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
 
         Schema::create('semester_joint_courses', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
 
         Schema::create('joint_course_slots', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->time('start_time');
             $table->time('end_time');
             $table->string('day');
@@ -54,7 +54,7 @@ return new class extends Migration
         });
 
         Schema::create('semester_joint_course_refs', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
     }

@@ -22,6 +22,10 @@ class ActivationCodeType extends Model
     public $keyType = 'string';
     public $table = 'activation_code_types';
 
+    public $casts = [
+        'price' => "float"
+    ];
+
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'country_id');

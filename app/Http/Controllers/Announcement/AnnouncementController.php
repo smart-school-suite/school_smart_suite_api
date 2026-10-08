@@ -49,6 +49,13 @@ class AnnouncementController extends Controller
         $list = $this->announcementService->getAnnouncementReadUnreadList($currentSchool, $announcementId);
         return ApiResponseService::success("Announcement List Fetched Successfully", $list, null, 200);
     }
+
+    public function getAnnouncementSummary(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $summary = $this->announcementService->announcementSummary($currentSchool);
+        return ApiResponseService::success("Announcement Summary Fetched Successfully", $summary, null, 200);
+    }
     public function createAnnoucement(CreateAnnouncementRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');

@@ -22,17 +22,23 @@ class CreateAnnouncementService
 {
     public function createAnnouncement(object $currentSchool, array $authenticatedUser, array $data)
     {
-        $recipients = $this->collectRecipients($currentSchool, $data);
+        $isDraft = ($data['status'] ?? null) === 'draft';
         $tags = $this->getTags($data);
 
-        if ($recipients->isEmpty()) {
-            throw new AppException(
-                "No Recipients Found",
-                400,
-                "No Recipients Found",
-                "No valid recipients were found for the selected audience configuration. Please check your selections.",
-                null
-            );
+        // Only resolve recipients if the announcement is NOT a draft
+        $recipients = collect();
+        if (!$isDraft) {
+            $recipients = $this->collectRecipients($currentSchool, $data);
+
+            if ($recipients->isEmpty()) {
+                throw new AppException(
+                    "No Recipients Found",
+                    400,
+                    "No Recipients Found",
+                    "No valid recipients were found for the selected audience configuration. Please check your selections.",
+                    null
+                );
+            }
         }
 
         return $this->createAnnouncementContent($currentSchool, $authenticatedUser, $data, $tags, $recipients);
@@ -232,8 +238,8 @@ class CreateAnnouncementService
                     'status' => $status,
                     'published_at' => $publishedAt,
                     'expires_at' => $expiresAt,
-                    'category_id' => $data['category_id'],
-                    'label_id' => $data['label_id'],
+                    'category_id' => $data['category_id'] ?? null,
+                    'label_id' => $data['label_id'] ?? null,
                     'notification_sent_at' => null,
                     'audience' => json_encode([
                         'admin_audience' => $data['admin_audience'] ?? [],
@@ -244,7 +250,10 @@ class CreateAnnouncementService
                     'school_branch_id' => $currentSchool->id,
                 ]);
 
-                $this->seedAudienceTable($currentSchool, $announcement->id, $recipients);
+                // Only seed audience table if recipients were collected (not a draft)
+                if (!$recipients->isEmpty()) {
+                    $this->seedAudienceTable($currentSchool, $announcement->id, $recipients);
+                }
 
                 AnnouncementAuthor::create([
                     'school_branch_id' => $currentSchool->id,

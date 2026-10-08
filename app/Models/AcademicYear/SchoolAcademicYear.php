@@ -40,10 +40,7 @@ class SchoolAcademicYear extends Model
     {
         return $this->hasMany(SchoolSemester::class, 'school_year_id');
     }
-    public function semesterJointCourse(): HasMany
-    {
-        return $this->hasMany(SemesterJointCourse::class);
-    }
+
     public function systemAcademicYear(): BelongsTo
     {
         return $this->belongsTo(SystemAcademicYear::class, 'system_academic_year_id');

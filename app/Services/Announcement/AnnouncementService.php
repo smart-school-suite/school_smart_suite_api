@@ -3,7 +3,7 @@
 namespace App\Services\Announcement;
 
 use App\Models\Announcement;
-use App\Models\AnnouncementEngagementStat;
+use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\AnnouncementTag;
 use Illuminate\Support\Collection;
 use Throwable;
@@ -12,6 +12,8 @@ use App\Models\StudentAnnouncement;
 use App\Models\TeacherAnnouncement;
 use App\Models\SchoolAdminAnnouncement;
 use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\Schooladmin;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
@@ -20,21 +22,63 @@ class AnnouncementService
 {
     public function getAnnouncementEngagementOverview(object $currentSchool, string $announcementId)
     {
-        $engagmentOverview = AnnouncementEngagementStat::where("school_branch_id", $currentSchool->id)
+        $summary = AnnouncementRecipient::where("school_branch_id", $currentSchool->id)
             ->where("announcement_id", $announcementId)
-            ->first();
+            ->with([
+                'recipient',
+                'announcement.announcementCategory',
+                'announcement.announcementLabel'
+            ])
+            ->get();
 
-        if (is_null($engagmentOverview)) {
-            throw new AppException(
-                "Announcement engagement overview not found",
-                404,
-                "Engagement Overview Missing",
-                "The engagement statistics for this announcement are not available.",
-                "/announcements"
-            );
-        }
+        $groupedByActor = $summary->groupBy('recipient_type');
 
-        return $engagmentOverview;
+        $resolveActorType = function (?string $type): string {
+            return match ($type) {
+                Student::class, 'student'       => 'student',
+                Teacher::class, 'teacher'       => 'teacher',
+                Schooladmin::class, 'admin', 'schooladmin' => 'admin',
+                default => strtolower(class_basename($type ?? 'unknown')),
+            };
+        };
+
+        $getActorStats = function (string $modelClass) use ($groupedByActor) {
+            $actors = $groupedByActor->get($modelClass, collect());
+            $total = $actors->count();
+            $seen = $actors->whereNotNull('seen_at')->count();
+            $percentage = $total > 0 ? round(($seen / $total) * 100, 2) : 0;
+
+            return [
+                'total'           => $total,
+                'seen'            => $seen,
+                'unseen'          => $total - $seen,
+                'seen_percentage' => $percentage,
+            ];
+        };
+
+        $totalRecipients = $summary->count();
+        $totalSeen = $summary->whereNotNull('seen_at')->count();
+        $overallSeenPercentage = $totalRecipients > 0 ? round(($totalSeen / $totalRecipients) * 100, 2) : 0;
+
+        return [
+            'announcement' => $summary->first()?->announcement,
+            'total_recipients'       => $totalRecipients,
+            'seen_count'             => $totalSeen,
+            'unseen_count'           => $totalRecipients - $totalSeen,
+            'overall_seen_percentage' => $overallSeenPercentage,
+            'student_stats' => $getActorStats(Student::class),
+            'teacher_stats' => $getActorStats(Teacher::class),
+            'admin_stats'   => $getActorStats(Schooladmin::class),
+            'recipients' => $summary->map(fn($r) => [
+                'username' => $r->recipient->username,
+                'name' => $r->recipient->name,
+                'first_name' => $r->recipient->first_name,
+                'last_name' => $r->recipient->last_name,
+                'profile_picture' => $r->recipient->profile_picture,
+                'seen_at'         => $r->seen_at,
+                'actor_type'            => $resolveActorType($r->recipient_type)
+            ]),
+        ];
     }
 
     public function getAnnouncementReadUnreadList(object $currentSchool, string $announcementId)
@@ -96,6 +140,34 @@ class AnnouncementService
         }
     }
 
+    public function announcementSummary(object $currentSchool)
+    {
+        $now = now();
+        $baseQuery = Announcement::where('school_branch_id', $currentSchool->id);
+
+        return [
+            'draft' => (clone $baseQuery)
+                ->whereNull('published_at')
+                ->count(),
+
+            'scheduled' => (clone $baseQuery)
+                ->where('published_at', '>', $now)
+                ->count(),
+
+            'active' => (clone $baseQuery)
+                ->where('published_at', '<=', $now)
+                ->where(function ($query) use ($now) {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', $now);
+                })
+                ->count(),
+
+            'expired' => (clone $baseQuery)
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '<=', $now)
+                ->count(),
+        ];
+    }
     public function deleteAnnouncement(string $announcementId, object $currentSchool, object $authAdmin)
     {
         try {
@@ -143,7 +215,6 @@ class AnnouncementService
             );
         }
     }
-
 
 
     public function getAnnouncementDetails(object $currentSchool, string $announcementId)

@@ -2,6 +2,8 @@
 
 namespace App\Models\AcademicYear;
 
+use App\Models\Course\SemesterJointCourse;
+use App\Models\Elections;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +22,10 @@ class SystemAcademicYear extends Model
     public $incrementing = false;
     public $keyType = 'string';
 
+    public function semesterJointCourse(): HasMany
+    {
+        return $this->hasMany(SemesterJointCourse::class);
+    }
     public function schoolAcademicYear(): HasMany
     {
         return $this->hasMany(SchoolAcademicYear::class, 'school_year_id');
@@ -28,5 +34,10 @@ class SystemAcademicYear extends Model
     public function examJointCourse(): HasMany
     {
         return $this->hasMany(ExamJointCourse::class);
+    }
+
+    public function election(): HasMany
+    {
+        return $this->hasMany(Elections::class, "academic_year_id");
     }
 }

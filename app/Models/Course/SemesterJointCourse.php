@@ -2,7 +2,7 @@
 
 namespace App\Models\Course;
 
-use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Courses;
 use App\Models\Semester;
 use App\Traits\GeneratesUuid;
@@ -43,6 +43,6 @@ class SemesterJointCourse extends Model
     }
     public function schoolYear(): BelongsTo
     {
-        return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
+        return $this->belongsTo(SystemAcademicYear::class, 'school_year_id');
     }
 }

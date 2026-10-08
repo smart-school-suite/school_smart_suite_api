@@ -2,18 +2,23 @@
 
 namespace Database\Seeders;
 
+use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
+use App\Models\Elections;
 use Illuminate\Database\Seeder;
 use App\Models\Examtype;
 use App\Models\Exam\Exam;
 use App\Models\TuitionFees;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Jobs\Resit\CreateResitExamJob;
+use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Announcement;
 use App\Models\AnnouncementAuthor;
 use App\Models\FeeSchedule;
 use App\Models\RegistrationFee;
 use App\Models\Schooladmin;
+use App\Models\SchoolSemester;
 use App\Models\Student;
+use Illuminate\Support\Arr;
 
 class test extends Seeder
 {
@@ -28,16 +33,32 @@ class test extends Seeder
 
     public function run(): void
     {
-        $schoolAdmin = Schooladmin::where("email", "chongongprecious@gmail.com")->first();
-        $announcements = Announcement::all();
-        foreach ($announcements as $a) {
-            AnnouncementAuthor::create([
-                'school_branch_id' => $a->school_branch_id,
-                'authorable_id' => $schoolAdmin->id,
-                'authorable_type' => Schooladmin::class,
-                'announcement_id' => $a->id,
-            ]);
+        $schoolSemesters = SchoolSemester::with(['schoolBranch'])->get();
+        foreach ($schoolSemesters as $schoolSemester) {
+            CreateJointCourseSemesterJob::dispatch(
+                $schoolSemester->id,
+                $schoolSemester->schoolBranch
+            );
         }
+
+
+        //    $academicYears = SystemAcademicYear::get()->pluck("id")->toArray();
+        //   $elections = Elections::all();
+        //   foreach($elections as $election){
+        //       $election->update([
+        //          "academic_year_id" => Arr::random($academicYears)
+        //       ]);
+        //   }
+        // $schoolAdmin = Schooladmin::where("email", "chongongprecious@gmail.com")->first();
+        // $announcements = Announcement::all();
+        // foreach ($announcements as $a) {
+        //     AnnouncementAuthor::create([
+        //         'school_branch_id' => $a->school_branch_id,
+        //         'authorable_id' => $schoolAdmin->id,
+        //         'authorable_type' => Schooladmin::class,
+        //         'announcement_id' => $a->id,
+        //     ]);
+        // }
         // $registrationFees = RegistrationFee::with(['student'])->get();
         // foreach ($registrationFees as $registrationFee) {
         //     $registrationFee->update([

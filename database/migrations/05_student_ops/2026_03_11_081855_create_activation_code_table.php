@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('activation_codes', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('code')->unique();
-            $table->boolean('used')->default(false);
             $table->decimal('price', 8, 2);
             $table->integer('duration')->default(365);
             $table->dateTime('expires_at');
