@@ -3,6 +3,7 @@
 namespace App\Jobs\Promotion;
 
 use App\Models\Promotion\PromotionRun;
+use App\Models\SchoolBranchSetting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -28,10 +29,24 @@ class StudentPromotionJob implements ShouldQueue
         $runId = $this->runId;
         $promotionRun = PromotionRun::where("school_branch_id", $schoolBranchId)
             ->where("id", $runId)
-            ->with(['schoolYear.specialty.student'])
+            ->with(['schoolYear.specialty.student', 'schoolYear.specialty.level'])
             ->first();
 
+        $students = $promotionRun->schoolYear->specialty->student;
 
 
+        $specialty = $promotionRun->schoolYear->specialty;
+        $promotionSetting = $this->getPromotionSetting($schoolBranchId);
+
+
+    }
+    private function getPromotionSetting(string $schoolBranchId)
+    {
+        return SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
+            ->with(['settingDefination.settingCategory'])
+            ->whereHas('settingDefination.settingCategory', function ($query) {
+                $query->where("key", "setting.category.promotion");
+            })
+            ->get();
     }
 }
