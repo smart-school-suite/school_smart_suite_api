@@ -2,46 +2,257 @@
 
 namespace App\Services\Grade;
 
-use App\Models\Grades;
-use App\Models\SchoolGradesConfig;
+use App\Models\GradeScale\SchoolGradeScale;
+use App\Models\GradeScale\SchoolGradeScaleCategory;
+use App\Models\GradeScale\Grade;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Throwable;
 use Illuminate\Support\Str;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
+use Illuminate\Support\Collection;
 
 class GradeScaleService
 {
-    public function makeGradeForExam(array $grades, $currentSchool, $authAdmin)
+    public function bulkActivateGradeScaleCategories(object $currentSchool, array $payload, object $authAdmin)
     {
         try {
             DB::beginTransaction();
 
-            $insertedGrades = [];
+            $categoryIds = collect($payload['grade_scale_category_ids'])->pluck('category_id')->toArray();
 
-            foreach ($grades as $grade) {
-                $newGrade = Grades::create([
-                    'school_branch_id' => $currentSchool->id,
-                    'letter_grade_id' => $grade['letter_grade_id'],
-                    'grade_points' => $grade['grade_points'],
-                    'minimum_score' => $grade['minimum_score'],
-                    'maximum_score' => $grade['maximum_score'],
-                    'grade_status' => $grade['grade_status'],
-                    'resit_status' => $grade['resit_status'],
-                    'determinant' => $grade['determinant'],
-                    'grades_category_id' => $grade['grades_category_id'],
+            $gradeScaleCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->get();
+
+            if ($gradeScaleCategories->isEmpty()) {
+                throw new AppException(
+                    "Grade Scale Categories Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified grade scale categories could not be found.",
+                    null
+                );
+            }
+
+            $alreadyActivated = $gradeScaleCategories->filter(function ($category) {
+                return $category->status === 'active';
+            });
+
+            if ($alreadyActivated->isNotEmpty()) {
+                $ids = $alreadyActivated->pluck('id')->implode(', ');
+                throw new AppException(
+                    "Grade Scale Categories Already Activated",
+                    422,
+                    "Validation Error",
+                    "The following grade scale categories are already activated: {$ids}. Please select only deactivated categories.",
+                    null
+                );
+            }
+
+            SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->update([
+                    'status' => 'active'
                 ]);
 
-                $insertedGrades[] = $newGrade;
+            DB::commit();
+
+            $updatedCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->get();
+
+            return $updatedCategories;
+        } catch (Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkDeactivateGradeScaleCategories(object $currentSchool, array $payload, object $authAdmin)
+    {
+        try {
+            DB::beginTransaction();
+
+            $categoryIds = collect($payload['grade_scale_category_ids'])->pluck('category_id')->toArray();
+
+            $gradeScaleCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->get();
+
+            if ($gradeScaleCategories->isEmpty()) {
+                throw new AppException(
+                    "Grade Scale Categories Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified grade scale categories could not be found.",
+                    null
+                );
             }
-            $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $grades[0]['grades_category_id'])
+
+            $alreadyDeactivated = $gradeScaleCategories->filter(function ($category) {
+                return $category->status === 'inactive';
+            });
+
+            if ($alreadyDeactivated->isNotEmpty()) {
+                $ids = $alreadyDeactivated->pluck('id')->implode(', ');
+                throw new AppException(
+                    "Grade Scale Categories Already Deactivated",
+                    422,
+                    "Validation Error",
+                    "The following grade scale categories are already deactivated: {$ids}. Please select only activated categories.",
+                    null
+                );
+            }
+
+            SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->update([
+                    'status' => 'inactive'
+                ]);
+
+            DB::commit();
+
+            $updatedCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->get();
+
+            return $updatedCategories;
+        } catch (Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function getGradeScaleCategories(object $currentSchool)
+    {
+        $categories = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+            ->with(['systemGradeCategory', 'schoolGradeScale.grade'])
+            ->get();
+
+        foreach ($categories as $category) {
+            $category->is_configured = $category->schoolGradeScale->isNotEmpty();
+        }
+
+        return $categories->map(fn($cat) => [
+            'id' => $cat->id,
+            'grades_category_id' => $cat->grades_category_id,
+            'grade_title' => $cat->systemGradeCategory->title ?? null,
+            'exam_type' => $cat->systemGradeCategory->exam_type ?? null,
+            'max_score' => $cat->max_score,
+            'status' => $cat->status,
+            'is_configured' => $cat->is_configured,
+            'created_at' => $cat->created_at,
+            'updated_at' => $cat->updated_at,
+            'passing_grade_count' => collect($cat->schoolGradeScale)->where("result", "passed")->count() ?? null,
+            'failing_grade_count' => collect($cat->schoolGradeScale)->where("result", "failed")->count() ?? null,
+            'total_grade_scale' => collect($cat->schoolGradeScale)->count() ?? null,
+            'grade_scale' =>  $cat->schoolGradeScale,
+        ]);
+    }
+    public function getGradeScaleDetails(object $currentSchool, string $categoryId)
+    {
+        $gradeScale = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+            ->with(['schoolGradeScale.grade', 'systemGradeCategory'])
+            ->find($categoryId);
+
+        if (!$gradeScale) {
+            throw new AppException(
+                "Grade Scale Category Not Found",
+                404,
+                "Configuration Not Found",
+                "The specified school grades configuration could not be found.",
+                null
+            );
+        }
+
+        $gradeScale->is_configured = $gradeScale->schoolGradeScale->isNotEmpty();
+
+        return $gradeScale;
+    }
+    public function getActiveGradeScaleCategories(object $currentSchool)
+    {
+        $categories = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+            ->where("status", "active")
+            ->with(['systemGradeCategory', 'schoolGradeScale.grade'])
+            ->get();
+
+        foreach ($categories as $category) {
+            $category->is_configured = $category->schoolGradeScale->isNotEmpty();
+        }
+
+        return $categories;
+    }
+    public function activateGradeScale(object $currentSchool, string $categoryId)
+    {
+        $gradeScale = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+            ->find($categoryId);
+
+        if (!$gradeScale) {
+            throw new AppException(
+                "Grade Scale Category Not Found",
+                404,
+                "Configuration Not Found",
+                "The specified school grades configuration could not be found.",
+                null
+            );
+        }
+
+        if ($gradeScale->status === "active") {
+            throw new AppException(
+                "Grade Scale Already Activated",
+                422,
+                "Validation Error",
+                "This grade scale category is already activated. No action required.",
+                null
+            );
+        }
+
+        $gradeScale->status = "active";
+        $gradeScale->save();
+        return $gradeScale;
+    }
+    public function deactivateGradeScale(object $currentSchool, string $categoryId)
+    {
+        $gradeScale = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+            ->find($categoryId);
+
+        if (!$gradeScale) {
+            throw new AppException(
+                "Grade Scale Category Not Found",
+                404,
+                "Configuration Not Found",
+                "The specified school grades configuration could not be found.",
+                null
+            );
+        }
+
+        if ($gradeScale->status === "inactive") {
+            throw new AppException(
+                "Grade Scale Already Inactive",
+                422,
+                "Validation Error",
+                "This grade scale category is already inactive. No action required.",
+                null
+            );
+        }
+
+        $gradeScale->status = "inactive";
+        $gradeScale->save();
+        return $gradeScale;
+    }
+    public function createGradeScale(array $payload, object $currentSchool, object $authAdmin)
+    {
+        try {
+            DB::beginTransaction();
+
+            $gradeScaleCategory = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+                ->where("id", $payload['grades_category_id'])
                 ->first();
 
-            if (!$schoolGradesConfig) {
+            if (!$gradeScaleCategory) {
                 throw new AppException(
-                    "School Grades Configuration Not Found",
+                    "Grade Scale Category Not Found",
                     404,
                     "Configuration Not Found",
                     "The specified school grades configuration could not be found. Please ensure the configuration exists before adding grades.",
@@ -49,378 +260,527 @@ class GradeScaleService
                 );
             }
 
-            if ($schoolGradesConfig) {
-                $schoolGradesConfig->isgrades_configured = true;
-                $schoolGradesConfig->max_score = $grades[0]['max_score'];
-                $schoolGradesConfig->save();
-            }
-            DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "action" => "gradeScale.created",
-                    "authAdmin" => $authAdmin,
-                    "data" => $insertedGrades,
-                    "message" => "Grade Scale Created",
-                ]
-            );
-            return $insertedGrades;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function bulkCreateExamGrades(array $data, $currentSchool, $authAdmin)
-    {
-        DB::beginTransaction();
-        try {
-            $gradesToInsert = [];
-            $configsToUpdate = [];
-            $grades = collect($data['grades'])->groupBy('grades_category_id');
-            $configIds = collect($data['configIds'])->pluck('grade_config_id')->toArray();
+            $this->validateGradeScaleOverlaps($payload['grade_scales']);
 
-            $existingConfigs = SchoolGradesConfig::where('school_branch_id', $currentSchool->id)
-                ->whereIn('id', $configIds)
-                ->get()
-                ->keyBy('id');
+            $insertedGrades = [];
 
-            foreach ($configIds as $configId) {
-                $schoolGradesConfig = $existingConfigs->get($configId);
-
-                if ($schoolGradesConfig && !$schoolGradesConfig->isgrades_configured) {
-                    $gradesCategoryId = $schoolGradesConfig->grades_category_id;
-                    $gradesForCategory = $grades->get($gradesCategoryId, []);
-
-                    if (!empty($gradesForCategory)) {
-                        $maxScore = $gradesForCategory[0]['max_score'];
-
-                        foreach ($gradesForCategory as $grade) {
-                            $gradesToInsert[] = [
-                                'id' => Str::uuid(),
-                                'school_branch_id' => $currentSchool->id,
-                                'letter_grade_id' => $grade['letter_grade_id'],
-                                'grade_points' => $grade['grade_points'],
-                                'minimum_score' => $grade['minimum_score'],
-                                'maximum_score' => $grade['maximum_score'],
-                                'grade_status' => $grade['grade_status'],
-                                'resit_status' => $grade['resit_status'],
-                                'determinant' => $grade['determinant'],
-                                'grades_category_id' => $gradesCategoryId,
-                            ];
-                        }
-
-                        $configsToUpdate[] = [
-                            'id' => $schoolGradesConfig->id,
-                            'isgrades_configured' => true,
-                            'max_score' => $maxScore,
-                        ];
-                    }
-                }
-            }
-
-            if (!empty($gradesToInsert)) {
-                DB::table('grades')->insert($gradesToInsert);
-            }
-
-            if (!empty($configsToUpdate)) {
-                SchoolGradesConfig::whereIn('id', array_column($configsToUpdate, 'id'))
-                    ->upsert($configsToUpdate, ['id'], ['isgrades_configured', 'max_score']);
-            }
-
-            DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "authAdmin" => $authAdmin,
-                    "action" => "gradeScale.created",
-                    "data" => $gradesToInsert,
-                    "message" => "Grade Scale Created",
-                ]
-            );
-        } catch (Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function updateExamGrades(array $grades, $currentSchool, $authAdmin): bool
-    {
-        if (empty($grades)) {
-            return true;
-        }
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($grades as $grade) {
-                Grades::where('school_branch_id', $currentSchool->id)
-                    ->where('id', $grade['grade_id'])
-                    ->update([
-                        'grade_points' => $grade['grade_points'],
-                        'letter_grade_id' => $grade['letter_grade_id'],
-                        'minimum_score' => $grade['minimum_score'],
-                        'maximum_score' => $grade['maximum_score'],
-                        'grade_status' => $grade['grade_status'],
-                        'resit_status' => $grade['resit_status'],
-                        'determinant' => $grade['determinant'],
-                    ]);
-            }
-
-            DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "action" => "gradeScale.update",
-                    "authAdmin" => $authAdmin,
-                    "data" => $grades,
-                    "message" => "Grade Scale Updated",
-                ]
-            );
-            return true;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public function configureByOtherGrades($configId, $currentSchool, $targetConfigId, $authAdmin)
-    {
-        $insertedGrades = [];
-        DB::beginTransaction();
-
-        try {
-
-            $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
-            $targetGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($targetConfigId);
-
-
-            if (!$schoolGradesConfig || !$targetGradesConfig) {
-                throw new Exception("School Grades Configurations not found", 404);
-            }
-
-
-            $grades = Grades::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
-                ->get();
-
-
-            foreach ($grades as $grade) {
-                $newGrade = Grades::create([
+            foreach ($payload['grade_scales'] as $gradeScale) {
+                $newGrade = SchoolGradeScale::create([
                     'school_branch_id' => $currentSchool->id,
-                    'letter_grade_id' => $grade->letter_grade_id,
-                    'grade_points' => $grade->grade_points,
-                    'minimum_score' => $grade->minimum_score,
-                    'maximum_score' => $grade->maximum_score,
-                    'grade_status' => $grade->grade_status,
-                    'determinant' => $grade->determinant,
-                    'grades_category_id' => $targetGradesConfig->grades_category_id,
+                    'letter_grade_id' => $gradeScale['letter_grade_id'],
+                    'performance' => $gradeScale['performance'],
+                    'minimum_score' => $gradeScale['minimum_score'],
+                    'maximum_score' => $gradeScale['maximum_score'],
+                    'grade_points' => $gradeScale['grade_points'],
+                    'result' => $gradeScale['result'],
+                    'resit_result' => $gradeScale['resit_result'],
+                    'grades_category_id' => $payload['grades_category_id'],
                 ]);
 
                 $insertedGrades[] = $newGrade;
             }
 
-
-            $targetGradesConfig->isgrades_configured = true;
-            $targetGradesConfig->max_score = $schoolGradesConfig->max_score;
-            $targetGradesConfig->save();
+            $gradeScaleCategory->max_score = $payload['grade_max_score'];
+            $gradeScaleCategory->save();
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "action" => "gradeScale.created",
-                    "authAdmin" => $authAdmin,
-                    "data" => $insertedGrades,
-                    "message" => "Grade Scale Created",
-                ]
-            );
+            return $gradeScaleCategory;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function updateGradeScale(object $currentSchool, array $payload, object $authAdmin)
+    {
+        try {
+            DB::beginTransaction();
+
+            $category = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->where('id', $payload['grades_category_id'])
+                ->with(['schoolGradeScale'])
+                ->first();
+
+            if (!$category) {
+                throw new AppException(
+                    "Category Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified grade scale category could not be found.",
+                    null
+                );
+            }
+
+            if (isset($payload['category_max_score'])) {
+                $gradeScaleIds = array_column($payload['grade_scales'], 'grade_scale_id');
+                $incomingGradeScales = collect($payload['grade_scales'])->keyBy('grade_scale_id');
+
+                foreach ($category->schoolGradeScale as $existingScale) {
+                    $maxScore = $incomingGradeScales->has($existingScale->id)
+                        ? ($incomingGradeScales[$existingScale->id]['maximum_score'] ?? $existingScale->maximum_score)
+                        : $existingScale->maximum_score;
+
+                    if ($maxScore > $payload['category_max_score']) {
+                        throw new AppException(
+                            "Grade Scale Exceeds Category Maximum",
+                            422,
+                            "Validation Error",
+                            "Grade scale with ID {$existingScale->id} has maximum score {$maxScore} which exceeds the category maximum score of {$payload['category_max_score']}. Please adjust the scores.",
+                            null
+                        );
+                    }
+                }
+            }
+
+            foreach ($payload['grade_scales'] as $gradeScaleData) {
+                $gradeScale = $category->schoolGradeScale->firstWhere('id', $gradeScaleData['grade_scale_id']);
+
+                if (!$gradeScale) {
+                    throw new AppException(
+                        "Grade Scale Not Found",
+                        404,
+                        "Configuration Not Found",
+                        "The specified grade scale could not be found.",
+                        null
+                    );
+                }
+
+                $categoryGradeScales = $category->schoolGradeScale->where('id', '!=', $gradeScaleData['grade_scale_id']);
+
+                $this->validateGradeScaleOverlapWithExisting($gradeScaleData, $categoryGradeScales);
+
+                if (isset($payload['category_max_score']) && ($gradeScaleData['maximum_score'] ?? $gradeScale->maximum_score) > $payload['category_max_score']) {
+                    throw new AppException(
+                        "Grade Scale Exceeds Category Maximum",
+                        422,
+                        "Validation Error",
+                        "Grade scale maximum score exceeds the category maximum score.",
+                        null
+                    );
+                }
+
+                $gradeScale->letter_grade_id = $gradeScaleData['letter_grade_id'] ?? $gradeScale->letter_grade_id;
+                $gradeScale->grade_points = $gradeScaleData['grade_points'] ?? $gradeScale->grade_points;
+                $gradeScale->minimum_score = $gradeScaleData['minimum_score'] ?? $gradeScale->minimum_score;
+                $gradeScale->maximum_score = $gradeScaleData['maximum_score'] ?? $gradeScale->maximum_score;
+                $gradeScale->performance = $gradeScaleData['performance'] ?? $gradeScale->performance;
+                $gradeScale->result = $gradeScaleData['result'] ?? $gradeScale->result;
+                $gradeScale->resit_result = $gradeScaleData['resit_result'] ?? $gradeScale->resit_result;
+                $gradeScale->save();
+            }
+
+            if (isset($payload['category_max_score'])) {
+                $category->max_score = $payload['category_max_score'];
+                $category->save();
+            }
+
+            DB::commit();
+
+            $gradeScaleIds = array_column($payload['grade_scales'], 'grade_scale_id');
+            $freshGradeScales = SchoolGradeScale::whereIn('id', $gradeScaleIds)
+                ->with(['grade', 'schoolGradeScaleCategory'])
+                ->get();
+
+
+            return $freshGradeScales;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function copyGradeScaleCategory(object $currentSchool, string $sourceCategoryId, string $targetCategoryId, object $authAdmin)
+    {
+        $insertedGrades = [];
+        DB::beginTransaction();
+
+        try {
+            $sourceCategory = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+                ->where("id", $sourceCategoryId)
+                ->first();
+
+            $targetCategory = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+                ->find($targetCategoryId);
+
+            if (!$sourceCategory || !$targetCategory) {
+                throw new AppException(
+                    "Grade Scale Category Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified grade scale categories could not be found.",
+                    null
+                );
+            }
+
+            $sourceGradeScales = SchoolGradeScale::where("school_branch_id", $currentSchool->id)
+                ->where("grades_category_id", $sourceCategory->id)
+                ->get();
+
+            if ($sourceGradeScales->isEmpty()) {
+                throw new AppException(
+                    "No Grade Scales Found",
+                    422,
+                    "Validation Error",
+                    "The source grade scale category has no configured grades to copy.",
+                    null
+                );
+            }
+
+            foreach ($sourceGradeScales as $gradeScale) {
+                $newGrade = SchoolGradeScale::create([
+                    'school_branch_id' => $currentSchool->id,
+                    'letter_grade_id' => $gradeScale->letter_grade_id,
+                    'grade_points' => $gradeScale->grade_points,
+                    'minimum_score' => $gradeScale->minimum_score,
+                    'maximum_score' => $gradeScale->maximum_score,
+                    'performance' => $gradeScale->performance,
+                    'result' => $gradeScale->result,
+                    'resit_result' => $gradeScale->resit_result,
+                    'grades_category_id' => $targetCategory->id,
+                ]);
+
+                $insertedGrades[] = $newGrade;
+            }
+
+            $targetCategory->max_score = $sourceCategory->max_score;
+            $targetCategory->save();
+
+            DB::commit();
+
             return $insertedGrades;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkConfigureByOtherGrades($data, $currentSchool, $authAdmin)
+    public function bulkCopyGradeScaleCategories(object $currentSchool, array $payload, object $authAdmin)
     {
         DB::beginTransaction();
         try {
-            $configIds = $data['configIds'];
-            $sourceConfigId = $data['target_config_id'];
+            $targetCategoryIds = $payload['target_category_ids'];
+            $sourceCategoryId = $payload['source_category_id'];
 
-            $sourceConfig = SchoolGradesConfig::where('school_branch_id', $currentSchool->id)
-                ->find($sourceConfigId);
+            $sourceCategory = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->where('id', $sourceCategoryId)
+                ->first();
 
-            if (!$sourceConfig || !$sourceConfig->isgrades_configured) {
-                DB::rollBack();
-                return;
+            if (!$sourceCategory) {
+                throw new AppException(
+                    "Source Grade Scale Category Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The source grade scale category could not be found.",
+                    null
+                );
             }
 
-            $targetConfigs = SchoolGradesConfig::where('school_branch_id', $currentSchool->id)
-                ->whereIn('id', $configIds)
-                ->where('isgrades_configured', false)
+            $sourceGradeScales = SchoolGradeScale::where('school_branch_id', $currentSchool->id)
+                ->where('grades_category_id', $sourceCategory->id)
                 ->get();
 
-            if ($targetConfigs->isEmpty()) {
-                DB::rollBack();
-                return;
+            if ($sourceGradeScales->isEmpty()) {
+                throw new AppException(
+                    "No Grade Scales Found",
+                    422,
+                    "Validation Error",
+                    "The source grade scale category has no configured grades to copy.",
+                    null
+                );
             }
 
-            $sourceGrades = Grades::where('school_branch_id', $currentSchool->id)
-                ->where('grades_category_id', $sourceConfig->grades_category_id)
+            $targetCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $targetCategoryIds)
                 ->get();
 
-            if ($sourceGrades->isEmpty()) {
-                DB::rollBack();
-                return;
+            if ($targetCategories->isEmpty()) {
+                throw new AppException(
+                    "Target Grade Scale Categories Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified target grade scale categories could not be found.",
+                    null
+                );
             }
 
             $gradesToInsert = [];
-            foreach ($targetConfigs as $targetConfig) {
-                foreach ($sourceGrades as $grade) {
+            foreach ($targetCategories as $targetCategory) {
+                $existingGrades = SchoolGradeScale::where('school_branch_id', $currentSchool->id)
+                    ->where('grades_category_id', $targetCategory->id)
+                    ->exists();
+
+                if ($existingGrades) {
+                    throw new AppException(
+                        "Target Category Already Configured",
+                        422,
+                        "Validation Error",
+                        "The target grade scale category {$targetCategory->id} already has configured grades.",
+                        null
+                    );
+                }
+
+                foreach ($sourceGradeScales as $gradeScale) {
                     $gradesToInsert[] = [
                         'id' => Str::uuid(),
                         'school_branch_id' => $currentSchool->id,
-                        'letter_grade_id' => $grade->letter_grade_id,
-                        'grade_points' => $grade->grade_points,
-                        'minimum_score' => $grade->minimum_score,
-                        'maximum_score' => $grade->maximum_score,
-                        'grade_status' => $grade->grade_status,
-                        'resit_status' => $grade->resit_status,
-                        'determinant' => $grade->determinant,
-                        'grades_category_id' => $targetConfig->grades_category_id,
+                        'letter_grade_id' => $gradeScale->letter_grade_id,
+                        'grade_points' => $gradeScale->grade_points,
+                        'minimum_score' => $gradeScale->minimum_score,
+                        'maximum_score' => $gradeScale->maximum_score,
+                        'performance' => $gradeScale->performance,
+                        'result' => $gradeScale->result,
+                        'resit_result' => $gradeScale->resit_result,
+                        'grades_category_id' => $targetCategory->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ];
                 }
             }
 
             if (!empty($gradesToInsert)) {
-                DB::table('grades')->insert($gradesToInsert);
+                DB::table('grade_scales')->insert($gradesToInsert);
             }
 
-            SchoolGradesConfig::whereIn('id', $targetConfigs->pluck('id'))
+            SchoolGradeScaleCategory::whereIn('id', $targetCategories->pluck('id'))
                 ->update([
-                    'isgrades_configured' => true,
-                    'max_score' => $sourceConfig->max_score,
+                    'max_score' => $sourceCategory->max_score,
                 ]);
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "action" => "gradeScale.created",
-                    "authAdmin" => $authAdmin,
-                    "data" => $gradesToInsert,
-                    "message" => "Grade Scale Created",
-                ]
-            );
+
+            return $gradesToInsert;
         } catch (Throwable $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function getGradeConfigDetails($currentSchool, $configId)
+    public function getGradeScaleCategoryById(object $currentSchool, string $categoryId, string $configType, float $maxScore)
     {
-        try {
-            $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
-            if (!$schoolGradesConfig) {
-                throw new Exception("School Grades Configuration Not Found", 404);
-            }
-            $grades = Grades::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
-                ->with(['lettergrade'])
-                ->get();
-            return $grades;
-        } catch (Exception $e) {
-            throw $e;
+        $schoolGradeScaleCategory = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
+            ->with(['systemGradeCategory', 'schoolGradeScale.grade'])
+            ->find($categoryId);
+
+        if (!$schoolGradeScaleCategory) {
+            throw new AppException(
+                "Grade Scale Category Not Found",
+                404,
+                "Configuration Not Found",
+                "The specified grade scale category could not be found.",
+                null
+            );
         }
+
+        $configuredGrades = SchoolGradeScale::where("school_branch_id", $currentSchool->id)
+            ->where("grades_category_id", $schoolGradeScaleCategory->id)
+            ->get()
+            ->keyBy('letter_grade_id');
+
+        $allLetterGrades = Grade::all();
+
+        return $this->formatGradeScaleResponse(
+            $allLetterGrades,
+            $configuredGrades,
+            $schoolGradeScaleCategory,
+            $configType,
+            $maxScore,
+            $schoolGradeScaleCategory->systemGradeCategory->exam_type ?? null
+        );
     }
-    public function deleteGradesConfig($currentSchool, $configId, $authAdmin)
+    private function formatGradeScaleResponse(
+        Collection $allLetterGrades,
+        Collection $configuredGrades,
+        SchoolGradeScaleCategory $schoolGradeScaleCategory,
+        string $configType,
+        float $maxScore,
+        ?string $examType
+    ): array {
+        $category = [
+            'id' => $schoolGradeScaleCategory->id,
+            'system_category_id' => $schoolGradeScaleCategory->grades_category_id,
+            'title' => $schoolGradeScaleCategory->systemGradeCategory->title ?? null,
+            'exam_type' => $examType,
+            'max_score' => $schoolGradeScaleCategory->max_score,
+            'status' => $schoolGradeScaleCategory->status,
+            'is_configured' => $configuredGrades->isNotEmpty()
+        ];
+
+        $formattedGrades = [];
+
+        if ($configType === 'automatic' && $maxScore > 0) {
+            $generateGradeScaleService = app(GenerateGradeScaleService::class);
+            $autoGenScale = $generateGradeScaleService->generateGradeScale([
+                'max_score' => $maxScore,
+                'exam_type' => $examType
+            ]);
+
+            $autoGenScaleIndexed = collect($autoGenScale)->keyBy('letter_grade_id');
+
+            foreach ($allLetterGrades as $letterGrade) {
+                $generatedGrade = $autoGenScaleIndexed->get($letterGrade->id);
+
+                $formattedGrades[] = [
+                    'letter_grade_id' => $letterGrade->id,
+                    'letter_grade' => $letterGrade->letter_grade,
+                    'status' => $letterGrade->status,
+                    'configuration' => [
+                        'id' => null,
+                        'minimum_score' => $generatedGrade['minimum_score'] ?? null,
+                        'maximum_score' => $generatedGrade['maximum_score'] ?? null,
+                        'grade_points' => $generatedGrade['grade_points'] ?? null,
+                        'performance' => $generatedGrade['performance'] ?? null,
+                        'result' => $generatedGrade['result'] ?? null,
+                        'resit_result' => $generatedGrade['resit_result'] ?? null,
+                        'is_configured' => !is_null($generatedGrade)
+                    ]
+                ];
+            }
+        } else {
+            foreach ($allLetterGrades as $letterGrade) {
+                $configuredGrade = $configuredGrades->get($letterGrade->id);
+
+                $formattedGrades[] = [
+                    'letter_grade_id' => $letterGrade->id,
+                    'letter_grade' => $letterGrade->letter_grade,
+                    'status' => $letterGrade->status,
+                    'configuration' => [
+                        'id' => $configuredGrade->id ?? null,
+                        'minimum_score' => $configuredGrade ? $configuredGrade->minimum_score : null,
+                        'maximum_score' => $configuredGrade ? $configuredGrade->maximum_score : null,
+                        'grade_points' => $configuredGrade ? $configuredGrade->grade_points : null,
+                        'performance' => $configuredGrade ? $configuredGrade->peformance : null,
+                        'result' => $configuredGrade ? $configuredGrade->result : null,
+                        'resit_result' => $configuredGrade ? $configuredGrade->resit_result : null,
+                        'is_configured' => !is_null($configuredGrade)
+                    ]
+                ];
+            }
+        }
+
+        return [
+            'category' => $category,
+            'grade_scales' => $formattedGrades
+        ];
+    }
+    public function deleteGradeScale(object $currentSchool, string $gradeScaleCategoryId, object $authAdmin)
     {
         try {
             DB::beginTransaction();
-            $schoolGradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)->find($configId);
-            if (!$schoolGradesConfig) {
-                throw new Exception("School Grades Configuration Not Found", 404);
+
+            $gradeScaleCategory = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)->find($gradeScaleCategoryId);
+
+            if (!$gradeScaleCategory) {
+                throw new AppException(
+                    "Grade Scale Category Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified school grades configuration could not be found.",
+                    null
+                );
             }
-            $grades = Grades::where("school_branch_id", $currentSchool->id)
-                ->where("grades_category_id", $schoolGradesConfig->grades_category_id)
+
+            $gradeScales = SchoolGradeScale::where("school_branch_id", $currentSchool->id)
+                ->where("grades_category_id", $gradeScaleCategory->id)
                 ->get();
-            foreach ($grades as $grade) {
+
+            foreach ($gradeScales as $grade) {
                 $grade->delete();
             }
-            $schoolGradesConfig->isgrades_configured = false;
-            $schoolGradesConfig->max_score = null;
-            $schoolGradesConfig->save();
+
+            $gradeScaleCategory->max_score = null;
+            $gradeScaleCategory->save();
+
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "action" => "gradeScale.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $schoolGradesConfig,
-                    "message" => "Grade Scale Deleted",
-                ]
-            );
+
+            return $gradeScaleCategory;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkDeleteGradesConfig($currentSchool, $data, $authAdmin)
+
+    public function bulkDeleteGradeScalesByCategories(object $currentSchool, array $payload, object $authAdmin)
     {
         try {
             DB::beginTransaction();
-            $configIds = collect($data['configIds'])->pluck('grade_config_id')->toArray();
 
-            $schoolGradesConfigs = SchoolGradesConfig::where('school_branch_id', $currentSchool->id)
-                ->whereIn('id', $configIds)
-                ->where('isgrades_configured', true)
+            $categoryIds = collect($payload['grade_scale_category_ids'])->pluck('category_id')->toArray();
+
+            $gradeScaleCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
                 ->get();
-            if ($schoolGradesConfigs->isNotEmpty()) {
-                $gradesCategoryIds = $schoolGradesConfigs->pluck('grades_category_id')->toArray();
-                Grades::where('school_branch_id', $currentSchool->id)
-                    ->whereIn('grades_category_id', $gradesCategoryIds)
-                    ->delete();
 
-                SchoolGradesConfig::where('school_branch_id', $currentSchool->id)
-                    ->whereIn('id', $configIds)
-                    ->update([
-                        'isgrades_configured' => false,
-                        'max_score' => null,
-                    ]);
+            if ($gradeScaleCategories->isEmpty()) {
+                throw new AppException(
+                    "Grade Scale Categories Not Found",
+                    404,
+                    "Configuration Not Found",
+                    "The specified grade scale categories could not be found.",
+                    null
+                );
             }
 
+            $gradesCategoryIds = $gradeScaleCategories->pluck('grades_category_id')->toArray();
+
+            SchoolGradeScale::where('school_branch_id', $currentSchool->id)
+                ->whereIn('grades_category_id', $gradesCategoryIds)
+                ->delete();
+
+            SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
+                ->whereIn('id', $categoryIds)
+                ->update([
+                    'max_score' => null,
+                ]);
+
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.grades.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "gradeScaleManagement",
-                    "action" => "gradeScale.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $schoolGradesConfigs,
-                    "message" => "Grade Scale Deleted",
-                ]
-            );
+
+
+            return $gradeScaleCategories;
         } catch (Throwable $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+    private function validateGradeScaleOverlaps(array $gradeScales)
+    {
+        $sortedScales = collect($gradeScales)->sortBy('minimum_score')->values()->toArray();
+
+        for ($i = 0; $i < count($sortedScales) - 1; $i++) {
+            $current = $sortedScales[$i];
+            $next = $sortedScales[$i + 1];
+
+            if ($current['maximum_score'] >= $next['minimum_score']) {
+                throw new AppException(
+                    "Grade Scale Overlap Detected",
+                    422,
+                    "Validation Error",
+                    "Grade scales cannot overlap. The range {$current['minimum_score']} - {$current['maximum_score']} overlaps with {$next['minimum_score']} - {$next['maximum_score']}. Please adjust the score ranges.",
+                    null
+                );
+            }
+        }
+    }
+
+    private function validateGradeScaleOverlapWithExisting(array $newGradeScale, Collection $existingGradeScales)
+    {
+        $newMin = $newGradeScale['minimum_score'];
+        $newMax = $newGradeScale['maximum_score'];
+
+        foreach ($existingGradeScales as $existing) {
+            $existingMin = $existing->minimum_score;
+            $existingMax = $existing->maximum_score;
+
+            $overlaps = (
+                ($newMin >= $existingMin && $newMin <= $existingMax) ||
+                ($newMax >= $existingMin && $newMax <= $existingMax) ||
+                ($newMin <= $existingMin && $newMax >= $existingMax)
+            );
+
+            if ($overlaps) {
+                throw new AppException(
+                    "Grade Scale Overlap Detected",
+                    422,
+                    "Validation Error",
+                    "The grade range {$newMin} - {$newMax} overlaps with existing range {$existingMin} - {$existingMax}. Please adjust the score ranges.",
+                    null
+                );
+            }
         }
     }
 }

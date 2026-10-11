@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class SpecialtyHallService
 {
-    public function assignHallToSpecialty($currentSchool, $data, $authAdmin)
+    public function assignHallToSpecialty(object $currentSchool, array $data, object $authAdmin)
     {
         $hallIds = collect($data['hallIds'] ?? [])->pluck('hall_id')->unique()->values();
 
@@ -85,22 +85,22 @@ class SpecialtyHallService
                 $specialty->saveQuietly();
             }
 
-            AdminActionEvent::dispatch([
-                'permissions'   => ['schoolAdmin.specialtyHall.assign'],
-                'roles'         => ['schoolSuperAdmin', 'schoolAdmin'],
-                'schoolBranch'  => $currentSchool->id,
-                'feature'       => 'specialtyHallManagement',
-                'authAdmin'     => $authAdmin,
-                'action'        => 'specialtyHall.assigned',
-                'data'          => [
-                    'halls'        => $halls->pluck('name')->join(', '),
-                    'specialty'    => $specialty->specialty_name,
-                    'level'        => $specialty->level?->level_name ?? '—',
-                    'halls_count'  => $halls->count(),
-                    'assigned_count' => $createdAssignments->count(),
-                ],
-                'message'       => "Specialty assigned to hall(s) successfully",
-            ]);
+            // AdminActionEvent::dispatch([
+            //     'permissions'   => ['schoolAdmin.specialtyHall.assign'],
+            //     'roles'         => ['schoolSuperAdmin', 'schoolAdmin'],
+            //     'schoolBranch'  => $currentSchool->id,
+            //     'feature'       => 'specialtyHallManagement',
+            //     'authAdmin'     => $authAdmin,
+            //     'action'        => 'specialtyHall.assigned',
+            //     'data'          => [
+            //         'halls'        => $halls->pluck('name')->join(', '),
+            //         'specialty'    => $specialty->specialty_name,
+            //         'level'        => $specialty->level?->level_name ?? '—',
+            //         'halls_count'  => $halls->count(),
+            //         'assigned_count' => $createdAssignments->count(),
+            //     ],
+            //     'message'       => "Specialty assigned to hall(s) successfully",
+            // ]);
 
             return [
                 'specialty'     => $specialty,
@@ -109,7 +109,7 @@ class SpecialtyHallService
             ];
         });
     }
-    public function getAvailableAssignableHalls($currentSchool, $specialtyId)
+    public function getAvailableAssignableHalls(object $currentSchool, string $specialtyId)
     {
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
             ->with(['level'])
@@ -145,7 +145,7 @@ class SpecialtyHallService
 
         return $assignableHalls;
     }
-    public function getAssignedHalls($currentSchool, $specialtyId)
+    public function getAssignedHalls(object $currentSchool, string $specialtyId)
     {
         $specialty = Specialty::where("school_branch_id", $currentSchool->id)
             ->with(['level'])
@@ -178,7 +178,7 @@ class SpecialtyHallService
 
         return $assignedHalls->map(fn($assignedHall) => $assignedHall->hall);
     }
-    public function removeAssignedHalls($currentSchool, $data, $authAdmin)
+    public function removeAssignedHalls(object $currentSchool, array $data, object $authAdmin)
     {
         $hallIds = collect($data['hallIds'])->pluck('hall_id')->unique()->values();
         $specialtyId = $data['specialty_id'];
@@ -249,25 +249,25 @@ class SpecialtyHallService
                 ];
             })->all();
 
-            AdminActionEvent::dispatch([
-                "permissions"  => ["schoolAdmin.specialtyHall.remove"],
-                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature"      => "specialtyHallManagement",
-                "authAdmin"    => $authAdmin,
-                "action"       => "specialtyHall.removed",
-                "data"         => [
-                    'halls'         => $hallsData,
-                    'halls_count'   => $deletedCount,
-                    'specialty_id'  => $specialtyId
-                ],
-                "message" => "Specialty removed from {$deletedCount} hall(s) successfully",
-            ]);
+            // AdminActionEvent::dispatch([
+            //     "permissions"  => ["schoolAdmin.specialtyHall.remove"],
+            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+            //     "schoolBranch" => $currentSchool->id,
+            //     "feature"      => "specialtyHallManagement",
+            //     "authAdmin"    => $authAdmin,
+            //     "action"       => "specialtyHall.removed",
+            //     "data"         => [
+            //         'halls'         => $hallsData,
+            //         'halls_count'   => $deletedCount,
+            //         'specialty_id'  => $specialtyId
+            //     ],
+            //     "message" => "Specialty removed from {$deletedCount} hall(s) successfully",
+            // ]);
 
             return $deletedCount;
         });
     }
-    public function removeAllAssignedHalls(object $currentSchool, string $specialtyId, $authAdmin): int
+    public function removeAllAssignedHalls(object $currentSchool, string $specialtyId, object $authAdmin): int
     {
         return DB::transaction(function () use ($currentSchool, $specialtyId, $authAdmin) {
 
@@ -316,21 +316,45 @@ class SpecialtyHallService
                 ]);
             }
 
-            AdminActionEvent::dispatch([
-                "permissions"  => ["schoolAdmin.specialtyHall.remove"],
-                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature"      => "specialtyHallManagement",
-                "authAdmin"    => $authAdmin,
-                "action"       => "specialtyHall.allRemoved",
-                "data"         => [
-                    'halls_count'  => $deletedCount,
-                    'specialty_id' => $specialtyId,
-                ],
-                "message"      => "All hall assignments removed from specialty ({$deletedCount} hall(s))",
-            ]);
+            // AdminActionEvent::dispatch([
+            //     "permissions"  => ["schoolAdmin.specialtyHall.remove"],
+            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
+            //     "schoolBranch" => $currentSchool->id,
+            //     "feature"      => "specialtyHallManagement",
+            //     "authAdmin"    => $authAdmin,
+            //     "action"       => "specialtyHall.allRemoved",
+            //     "data"         => [
+            //         'halls_count'  => $deletedCount,
+            //         'specialty_id' => $specialtyId,
+            //     ],
+            //     "message"      => "All hall assignments removed from specialty ({$deletedCount} hall(s))",
+            // ]);
 
             return $deletedCount;
         });
+    }
+
+    public function getSpecialties(object $currentSchool)
+    {
+        return Specialty::where("school_branch_id", $currentSchool->id)
+            ->with(['level', 'department'])
+            ->withCount('specialtyHall')
+            ->get()
+            ->map(function ($specialty) {
+                $assignedCount = $specialty->specialty_hall_count;
+                return [
+                    'id' => $specialty->id,
+                    'specialty' => $specialty->specialty_name,
+                    'description' => $specialty->description,
+                    'status' => $specialty->status,
+                    'level_name' => $specialty->level?->name ?? '—',
+                    'level' => $specialty->level->level ?? "-",
+                    'department' => $specialty->department?->department_name ?? '—',
+                    'assigned_hall_count' => $assignedCount,
+                    'assignment_status' => $assignedCount > 0 ? 'assigned' : 'not_assigned',
+                    'created_at' => $specialty->created_at,
+                    'updated_at' => $specialty->updated_at,
+                ];
+            });
     }
 }

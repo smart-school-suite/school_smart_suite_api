@@ -13,19 +13,20 @@ class SchoolGradesConfig extends Model
 
     protected $fillable = [
         'school_branch_id',
-        'isgrades_configured',
         'max_score',
         'grades_category_id'
     ];
 
-    protected $cast = [
-         'max_score' => 'decimal:2'
+    protected $casts = [
+        'max_score' => 'float',
+        'isgrades_configured' => "boolean"
     ];
     public $keyType = 'string';
     public $incrementing = 'false';
     public $table = 'school_grade_scale_categories';
 
-    public function gradesCategory(): BelongsTo {
-         return $this->belongsTo(GradesCategory::class, 'grades_category_id');
+    public function gradesCategory(): BelongsTo
+    {
+        return $this->belongsTo(GradesCategory::class, 'grades_category_id');
     }
 }

@@ -14,20 +14,12 @@ return new class extends Migration
         Schema::table('student_resits', function (Blueprint $table) {
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
-            $table->string('specialty_id');
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('course_id');
+            $table->string('course_id')->index();
             $table->foreign('course_id')->references('id')->on('courses');
-            $table->string('exam_id');
+            $table->string('exam_id')->index();
             $table->foreign('exam_id')->references('id')->on('exams');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels');
-            $table->string('student_id');
+            $table->string('student_id')->index();
             $table->foreign('student_id')->references('id')->on('students');
-            $table->string('semester_id');
-            $table->foreign('semester_id')->references('id')->on('semesters');
-            $table->string('student_batch_id');
-            $table->foreign('student_batch_id')->references('id')->on('student_batches');
         });
 
         Schema::table('resit_fee_transactions', function (Blueprint $table) {

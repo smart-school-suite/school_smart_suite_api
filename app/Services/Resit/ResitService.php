@@ -15,9 +15,10 @@ use Throwable;
 use App\Models\Studentresit;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
+
 class ResitService
 {
-    public function updateStudentResit(array $data, $currentSchool, $studentResitId, $authAdmin)
+    public function updateStudentResit(array $data, object $currentSchool, string $studentResitId, object $authAdmin)
     {
         $studentResitExists = Studentresit::where("school_branch_id", $currentSchool->id)->find($studentResitId);
         if (!$studentResitExists) {
@@ -25,7 +26,7 @@ class ResitService
         }
         $filteredData = array_filter($data);
         $studentResitExists->update($filteredData);
-                AdminActionEvent::dispatch(
+        AdminActionEvent::dispatch(
             [
                 "permissions" =>  ["schoolAdmin.resit.update"],
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
@@ -38,14 +39,14 @@ class ResitService
         );
         return $studentResitExists;
     }
-    public function deleteStudentResit($studentResitId, $currentSchool, $authAdmin)
+    public function deleteStudentResit(string $studentResitId, object $currentSchool, object $authAdmin)
     {
         $studentResitExists = Studentresit::where("school_branch_id", $currentSchool->id)->find($studentResitId);
         if (!$studentResitExists) {
             return ApiResponseService::error("Student Resit Not found", null, 404);
         }
         $studentResitExists->delete();
-                        AdminActionEvent::dispatch(
+        AdminActionEvent::dispatch(
             [
                 "permissions" =>  ["schoolAdmin.resit.delete"],
                 "roles" => ["schoolSuperAdmin", "schoolAdmin"],
@@ -58,11 +59,18 @@ class ResitService
         );
         return $studentResitExists;
     }
-    public function getResitableCourses($currentSchool)
+    public function getResitableCourses(object $currentSchool)
     {
         try {
             $resitableCourses = Studentresit::where('school_branch_id', $currentSchool->id)
-                ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
+                ->whereNull('deleted_at')
+                ->with([
+                    'exam.schoolYear.specialty.level',
+                    'courses',
+                    'student',
+                    'exam.examType.semesters',
+                    'exam.schoolYear.systemAcademicYear'
+                ])
                 ->get();
 
             if ($resitableCourses->isEmpty()) {
@@ -233,23 +241,22 @@ class ResitService
         try {
             DB::beginTransaction();
             foreach ($studentResitIds as $studentResitId) {
-                $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)->
-                findOrFail($studentResitId['resit_id']);
+                $studentResit = Studentresit::where("school_branch_id", $currentSchool->id)->findOrFail($studentResitId['resit_id']);
                 $studentResit->delete();
                 $result[] = $studentResit;
             }
             DB::commit();
-                                    AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.resit.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "resitManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $result,
-                "message" => "Resit Deleted",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resit.delete"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Deleted",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -262,8 +269,7 @@ class ResitService
         try {
             DB::beginTransaction();
             foreach ($updateStudentResitList as $updateStudentResit) {
-                $studentResit = StudentResit::where("school_branch_id", $currentSchool->id)->
-                findOrFail($updateStudentResit->id);
+                $studentResit = StudentResit::where("school_branch_id", $currentSchool->id)->findOrFail($updateStudentResit->id);
                 if ($studentResit) {
                     $cleanedData = array_filter($updateStudentResit, function ($value) {
                         return $value !== null && $value !== '';
@@ -278,17 +284,17 @@ class ResitService
                 ];
             }
             DB::commit();
-                            AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.resit.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "resitManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $result,
-                "message" => "Resit Updated",
-            ]
-        );
+            AdminActionEvent::dispatch(
+                [
+                    "permissions" =>  ["schoolAdmin.resit.update"],
+                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    "schoolBranch" =>  $currentSchool->id,
+                    "feature" => "resitManagement",
+                    "authAdmin" => $authAdmin,
+                    "data" => $result,
+                    "message" => "Resit Updated",
+                ]
+            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

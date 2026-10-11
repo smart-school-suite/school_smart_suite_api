@@ -5,7 +5,11 @@ namespace App\Services\AcademicYear;
 use App\Exceptions\AppException;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\AcademicYear\SystemAcademicYear;
+use App\Models\Promotion\PromotionRun;
+use App\Models\FeeSchedule;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+
 class SchoolAcademicYearService
 {
     public function createSchoolAcademicYear(array $data, object $currentSchool)
@@ -25,15 +29,27 @@ class SchoolAcademicYearService
             );
         }
 
-        $academicYear = SchoolAcademicYear::create([
-            'specialty_id' => $data['specialty_id'],
-            'school_branch_id' => $currentSchool->id,
-            'system_academic_year_id' => $data['system_academic_year_id'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-        ]);
+        return DB::transaction(function () use ($data, $currentSchool) {
+            $academicYear = SchoolAcademicYear::create([
+                'specialty_id' => $data['specialty_id'],
+                'school_branch_id' => $currentSchool->id,
+                'system_academic_year_id' => $data['system_academic_year_id'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+            ]);
 
-        return $academicYear;
+            FeeSchedule::create([
+                'school_branch_id' => $currentSchool->id,
+                'school_year_id' => $academicYear->id,
+            ]);
+
+            PromotionRun::create([
+                'school_year_id' => $academicYear->id,
+                'school_branch_id' => $currentSchool->id,
+            ]);
+
+            return $academicYear;
+        });
     }
 
     public function updateSchoolAcademicYear(
@@ -190,10 +206,10 @@ class SchoolAcademicYearService
             $end   = Carbon::parse($year->end_date)->endOfDay();
 
             $status = match (true) {
-            $today < $start  => 'upcoming',
-            $today <= $end   => 'ongoing',
-            default          => 'expired'
-        };
+                $today < $start  => 'upcoming',
+                $today <= $end   => 'ongoing',
+                default          => 'expired'
+            };
 
             return [
                 "id" => $year->id,
@@ -201,8 +217,13 @@ class SchoolAcademicYearService
                 "end_date" => $year->end_date,
                 "specialty_name" => $year->specialty->specialty_name ?? null,
                 "level_name" => $year->specialty->level->name ?? null,
+                "level_number" => $year->specialty->level->level ?? null,
                 "status" => $status,
-                "school_year" => $year->systemAcademicYear->name ?? null
+                "school_year" => $year->systemAcademicYear->name ?? null,
+                "year_start" => $year->systemAcademicYear->year_start ?? null,
+                "year_end" => $year->systemAcademicYear->year_end ?? null,
+                "created_at" => $year->created_at ?? null,
+                "updated_at" => $year->updated_at ?? null,
             ];
         });
 

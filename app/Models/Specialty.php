@@ -6,8 +6,10 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\Course\CourseSpecialty;
-use App\Traits\GeneratesUuid;
 use App\Models\Courses;
+use App\Models\Promotion\StudentPromotionRecord;
+use App\Models\Teacher\TeacherSpecialty;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Specialty extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'department_id',
@@ -34,7 +36,7 @@ class Specialty extends Model
     ];
     public $keyType = 'string';
     public $table = 'specialties';
-    public $incrementing = 'false';
+    public $incrementing = false;
 
     public function examJcSessionHall(): HasMany
     {
@@ -56,9 +58,28 @@ class Specialty extends Model
             ->withPivot(['id'])
             ->withTimestamps();
     }
-    public function resitExamRef(): HasMany
+
+    public function teachers()
     {
-        return $this->hasMany(ResitExamRef::class);
+        return $this->belongsToMany(
+            Teacher::class,
+            'teacher_specialty_preferences',
+            'specialty_id',
+            'teacher_id'
+        )
+            ->using(TeacherSpecialty::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
+    }
+
+    public function fromSpecStudPromRecord(): HasMany
+    {
+        return $this->hasMany(StudentPromotionRecord::class, 'from_specialty_id');
+    }
+
+    public function toSpecStudPromRecord(): HasMany
+    {
+        return $this->hasMany(StudentPromotionRecord::class, 'to_specialty_id');
     }
     public function specialtyHall(): HasMany
     {
@@ -67,15 +88,6 @@ class Specialty extends Model
     public function examCandidate(): HasMany
     {
         return $this->hasMany(AccessedStudent::class);
-    }
-    public function instructorAvailability(): HasMany
-    {
-        return $this->hasMany(InstructorAvailability::class);
-    }
-
-    public function instructorAvailabilitySlot(): HasMany
-    {
-        return $this->hasMany(InstructorAvailabilitySlot::class);
     }
     public function feeSchedule(): HasMany
     {
@@ -98,10 +110,6 @@ class Specialty extends Model
     {
         return $this->hasMany(StudentFeeSchedule::class);
     }
-    public function resitmarks(): HasMany
-    {
-        return $this->hasMany(ResitMarks::class, 'specialty_id');
-    }
     public function studentResults(): HasMany
     {
         return $this->hasMany(StudentResults::class, 'specialty_id');
@@ -120,7 +128,7 @@ class Specialty extends Model
     }
     public function tuitionFees(): HasMany
     {
-        return $this->hasMany(TuitionFees::class, 'student_id');
+        return $this->hasMany(TuitionFees::class, 'specialty_id');
     }
     public function department(): BelongsTo
     {
@@ -134,9 +142,9 @@ class Specialty extends Model
     {
         return $this->hasMany(Exams::class);
     }
-    public function TeacherSpecailtyPreference(): HasMany
+    public function teacherSpecialty(): HasMany
     {
-        return $this->hasMany(TeacherSpecailtyPreference::class);
+        return $this->hasMany(TeacherSpecialty::class);
     }
     public function school(): BelongsTo
     {
@@ -149,7 +157,7 @@ class Specialty extends Model
 
     public function student(): HasMany
     {
-        return $this->hasMany(Student::class);
+        return $this->hasMany(Student::class, 'specialty_id');
     }
 
     public function teacher(): HasMany
@@ -159,10 +167,6 @@ class Specialty extends Model
     public function marks(): HasMany
     {
         return $this->hasMany(Marks::class, 'specialty_id');
-    }
-    public function studentresit(): HasMany
-    {
-        return $this->hasMany(Studentresit::class);
     }
 
     public function eventAudience()

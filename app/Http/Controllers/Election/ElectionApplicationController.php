@@ -44,7 +44,7 @@ class ElectionApplicationController extends Controller
         return ApiResponseService::success('Application Deleted Succefully', $application, null, 200);
     }
 
-    public function getApplications(Request $request, $electionId)
+    public function getApplications(Request $request, string $electionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $electionApplications = $this->electionApplicationService->getApplicationsByElection($currentSchool, $electionId);
@@ -76,20 +76,20 @@ class ElectionApplicationController extends Controller
         $bulkApproveApplication = $this->electionApplicationService->bulkApproveApplication($request->electionApplicationIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Applications Approved Successfully", $bulkApproveApplication, null, 200);
     }
-    public function getApplicationsByStudentId(Request $request, $studentId)
+    public function getApplicationsByStudentId(Request $request, string $studentId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $getMyApplications = $this->electionApplicationService->getApplicationsByStudent($currentSchool, $studentId);
         return ApiResponseService::success("Applications Fetched Successfully", $getMyApplications, null, 200);
     }
-    public function getApplicationDetails(Request $request, $applicationId)
+    public function getApplicationDetails(Request $request, string $applicationId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $applicationDetails = $this->electionApplicationService->getApplicationDetails($applicationId, $currentSchool);
         return ApiResponseService::success("Application Details Fetched Successfully", $applicationDetails, null, 200);
     }
 
-    public function getStudentElectionApplication(Request $request, $electionId)
+    public function getStudentElectionApplication(Request $request, string $electionId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $student = $this->resolveUser();
