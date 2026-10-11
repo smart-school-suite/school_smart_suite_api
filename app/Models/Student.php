@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Badge\UserBadge;
 use App\Traits\Currency;
+use App\Models\Exam\ExamCandidate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
@@ -13,34 +14,30 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasPermissions;
+use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\OTP;
 use App\Models\Job\SystemJob;
+use App\Models\Promotion\StudentPromotionRecord;
 
 class Student extends Model
 {
     use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'id',
         'name',
         'first_name',
         'last_name',
+        'username',
         'DOB',
         'gender_id',
         'phone',
-        'level_id',
         'school_branch_id',
         'specialty_id',
-        'department_id',
         'guardian_id',
         'student_batch_id',
         'account_status',
         'payment_format',
+        'dropout_status',
         'email',
         'password',
         "sub_status",
@@ -48,12 +45,6 @@ class Student extends Model
         'relationship_id',
         'student_source_id'
     ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -62,16 +53,23 @@ class Student extends Model
     public $keyType = 'string';
     public $table = 'students';
     public $incrementing = 'false';
-    // protected $authTokenColumn = 'token';
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'dropout_status' => 'boolean'
         ];
     }
 
+    public function studentPromotionRecord(): HasMany
+    {
+        return $this->hasMany(StudentPromotionRecord::class, 'student_id');
+    }
+    public function relationship(): BelongsTo
+    {
+        return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
+    }
     public function systemJob(): MorphMany
     {
         return $this->morphMany(SystemJob::class, 'initiatedBy');
@@ -112,14 +110,6 @@ class Student extends Model
     public function currentElectionWinners(): BelongsTo
     {
         return $this->belongsTo(CurrentElectionWinners::class);
-    }
-    public function resitmarks(): HasMany
-    {
-        return $this->hasMany(ResitMarks::class, 'student_id');
-    }
-    public function accessedStudent(): HasMany
-    {
-        return $this->hasMany(AccessedStudent::class);
     }
 
     public function studentResults(): HasMany
@@ -185,11 +175,6 @@ class Student extends Model
         return $this->hasMany(Courses::class);
     }
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class, 'department_id');
-    }
-
     public function exams(): HasMany
     {
         return $this->hasMany(Exams::class);
@@ -236,11 +221,6 @@ class Student extends Model
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
-    public function level(): BelongsTo
-    {
-        return $this->belongsTo(Educationlevels::class, 'level_id');
-    }
-
     public function resitResults(): HasMany
     {
         return $this->hasMany(ResitResults::class);
@@ -255,8 +235,13 @@ class Student extends Model
         return $this->hasMany(Studentresit::class);
     }
 
-    public function studentParentRelationship()
+    public function announcementRecipient()
     {
-        return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
+        return $this->morphMany(AnnouncementRecipient::class, 'recipient');
+    }
+
+    public function examCandidate(): HasMany
+    {
+        return $this->hasMany(ExamCandidate::class, 'student_id');
     }
 }

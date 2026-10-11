@@ -29,7 +29,7 @@ class GradeCategorySeeder extends Seeder
             ['title' => 'Level Three Resit', 'status' => 'active', 'exam_type' => 'resit'],
             ['title' => 'Bachelors Degree CA', 'status' => 'active', 'exam_type' =>  'ca'],
             ['title' => 'Bachelors Degree Exam', 'status' => 'active', 'exam_type' => 'exam'],
-            ['title' => 'Bachelors Degree Resit', 'status' => 'active', 'exam_type' =>  'ca'],
+            ['title' => 'Bachelors Degree Resit', 'status' => 'active', 'exam_type' =>  'resit'],
             ['title' => 'Masters Degree CA', 'status' => 'active', 'exam_type' =>  'ca'],
             ['title' => 'Masters Degree Exam', 'status' => 'active', 'exam_type' => 'exam'],
             ['title' => 'Masters Degree Resit', 'status' => 'active', 'exam_type' => 'resit'],

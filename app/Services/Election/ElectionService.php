@@ -25,7 +25,7 @@ use App\Events\Analytics\ElectionAnalyticsEvent;
 use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
 class ElectionService
 {
-    public function createElection(array $data, $currentSchool, $authAdmin)
+    public function createElection(array $data, object $currentSchool, $authAdmin)
     {
         try {
             $existingElection = Elections::where("school_branch_id", $currentSchool->id)
@@ -57,25 +57,25 @@ class ElectionService
             $election->save();
 
             $this->dispatchJobs($electionId, $currentSchool, $data);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.election.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $election,
-                    "message" => "Election Created",
-                ]
-            );
-            event(new ElectionAnalyticsEvent(
-                 eventType:ElectionEvent::ELECTION_CREATED,
-                 version:1,
-                 payload:[
-                    "school_branch_id" => $currentSchool->id,
-                    "election_type_id" => $data["election_type_id"]
-                 ]
-            ));
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.election.create"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "electionManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $election,
+            //         "message" => "Election Created",
+            //     ]
+            // );
+            // event(new ElectionAnalyticsEvent(
+            //      eventType:ElectionEvent::ELECTION_CREATED,
+            //      version:1,
+            //      payload:[
+            //         "school_branch_id" => $currentSchool->id,
+            //         "election_type_id" => $data["election_type_id"]
+            //      ]
+            // ));
             return $election;
         } catch (Throwable $e) {
             if (!($e instanceof AppException)) {
@@ -90,7 +90,7 @@ class ElectionService
             throw $e;
         }
     }
-    private function dispatchJobs($electionId, $currentSchool, $data)
+    private function dispatchJobs(string $electionId, object $currentSchool, array $data)
     {
         ElectionStatJob::dispatch($electionId, $currentSchool->id);
         SendElectionOpenNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_start"]));
@@ -103,7 +103,7 @@ class ElectionService
         SendAdminElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
         SendElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
     }
-    public function bulkDeleteElection($electionIds, $currentSchool, $authAdmin)
+    public function bulkDeleteElection(array $electionIds, object $currentSchool, array $authAdmin)
     {
         $result = [];
         try {
@@ -160,17 +160,17 @@ class ElectionService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.election.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $electionIds,
-                    "message" => "Election Deleted",
-                ]
-            );
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.election.delete"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "electionManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $electionIds,
+            //         "message" => "Election Deleted",
+            //     ]
+            // );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -187,7 +187,7 @@ class ElectionService
             );
         }
     }
-    public function deleteElection($currentSchool, $electionId, $authAdmin)
+    public function deleteElection(object $currentSchool, string $electionId, array $authAdmin)
     {
         $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
 
@@ -203,17 +203,17 @@ class ElectionService
 
         try {
             $election->delete();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.election.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $election,
-                    "message" => "Election Deleted",
-                ]
-            );
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.election.delete"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "electionManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $election,
+            //         "message" => "Election Deleted",
+            //     ]
+            // );
             return $election;
         } catch (Throwable $e) {
             throw new AppException(
@@ -225,11 +225,10 @@ class ElectionService
             );
         }
     }
-    public function getElections($currentSchool)
+    public function getElections(object $currentSchool)
     {
         $elections = Elections::where('school_branch_id', $currentSchool->id)
-            ->where("status", "!=", "finished")
-            ->with(['electionType'])
+            ->with(['electionType', 'academicYear'])
             ->get();
 
         if ($elections->isEmpty()) {
@@ -244,10 +243,10 @@ class ElectionService
 
         return $elections;
     }
-    public function getElectionDetails($currentSchool, $electionId)
+    public function getElectionDetails(object $currentSchool, string $electionId)
     {
         $electionDetails = Elections::where("school_branch_id", $currentSchool->id)
-            ->with(['electionType'])
+            ->with(['electionType', 'academicYear'])
             ->find($electionId);
 
         if (is_null($electionDetails)) {
@@ -262,7 +261,7 @@ class ElectionService
 
         return $electionDetails;
     }
-    public function updateElection(array $data, $currentSchool, $electionId, $authAdmin)
+    public function updateElection(array $data, object $currentSchool, string $electionId, array $authAdmin)
     {
         $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
 
@@ -312,7 +311,7 @@ class ElectionService
             );
         }
     }
-    public function bulkUpdateElection(array $electionList, $currentSchool, $authAdmin)
+    public function bulkUpdateElection(array $electionList, object $currentSchool, array $authAdmin)
     {
         $result = [];
         try {
@@ -348,17 +347,17 @@ class ElectionService
                     $schoolElection = Elections::findOrFail($electionId);
                     $schoolElection->update($filterData);
                     $result[] = $schoolElection;
-                    AdminActionEvent::dispatch(
-                        [
-                            "permissions" =>  ["schoolAdmin.election.update"],
-                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                            "schoolBranch" =>  $currentSchool->id,
-                            "feature" => "electionManagement",
-                            "authAdmin" => $authAdmin,
-                            "data" => $result,
-                            "message" => "Elections Updated",
-                        ]
-                    );
+                    // AdminActionEvent::dispatch(
+                    //     [
+                    //         "permissions" =>  ["schoolAdmin.election.update"],
+                    //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                    //         "schoolBranch" =>  $currentSchool->id,
+                    //         "feature" => "electionManagement",
+                    //         "authAdmin" => $authAdmin,
+                    //         "data" => $result,
+                    //         "message" => "Elections Updated",
+                    //     ]
+                    // );
                 } catch (ModelNotFoundException $e) {
                     DB::rollBack();
                     throw new AppException(
@@ -389,7 +388,7 @@ class ElectionService
             );
         }
     }
-    public function getUpcomingEligibleElectionsForStudent($currentSchool, $studentId)
+    public function getUpcomingEligibleElectionsForStudent(object $currentSchool, string $studentId)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
             ->find($studentId);
@@ -437,7 +436,7 @@ class ElectionService
 
         return $eligibleElections;
     }
-    public function getPastElection($currentSchool)
+    public function getPastElection(object $currentSchool)
     {
         $pastElections = Elections::where("school_branch_id", $currentSchool->id)
             ->where("status", "finished")
@@ -456,7 +455,7 @@ class ElectionService
 
         return $pastElections;
     }
-    public function addAllowedElectionParticipants(array $electionParticipantsList, $currentSchool, $authAdmin)
+    public function addAllowedElectionParticipants(array $electionParticipantsList, object $currentSchool, object $authAdmin)
     {
         $result = [];
         $specialtyIds = [];

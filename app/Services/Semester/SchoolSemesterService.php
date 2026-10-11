@@ -7,7 +7,7 @@ use App\Constant\Enums\SystemState;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
 use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
-use App\Models\FeeSchedule;
+
 use App\Models\SchoolSemester;
 use App\Models\Semester;
 use App\Models\SchoolBranchSetting;
@@ -71,12 +71,7 @@ class SchoolSemesterService
 
             $schoolSemester->save();
 
-            FeeSchedule::create([
-                'specialty_id' => $specialty->id,
-                'level_id' => $specialty->level_id,
-                'school_branch_id' => $currentSchool->id,
-                'school_semester_id' => $schoolSemester->id
-            ]);
+
 
             CreateTeacherAvailabilityJob::dispatch([
                 'specialty_id' => $specialty->id,
@@ -393,8 +388,11 @@ class SchoolSemesterService
                 "status" => $status,
                 "specialty_name" => $semester->schoolYear->specialty?->specialty_name,
                 "level_name" => $semester->schoolYear->specialty?->level?->name,
+                "level_number" => $semester->schoolYear->specialty?->level?->level,
                 "timetable_published" => $semester->timetable_published ? "created" : "not created",
                 "semester_name" => $semester->semester?->name ?? $semester->semester?->semester_name,
+                "created_at" => $semester->created_at,
+                "updated_at" => $semester->updated_at
             ];
         });
     }
@@ -419,7 +417,7 @@ class SchoolSemesterService
     }
     public function getSchoolSemesterDetail(object $currentSchool, string $semesterId)
     {
-        $schoolSemesterDetails = SchoolSemester::with(['specialty', 'specialty.level', 'semester', 'studentBatch', 'schoolYear.systemAcademicYear'])
+        $schoolSemesterDetails = SchoolSemester::with(['schoolYear.specialty.level', 'semester'])
             ->where("school_branch_id", $currentSchool->id)
             ->find($semesterId);
         if ($schoolSemesterDetails === null) {

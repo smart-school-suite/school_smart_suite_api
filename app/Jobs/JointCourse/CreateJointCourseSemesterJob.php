@@ -31,6 +31,7 @@ class CreateJointCourseSemesterJob implements ShouldQueue
     {
         $semester = SchoolSemester::where('school_branch_id', $this->currentSchool->id)
             ->where('id', $this->schoolSemesterId)
+            ->with(['schoolYear.systemAcademicYear'])
             ->select(['id', 'semester_id', 'school_year_id'])
             ->firstOrFail();
 
@@ -48,7 +49,7 @@ class CreateJointCourseSemesterJob implements ShouldQueue
 
         $existingJointCourseIds = SemesterJointCourse::query()
             ->where('school_branch_id', $this->currentSchool->id)
-            ->where('school_year_id', $semester->school_year_id)
+            ->where('school_year_id', $semester?->schoolYear?->systemAcademicYear?->id)
             ->where('semester_id', $semester->semester_id)
             ->pluck('course_id', 'id')
             ->all();
@@ -66,7 +67,7 @@ class CreateJointCourseSemesterJob implements ShouldQueue
                 $newRecords[] = [
                     'id'               => $uuid,
                     'school_branch_id' => $this->currentSchool->id,
-                    'school_year_id'   => $semester->school_year_id,
+                    'school_year_id'   => $semester?->schoolYear?->systemAcademicYear?->id,
                     'semester_id'      => $semester->semester_id,
                     'course_id'        => $courseId,
                     'created_at'       => $now,

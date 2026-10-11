@@ -15,20 +15,18 @@ class ResitExamCandidateResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "grades_submitted" => $this->grades_submitted == false ? "Not Submitted" : "Submitted",
-            "student_accessed" => $this->student_accessed == false ? "Not Accessed" : "accessed",
-            "student_name" => $this->student->name,
-            "student_id" => $this->student->id,
-            "level" => $this->student->level->level ?? null,
-            "level_name" => $this->student->level->name ?? null,
-            "specialty_name" => $this->student->specialty->specialty_name,
-            "specialty_id" => $this->student->specialty->id,
-            "level_id" => $this->student->level->id ?? null,
-            "exam_name" => $this->resitExam->examtype->exam_name,
-            "exam_type" => $this->resitExam->examtype->type,
-            'reference_exam_id' => $this->resitExam->reference_exam_id,
-            "exam_id" => $this->resitExam->id
+            'id' => $this->id,
+            'is_student_evaluated' =>  $this->resitScores?->isNotEmpty() ?? false,
+            'student_name' => $this->student?->name,
+            'level_number' => $this->resitExam?->schoolYear?->specialty?->level?->level,
+            'level_name' => $this->resitExam?->schoolYear?->specialty?->level?->name,
+            'specialty_name' => $this->resitExam?->schoolYear?->specialty?->specialty_name,
+            'semester' => $this->resitExam?->examType?->semesters?->name,
+            'exam_name' => $this->resitExam?->examType?->exam_name,
+            'exam_type' => $this->resitExam?->examType?->type,
+            'academic_year' => $this->resitExam?->schoolYear?->systemAcademicYear?->name,
+            "created_at" => $this->created_at ?? null,
+            "updated_at" => $this->updated_at ?? null
         ];
     }
 }

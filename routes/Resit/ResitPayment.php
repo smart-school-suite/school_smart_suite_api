@@ -19,7 +19,7 @@ Route::get('/resit-transactions/{transactionId}', [ResitPaymentController::class
 Route::delete('/resit-transactions/{transactionId}/reverse', [ResitPaymentController::class, 'reverseTransaction'])
  ->name('resit-transactions.reverse');
 
-Route::post('/student-resits/bulk-pay', [ResitPaymentController::class, 'bulkPayStudentResit'])
+Route::post('/bulk-pay', [ResitPaymentController::class, 'bulkPayStudentResit'])
 ->name('student-resits.bulk-pay');
 
 Route::post('/resit-transactions/bulk-delete', [ResitPaymentController::class, 'bulkDeleteStudentResitTransactions'])

@@ -14,9 +14,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\Announcement\CreateAnnouncementService;
 use App\Services\Announcement\UpdateDraftAnnouncementService;
+
 class AnnouncementController extends Controller
 {
-       protected CreateAnnouncementService $createAnnouncementService;
+    protected CreateAnnouncementService $createAnnouncementService;
     protected AnnouncementService $announcementService;
     protected UpdateDraftAnnouncementService $updateDraftAnnouncementService;
     public function __construct(
@@ -47,6 +48,13 @@ class AnnouncementController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $list = $this->announcementService->getAnnouncementReadUnreadList($currentSchool, $announcementId);
         return ApiResponseService::success("Announcement List Fetched Successfully", $list, null, 200);
+    }
+
+    public function getAnnouncementSummary(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $summary = $this->announcementService->announcementSummary($currentSchool);
+        return ApiResponseService::success("Announcement Summary Fetched Successfully", $summary, null, 200);
     }
     public function createAnnoucement(CreateAnnouncementRequest $request)
     {
@@ -90,7 +98,8 @@ class AnnouncementController extends Controller
         return ApiResponseService::success("Student Announcements Fetched Successfully", $announcements, null, 200);
     }
 
-    public function getAllStudentAnnouncementLabelId(Request $request, string $labelId){
+    public function getAllStudentAnnouncementLabelId(Request $request, string $labelId)
+    {
         $currentSchool = $request->attributes->get('currentSchool');
         $authenticatedUser = $this->getAuthenticatedUser();
         $announcements = $this->announcementService->getStudentAnnouncementLabelId($currentSchool, $authenticatedUser['authUser'], $labelId);

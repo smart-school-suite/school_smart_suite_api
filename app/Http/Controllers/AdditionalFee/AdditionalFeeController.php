@@ -31,7 +31,7 @@ class AdditionalFeeController extends Controller
         $createAdditionalFees = $this->additionalFeeService->createStudentAdditionalFees($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Additional Fees Created Sucessfully", $createAdditionalFees, null, 201);
     }
-    public function getAdditionalFeeDetails(Request $request, $feeId)
+    public function getAdditionalFeeDetails(Request $request, string $feeId)
     {
         $currenSchool = $request->attributes->get('currentSchool');
         $additionalFeeDetails = $this->additionalFeeService->getAdditionalFeeDetails($currenSchool, $feeId);
@@ -92,7 +92,7 @@ class AdditionalFeeController extends Controller
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
     }
-    public function getStudentAdditionalFees(Request $request, $status)
+    public function getStudentAdditionalFees(Request $request, string $status)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();

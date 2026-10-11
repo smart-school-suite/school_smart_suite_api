@@ -36,6 +36,10 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = 'false';
 
+    public function schoolSemester(): HasMany
+    {
+        return $this->hasMany(SchoolSemester::class, 'school_branch_id');
+    }
     public function subscriptionUsage(): HasMany
     {
         return $this->hasMany(SchoolSubscription::class);
@@ -115,7 +119,7 @@ class Schoolbranches extends Model
 
     public function schooladmin(): HasMany
     {
-        return $this->hasMany(Schooladmin::class);
+        return $this->hasMany(Schooladmin::class, 'school_branch_id');
     }
     public function specialty(): HasMany
     {
@@ -124,12 +128,12 @@ class Schoolbranches extends Model
 
     public function student(): HasMany
     {
-        return $this->hasMany(Student::class);
+        return $this->hasMany(Student::class, 'school_branch_id');
     }
 
     public function teacher(): HasMany
     {
-        return $this->hasMany(Teacher::class);
+        return $this->hasMany(Teacher::class, 'school_branch_id');
     }
 
     public function schoolBranchSetting(): HasMany

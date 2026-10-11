@@ -359,7 +359,7 @@ class ElectionApplicationService
 
         return $application;
     }
-    public function getApplicationsByElection(string $electionId, $currentSchool)
+    public function getApplicationsByElection(string $electionId, object $currentSchool)
     {
         try {
             Elections::findOrFail($electionId);
@@ -384,10 +384,10 @@ class ElectionApplicationService
 
         return $applications;
     }
-    public function getAllApplications($currentSchool)
+    public function getAllApplications(object $currentSchool)
     {
         $application = ElectionApplication::where("school_branch_id", $currentSchool->id)
-            ->with(['student', 'election.electionType', 'electionRole'])
+            ->with(['student.specialty.level', 'election.electionType', 'electionRole'])
             ->get();
 
         if ($application->isEmpty()) {

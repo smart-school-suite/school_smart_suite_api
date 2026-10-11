@@ -2,548 +2,395 @@
 
 namespace App\Services\ExamEvaluation;
 
-use App\Jobs\DataCreationJob\CreateResitExamJob;
-use App\Jobs\NotificationJobs\SendExamResultsReleasedNotificationJob;
-use App\Jobs\StatisticalJobs\AcademicJobs\ExamStatsJob;
-use App\Jobs\StatisticalJobs\AcademicJobs\StudentExamStatsJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Models\StudentResults;
-use App\Models\Exams;
 use App\Models\Grades;
-use App\Models\Student;
-use App\Models\Marks;
 use App\Models\Examtype;
-use App\Models\Courses;
-use App\Models\AccessedStudent;
-use App\Models\Studentresit;
+use App\Models\Exam\ExamCandidate;
+use App\Models\Exam\ExamScore;
+use App\Models\Exam\Exam;
+use App\Exceptions\AppException;
+use App\Models\Course\CourseSpecialty;
 use Illuminate\Support\Collection;
-use App\Events\Actions\AdminActionEvent;
-use App\Constant\Analytics\Academic\AcademicAnalyticsEvent as AcademicEvent;
-use App\Events\Analytics\AcademicAnalyticsEvent;
-use App\Models\TeacherCoursePreference;
-
+use App\Models\Studentresit;
+use Illuminate\Support\Str;
+use App\Jobs\Resit\CreateResitExamJob;
+use Illuminate\Support\Facades\Log;
 class AddExamScoreService
 {
-    public function addExamScores(array $studentScores, $currentSchool, $authAdmin): array
+    public function addExamScores(array $payload, object $currentSchool, object $authAdmin): array
     {
-        $results = [];
-        $examDetails = null;
-        $targetStudent = null;
-        $allStudentsEvaluated = false;
+        $scores = $payload["scores"];
+        $candidateId = $payload["candidate_id"];
+
+        if (empty($scores)) {
+            throw new AppException(
+                'No scores submitted.',
+                400,
+                'No Scores',
+                'Please provide at least one course score to submit.',
+                '/scores/exam'
+            );
+        }
+
         DB::beginTransaction();
+
         try {
-            foreach ($studentScores as $scoreData) {
-                $student = $this->getStudent($currentSchool->id, $scoreData['student_id']);
-                $targetStudent = $student;
-                $exam = Exams::with('examtype')->findOrFail($scoreData['exam_id']);
-                $examDetails = $exam;
+            $candidate = ExamCandidate::where("school_branch_id", $currentSchool->id)
+                ->with([
+                    'exam.examType',
+                    'exam.examGradeScale.schoolGradeScale.grade',
+                    'exam.schoolYear.schoolSemester.semester',
+                    'exam.schoolYear.specialty',
+                    'examScores',
+                    'student'
+                ])
+                ->find($candidateId);
 
-                $this->validateStudentAndExam($student, $exam);
+            if (!$candidate) {
+                throw new AppException(
+                    "The selected candidate could not be found.",
+                    404,
+                    "Candidate Not Found",
+                    "Please verify that the selected candidate exists or has not been removed.",
+                    "/candidates"
+                );
+            }
 
-                if ($this->isDuplicateEntry($currentSchool->id, $scoreData, $student)) {
-                    throw new Exception('Duplicate data entry for this student', 409);
+            if ($candidate->examScores->isNotEmpty()) {
+                throw new AppException(
+                    "The Exam Candidate Already Accessed.",
+                    400,
+                    "Exam Candidate Already Accessed",
+                    "The Exam Candidate Has Already Been Accessed. You Cannot Submit Scores Again.",
+                    "/accessed-students"
+                );
+            }
+
+            $exam = $candidate->exam;
+
+            if (!$exam) {
+                throw new AppException(
+                    "The exam associated with this candidate could not be found.",
+                    404,
+                    "Exam Not Found",
+                    "Please verify that the candidate is assigned to a valid exam.",
+                    "/exams"
+                );
+            }
+
+            if (!$exam->examType) {
+                throw new AppException(
+                    "Exam type not set for this exam.",
+                    400,
+                    "Exam Type Not Set",
+                    "The exam type for this exam has not been set. Please configure it before proceeding.",
+                    "/exams/{$exam->id}/edit"
+                );
+            }
+
+            $schoolSemester = $exam->schoolYear->schoolSemester->first();
+
+            if (!$schoolSemester || !$schoolSemester->semester) {
+                throw new AppException(
+                    'Semester Not Set',
+                    400,
+                    'Semester Not Set',
+                    'The semester for this school year has not been set. Please set the semester to proceed.',
+                    "/school-years/{$exam->schoolYear->id}/edit"
+                );
+            }
+
+            $semesterId = $schoolSemester->semester->id;
+
+            $courses = CourseSpecialty::where("school_branch_id", $currentSchool->id)
+                ->where("specialty_id", $exam->schoolYear->specialty->id)
+                ->whereHas('course', function ($query) use ($semesterId) {
+                    $query->where("semester_id", $semesterId);
+                })
+                ->with(['course' => function ($query) use ($semesterId) {
+                    $query->where("semester_id", $semesterId);
+                }])
+                ->get()
+                ->pluck('course')
+                ->filter()
+                ->unique('id')
+                ->values();
+
+            $requiredCourseIds = $courses->pluck('id')->sort()->values();
+
+            $submittedCourseIds = collect($scores)
+                ->pluck('course_id')
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            if ($submittedCourseIds->count() !== count($scores)) {
+                throw new AppException(
+                    'Duplicate course entries in payload.',
+                    400,
+                    'Duplicate Courses',
+                    'Each course may only be submitted once per exam.',
+                    '/scores/exam/duplicate-course'
+                );
+            }
+
+            if ($submittedCourseIds->count() !== $requiredCourseIds->count()) {
+                throw new AppException(
+                    'Course count mismatch.',
+                    400,
+                    'Incomplete Course Scores',
+                    "This exam requires scores for {$requiredCourseIds->count()} course(s), but {$submittedCourseIds->count()} were submitted.",
+                    "/exams/{$exam->id}"
+                );
+            }
+
+            $missingCourseIds = $requiredCourseIds->diff($submittedCourseIds)->values();
+            $extraCourseIds   = $submittedCourseIds->diff($requiredCourseIds)->values();
+
+            if ($missingCourseIds->isNotEmpty() || $extraCourseIds->isNotEmpty()) {
+                throw new AppException(
+                    'Course mismatch.',
+                    400,
+                    'Course Mismatch',
+                    'The submitted courses do not match the required courses for this exam.',
+                    "/exams/{$exam->id}"
+                );
+            }
+
+            $gradeScales = Grades::with('lettergrade')
+                ->where('school_branch_id', $currentSchool->id)
+                ->where('grades_category_id', $exam->grades_category_id)
+                ->orderBy('minimum_score', 'desc')
+                ->get();
+
+            if ($gradeScales->isEmpty()) {
+                throw new AppException(
+                    'Exam Grade Scale Not Configured',
+                    404,
+                    'Grade Scale Not Configured',
+                    'The grade scale has been set for this exam, but this grade scale has not been configured yet. Please ensure that grades have been set up for this scale.',
+                    "/grades-categories"
+                );
+            }
+
+            $relatedCaExam = $this->getRelatedCa($exam, $currentSchool->id);
+
+            $caScores = ExamScore::where("school_branch_id", $currentSchool->id)
+                ->where("exam_id", $relatedCaExam->id)
+                ->whereHas('candidate.student', function ($query) use ($candidate, $currentSchool) {
+                    $query->where("school_branch_id", $currentSchool->id)
+                        ->where("id", $candidate->student_id);
+                })
+                ->get()
+                ->keyBy('course_id');
+
+            if ($caScores->isEmpty()) {
+                throw new AppException(
+                    "Missing CA Scores",
+                    404,
+                    "Missing CA Scores",
+                    "No Continuous Assessment scores were found for this candidate. Please submit CA scores before the final exam.",
+                    "/accessed-students"
+                );
+            }
+
+            $examScores = [];
+            $now = now();
+            $totalFinalScore = 0.0;
+            $student = $candidate->student;
+            foreach ($scores as $score) {
+                $examScore = (float) $score["score"];
+                $courseId = $score["course_id"];
+
+                $caScoreRow = $caScores->get($courseId);
+
+                if (!$caScoreRow) {
+                    throw new AppException(
+                        "Missing CA score for one or more courses.",
+                        400,
+                        "Missing CA Score",
+                        "No Continuous Assessment score was found for one of the submitted courses. Please ensure CA scores exist for all courses.",
+                        "/accessed-students"
+                    );
                 }
 
-                $totalScore = $this->calculateTotalScore($currentSchool->id, $student, $scoreData, $exam);
-                $gradeData = $this->determineExamLetterGrade(
-                    $totalScore,
-                    $currentSchool->id,
-                    $student,
-                    $exam->id,
-                    $scoreData['course_id']
-                );
+                $caScoreValue = (float) $caScoreRow->score;
+                $finalScore = $caScoreValue + $examScore;
 
-                $marks = $this->createMarks(
-                    $gradeData,
-                    $totalScore,
-                    $student,
-                    $currentSchool->id,
-                    $exam,
-                    $scoreData['course_id']
-                );
+                $this->validateScore($exam, $finalScore);
 
-                $accessedStudent = AccessedStudent::findOrFail($scoreData['accessment_id']);
-                $this->updateAccessedStudent($accessedStudent);
+                $grade = $this->determineGrade($finalScore, $gradeScales);
 
-                $results[] = $marks;
-            }
+                if ($grade === null) {
+                    throw new AppException(
+                        'No matching grade found.',
+                        400,
+                        'Grade Not Matched',
+                        "No grade scale range matches the computed score of {$finalScore}.",
+                        "/grades-categories"
+                    );
+                }
 
-            $totalScoreAndGpa = $this->calculateGpaAndTotalScore(
-                collect($results),
-                collect([
-                    "exam" => $exam,
-                    "student" => $student,
-                    "candidate" => $currentSchool,
-                    "currentSchool" => $currentSchool
-                ])
-            );
-            $examStatus = $this->determineExamResultsStatus(
-                collect($results),
-                collect([
-                    "exam" => $exam,
-                    "student" => $student,
-                    "candidate" => $currentSchool,
-                    "currentSchool" => $currentSchool
-                ])
-            );
+                if ($grade->result === "failed") {
 
-            $this->addStudentResultRecords(
-                $student,
-                $currentSchool,
-                $totalScoreAndGpa,
-                $examDetails,
-                $results,
-                $examStatus
-            );
+                    $this->createResit($courseId, $student->id, $exam->id, $currentSchool->id);
+                }
 
-            $allStudentsEvaluated = $this->updateEvaluatedStudentCount($examDetails);
-            DB::commit();
-            StudentExamStatsJob::dispatch($examDetails, $targetStudent);
-            if ($allStudentsEvaluated) {
-                CreateResitExamJob::dispatch($examDetails);
-                ExamStatsJob::dispatch($examDetails);
-                $this->sendExamResultsNotification($examDetails);
-            }
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.examEvaluation.addScore"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "examEvaluation",
-                    "authAdmin" => $authAdmin,
-                    "data" => $results,
-                    "message" => "Exam Results Summited",
-                ]
-            );
-            event(new AcademicAnalyticsEvent(
-                eventType: AcademicEvent::EXAM_CANDIDATE_EVALUATED,
-                version: 1,
-                payload: [
+                $examScores[] = [
+                    "id" => Str::uuid()->toString(),
                     "school_branch_id" => $currentSchool->id,
-                    "exam_type_id" => $exam->exam_type_id,
-                    "level_id" => $exam->level_id,
-                    "department_id" => $exam->department_id,
-                    "specialty_id" => $exam->specialty_id
-                ]
-            ));
-            return $results;
-        } catch (Exception $e) {
+                    "candidate_id" => $candidate->id,
+                    "course_id" => $courseId,
+                    "exam_id" => $exam->id,
+                    "grade_id" => $grade->id,
+                    "score" => $finalScore,
+                    "updated_at" => $now,
+                    "created_at" => $now,
+                ];
+
+                $totalFinalScore += $finalScore;
+            }
+
+            DB::table("exam_scores")->insert($examScores);
+            if ($this->isExamFullyEvaluated($exam->id)) {
+                CreateResitExamJob::dispatch($exam->id, $currentSchool->id)->afterCommit();
+            }
+
+            DB::commit();
+
+            return [
+                'candidate_id' => $candidate->id,
+                'exam_id' => $exam->id,
+                'courses_submitted' => count($examScores),
+                'total_score' => round($totalFinalScore, 2),
+                'average_score' => round($totalFinalScore / count($examScores), 2),
+                'submitted_at' => $now->toIso8601String(),
+                'message' => 'Exam scores submitted successfully.',
+            ];
+        } catch (AppException $e) {
             DB::rollBack();
             throw $e;
-        }
-    }
-    private function createMarks(
-        array $gradeData,
-        float $score,
-        Student $student,
-        string $schoolId,
-        object $exam,
-        string $courseId
-    ): array {
-        $teacherCourse = TeacherCoursePreference::where("school_branch_id", $schoolId)
-            ->with(['course'])
-            ->where("course_id", $gradeData['course_id'])->first();
-        Marks::create([
-            'student_batch_id' => $student->student_batch_id,
-            'courses_id' => $courseId,
-            'student_id' => $student->id,
-            'exam_id' => $exam->id,
-            'level_id' => $student->level_id,
-            'score' => $score,
-            'specialty_id' => $student->specialty_id,
-            'school_branch_id' => $schoolId,
-            'grade' => $gradeData['letterGrade'],
-            'grade_status' => $gradeData['gradeStatus'],
-            'grade_points' => $gradeData['gradePoints'],
-            'resit_status' => $gradeData['resitStatus'],
-            'gratification' => $gradeData['gratification'],
-        ]);
-        event(new AcademicAnalyticsEvent(
-            eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_EVALUATED,
-            version: 1,
-            payload: [
-                'school_branch_id' => $schoolId,
-                'student_id' => $student->id,
-                'level_id' => $student->level_id,
-                'courses_id' => $teacherCourse->course_id,
-                "teacher_id" => $teacherCourse->teacher_id,
-                "letter_grade_id" => $gradeData['letterGradeId'],
-                'exam_id' => $exam->id,
-                'exam_type_id' => $exam->exam_type_id,
-                'specialty_id' => $student->specialty_id,
-                "department_id" => $exam->department_id,
-                "value" => 1
-            ]
-        ));
-        event(new AcademicAnalyticsEvent(
-            eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_SCORE,
-            version: 1,
-            payload: [
-                'school_branch_id' => $schoolId,
-                'student_id' => $student->id,
-                'level_id' => $student->level_id,
-                'courses_id' => $teacherCourse->course_id,
-                "teacher_id" => $teacherCourse->teacher_id,
-                "letter_grade_id" => $gradeData['letterGradeId'],
-                'exam_id' => $exam->id,
-                'exam_type_id' => $exam->exam_type_id,
-                'specialty_id' => $student->specialty_id,
-                "department_id" => $exam->department_id,
-                "value" => $gradeData['score']
-            ]
-        ));
-        event(new AcademicAnalyticsEvent(
-            eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_GRADE,
-            version: 1,
-            payload: [
-                'school_branch_id' => $schoolId,
-                'student_id' => $student->id,
-                'level_id' => $student->level_id,
-                'courses_id' => $teacherCourse->course_id,
-                "teacher_id" => $teacherCourse->teacher_id,
-                "letter_grade_id" => $gradeData['letterGradeId'],
-                'exam_id' => $exam->id,
-                'exam_type_id' => $exam->exam_type_id,
-                'specialty_id' => $student->specialty_id,
-                "department_id" => $exam->department_id,
-                "value" => 1
-            ]
-        ));
-        if ($gradeData['gradeStatus'] == "passed") {
-            event(new AcademicAnalyticsEvent(
-                eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_PASSED,
-                version: 1,
-                payload: [
-                    'school_branch_id' => $schoolId,
-                    'student_id' => $student->id,
-                    'level_id' => $student->level_id,
-                    'courses_id' => $teacherCourse->course_id,
-                    "teacher_id" => $teacherCourse->teacher_id,
-                    "letter_grade_id" => $gradeData['letterGradeId'],
-                    'exam_id' => $exam->id,
-                    'exam_type_id' => $exam->exam_type_id,
-                    'specialty_id' => $student->specialty_id,
-                    "department_id" => $exam->department_id,
-                    "value" => 1
-                ]
-            ));
-        } else {
-            event(new AcademicAnalyticsEvent(
-                eventType: AcademicEvent::EXAM_CANDIDATE_COURSE_FAILED,
-                version: 1,
-                payload: [
-                    'school_branch_id' => $schoolId,
-                    'student_id' => $student->id,
-                    'level_id' => $student->level_id,
-                    'courses_id' => $teacherCourse->course_id,
-                    "teacher_id" => $teacherCourse->teacher_id,
-                    "letter_grade_id" => $gradeData['letterGradeId'],
-                    'exam_id' => $exam->id,
-                    'exam_type_id' => $exam->exam_type_id,
-                    'specialty_id' => $student->specialty_id,
-                    "department_id" => $exam->department_id,
-                    "value" => 1
-                ]
-            ));
-        }
-        return [
-            'course_id' => $teacherCourse->course->id,
-            'course_name' => $teacherCourse->course->course_title,
-            'course_code' => $teacherCourse->course->course_code,
-            'score' => $gradeData['score'],
-            'grade' => $gradeData['letterGrade'],
-            'grade_status' => $gradeData['gradeStatus'],
-            'gratification' => $gradeData['gratification'],
-            'grade_points' => $gradeData['gradePoints'],
-            'resit_status' => $gradeData['resitStatus'],
-            'course_credit' => $teacherCourse->course->credit,
-        ];
-    }
-    private function updateEvaluatedStudentCount(Exams $exam): bool
-    {
-        $exam->increment('evaluated_candidate_number');
-        $exam->refresh();
-        return $exam->evaluated_candidate_number >= $exam->expected_candidate_number;
-    }
-
-    private function getStudent(string $schoolId, string $studentId): Student
-    {
-        return Student::where('school_branch_id', $schoolId)->findOrFail($studentId);
-    }
-
-    private function validateStudentAndExam(?object $student, ?object $exam): void
-    {
-        if (!$student || !$exam) {
-            throw new Exception('Student or Exam not found', 404);
+        } catch (Exception $e) {
+            DB::rollBack();
+              Log::error('Failed to add Exam scores.', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'candidate_id' => $candidateId,
+                'school_branch_id' => $currentSchool->id,
+                'auth_admin_id' => $authAdmin->id ?? null,
+                'payload_scores_count' => is_array($scores) ? count($scores) : null,
+                'submitted_course_ids' => $submittedCourseIds ?? null,
+                'required_course_ids' => $requiredCourseIds ?? null,
+                'exam_id' => $exam->id ?? null,
+                'semester_id' => $semesterId ?? null,
+            ]);
+            throw new AppException(
+                'An unexpected error occurred while adding exam scores. Please try again later.',
+                500,
+                'Server Error',
+                'We encountered an unexpected issue while saving the scores. This has been logged for investigation.',
+                null
+            );
         }
     }
 
-    private function isDuplicateEntry(string $schoolId, array $scoreData, Student $student): bool
+    private function isExamFullyEvaluated(string $examId): bool
     {
-        return Marks::where('school_branch_id', $schoolId)
-            ->where('courses_id', $scoreData['course_id'])
-            ->where('exam_id', $scoreData['exam_id'])
-            ->where('level_id', $student->level_id)
-            ->where('specialty_id', $student->specialty_id)
-            ->where('student_id', $student->id)
+        $exam = Exam::with('examCandidate.examScores')->findOrFail($examId);
+
+        return $exam->examCandidate->every(
+            fn($candidate) => $candidate->examScores->isNotEmpty()
+        );
+    }
+
+    private function validateScore(object $exam, float $score): void
+    {
+        if ($score < 0 || $score > $exam->max_score) {
+            throw new AppException(
+                'Score exceeds maximum exam mark.',
+                400,
+                'Validation Error',
+                "The entered score of $score is not valid. The maximum allowed mark for this exam is $exam->max_score.",
+                "/exam"
+            );
+        }
+    }
+
+    private function createResit(string $courseId, string $studentId, string $examId, string $schoolBranchId)
+    {
+        $existingResit = Studentresit::where("school_branch_id", $schoolBranchId)
+            ->where("student_id", $studentId)
+            ->where("exam_id", $examId)
+            ->where("course_id", $courseId)
             ->exists();
-    }
-
-    private function retrieveCaScore(string $schoolId, Student $student, string $courseId, string $examId): Marks
-    {
-        $caScore = Marks::where('school_branch_id', $schoolId)
-            ->where('exam_id', $examId)
-            ->where('student_id', $student->id)
-            ->where('courses_id', $courseId)
-            ->where('specialty_id', $student->specialty_id)
-            ->where('level_id', $student->level_id)
-            ->where('student_batch_id', $student->student_batch_id)
-            ->first();
-
-        if (!$caScore) {
-            throw new Exception('CA mark not found for this course', 400);
+        if (!$existingResit) {
+            Studentresit::create([
+                'school_branch_id' => $schoolBranchId,
+                'student_id' => $studentId,
+                'course_id' => $courseId,
+                'exam_id' => $examId,
+            ]);
         }
-
-        return $caScore;
     }
-
-    private function calculateTotalScore(string $schoolId, Student $student, array $scoreData, object $exam): float
+    private function getRelatedCa(Exam $exam, string $schoolBranchId): Exam
     {
-        $additionalExam = $this->findCaExamForCurrentExam($scoreData['exam_id']);
-        $caScore = $this->retrieveCaScore($schoolId, $student, $scoreData['course_id'], $additionalExam->id);
-        $totalScore = $scoreData['score'] + $caScore->score;
-
-        if ($totalScore > ($additionalExam->weighted_mark + $exam->weighted_mark)) {
-            throw new Exception('Total score exceeds maximum allowed score.', 400);
-        }
-
-        return $totalScore;
-    }
-
-    private function findCaExamForCurrentExam(string $examId): Exams
-    {
-        $exam = Exams::with('examType')->findOrFail($examId);
         if ($exam->examType->type !== 'exam') {
-            throw new Exception('Exam type is not valid or not found');
+            throw new AppException(
+                'Invalid Exam Type',
+                400,
+                'Exam Type Error',
+                'The selected evaluation is not a final exam. Please select a valid exam to proceed.',
+                '/exams'
+            );
         }
 
-        $caExamType = ExamType::where('semester_id', $exam->examType->semester_id)
+        $caExamType = Examtype::where('semester_id', $exam->examType->semester_id)
             ->where('type', 'ca')
-            ->firstOrFail();
-        $additionalExams = Exams::where('school_year', $exam->school_year)
-            ->where('exam_type_id', $caExamType->id)
-            ->where('specialty_id', $exam->specialty_id)
-            ->where('level_id', $exam->level_id)
-            ->where('student_batch_id', $exam->student_batch_id)
-            ->where('semester_id', $exam->semester_id)
             ->first();
-        return $additionalExams;
+
+        if (!$caExamType) {
+            throw new AppException(
+                'No Continuous Assessment Type Found',
+                404,
+                'Continuous Assessment Not Configured',
+                'No Continuous Assessment type is set up for this semester. Please configure it in the settings before proceeding.',
+                '/exam-types'
+            );
+        }
+
+        $relatedCaExam = Exam::where('school_branch_id', $schoolBranchId)
+            ->where('exam_type_id', $caExamType->id)
+            ->where('school_year_id', $exam->school_year_id)
+            ->first();
+
+        if (!$relatedCaExam) {
+            throw new AppException(
+                'No Continuous Assessment Found',
+                404,
+                'Continuous Assessment Missing',
+                'No corresponding Continuous Assessment exam exists for this academic year and semester. Please create one to proceed.',
+                '/exams'
+            );
+        }
+
+        return $relatedCaExam;
     }
 
-    private function determineExamLetterGrade(float $score, string $schoolId, Student $student, string $examId, string $courseId): array
-    {
-        $exam = Exams::findOrFail($examId);
-        $grades = Grades::with('lettergrade')
-            ->where('school_branch_id', $schoolId)
-            ->where('grades_category_id', $exam->grades_category_id)
-            ->orderBy('minimum_score', 'desc')
-            ->get();
-
-        if ($grades->isEmpty()) {
-            throw new Exception("No grades found for school ID: {$schoolId} and exam ID: {$examId}");
-        }
-
-        foreach ($grades as $grade) {
-            if ($score >= $grade->minimum_score && $score <= $grade->maximum_score) {
-                if ($grade->resit_status === 'resit') {
-                    $this->createResitableCourse($courseId, $exam, $student, $schoolId);
-                }
-
-                return [
-                    'letterGrade' => $grade->lettergrade->letter_grade,
-                    'gradeStatus' => $grade->grade_status,
-                    'gratification' => $grade->determinant,
-                    'gradePoints' => $grade->grade_points,
-                    'resitStatus' => $grade->resit_status,
-                    'score' => $score,
-                ];
+    private function determineGrade(
+        float $score,
+        Collection $gradeScales
+    ): ?object {
+        foreach ($gradeScales as $gradeScale) {
+            if ($score >= $gradeScale->minimum_score && $score <= $gradeScale->maximum_score) {
+                return $gradeScale;
             }
         }
-        return [
-            'letterGrade' => 'F',
-            'gradeStatus' => 'fail',
-            'gratification' => 'poor',
-            'gradePoints' => 0.0,
-            'resitStatus' => 'resit',
-            'score' => $score,
-        ];
-    }
 
-    private function createResitableCourse(string $courseId,  $exam, Student $student, string $schoolId): void
-    {
-
-        if (!Studentresit::where("student_id", $student->id)
-            ->where("level_id", $student->level_id)
-            ->where("specialty_id", $student->specialty_id)
-            ->where("course_id", $courseId)
-            ->exists()) {
-            Studentresit::create([
-                'school_branch_id' => $schoolId,
-                'student_id' => $student->id,
-                'specialty_id' => $student->specialty_id,
-                'course_id' => $courseId,
-                'exam_id' => $exam->id,
-                'semester_id' => $exam->semester_id,
-                'student_batch_id' => $student->student_batch_id,
-                'level_id' => $student->level_id,
-            ]);
-            event(new AcademicAnalyticsEvent(
-                eventType: AcademicEvent::EXAM_CANDIDATE_RESIT_INCURRED,
-                version: 1,
-                payload: [
-                    'school_branch_id' => $schoolId,
-                    'student_id' => $student->id,
-                    'specialty_id' => $student->specialty_id,
-                    'course_id' => $courseId,
-                    'exam_id' => $exam->id,
-                    'semester_id' => $exam->semester_id,
-                    'student_batch_id' => $student->student_batch_id,
-                    'level_id' => $student->level_id,
-                ]
-            ));
-        }
-    }
-
-    private function updateAccessedStudent(object $accessedStudent): void
-    {
-        if (!$accessedStudent->grades_submitted || $accessedStudent->student_accessed === 'pending') {
-            $accessedStudent->grades_submitted = true;
-            $accessedStudent->student_accessed = 'accessed';
-            $accessedStudent->save();
-        }
-    }
-
-    private function calculateGpaAndTotalScore(Collection $marks, Collection $evaluationCredentials): array
-    {
-        $totalWeightedPoints = 0;
-        $totalCredits = 0;
-        $overallTotalScore = 0;
-
-        foreach ($marks as $mark) {
-            $credits = $mark['course_credit'] ?? ($mark->course->credit ?? 0);
-            $gradePoints = $mark['grade_points'] ?? 0;
-            $score = $mark['score'] ?? 0;
-
-            $totalWeightedPoints += $gradePoints * $credits;
-            $totalCredits += $credits;
-            $overallTotalScore += $score;
-        }
-
-        $gpa = $totalCredits > 0 ? round($totalWeightedPoints / $totalCredits, 2) : 0.00;
-
-        event(new AcademicAnalyticsEvent(
-            eventType: AcademicEvent::EXAM_CANDIDATE_GPA_CALCULATED,
-            version: 1,
-            payload: [
-                "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
-                "student_id" => $evaluationCredentials->get("student")->id,
-                "level_id" => $evaluationCredentials->get("student")->level_id,
-                "department_id" => $evaluationCredentials->get("student")->department_id,
-                "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
-                "exam_id" => $evaluationCredentials->get("exam")->id,
-                "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
-                "value" => $gpa
-            ]
-        ));
-        event(new AcademicAnalyticsEvent(
-            eventType: AcademicEvent::EXAM_CANDIDATE_TOTAL_SCORE_CALCULATED,
-            version: 1,
-            payload: [
-                "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
-                "student_id" => $evaluationCredentials->get("student")->id,
-                "level_id" => $evaluationCredentials->get("student")->level_id,
-                "department_id" => $evaluationCredentials->get("student")->department_id,
-                "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
-                "exam_id" => $evaluationCredentials->get("exam")->id,
-                "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
-                "value" => round($overallTotalScore, 2)
-            ]
-        ));
-        return [
-            'totalScore' => round($overallTotalScore, 2),
-            'gpa' => $gpa,
-        ];
-    }
-
-    private function addStudentResultRecords(Student $student, $currentSchool, array $totalScoreAndGpa, object $exam, array $result, array $examStatus): StudentResults
-    {
-        $studentResult = StudentResults::create([
-            'student_id' => $student->id,
-            'specialty_id' => $student->specialty_id,
-            'student_batch_id' => $student->student_batch_id,
-            'level_id' => $student->level_id,
-            'exam_id' => $exam->id,
-            'school_branch_id' => $currentSchool->id,
-            'total_score' => $totalScoreAndGpa['totalScore'],
-            'gpa' => $totalScoreAndGpa['gpa'],
-            'exam_status' => $examStatus['passed'] ? 'Passed' : 'Failed',
-            'score_details' => json_encode($result),
-        ]);
-        return $studentResult;
-    }
-
-    private function determineExamResultsStatus(Collection $marks, Collection $evaluationCredentials): array
-    {
-        $failedCourses = $marks->filter(fn($mark) => ($mark['grade_status'] ?? $mark->grade_status ?? '') === 'failed');
-
-        if ($failedCourses->isEmpty()) {
-            event(new AcademicAnalyticsEvent(
-                eventType: AcademicEvent::EXAM_CANDIDATE_PASSED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
-                    "student_id" => $evaluationCredentials->get("student")->id,
-                    "level_id" => $evaluationCredentials->get("student")->level_id,
-                    "department_id" => $evaluationCredentials->get("student")->department_id,
-                    "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
-                    "exam_id" => $evaluationCredentials->get("exam")->id,
-                    "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
-                    "value" => 1
-                ]
-            ));
-            return [
-                'exam_status' => 'Passed',
-                'passed' => true,
-                'failed' => false,
-            ];
-        }
-
-        event(new AcademicAnalyticsEvent(
-            eventType: AcademicEvent::EXAM_CANDIDATE_FAILED,
-            version: 1,
-            payload: [
-                "school_branch_id" => $evaluationCredentials->get("currentSchool")->id,
-                "student_id" => $evaluationCredentials->get("student")->id,
-                "level_id" => $evaluationCredentials->get("student")->level_id,
-                "department_id" => $evaluationCredentials->get("student")->department_id,
-                "specialty_id" => $evaluationCredentials->get("student")->specialty_id,
-                "exam_id" => $evaluationCredentials->get("exam")->id,
-                "exam_type_id" => $evaluationCredentials->get("exam")->exam_type_id,
-                "value" => 1
-            ]
-        ));
-        return [
-            'exam_status' => 'Failed',
-            'passed' => false,
-            'failed' => true,
-        ];
-    }
-
-    private function sendExamResultsNotification(Exams $exam)
-    {
-        $examDetails = Exams::with('specialty', 'level', 'examtype')->find($exam->id);
-        $examCandidates = AccessedStudent::where('exam_id', $exam->id)->with('student')->get();
-        SendExamResultsReleasedNotificationJob::dispatch($examCandidates, $examDetails);
+        return null;
     }
 }

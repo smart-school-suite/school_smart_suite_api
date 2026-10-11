@@ -19,9 +19,8 @@ use App\Models\Course\CourseSpecialty;
 
 class CourseService
 {
-    public function createCourse(array $data, object $currentSchool, object  $authAdmin): Courses
+    public function createCourse(array $data, object $currentSchool, object $authAdmin): Courses
     {
-        // $specialty = Specialty::findOrFail($data['specialty_id']);
         $courses = Courses::where("school_branch_id", $currentSchool->id)
             ->where("course_code", $data['course_code'])
             ->where("course_title", $data['course_title'])
@@ -96,7 +95,7 @@ class CourseService
         // ));
         return $course;
     }
-    public function deleteCourse(string $courseId, object $currentSchool, array $authAdmin)
+    public function deleteCourse(string $courseId, object $currentSchool, object $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if (!$course) {
@@ -130,7 +129,7 @@ class CourseService
         ]);
         return $course;
     }
-    public function bulkDeleteCourse(array $coursesIds, object $currentSchool, array $authAdmin)
+    public function bulkDeleteCourse(array $coursesIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -177,7 +176,7 @@ class CourseService
             );
         }
     }
-    public function updateCourse(string $courseId, array $data, object $currentSchool, array $authAdmin)
+    public function updateCourse(string $courseId, array $data, object $currentSchool, object $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)
             ->find($courseId);
@@ -249,7 +248,7 @@ class CourseService
         ]);
         return $course;
     }
-    public function bulkUpdateCourse(array $updateCourseList, object $currentSchool, array $authAdmin)
+    public function bulkUpdateCourse(array $updateCourseList, object $currentSchool, object $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -327,11 +326,15 @@ class CourseService
             "course_code" => $course->course_code ?? null,
             "course_title" => $course->course_title ?? null,
             "course_credit" => $course->credit ?? null,
+            'course_description' => $course->description ?? null,
             "semester_title" => $course->semester->name ?? null,
+            "semester_count" => $course->semester->count ?? null,
             "specialty_name" => $course->specialties->first()->specialty_name ?? null,
             "level_name" => $course->specialties->first()->level->name ?? null,
             "level_number" => $course->specialties->first()->level->level ?? null,
             "status" => $course->status ?? null,
+            "created_at" => $course->created_at ?? null,
+            "updated_at" => $course->updated_at ?? null
         ]);
     }
     public function courseDetails(string $courseId, object $currentSchool)
@@ -402,7 +405,7 @@ class CourseService
             );
         }
     }
-    public function deactivateCourse(object $currentSchool, string $courseId, array $authAdmin)
+    public function deactivateCourse(object $currentSchool, string $courseId, object $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if ($course->status === "inactive") {
@@ -435,7 +438,7 @@ class CourseService
 
         return $course;
     }
-    public function bulkDeactivateCourse(array $coursesIds, object $currentSchool, array $authAdmin)
+    public function bulkDeactivateCourse(array $coursesIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -491,7 +494,7 @@ class CourseService
             );
         }
     }
-    public function activateCourse(object $currentSchool, string $courseId, array $authAdmin)
+    public function activateCourse(object $currentSchool, string $courseId, object $authAdmin)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)->find($courseId);
         if ($course->status === "active") {
@@ -523,7 +526,7 @@ class CourseService
         ]);
         return $course;
     }
-    public function bulkActivateCourse(array $courseIds, object $currentSchool, array $authAdmin)
+    public function bulkActivateCourse(array $courseIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         $specialtyIds = [];
@@ -777,7 +780,6 @@ class CourseService
 
         return $formatted->toArray();
     }
-
     public function getCoursesGSemesterBspecialtyId(object $currentSchool, string $specialtyId)
     {
         $courses = Courses::where("school_branch_id", $currentSchool->id)

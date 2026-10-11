@@ -14,19 +14,20 @@ use App\Events\Actions\StudentActionEvent;
 
 class StudentService
 {
-    public function getStudents($currentSchool)
+    public function getStudents(object $currentSchool)
     {
         $students = Student::where('school_branch_id', $currentSchool->id)->with([
             'guardian',
-            'specialty',
-            'level',
+            'specialty.level',
+            'specialty.department',
             'studentBatch',
             'gender',
+            'relationship'
         ])
             ->where("dropout_status", false)->get();
         return $students;
     }
-    public function deleteStudent($studentId, $currentSchool, $authAdmin)
+    public function deleteStudent(string $studentId, object $currentSchool, object $authAdmin)
     {
         $studentExists = Student::Where("school_branch_id", $currentSchool->id)->find($studentId);
         if (!$studentExists) {
@@ -54,7 +55,7 @@ class StudentService
         ]);
         return $studentExists;
     }
-    public function updateStudent($studentId, $currentSchool, array $data, $authAdmin)
+    public function updateStudent(string $studentId, object $currentSchool, array $data, $authAdmin)
     {
         $studentExists = Student::Where("school_branch_id", $currentSchool->id)->find($studentId);
         if (!$studentExists) {
@@ -84,22 +85,21 @@ class StudentService
         ]);
         return $studentExists;
     }
-    public function studentDetails($studentId, $currentSchool)
+    public function studentDetails(string $studentId, object $currentSchool)
     {
         $studentDetails = Student::where("school_branch_id", $currentSchool->id)
             ->with([
                 'guardian',
-                'specialty',
-                'level',
+                'specialty.level',
                 'gender',
                 'studentSource',
                 'studentBatch',
-                'studentParentRelationship'
+                'relationship'
             ])
             ->find($studentId);
         return $studentDetails;
     }
-    public function deactivateStudentAccount($studentId, $currentSchool, $authAdmin)
+    public function deactivateStudentAccount(string $studentId, object $currentSchool, $authAdmin)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
         $student->status = 'inactive';
@@ -125,7 +125,7 @@ class StudentService
         ]);
         return $student;
     }
-    public function activateStudentAccount($studentId, $currentSchool, $authAdmin)
+    public function activateStudentAccount(string $studentId, object $currentSchool, $authAdmin)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
         $student->status = 'active';
@@ -151,7 +151,7 @@ class StudentService
         ]);
         return $student;
     }
-    public function markStudentAsDropout($studentId, $currentSchool, $reason, $authAdmin)
+    public function markStudentAsDropout(string $studentId, object $currentSchool, $reason, $authAdmin)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)->findOrFail($studentId);
 
@@ -178,7 +178,7 @@ class StudentService
         ]);
         return $student;
     }
-    public function bulkReinstateDropOutStudent($studentDropoutList, $currentSchool, $authAdmin)
+    public function bulkReinstateDropOutStudent(array $studentDropoutList, object $currentSchool, $authAdmin)
     {
         $studentIds = [];
         try {
@@ -216,15 +216,17 @@ class StudentService
             throw $e;
         }
     }
-    public function getAllDropoutStudents($currentSchool)
+    public function getAllDropoutStudents(object $currentSchool)
     {
         try {
             $dropoutStudents = Student::where('school_branch_id', $currentSchool->id)
                 ->with([
-                    'level',
-                    'specialty',
+                    'guardian',
+                    'specialty.level',
+                    'specialty.department',
                     'studentBatch',
-                    'department'
+                    'gender',
+                    'relationship'
                 ])
                 ->where('dropout_status', true)
                 ->get();
@@ -252,7 +254,7 @@ class StudentService
             );
         }
     }
-    public function reinstateDropoutStudent(string $studentDropoutId, $currentSchool, $authAdmin)
+    public function reinstateDropoutStudent(string $studentDropoutId, object $currentSchool, $authAdmin)
     {
         $dropoutStudent = Student::where('school_branch_id', $currentSchool->id)->find($studentDropoutId);
         if (!$dropoutStudent) {
@@ -281,7 +283,7 @@ class StudentService
         ]);
         return $dropoutStudent;
     }
-    public function bulkMarkStudentAsDropOut($studentDropdoutList, $currentSchool, $authAdmin)
+    public function bulkMarkStudentAsDropOut(array $studentDropdoutList, object $currentSchool, $authAdmin)
     {
         $result = [];
         $studentIds = [];
@@ -319,7 +321,7 @@ class StudentService
             throw $e;
         }
     }
-    public function bulkDeleteStudent($studentIds, $currentSchool, $authAdmin)
+    public function bulkDeleteStudent(array $studentIds, object $currentSchool, $authAdmin)
     {
         $result = [];
         $studentIds = [];
@@ -356,7 +358,7 @@ class StudentService
             throw $e;
         }
     }
-    public function bulkUpdateStudent($updateData, $currentSchool, $authAdmin)
+    public function bulkUpdateStudent(array $updateData, object $currentSchool, $authAdmin)
     {
         $result = [];
         $studentIds = [];
@@ -395,7 +397,7 @@ class StudentService
             throw $e;
         }
     }
-    public function bulkActivateStudent($studentIds, $currentSchool, $authAdmin)
+    public function bulkActivateStudent(array $studentIds, object $currentSchool, $authAdmin)
     {
         $result = [];
         $studentIds = [];
@@ -558,10 +560,10 @@ class StudentService
             throw $e;
         }
     }
-    public function getStudentProfileDetails($currentSchool, $studentId)
+    public function getStudentProfileDetails(object $currentSchool, string $studentId)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
-            ->with(['department', 'specialty', 'guardian', 'level', 'schoolbranches'])
+            ->with(['department', 'specialty.level', 'guardian', 'level'])
             ->find($studentId);
         return $student;
     }

@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\Log;
 use Exception;
 use Throwable;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
+// use App\Events\Actions\AdminActionEvent;
+// use App\Events\Actions\StudentActionEvent;
 
 class TuitionFeeTransactionService
 {
-    public function bulkDeleteTuitionFeeTransaction($transactionIds, $currentSchool, $authAdmin)
+    public function bulkDeleteTuitionFeeTransaction(array $transactionIds, object  $currentSchool, object $authAdmin)
     {
         $result = [];
         $studentIds = [];
@@ -29,31 +29,31 @@ class TuitionFeeTransactionService
                 $studentIds[] = $transactions->tuition->student_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.tuitionFee.delete.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "tuitionFeeTransactionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Tuition Fee Transaction Deleted Event",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'tuitionFeeTransactionDeleted',
-                'message'      => 'Tuition Fees Transaction Deleted',
-                'data'         => $result,
-            ]);
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.tuitionFee.delete.transaction"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "tuitionFeeTransactionManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $result,
+            //         "message" => "Tuition Fee Transaction Deleted Event",
+            //     ]
+            // );
+            // StudentActionEvent::dispatch([
+            //     'schoolBranch' => $currentSchool->id,
+            //     'studentIds'   => $studentIds,
+            //     'feature'      => 'tuitionFeeTransactionDeleted',
+            //     'message'      => 'Tuition Fees Transaction Deleted',
+            //     'data'         => $result,
+            // ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function bulkReverseTuitionFeeTransaction($transactionIds, $currentSchool, $authAdmin)
+    public function bulkReverseTuitionFeeTransaction(array $transactionIds, object $currentSchool, object $authAdmin)
     {
         $results = [];
         $studentIds = [];
@@ -93,36 +93,36 @@ class TuitionFeeTransactionService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.tuitionFee.reverse.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "tuitionFeeTransactionManagement",
-                    "action" => "tuitionFeeTransaction.reversed",
-                    "authAdmin" => $authAdmin,
-                    "data" => $results,
-                    "message" => "Tuition Fee Transaction Reversed",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'tuitionFeeTransactionReversed',
-                'message'      => 'Tuition Fee Transaction Reversed',
-                'data'         => $results,
-            ]);
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.tuitionFee.reverse.transaction"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "tuitionFeeTransactionManagement",
+            //         "action" => "tuitionFeeTransaction.reversed",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $results,
+            //         "message" => "Tuition Fee Transaction Reversed",
+            //     ]
+            // );
+            // StudentActionEvent::dispatch([
+            //     'schoolBranch' => $currentSchool->id,
+            //     'studentIds'   => $studentIds,
+            //     'feature'      => 'tuitionFeeTransactionReversed',
+            //     'message'      => 'Tuition Fee Transaction Reversed',
+            //     'data'         => $results,
+            // ]);
             return $results;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-    public function getTuitionFeeTransactions($currentSchool)
+    public function getTuitionFeeTransactions(object $currentSchool)
     {
         try {
             $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
-                ->with(['tuition.student', 'tuition.specialty', 'tuition.level'])
+                ->with(['tuition.student', 'tuition.specialty.level', 'tuition.specialty.department'])
                 ->get();
 
             if ($getTuitionFeeTransactions->isEmpty()) {
@@ -148,7 +148,7 @@ class TuitionFeeTransactionService
             );
         }
     }
-    public function deleteTuitionFeeTransaction($transactionId, $currentSchool, $authAdmin)
+    public function deleteTuitionFeeTransaction(string $transactionId, object $currentSchool, object $authAdmin)
     {
         try {
             $transaction = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
@@ -165,24 +165,24 @@ class TuitionFeeTransactionService
             }
 
             $transaction->delete();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.tuitionFee.delete.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "tuitionFeeTransactionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $transaction,
-                    "message" => "Tuition Fee Transaction Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$transaction->tuition->student_id],
-                'feature'      => 'tuitionFeeTransactionDeleted',
-                'message'      => 'Tuition Fee Transaction Deleted',
-                'data'         => $transaction,
-            ]);
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.tuitionFee.delete.transaction"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "tuitionFeeTransactionManagement",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $transaction,
+            //         "message" => "Tuition Fee Transaction Deleted",
+            //     ]
+            // );
+            // StudentActionEvent::dispatch([
+            //     'schoolBranch' => $currentSchool->id,
+            //     'studentIds'   => [$transaction->tuition->student_id],
+            //     'feature'      => 'tuitionFeeTransactionDeleted',
+            //     'message'      => 'Tuition Fee Transaction Deleted',
+            //     'data'         => $transaction,
+            // ]);
             return $transaction;
         } catch (AppException $e) {
             throw $e;
@@ -208,7 +208,7 @@ class TuitionFeeTransactionService
             );
         }
     }
-    public function tuitionFeeTransactionDetails($transactionId, $currentSchool)
+    public function tuitionFeeTransactionDetails(string $transactionId, object $currentSchool)
     {
         try {
             $transactionDetail = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
@@ -238,7 +238,7 @@ class TuitionFeeTransactionService
             );
         }
     }
-    public function reverseFeePaymentTransaction(string $transactionId, $currentSchool, $authAdmin)
+    public function reverseFeePaymentTransaction(string $transactionId, object $currentSchool, object $authAdmin)
     {
         DB::beginTransaction();
 
@@ -297,25 +297,25 @@ class TuitionFeeTransactionService
             $transaction->delete();
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.tuitionFee.reverse.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "tuitionFeeTransactionManagement",
-                    "action" => "tuitionFeeTransaction.reversed",
-                    "authAdmin" => $authAdmin,
-                    "data" => $transaction,
-                    "message" => "Tuition Fee Transaction Reversed",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$transaction->tuition->student_id],
-                'feature'      => 'tuitionFeeTransactionReversed',
-                'message'      => 'Tuition Fee Transaction Reversed',
-                'data'         => $transaction,
-            ]);
+            // AdminActionEvent::dispatch(
+            //     [
+            //         "permissions" =>  ["schoolAdmin.tuitionFee.reverse.transaction"],
+            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            //         "schoolBranch" =>  $currentSchool->id,
+            //         "feature" => "tuitionFeeTransactionManagement",
+            //         "action" => "tuitionFeeTransaction.reversed",
+            //         "authAdmin" => $authAdmin,
+            //         "data" => $transaction,
+            //         "message" => "Tuition Fee Transaction Reversed",
+            //     ]
+            // );
+            // StudentActionEvent::dispatch([
+            //     'schoolBranch' => $currentSchool->id,
+            //     'studentIds'   => [$transaction->tuition->student_id],
+            //     'feature'      => 'tuitionFeeTransactionReversed',
+            //     'message'      => 'Tuition Fee Transaction Reversed',
+            //     'data'         => $transaction,
+            // ]);
             return $transaction;
         } catch (QueryException $e) {
             DB::rollBack();

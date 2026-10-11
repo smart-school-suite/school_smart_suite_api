@@ -3,17 +3,20 @@
 namespace App\Models\AcademicYear;
 
 use App\Models\Course\SemesterJointCourse;
-use App\Models\Exams;
+use App\Models\Exam\Exam;
+use App\Models\FeeSchedule;
+use App\Models\Promotion\PromotionRun;
+use App\Models\ResitExam;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolAcademicYear extends Model
 {
-    use GeneratesUuid;
+    use HasUuids;
     protected $fillable = [
         'specialty_id',
         'school_branch_id',
@@ -26,14 +29,19 @@ class SchoolAcademicYear extends Model
     public $incrementing = false;
     public $keyType = 'string';
 
+    public function tuitionFeeSchedule(): HasMany
+    {
+        return $this->hasMany(FeeSchedule::class, 'school_year_id');
+    }
+    public function resitExam(): HasMany
+    {
+        return $this->hasMany(ResitExam::class, 'school_year_id');
+    }
     public function schoolSemester(): HasMany
     {
         return $this->hasMany(SchoolSemester::class, 'school_year_id');
     }
-    public function semesterJointCourse(): HasMany
-    {
-        return $this->hasMany(SemesterJointCourse::class);
-    }
+
     public function systemAcademicYear(): BelongsTo
     {
         return $this->belongsTo(SystemAcademicYear::class, 'system_academic_year_id');
@@ -45,6 +53,11 @@ class SchoolAcademicYear extends Model
 
     public function exam(): HasMany
     {
-        return $this->hasMany(Exams::class, 'school_year_id');
+        return $this->hasMany(Exam::class, 'school_year_id');
+    }
+
+    public function promotionRun(): HasMany
+    {
+        return $this->hasMany(PromotionRun::class, 'school_year_id');
     }
 }

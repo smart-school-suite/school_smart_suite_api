@@ -3,7 +3,7 @@
 namespace App\Services\TuitionFee;
 
 use App\Jobs\NotificationJobs\SendAdminTuitionFeePaidNotificationJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeePaymentStatJob;
+// use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeePaymentStatJob;
 use App\Models\Student;
 use App\Models\TuitionFees;
 use Illuminate\Support\Facades\DB;
@@ -19,9 +19,10 @@ use Throwable;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
 use App\Models\StudentFeeSchedule;
+
 class TuitionFeePaymentService
 {
-    public function payStudentFees(array $data, object $currentSchool, $authAdmin): TuitionFees
+    public function payStudentFees(array $data, object $currentSchool, object $authAdmin): TuitionFees
     {
         DB::beginTransaction();
 
@@ -43,7 +44,10 @@ class TuitionFeePaymentService
                 );
             }
 
-            $paymentAmount = $data['amount'];
+            $paymentAmount = (float) $data['amount'];
+            $tuitionTotal = (float) ($studentTuitionFees->tuition_fee_total ?? $studentTuitionFees->tution_fee_total ?? 0);
+            $currentAmountPaid = (float) ($studentTuitionFees->amount_paid ?? 0);
+            $amountLeft = max(0, $tuitionTotal - $currentAmountPaid);
 
             if ($paymentAmount <= 0) {
                 throw new AppException(
@@ -55,9 +59,9 @@ class TuitionFeePaymentService
                 );
             }
 
-            if ($paymentAmount > $studentTuitionFees->amount_left) {
+            if ($paymentAmount > $amountLeft) {
                 throw new AppException(
-                    "Payment amount ({$paymentAmount}) exceeds the remaining fee debt ({$studentTuitionFees->amount_left}).",
+                    "Payment amount ({$paymentAmount}) exceeds the remaining fee debt ({$amountLeft}).",
                     409,
                     "Overpayment Conflict ❌",
                     "The amount you entered exceeds the balance currently owed on this tuition fee.",
@@ -65,9 +69,9 @@ class TuitionFeePaymentService
                 );
             }
 
-            if ($student->payment_format === "one-time" && $studentTuitionFees->tution_fee_total != $paymentAmount) {
+            if ($student->payment_format === "one-time" && $tuitionTotal != $paymentAmount) {
                 throw new AppException(
-                    "Student payment format is 'one-time', requiring the full amount ({$studentTuitionFees->tution_fee_total}) to be paid.",
+                    "Student payment format is 'one-time', requiring the full amount ({$tuitionTotal}) to be paid.",
                     400,
                     "Full Payment Required 💳",
                     "This student's payment plan requires the full tuition amount to be paid in a single transaction.",
@@ -75,20 +79,15 @@ class TuitionFeePaymentService
                 );
             }
 
-            $studentTuitionFees->amount_paid += $paymentAmount;
-            $studentTuitionFees->amount_left -= $paymentAmount;
-
-            if ($studentTuitionFees->amount_left <= 0) {
-                $studentTuitionFees->status = "completed";
-                $studentTuitionFees->amount_left = 0;
-            }
-
+            $studentTuitionFees->amount_paid = $currentAmountPaid + $paymentAmount;
             $studentTuitionFees->save();
+
+            $newAmountLeft = max(0, $tuitionTotal - $studentTuitionFees->amount_paid);
 
             $paymentId = Str::uuid();
             $transactionId = 'TXN-' . strtoupper(Str::random(10));
 
-            $tuitionFeeTransaction =  TuitionFeeTransactions::create([
+            $tuitionFeeTransaction = TuitionFeeTransactions::create([
                 'id' => $paymentId,
                 'transaction_id' => $transactionId,
                 'amount' => $paymentAmount,
@@ -105,24 +104,24 @@ class TuitionFeePaymentService
 
             $paymentDetails = [
                 'amountPaid' => $paymentAmount,
-                'balanceLeft' => $studentTuitionFees->amount_left,
+                'balanceLeft' => $newAmountLeft,
                 'paymentDate' => now()
             ];
 
             SendAdminTuitionFeePaidNotificationJob::dispatch($currentSchool->id, $student, $paymentDetails);
-            $student->notify(new TuitionFeePaid($paymentAmount, $studentTuitionFees->amount_left, now()));
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.tuitionFee.pay"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "tuitionFeeManagement",
-                    "action" => "tuitionFee.paid",
-                    "authAdmin" => $authAdmin,
-                    "data" => $studentTuitionFees,
-                    "message" => "Tuition Fee Paid",
-                ]
-            );
+            $student->notify(new TuitionFeePaid($paymentAmount, $newAmountLeft, now()));
+
+            AdminActionEvent::dispatch([
+                "permissions" => ["schoolAdmin.tuitionFee.pay"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" => $currentSchool->id,
+                "feature" => "tuitionFeeManagement",
+                "action" => "tuitionFee.paid",
+                "authAdmin" => $authAdmin,
+                "data" => $studentTuitionFees,
+                "message" => "Tuition Fee Paid",
+            ]);
+
             StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
                 'studentIds'   => [$studentTuitionFees->student_id],
@@ -133,6 +132,7 @@ class TuitionFeePaymentService
                     'tution_fee_transaction' => $tuitionFeeTransaction
                 ],
             ]);
+
             return $studentTuitionFees;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -166,7 +166,7 @@ class TuitionFeePaymentService
             );
         }
     }
-    public function getStudentFinancialTransactions($currentSchool, $student)
+    public function getStudentFinancialTransactions(object $currentSchool, object $student)
     {
         $schoolBranchId = $currentSchool->id;
         $studentId      = $student->id;

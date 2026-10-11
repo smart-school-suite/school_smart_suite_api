@@ -4,7 +4,6 @@ namespace App\Services\Teacher;
 
 use App\Models\Specialty;
 use App\Models\Teacher;
-use App\Models\TeacherSpecailtyPreference;
 use App\Notifications\SpecialtyAssignedToTeacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -13,13 +12,14 @@ use Carbon\Carbon;
 use Throwable;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
+use App\Models\Teacher\TeacherSpecialty;
 
 class TeacherService
 {
     public function getTeacherDetails(string $teacherId)
     {
-        $find_teacher = Teacher::with(['qualifications', 'levels'])->findOrFail($teacherId);
-        return $find_teacher;
+        $teacher = Teacher::with(['qualifications', 'levels'])->findOrFail($teacherId);
+        return $teacher;
     }
     public function deletetTeacher(string $teacherId, object $currentSchool, object $authAdmin)
     {
@@ -101,8 +101,8 @@ class TeacherService
     public function getAllTeachers(object $currentSchool)
     {
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
-            ->with(['gender', 'specialtyPreference.specailty']) // Fixed typo: 'specailty' to 'specialty'
-            ->withCount(['specialtyPreference as num_assigned_specialties']) // Count specialty preferences
+            ->with(['gender', 'specialties']) // Fixed typo: 'specailty' to 'specialty'
+            ->withCount(['specialties as num_assigned_specialties']) // Count specialty preferences
             //  ->withCount(['teacherCoursePreferences as num_assigned_courses']) // Count assigned courses if needed
             ->get();
 
@@ -110,12 +110,15 @@ class TeacherService
             "id" => $teacher->id,
             "first_name" => $teacher->first_name ?? null,
             "last_name" => $teacher->last_name ?? null,
+            'username' => $teacher->username ?? null,
             "name" => $teacher->name ?? null,
             "profile_picture" => $teacher->profile_picture ?? null,
             "gender" => $teacher->gender->name ?? null,
             "email" => $teacher->email ?? null,
             "status" => $teacher->status ?? null,
             "phone" => $teacher->phone ?? null,
+            "created_at" => $teacher->created_at ?? null,
+            "updated_at" => $teacher->updated_at ?? null,
             'num_assigned_specialties' => $teacher->num_assigned_specialties ?? 0,
             'specialty_assignment_status' => $teacher->specialty_assignment_status ?? $this->getSpecialtyAssignmentStatus($teacher->num_assigned_specialties ?? 0)
         ]);
@@ -145,7 +148,7 @@ class TeacherService
                     ->find($preference['teacher_id']);
                 $teacher = $teacherDetails;
             }
-            $createdEntry = TeacherSpecailtyPreference::create([
+            $createdEntry = TeacherSpecialty::create([
                 'specialty_id' => $preference["specialty_id"],
                 'teacher_id' =>  $preference['teacher_id'],
                 "school_branch_id" => $currentSchool->id
@@ -162,17 +165,17 @@ class TeacherService
             ->findOrFail($teacherId);
         $teacher->status = "inactive";
         $teacher->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.teacher.deactivate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "teacherManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $teacher,
-                "message" => "Teacher Account Deactivated",
-            ]
-        );
+        // AdminActionEvent::dispatch(
+        //     [
+        //         "permissions" =>  ["schoolAdmin.teacher.deactivate"],
+        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+        //         "schoolBranch" =>  $currentSchool->id,
+        //         "feature" => "teacherManagement",
+        //         "authAdmin" => $authAdmin,
+        //         "data" => $teacher,
+        //         "message" => "Teacher Account Deactivated",
+        //     ]
+        // );
         return $teacher;
     }
     public function activateTeacher(string $teacherId, object $currentSchool, object $authAdmin)
@@ -181,17 +184,17 @@ class TeacherService
             ->findOrFail($teacherId);
         $teacher->status = "active";
         $teacher->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.teacher.activate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "teacherManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $teacher,
-                "message" => "Teacher Account Activated",
-            ]
-        );
+        // AdminActionEvent::dispatch(
+        //     [
+        //         "permissions" =>  ["schoolAdmin.teacher.activate"],
+        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+        //         "schoolBranch" =>  $currentSchool->id,
+        //         "feature" => "teacherManagement",
+        //         "authAdmin" => $authAdmin,
+        //         "data" => $teacher,
+        //         "message" => "Teacher Account Activated",
+        //     ]
+        // );
         return $teacher;
     }
     public function bulkDeactivateTeacher(array $teacherIds, object $currentSchool, object $authAdmin)
@@ -369,20 +372,19 @@ class TeacherService
     }
     public function getTeachersBySpecialtyPreference(string $specialtyId, object $currentSchool)
     {
-        $teachers = TeacherSpecailtyPreference::where('specialty_id', $specialtyId)
+
+        $teachers = TeacherSpecialty::where('specialty_id', $specialtyId)
             ->where('school_branch_id', $currentSchool->id)
-            ->with(['teacher.specialtyPreference', 'teacher.teacherCoursePreference', 'teacher.qualifications', 'teacher.levels'])
+            ->with(['teacher.specialties', 'teacher.teacherCoursePreference', 'teacher.qualifications', 'teacher.levels'])
             ->get();
 
         if ($teachers->isEmpty()) {
             return ApiResponseService::error('No teachers found for this specialty', null, 404);
         }
-
         return $teachers->map(function ($teacherPreference) {
             $teacher = $teacherPreference->teacher;
-            $numSpecialties = $teacher->specialtyPreference->count();
+            $numSpecialties = $teacher->specialties->count();
             $numCourses = $teacher->teacherCoursePreference->count();
-
             return [
                 'id' => $teacher->id,
                 'school_branch_id' => $teacherPreference->school_branch_id,
@@ -398,6 +400,7 @@ class TeacherService
                 'course_assignment_status' => $numCourses > 0 ? 'assigned' : 'unassigned',
                 'num_assigned_specialties' => $numSpecialties,
                 'specialty_assignment_status' => $numSpecialties > 0 ? 'assigned' : 'unassigned',
+
             ];
         });
     }

@@ -12,12 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('fee_schedules', function (Blueprint $table) {
-            $table->string('specialty_id')->index();
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('level_id')->index();
-            $table->foreign('level_id')->references('id')->on('levels');
-            $table->string('school_semester_id')->index();
-            $table->foreign('school_semester_id')->references('id')->on('school_semesters');
+             $table->uuid('school_year_id');
+            $table->foreign('school_year_id')->references('id')->on('school_academic_years');
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });

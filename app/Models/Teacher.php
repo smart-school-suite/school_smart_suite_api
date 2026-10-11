@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use App\Models\Course\JointCourseSlot;
-use App\Models\ExamTimetable\Invigilator;
+use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\Job\SystemJob;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\OTP;
+use App\Models\Teacher\TeacherSpecialty;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,6 +19,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Announcement\AnnouncementRecipient;
 
 class Teacher extends Model
 {
@@ -34,6 +36,7 @@ class Teacher extends Model
         'profile_picture',
         'address',
         'username',
+        'password',
         'gender_id',
         'sub_status'
     ];
@@ -57,7 +60,7 @@ class Teacher extends Model
 
     public function examInvigilator()
     {
-        return $this->morphMany(Invigilator::class, 'invigilatable');
+        return $this->morphMany(ExamInvigilator::class, 'invigilatable');
     }
     public function systemJob(): MorphMany
     {
@@ -120,18 +123,13 @@ class Teacher extends Model
         return $this->belongsTo(Schoolbranches::class);
     }
 
-    public function specialtyPreference(): HasMany
+    public function teacherSpecialty(): HasMany
     {
-        return $this->hasMany(TeacherSpecailtyPreference::class, 'teacher_id');
+        return $this->hasMany(TeacherSpecialty::class, 'teacher_id');
     }
     public function courses(): HasMany
     {
         return $this->hasMany(Courses::class);
-    }
-
-    public function instructoravailabilitySlots(): HasMany
-    {
-        return $this->hasMany(InstructorAvailabilitySlot::class);
     }
     public function eventAudience()
     {
@@ -151,6 +149,23 @@ class Teacher extends Model
     {
         return $this->hasMany(SemesterTimetableSlot::class);
     }
+
+    public function announcementRecipient()
+    {
+        return $this->morphMany(AnnouncementRecipient::class, 'recipient');
+    }
+
+    public function specialties()
+    {
+        return $this->belongsToMany(
+            Specialty::class,
+            'teacher_specialty_preferences',
+            'teacher_id',
+            'specialty_id'
+        )->using(TeacherSpecialty::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
+    }
     public function qualifications()
     {
         return $this->belongsToMany(
@@ -159,7 +174,13 @@ class Teacher extends Model
             'teacher_id',
             'qualification_id'
         )->using(TeacherQualification::class)
-            ->withPivot(['id', 'school_branch_id', 'field_of_study'])
+            ->withPivot([
+                'id',
+                'school_branch_id',
+                'field_of_study',
+                'year',
+                'institution'
+            ])
             ->withTimestamps();
     }
 

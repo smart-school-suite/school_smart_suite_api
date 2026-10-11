@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\GradeScale\SchoolGradeScaleCategory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,31 +12,30 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ResitExam extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
     protected $fillable = [
-        'id',
         'start_date',
         'end_date',
-        'weighted_mark',
-        'timetable_published',
-        'status',
-        'grading_added',
-        'expected_candidate_number',
-        'evaluated_candidate_number',
+        'max_score',
+        'school_year_id',
+        'grades_category_id',
         'school_branch_id',
-        'school_year',
-        'grades_category_id'
+        'exam_type_id'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'weighted_mark' => 'decimal:2',
+        'max_score' => 'float',
     ];
     public $incrementing = 'false';
     public $table = 'resit_exams';
     public $keyType = 'string';
 
+    public function schoolYear(): BelongsTo
+    {
+        return $this->belongsTo(SchoolAcademicYear::class, "school_year_id");
+    }
     public function resitExamRef(): HasMany
     {
         return $this->hasMany(ResitExamRef::class);
@@ -58,8 +60,13 @@ class ResitExam extends Model
     {
         return $this->hasMany(ResitCandidates::class, 'resit_exam_id');
     }
-    public function gradesCategory(): BelongsTo
+     public function examGradeScale(): BelongsTo
     {
-        return $this->belongsTo(GradesCategory::class, 'grades_category_id');
+        return $this->belongsTo(SchoolGradeScaleCategory::class, 'grades_category_id');
+    }
+
+    public function examType(): BelongsTo
+    {
+        return $this->belongsTo(Examtype::class, "exam_type_id");
     }
 }

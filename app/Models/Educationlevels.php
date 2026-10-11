@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Educationlevels extends Model
 {
@@ -25,10 +26,6 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'levels';
 
-    public function resitExamRef(): HasMany
-    {
-        return $this->hasMany(ResitExamRef::class);
-    }
     public function specialtyHall(): HasMany
     {
         return $this->hasMany(SpecialtyHall::class);
@@ -36,10 +33,6 @@ class Educationlevels extends Model
     public function examCandidate(): HasMany
     {
         return $this->hasMany(AccessedStudent::class);
-    }
-    public function instructorAvailability(): HasMany
-    {
-        return $this->hasMany(InstructorAvailability::class);
     }
     public function feeSchedule(): HasMany
     {
@@ -57,10 +50,6 @@ class Educationlevels extends Model
     public function studentFeeSchedule(): HasMany
     {
         return $this->hasMany(StudentFeeSchedule::class);
-    }
-    public function resitmarks(): HasMany
-    {
-        return $this->hasMany(ResitMarks::class, 'level_id');
     }
     public function feeWaiver(): HasMany
     {
@@ -80,11 +69,7 @@ class Educationlevels extends Model
     }
     public function specialty(): HasMany
     {
-        return $this->hasMany(Specialty::class);
-    }
-    public function registrationFee(): HasMany
-    {
-        return $this->hasMany(RegistrationFee::class, 'level_id');
+        return $this->hasMany(Specialty::class, 'level_id');
     }
     public function mark(): HasMany
     {
@@ -95,17 +80,9 @@ class Educationlevels extends Model
     {
         return $this->hasMany(TuitionFees::class);
     }
-    public function student(): HasMany
-    {
-        return $this->hasMany(Student::class, 'level_id');
-    }
     public function exam(): HasMany
     {
         return $this->hasMany(Exams::class);
-    }
-    public function studentresit(): HasMany
-    {
-        return $this->hasMany(Studentresit::class);
     }
 
     public function levelType(): BelongsTo
@@ -118,6 +95,10 @@ class Educationlevels extends Model
         return $this->hasMany(SemesterTimetableSlot::class);
     }
 
+    public function students(): HasManyThrough
+    {
+        return $this->hasManyThrough(Student::class, Specialty::class, 'level_id', 'specialty_id', 'id', 'id');
+    }
     public function teacher()
     {
         return $this->belongsToMany(
