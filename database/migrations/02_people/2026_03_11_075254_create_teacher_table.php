@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('username', 150)->index();
             $table->string('profile_picture')->nullable();
-            $table->string('phone');
+            $table->string('phone')->nullable();
             $table->string('email');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('address')->nullable();
@@ -38,7 +38,6 @@ return new class extends Migration
 
         Schema::create('teacher_availabilities', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->enum('status', ['added', 'not added'])->default('not added');
             $table->timestamps();
         });
 
@@ -50,6 +49,8 @@ return new class extends Migration
         Schema::create('teacher_qualifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('field_of_study', 150);
+            $table->string('year', 50);
+            $table->string('institution', 150);
             $table->timestamps();
         });
         Schema::create('teacher_levels', function (Blueprint $table) {

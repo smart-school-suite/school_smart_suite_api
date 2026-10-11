@@ -3,80 +3,45 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 class MakeService extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'make:service {name}';
+    protected $description = 'Create a new service class';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Creating a new service class';
-
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
         $name = $this->argument('name');
-        $path = app_path("Services/" . str_replace('\\', '/', $name) . ".php");
+        $className = class_basename($name);
+        $namespace = trim(str_replace('/', '\\', dirname(str_replace('\\', '/', $name))), '\\');
+        $fullNamespace = 'App\\Services' . ($namespace ? "\\{$namespace}" : '');
+        $path = app_path('Services/' . str_replace('\\', '/', $name) . '.php');
 
-        // Create the directory structure if it doesn't exist
-        $directoryPath = dirname($path);
-        if (!is_dir($directoryPath)) {
-            mkdir($directoryPath, 0755, true);
-        }
-
-        if (file_exists($path)) {
+        if (File::exists($path)) {
             $this->error("Service {$name} already exists!");
-            return;
+            return self::FAILURE;
         }
 
-        // Stub for the Service class
-        $stub = <<<EOD
-<?php
+        File::ensureDirectoryExists(dirname($path));
 
-namespace App\Services\\{$this->getNamespace($name)};
+        File::put($path, $this->buildStub($fullNamespace, $className));
 
-class {$this->getClassName($name)}
-{
-    // Implement your logic here
-}
-EOD;
-
-        file_put_contents($path, $stub);
         $this->info("Service {$name} created successfully.");
+        return self::SUCCESS;
     }
 
-    /**
-     * Get the class name from the given name.
-     *
-     * @param string $name
-     * @return string
-     */
-    protected function getClassName($name)
+    protected function buildStub(string $namespace, string $className): string
     {
-        $segments = explode('\\', $name);
-        return array_pop($segments); // Get the last segment as class name
-    }
+        return <<<PHP
+        <?php
 
-    /**
-     * Get the namespace from the given name.
-     *
-     * @param string $name
-     * @return string
-     */
-    protected function getNamespace($name)
-    {
-        $segments = explode('\\', $name);
-        array_pop($segments); // Remove the class name segment
-        return implode('\\', $segments); // Join remaining segments for namespace
+        namespace {$namespace};
+
+        class {$className}
+        {
+            //
+        }
+        PHP;
     }
 }

@@ -18,11 +18,14 @@ class AdditionalFeeTransactionResource extends JsonResource
             'id' => $this->id,
             'transaction_id' => $this->transaction_id,
             'amount' => $this->amount,
+            'additional_fees' => $this->additionFee->amount,
             'payment_method' => $this->payment_method,
             'specialty_name' => $this->additionFee->student->specialty->specialty_name,
             'student_name' => $this->additionFee->student->name,
             'level_name' => $this->additionFee->student->specialty->level->name,
-            'category' => $this->additionFee->feeCategory->title
+            'category' => $this->additionFee->feeCategory->title,
+            'created_at' => $this->created_at ?? null,
+            'updated_at' => $this->updated_at ?? null
         ];
     }
 }

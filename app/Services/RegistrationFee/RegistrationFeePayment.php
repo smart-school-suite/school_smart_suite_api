@@ -18,7 +18,7 @@ use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventCo
 
 class RegistrationFeePayment
 {
-    public function payRegistrationFees(array $data, $currentSchool, $authAdmin)
+    public function payRegistrationFees(array $data, object $currentSchool, object $authAdmin)
     {
         DB::beginTransaction();
         try {
@@ -103,7 +103,7 @@ class RegistrationFeePayment
             throw $e;
         }
     }
-    public function bulkPayRegistrationFee(array $feeDataArray, $currentSchool, $authAdmin)
+    public function bulkPayRegistrationFee(array $feeDataArray, object $currentSchool, object  $authAdmin)
     {
         try {
             DB::beginTransaction();

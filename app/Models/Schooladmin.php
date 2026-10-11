@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\ExamTimetable\Invigilator;
+use App\Models\Announcement\AnnouncementRecipient;
+use App\Models\ExamTimetable\ExamInvigilator;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,21 +26,16 @@ class Schooladmin extends Authenticatable
         'name',
         'first_name',
         'last_name',
-        'role',
+        'username',
         'email',
         'password',
         'profile_picture',
-        'date_of_birth',
         'address',
-        'cultural_background',
-        'phone_one',
-        'phone_two',
+        'phone',
         'school_branch_id',
-        'status'
-    ];
-
-    protected $casts = [
-        'date_of_birth' => 'date'
+        'status',
+        'gender_id',
+        'phone'
     ];
 
     protected $hidden = [
@@ -64,6 +60,10 @@ class Schooladmin extends Authenticatable
         ];
     }
 
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class, 'gender_id');
+    }
     public function systemJob(): MorphMany
     {
         return $this->morphMany(SystemJob::class, 'initiatedBy');
@@ -102,7 +102,7 @@ class Schooladmin extends Authenticatable
 
     public function examInvigilator()
     {
-        return $this->morphMany(Invigilator::class, 'invigilatable');
+        return $this->morphMany(ExamInvigilator::class, 'invigilatable');
     }
 
     // public function userBadge()
@@ -135,6 +135,11 @@ class Schooladmin extends Authenticatable
     public function eventAudience()
     {
         return $this->morphMany(EventAudience::class, 'audienceable');
+    }
+
+    public function announcementRecipient()
+    {
+        return $this->morphMany(AnnouncementRecipient::class, 'recipient');
     }
     public function announcementAudience()
     {

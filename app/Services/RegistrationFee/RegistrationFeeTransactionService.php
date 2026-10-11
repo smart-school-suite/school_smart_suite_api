@@ -15,7 +15,7 @@ use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventCo
 
 class RegistrationFeeTransactionService
 {
-    public function bulkDeleteRegistrationFeeTransactions($transactionIds, $currentSchool, $authAdmin)
+    public function bulkDeleteRegistrationFeeTransactions(array $transactionIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         $studentIds = [];
@@ -54,7 +54,7 @@ class RegistrationFeeTransactionService
             throw $e;
         }
     }
-    public function reverseRegistrationFeePaymentTransaction(string $transactionId, $currentSchool, $authAdmin)
+    public function reverseRegistrationFeePaymentTransaction(string $transactionId, object $currentSchool, object $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -117,11 +117,11 @@ class RegistrationFeeTransactionService
             throw $e;
         }
     }
-    public function getRegistrationFeeTransactions($currentSchool)
+    public function getRegistrationFeeTransactions(object $currentSchool)
     {
         try {
             $transactions = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
-                ->with(['registrationFee.student', 'registrationFee.level', 'registrationFee.specialty'])
+                ->with(['registrationFee.student', 'registrationFee.specialty.level'])
                 ->get();
 
             if ($transactions->isEmpty()) {

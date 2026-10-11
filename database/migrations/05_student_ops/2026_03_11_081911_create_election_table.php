@@ -14,10 +14,6 @@ return new class extends Migration
             $table->dateTime('application_end')->nullable();
             $table->dateTime('voting_start')->nullable();
             $table->dateTime('voting_end')->nullable();
-            $table->enum('voting_status', ['ongoing', 'ended', 'pending'])->default('pending');
-            $table->enum('application_status', ['ongoing', 'ended', 'pending'])->default('pending');
-            $table->string('school_year')->nullable();
-            $table->enum('status', ['upcoming', 'ongoing', 'finished'])->default('upcoming');
             $table->boolean('is_results_published')->default(false);
             $table->timestamps();
         });

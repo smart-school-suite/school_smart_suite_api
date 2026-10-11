@@ -19,10 +19,13 @@ class RegistrationFeeTransResource extends JsonResource
             'transaction_id' => $this->transaction_id,
             'payment_method' => $this->payment_method,
             'amount' => $this->amount,
+            'registration_fee' => $this->registrationFee->amount ?? null,
             'student_name' => $this->registrationFee->student->name ?? null,
-            'level_name' => $this->registrationFee->level->name ?? null,
-            'level' => $this->registrationFee->level->level ?? null,
+            'level_name' => $this->registrationFee->specialty->level->name ?? null,
+            'level' => $this->registrationFee->specialty->level->level ?? null,
             'specialty_name' => $this->registrationFee->specialty->specialty_name ?? null,
+            'created_at' => $this->created_at ?? null,
+            'updated_at' => $this->updated_at ?? null
         ];
     }
 }

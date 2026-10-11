@@ -15,8 +15,9 @@ class RemoveInvigilatorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "invigilatorIds" => ["required", "array", "min:1"],
-            "invigilatorIds.*" => ["required", "uuid", "exists:invigilators,id"]
+            'exam_id' => 'required|uuid|exists:exams,id',
+            "invigilator_ids" => ["required", "array", "min:1"],
+            "invigilator_ids.*" => ["required", "uuid", "exists:exam_invigilators,id"]
         ];
     }
 }

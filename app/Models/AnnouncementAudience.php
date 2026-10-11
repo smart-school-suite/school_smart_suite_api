@@ -12,8 +12,13 @@ class AnnouncementAudience extends Model
         'school_branch_id',
         'audienceable_id',
         'audienceable_type',
-        'announcement_id'
+        'announcement_id',
+        'seen_at'
     ];
+
+    public $table = "announcement_audience";
+    public $incrementing = false;
+    public $keyType = 'announcement_audience';
 
     public function announcement(): BelongsTo
     {

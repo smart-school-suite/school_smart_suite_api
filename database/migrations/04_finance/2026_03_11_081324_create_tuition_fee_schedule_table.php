@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('installments', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->string('program_name');
             $table->string('code');
@@ -19,14 +19,12 @@ return new class extends Migration
         });
 
         Schema::create('fee_schedules', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->enum('config_status', ['configured', 'not configured'])->default('not configured');
-            $table->enum('status', ['active', 'inactive'])->default('inactive');
+            $table->uuid('id')->primary();
             $table->timestamps();
         });
 
         Schema::create('fee_schedule_slots', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->date('due_date');
             $table->decimal('fee_percentage', 5, 2);
             $table->decimal('amount', 15, 2);
@@ -34,7 +32,7 @@ return new class extends Migration
         });
 
         Schema::create('student_fee_schedules', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->decimal('expected_amount', 15, 2);
             $table->decimal('amount_paid', 8, 2)->default(0.0);
             $table->decimal('amount_left', 8, 2);

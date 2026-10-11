@@ -18,8 +18,6 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
             $table->string('specialty_id');
             $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('level_id');
-            $table->foreign('level_id')->references('id')->on('levels');
         });
 
         Schema::table('registration_fee_transactions', function (Blueprint $table) {

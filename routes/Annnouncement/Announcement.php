@@ -13,3 +13,4 @@ Route::get('read-uread/list/{announcementId}', [AnnouncementController::class, '
 Route::put('/daft/update', [AnnouncementController::class, 'updateAnnouncementDraft'])->name("draft.announcement.update");
 Route::get('/student/announcements', [AnnouncementController::class, 'getAllStudentAnnouncement'])->name('student.announcements.get');
 Route::get('/student/announcements/label/{labelId}', [AnnouncementController::class, 'getAllStudentAnnouncementLabelId'])->name('student.announcements.label.get');
+Route::get('/stats/summary', [AnnouncementController::class, 'getAnnouncementSummary'])->name('announcement.summary');

@@ -14,25 +14,42 @@ class ResitExamResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $now = now();
+        $startDate = $this->start_date;
+        $endDate = $this->end_date;
+
+        if (!$startDate && !$endDate) {
+            $status = 'not_scheduled';
+        } elseif ($startDate && $now->lt($startDate)) {
+            $status = 'upcoming';
+        } elseif ($startDate && $endDate && $now->between($startDate, $endDate)) {
+            $status = 'active';
+        } elseif ($endDate && $now->gt($endDate)) {
+            $status = 'finished';
+        } else {
+            $status = 'not_scheduled';
+        }
+
         return [
-            'id'=> $this->id,
-            'exam_name' => $this->examtype->exam_name,
-            'exam_type' => $this->examtype->type,
-            'exam_type_id' => $this->examtype->id,
-            'semester_name' => $this->semester->name ?? null,
-            'semester_id' => $this->semester->id ?? null,
-            'specialty_id' => $this->specialty->id ?? null,
-            'specailty_name' => $this->specialty->specialty_name ?? null,
-            'level_name' => $this->level->name ?? null,
-            'level_id' => $this->level->id ?? null,
+            'id' => $this->id,
+            'exam_name' => $this->examType->exam_name,
+            'exam_type' => $this->examType->type,
+            'semester_name' => $this->examType->semesters->name ?? null,
+            'specialty_name' => $this->schoolYear->specialty->specialty_name ?? null,
+            'level_name' => $this->schoolYear->specialty->level->name ?? null,
+            'level_number' => $this->schoolYear->specialty->level->level ?? null,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
-            'status' => $this->status,
-            'school_year' => $this->school_year,
-            'reference_exam_id' => $this->reference_exam_id,
-            'timetable_published' => $this->timetable_published  == 1 ? 'created' : 'not created',
-            'weighted_mark' => $this->weighted_mark,
-            'grading_added' => $this->grading_added
+            'status' => $status,
+            'timetable_published' => $this->timetable_published ? 'created' : 'not created',
+            'school_year' => $this->schoolYear->systemAcademicYear->name ?? null,
+            'academic_year_start' => $this->schoolYear->start_date ?? null,
+            'academic_year_end' => $this->schoolYear->end_date ?? null,
+            'max_score' => $this->max_score,
+            'is_grade_scale_configured' => $this->grades_category_id ? true : false,
+            'candidates' => $this->resitCandidates->count() ?? 0,
+            "created_at" => $this->created_at ?? null,
+            "updated_at" => $this->updated_at ?? null
         ];
     }
 }

@@ -11,9 +11,7 @@ return new class extends Migration
         Schema::create('tuition_fees', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->decimal('amount_paid', 15, 2)->default(0.00);
-            $table->decimal('amount_left', 15, 2)->default(0.00);
             $table->decimal('tution_fee_total', 15, 2);
-            $table->enum('status', ['completed', 'owing', 'bad debt'])->default('owing');
             $table->timestamps();
         });
 

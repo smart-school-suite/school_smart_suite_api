@@ -16,11 +16,12 @@ use App\Models\Teacher;
 use App\Notifications\ActivationCode\Admin\AdminPurchaseSuccessfullNotification;
 use App\Notifications\ActivationCode\Teacher\TeacherSubscribedNotification;
 use App\Notifications\ActivationCode\Student\StudentSubscribedNotification;
+
 class ActivationCodeService
 {
-    public function purchaseActivationCode($data, $currentSchool, $authAdmin)
+    public function purchaseActivationCode(array $payload, object $currentSchool, object $authAdmin)
     {
-        $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+        $paymentMethod = PaymentMethod::find($payload['payment_method_id']);
         if (!$paymentMethod) {
             throw new AppException(
                 "Payment Method Not Found",
@@ -39,8 +40,8 @@ class ActivationCodeService
             );
         }
 
-        $teacherCount = (int) ($data['teacher_code_count'] ?? 0);
-        $studentCount = (int) ($data['student_code_count'] ?? 0);
+        $teacherCount = (int) ($payload['teacher_code_count'] ?? 0);
+        $studentCount = (int) ($payload['student_code_count'] ?? 0);
 
         if ($teacherCount <= 0 && $studentCount <= 0) {
             throw new AppException(
@@ -95,8 +96,6 @@ class ActivationCodeService
                 'id' => Str::uuid(),
                 'code' => 'TEA-' . strtoupper(Str::random(8)),
                 'code_type' => 'teacher',
-                'status' => 'active',
-                'used' => false,
                 'price' => $teacherPrice,
                 'duration' => 365,
                 'expires_at' => $expiresAt,
@@ -112,8 +111,6 @@ class ActivationCodeService
                 'id' => Str::uuid(),
                 'code' => 'STU-' . strtoupper(Str::random(8)),
                 'code_type' => 'student',
-                'status' => 'active',
-                'used' => false,
                 'price' => $studentPrice,
                 'duration' => 365,
                 'expires_at' => $expiresAt,
@@ -162,17 +159,40 @@ class ActivationCodeService
             'student_codes' => $studentCount,
         ];
     }
-    public function getSchoolBranchActivationCodes($currentSchool)
+    public function getSchoolBranchActivationCodes(object $currentSchool)
     {
-        $activationCodes = ActivationCode::Where("school_branch_id", $currentSchool->id)
-            ->with(['country', 'activationCodeType'])
+        $activationCodes = ActivationCode::where("school_branch_id", $currentSchool->id)
+            ->with(['country', 'activationCodeType', 'activationCodeUsage'])
             ->get();
-        return $activationCodes;
+
+        return $activationCodes->map(function ($a) {
+            $now = now();
+            $isUsed = $a->activationCodeUsage->isNotEmpty();
+            $isExpired = $a->expires_at && $now->greaterThan($a->expires_at);
+
+            return [
+                "id" => $a->id,
+                "created_at" => $a->created_at,
+                "updated_at" => $a->updated_at,
+                'code' => $a->code,
+                'code_type' => $a->code_type,
+                'status' => $isExpired ? 'expired' : 'active',
+                'used_status' => $isUsed ? "used" : "unused",
+                'price' => $a->price,
+                'duration' => $a->duration,
+                'expires_at' => $a->expires_at,
+                'expires_in' => (!$isUsed && $a->expires_at) ? $now->diffForHumans($a->expires_at, [
+                    'parts' => 2,
+                    'short' => false,
+                    'syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW,
+                ]) : null,
+            ];
+        });
     }
-    public function activateStudentAccount($data, $currentSchool)
+    public function activateStudentAccount(array $payload, object $currentSchool)
     {
         $student = Student::where('school_branch_id', $currentSchool->id)
-            ->find($data['student_id']);
+            ->find($payload['student_id']);
 
         if (!$student) {
             throw new AppException(
@@ -198,7 +218,7 @@ class ActivationCodeService
         }
 
         $code = ActivationCode::where('school_branch_id', $currentSchool->id)
-            ->where('code', $data['activation_code'])
+            ->where('code', $payload['activation_code'])
             ->where('status', 'active')
             ->where('used', false)
             ->first();
@@ -208,7 +228,7 @@ class ActivationCodeService
                 "Invalid or Unavailable Code",
                 404,
                 "Code Not Found",
-                "The activation code '{$data['activation_code']}' is invalid, already used, inactive, or not found. Please check and try again."
+                "The activation code '{$payload['activation_code']}' is invalid, already used, inactive, or not found. Please check and try again."
             );
         }
 
@@ -217,7 +237,7 @@ class ActivationCodeService
                 "Code Expired",
                 409,
                 "Code Expired",
-                "The activation code '{$data['activation_code']}' has expired. Please use a valid, non-expired code."
+                "The activation code '{$payload['activation_code']}' has expired. Please use a valid, non-expired code."
             );
         }
 
@@ -256,10 +276,10 @@ class ActivationCodeService
             'expires_at' => $subscriptionExpiresAt,
         ];
     }
-    public function activateTeacherAccount($data, $currentSchool)
+    public function activateTeacherAccount(array $payload, object $currentSchool)
     {
         $teacher = Teacher::where('school_branch_id', $currentSchool->id)
-            ->find($data['teacher_id']);
+            ->find($payload['teacher_id']);
 
         if (!$teacher) {
             throw new AppException(
@@ -285,7 +305,7 @@ class ActivationCodeService
         }
 
         $code = ActivationCode::where('school_branch_id', $currentSchool->id)
-            ->where('code', $data['activation_code'])
+            ->where('code', $payload['activation_code'])
             ->where('status', 'active')
             ->where('used', false)
             ->first();
@@ -295,7 +315,7 @@ class ActivationCodeService
                 "Invalid or Unavailable Code",
                 404,
                 "Code Not Found",
-                "The activation code '{$data['activation_code']}' is invalid, already used, inactive, or not found. Please check and try again."
+                "The activation code '{$payload['activation_code']}' is invalid, already used, inactive, or not found. Please check and try again."
             );
         }
 
@@ -304,7 +324,7 @@ class ActivationCodeService
                 "Code Expired",
                 409,
                 "Code Expired",
-                "The activation code '{$data['activation_code']}' has expired. Please use a valid, non-expired code."
+                "The activation code '{$payload['activation_code']}' has expired. Please use a valid, non-expired code."
             );
         }
 
@@ -340,7 +360,7 @@ class ActivationCodeService
             'expires_at' => $subscriptionExpiresAt,
         ];
     }
-    public function getActivationCodeUsage($currentSchool)
+    public function getActivationCodeUsage(object $currentSchool)
     {
         return ActivationCodeUsage::where('school_branch_id', $currentSchool->id)
             ->with(['actorable', 'activationCode'])
@@ -351,33 +371,40 @@ class ActivationCodeService
                     ->afterLast('\\')
                     ->lower()
                     ->value() ?: 'unknown',
-                'user_name'     => $usage->actorable?->name ?? '—',
+                'user_name'     => $usage->actorable?->username ?? '—',
+                "account_name" => $usage->actorable?->name ?? '—',
+                "profile_picture" => $usage->actorable?->profile_picture ?? "-",
                 "code" => $usage->activationCode->code ?? '',
                 'activated_date' => $usage->activated_at?->toDateTimeString(),
                 'expires_at'    => $usage->expires_at?->toDateTimeString(),
                 'status'        => $usage->expires_at
                     ? ($usage->expires_at->isFuture() ? 'active' : 'expired')
                     : 'no expiry',
+                'created_at' => $usage->created_at ?? null,
+                'updated_at' => $usage->updated_at ?? null
             ])
             ->values()
             ->all();
     }
-    public function getStudentActivationStatuses($currentSchool)
+    public function getStudentActivationStatuses(object $currentSchool)
     {
         $activationStatus = Student::where("school_branch_id", $currentSchool->id)
-            ->with(['activationCode.activationCode', 'specialty.level'])
+            ->with(['activationCode.activationCode', 'specialty.level', 'specialty.department'])
             ->get();
         return $activationStatus->map(fn($student) => [
             "id" => $student->id,
             "student_name" => $student->name,
-            "specialty_name" => $student->specialty->specialty_name,
+            "username" => $student->username,
+            "profile_picture" => $student->profile_picture,
+            "department" => $student->specialty?->department?->department_name,
+            "specialty" => $student->specialty->specialty_name,
             "level_name" => $student->specialty->level->name,
             "level" =>   $student->specialty->level->level,
             "sub_status" => $student->sub_status,
             "activation_code" => $student->activationCode->first()->activationCode->code ?? null
         ]);
     }
-    public function getStudentSubscriptionDetail($currentSchool, $studentId)
+    public function getStudentSubscriptionDetail(object $currentSchool, string $studentId)
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->with(['activationCode.activationCode', 'specialty.level'])
@@ -401,7 +428,7 @@ class ActivationCodeService
             "activation_code" => $student->activationCode->first()->activationCode->code ?? null
         ];
     }
-    public function getTeacherActivationStatuses($currentSchool)
+    public function getTeacherActivationStatuses(object $currentSchool)
     {
         $activationStatus = Teacher::where("school_branch_id", $currentSchool->id)
             ->with(['activationCode.activationCode'])
@@ -409,14 +436,15 @@ class ActivationCodeService
         return $activationStatus->map(fn($teacher) => [
             "id" => $teacher->id,
             "teacher_name" => $teacher->name,
+            "username" => $teacher->username,
             "first_name" => $teacher->first_name,
             "last_name" => $teacher->last_name,
-            "avatar" => $teacher->profile_picture ?? null,
+            "profile_picture" => $teacher->profile_picture ?? null,
             "sub_status" => $teacher->sub_status,
             "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null
         ]);
     }
-    public function getTeacherSubscriptionDetail($currentSchool, $teacherId)
+    public function getTeacherSubscriptionDetail(object $currentSchool, string $teacherId)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->with(['activationCode.activationCode'])

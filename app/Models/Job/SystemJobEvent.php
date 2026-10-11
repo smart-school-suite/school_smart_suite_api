@@ -2,30 +2,54 @@
 
 namespace App\Models\Job;
 
-use App\Traits\GeneratesUuid;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use MongoDB\Laravel\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Builder;
 
 class SystemJobEvent extends Model
 {
-    use GeneratesUuid;
-    protected $casts = [
-        'meta' => 'array',
-    ];
-
-    protected $fillable = [
-        'system_job_id',
-        'event_type',
-        'message',
-        'meta',
-    ];
-
+    protected $connection = 'mongodb';
+    protected $table = 'system_job_events';
+    protected $primaryKey = '_id';
     public $incrementing = false;
-    public $table = "system_job_events";
-    public  $keyType = 'string';
+    protected $keyType = 'string';
+    protected $fillable = [
+        'job_id',
+        'school_branch_id',
+        'type',
+        'stage',
+        'message',
+        'data',
+    ];
 
-    public function systemJob(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(SystemJob::class,  'system_job_id');
+        return [
+            'data' => 'array',
+        ];
+    }
+
+
+    public function getTable()
+    {
+        return 'system_job_events';
+    }
+
+    public function newEloquentBuilder($query)
+    {
+        return new Builder($query);
+    }
+
+    public function qualifyColumn($column)
+    {
+        return $column;
+    }
+
+    public function scopeForJob(object $query, string $jobId)
+    {
+        return $query->where('job_id', $jobId);
+    }
+    public function scopeForSchoolBranch(object $query, string $schoolBranchId)
+    {
+        return $query->where('school_branch_id', $schoolBranchId);
     }
 }

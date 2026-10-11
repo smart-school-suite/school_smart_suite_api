@@ -18,14 +18,10 @@ class UpdateResitExamScore extends FormRequest
     public function rules(): array
     {
         return [
-            'entries' => 'required|array',
-            'entries.*.student_id' => 'required|string|exists:students,id',
-            'entries.*.resit_exam_id' => 'required|string|exists:resit_exams,id',
-            'entries.*.resit_mark_id' => 'required|string|exists:resit_marks,id',
-            'entries.*.course_id' => 'required|string|exists:courses,id',
-            'entries.*.specialty_id' => 'required|string|exists:specialties,id',
-            'entries.*.exam_id' => 'required|string|exists:exams,id',//exam the student failed
-            'entries.*.score' => [
+            'candidate_id' => "required|uuid|exists:resit_candidates,id",
+            'scores' => 'required|array|min:1',
+            'scores.*.score_id' => 'required|string|exists:resit_marks,id',
+            'scores.*.score' => [
                 'required',
                 'regex:/^\d+(\.\d{1,2})?$/',
             ],
