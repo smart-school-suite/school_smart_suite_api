@@ -20,7 +20,9 @@ RUN composer install \
     --no-scripts \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --ignore-platform-req=ext-gd \
+    --ignore-platform-req=ext-exif
 
 COPY . .
 RUN composer dump-autoload --optimize --classmap-authoritative --no-scripts
@@ -48,6 +50,7 @@ RUN docker-php-ext-configure gd \
         --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         bcmath \
+        exif \
         gd \
         intl \
         opcache \
