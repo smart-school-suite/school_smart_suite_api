@@ -5,7 +5,9 @@ namespace App\Services\AcademicYear;
 use App\Exceptions\AppException;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\AcademicYear\SystemAcademicYear;
+use App\Models\Promotion\PromotionRun;
 use App\Models\FeeSchedule;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class SchoolAcademicYearService
@@ -27,20 +29,27 @@ class SchoolAcademicYearService
             );
         }
 
-        $academicYear = SchoolAcademicYear::create([
-            'specialty_id' => $data['specialty_id'],
-            'school_branch_id' => $currentSchool->id,
-            'system_academic_year_id' => $data['system_academic_year_id'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-        ]);
+        return DB::transaction(function () use ($data, $currentSchool) {
+            $academicYear = SchoolAcademicYear::create([
+                'specialty_id' => $data['specialty_id'],
+                'school_branch_id' => $currentSchool->id,
+                'system_academic_year_id' => $data['system_academic_year_id'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+            ]);
 
-        FeeSchedule::create([
-            'school_branch_id' => $currentSchool->id,
-            'school_year_id' => $academicYear->id
-        ]);
+            FeeSchedule::create([
+                'school_branch_id' => $currentSchool->id,
+                'school_year_id' => $academicYear->id,
+            ]);
 
-        return $academicYear;
+            PromotionRun::create([
+                'school_year_id' => $academicYear->id,
+                'school_branch_id' => $currentSchool->id,
+            ]);
+
+            return $academicYear;
+        });
     }
 
     public function updateSchoolAcademicYear(

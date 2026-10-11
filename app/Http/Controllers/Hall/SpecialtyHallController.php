@@ -26,14 +26,14 @@ class SpecialtyHallController extends Controller
         return ApiResponseService::success("Hall Assigned Successfully", $assignHall, null, 200);
     }
 
-    public function getAssignableHalls(Request $request, $specialtyId)
+    public function getAssignableHalls(Request $request, string $specialtyId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $assignableHalls = $this->specialtyHallService->getAvailableAssignableHalls($currentSchool, $specialtyId);
         return ApiResponseService::success("Assignable Halls Fetched Successfully", $assignableHalls, null, 200);
     }
 
-    public function getAssignedHalls(Request $request, $specialtyId)
+    public function getAssignedHalls(Request $request, string $specialtyId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $assignedHalls = $this->specialtyHallService->getAssignedHalls($currentSchool, $specialtyId);
@@ -48,13 +48,18 @@ class SpecialtyHallController extends Controller
         return ApiResponseService::success("Specialty Assiged Hall Removed Successfully", $removedAssignedHall, null, 200);
     }
 
-    public function removeAllAssignedHalls(Request $request, $specialtyId){
+    public function removeAllAssignedHalls(Request $request, string $specialtyId){
         $currentSchool = $request->attributes->get("currentSchool");
         $authAdmin = $this->resolveUser();
         $removeAllAssignedHalls = $this->specialtyHallService->removeAllAssignedHalls($currentSchool, $specialtyId, $authAdmin);
         return ApiResponseService::success("All Assigned Specialty Halls Removed Successfully", $removeAllAssignedHalls, null, 200);
     }
 
+    public function getSpecialties(Request $request){
+        $currentSchool = $request->attributes->get("currentSchool");
+        $specialties = $this->specialtyHallService->getSpecialties($currentSchool);
+        return ApiResponseService::success("Specialties Fetched Successfully", $specialties, null, 200);
+    }
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {

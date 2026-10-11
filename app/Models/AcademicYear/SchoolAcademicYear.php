@@ -5,6 +5,7 @@ namespace App\Models\AcademicYear;
 use App\Models\Course\SemesterJointCourse;
 use App\Models\Exam\Exam;
 use App\Models\FeeSchedule;
+use App\Models\Promotion\PromotionRun;
 use App\Models\ResitExam;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
@@ -53,5 +54,10 @@ class SchoolAcademicYear extends Model
     public function exam(): HasMany
     {
         return $this->hasMany(Exam::class, 'school_year_id');
+    }
+
+    public function promotionRun(): HasMany
+    {
+        return $this->hasMany(PromotionRun::class, 'school_year_id');
     }
 }

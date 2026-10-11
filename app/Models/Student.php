@@ -17,6 +17,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\OTP;
 use App\Models\Job\SystemJob;
+use App\Models\Promotion\StudentPromotionRecord;
 
 class Student extends Model
 {
@@ -61,6 +62,10 @@ class Student extends Model
         ];
     }
 
+    public function studentPromotionRecord(): HasMany
+    {
+        return $this->hasMany(StudentPromotionRecord::class, 'student_id');
+    }
     public function relationship(): BelongsTo
     {
         return $this->belongsTo(StudentParentRelationship::class, 'relationship_id');
@@ -230,7 +235,7 @@ class Student extends Model
         return $this->hasMany(Studentresit::class);
     }
 
-     public function announcementRecipient()
+    public function announcementRecipient()
     {
         return $this->morphMany(AnnouncementRecipient::class, 'recipient');
     }

@@ -14,6 +14,7 @@ use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Announcement;
 use App\Models\AnnouncementAuthor;
 use App\Models\FeeSchedule;
+use App\Models\Promotion\PromotionRun;
 use App\Models\RegistrationFee;
 use App\Models\Schooladmin;
 use App\Models\SchoolSemester;
@@ -33,13 +34,21 @@ class test extends Seeder
 
     public function run(): void
     {
-        $schoolSemesters = SchoolSemester::with(['schoolBranch'])->get();
-        foreach ($schoolSemesters as $schoolSemester) {
-            CreateJointCourseSemesterJob::dispatch(
-                $schoolSemester->id,
-                $schoolSemester->schoolBranch
-            );
+        $schoolYears = SchoolAcademicYear::all();
+        foreach ($schoolYears as $schoolYear) {
+            PromotionRun::create([
+                'school_year_id' => $schoolYear->id,
+                'school_branch_id' => $schoolYear->school_branch_id
+            ]);
         }
+
+        // $schoolSemesters = SchoolSemester::with(['schoolBranch'])->get();
+        // foreach ($schoolSemesters as $schoolSemester) {
+        //     CreateJointCourseSemesterJob::dispatch(
+        //         $schoolSemester->id,
+        //         $schoolSemester->schoolBranch
+        //     );
+        // }
 
 
         //    $academicYears = SystemAcademicYear::get()->pluck("id")->toArray();

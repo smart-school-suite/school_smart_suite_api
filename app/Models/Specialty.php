@@ -7,6 +7,7 @@ use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\Course\CourseSpecialty;
 use App\Models\Courses;
+use App\Models\Promotion\StudentPromotionRecord;
 use App\Models\Teacher\TeacherSpecialty;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -58,16 +59,27 @@ class Specialty extends Model
             ->withTimestamps();
     }
 
-    public function teachers(){
-         return $this->belongsToMany(
-             Teacher::class,
-             'teacher_specialty_preferences',
-             'specialty_id',
-             'teacher_id'
-         )
-         ->using(TeacherSpecialty::class)
-         ->withPivot(['id', 'school_branch_id'])
-         ->withTimestamps();
+    public function teachers()
+    {
+        return $this->belongsToMany(
+            Teacher::class,
+            'teacher_specialty_preferences',
+            'specialty_id',
+            'teacher_id'
+        )
+            ->using(TeacherSpecialty::class)
+            ->withPivot(['id', 'school_branch_id'])
+            ->withTimestamps();
+    }
+
+    public function fromSpecStudPromRecord(): HasMany
+    {
+        return $this->hasMany(StudentPromotionRecord::class, 'from_specialty_id');
+    }
+
+    public function toSpecStudPromRecord(): HasMany
+    {
+        return $this->hasMany(StudentPromotionRecord::class, 'to_specialty_id');
     }
     public function specialtyHall(): HasMany
     {

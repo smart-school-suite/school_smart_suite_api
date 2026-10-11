@@ -9,3 +9,4 @@ Route::get("/hall-unassigned/{specialtyId}", [SpecialtyHallController::class, "g
 Route::get("/hall-assigned/{specialtyId}", [SpecialtyHallController::class, "getAssignedHalls"])->name("assignedHalls");
 Route::delete("/delete/{specialtyId}", [SpecialtyHallController::class, "removeAllAssignedHalls"])->name("removeAll.AssignedHalls");
 Route::post("/remove/assigned", [SpecialtyHallController::class, 'removeAssignedHalls'])->name("remove.assignedHall");
+Route::get("/specialties", [SpecialtyHallController::class, 'getSpecialties'])->name("get.specialties");
