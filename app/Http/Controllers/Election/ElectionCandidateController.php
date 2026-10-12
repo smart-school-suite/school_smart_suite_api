@@ -17,7 +17,7 @@ class ElectionCandidateController extends Controller
         $this->electionCandidateService  = $electionCandidateService;
     }
 
-    public function getCandidatesByElection(Request $request, $electionId)
+    public function getCandidatesByElection(Request $request, string $electionId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $candidates = $this->electionCandidateService->getElectionCandidatesByElection($electionId, $currentSchool);
@@ -31,14 +31,14 @@ class ElectionCandidateController extends Controller
         return ApiResponseService::success("Election Candidates Fetched Successfully", ElectionCandidateResource::collection($candidates), null, 200);
     }
 
-    public function getElectionCandidateDetails(Request $request, $candidateId)
+    public function getElectionCandidateDetails(Request $request, string $candidateId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
         $candidateDetails = $this->electionCandidateService->getElectionCandidateDetails($currentSchool, $candidateId);
         return ApiResponseService::success("Candidate Details Fetched Successfully", $candidateDetails, null, 200);
     }
 
-    public function disqualifyCandidate(Request $request, $candidateId)
+    public function disqualifyCandidate(Request $request, string $candidateId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();
@@ -46,7 +46,7 @@ class ElectionCandidateController extends Controller
         return ApiResponseService::success("Candidate Disqualified Successfully", null, null, 200);
     }
 
-    public function reinstateCandidate(Request $request, $candidateId)
+    public function reinstateCandidate(Request $request, string $candidateId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();

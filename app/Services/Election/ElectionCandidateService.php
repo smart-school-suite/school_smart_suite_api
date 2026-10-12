@@ -11,7 +11,7 @@ use App\Events\Actions\AdminActionEvent;
 
 class ElectionCandidateService
 {
-    public function getElectionCandidatesByElection(string $electionId, $currentSchool)
+    public function getElectionCandidatesByElection(string $electionId, object $currentSchool)
     {
         $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
             ->where("election_id", $electionId)
@@ -30,7 +30,7 @@ class ElectionCandidateService
 
         return $getElectionCandidates;
     }
-    public function getElectionCandidates($currentSchool)
+    public function getElectionCandidates(object $currentSchool)
     {
         $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
             ->with(['student.specialty.level', 'electionApplication', 'electionRole.electionType'])
@@ -48,12 +48,13 @@ class ElectionCandidateService
 
         return $getElectionCandidates;
     }
-    public function getElectionCandidateDetails($currentSchool, $candidateId)
+    public function getElectionCandidateDetails(object $currentSchool, string $candidateId)
     {
         try {
             $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-                ->with(['student', 'electionRole', 'electionApplication.election'])
-                ->findOrFail($candidateId);
+                ->with(['student.specialty.level', 'electionRole', 'electionApplication.election'])
+                ->where('id', $candidateId)
+                ->first();
 
             return $candidate;
         } catch (ModelNotFoundException $e) {
@@ -66,7 +67,7 @@ class ElectionCandidateService
             );
         }
     }
-    public function disqualifyCandidate($currentSchool, $candidateId, $authAdmin)
+    public function disqualifyCandidate(object $currentSchool, string $candidateId, $authAdmin)
     {
         try {
             $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
@@ -105,7 +106,7 @@ class ElectionCandidateService
             );
         }
     }
-    public function reinstateCandidate($currentSchool, $candidateId, $authAdmin)
+    public function reinstateCandidate(object $currentSchool, string $candidateId, $authAdmin)
     {
         try {
             $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
@@ -144,7 +145,7 @@ class ElectionCandidateService
             );
         }
     }
-    public function bulkDisqualifyCandidate($currentSchool, $candidateIds, $authAdmin)
+    public function bulkDisqualifyCandidate(object $currentSchool, array $candidateIds, $authAdmin)
     {
         $result = [];
         try {
@@ -224,7 +225,7 @@ class ElectionCandidateService
             );
         }
     }
-    public function bulkReinstateCandidate($currentSchool, $candidateIds, $authAdmin)
+    public function bulkReinstateCandidate(object $currentSchool, array $candidateIds, $authAdmin)
     {
         $result = [];
         try {
