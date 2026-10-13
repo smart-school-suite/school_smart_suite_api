@@ -8,5 +8,5 @@ Route::post('{qualificationId}/deactivate', [QualificationController::class, 'de
 Route::post('{qualificationId}/activate', [QualificationController::class, 'activateQualification'])->name('activate.qualification');
 Route::delete('{qualificationId}/delete', [QualificationController::class, 'deleteQualification'])->name('delete.qualification');
 Route::post('/create', [QualificationController::class, 'createQualification'])->name('create.qualification');
-Route::put('{qualificationId}/update', [QualificationController::class, 'updateQualification'])->name('create.qualification');
+Route::put('{qualificationId}/update', [QualificationController::class, 'updateQualification'])->name('update.qualification');
 Route::get('/{qualificationId}/details', [QualificationController::class, 'getQualificationDetails'])->name('details.qualification');

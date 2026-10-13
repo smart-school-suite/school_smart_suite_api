@@ -6,5 +6,5 @@ use App\Http\Middleware\IdentifyTenant;
 Route::get('/', [TuitionFeeInstallmentController::class, 'getFeeInstallment'])->name("fee-installment.get");
 Route::post('/', [TuitionFeeInstallmentController::class, 'createFeeInstallment'])->name('fee-installment.create');
 Route::patch('/{installmentId}', [TuitionFeeInstallmentController::class, 'updateFeeInstallment'])->name('fee-installment.update');
-Route::delete('/{installmentId}', [TuitionFeeInstallmentController::class, 'deleteFeeInstallment'])->name('fee-installment.create');
+Route::delete('/{installmentId}', [TuitionFeeInstallmentController::class, 'deleteFeeInstallment'])->name('fee-installment.delete');
 Route::middleware( [IdentifyTenant::class])->get('/status/active', [TuitionFeeInstallmentController::class, 'getActiveFeeInstallment'])->name("fee-installment.get.active");

@@ -56,7 +56,6 @@ return new class extends Migration
             $table->uuid('teacher_id')->index();
             $table->foreign('teacher_id')->references('id')->on('teachers');
             $table->uuid('qualification_id')->index();
-            $table->foreign('qualification_id')->references('id')->on('qualifications');
             $table->uuid('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches');
         });
@@ -79,7 +78,6 @@ return new class extends Migration
         if (Schema::hasTable('teacher_qualifications')) {
             Schema::table('teacher_qualifications', function (Blueprint $table) {
                 $table->dropForeign(['school_branch_id']);
-                $table->dropForeign(['qualification_id']);
                 $table->dropForeign(['teacher_id']);
             });
         }
