@@ -8,7 +8,7 @@ Route::post('/create', [TeacherPreferedTeachingTimeController::class, 'createIns
 
 Route::post('/{targetAvailabilityId}/{availabilityId}/create',
   [TeacherPreferedTeachingTimeController::class, 'createAvailabilityByOtherSlots']
-)->name('instructor-availability.create');
+)->name('instructor-availability.create-by-other-slots');
 
 Route::get('/teacher/{teacherId}/availability', [TeacherPreferedTeachingTimeController::class, 'getInstructorAvailabilitesByTeacher'])
     ->name('teachers.availability.index');

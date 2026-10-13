@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('announcement_audiences', function (Blueprint $table) {
+        Schema::table('announcement_recipients', function (Blueprint $table) {
             $table->uuid('announcement_id')->index();
             $table->foreign('announcement_id')->references('id')->on('announcements')->onDelete('cascade');
             $table->uuid('school_branch_id')->index();
@@ -68,8 +68,8 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('announcement_audiences')) {
-            Schema::table('announcement_audiences', function (Blueprint $table) {
+        if (Schema::hasTable('announcement_recipients')) {
+            Schema::table('announcement_recipients', function (Blueprint $table) {
                 $table->dropForeign(['announcement_id']);
                 $table->dropForeign(['school_branch_id']);
             });

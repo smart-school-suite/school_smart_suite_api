@@ -45,7 +45,7 @@ return new class extends Migration
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
             $table->uuid('school_year_id');
             $table->foreign('school_year_id')->references('id')->on('system_academic_years')->onDelete('cascade');
-            $table->unique(['school_branch_id', 'school_year_id', 'semester_id', 'course_id']);
+            $table->unique(['school_branch_id', 'school_year_id', 'semester_id', 'course_id'], 'sem_joint_courses_branch_year_sem_course_unique');
         });
 
         Schema::table('joint_course_slots', function (Blueprint $table) {
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
             $table->uuid('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-            $table->unique(['school_branch_id', 'school_semester_id', 'semester_joint_course_id']);
+            $table->unique(['school_branch_id', 'school_semester_id', 'semester_joint_course_id'], 'sem_joint_course_refs_branch_sem_course_unique');
         });
     }
 
