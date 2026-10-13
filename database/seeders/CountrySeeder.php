@@ -2,22 +2,19 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+
 class CountrySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $this->seedCountries();
     }
 
-      private function seedCountries(): void
+    private function seedCountries(): void
     {
         $timestamp = now();
         $filePath = public_path("data/country.csv");
@@ -33,7 +30,6 @@ class CountrySeeder extends Seeder
             Log::info('CSV Header:', $header ?? []);
 
             while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                Log::info('Processing CSV Row:', $data);
                 if (count($data) >= 5) {
                     $countries[] = [
                         'id' => Str::uuid()->toString(),
@@ -52,8 +48,12 @@ class CountrySeeder extends Seeder
         }
 
         if (!empty($countries)) {
-            DB::table('countries')->insert($countries);
-            Log::info('Inserted ' . count($countries) . ' countries.');
+            DB::table('countries')->upsert(
+                $countries,
+                ['code'],
+                ['country', 'currency', 'official_language', 'updated_at']
+            );
+            Log::info('Upserted ' . count($countries) . ' countries.');
         } else {
             Log::warning('No countries to insert from CSV.');
         }

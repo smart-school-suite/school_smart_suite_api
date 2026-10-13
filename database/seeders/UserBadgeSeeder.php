@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Badge\BadgeCategory;
 use App\Models\Badge\BadgeType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class UserBadgeSeeder extends Seeder
@@ -15,9 +14,10 @@ class UserBadgeSeeder extends Seeder
     public function run(): void
     {
         $this->createUserBadgeCategory();
+        $this->createUserBadgeTypes();
     }
 
-    private function createUserBadgeCategory()
+    private function createUserBadgeCategory(): void
     {
         $categories = [
             [
@@ -33,16 +33,19 @@ class UserBadgeSeeder extends Seeder
                 "key" => "verfication.badges"
             ]
         ];
+
         foreach ($categories as $category) {
-            BadgeCategory::create([
-                'name' => $category['name'],
-                "status" => "active",
-                "key" => $category['key']
-            ]);
+            BadgeCategory::updateOrCreate(
+                ['key' => $category['key']],
+                [
+                    'name' => $category['name'],
+                    'status' => 'active',
+                ]
+            );
         }
     }
 
-    public function createUserBadgeTypes()
+    public function createUserBadgeTypes(): void
     {
         $badgeTypes = [
             [
@@ -68,23 +71,21 @@ class UserBadgeSeeder extends Seeder
             ]
         ];
 
+        $categoriesByKey = BadgeCategory::pluck('id', 'key');
+
         foreach ($badgeTypes as $badgeType) {
-            $badgeCategory = BadgeCategory::where("key", $badgeType['key'])->first();
+            $badgeCategoryId = $categoriesByKey[$badgeType['key']] ?? null;
 
-            if (BadgeType::where('badge_category_id', $badgeCategory?->id)
-                ->where('key', $badgeType['key'])
-                ->exists()
-            ) {
-                continue;
-            }
-
-            BadgeType::create([
-                "name"             => $badgeType['name'],
-                "badge_category_id" => $badgeCategory?->id,
-                "description"      => $badgeType['description'],
-                "color"            => $badgeType['color'],
-                "icon_code"        => $badgeType['icon_code']
-            ]);
+            BadgeType::updateOrCreate(
+                ['key' => $badgeType['key']],
+                [
+                    "name"              => $badgeType['name'],
+                    "badge_category_id" => $badgeCategoryId,
+                    "description"       => $badgeType['description'],
+                    "color"             => $badgeType['color'],
+                    "icon_code"         => $badgeType['icon_code'],
+                ]
+            );
         }
     }
 }

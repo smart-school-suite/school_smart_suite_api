@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Gender;
 use App\Models\StudentSource;
@@ -63,16 +62,16 @@ class StudentCredentials extends Seeder
         ];
 
         foreach ($genders as $gender) {
-            Gender::create([
+            Gender::firstOrCreate([
                 'name' => $gender
             ]);
         }
 
         foreach ($studentSources as $studentSource) {
-             StudentSource::create([
-                 'name' => $studentSource['name'],
-                 'description' => $studentSource['description']
-             ]);
+            StudentSource::updateOrCreate(
+                ['name' => $studentSource['name']],
+                ['description' => $studentSource['description']]
+            );
         }
     }
 }

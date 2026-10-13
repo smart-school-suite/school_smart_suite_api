@@ -10,11 +10,12 @@ class SettingCategorySeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void {
+    public function run(): void
+    {
         $this->createSettingCategories();
     }
 
-    public function createSettingCategories()
+    public function createSettingCategories(): void
     {
         $data = [
             [
@@ -49,14 +50,13 @@ class SettingCategorySeeder extends Seeder
                 'name' => 'Level Setting',
                 'key' => 'setting.category.level'
             ]
-
         ];
 
         foreach ($data as $setting) {
-            SettingCategory::create([
-                'name' => $setting['name'],
-                'key' => $setting['key'],
-            ]);
+            SettingCategory::updateOrCreate(
+                ['key' => $setting['key']],
+                ['name' => $setting['name']]
+            );
         }
     }
 }

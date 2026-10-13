@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Qualification;
+
 class QualificationSeeder extends Seeder
 {
     /**
@@ -12,7 +12,7 @@ class QualificationSeeder extends Seeder
      */
     public function run(): void
     {
-              $qualifications = [
+        $qualifications = [
             [
                 "name" => "Higher National Diploma",
                 "abbreviation" => "HND",
@@ -40,11 +40,14 @@ class QualificationSeeder extends Seeder
         ];
 
         foreach ($qualifications as $q) {
-            Qualification::create([
-                "name" => $q['name'],
-                "level" => $q['level'],
-                'abbreviation' => $q['abbreviation']
-            ]);
+            Qualification::updateOrCreate(
+                ['abbreviation' => $q['abbreviation']], // unique identifier
+                [
+                    'name' => $q['name'],
+                    'level' => $q['level'],
+                    'obtained_from' => $q['obtained_from'],
+                ]
+            );
         }
     }
 }

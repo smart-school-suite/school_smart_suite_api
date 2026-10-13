@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,242 +14,65 @@ class StatTypeSeeder extends Seeder
     public function run(): void
     {
         $kpiDetails = [
-            [
-                'name' => "Student Ca Percentage Increase In Performance By Exam",
-                'program_name' => 'student_ca_percentage_increase_performance_by_exam_type'
-            ],
-            [
-                'name' => "Student Ca Percentage Increase In Performance By Semester",
-                'program_name' => "student_ca_percentage_increase_performance_by_semester",
-            ],
-            [
-                'name' => "Student Ca Percentage Decrease In Performance By Exam",
-                'program_name' => 'student_ca_percentage_decrease_performance_by_exam'
-            ],
-            [
-                'name' => 'Student Ca Percentage Decrease In Performance By Semester',
-                'program_name' => 'student_ca_percentage_decrease_performance_by_semester'
-            ],
-            [
-                'name' => 'Student CA Courses Sat',
-                'program_name' => 'student_ca_courses_sat'
-            ],
-            [
-                'name' => 'Student CA Courses Passed',
-                'program_name' => 'student_ca_courses_passed'
-            ],
-            [
-                'name' => 'Student CA Courses Failed',
-                'program_name' => 'student_ca_courses_failed'
-            ],
-            [
-                'name' => 'Student CA Pass Rate',
-                'program_name' => 'student_ca_pass_rate'
-            ],
-            [
-                'name' => 'Student CA Fail Rate',
-                'program_name' => 'student_ca_fail_rate'
-            ],
-            [
-                'name' => 'Student CA GPA trends over school years By Exam',
-                'program_name' => 'student_ca_school_year_on_gpa_changes_by_exam'
-            ],
-            [
-                'name' => 'Student CA Total Score Trends Over School Years By Exam',
-                'program_name' => 'student_ca_school_year_on_total_score_changes_by_exam'
-            ],
-            [
-                'name' => 'Student CA Potential Resits',
-                'program_name' => 'student_ca_potential_resits'
-            ],
-            [
-                'name' => 'Student CA Resit Probability',
-                'program_name' => 'student_ca_chances_of_resit'
-            ],
-            [
-                'name' => 'Student CA Grades Distribution',
-                'program_name' => 'student_ca_grades_distribution'
-            ],
-            [
-                'name' => 'CA Exam Total Students Accessed',
-                'program_name' => 'ca_exam_total_students_accessed'
-            ],
-            [
-                'name' => 'CA Exam Total Students Passed',
-                'program_name' => 'ca_exam_total_students_passed'
-            ],
-            [
-                'name' => 'CA Exam Total Students Failed',
-                'program_name' => 'ca_exam_total_students_failed'
-            ],
-            [
-                'name' => 'CA Exam Pass Rate',
-                'program_name' => 'ca_exam_pass_rate'
-            ],
-            [
-                'name' => 'CA Exam Fail Rate',
-                'program_name' => 'ca_exam_fail_rate'
-            ],
-            [
-                'name' => 'CA Exam Average Total Score',
-                'program_name' => 'average_ca_exam_total_score'
-            ],
-            [
-                'name' => 'CA Exam Average GPA',
-                'program_name' => 'average_ca_exam_gpa'
-            ],
-            [
-                'name' => 'CA Exam Course Fail Rates',
-                'program_name' => 'ca_exam_course_fail_rates'
-            ],
-            [
-                'name' => 'CA Exam Course Pass Rates',
-                'program_name' => 'ca_exam_course_pass_rates'
-            ],
-            [
-                'name' => 'CA Exam Course Fail Distribution',
-                'program_name' => 'ca_exam_course_fail_distribution'
-            ],
-            [
-                'name' => 'CA Exam Course Pass Distribution',
-                'program_name' => 'ca_exam_course_pass_distribution'
-            ],
-            [
-                'name' => 'CA Exam Potential Resit Distribution',
-                'program_name' => 'ca_exam_course_potential_resit_distribution'
-            ],
-            [
-                'name' => 'CA Exam Total Potential Resits',
-                'program_name' => 'ca_total_number_of_potential_resits'
-            ],
-            [
-                'name' => 'CA Exam Grades Distribution',
-                'program_name' => 'ca_exam_grades_distribution'
-            ],
-            [
-                'name' => 'CA Exam Course Score Distribution',
-                'program_name' => 'ca_exam_course_score_distribution'
-            ],
-            [
-                'name' => 'Student Percentage Increase Performance by Exam Type',
-                'program_name' => 'student_exam_percentage_increase_performance_by_exam_type'
-            ],
-            [
-                'name' => 'Student Percentage Increase Performance by Semester',
-                'program_name' => 'student_exam_percentage_increase_performance_by_semester'
-            ],
-            [
-                'name' => 'Student Percentage Decrease Performance by Exam Type',
-                'program_name' => 'student_exam_percentage_decrease_performance_by_exam_type'
-            ],
-            [
-                'name' => 'Student Percentage Decrease Performance by Semester',
-                'program_name' => 'student_exam_percentage_decrease_performance_by_semester'
-            ],
-            [
-                'name' => 'Student Courses SAT',
-                'program_name' => 'student_exam_courses_sat'
-            ],
-            [
-                'name' => 'Student Courses Passed',
-                'program_name' => 'student_exam_courses_passed'
-            ],
-            [
-                'name' => 'Student Courses Failed',
-                'program_name' => 'student_exam_courses_failed'
-            ],
-            [
-                'name' => 'Student Exam Pass Rate',
-                'program_name' => 'student_exam_pass_rate'
-            ],
-            [
-                'name' => 'Student Exam Fail Rate',
-                'program_name' => 'student_exam_fail_rate'
-            ],
-            [
-                'name' => 'Student GPA Changes by Exam and School Year',
-                'program_name' => 'student_exam_school_year_on_gpa_changes_by_exam'
-            ],
-            [
-                'name' => 'Student Total Score Changes by Exam and School Year',
-                'program_name' => 'student_exam_school_year_on_total_score_changes_by_exam'
-            ],
-            [
-                'name' => 'Student Resits',
-                'program_name' => 'student_exam_resits'
-            ],
-            [
-                'name' => 'Student No Resit',
-                'program_name' => 'student_exam_no_resit'
-            ],
-            [
-                'name' => 'Student Grades Distribution',
-                'program_name' => 'student_exam_grades_distribution'
-            ],
-            [
-                'name' => 'Student Marks Score Distribution by Course',
-                'program_name' => 'student_exam_marks_score_distribution_by_course'
-            ],
-            [
-                'name' => 'Total Students Accessed',
-                'program_name' => 'exam_total_students_accessed'
-            ],
-            [
-                'name' => 'Total Students Passed',
-                'program_name' => 'exam_total_students_passed'
-            ],
-            [
-                'name' => 'Total Students Failed',
-                'program_name' => 'exam_total_students_failed'
-            ],
-            [
-                'name' => 'Pass Rate',
-                'program_name' => 'exam_pass_rate'
-            ],
-            [
-                'name' => 'Fail Rate',
-                'program_name' => 'exam_fail_rate'
-            ],
-            [
-                'name' => 'Average Total Score',
-                'program_name' => 'average_exam_total_score'
-            ],
-            [
-                'name' => 'Average GPA',
-                'program_name' => 'average_exam_gpa'
-            ],
-            [
-                'name' => 'Course Fail Rates',
-                'program_name' => 'exam_course_fail_rates'
-            ],
-            [
-                'name' => 'Course Pass Rates',
-                'program_name' => 'exam_course_pass_rates'
-            ],
-            [
-                'name' => 'Course Fail Distribution',
-                'program_name' => 'exam_course_fail_distribution'
-            ],
-            [
-                'name' => 'Course Pass Distribution',
-                'program_name' => 'exam_course_pass_distribution'
-            ],
-            [
-                'name' => 'Course Resit Distribution',
-                'program_name' => 'exam_course_resit_distribution'
-            ],
-            [
-                'name' => 'Total Number of Resits',
-                'program_name' => 'exam_total_number_of_resits'
-            ],
-            [
-                'name' => 'Grades Distribution',
-                'program_name' => 'exam_grades_distribution'
-            ],
-            [
-                'name' => 'Course Score Distribution',
-                'program_name' => 'exam_course_score_distribution'
-            ],
+            ['name' => "Student Ca Percentage Increase In Performance By Exam", 'program_name' => 'student_ca_percentage_increase_performance_by_exam_type'],
+            ['name' => "Student Ca Percentage Increase In Performance By Semester", 'program_name' => "student_ca_percentage_increase_performance_by_semester"],
+            ['name' => "Student Ca Percentage Decrease In Performance By Exam", 'program_name' => 'student_ca_percentage_decrease_performance_by_exam'],
+            ['name' => 'Student Ca Percentage Decrease In Performance By Semester', 'program_name' => 'student_ca_percentage_decrease_performance_by_semester'],
+            ['name' => 'Student CA Courses Sat', 'program_name' => 'student_ca_courses_sat'],
+            ['name' => 'Student CA Courses Passed', 'program_name' => 'student_ca_courses_passed'],
+            ['name' => 'Student CA Courses Failed', 'program_name' => 'student_ca_courses_failed'],
+            ['name' => 'Student CA Pass Rate', 'program_name' => 'student_ca_pass_rate'],
+            ['name' => 'Student CA Fail Rate', 'program_name' => 'student_ca_fail_rate'],
+            ['name' => 'Student CA GPA trends over school years By Exam', 'program_name' => 'student_ca_school_year_on_gpa_changes_by_exam'],
+            ['name' => 'Student CA Total Score Trends Over School Years By Exam', 'program_name' => 'student_ca_school_year_on_total_score_changes_by_exam'],
+            ['name' => 'Student CA Potential Resits', 'program_name' => 'student_ca_potential_resits'],
+            ['name' => 'Student CA Resit Probability', 'program_name' => 'student_ca_chances_of_resit'],
+            ['name' => 'Student CA Grades Distribution', 'program_name' => 'student_ca_grades_distribution'],
+            ['name' => 'CA Exam Total Students Accessed', 'program_name' => 'ca_exam_total_students_accessed'],
+            ['name' => 'CA Exam Total Students Passed', 'program_name' => 'ca_exam_total_students_passed'],
+            ['name' => 'CA Exam Total Students Failed', 'program_name' => 'ca_exam_total_students_failed'],
+            ['name' => 'CA Exam Pass Rate', 'program_name' => 'ca_exam_pass_rate'],
+            ['name' => 'CA Exam Fail Rate', 'program_name' => 'ca_exam_fail_rate'],
+            ['name' => 'CA Exam Average Total Score', 'program_name' => 'average_ca_exam_total_score'],
+            ['name' => 'CA Exam Average GPA', 'program_name' => 'average_ca_exam_gpa'],
+            ['name' => 'CA Exam Course Fail Rates', 'program_name' => 'ca_exam_course_fail_rates'],
+            ['name' => 'CA Exam Course Pass Rates', 'program_name' => 'ca_exam_course_pass_rates'],
+            ['name' => 'CA Exam Course Fail Distribution', 'program_name' => 'ca_exam_course_fail_distribution'],
+            ['name' => 'CA Exam Course Pass Distribution', 'program_name' => 'ca_exam_course_pass_distribution'],
+            ['name' => 'CA Exam Potential Resit Distribution', 'program_name' => 'ca_exam_course_potential_resit_distribution'],
+            ['name' => 'CA Exam Total Potential Resits', 'program_name' => 'ca_total_number_of_potential_resits'],
+            ['name' => 'CA Exam Grades Distribution', 'program_name' => 'ca_exam_grades_distribution'],
+            ['name' => 'CA Exam Course Score Distribution', 'program_name' => 'ca_exam_course_score_distribution'],
+            ['name' => 'Student Percentage Increase Performance by Exam Type', 'program_name' => 'student_exam_percentage_increase_performance_by_exam_type'],
+            ['name' => 'Student Percentage Increase Performance by Semester', 'program_name' => 'student_exam_percentage_increase_performance_by_semester'],
+            ['name' => 'Student Percentage Decrease Performance by Exam Type', 'program_name' => 'student_exam_percentage_decrease_performance_by_exam_type'],
+            ['name' => 'Student Percentage Decrease Performance by Semester', 'program_name' => 'student_exam_percentage_decrease_performance_by_semester'],
+            ['name' => 'Student Courses SAT', 'program_name' => 'student_exam_courses_sat'],
+            ['name' => 'Student Courses Passed', 'program_name' => 'student_exam_courses_passed'],
+            ['name' => 'Student Courses Failed', 'program_name' => 'student_exam_courses_failed'],
+            ['name' => 'Student Exam Pass Rate', 'program_name' => 'student_exam_pass_rate'],
+            ['name' => 'Student Exam Fail Rate', 'program_name' => 'student_exam_fail_rate'],
+            ['name' => 'Student GPA Changes by Exam and School Year', 'program_name' => 'student_exam_school_year_on_gpa_changes_by_exam'],
+            ['name' => 'Student Total Score Changes by Exam and School Year', 'program_name' => 'student_exam_school_year_on_total_score_changes_by_exam'],
+            ['name' => 'Student Resits', 'program_name' => 'student_exam_resits'],
+            ['name' => 'Student No Resit', 'program_name' => 'student_exam_no_resit'],
+            ['name' => 'Student Grades Distribution', 'program_name' => 'student_exam_grades_distribution'],
+            ['name' => 'Student Marks Score Distribution by Course', 'program_name' => 'student_exam_marks_score_distribution_by_course'],
+            ['name' => 'Total Students Accessed', 'program_name' => 'exam_total_students_accessed'],
+            ['name' => 'Total Students Passed', 'program_name' => 'exam_total_students_passed'],
+            ['name' => 'Total Students Failed', 'program_name' => 'exam_total_students_failed'],
+            ['name' => 'Pass Rate', 'program_name' => 'exam_pass_rate'],
+            ['name' => 'Fail Rate', 'program_name' => 'exam_fail_rate'],
+            ['name' => 'Average Total Score', 'program_name' => 'average_exam_total_score'],
+            ['name' => 'Average GPA', 'program_name' => 'average_exam_gpa'],
+            ['name' => 'Course Fail Rates', 'program_name' => 'exam_course_fail_rates'],
+            ['name' => 'Course Pass Rates', 'program_name' => 'exam_course_pass_rates'],
+            ['name' => 'Course Fail Distribution', 'program_name' => 'exam_course_fail_distribution'],
+            ['name' => 'Course Pass Distribution', 'program_name' => 'exam_course_pass_distribution'],
+            ['name' => 'Course Resit Distribution', 'program_name' => 'exam_course_resit_distribution'],
+            ['name' => 'Total Number of Resits', 'program_name' => 'exam_total_number_of_resits'],
+            ['name' => 'Grades Distribution', 'program_name' => 'exam_grades_distribution'],
+            ['name' => 'Course Score Distribution', 'program_name' => 'exam_course_score_distribution'],
             ['name' => 'Total Additional Fee', 'program_name' => 'total_additional_fee'],
             ['name' => 'Total Additional Fee by Department', 'program_name' => 'total_additional_fee_by_department'],
             ['name' => 'Total Additional Fee by Specialty', 'program_name' => 'total_additional_fee_by_specialty'],
@@ -303,55 +125,36 @@ class StatTypeSeeder extends Seeder
             ['name' => 'Total Number of Courses per Specialty', 'program_name' => 'total_number_of_courses_per_specialty'],
             ['name' => 'Total Number of Courses per Teacher', 'program_name' => 'total_number_of_courses_per_teacher'],
             ['name' => 'Average Courses per Day', 'program_name' => 'total_average_course_per_day'],
-            [
-                'name' => "School Expenses Progress",
-                "program_name" => "school_expenses_progress"
-            ],
-            [
-                'name' => "Total Tuition Fee Progress",
-                "program_name" => "total_tuition_fee_progress",
-            ],
-            [
-                'name' => "Total Additional Fee Progress",
-                "program_name" => "total_additional_fee_progress"
-            ],
-            [
-                'name' => 'Total Application Count',
-                'program_name' => 'total_application_count'
-             ],
-             [
-                'name' => 'Total Application Rejection Count',
-                'program_name' => 'total_application_rejection_count'
-             ],
-             [
-                'name' => 'Total Application Acceptance Count',
-                'program_name' => 'total_application_acceptance_count'
-             ],
-             [
-                'name' => 'School Expenses Progress',
-                'program_name' => 'school_expenses_progress'
-             ],
-             [
-                'name' => 'Total Revenue Progress',
-                'program_name' => 'total_revenue_progress'
-             ],
-             [
-                'name' => "Total School Admin",
-                'program_name' => 'total_school_admin'
-             ]
+            ['name' => "School Expenses Progress", "program_name" => "school_expenses_progress"],
+            ['name' => "Total Tuition Fee Progress", "program_name" => "total_tuition_fee_progress"],
+            ['name' => "Total Additional Fee Progress", "program_name" => "total_additional_fee_progress"],
+            ['name' => 'Total Application Count', 'program_name' => 'total_application_count'],
+            ['name' => 'Total Application Rejection Count', 'program_name' => 'total_application_rejection_count'],
+            ['name' => 'Total Application Acceptance Count', 'program_name' => 'total_application_acceptance_count'],
+            ['name' => 'School Expenses Progress', 'program_name' => 'school_expenses_progress'],
+            ['name' => 'Total Revenue Progress', 'program_name' => 'total_revenue_progress'],
+            ['name' => "Total School Admin", 'program_name' => 'total_school_admin']
         ];
-        $this->command->info("Creating Stat Types..............................................1%");
+
+
+        $timestamp = now();
+
+        $rows = [];
         foreach ($kpiDetails as $kpiDetail) {
-            DB::table('stat_types')->insert(
-                [
-                    'id' => Str::uuid(),
-                    'name' => $kpiDetail['name'],
-                    'program_name' => $kpiDetail['program_name'],
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            );
+            $rows[] = [
+                'id' => Str::uuid()->toString(),
+                'name' => $kpiDetail['name'],
+                'program_name' => $kpiDetail['program_name'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
         }
-        $this->command->info("Stat Types Created Successfully..................................100%");
+
+        DB::table('stat_types')->upsert(
+            $rows,
+            ['program_name'],
+            ['name', 'updated_at']
+        );
+
     }
 }

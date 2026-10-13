@@ -3,9 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Installment;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class InstallmentSeeder extends Seeder
 {
@@ -46,8 +44,10 @@ class InstallmentSeeder extends Seeder
                 'code' => 'FIFINS'
             ]
         ];
-        foreach($data as $feeInstallment){
-            Installment::create(
+
+        foreach ($data as $feeInstallment) {
+            Installment::updateOrCreate(
+                ['code' => $feeInstallment['code']],
                 $feeInstallment
             );
         }
