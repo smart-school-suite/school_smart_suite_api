@@ -10,6 +10,7 @@ use App\Models\Constraint\SemTimetableConstraint;
 use App\Models\Constraint\SemTimetableConstraintCategory;
 use App\Models\Constraint\SemTimetableConstraintType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class TimetableConstraintSeeder extends Seeder
 {
@@ -115,16 +116,29 @@ class TimetableConstraintSeeder extends Seeder
     private function seedConstraints(): void
     {
         $constraints = ConstraintBuilder::all();
+
+        $categoriesByKey = SemTimetableConstraintCategory::pluck('id', 'key');
+        $typesByKey = SemTimetableConstraintType::pluck('id', 'key');
+
         foreach ($constraints as $constraint) {
-            $category = SemTimetableConstraintCategory::where("key", $constraint["category"])->first();
-            $type = SemTimetableConstraintType::where("key", $constraint["type"])->first();
+            $categoryId = $categoriesByKey[$constraint['category']] ?? null;
+            $typeId = $typesByKey[$constraint['type']] ?? null;
+
+            if (!$categoryId) {
+                Log::warning("Constraint category not found: {$constraint['category']} (for constraint {$constraint['key']})");
+            }
+
+            if (!$typeId) {
+                Log::warning("Constraint type not found: {$constraint['type']} (for constraint {$constraint['key']})");
+            }
+
             SemTimetableConstraint::updateOrCreate(
-                ['key' => $constraint['key']], // Unique identifier
+                ['key' => $constraint['key']],
                 [
                     "name" => $constraint["title"],
                     "description" => $constraint["description"],
-                    "constraint_category_id" => $category?->id,
-                    "constraint_type_id" => $type?->id,
+                    "constraint_category_id" => $categoryId,
+                    "constraint_type_id" => $typeId,
                     "is_suggestable" => !empty($constraint["suggestion_handler"]),
                     "is_blockable" => !empty($constraint["interpreter_handler"])
                 ]
@@ -135,8 +149,15 @@ class TimetableConstraintSeeder extends Seeder
     private function seedViolations(): void
     {
         $violations = ViolationBuilder::all();
+
+        $categoriesByKey = SemTimetableBlockerCategory::pluck('id', 'key');
+
         foreach ($violations as $violation) {
-            $category = SemTimetableBlockerCategory::where("key", $violation["category"])->first();
+            $categoryId = $categoriesByKey[$violation['category']] ?? null;
+
+            if (!$categoryId) {
+                Log::warning("Blocker category not found: {$violation['category']} (for violation {$violation['key']})");
+            }
 
             SemTimetableBlocker::updateOrCreate(
                 ['key' => $violation['key']],
@@ -144,7 +165,7 @@ class TimetableConstraintSeeder extends Seeder
                     "name" => $violation["title"],
                     "description" => $violation["description"],
                     "is_resolvable" => !empty($violation["violation_handler"]),
-                    "sem_blocker_category_id" => $category?->id
+                    "sem_blocker_category_id" => $categoryId
                 ]
             );
         }

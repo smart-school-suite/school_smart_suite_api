@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\LevelType;
 
@@ -35,12 +34,15 @@ class LevelTypeSeeder extends Seeder
                 "program_name" => "level_start_400"
             ],
         ];
+
         foreach ($levelTypes as $levelType) {
-            LevelType::create([
-                'name' => $levelType['name'],
-                'description' => $levelType['description'],
-                'program_name' => $levelType['program_name']
-            ]);
+            LevelType::updateOrCreate(
+                ['program_name' => $levelType['program_name']],
+                [
+                    'name' => $levelType['name'],
+                    'description' => $levelType['description'],
+                ]
+            );
         }
     }
 }

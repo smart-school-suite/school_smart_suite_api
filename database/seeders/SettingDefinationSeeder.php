@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-
 use Illuminate\Database\Seeder;
 use App\Models\SettingCategory;
 use App\Models\SettingDefination;
@@ -22,9 +21,10 @@ class SettingDefinationSeeder extends Seeder
         $this->examSettingDefination();
         $this->gradeSettingDefination();
         $this->electionTieBreakerSettingDefination();
+        $this->levelSetting();
     }
 
-    public function studentPromotionSettingDefination()
+    public function studentPromotionSettingDefination(): void
     {
         $promotionSettingDefs = [
             [
@@ -55,25 +55,12 @@ class SettingDefinationSeeder extends Seeder
                 'default_value' => 5,
                 'description' => 'The maximum number of courses/modules a student is permitted to have carried over (failed and needing to be retaken) from the previous level for promotion eligibility.',
             ],
-            //when the auto promotion to occur,
-            //what event should happen before auto promotion
         ];
 
-        $settingCategoryName = 'Student Promotion Setting';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
-
-        foreach ($promotionSettingDefs as $promotionSettingDef) {
-            SettingDefination::create([
-                'key' => $promotionSettingDef['key'],
-                'data_type' => $promotionSettingDef['data_type'],
-                'default_value' => $promotionSettingDef['default_value'],
-                'name' => $promotionSettingDef['label'],
-                'description' => $promotionSettingDef['description'] ?? null,
-                'setting_category_id' => $settingCategory->id
-            ]);
-        }
+        $this->seedDefinitions('Student Promotion Setting', $promotionSettingDefs);
     }
-    public function timetableSettingDefination()
+
+    public function timetableSettingDefination(): void
     {
         $settingDefs = [
             [
@@ -92,21 +79,10 @@ class SettingDefinationSeeder extends Seeder
             ]
         ];
 
-        $settingCategoryName = 'Time-table Settings';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
-
-        foreach ($settingDefs as $settingDef) {
-            SettingDefination::create([
-                'key' => $settingDef['key'],
-                'data_type' => $settingDef['data_type'],
-                'default_value' => $settingDef['default_value'],
-                'name' => $settingDef['label'],
-                'description' => $settingDef['description'] ?? null,
-                'setting_category_id' => $settingCategory->id
-            ]);
-        }
+        $this->seedDefinitions('Time-table Settings', $settingDefs);
     }
-    public function resitSettingDefination()
+
+    public function resitSettingDefination(): void
     {
         $settingDefs = [
             [
@@ -146,21 +122,10 @@ class SettingDefinationSeeder extends Seeder
             ]
         ];
 
-        $settingCategoryName = 'Resit Settings';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
-
-        foreach ($settingDefs as $settingDef) {
-            SettingDefination::create([
-                'key' => $settingDef['key'],
-                'data_type' => $settingDef['data_type'],
-                'default_value' => $settingDef['default_value'],
-                'name' => $settingDef['label'],
-                'description' => $settingDef['description'] ?? null,
-                'setting_category_id' => $settingCategory->id
-            ]);
-        }
+        $this->seedDefinitions('Resit Settings', $settingDefs);
     }
-    public function examSettingDefination()
+
+    public function examSettingDefination(): void
     {
         $settingDefs = [
             [
@@ -178,20 +143,11 @@ class SettingDefinationSeeder extends Seeder
                 'description' => "Automatically generate exams when a new semester is created for seamless planning"
             ]
         ];
-        $settingCategoryName = 'Exam Settings';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
-        foreach ($settingDefs as $settingDef) {
-            SettingDefination::create([
-                'key' => $settingDef['key'],
-                'data_type' => $settingDef['data_type'],
-                'default_value' => $settingDef['default_value'],
-                'name' => $settingDef['label'],
-                'description' => null,
-                'setting_category_id' => $settingCategory->id
-            ]);
-        }
+
+        $this->seedDefinitions('Exam Settings', $settingDefs);
     }
-    public function gradeSettingDefination()
+
+    public function gradeSettingDefination(): void
     {
         $letterGrades = LetterGrade::all();
 
@@ -219,21 +175,10 @@ class SettingDefinationSeeder extends Seeder
             ],
         ];
 
-        $settingCategoryName = 'Grade Settings';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
-
-        foreach ($settingDefs as $settingDef) {
-            SettingDefination::create([
-                'key' => $settingDef['key'],
-                'data_type' => $settingDef['data_type'],
-                'default_value' => $settingDef['default_value'],
-                'name' => $settingDef['label'],
-                'description' => $settingDef['description'] ?? null,
-                'setting_category_id' => $settingCategory->id
-            ]);
-        }
+        $this->seedDefinitions('Grade Settings', $settingDefs);
     }
-    public function electionTieBreakerSettingDefination()
+
+    public function electionTieBreakerSettingDefination(): void
     {
         $settingDefs = [
             [
@@ -252,43 +197,45 @@ class SettingDefinationSeeder extends Seeder
             ]
         ];
 
-        $settingCategoryName = 'Election Tie Breaker Setting';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
-
-        foreach ($settingDefs as $settingDef) {
-            SettingDefination::create([
-                'key' => $settingDef['key'],
-                'data_type' => $settingDef['data_type'],
-                'default_value' => $settingDef['default_value'],
-                'name' => $settingDef['label'],
-                'description' => $settingDef['description'] ?? null,
-                'setting_category_id' => $settingCategory->id
-            ]);
-        }
+        $this->seedDefinitions('Election Tie Breaker Setting', $settingDefs);
     }
 
-    public function levelSetting()
+    public function levelSetting(): void
     {
+        $levelType = LevelType::where("program_name", "level_start_100")->first();
+
         $settingDefs = [
             [
                 'key' => 'level.start',
                 'label' => 'Level Start',
                 'data_type' => 'json',
-                'default_value' => LevelType::where("program_name", "level_start_100")->first(),
+                'default_value' => $levelType ? json_encode($levelType->toArray()) : '{}',
                 'description' => 'Defines the starting academic level used by the institution (e.g., 100, 200, 300)',
             ],
         ];
-        $settingCategoryName = 'Level Setting';
-        $settingCategory = SettingCategory::where("name", $settingCategoryName)->first();
+
+        $this->seedDefinitions('Level Setting', $settingDefs);
+    }
+
+    private function seedDefinitions(string $categoryName, array $settingDefs): void
+    {
+        $settingCategory = SettingCategory::where('name', $categoryName)->first();
+
+        if (!$settingCategory) {
+            return;
+        }
+
         foreach ($settingDefs as $settingDef) {
-            SettingDefination::create([
-                'key' => $settingDef['key'],
-                'data_type' => $settingDef['data_type'],
-                'default_value' => $settingDef['default_value'],
-                'name' => $settingDef['label'],
-                'description' => $settingDef['description'] ?? null,
-                'setting_category_id' => $settingCategory->id
-            ]);
+            SettingDefination::updateOrCreate(
+                ['key' => $settingDef['key']],
+                [
+                    'name' => $settingDef['label'],
+                    'data_type' => $settingDef['data_type'],
+                    'default_value' => $settingDef['default_value'],
+                    'description' => $settingDef['description'] ?? null,
+                    'setting_category_id' => $settingCategory->id,
+                ]
+            );
         }
     }
 }

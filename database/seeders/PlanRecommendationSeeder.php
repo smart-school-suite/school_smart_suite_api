@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Feature;
 use App\Models\Plan;
@@ -15,10 +14,8 @@ class PlanRecommendationSeeder extends Seeder
 {
     public function run(): void
     {
-        // Fetch all plans (excluding max_plan)
         $plans = Plan::where("max_plan", false)->get();
 
-        // Define features
         $features = [
             ["key" => "timetable.generation", "priority" => 7, "name" => "Timetable Generations"],
             ["key" => "school.admins", "priority" => 5, "name" => "School Admins"],
@@ -31,48 +28,66 @@ class PlanRecommendationSeeder extends Seeder
             ["key" => "school.courses", "priority" => 6, "name" => "Courses"],
         ];
 
-        // Loop through plans
+        $featuresByKey = Feature::whereIn('key', array_column($features, 'key'))
+            ->get()
+            ->keyBy('key');
+
         foreach ($plans as $plan) {
+            $targetPlan = Plan::where('price', '>', $plan->price)
+                ->where('country_id', $plan->country_id)
+                ->orderBy('price', 'asc')
+                ->first();
+
+            if (!$targetPlan) {
+                continue;
+            }
+
             foreach ($features as $featureData) {
+                $feature = $featuresByKey->get($featureData['key']);
 
-                // Determine next plan to recommend (for simplicity, next higher priced plan)
-                $targetPlan = Plan::where('price', '>', $plan->price)
-                    ->where('country_id', $plan->country_id)
-                    ->orderBy('price', 'asc')
-                    ->first();
-
-                if (!$targetPlan) {
-                    continue; // no higher plan to recommend
+                if (!$feature) {
+                    continue;
                 }
 
-                // Create Plan Recommendation
-                $recommendationId = Str::uuid();
-                PlanRecommendation::create([
-                    'id' => $recommendationId,
-                    'source_plan_id' => $plan->id,
-                    'target_plan_id' => $targetPlan->id,
-                    'feature_id' => Feature::where('key', $featureData['key'])->first()->id,
-                    'priority' => $featureData['priority'],
-                    'status' => 'active',
-                ]);
+                $recommendation = PlanRecommendation::updateOrCreate(
+                    [
+                        'source_plan_id' => $plan->id,
+                        'target_plan_id' => $targetPlan->id,
+                        'feature_id' => $feature->id,
+                    ],
+                    [
+                        'id' => PlanRecommendation::where('source_plan_id', $plan->id)
+                            ->where('target_plan_id', $targetPlan->id)
+                            ->where('feature_id', $feature->id)
+                            ->value('id') ?? Str::uuid()->toString(),
+                        'priority' => $featureData['priority'],
+                        'status' => 'active',
+                    ]
+                );
 
-                // Create Recommendation Condition (example: 80% usage triggers)
-                $planRecConId = Str::uuid();
-                PlanRecCondition::create([
-                    'id' => $planRecConId,
-                    'plan_rec_id' => $recommendationId,
-                    'operator' => 'percentage',
-                    'value' => json_encode(['threshold' => 0.7]), // 70% usage
-                ]);
+                $condition = PlanRecCondition::updateOrCreate(
+                    [
+                        'plan_rec_id' => $recommendation->id,
+                        'operator' => 'percentage',
+                    ],
+                    [
+                        'id' => PlanRecCondition::where('plan_rec_id', $recommendation->id)
+                            ->where('operator', 'percentage')
+                            ->value('id') ?? Str::uuid()->toString(),
+                        'value' => json_encode(['threshold' => 0.7]),
+                    ]
+                );
 
-                // Create Recommendation Copy (UI friendly)
-
-                PlanRecCopy::create([
-                    'plan_rec_cond_id' => $planRecConId,
-                    'title' => "You're reaching your {$featureData['name']} limit",
-                    'description' => "Your current plan allows a limited {$featureData['name']}. Upgrade to the {$targetPlan->name} plan to increase this limit and continue uninterrupted.",
-                    'cta_text' => "Upgrade to {$targetPlan->name}",
-                ]);
+                PlanRecCopy::updateOrCreate(
+                    [
+                        'plan_rec_cond_id' => $condition->id,
+                    ],
+                    [
+                        'title' => "You're reaching your {$featureData['name']} limit",
+                        'description' => "Your current plan allows a limited {$featureData['name']}. Upgrade to the {$targetPlan->name} plan to increase this limit and continue uninterrupted.",
+                        'cta_text' => "Upgrade to {$targetPlan->name}",
+                    ]
+                );
             }
         }
     }

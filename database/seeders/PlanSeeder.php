@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Plan;
 use App\Models\Country;
+
 class PlanSeeder extends Seeder
 {
     /**
@@ -52,17 +52,22 @@ class PlanSeeder extends Seeder
         ];
 
         $countries = Country::all();
-        foreach($countries as $country){
-             foreach($plans as $plan){
-                 Plan::create([
-                     'country_id' => $country->id,
-                     'price' => $plan["price"],
-                     "name" => $plan['name'],
-                     "description" => $plan["description"],
-                     "key" => $plan["key"],
-                     "max_plan" => $plan["max_plan"]
-                 ]);
-             }
+
+        foreach ($countries as $country) {
+            foreach ($plans as $plan) {
+                Plan::updateOrCreate(
+                    [
+                        'country_id' => $country->id,
+                        'key' => $plan['key'],
+                    ],
+                    [
+                        'name' => $plan['name'],
+                        'description' => $plan['description'],
+                        'price' => $plan['price'],
+                        'max_plan' => $plan['max_plan'],
+                    ]
+                );
+            }
         }
     }
 }

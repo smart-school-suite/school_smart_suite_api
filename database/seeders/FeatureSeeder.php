@@ -5,11 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Feature;
 use App\Models\Country;
+
 class FeatureSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $features = [
@@ -79,17 +77,22 @@ class FeatureSeeder extends Seeder
         ];
 
         $countries = Country::all();
-        foreach($countries as $country){
-             foreach($features as $feature){
-             Feature::create([
-                 "name" => $feature["name"],
-                 "key" => $feature["key"],
-                 "description" =>  $feature["description"],
-                 "country_id" => $country->id,
-                 "limit_type" => $feature["limit_type"],
-                 "default" => $feature["default"]
-             ]);
-        }
+
+        foreach ($countries as $country) {
+            foreach ($features as $feature) {
+                Feature::updateOrCreate(
+                    [
+                        'country_id' => $country->id,
+                        'key' => $feature['key'],
+                    ],
+                    [
+                        'name' => $feature['name'],
+                        'description' => $feature['description'],
+                        'limit_type' => $feature['limit_type'],
+                        'default' => $feature['default'],
+                    ]
+                );
+            }
         }
     }
 }

@@ -10,84 +10,95 @@ use App\Jobs\NotificationJobs\SendElectionOpenNotificationJob;
 use App\Jobs\NotificationJobs\SendElectionVoteOpenNotification;
 use App\Jobs\StatisticalJobs\OperationalJobs\ElectionStatJob;
 use App\Models\ElectionParticipants;
+use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Elections;
 use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use App\Exceptions\AppException;
 use Exception;
 use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
-use App\Events\Analytics\ElectionAnalyticsEvent;
-use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
+
 class ElectionService
 {
     public function createElection(array $data, object $currentSchool, $authAdmin)
     {
         try {
+            $academicYear = SystemAcademicYear::find($data['school_year_id']);
+
+            if (!$academicYear) {
+                throw new AppException(
+                    "Academic year not found",
+                    404,
+                    "Resource Not Found",
+                    "The specified academic year could not be found.",
+                    "/elections/create"
+                );
+            }
+
             $existingElection = Elections::where("school_branch_id", $currentSchool->id)
-                ->where("school_year", $data["school_year"])
+                ->where("school_year_id", $data["school_year_id"])
                 ->where("election_type_id", $data['election_type_id'])
                 ->exists();
 
             if ($existingElection) {
+                $yearLabel = $data["school_year"] ?? $academicYear->name ?? "the selected year";
                 throw new AppException(
                     "Election already exists",
                     409,
                     "Duplicate Election Found",
-                    "An election of this type has already been created for the current school year (" . $data["school_year"] . ").",
+                    "An election of this type has already been created for " . $yearLabel . ".",
                     "/elections/create"
                 );
             }
 
-            $election = new Elections();
-            $electionId = Str::uuid();
-            $election->id = $electionId;
-            $election->application_start = $data["application_start"];
-            $election->application_end = $data["application_end"];
-            $election->voting_start = $data["voting_start"];
-            $election->voting_end = $data["voting_end"];
-            $election->school_year = $data["school_year"];
-            $election->election_type_id = $data["election_type_id"];
-            $election->school_branch_id = $currentSchool->id;
+            return DB::transaction(function () use ($data, $academicYear, $currentSchool) {
+                $election = new Elections();
+                $election->application_start = $data["application_start"];
+                $election->application_end = $data["application_end"];
+                $election->voting_start = $data["voting_start"];
+                $election->voting_end = $data["voting_end"];
+                $election->academic_year_id = $academicYear->id;
+                $election->election_type_id = $data["election_type_id"];
+                $election->school_branch_id = $currentSchool->id;
+                $election->save();
 
-            $election->save();
-
-            $this->dispatchJobs($electionId, $currentSchool, $data);
-            // AdminActionEvent::dispatch(
-            //     [
-            //         "permissions" =>  ["schoolAdmin.election.create"],
-            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            //         "schoolBranch" =>  $currentSchool->id,
-            //         "feature" => "electionManagement",
-            //         "authAdmin" => $authAdmin,
-            //         "data" => $election,
-            //         "message" => "Election Created",
-            //     ]
-            // );
-            // event(new ElectionAnalyticsEvent(
-            //      eventType:ElectionEvent::ELECTION_CREATED,
-            //      version:1,
-            //      payload:[
-            //         "school_branch_id" => $currentSchool->id,
-            //         "election_type_id" => $data["election_type_id"]
-            //      ]
-            // ));
-            return $election;
-        } catch (Throwable $e) {
-            if (!($e instanceof AppException)) {
+                return $election;
+            });
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23000') {
                 throw new AppException(
-                    "Failed to create election",
-                    500,
-                    "Creation Error",
-                    "An unexpected error occurred while attempting to save the new election.",
+                    "Election already exists",
+                    409,
+                    "Duplicate Election Found",
+                    "A conflicting election entry already exists in the system.",
                     "/elections/create"
                 );
             }
-            throw $e;
+
+            throw new AppException(
+                "Database error",
+                500,
+                "Database Error",
+                "A database error occurred while processing your request.",
+                "/elections/create"
+            );
+        } catch (Throwable $e) {
+            if ($e instanceof AppException) {
+                throw $e;
+            }
+
+            throw new AppException(
+                "Failed to create election",
+                500,
+                "Creation Error",
+                "An unexpected error occurred while attempting to save the new election.",
+                "/elections/create"
+            );
         }
     }
     private function dispatchJobs(string $electionId, object $currentSchool, array $data)

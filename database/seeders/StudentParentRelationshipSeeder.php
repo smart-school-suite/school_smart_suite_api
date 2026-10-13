@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\StudentParentRelationship;
 
@@ -29,8 +28,9 @@ class StudentParentRelationshipSeeder extends Seeder
             "Sponsor",
             "Caretaker",
         ];
+
         foreach ($relationships as $relationship) {
-            StudentParentRelationship::create([
+            StudentParentRelationship::firstOrCreate([
                 "name" => $relationship
             ]);
         }

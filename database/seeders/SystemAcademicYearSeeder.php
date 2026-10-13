@@ -16,6 +16,7 @@ class SystemAcademicYearSeeder extends Seeder
             [$currentYear + 1, $currentYear + 2],
         ];
 
+        $validRanges = [];
         foreach ($ranges as [$start, $end]) {
             SystemAcademicYear::firstOrCreate(
                 [
@@ -26,6 +27,11 @@ class SystemAcademicYearSeeder extends Seeder
                     'name' => "{$start}-{$end}",
                 ]
             );
+
+            $validRanges[] = [$start, $end];
         }
+
+        SystemAcademicYear::whereNotIn('year_start', array_column($validRanges, 0))
+            ->delete();
     }
 }
