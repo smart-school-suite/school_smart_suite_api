@@ -31,8 +31,8 @@ class CourseTypeSeeder extends Seeder
 
         foreach ($courseTypes as $courseType) {
             CourseType::updateOrCreate(
-                ['key' => $courseType['key']], // unique identifier
-                $courseType                     // everything else (including key, harmless)
+                ['key' => $courseType['key']],
+                $courseType
             );
         }
     }

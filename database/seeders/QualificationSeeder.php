@@ -41,7 +41,7 @@ class QualificationSeeder extends Seeder
 
         foreach ($qualifications as $q) {
             Qualification::updateOrCreate(
-                ['abbreviation' => $q['abbreviation']], // unique identifier
+                ['abbreviation' => $q['abbreviation']],
                 [
                     'name' => $q['name'],
                     'level' => $q['level'],

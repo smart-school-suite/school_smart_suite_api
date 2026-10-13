@@ -4,58 +4,83 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 class CountrySeeder extends Seeder
 {
     public function run(): void
     {
-        $this->seedCountries();
-    }
-
-    private function seedCountries(): void
-    {
         $timestamp = now();
-        $filePath = public_path("data/country.csv");
 
-        if (!file_exists($filePath) || !is_readable($filePath)) {
-            Log::error("CSV file not found or not readable at: " . $filePath);
-            return;
-        }
+        $countriesData = [
+            [
+                'country'           => 'Burkina Faso',
+                'code'              => 'BFA',
+                'currency'          => '₣',
+                'official_language' => 'French',
+            ],
+            [
+                'country'           => 'Cabo Verde',
+                'code'              => 'CPV',
+                'currency'          => 'CVE',
+                'official_language' => 'Portuguese',
+            ],
+            [
+                'country'           => 'Cameroon',
+                'code'              => 'CMR',
+                'currency'          => '₣',
+                'official_language' => 'French, English',
+            ],
+            [
+                'country'           => 'Central African Republic',
+                'code'              => 'CAF',
+                'currency'          => '₣',
+                'official_language' => 'Sango, French',
+            ],
+            [
+                'country'           => 'Algeria',
+                'code'              => 'DZA',
+                'currency'          => 'DZD',
+                'official_language' => 'Arabic',
+            ],
+            [
+                'country'           => 'Burundi',
+                'code'              => 'BDI',
+                'currency'          => 'BIF',
+                'official_language' => 'Kirundi, French',
+            ],
+            [
+                'country'           => 'Benin',
+                'code'              => 'BEN',
+                'currency'          => 'XOF',
+                'official_language' => 'French',
+            ],
+            [
+                'country'           => 'Botswana',
+                'code'              => 'BWA',
+                'currency'          => 'BWP',
+                'official_language' => 'English, Tswana',
+            ],
+            [
+                'country'           => 'Angola',
+                'code'              => 'AGO',
+                'currency'          => 'AOA',
+                'official_language' => 'Portuguese',
+            ],
+        ];
 
-        $countries = [];
-        if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle);
-            Log::info('CSV Header:', $header ?? []);
+        $countries = array_map(function ($row) use ($timestamp) {
+            return array_merge($row, [
+                'id'         => Str::uuid()->toString(),
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+        }, $countriesData);
 
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                if (count($data) >= 5) {
-                    $countries[] = [
-                        'id' => Str::uuid()->toString(),
-                        'country' => $data[1] ?? null,
-                        'code' => $data[2] ?? null,
-                        'currency' => $data[3] ?? null,
-                        'official_language' => $data[4] ?? null,
-                        'created_at' => $timestamp,
-                        'updated_at' => $timestamp,
-                    ];
-                } else {
-                    Log::warning('Skipping incomplete CSV row:', $data);
-                }
-            }
-            fclose($handle);
-        }
-
-        if (!empty($countries)) {
-            DB::table('countries')->upsert(
-                $countries,
-                ['code'],
-                ['country', 'currency', 'official_language', 'updated_at']
-            );
-            Log::info('Upserted ' . count($countries) . ' countries.');
-        } else {
-            Log::warning('No countries to insert from CSV.');
-        }
+        DB::table('countries')->upsert(
+            $countries,
+            ['code'],
+            ['country', 'currency', 'official_language', 'updated_at']
+        );
     }
 }
