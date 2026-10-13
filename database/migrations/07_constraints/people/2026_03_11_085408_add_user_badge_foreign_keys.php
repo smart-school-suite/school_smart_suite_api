@@ -15,11 +15,6 @@ return new class extends Migration
             $table->string('school_branch_id');
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
-
-        Schema::table('badge_types', function (Blueprint $table) {
-            $table->string('badge_category_id');
-            $table->foreign('badge_category_id')->references('id')->on('badge_categories');
-        });
     }
 
     /**

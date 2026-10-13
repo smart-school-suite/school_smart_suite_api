@@ -31,7 +31,6 @@ class ExamTypeSeeder extends Seeder
 
         $header = fgetcsv($handle);
 
-        // Preload all semesters keyed by 'count' to avoid N+1 queries
         $semestersByCount = Semester::pluck('id', 'count');
 
         $examTypes = [];

@@ -18,11 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call(PermissionCategorySeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(PermissionSeeder::class);
-        $this->call(StatTypeSeeder::class);
         $this->call(AssignPermissionToRoles::class);
         $this->call(InstallmentSeeder::class);
         $this->call(AnnouncementSeeder::class);
-        $this->call(SemesterSeeder::class);
         $this->call(LetterGradeSeeder::class);
         $this->call(ExamTypeSeeder::class);
         $this->call(GradeCategorySeeder::class);
