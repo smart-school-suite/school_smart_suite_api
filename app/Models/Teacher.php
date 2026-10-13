@@ -20,6 +20,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Announcement\AnnouncementRecipient;
+use App\Models\Exam\ExamResultPublication;
 
 class Teacher extends Model
 {
@@ -58,6 +59,10 @@ class Teacher extends Model
         ];
     }
 
+    public function examPublicationAuthor()
+    {
+        return $this->morphMany(ExamResultPublication::class, 'authorable');
+    }
     public function examInvigilator()
     {
         return $this->morphMany(ExamInvigilator::class, 'invigilatable');
