@@ -15,13 +15,13 @@ class PromotionRunLog extends Model
     protected $fillable = [
         'promotion_run_id',
         'school_branch_id',
-        'data',
+        'rule_logs',
     ];
 
     protected function casts(): array
     {
         return [
-            'data' => 'array',
+            'rule_logs' => 'array',
         ];
     }
 

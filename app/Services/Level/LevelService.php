@@ -4,6 +4,7 @@ namespace App\Services\Level;
 
 use App\Models\Educationlevels;
 use App\Exceptions\AppException;
+use App\Models\SchoolBranchSetting;
 use Throwable;
 
 class LevelService
@@ -58,7 +59,37 @@ class LevelService
     public function getEducationLevels()
     {
         try {
-            $educationLevels = Educationlevels::whereHas("levelType", fn($query) => $query->where("program_name", "level_start_200"))->get();
+            $educationLevels = Educationlevels::all();
+
+            if ($educationLevels->isEmpty()) {
+                throw new AppException(
+                    "No education levels were found in the system.",
+                    404,
+                    "No Education Levels Found 📚",
+                    "There are currently no education levels defined in the system. Please create a new level to get started.",
+                    null
+                );
+            }
+
+            return $educationLevels;
+        } catch (AppException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new AppException(
+                "Failed to retrieve education levels. Error: " . $e->getMessage(),
+                500,
+                "Data Retrieval Failed 🛑",
+                "A system error occurred while trying to load the education levels. Please try again or contact support.",
+                null
+            );
+        }
+    }
+
+    public function getLevelBySchoolBranch(object $currentSchool)
+    {
+        try {
+            $levelSettings = $this->levelSetting($currentSchool->id);
+            $educationLevels = Educationlevels::whereHas("levelType", fn($query) => $query->where("program_name", $levelSettings->value))->get();
 
             if ($educationLevels->isEmpty()) {
                 throw new AppException(
@@ -183,5 +214,14 @@ class LevelService
                 null
             );
         }
+    }
+
+    private function levelSetting(string $schoolBranchId)
+    {
+        return  SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
+            ->with(['settingDefination'])
+            ->whereHas('settingDefination', function ($query) {
+                $query->where("key", "level.start");
+            })->first();
     }
 }

@@ -17,6 +17,12 @@ class ExamResultController extends Controller
         $this->examResultService = $examResultService;
     }
 
+    public function getExamResultPublishDetails(Request $request, string $examId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $details = $this->examResultService->getExamResultPublishDetails($currentSchool, $examId);
+        return ApiResponseService::success("Exam Result Publishement Details Fetched Successfully", $details, null, 200);
+    }
     public function publishExamResult(PublishExamResultRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');

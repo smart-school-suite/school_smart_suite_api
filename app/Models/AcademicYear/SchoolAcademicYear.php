@@ -7,6 +7,7 @@ use App\Models\Exam\Exam;
 use App\Models\FeeSchedule;
 use App\Models\Promotion\PromotionRun;
 use App\Models\ResitExam;
+use App\Models\Schoolbranches;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -59,5 +60,10 @@ class SchoolAcademicYear extends Model
     public function promotionRun(): HasMany
     {
         return $this->hasMany(PromotionRun::class, 'school_year_id');
+    }
+
+    public function schoolBranch(): BelongsTo
+    {
+        return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 }

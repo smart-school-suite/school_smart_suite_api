@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Job\SystemJob;
 use App\Models\OTP;
+use App\Models\Promotion\PromotionRun;
+use App\Models\Promotion\StudentPromotionRecord;
 
 class Schooladmin extends Authenticatable
 {
@@ -76,6 +78,15 @@ class Schooladmin extends Authenticatable
     public function getMorphClass()
     {
         return static::class;
+    }
+
+    public function promotionReviewAuthor(): MorphMany
+    {
+        return $this->morphMany(StudentPromotionRecord::class, 'authorable');
+    }
+    public function promotionRunAuthor(): MorphMany
+    {
+        return $this->morphMany(PromotionRun::class, 'authorable');
     }
     public function vote()
     {

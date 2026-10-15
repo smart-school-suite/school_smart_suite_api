@@ -50,3 +50,11 @@ Schedule::command('create-system-academic-year-command')
     ->withoutOverlapping(3600)
     ->runInBackground()
     ->onOneServer();
+
+
+Schedule::command('students:promote')
+    ->dailyAt('00:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onOneServer();

@@ -2,13 +2,26 @@
 
 namespace App\Jobs\Promotion;
 
+use App\DTOs\Promotion\PromotionRunLogReasonDTO;
+use App\DTOs\Promotion\PromotionRunLogDTO;
 use App\Models\AdditionalFees;
 use App\Models\Exam\ExamScore;
 use App\Models\Examtype;
 use App\Models\Promotion\PromotionRun;
+use App\Models\Promotion\StudentPromotionLog;
 use App\Models\SchoolBranchSetting;
 use App\Models\Studentresit;
 use App\Models\TuitionFees;
+use App\Models\Educationlevels;
+use App\Models\Specialty;
+use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Promotion\StudentPromotionRecord;
+use App\Models\Promotion\PromotionRunLog;
+use App\Services\PromotionRules\AdditionalFeeRuleService;
+use App\Services\PromotionRules\EvaluationRuleService;
+use App\Services\PromotionRules\ExamScoreRuleService;
+use App\Services\PromotionRules\ResitRuleService;
+use App\Services\PromotionRules\TuitionFeeRuleService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -28,29 +41,95 @@ class StudentPromotionJob implements ShouldQueue
         $this->runId = $runId;
         $this->schoolBranchId = $schoolBranchId;
     }
-
     public function handle(): void
     {
         $schoolBranchId = $this->schoolBranchId;
         $runId = $this->runId;
-
-        $examTypes = Examtype::with(['semesters' => function ($query) {
-            $query->where("count", "<", 3)
-                ->where("type", "!=", "resit");
-        }])->get();
+        $reasons = [];
 
         $promotionRun = PromotionRun::where("school_branch_id", $schoolBranchId)
             ->where("id", $runId)
             ->with(['schoolYear.specialty.student', 'schoolYear.specialty.level'])
-            ->firstOrFail();
+            ->first();
 
-        $studentIds = $promotionRun->schoolYear->specialty->student->pluck('id');
+        if (!$promotionRun) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "Promotion run record not found.",
+                details: ['promotion_run_id' => $runId, 'school_branch_id' => $schoolBranchId]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Promotion Run Initialization Failed", $reasons);
+            return;
+        }
+
+        $specialty = $promotionRun->schoolYear?->specialty;
+        $students = $specialty?->student ?? collect();
+
+        if ($students->isEmpty()) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "No students found attached to the current specialty/school year.",
+                details: ['specialty_id' => $specialty?->id]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "No Students Found", $reasons, $promotionRun);
+            return;
+        }
+
+        $levelSettings = $this->levelSetting($schoolBranchId);
+        $levels = Educationlevels::whereHas(
+            "levelType",
+            fn($query) => $query->where("program_name", $levelSettings?->value)
+        )->get();
+
+        if ($levels->isEmpty()) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "No education levels found matching program name.",
+                details: ['program_name' => $levelSettings?->value]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Level Settings Misconfiguration", $reasons, $promotionRun);
+            return;
+        }
+
+        $nextSpecialty = $this->getNextSpecialty($specialty, $levels);
+        if (!$nextSpecialty) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "Target next specialty could not be determined.",
+                details: ['current_specialty_id' => $specialty->id]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Next Specialty Missing", $reasons, $promotionRun);
+            return;
+        }
+
+        $nextSpecialtySchoolYear = SchoolAcademicYear::where("school_branch_id", $schoolBranchId)
+            ->with(["specialty", "level"])
+            ->where("specialty_id", $nextSpecialty->id)
+            ->where("end_date", ">=", now())
+            ->first();
+
+        if (!$nextSpecialtySchoolYear) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "No active or future academic year found for the target promotion specialty.",
+                details: ['next_specialty_id' => $nextSpecialty->id]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Next Specialty Academic Year Missing", $reasons, $promotionRun);
+            return;
+        }
+
+        $reasons[] = new PromotionRunLogReasonDTO(
+            reason: "Target specialty and academic year resolved successfully.",
+            details: [
+                'next_specialty_id' => $nextSpecialty->id,
+                'next_academic_year_id' => $nextSpecialtySchoolYear->id,
+            ]
+        );
+
+        $studentIds = $students->pluck('id');
+
+        $examTypes = Examtype::with(['semesters' => function ($query) {
+            $query->where("count", "<", 3)->where("type", "!=", "resit");
+        }])->get();
 
         $studentMarks = ExamScore::where("school_branch_id", $schoolBranchId)
-            ->whereHas('candidate', function ($q) use ($studentIds) {
-                $q->whereIn("student_id", $studentIds);
-            })
-            ->with(['exam.semester', 'candidate.student', 'course', 'exam.examType'])
+            ->whereHas('candidate', fn($q) => $q->whereIn("student_id", $studentIds))
+            ->with(['exam.semester', 'candidate.student', 'course', 'exam.examType', 'grade'])
             ->get();
 
         $studentAdditionalFees = AdditionalFees::where("school_branch_id", $schoolBranchId)
@@ -66,190 +145,169 @@ class StudentPromotionJob implements ShouldQueue
         $studentResits = Studentresit::where("school_branch_id", $schoolBranchId)
             ->whereIn("student_id", $studentIds)
             ->with(['student', 'course'])
-         ->get();
+            ->get();
 
-        $schoolYear = $promotionRun->schoolYear;
-        $specialty = $promotionRun->schoolYear->specialty;
         $promotionSetting = $this->getPromotionSetting($schoolBranchId);
-        $students = $promotionRun->schoolYear->specialty->student;
 
+        $tuitionFeeRule = app(TuitionFeeRuleService::class);
+        $additionalFeeRule = app(AdditionalFeeRuleService::class);
+        $examScoreRule = app(ExamScoreRuleService::class);
+        $resitRule = app(ResitRuleService::class);
+        $evaluationRule = app(EvaluationRuleService::class);
 
-        //
+        $passedCount = 0;
+        $failedCount = 0;
+        $needsReviewCount = 0;
+
         foreach ($students as $student) {
-            //studentscores
             $scores = $studentMarks->filter(fn($marks) => $marks->candidate?->student_id === $student->id);
-            $resits = $studentResits->where("student_id",  $student->id);
+            $resits = $studentResits->where("student_id", $student->id);
             $tuitionFees = $studentTuitionFees->where("student_id", $student->id);
             $additionalFees = $studentAdditionalFees->where("student_id", $student->id);
-        }
-    }
-    private function evaluateAdditionalFeePromCondition(Collection $additionalFees, Collection $promotionSettings)
-    {
-        $maxDebtSetting = $promotionSettings->first(fn($s) => $s->settingDefination?->key === "promotion.max_additional_fee_debt");
-        $maxAllowedDebt = $maxDebtSetting ? (float) $maxDebtSetting->value : 0.0;
 
-        $totalDebt = 0.0;
-        $unpaidFeeDetails = [];
+            $rules = collect([
+                $additionalFeeRule->additionalFeeRule($additionalFees, $promotionSetting),
+                $tuitionFeeRule->tuitionFeeRule($tuitionFees, $promotionSetting),
+                $resitRule->carryOverRule($resits, $promotionSetting),
+                $evaluationRule->gpaRule($scores, $promotionSetting, $examTypes),
+                $examScoreRule->incompleteExamScoresRule($scores, $examTypes),
+            ]);
 
-        foreach ($additionalFees as $fee) {
-            $requiredAmount = (float) ($fee->amount ?? 0);
-            $totalPaid = (float) $fee->additionalFeeTranctions->sum('amount');
-            $balance = max(0, $requiredAmount - $totalPaid);
+            $needsReview = $rules->contains(fn($rule) => $rule->needsReview === true);
+            $overallPassed = $rules->every(fn($rule) => $rule->passed === true);
 
-            if ($balance > 0) {
-                $totalDebt += $balance;
-                $unpaidFeeDetails[] = [
-                    'fee_id'    => $fee->id,
-                    'reason'    => $fee->reason ?? 'Unspecified Fee',
-                    'required'  => $requiredAmount,
-                    'paid'      => $totalPaid,
-                    'balance'   => $balance,
-                ];
-            }
-        }
-
-        $hasPassed = $totalDebt <= $maxAllowedDebt;
-
-        $messages = [];
-        if ($hasPassed) {
-            if ($totalDebt === 0.0) {
-                $messages[] = "Student passed additional fee promotion criteria with zero outstanding balance.";
+            if ($needsReview) {
+                $needsReviewCount++;
+                $outcome = 'pending_review';
+                $status = 'pending';
+                $toSpecialtyId = null;
+            } elseif ($overallPassed) {
+                $passedCount++;
+                $outcome = 'promoted';
+                $status = 'completed';
+                $toSpecialtyId = $nextSpecialty->id;
             } else {
-                $messages[] = "Student passed additional fee promotion criteria with an outstanding debt of {$totalDebt} (Maximum allowed: {$maxAllowedDebt}).";
+                $failedCount++;
+                $outcome = 'retained';
+                $status = 'completed';
+                $toSpecialtyId = $specialty->id;
             }
-        } else {
-            $messages[] = "Student failed additional fee promotion criteria with an outstanding debt of {$totalDebt}, which exceeds the maximum allowed debt limit of {$maxAllowedDebt}.";
+
+            $studentPromotionRecord = StudentPromotionRecord::create([
+                'outcome' => $outcome,
+                'status' => $status,
+                'processed_at' => now(),
+                'promotion_run_id' => $runId,
+                'student_id' => $student->id,
+                'from_specialty_id' => $specialty->id,
+                'to_specialty_id' => $toSpecialtyId,
+            ]);
+
+            StudentPromotionLog::create([
+                'record_id' => $studentPromotionRecord->id,
+                'student_id' => $student->id,
+                'school_branch_id' => $schoolBranchId,
+                'rule_logs' => $rules->map(fn($r) => $r->toArray())->values()->toArray(),
+            ]);
         }
 
-        return [
-            'status' => $hasPassed,
-            'messages' => $messages,
-            'total_debt' => $totalDebt,
-            'max_allowed_debt' => $maxAllowedDebt,
-            'unpaid_fees' => $unpaidFeeDetails,
-        ];
+        $promotionRun->update([
+            'passed_count' => $passedCount,
+            'failed_count' => $failedCount,
+            'needs_review_count' => $needsReviewCount,
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        $reasons[] = new PromotionRunLogReasonDTO(
+            reason: "Promotion run completed successfully.",
+            details: [
+                'total_students' => $students->count(),
+                'passed' => $passedCount,
+                'failed' => $failedCount,
+                'needs_review' => $needsReviewCount,
+            ]
+        );
+
+        $logDto = new PromotionRunLogDTO(
+            status: 'success',
+            title: 'Promotion Run Execution Completed',
+            reasons: $reasons
+        );
+
+        PromotionRunLog::create([
+            'promotion_run_id' => $runId,
+            'school_branch_id' => $schoolBranchId,
+            'rule_logs' => $logDto->toArray(),
+        ]);
     }
-    private function evaluateTuitionFeePromCondition(Collection $tuitionFee, Collection $promotionSettings)
+
+    private function failAndLog(
+        int|string $runId,
+        int|string $schoolBranchId,
+        string $title,
+        array $reasons,
+        ?PromotionRun $promotionRun = null
+    ): void {
+        if ($promotionRun) {
+            $promotionRun->update([
+                'status' => 'failed',
+                'completed_at' => now(),
+            ]);
+        }
+
+        $logDto = new PromotionRunLogDTO(
+            status: 'failed',
+            title: $title,
+            reasons: $reasons
+        );
+
+        PromotionRunLog::create([
+            'promotion_run_id' => $runId,
+            'school_branch_id' => $schoolBranchId,
+            'rule_logs' => $logDto->toArray(),
+        ]);
+    }
+    private function getNextSpecialty(Specialty $specialty, Collection $levels): ?Specialty
     {
-        $promMaxTuitionFeeDebt = $promotionSettings->first(fn($s) => $s->settingDefination->key === "promotion.max_tuition_fee_debt");
+        $currentLevel = (int) $specialty->level->level;
+
+        $nextLevelNumber = $levels
+            ->pluck('level')
+            ->map(fn($level) => (int) $level)
+            ->filter(fn($level) => $level > $currentLevel)
+            ->sort()
+            ->first();
+
+        if ($nextLevelNumber === null) {
+            return null;
+        }
+
+        $nextEducationLevel = $levels->first(
+            fn($level) => (int) $level->level === $nextLevelNumber
+        );
+
+        return Specialty::where("school_branch_id", $specialty->school_branch_id)
+            ->where("specialty_name", $specialty->specialty_name)
+            ->where("level_id", $nextEducationLevel->id)
+            ->first();
     }
-    private function evaluateCarryOverPromCondition(Collection $resits, Collection $promotionSettings)
-    {
-        $maxCarryOversSetting = $promotionSettings->first(fn($s) => $s->settingDefination?->key === "promotion.max_carry_overs");
-        $maxAllowedCarryOvers = $maxCarryOversSetting ? (int) $maxCarryOversSetting->value : 0;
-
-        $carryOverCount = $resits->filter(fn($resit) => (bool) $resit->iscarry_over)->count();
-
-        $hasPassed = $carryOverCount <= $maxAllowedCarryOvers;
-
-        $messages = [];
-        if ($hasPassed) {
-            if ($carryOverCount === 0) {
-                $messages[] = "Student passed resit promotion criteria with zero carry-overs.";
-            } else {
-                $messages[] = "Student passed resit promotion criteria with {$carryOverCount} carry-over(s) (Maximum allowed: {$maxAllowedCarryOvers}).";
-            }
-        } else {
-            $messages[] = "Student failed resit promotion criteria with {$carryOverCount} carry-over(s), which exceeds the maximum limit of {$maxAllowedCarryOvers}.";
-        }
-
-        return [
-            'status' => $hasPassed,
-            'messages' => $messages,
-            'carry_over_count' => $carryOverCount,
-            'max_allowed_carry_overs' => $maxAllowedCarryOvers,
-        ];
-    }
-    private function evaluateScorePromCondition(Collection $scores, Collection $promotionSettings, Collection $examTypes)
-    {
-        $promMinGpaSetting = $promotionSettings->first(fn($s) => $s->settingDefination?->key === "promotion.min_gpa");
-        $promMinGpa = $promMinGpaSetting ? (float) $promMinGpaSetting->value : null;
-
-        if ($promMinGpa === null) {
-            return [
-                'status' => false,
-                'messages' => ['Promotion minimum GPA setting is not defined.'],
-                'average_gpa' => 0,
-                'exam_type_gpas' => [],
-            ];
-        }
-
-        $scoresByExamType = $scores->groupBy(fn($score) => $score->exam?->exam_type_id);
-
-        $gpaByExamType = [];
-        $totalGpaSum = 0;
-        $satExamTypesCount = 0;
-
-        foreach ($examTypes as $examType) {
-            $typeScores = $scoresByExamType->get($examType->id, collect());
-
-            if ($typeScores->isEmpty()) {
-                continue;
-            }
-
-            $totalWeightedPoints = 0;
-            $totalCredits = 0;
-
-            foreach ($typeScores as $scoreItem) {
-                $obtainedScore = $scoreItem->score ?? 0;
-                $maxScore = $scoreItem->exam?->max_score ?? 0;
-                $credits = $scoreItem->course?->credit ?? 0;
-
-                if ($maxScore > 0 && $credits > 0) {
-                    $percentage = ($obtainedScore / $maxScore) * 100;
-                    $gradePoint = ($percentage / 100) * 4.0;
-
-                    $totalWeightedPoints += ($gradePoint * $credits);
-                    $totalCredits += $credits;
-                }
-            }
-
-            if ($totalCredits > 0) {
-                $gpa = round($totalWeightedPoints / $totalCredits, 2);
-                $gpaByExamType[$examType->id] = [
-                    'name' => $examType->name ?? "Exam Type #{$examType->id}",
-                    'gpa'  => $gpa,
-                ];
-                $totalGpaSum += $gpa;
-                $satExamTypesCount++;
-            }
-        }
-
-        if ($satExamTypesCount === 0) {
-            return [
-                'status' => false,
-                'messages' => ['Student has no valid exam scores or credits to calculate GPA.'],
-                'average_gpa' => 0,
-                'exam_type_gpas' => [],
-            ];
-        }
-
-        $overallAverageGpa = round($totalGpaSum / $satExamTypesCount, 2);
-        $hasPassed = $overallAverageGpa >= $promMinGpa;
-
-        $messages = [];
-        if ($hasPassed) {
-            $messages[] = "Student passed promotion criteria with an average GPA of {$overallAverageGpa} across {$satExamTypesCount} exam types (Required: {$promMinGpa}).";
-        } else {
-            $messages[] = "Student failed promotion criteria. Achieved average GPA of {$overallAverageGpa} across {$satExamTypesCount} exam types, which is below the required minimum of {$promMinGpa}.";
-        }
-
-        return [
-            'status' => $hasPassed,
-            'messages' => $messages,
-            'average_gpa' => $overallAverageGpa,
-            'required_min_gpa' => $promMinGpa,
-            'exam_type_gpas' => $gpaByExamType,
-        ];
-    }
-
     private function getPromotionSetting(string $schoolBranchId)
     {
+
         return SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
             ->with(['settingDefination.settingCategory'])
             ->whereHas('settingDefination.settingCategory', function ($query) {
                 $query->where("key", "setting.category.promotion");
             })
             ->get();
+    }
+    private function levelSetting(string $schoolBranchId)
+    {
+        return  SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
+            ->with(['settingDefination'])
+            ->whereHas('settingDefination', function ($query) {
+                $query->where("key", "level.start");
+            })->first();
     }
 }
