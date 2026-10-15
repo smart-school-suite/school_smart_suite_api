@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Services\ApiResponseService;
 use App\Events\Actions\AdminActionEvent;
+use App\Services\Helpers\Actor\ActorHelperService;
 
 class SchoolAdminService
 {
@@ -87,34 +88,34 @@ class SchoolAdminService
         return $SchoolAdminExists;
     }
 
-    public function createSchoolAdmin(array $data, string $schoolBranchId): Schooladmin
-    {
-        try {
+    public function createSchoolAdmin(
+        array $data,
+        string $schoolBranchId,
+        ActorHelperService $actorHelper
+    ): Schooladmin {
+        return DB::transaction(function () use ($data, $schoolBranchId, $actorHelper) {
+            $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+            if (empty($fullName)) {
+                $fullName = $data['name'] ?? 'Admin';
+            }
 
-            DB::beginTransaction();
+            $username = $actorHelper->generateUsername($fullName, Schooladmin::class);
 
-            $schoolAdmin = new Schooladmin();
-            $schoolAdminId = Str::uuid();
-            $schoolAdmin->id = $schoolAdminId;
-            $schoolAdmin->name = $data["name"];
-            $schoolAdmin->email = $data["email"];
+            $schoolAdmin = Schooladmin::create([
+                'id' => (string) Str::uuid(),
+                'name' => $data['name'],
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'username' => $username,
+                'password' => Hash::make($data['password']),
+                'school_branch_id' => $schoolBranchId,
+            ]);
 
-            $schoolAdmin->password = Hash::make($data["password"]);
-
-            $schoolAdmin->first_name = $data["first_name"];
-            $schoolAdmin->last_name = $data["last_name"];
-            $schoolAdmin->school_branch_id = $schoolBranchId;
-            $schoolAdmin->save();
-            DB::commit();
-            $user = Schooladmin::where("school_branch_id", $schoolBranchId)
-                ->find($schoolAdminId);
-            $user->assignRole("schoolSuperAdmin");
+            $schoolAdmin->assignRole('schoolSuperAdmin');
 
             return $schoolAdmin;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     public function uploadProfilePicture(object $request, object $authSchoolAdmin)
