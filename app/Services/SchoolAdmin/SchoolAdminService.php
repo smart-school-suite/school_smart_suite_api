@@ -90,10 +90,11 @@ class SchoolAdminService
 
     public function createSchoolAdmin(
         array $data,
-        string $schoolBranchId,
-        ActorHelperService $actorHelper
+        string $schoolBranchId
     ): Schooladmin {
-        return DB::transaction(function () use ($data, $schoolBranchId, $actorHelper) {
+
+        return DB::transaction(function () use ($data, $schoolBranchId) {
+            $actorHelper = app(ActorHelperService::class);
             $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
             if (empty($fullName)) {
                 $fullName = $data['name'] ?? 'Admin';

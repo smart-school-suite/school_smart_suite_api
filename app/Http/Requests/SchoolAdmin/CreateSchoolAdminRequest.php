@@ -24,9 +24,9 @@ class CreateSchoolAdminRequest extends FormRequest
             'first_name' => 'required|string',
             'last_name' => 'required|string',
             'email' => 'required|email|string|max:150',
-            'phone' => 'required|nullable|string|max:20',
-            'address' => 'required|nullable|string|max:200',
-            'gender_id' => 'required|string|exists:genders,id',
+            // 'phone' => 'required|nullable|string|max:20',
+            // 'address' => 'required|nullable|string|max:200',
+            // 'gender_id' => 'required|string|exists:genders,id',
         ];
     }
 }
