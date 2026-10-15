@@ -22,6 +22,8 @@ return new class extends Migration
             $table->decimal('registration_fee', 12, 2);
             $table->decimal('school_fee', 12, 2);
             $table->enum('status', ['active', 'inactive']);
+            $table->boolean('final_level')->default(false);
+            $table->boolean('graduation_level')->default(false);
             $table->text('description')->nullable();
             $table->enum('hall_assignment_status', ['unassigned', 'assigned'])->default('unassigned');
             $table->integer('num_assigned_hall')->default(0);
