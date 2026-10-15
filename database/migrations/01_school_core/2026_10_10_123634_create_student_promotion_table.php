@@ -18,8 +18,8 @@ return new class extends Migration
                 'completed_with_issues',
                 'failed',
                 'cancelled',
+                'scheduled'
             ])->default('pending');
-            $table->string('current_stage')->nullable();
             $table->unsignedInteger('total_students')->default(0);
             $table->unsignedInteger('processed_students')->default(0);
             $table->unsignedInteger('promoted_count')->default(0);
@@ -28,7 +28,8 @@ return new class extends Migration
             $table->unsignedInteger('review_count')->default(0);
             $table->unsignedInteger('excluded_count')->default(0);
             $table->unsignedInteger('failed_count')->default(0);
-            $table->uuid('initiated_by')->nullable();
+            $table->string('authorable_type')->nullable();
+            $table->uuid('authorable_id')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->json('metadata')->nullable();
@@ -44,7 +45,6 @@ return new class extends Migration
                 'pending_review',
                 'excluded',
             ])->default('pending_review');
-            $table->string('reason_code')->nullable();
             $table->enum('status', [
                 'pending',
                 'evaluating',
@@ -52,7 +52,8 @@ return new class extends Migration
                 'failed',
             ])->default('pending');
             $table->timestamp('processed_at')->nullable();
-            $table->uuid('reviewed_by')->nullable();
+            $table->string('authorable_type')->nullable();
+            $table->uuid('authorable_id')->nullable();
             $table->timestamp('reviewed_at')->nullable();
             $table->text('admin_note')->nullable();
             $table->json('metadata')->nullable();

@@ -13,16 +13,16 @@ class StudentPromotionLog extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = [
-        'promotion_run_id',
         'student_id',
+        'record_id',
         'school_branch_id',
-        'data',
+        'rule_logs',
     ];
 
     protected function casts(): array
     {
         return [
-            'data' => 'array',
+            'rule_logs' => 'array',
         ];
     }
 

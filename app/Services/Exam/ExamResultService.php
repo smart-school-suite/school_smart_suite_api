@@ -9,6 +9,12 @@ use App\Exceptions\AppException;
 
 class ExamResultService
 {
+    public function getExamResultPublishDetails(object $currentSchool, string $examId)
+    {
+        return ExamResultPublication::where("school_branch_id", $currentSchool->id)
+            ->where("exam_id", $examId)
+            ->first();
+    }
     public function getExams(object $currentSchool)
     {
         return Exam::where('school_branch_id', $currentSchool->id)

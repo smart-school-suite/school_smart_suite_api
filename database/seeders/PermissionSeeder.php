@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Permission;
 use App\Models\PermissionCategory;
@@ -53,1944 +52,1124 @@ class PermissionSeeder extends Seeder
         $this->resitManager();
     }
 
-    private function studentManagerPermissions()
+    private function studentManagerPermissions(): void
     {
         $studentMananger = PermissionCategory::where("title", "Student Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.student.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id,
-            "desc_name" => "Create Student",
-            "desc_text" => "Manages Student Creation"
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id,
-            "desc_name" => "Update Student",
-            "desc_text" => "Manages Student Updates"
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.mark.student.as.dropout",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.reinstate.dropout.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.view.student.dropout",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.delete.student.dropout",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.view.student.details",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.view.students",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.delete.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.promote",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentMananger->id
-        ]);
+
+        $permissions = [
+            [
+                'name' => "schoolAdmin.student.create",
+                'desc_name' => "Create Student",
+                'desc_text' => "Manages Student Creation",
+            ],
+            [
+                'name' => "schoolAdmin.student.update",
+                'desc_name' => "Update Student",
+                'desc_text' => "Manages Student Updates",
+            ],
+            ['name' => "schoolAdmin.student.activate"],
+            ['name' => "schoolAdmin.student.deactivate"],
+            ['name' => "schoolAdmin.student.mark.student.as.dropout"],
+            ['name' => "schoolAdmin.student.reinstate.dropout.student"],
+            ['name' => "schoolAdmin.student.view.student.dropout"],
+            ['name' => "schoolAdmin.student.delete.student.dropout"],
+            ['name' => "schoolAdmin.student.view.student.details"],
+            ['name' => "schoolAdmin.student.view.students"],
+            ['name' => "schoolAdmin.student.delete.student"],
+            ['name' => "schoolAdmin.student.promote"],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $studentMananger->id,
+                    'desc_name'              => $permission['desc_name'] ?? null,
+                    'desc_text'              => $permission['desc_text'] ?? null,
+                ]
+            );
+        }
     }
-    private function studentBatchManagerPermissions()
+    private function studentBatchManagerPermissions(): void
     {
         $studentBatchMananger = PermissionCategory::where("title", "Student Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.view.graduation.dates",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.create.graduation.dates",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.student.batch.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $studentBatchMananger->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.student.batch.create",
+            "schoolAdmin.student.batch.update",
+            "schoolAdmin.student.batch.delete",
+            "schoolAdmin.student.batch.view",
+            "schoolAdmin.student.batch.view.graduation.dates",
+            "schoolAdmin.student.batch.create.graduation.dates",
+            "schoolAdmin.student.batch.activate",
+            "schoolAdmin.student.batch.deactivate",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $studentBatchMananger->id,
+                ]
+            );
+        }
     }
-    private function specialtyManagerPermissions()
+
+
+    private function specialtyManagerPermissions(): void
     {
         $specialtyMananger = PermissionCategory::where("title", "Specialty Manager")->firstOrFail();
 
-        Permission::create([
-            'name' => "schoolAdmin.specialty.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.show.details",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.timetable.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.timetable.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.timetable.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.timetable.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.timetable.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialty.timetable.avialability.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $specialtyMananger->id
-        ]);
+        $permissions = [
+            "schoolAdmin.specialty.create",
+            "schoolAdmin.specialty.view",
+            "schoolAdmin.specialty.show.details",
+            "schoolAdmin.specialty.update",
+            "schoolAdmin.specialty.delete",
+            "schoolAdmin.specialty.activate",
+            "schoolAdmin.specialty.deactivate",
+            "schoolAdmin.specialty.timetable.create",
+            "schoolAdmin.specialty.timetable.update",
+            "schoolAdmin.specialty.timetable.view",
+            "schoolAdmin.specialty.timetable.show",
+            "schoolAdmin.specialty.timetable.delete",
+            "schoolAdmin.specialty.timetable.avialability.view",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $specialtyMananger->id,
+                ]
+            );
+        }
     }
-    private function teacherManagerPermissions()
+    private function teacherManagerPermissions(): void
     {
         //teacher permission
         $teacherMananager = PermissionCategory::where("title", "Teacher Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.teacher.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.view.time.timetable",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.add.specialty.peference",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.view.specialty.peference",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.teacher.view.specialty.peference",
-            "guard_name" => "teacher",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacher.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.avialability.view",
-            "guard_name" => "teacher",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.avialability.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.avialability.create",
-            "guard_name" => "teacher",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.avialability.show.teacher",
-            "guard_name" => "teacher",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.avialability.delete",
-            "guard_name" => "teacher",
-            "permission_category_id" => $teacherMananager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.avialability.update",
-            "guard_name" => "teacher",
-            "permission_category_id" => $teacherMananager->id
-        ]);
+
+        $permissions = [
+            // schooladmin guard
+            ['name' => "schoolAdmin.teacher.view",                      'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.create",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.show",                      'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.update",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.delete",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.view.time.timetable",       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.add.specialty.peference",   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.view.specialty.peference",  'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.activate",                  'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.teacher.deactivate",                'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.avialability.view",                 'guard_name' => 'schooladmin'],
+
+            // teacher guard
+            ['name' => "teacher.teacher.view.specialty.peference",      'guard_name' => 'teacher'],
+            ['name' => "teacher.avialability.view",                     'guard_name' => 'teacher'],
+            ['name' => "teacher.avialability.create",                   'guard_name' => 'teacher'],
+            ['name' => "teacher.avialability.show.teacher",             'guard_name' => 'teacher'],
+            ['name' => "teacher.avialability.delete",                   'guard_name' => 'teacher'],
+            ['name' => "teacher.avialability.update",                   'guard_name' => 'teacher'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $teacherMananager->id,
+                ]
+            );
+        }
     }
-    private function examManagerPermissions()
+
+
+    private function examManagerPermissions(): void
     {
         $examMananger = PermissionCategory::where("title", "Exam Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.exam.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "student.exam.show",
-            "guard_name" => "student",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "teacher.exam.show",
-            "guard_name" => "teacher",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examGradeScale.add",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examGradeScale.remove",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examGradeScale.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.candidate.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examCandidate.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.timetable.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.timetable.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.timetable.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.timetable.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.exam.timetable.course.data",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        //exam results
 
-        Permission::create([
-            'name' => "schoolAdmin.examResults.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examResults.view.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "teacher.examResults.view.student",
-            "guard_name" => "teacher",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "student.examResults.view.student",
-            "guard_name" => "student",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examResults.view.standings",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
+        $permissions = [
+            // exam
+            ['name' => "schoolAdmin.exam.create",                 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.update",                 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.view",                   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.delete",                 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.show",                   'guard_name' => 'schooladmin'],
+            ['name' => "student.exam.show",                       'guard_name' => 'student'],
+            ['name' => "teacher.exam.show",                       'guard_name' => 'teacher'],
 
-        //exam permissions
-        Permission::create([
-            'name' => "appAdmin.examType.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.examType.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.examType.view",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examType.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.examType.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examEvaluation.addScore",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examEvaluation.updateScore",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $examMananger->id
-        ]);
+            // exam grade scale
+            ['name' => "schoolAdmin.examGradeScale.add",          'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.examGradeScale.remove",       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.examGradeScale.view",         'guard_name' => 'schooladmin'],
+
+            // exam candidates
+            ['name' => "schoolAdmin.exam.candidate.view",         'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.examCandidate.delete",        'guard_name' => 'schooladmin'],
+
+            // exam timetable
+            ['name' => "schoolAdmin.exam.timetable.create",       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.timetable.update",       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.timetable.delete",       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.timetable.view",         'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.exam.timetable.course.data",  'guard_name' => 'schooladmin'],
+
+            // exam results
+            ['name' => "schoolAdmin.examResults.view",             'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.examResults.view.student",     'guard_name' => 'schooladmin'],
+            ['name' => "teacher.examResults.view.student",         'guard_name' => 'teacher'],
+            ['name' => "student.examResults.view.student",         'guard_name' => 'student'],
+            ['name' => "schoolAdmin.examResults.view.standings",   'guard_name' => 'schooladmin'],
+
+            // exam types
+            ['name' => "appAdmin.examType.create",                 'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.examType.update",                 'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.examType.view",                   'guard_name' => 'appAdmin'],
+            ['name' => "schoolAdmin.examType.view",                'guard_name' => 'schooladmin'],
+            ['name' => "appAdmin.examType.delete",                 'guard_name' => 'appAdmin'],
+
+            // exam evaluation
+            ['name' => "schoolAdmin.examEvaluation.addScore",      'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.examEvaluation.updateScore",   'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $examMananger->id,
+                ]
+            );
+        }
     }
-    private function electionManagerPermissions()
+    private function electionManagerPermissions(): void
     {
         $electionMananger = PermissionCategory::where("title", "Election Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.election.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.add.participants",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.view.participants",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.vote",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.view.results",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.view.past.winners",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.election.view.winners.current",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
 
-        //election candidates
-        Permission::create([
-            'name' => "schoolAdmin.electionCandidate.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionCandidate.disqualify",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionCandidate.reinstate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
+        $permissions = [
+            // election
+            ['name' => "schoolAdmin.election.create",                         'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.view",                           'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.delete",                         'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.update",                         'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.add.participants",               'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.view.participants",              'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.vote",                           'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.view.results",                   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.view.past.winners",              'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.election.view.winners.current",           'guard_name' => 'schooladmin'],
 
-        //election type permissions
-        Permission::create([
-            'name' => "schoolAdmin.electionType.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionType.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionType.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionType.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionType.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionType.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionType.view.active",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
+            // election candidates
+            ['name' => "schoolAdmin.electionCandidate.view",                  'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionCandidate.disqualify",            'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionCandidate.reinstate",             'guard_name' => 'schooladmin'],
 
-        //election Applications
-        Permission::create([
-            'name' => "schoolAdmin.electionApplications.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "student.electionApplications.create",
-            "guard_name" => "student",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionApplications.view.elections",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "student.electionApplications.update",
-            "guard_name" => "student",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionApplications.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionApplications.approve",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
+            // election types
+            ['name' => "schoolAdmin.electionType.create",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionType.update",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionType.view",                       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionType.activate",                   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionType.deactivate",                 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionType.delete",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionType.view.active",                'guard_name' => 'schooladmin'],
 
-        //electionTypes Permissions
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "student.electionRole.view.election",
-            "guard_name" => "student",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.view.election",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "student.electionRole.view.active.election",
-            "guard_name" => "student",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.electionRole.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $electionMananger->id
-        ]);
+            // election applications
+            ['name' => "schoolAdmin.electionApplications.view",               'guard_name' => 'schooladmin'],
+            ['name' => "student.electionApplications.create",                 'guard_name' => 'student'],
+            ['name' => "schoolAdmin.electionApplications.view.elections",     'guard_name' => 'schooladmin'],
+            ['name' => "student.electionApplications.update",                 'guard_name' => 'student'],
+            ['name' => "schoolAdmin.electionApplications.delete",             'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionApplications.approve",            'guard_name' => 'schooladmin'],
+
+            // election roles
+            ['name' => "schoolAdmin.electionRole.create",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionRole.view",                       'guard_name' => 'schooladmin'],
+            ['name' => "student.electionRole.view.election",                  'guard_name' => 'student'],
+            ['name' => "schoolAdmin.electionRole.view.election",              'guard_name' => 'schooladmin'],
+            ['name' => "student.electionRole.view.active.election",           'guard_name' => 'student'],
+            ['name' => "schoolAdmin.electionRole.update",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionRole.delete",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionRole.activate",                   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.electionRole.deactivate",                 'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $electionMananger->id,
+                ]
+            );
+        }
     }
-    private function resitManagerPermissions()
+    private function resitManagerPermissions(): void
     {
         $resitMananger = PermissionCategory::where("title", "Resit Manager")->firstOrFail();
-        Permission::create([
-            'name' => "student.studentResits.view.student",
-            "guard_name" => "student",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.view.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.pay",
-            "guard_name" => "student",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.transactions.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.transactions.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.transaction.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.transaction.reverse",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.store.scores",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.update.scores",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.view.evaluation.data",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.view.student.resitExam",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.view.eligable.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.studentResits.view.eligable.student.resitExam",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.timetable.resitexam.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.timetable.resitexam.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.timetable.resitexam.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.timetable.resitexam.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.timetable.resitexam.courses.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $resitMananger->id
-        ]);
+
+        $permissions = [
+            ['name' => "student.studentResits.view.student",                        'guard_name' => 'student'],
+            ['name' => "schoolAdmin.studentResits.view.student",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.pay",                             'guard_name' => 'student'],
+            ['name' => "schoolAdmin.studentResits.update",                          'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.delete",                          'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.view",                            'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.show",                            'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.transactions.view",               'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.transactions.delete",             'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.transaction.show",                'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.transaction.reverse",             'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.store.scores",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.update.scores",                   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.view.evaluation.data",            'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.view.student.resitExam",          'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.view.eligable.student",           'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.studentResits.view.eligable.student.resitExam", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.timetable.resitexam.create",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.timetable.resitexam.update",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.timetable.resitexam.delete",                    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.timetable.resitexam.view",                      'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.timetable.resitexam.courses.view",              'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $resitMananger->id,
+                ]
+            );
+        }
     }
-    private function courseManagerPermissions()
+    private function courseManagerPermissions(): void
     {
         $courseMananger = PermissionCategory::where("title", "Course Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.course.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.view.active",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.course.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.course.create",
+            "schoolAdmin.course.view",
+            "schoolAdmin.course.update",
+            "schoolAdmin.course.delete",
+            "schoolAdmin.course.view.active",
+            "schoolAdmin.course.activate",
+            "schoolAdmin.course.show",
+            "schoolAdmin.course.deactivate",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $courseMananger->id,
+                ]
+            );
+        }
     }
-    private function teacherCoursePreferenceManagementPermission()
+
+
+    private function teacherCoursePreferenceManagementPermission(): void
     {
         $courseMananger = PermissionCategory::where("title", "Teacher Course Preference Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.teacherCoursePreference.assign",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacherCoursePreference.remove",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.teacherCoursePreference.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $courseMananger->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.teacherCoursePreference.assign",
+            "schoolAdmin.teacherCoursePreference.remove",
+            "schoolAdmin.teacherCoursePreference.view",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $courseMananger->id,
+                ]
+            );
+        }
     }
-    private function countryManagerPermissions()
+    private function countryManagerPermissions(): void
     {
         $countryMananger = PermissionCategory::where("title", "Country Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.country.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $countryMananger->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.country.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $countryMananger->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.country.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $countryMananger->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.country.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $countryMananger->id
-        ]);
+
+        $permissions = [
+            ['name' => "schoolAdmin.country.view",  'guard_name' => 'schooladmin'],
+            ['name' => "appAdmin.country.update",   'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.country.delete",   'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.country.create",   'guard_name' => 'appAdmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $countryMananger->id,
+                ]
+            );
+        }
     }
-    private function departmentManagerPermissions()
+
+
+    private function departmentManagerPermissions(): void
     {
         $departmentMananger = PermissionCategory::where("title", "Department Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.department.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.department.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.department.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.department.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.department.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.department.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.department.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $departmentMananger->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.department.create",
+            "schoolAdmin.department.update",
+            "schoolAdmin.department.delete",
+            "schoolAdmin.department.view",
+            "schoolAdmin.department.activate",
+            "schoolAdmin.department.deactivate",
+            "schoolAdmin.department.show",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $departmentMananger->id,
+                ]
+            );
+        }
     }
-    private function schoolEventManagerPermissions()
+    private function schoolEventManagerPermissions(): void
     {
         $eventManager = PermissionCategory::where("title", "Event Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.event.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.event.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.event.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.event.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "student.event.view",
-            "guard_name" => "student",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.event.view",
-            "guard_name" => "teacher",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "teacher.event.show",
-            "guard_name" => "teacher",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "student.event.show",
-            "guard_name" => "student",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.event.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "schoolAdmin.event.create", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.event.update", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.event.delete", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.event.view",   'guard_name' => 'schooladmin'],
+            ['name' => "student.event.view",       'guard_name' => 'student'],
+            ['name' => "teacher.event.view",       'guard_name' => 'teacher'],
+            ['name' => "teacher.event.show",       'guard_name' => 'teacher'],
+            ['name' => "student.event.show",       'guard_name' => 'student'],
+            ['name' => "schoolAdmin.event.show",   'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $eventManager->id,
+                ]
+            );
+        }
     }
-    private function schoolEventCategoryManagerPermission()
+    private function schoolEventCategoryManagerPermission(): void
     {
         $eventManager = PermissionCategory::where("title", "Event Category Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.eventCategory.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.eventCategory.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.eventCategory.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.eventCategory.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.eventCategory.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.eventCategory.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $eventManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.eventCategory.create",
+            "schoolAdmin.eventCategory.update",
+            "schoolAdmin.eventCategory.delete",
+            "schoolAdmin.eventCategory.view",
+            "schoolAdmin.eventCategory.activate",
+            "schoolAdmin.eventCategory.deactivate",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $eventManager->id,
+                ]
+            );
+        }
     }
-    private function additionalFeeManagerPermissions()
+
+
+
+    private function additionalFeeManagerPermissions(): void
     {
         $additionalFeeManager = PermissionCategory::where("title", "Additional Fee Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.view.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "student.additionalFee.view.student",
-            "guard_name" => "student",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.pay",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.transactions.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.transactions.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.transactions.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFee.transactions.reverse",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "schoolAdmin.additionalFee.create",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.view",                       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.view.student",               'guard_name' => 'schooladmin'],
+            ['name' => "student.additionalFee.view.student",                   'guard_name' => 'student'],
+            ['name' => "schoolAdmin.additionalFee.update",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.delete",                     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.pay",                        'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.transactions.view",          'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.transactions.show",          'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.transactions.delete",        'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.additionalFee.transactions.reverse",       'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $additionalFeeManager->id,
+                ]
+            );
+        }
     }
-    private function additionalFeeCategoryManagerPermissions()
+    private function additionalFeeCategoryManagerPermissions(): void
     {
         $additionalFeeManager = PermissionCategory::where("title", "Additional Fee Category Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.additionalFeeCategory.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFeeCategory.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFeeCategory.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.additionalFeeCategory.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $additionalFeeManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.additionalFeeCategory.create",
+            "schoolAdmin.additionalFeeCategory.update",
+            "schoolAdmin.additionalFeeCategory.delete",
+            "schoolAdmin.additionalFeeCategory.view",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $additionalFeeManager->id,
+                ]
+            );
+        }
     }
-    private function tuitionFeeManagerPermissions()
+    private function tuitionFeeManagerPermissions(): void
     {
-
         $tuitionFeeManager = PermissionCategory::where("title", "Tuition Fee Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.pay",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.view.paid",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.view.deptors",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.view.transactions",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.show.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.reverse.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.tuitionFee.delete.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
 
-        //Fee Payment Schedule Slots
-        Permission::create([
-            'name' => "schoolAdmin.feeScheduleSlots.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeScheduleSlots.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeScheduleSlots.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeScheduleSlot.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
+        $permissions = [
+            // Tuition fees
+            "schoolAdmin.tuitionFee.pay",
+            "schoolAdmin.tuitionFee.view.paid",
+            "schoolAdmin.tuitionFee.view",
+            "schoolAdmin.tuitionFee.update",
+            "schoolAdmin.tuitionFee.delete",
+            "schoolAdmin.tuitionFee.view.deptors",
+            "schoolAdmin.tuitionFee.view.transactions",
+            "schoolAdmin.tuitionFee.show.transaction",
+            "schoolAdmin.tuitionFee.reverse.transaction",
+            "schoolAdmin.tuitionFee.delete.transaction",
 
-        //Fee Payment Schedule Permissions
-        Permission::create([
-            'name' => "schoolAdmin.feeSchedule.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeSchedule.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeSchedule.view.specialty",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeSchedule.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeSchedule.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
+            // Fee Payment Schedule Slots
+            "schoolAdmin.feeScheduleSlots.create",
+            "schoolAdmin.feeScheduleSlots.view",
+            "schoolAdmin.feeScheduleSlots.delete",
+            "schoolAdmin.feeScheduleSlot.update",
 
-        //Fee Waiver Permissions
-        Permission::create([
-            'name' => "schoolAdmin.feeWaiver.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeWaiver.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeWaiver.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeWaiver.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.feeWaiver.view.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $tuitionFeeManager->id
-        ]);
+            // Fee Payment Schedule
+            "schoolAdmin.feeSchedule.create",
+            "schoolAdmin.feeSchedule.view",
+            "schoolAdmin.feeSchedule.view.specialty",
+            "schoolAdmin.feeSchedule.update",
+            "schoolAdmin.feeSchedule.delete",
+
+            // Fee Waivers
+            "schoolAdmin.feeWaiver.create",
+            "schoolAdmin.feeWaiver.view",
+            "schoolAdmin.feeWaiver.update",
+            "schoolAdmin.feeWaiver.delete",
+            "schoolAdmin.feeWaiver.view.student",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $tuitionFeeManager->id,
+                ]
+            );
+        }
     }
-    private function registrationFeeManagerPermissions()
+
+
+
+    private function registrationFeeManagerPermissions(): void
     {
         $registrationFeeManager = PermissionCategory::where("title", "Registration Fee Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.registrationFee.pay",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $registrationFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.registrationFee.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $registrationFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.registrationFee.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $registrationFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.registrationFee.view.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $registrationFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.registrationFee.delete.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $registrationFeeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.registrationFee.reverse.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $registrationFeeManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.registrationFee.pay",
+            "schoolAdmin.registrationFee.delete",
+            "schoolAdmin.registrationFee.view",
+            "schoolAdmin.registrationFee.view.transaction",
+            "schoolAdmin.registrationFee.delete.transaction",
+            "schoolAdmin.registrationFee.reverse.transaction",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $registrationFeeManager->id,
+                ]
+            );
+        }
     }
-    private function gradesManagerPermissions()
+    private function gradesManagerPermissions(): void
     {
         //grade permissions
         $gradeManager = PermissionCategory::where("title", "Grades Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.grades.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.grades.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.grades.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.grades.update.grade.config",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.grades.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.grades.relatedexam.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.grades.config.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
 
-        //grade category
-        Permission::create([
-            'name' => "appAdmin.gradesCategory.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.gradesCategory.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.gradesCategory.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.gradesCategory.view",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $gradeManager->id
-        ]);
+        $permissions = [
+            ['name' => "schoolAdmin.grades.create",              'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.grades.view",                'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.grades.update",              'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.grades.update.grade.config", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.grades.delete",              'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.grades.relatedexam.view",    'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.grades.config.view",         'guard_name' => 'schooladmin'],
+
+            // grade category
+            ['name' => "appAdmin.gradesCategory.create",         'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.gradesCategory.delete",         'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.gradesCategory.update",         'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.gradesCategory.view",           'guard_name' => 'appAdmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $gradeManager->id,
+                ]
+            );
+        }
     }
-    private function letterGradeManagerPermissions()
+    private function letterGradeManagerPermissions(): void
     {
         $letterGradeManager = PermissionCategory::where("title", "Letter Grade Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.letterGrade.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $letterGradeManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.letterGrade.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $letterGradeManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.letterGrade.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $letterGradeManager->id
-        ]);
+
+        $permissions = [
+            "appAdmin.letterGrade.create",
+            "appAdmin.letterGrade.update",
+            "appAdmin.letterGrade.delete",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'appAdmin',
+                ],
+                [
+                    'permission_category_id' => $letterGradeManager->id,
+                ]
+            );
+        }
     }
-    private function levelManagerPermissions()
+    private function levelManagerPermissions(): void
     {
         $levelManager = PermissionCategory::where("title", "Level Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.level.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $levelManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.level.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $levelManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.level.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $levelManager->id
-        ]);
+
+        $permissions = [
+            "appAdmin.level.create",
+            "appAdmin.level.update",
+            "appAdmin.level.delete",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'appAdmin',
+                ],
+                [
+                    'permission_category_id' => $levelManager->id,
+                ]
+            );
+        }
     }
-    private function semesterManagerPermissions()
+
+
+
+    private function semesterManagerPermissions(): void
     {
         $semesterManager = PermissionCategory::where("title", "Semester Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.semester.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.semester.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.semester.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolSemester.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolSemester.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolSemester.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolSemester.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolSemester.view.active",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolSemester.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $semesterManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "appAdmin.semester.create",              'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.semester.delete",              'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.semester.update",              'guard_name' => 'appAdmin'],
+            ['name' => "schoolAdmin.schoolSemester.update",     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.schoolSemester.create",     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.schoolSemester.delete",     'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.schoolSemester.show",       'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.schoolSemester.view.active", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.schoolSemester.view",       'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $semesterManager->id,
+                ]
+            );
+        }
     }
-    private function ratesManagerPermissions()
+    private function ratesManagerPermissions(): void
     {
         $ratesManager = PermissionCategory::where("title", "Rate Card Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.rateCard.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $ratesManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.rateCard.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $ratesManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.rateCard.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $ratesManager->id
-        ]);
+
+        $permissions = [
+            "appAdmin.rateCard.create",
+            "appAdmin.rateCard.delete",
+            "appAdmin.rateCard.update",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'appAdmin',
+                ],
+                [
+                    'permission_category_id' => $ratesManager->id,
+                ]
+            );
+        }
     }
-    private function subscriptionManagerPermissions()
+    private function subscriptionManagerPermissions(): void
     {
         $subscriptionManager = PermissionCategory::where("title", "Subscription Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.subscription.view.subscribed.schools",
-            "guard_name" => "appAdmin",
-            "permission_category_id" => $subscriptionManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.subscription.show.schoolBranch",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $subscriptionManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.subscription.delete.transaction",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $subscriptionManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.subscription.view.transactions.schoolBranch",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $subscriptionManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "appAdmin.subscription.view.subscribed.schools",              'guard_name' => 'appAdmin'],
+            ['name' => "schoolAdmin.subscription.show.schoolBranch",                 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.subscription.delete.transaction",                'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.subscription.view.transactions.schoolBranch",    'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $subscriptionManager->id,
+                ]
+            );
+        }
     }
-    private function schoolExpensesManagerPermissions()
+    private function schoolExpensesManagerPermissions(): void
     {
         $schoolExpensesManager = PermissionCategory::where("title", "School Expenses Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
 
-        //expenses category permissions
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.category.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.category.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.category.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolExpenses.category.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolExpensesManager->id
-        ]);
+        $permissions = [
+            "schoolAdmin.schoolExpenses.create",
+            "schoolAdmin.schoolExpenses.update",
+            "schoolAdmin.schoolExpenses.delete",
+            "schoolAdmin.schoolExpenses.view",
+            "schoolAdmin.schoolExpenses.show",
+
+            // expenses category permissions
+            "schoolAdmin.schoolExpenses.category.create",
+            "schoolAdmin.schoolExpenses.category.update",
+            "schoolAdmin.schoolExpenses.category.delete",
+            "schoolAdmin.schoolExpenses.category.view",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $schoolExpensesManager->id,
+                ]
+            );
+        }
     }
-    private function schoolAdminManagerPermissions()
+    private function schoolAdminManagerPermissions(): void
     {
         $schoolAdminManager = PermissionCategory::where("title", "School Admin Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.upload.avatar",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.delete.avatar",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.permission.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.permission.revoke",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.permission.assign",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.role.assign",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.role.revoke",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolAdmin.role.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" => $schoolAdminManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.schoolAdmin.create",
+            "schoolAdmin.schoolAdmin.update",
+            "schoolAdmin.schoolAdmin.delete",
+            "schoolAdmin.schoolAdmin.view",
+            "schoolAdmin.schoolAdmin.show",
+            "schoolAdmin.schoolAdmin.upload.avatar",
+            "schoolAdmin.schoolAdmin.delete.avatar",
+            "schoolAdmin.schoolAdmin.deactivate",
+            "schoolAdmin.schoolAdmin.activate",
+            "schoolAdmin.schoolAdmin.permission.view",
+            "schoolAdmin.schoolAdmin.permission.revoke",
+            "schoolAdmin.schoolAdmin.permission.assign",
+            "schoolAdmin.schoolAdmin.role.assign",
+            "schoolAdmin.schoolAdmin.role.revoke",
+            "schoolAdmin.schoolAdmin.role.view",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $schoolAdminManager->id,
+                ]
+            );
+        }
     }
-    private function schoolBranchManagerPermissions()
+
+
+
+
+    private function schoolBranchManagerPermissions(): void
     {
         $schoolBranchManager = PermissionCategory::where("title", "School Branch Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.schoolBranch.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $schoolBranchManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.schoolBranch.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $schoolBranchManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.schoolBranch.view",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $schoolBranchManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "schoolAdmin.schoolBranch.delete", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.schoolBranch.update", 'guard_name' => 'schooladmin'],
+            ['name' => "appAdmin.schoolBranch.view",      'guard_name' => 'appAdmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $schoolBranchManager->id,
+                ]
+            );
+        }
     }
-    private function schoolManagerPermissions()
+    private function schoolManagerPermissions(): void
     {
         $schoolManager = PermissionCategory::where("title", "School Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.school.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $schoolManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.school.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $schoolManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.school.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $schoolManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.school.show",
+            "schoolAdmin.school.update",
+            "schoolAdmin.school.delete",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $schoolManager->id,
+                ]
+            );
+        }
     }
-    private function roleManagerPermissions()
+    private function roleManagerPermissions(): void
     {
         $roleManager = PermissionCategory::where("title", "Role Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.role.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $roleManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.role.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $roleManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.role.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $roleManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.role.assign",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $roleManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.role.remove",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $roleManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "appAdmin.role.delete",      'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.role.update",      'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.role.create",      'guard_name' => 'appAdmin'],
+            ['name' => "schoolAdmin.role.assign",   'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.role.remove",   'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $roleManager->id,
+                ]
+            );
+        }
     }
-    private function appManagerPermissions()
+    private function appManagerPermissions(): void
     {
         $permissionManager = PermissionCategory::where("title", "Permission Manager")->firstOrFail();
-        Permission::create([
-            'name' => "appAdmin.permission.delete",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $permissionManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.permission.create",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $permissionManager->id
-        ]);
-        Permission::create([
-            'name' => "appAdmin.permission.update",
-            "guard_name" => "appAdmin",
-            "permission_category_id" =>  $permissionManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.permission.view.schoolAdmin",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $permissionManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.permission.assign",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $permissionManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.permission.remove",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $permissionManager->id
-        ]);
+
+        $permissions = [
+            ['name' => "appAdmin.permission.delete",              'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.permission.create",              'guard_name' => 'appAdmin'],
+            ['name' => "appAdmin.permission.update",              'guard_name' => 'appAdmin'],
+            ['name' => "schoolAdmin.permission.view.schoolAdmin", 'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.permission.assign",           'guard_name' => 'schooladmin'],
+            ['name' => "schoolAdmin.permission.remove",           'guard_name' => 'schooladmin'],
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $permission['name'],
+                    'guard_name' => $permission['guard_name'],
+                ],
+                [
+                    'permission_category_id' => $permissionManager->id,
+                ]
+            );
+        }
     }
-    private function parentManagerPermissions()
+    private function parentManagerPermissions(): void
     {
-        $parentManager = PermissionCategory::Where("title", "Parent Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.parent.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $parentManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.parent.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $parentManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.parent.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $parentManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.parent.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $parentManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.parent.show",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $parentManager->id
-        ]);
+        $parentManager = PermissionCategory::where("title", "Parent Manager")->firstOrFail();
+
+        $permissions = [
+            "schoolAdmin.parent.create",
+            "schoolAdmin.parent.update",
+            "schoolAdmin.parent.view",
+            "schoolAdmin.parent.delete",
+            "schoolAdmin.parent.show",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $parentManager->id,
+                ]
+            );
+        }
     }
-    private function marksManagerPermissions()
+
+
+
+
+    private function marksManagerPermissions(): void
     {
         $marksManager = PermissionCategory::where("title", "Marks Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.mark.create.ca.marks",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.update.ca.marks",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.create.exam.marks",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.update.exam.marks",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.view.accessed.courses",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.view.ca.evaluation.data",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.view.exam.evaluation.data",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.view.ca.result.data",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.mark.view.student",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.mark.create.ca.marks",
+            "schoolAdmin.mark.update.ca.marks",
+            "schoolAdmin.mark.create.exam.marks",
+            "schoolAdmin.mark.update.exam.marks",
+            "schoolAdmin.mark.view.accessed.courses",
+            "schoolAdmin.mark.view.ca.evaluation.data",
+            "schoolAdmin.mark.view.exam.evaluation.data",
+            "schoolAdmin.mark.view.ca.result.data",
+            "schoolAdmin.mark.view.student",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $marksManager->id,
+                ]
+            );
+        }
     }
-    private function anouncementCategoryPermission()
+    private function anouncementCategoryPermission(): void
     {
         $marksManager = PermissionCategory::where("title", "Announcement Category Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.announcementCategory.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcementCategory.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcementCategory.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcementCategory.get",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcementCategory.activate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcementCategory.deactivate",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.announcementCategory.create",
+            "schoolAdmin.announcementCategory.update",
+            "schoolAdmin.announcementCategory.delete",
+            "schoolAdmin.announcementCategory.get",
+            "schoolAdmin.announcementCategory.activate",
+            "schoolAdmin.announcementCategory.deactivate",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $marksManager->id,
+                ]
+            );
+        }
     }
-    private function anouncementPermission()
+    private function anouncementPermission(): void
     {
         $marksManager = PermissionCategory::where("title", "Announcement Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.announcement.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcement.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcement.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.announcement.get",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.announcement.create",
+            "schoolAdmin.announcement.update",
+            "schoolAdmin.announcement.delete",
+            "schoolAdmin.announcement.get",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $marksManager->id,
+                ]
+            );
+        }
     }
-    private function schoolAppSettingPermission()
+    private function schoolAppSettingPermission(): void
     {
         $marksManager = PermissionCategory::where("title", "School Branch Setting Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.electionSetting.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.examSetting.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.gradeScaleSetting.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.promotionSetting.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitSetting.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.timetableSetting.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.electionSetting.update",
+            "schoolAdmin.examSetting.update",
+            "schoolAdmin.gradeScaleSetting.update",
+            "schoolAdmin.promotionSetting.update",
+            "schoolAdmin.resitSetting.update",
+            "schoolAdmin.timetableSetting.update",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $marksManager->id,
+                ]
+            );
+        }
     }
-    private function hallPermission()
+    private function hallPermission(): void
     {
         $marksManager = PermissionCategory::where("title", "Hall Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.hall.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.hall.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.hall.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.hall.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.hall.deactivated",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialtyHall.available.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.hall.activated",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialtyHall.assign",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.specialtyHall.remove",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+
+        $permissions = [
+            "schoolAdmin.hall.update",
+            "schoolAdmin.hall.create",
+            "schoolAdmin.hall.delete",
+            "schoolAdmin.hall.view",
+            "schoolAdmin.hall.deactivated",
+            "schoolAdmin.specialtyHall.available.view",
+            "schoolAdmin.hall.activated",
+            "schoolAdmin.specialtyHall.assign",
+            "schoolAdmin.specialtyHall.remove",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $marksManager->id,
+                ]
+            );
+        }
     }
-    private function resitManager()
+    private function resitManager(): void
     {
         $marksManager = PermissionCategory::where("title", "Resit Manager")->firstOrFail();
-        Permission::create([
-            'name' => "schoolAdmin.resitTimetable.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitTimetable.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitTimetable.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
 
-        Permission::create([
-            'name' => "schoolAdmin.resitExam.create",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+        $permissions = [
+            // resit timetable
+            "schoolAdmin.resitTimetable.create",
+            "schoolAdmin.resitTimetable.update",
+            "schoolAdmin.resitTimetable.delete",
 
-        Permission::create([
-            'name' => "schoolAdmin.resitExam.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitExam.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitExam.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitExam.gradeScaleAdd",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitExam.gradeScaleRemove",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitCandidate.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitCandidate.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitEvaluation.addScore",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitEvaluation.updateScore",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitEvaluation.deleteResult",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resitEvaluation.viewResult",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+            // resit exam
+            "schoolAdmin.resitExam.create",
+            "schoolAdmin.resitExam.update",
+            "schoolAdmin.resitExam.view",
+            "schoolAdmin.resitExam.delete",
+            "schoolAdmin.resitExam.gradeScaleAdd",
+            "schoolAdmin.resitExam.gradeScaleRemove",
 
-        Permission::create([
-            'name' => "schoolAdmin.resit.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resit.update",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
-        Permission::create([
-            'name' => "schoolAdmin.resit.view",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+            // resit candidates
+            "schoolAdmin.resitCandidate.delete",
+            "schoolAdmin.resitCandidate.view",
 
-        Permission::create([
-            'name' => "schoolAdmin.resitPayment.pay",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+            // resit evaluation
+            "schoolAdmin.resitEvaluation.addScore",
+            "schoolAdmin.resitEvaluation.updateScore",
+            "schoolAdmin.resitEvaluation.deleteResult",
+            "schoolAdmin.resitEvaluation.viewResult",
 
-        Permission::create([
-            'name' => "schoolAdmin.resitTransaction.delete",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+            // resit
+            "schoolAdmin.resit.delete",
+            "schoolAdmin.resit.update",
+            "schoolAdmin.resit.view",
 
-        Permission::create([
-            'name' => "schoolAdmin.resitTransaction.reverse",
-            "guard_name" => "schooladmin",
-            "permission_category_id" =>  $marksManager->id
-        ]);
+            // resit payment + transactions
+            "schoolAdmin.resitPayment.pay",
+            "schoolAdmin.resitTransaction.delete",
+            "schoolAdmin.resitTransaction.reverse",
+        ];
+
+        foreach ($permissions as $name) {
+            Permission::updateOrCreate(
+                [
+                    'name'       => $name,
+                    'guard_name' => 'schooladmin',
+                ],
+                [
+                    'permission_category_id' => $marksManager->id,
+                ]
+            );
+        }
     }
 }

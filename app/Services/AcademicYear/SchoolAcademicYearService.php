@@ -3,6 +3,7 @@
 namespace App\Services\AcademicYear;
 
 use App\Exceptions\AppException;
+use App\Models\Specialty;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Promotion\PromotionRun;
@@ -12,8 +13,39 @@ use Carbon\Carbon;
 
 class SchoolAcademicYearService
 {
-    public function createSchoolAcademicYear(array $data, object $currentSchool)
+    public function createSchoolAcademicYear(array $data, object $currentSchool): SchoolAcademicYear
     {
+        $specialty = Specialty::with(['student'])->find($data['specialty_id']);
+
+        if (!$specialty) {
+            throw new AppException(
+                'The requested specialty could not be found.',
+                404,
+                'Specialty Not Found',
+                "No specialty found with ID: {$data['specialty_id']}."
+            );
+        }
+
+        $systemAcademicYear = SystemAcademicYear::find($data['system_academic_year_id']);
+
+        if (!$systemAcademicYear) {
+            throw new AppException(
+                'The requested system academic year could not be found.',
+                404,
+                'System Academic Year Not Found',
+                "No system academic year found with ID: {$data['system_academic_year_id']}."
+            );
+        }
+
+        if (strtotime($data['start_date']) >= strtotime($data['end_date'])) {
+            throw new AppException(
+                'The academic year start date must be prior to the end date.',
+                422,
+                'Invalid Date Range',
+                "Provided start date ({$data['start_date']}) cannot be on or after the end date ({$data['end_date']})."
+            );
+        }
+
         $existingAcademicYear = SchoolAcademicYear::where('school_branch_id', $currentSchool->id)
             ->where('system_academic_year_id', $data['system_academic_year_id'])
             ->where('specialty_id', $data['specialty_id'])
@@ -23,13 +55,13 @@ class SchoolAcademicYearService
         if ($existingAcademicYear) {
             throw new AppException(
                 'An academic year with the same school year and specialty already exists for this school branch.',
-                400,
-                "Existing Academic Year",
-                "Academic Year {$existingAcademicYear->systemAcademicYear->name} for {$existingAcademicYear->specialty->specialty_name}, {$existingAcademicYear->specialty->level->level} already exists."
+                409,
+                'Existing Academic Year',
+                "Academic Year {$existingAcademicYear->systemAcademicYear?->name} for {$existingAcademicYear->specialty?->specialty_name}, {$existingAcademicYear->specialty?->level?->level} already exists."
             );
         }
 
-        return DB::transaction(function () use ($data, $currentSchool) {
+        return DB::transaction(function () use ($data, $currentSchool, $specialty) {
             $academicYear = SchoolAcademicYear::create([
                 'specialty_id' => $data['specialty_id'],
                 'school_branch_id' => $currentSchool->id,
@@ -46,6 +78,7 @@ class SchoolAcademicYearService
             PromotionRun::create([
                 'school_year_id' => $academicYear->id,
                 'school_branch_id' => $currentSchool->id,
+                'total_students' => $specialty->student->count(),
             ]);
 
             return $academicYear;
@@ -247,4 +280,6 @@ class SchoolAcademicYearService
 
         return $academicYear;
     }
+
+
 }

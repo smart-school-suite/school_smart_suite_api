@@ -7,7 +7,6 @@ use App\Jobs\NotificationJobs\SendAdminSpecialtyCreatedNotificationJob;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\Actions\AdminActionEvent;
 

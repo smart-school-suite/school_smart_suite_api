@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use App\Models\SettingCategory;
 use App\Models\SettingDefination;
 use App\Models\LetterGrade;
-use App\Models\LevelType;
 
 class SettingDefinationSeeder extends Seeder
 {
@@ -59,7 +58,6 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Student Promotion Setting', $promotionSettingDefs);
     }
-
     public function timetableSettingDefination(): void
     {
         $settingDefs = [
@@ -81,7 +79,6 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Time-table Settings', $settingDefs);
     }
-
     public function resitSettingDefination(): void
     {
         $settingDefs = [
@@ -124,7 +121,6 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Resit Settings', $settingDefs);
     }
-
     public function examSettingDefination(): void
     {
         $settingDefs = [
@@ -146,7 +142,6 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Exam Settings', $settingDefs);
     }
-
     public function gradeSettingDefination(): void
     {
         $letterGrades = LetterGrade::all();
@@ -177,7 +172,6 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Grade Settings', $settingDefs);
     }
-
     public function electionTieBreakerSettingDefination(): void
     {
         $settingDefs = [
@@ -199,19 +193,24 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Election Tie Breaker Setting', $settingDefs);
     }
-
     public function levelSetting(): void
     {
-        $levelType = LevelType::where("program_name", "level_start_100")->first();
 
         $settingDefs = [
             [
                 'key' => 'level.start',
                 'label' => 'Level Start',
-                'data_type' => 'json',
-                'default_value' => $levelType ? json_encode($levelType->toArray()) : '{}',
+                'data_type' => 'string',
+                'default_value' => "level_start_100",
                 'description' => 'Defines the starting academic level used by the institution (e.g., 100, 200, 300)',
             ],
+            [
+                'key' => 'specialties.auto_generate_levels',
+                'label' => "Auto-Generate Across All Levels",
+                "data_type" => 'boolean',
+                'default_value' => true,
+                'description' => "Automatically creates a copy of a new specialty for every active level upon creation."
+            ]
         ];
 
         $this->seedDefinitions('Level Setting', $settingDefs);

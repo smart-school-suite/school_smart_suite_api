@@ -14,3 +14,6 @@ Route::get('/exam/{examId}/progress', [ExamResultController::class, 'getExamEval
     ->name('getExamEvaluationProgress');
 
 Route::post('/publish', [ExamResultController::class, 'publishExamResult'])->name('publish.examResult');
+
+Route::get('/exam/{examId}/publish-details', [ExamResultController::class, 'getExamResultPublishDetails'])
+    ->name('get.ExamResultPublishDetails');
