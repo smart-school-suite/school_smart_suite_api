@@ -2,57 +2,44 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Exception;
 use Illuminate\Support\Str;
+
 class SemesterSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $this->createSemesters();
-    }
-
-      private function createSemesters(): void
-    {
         $timestamp = now();
-        $filePath = public_path("data/semesters.csv");
-        if (!file_exists($filePath) || !is_readable($filePath)) {
-            throw new Exception("CSV file not found or not readable!");
-        }
 
-        if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle);
-            $semesters = [];
+        $semesters = [
+            ['name' => 'first semester',  'program_name' => 'FIS', 'count' => 1],
+            ['name' => 'second semester', 'program_name' => 'SES', 'count' => 2],
+            ['name' => 'third semester',  'program_name' => 'THS', 'count' => 3],
+            ['name' => 'fourth semester', 'program_name' => 'FOS', 'count' => 4],
+            ['name' => 'fifth semester',  'program_name' => 'FIS', 'count' => 5],
+        ];
 
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                $uuid = Str::uuid()->toString();
+        foreach ($semesters as $semester) {
+            $exists = DB::table('semesters')->where('name', $semester['name'])->exists();
 
-                if (count($data) >= 2) {
-                    $semesters[] = [
-                        'id' => $uuid,
-                        'name' => $data[1],
-                        'program_name' => $data[2],
-                        'count' => $data[3],
-                        'created_at' => $timestamp,
-                        'updated_at' => $timestamp
-                    ];
-                }
+            if ($exists) {
+                DB::table('semesters')->where('name', $semester['name'])->update([
+                    'program_name' => $semester['program_name'],
+                    'count'        => $semester['count'],
+                    'updated_at'   => $timestamp,
+                ]);
+                continue;
             }
 
-            fclose($handle);
-
-
-            if (!empty($semesters)) {
-                DB::table('semesters')->insert($semesters);
-            } else {
-                Log::warning('No semesters to insert.');
-            }
+            DB::table('semesters')->insert([
+                'id'           => Str::uuid()->toString(),
+                'name'         => $semester['name'],
+                'program_name' => $semester['program_name'],
+                'count'        => $semester['count'],
+                'created_at'   => $timestamp,
+                'updated_at'   => $timestamp,
+            ]);
         }
     }
 }

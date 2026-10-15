@@ -22,7 +22,7 @@ use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
 
 class ElectionApplicationService
 {
-    public function createApplication(array $data, $currentSchool)
+    public function createApplication(array $data, object $currentSchool)
     {
         $existingApplication = ElectionApplication::where("school_branch_id", $currentSchool->id)
             ->where("election_id", $data["election_id"])
@@ -78,16 +78,16 @@ class ElectionApplicationService
             );
         }
     }
-    public function updateApplication(array $data, $application_id)
+    public function updateApplication(array $data, string $applicationId)
     {
-        $applcationExists = ElectionApplication::find($application_id);
+        $applcationExists = ElectionApplication::find($applicationId);
 
         if (is_null($applcationExists)) {
             throw new AppException(
                 "Application not found for update",
                 404,
                 "Application Missing",
-                "The election application with ID $application_id could not be found.",
+                "The election application with ID $applicationId could not be found.",
                 "/elections/applications"
             );
         }
@@ -100,7 +100,7 @@ class ElectionApplicationService
                 400,
                 "Invalid Update Data",
                 "The request contained no valid, non-empty fields to update the application.",
-                "/elections/applications/" . $application_id . "/edit"
+                "/elections/applications/" . $applicationId . "/edit"
             );
         }
 
@@ -113,20 +113,20 @@ class ElectionApplicationService
                 500,
                 "Update Error",
                 "An unexpected error occurred while attempting to save the changes to the application.",
-                "/elections/applications/" . $application_id . "/edit"
+                "/elections/applications/" . $applicationId . "/edit"
             );
         }
     }
-    public function deleteApplication(string $application_id, $currentSchool, $authAdmin)
+    public function deleteApplication(string $applicationId, object $currentSchool, object $authAdmin)
     {
-        $applcationExists = ElectionApplication::find($application_id);
+        $applcationExists = ElectionApplication::find($applicationId);
 
         if (is_null($applcationExists)) {
             throw new AppException(
                 "Application not found for deletion",
                 404,
                 "Application Missing",
-                "The election application with ID $application_id could not be found.",
+                "The election application with ID $applicationId could not be found.",
                 "/elections/applications"
             );
         }
@@ -155,7 +155,7 @@ class ElectionApplicationService
             );
         }
     }
-    public function bulkDeleteApplication($applicationIds, $currentSchool, $authAdmin)
+    public function bulkDeleteApplication(array $applicationIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
         try {
@@ -232,7 +232,7 @@ class ElectionApplicationService
             );
         }
     }
-    public function bulkApproveApplication($applicationIds, $currentSchool, $authAdmin)
+    public function bulkApproveApplication(array $applicationIds, object $currentSchool, object $authAdmin)
     {
         $applicationData = [];
 
@@ -341,7 +341,7 @@ class ElectionApplicationService
             );
         }
     }
-    public function getApplicationDetails($applicationId, $currentSchool)
+    public function getApplicationDetails(string $applicationId, object $currentSchool)
     {
         $application = ElectionApplication::where('school_branch_id', $currentSchool->id)
             ->with(['student.specialty.level', 'election', 'electionRole'])
@@ -402,7 +402,7 @@ class ElectionApplicationService
 
         return $application;
     }
-    public function getApplicationsByStudent($currentSchool, $studentId)
+    public function getApplicationsByStudent(object $currentSchool, string $studentId)
     {
         if (!Student::where('id', $studentId)->where('school_branch_id', $currentSchool->id)->exists()) {
             throw new AppException(
@@ -431,7 +431,7 @@ class ElectionApplicationService
 
         return $studentApplications;
     }
-    public function approveApplication(string $applicationId, $currentSchool, $authAdmin)
+    public function approveApplication(string $applicationId, object $currentSchool, object $authAdmin)
     {
         try {
             DB::beginTransaction();
@@ -534,8 +534,7 @@ class ElectionApplicationService
             );
         }
     }
-
-    public function getStudentElectionApplications($currentSchool, $student, $electionId)
+    public function getStudentElectionApplications(object $currentSchool, object $student, string $electionId)
     {
         $schoolBranchId = $currentSchool->id;
         $now = Carbon::now();

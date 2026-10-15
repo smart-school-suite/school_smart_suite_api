@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PermissionCategorySeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(PermissionSeeder::class);
-        $this->call(StatTypeSeeder::class);
         $this->call(AssignPermissionToRoles::class);
         $this->call(InstallmentSeeder::class);
         $this->call(AnnouncementSeeder::class);
@@ -37,5 +36,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SystemAcademicYearSeeder::class);
         $this->call(PeriodDurationSeeder::class);
         $this->call(JobCategorySeeder::class);
+        $this->call(PaymentMethodCategorySeeder::class);
+        $this->call(PaymentMethodSeeder::class);
     }
 }

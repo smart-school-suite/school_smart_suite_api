@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\AnnouncementLabel;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class AnnouncementSeeder extends Seeder
@@ -32,7 +31,7 @@ class AnnouncementSeeder extends Seeder
             ],
             [
                 'label' => 'info',
-                'icon' => "material-symbols:info-rounded",
+                'icon' => 'material-symbols:info-rounded',
                 'color' => [
                     'color_light' => '#dfe5ff',
                     'color_thick' => '#4345ff'
@@ -40,19 +39,22 @@ class AnnouncementSeeder extends Seeder
             ],
             [
                 'label' => 'all',
-                'icon' => "mage:dashboard-fill",
+                'icon' => 'mage:dashboard-fill',
                 'color' => [
                     'color_light' => '#e0f2fe',
                     'color_thick' => '#0ea7e9'
                 ]
             ]
         ];
-         foreach($announcementLabels as $announcementLabel){
-             AnnouncementLabel::create([
-                 'name' => $announcementLabel['label'],
-                 'icon' => $announcementLabel['icon'],
-                 'color' => json_encode($announcementLabel['color'])
-             ]);
-         }
+
+        foreach ($announcementLabels as $announcementLabel) {
+            AnnouncementLabel::updateOrCreate(
+                ['name' => $announcementLabel['label']],
+                [
+                    'icon' => $announcementLabel['icon'],
+                    'color' => $announcementLabel['color'],
+                ]
+            );
+        }
     }
 }

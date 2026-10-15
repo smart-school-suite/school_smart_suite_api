@@ -14,6 +14,8 @@ php artisan package:discover --ansi >/dev/null 2>&1 || true
 
 if [ "$RUN_MIGRATIONS" = "true" ] || [ "$RUN_MIGRATIONS" = "1" ]; then
   php artisan migrate --force
+  # Seeders are idempotent: they only add or update reference data, never duplicate it.
+  php artisan db:seed --force
 fi
 
 if [ "$APP_ENV" = "production" ]; then

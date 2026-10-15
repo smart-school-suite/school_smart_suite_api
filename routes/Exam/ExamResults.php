@@ -4,19 +4,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Exam\ExamResultController;
 
 
-Route::get('/student-results', [ExamResultController::class, 'getAllStudentResults'])
-    ->name('student-results.index');
+Route::get('/exams', [ExamResultController::class, 'getExams'])
+    ->name('result.exams');
 
-Route::get('/exams/{examId}/students/{studentId}/results', [ExamResultController::class, 'getMyResults'])
-    ->name('exams.students.results.show');
+Route::get('/exam/{examId}/standing', [ExamResultController::class, 'getExamStandings'])
+    ->name('exam.standing');
 
-Route::get('/exams/{examId}/standings', [ExamResultController::class, 'getStandingsByExam'])
-    ->name('exams.standings.index');
+Route::get('/exam/{examId}/progress', [ExamResultController::class, 'getExamEvaluationProgress'])
+    ->name('getExamEvaluationProgress');
 
-Route::get('/exams/{examId}/standings/pdf', [ExamResultController::class, 'generateStudentResultStandingPdfByExam'])
-    ->name('exams.standings.pdf');
+Route::post('/publish', [ExamResultController::class, 'publishExamResult'])->name('publish.examResult');
 
-Route::get('/exams/{examId}/students/{studentId}/results/pdf', [ExamResultController::class, 'generateStudentResultPdf'])
-    ->name('exams.students.results.pdf');
-
-Route::get('/result/{resultId}', [ExamResultController::class, 'getResultDetails'])->name('student.result.details');
+Route::get('/exam/{examId}/publish-details', [ExamResultController::class, 'getExamResultPublishDetails'])
+    ->name('get.ExamResultPublishDetails');

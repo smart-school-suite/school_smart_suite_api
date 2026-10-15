@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\AcademicYear\SchoolAcademicYear;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +37,10 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = 'false';
 
+    public function schoolAcademicYear(): HasMany
+    {
+        return $this->hasMany(SchoolAcademicYear::class, 'school_branch_id');
+    }
     public function schoolSemester(): HasMany
     {
         return $this->hasMany(SchoolSemester::class, 'school_branch_id');

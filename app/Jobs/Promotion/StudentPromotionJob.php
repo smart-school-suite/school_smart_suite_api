@@ -2,12 +2,32 @@
 
 namespace App\Jobs\Promotion;
 
+use App\DTOs\Promotion\PromotionRunLogReasonDTO;
+use App\DTOs\Promotion\PromotionRunLogDTO;
+use App\Models\AdditionalFees;
+use App\Models\Exam\ExamScore;
+use App\Models\Examtype;
 use App\Models\Promotion\PromotionRun;
+use App\Models\Promotion\StudentPromotionLog;
+use App\Models\SchoolBranchSetting;
+use App\Models\Studentresit;
+use App\Models\TuitionFees;
+use App\Models\Educationlevels;
+use App\Models\Specialty;
+use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Promotion\StudentPromotionRecord;
+use App\Models\Promotion\PromotionRunLog;
+use App\Services\PromotionRules\AdditionalFeeRuleService;
+use App\Services\PromotionRules\EvaluationRuleService;
+use App\Services\PromotionRules\ExamScoreRuleService;
+use App\Services\PromotionRules\ResitRuleService;
+use App\Services\PromotionRules\TuitionFeeRuleService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 
 class StudentPromotionJob implements ShouldQueue
 {
@@ -21,17 +41,273 @@ class StudentPromotionJob implements ShouldQueue
         $this->runId = $runId;
         $this->schoolBranchId = $schoolBranchId;
     }
-
     public function handle(): void
     {
         $schoolBranchId = $this->schoolBranchId;
         $runId = $this->runId;
+        $reasons = [];
+
         $promotionRun = PromotionRun::where("school_branch_id", $schoolBranchId)
             ->where("id", $runId)
-            ->with(['schoolYear.specialty.student'])
+            ->with(['schoolYear.specialty.student', 'schoolYear.specialty.level'])
             ->first();
 
+        if (!$promotionRun) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "Promotion run record not found.",
+                details: ['promotion_run_id' => $runId, 'school_branch_id' => $schoolBranchId]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Promotion Run Initialization Failed", $reasons);
+            return;
+        }
 
+        $specialty = $promotionRun->schoolYear?->specialty;
+        $students = $specialty?->student ?? collect();
 
+        if ($students->isEmpty()) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "No students found attached to the current specialty/school year.",
+                details: ['specialty_id' => $specialty?->id]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "No Students Found", $reasons, $promotionRun);
+            return;
+        }
+
+        $levelSettings = $this->levelSetting($schoolBranchId);
+        $levels = Educationlevels::whereHas(
+            "levelType",
+            fn($query) => $query->where("program_name", $levelSettings?->value)
+        )->get();
+
+        if ($levels->isEmpty()) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "No education levels found matching program name.",
+                details: ['program_name' => $levelSettings?->value]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Level Settings Misconfiguration", $reasons, $promotionRun);
+            return;
+        }
+
+        $nextSpecialty = $this->getNextSpecialty($specialty, $levels);
+        if (!$nextSpecialty) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "Target next specialty could not be determined.",
+                details: ['current_specialty_id' => $specialty->id]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Next Specialty Missing", $reasons, $promotionRun);
+            return;
+        }
+
+        $nextSpecialtySchoolYear = SchoolAcademicYear::where("school_branch_id", $schoolBranchId)
+            ->with(["specialty", "level"])
+            ->where("specialty_id", $nextSpecialty->id)
+            ->where("end_date", ">=", now())
+            ->first();
+
+        if (!$nextSpecialtySchoolYear) {
+            $reasons[] = new PromotionRunLogReasonDTO(
+                reason: "No active or future academic year found for the target promotion specialty.",
+                details: ['next_specialty_id' => $nextSpecialty->id]
+            );
+            $this->failAndLog($runId, $schoolBranchId, "Next Specialty Academic Year Missing", $reasons, $promotionRun);
+            return;
+        }
+
+        $reasons[] = new PromotionRunLogReasonDTO(
+            reason: "Target specialty and academic year resolved successfully.",
+            details: [
+                'next_specialty_id' => $nextSpecialty->id,
+                'next_academic_year_id' => $nextSpecialtySchoolYear->id,
+            ]
+        );
+
+        $studentIds = $students->pluck('id');
+
+        $examTypes = Examtype::with(['semesters' => function ($query) {
+            $query->where("count", "<", 3)->where("type", "!=", "resit");
+        }])->get();
+
+        $studentMarks = ExamScore::where("school_branch_id", $schoolBranchId)
+            ->whereHas('candidate', fn($q) => $q->whereIn("student_id", $studentIds))
+            ->with(['exam.semester', 'candidate.student', 'course', 'exam.examType', 'grade'])
+            ->get();
+
+        $studentAdditionalFees = AdditionalFees::where("school_branch_id", $schoolBranchId)
+            ->whereIn("student_id", $studentIds)
+            ->with(['feeCategory', 'student', 'additionalFeeTranctions'])
+            ->get();
+
+        $studentTuitionFees = TuitionFees::where("school_branch_id", $schoolBranchId)
+            ->whereIn("student_id", $studentIds)
+            ->with(['student', 'tuitionFeeTransactions'])
+            ->get();
+
+        $studentResits = Studentresit::where("school_branch_id", $schoolBranchId)
+            ->whereIn("student_id", $studentIds)
+            ->with(['student', 'course'])
+            ->get();
+
+        $promotionSetting = $this->getPromotionSetting($schoolBranchId);
+
+        $tuitionFeeRule = app(TuitionFeeRuleService::class);
+        $additionalFeeRule = app(AdditionalFeeRuleService::class);
+        $examScoreRule = app(ExamScoreRuleService::class);
+        $resitRule = app(ResitRuleService::class);
+        $evaluationRule = app(EvaluationRuleService::class);
+
+        $passedCount = 0;
+        $failedCount = 0;
+        $needsReviewCount = 0;
+
+        foreach ($students as $student) {
+            $scores = $studentMarks->filter(fn($marks) => $marks->candidate?->student_id === $student->id);
+            $resits = $studentResits->where("student_id", $student->id);
+            $tuitionFees = $studentTuitionFees->where("student_id", $student->id);
+            $additionalFees = $studentAdditionalFees->where("student_id", $student->id);
+
+            $rules = collect([
+                $additionalFeeRule->additionalFeeRule($additionalFees, $promotionSetting),
+                $tuitionFeeRule->tuitionFeeRule($tuitionFees, $promotionSetting),
+                $resitRule->carryOverRule($resits, $promotionSetting),
+                $evaluationRule->gpaRule($scores, $promotionSetting, $examTypes),
+                $examScoreRule->incompleteExamScoresRule($scores, $examTypes),
+            ]);
+
+            $needsReview = $rules->contains(fn($rule) => $rule->needsReview === true);
+            $overallPassed = $rules->every(fn($rule) => $rule->passed === true);
+
+            if ($needsReview) {
+                $needsReviewCount++;
+                $outcome = 'pending_review';
+                $status = 'pending';
+                $toSpecialtyId = null;
+            } elseif ($overallPassed) {
+                $passedCount++;
+                $outcome = 'promoted';
+                $status = 'completed';
+                $toSpecialtyId = $nextSpecialty->id;
+            } else {
+                $failedCount++;
+                $outcome = 'retained';
+                $status = 'completed';
+                $toSpecialtyId = $specialty->id;
+            }
+
+            $studentPromotionRecord = StudentPromotionRecord::create([
+                'outcome' => $outcome,
+                'status' => $status,
+                'processed_at' => now(),
+                'promotion_run_id' => $runId,
+                'student_id' => $student->id,
+                'from_specialty_id' => $specialty->id,
+                'to_specialty_id' => $toSpecialtyId,
+            ]);
+
+            StudentPromotionLog::create([
+                'record_id' => $studentPromotionRecord->id,
+                'student_id' => $student->id,
+                'school_branch_id' => $schoolBranchId,
+                'rule_logs' => $rules->map(fn($r) => $r->toArray())->values()->toArray(),
+            ]);
+        }
+
+        $promotionRun->update([
+            'passed_count' => $passedCount,
+            'failed_count' => $failedCount,
+            'needs_review_count' => $needsReviewCount,
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        $reasons[] = new PromotionRunLogReasonDTO(
+            reason: "Promotion run completed successfully.",
+            details: [
+                'total_students' => $students->count(),
+                'passed' => $passedCount,
+                'failed' => $failedCount,
+                'needs_review' => $needsReviewCount,
+            ]
+        );
+
+        $logDto = new PromotionRunLogDTO(
+            status: 'success',
+            title: 'Promotion Run Execution Completed',
+            reasons: $reasons
+        );
+
+        PromotionRunLog::create([
+            'promotion_run_id' => $runId,
+            'school_branch_id' => $schoolBranchId,
+            'rule_logs' => $logDto->toArray(),
+        ]);
+    }
+
+    private function failAndLog(
+        int|string $runId,
+        int|string $schoolBranchId,
+        string $title,
+        array $reasons,
+        ?PromotionRun $promotionRun = null
+    ): void {
+        if ($promotionRun) {
+            $promotionRun->update([
+                'status' => 'failed',
+                'completed_at' => now(),
+            ]);
+        }
+
+        $logDto = new PromotionRunLogDTO(
+            status: 'failed',
+            title: $title,
+            reasons: $reasons
+        );
+
+        PromotionRunLog::create([
+            'promotion_run_id' => $runId,
+            'school_branch_id' => $schoolBranchId,
+            'rule_logs' => $logDto->toArray(),
+        ]);
+    }
+    private function getNextSpecialty(Specialty $specialty, Collection $levels): ?Specialty
+    {
+        $currentLevel = (int) $specialty->level->level;
+
+        $nextLevelNumber = $levels
+            ->pluck('level')
+            ->map(fn($level) => (int) $level)
+            ->filter(fn($level) => $level > $currentLevel)
+            ->sort()
+            ->first();
+
+        if ($nextLevelNumber === null) {
+            return null;
+        }
+
+        $nextEducationLevel = $levels->first(
+            fn($level) => (int) $level->level === $nextLevelNumber
+        );
+
+        return Specialty::where("school_branch_id", $specialty->school_branch_id)
+            ->where("specialty_name", $specialty->specialty_name)
+            ->where("level_id", $nextEducationLevel->id)
+            ->first();
+    }
+    private function getPromotionSetting(string $schoolBranchId)
+    {
+
+        return SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
+            ->with(['settingDefination.settingCategory'])
+            ->whereHas('settingDefination.settingCategory', function ($query) {
+                $query->where("key", "setting.category.promotion");
+            })
+            ->get();
+    }
+    private function levelSetting(string $schoolBranchId)
+    {
+        return  SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
+            ->with(['settingDefination'])
+            ->whereHas('settingDefination', function ($query) {
+                $query->where("key", "level.start");
+            })->first();
     }
 }

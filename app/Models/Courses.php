@@ -12,7 +12,7 @@ use App\Models\Specialty;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Courses extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'course_code',

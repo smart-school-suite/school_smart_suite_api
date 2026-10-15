@@ -15,10 +15,6 @@ return new class extends Migration
             $table->uuid('category_id')->nullable();
             $table->foreign('category_id')->references('id')->on('system_job_categories');
         });
-        Schema::table('system_job_events', function (Blueprint $table) {
-            $table->string('system_job_id');
-            $table->foreign('system_job_id')->references('id')->on('system_jobs');
-        });
     }
 
     /**
@@ -26,9 +22,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('system_job_events', function (Blueprint $table) {
-            $table->dropForeign(['system_job_id']);
-            $table->dropColumn('system_job_id');
-        });
+        if (Schema::hasTable('system_jobs')) {
+            Schema::table('system_jobs', function (Blueprint $table) {
+                $table->dropForeign(['category_id']);
+                $table->dropColumn('category_id');
+            });
+        }
     }
 };

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Course\CourseType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CourseTypeSeeder extends Seeder
@@ -30,8 +29,11 @@ class CourseTypeSeeder extends Seeder
             ]
         ];
 
-        foreach ($courseTypes as $courseType ) {
-            CourseType::create($courseType);
+        foreach ($courseTypes as $courseType) {
+            CourseType::updateOrCreate(
+                ['key' => $courseType['key']],
+                $courseType
+            );
         }
     }
 }

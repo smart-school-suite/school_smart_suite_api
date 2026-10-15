@@ -25,7 +25,7 @@ class CreateElectionRequest extends FormRequest
             'application_end' => 'required|date_format:Y-m-d H:i|after:application_start',
             'voting_start' => 'required|date_format:Y-m-d H:i|after_or_equal:application_end',
             'voting_end' => 'required|date_format:Y-m-d H:i|after:voting_start',
-            'school_year' => 'required|string|regex:/^\d{4}-\d{4}$/',
+            'school_year_id' => 'required|uuid|exists:system_academic_years,id',
         ];
     }
 }

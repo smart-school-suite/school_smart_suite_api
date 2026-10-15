@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PromotionRun extends Model
 {
@@ -16,7 +17,6 @@ class PromotionRun extends Model
 
     protected $fillable = [
         'status',
-        'current_stage',
         'total_students',
         'processed_students',
         'promoted_count',
@@ -25,7 +25,8 @@ class PromotionRun extends Model
         'review_count',
         'excluded_count',
         'failed_count',
-        'initiated_by',
+        'authorable_type',
+        'authorable_id',
         'started_at',
         'completed_at',
         'metadata',
@@ -62,5 +63,10 @@ class PromotionRun extends Model
     public function schoolYear(): BelongsTo
     {
         return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
+    }
+
+    public function authorable(): MorphTo
+    {
+        return $this->morphTo('author', 'authorable_type', 'authorable_id');
     }
 }

@@ -26,6 +26,10 @@ class Educationlevels extends Model
     public $incrementing = 'false';
     public $table = 'levels';
 
+    public $casts = [
+        'level' => 'integer'
+    ];
+
     public function specialtyHall(): HasMany
     {
         return $this->hasMany(SpecialtyHall::class);

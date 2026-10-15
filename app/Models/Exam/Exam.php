@@ -37,6 +37,11 @@ class Exam extends Model
     public $incrementing = false;
     public $table = 'exams';
 
+    public function examResultPublication(): HasMany
+    {
+        return $this->hasMany(ExamResultPublication::class, 'exam_id');
+    }
+
     public function resit(): HasMany
     {
         return $this->hasMany(Studentresit::class, "exam_id");

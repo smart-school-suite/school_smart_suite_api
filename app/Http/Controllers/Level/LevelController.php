@@ -7,6 +7,7 @@ use App\Services\Level\LevelService;
 use App\Http\Requests\Level\UpdateLevelRequest;
 use App\Http\Requests\Level\CreateLevelRequest;
 use App\Services\ApiResponseService;
+use Illuminate\Http\Request;
 
 class LevelController extends Controller
 {
@@ -39,5 +40,12 @@ class LevelController extends Controller
     {
         $educationLevel = $this->levelService->getEducationLevels();
         return ApiResponseService::success("Education Levels Fetched Succefully", $educationLevel, null, 200);
+    }
+
+    public function getEducationLevelBySchoolBranch(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $levels = $this->levelService->getLevelBySchoolBranch($currentSchool);
+        return ApiResponseService::success("Levels Fetched Successfully", $levels, null, 200);
     }
 }

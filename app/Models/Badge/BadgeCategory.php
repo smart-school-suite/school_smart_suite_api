@@ -4,13 +4,14 @@ namespace App\Models\Badge;
 
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
-use MongoDB\Laravel\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BadgeCategory extends Model
 {
     use GeneratesUuid;
     protected $fillable = [
         'name',
+        'key',
         'status'
     ];
 

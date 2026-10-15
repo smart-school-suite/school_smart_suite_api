@@ -5,8 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-use Exception;
+
 class LetterGradeSeeder extends Seeder
 {
     /**
@@ -14,41 +13,37 @@ class LetterGradeSeeder extends Seeder
      */
     public function run(): void
     {
-       $this->createLetterGrades();
-    }
-
-    private function createLetterGrades()
-    {
         $timestamp = now();
-        $filePath = public_path("data/letter_grade.csv");
-        if (!file_exists($filePath) || !is_readable($filePath)) {
-            throw new Exception("CSV file not found or not readable!");
-        }
 
-        if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle);
+        $letterGradesData = [
+            'C-',
+            'A+',
+            'D-',
+            'A',
+            'D+',
+            'D',
+            'B-',
+            'A-',
+            'B',
+            'C+',
+            'C',
+            'B+',
+            'F',
+        ];
 
-            $letter_grade = [];
+        $letterGrades = array_map(function ($grade) use ($timestamp) {
+            return [
+                'id'           => Str::uuid()->toString(),
+                'letter_grade' => $grade,
+                'created_at'   => $timestamp,
+                'updated_at'   => $timestamp,
+            ];
+        }, $letterGradesData);
 
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                $uuid = Str::uuid()->toString();
-                if (count($data) >= 2) {
-                    $letter_grade[] = [
-                        'id' => $uuid,
-                        'letter_grade' => $data[1],
-                        'created_at' => $timestamp,
-                        'updated_at' => $timestamp
-                    ];
-                }
-            }
-
-            fclose($handle);
-
-            if (!empty($letter_grade)) {
-                DB::table('letter_grades')->insert($letter_grade);
-            } else {
-                Log::warning('No Grades to insert.');
-            }
-        }
+        DB::table('letter_grades')->upsert(
+            $letterGrades,
+            ['letter_grade'],
+            ['updated_at']
+        );
     }
 }

@@ -2,60 +2,99 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Semester;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Exception;
-use App\Models\Semester;
 use Illuminate\Support\Str;
+
 class ExamTypeSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $this->createExamType();
-    }
-    private function createExamType(): void
-    {
         $timestamp = now();
-        $filePath = public_path("data/exam_type.csv");
-        if (!file_exists($filePath) || !is_readable($filePath)) {
-            throw new Exception("CSV file not found or not readable!");
-        }
+        $semestersByCount = Semester::pluck('id', 'count');
 
-        if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle);
+        $examTypesData = [
+            [
+                'exam_name'    => 'Second Semester Exam',
+                'program_name' => 'SSE',
+                'semester'     => 'second',
+                'type'         => 'exam',
+                'count'        => 2,
+                'description'  => 'The final major exam of the entire academic session, usually written in May/June or June/July. Covers only second-semester topics, but your result here combines with everything else to determine if you pass or move to the next class/level. Typically 60–70%. Clear this and you’re done for the year – no more tension!',
+            ],
+            [
+                'exam_name'    => 'Second Semester CA (Continous Accessment)',
+                'program_name' => 'SSC',
+                'semester'     => 'second',
+                'type'         => 'ca',
+                'count'        => 2,
+                'description'  => 'Just like first semester CA, but for the second half of the session (January/February to May/June). All your tests, assignments, quizzes, practicals, and attendance during this period count here. Still 30–40% of your final grade. Many students use this semester to boost subjects they were weak in earlier.',
+            ],
+            [
+                'exam_name'    => 'Second Semester Resit',
+                'program_name' => 'SSR',
+                'semester'     => 'second',
+                'type'         => 'resit',
+                'count'        => 2,
+                'description'  => 'A supplementary examination opportunity provided at the end of the academic session for students needing to clear failed or missed courses from the second semester. Passing this allows you to satisfy academic requirements without repeating the entire semester.',
+            ],
+            [
+                'exam_name'    => 'First Semester Resit',
+                'program_name' => 'FSR',
+                'semester'     => 'first',
+                'type'         => 'resit',
+                'count'        => 1,
+                'description'  => 'A makeup assessment offered to students who scored below the passing threshold or missed the main first semester examination. It provides a second chance to earn necessary course credits before progressing further.',
+            ],
+            [
+                'exam_name'    => 'First Semester CA (Continous Accessment)',
+                'program_name' => 'FSC',
+                'semester'     => 'first',
+                'type'         => 'ca',
+                'count'        => 1,
+                'description'  => 'This is your day-to-day score throughout the first semester (usually August/September to December). It includes quizzes, class tests, assignments, projects, attendance, and participation. In most schools, CA is worth 30–40% of your total grade for each subject. Staying consistent here reduces the pressure on the final exam and keeps your GP high from the start!',
+            ],
+            [
+                'exam_name'    => 'First Semester Exam',
+                'program_name' => 'FSE',
+                'semester'     => 'first',
+                'type'         => 'exam',
+                'count'        => 1,
+                'description'  => 'The main written exam taken at the end of first semester (November/December/January). It tests everything you’ve been taught from the beginning of the session till that point. Usually carries 60–70% of your total grade per subject. Doing well here locks in a strong foundation for the year.',
+            ],
+        ];
 
-            $exam_type = [];
+        foreach ($examTypesData as $row) {
+            $semesterId = $semestersByCount[$row['count']] ?? null;
 
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                $uuid = Str::uuid()->toString();
-                if (count($data) >= 2) {
-                    $exam_type[] = [
-                        'id' => $uuid,
-                        'exam_name' => $data[1],
-                        "program_name" => $data[2],
-                        "semester" => $data[3],
-                        "type" => $data[4],
-                        "description" =>  $data[6],
-                        'semester_id' => Semester::where('count', $data[5])->first()->id,
-                        'created_at' => $timestamp,
-                        'updated_at' => $timestamp
-                    ];
-                }
+            if (!$semesterId) {
+                continue;
             }
 
-            fclose($handle);
+            $match = [
+                'exam_name'    => $row['exam_name'],
+                'program_name' => $row['program_name'],
+                'semester_id'  => $semesterId,
+                'type'         => $row['type'],
+            ];
 
-
-            if (!empty($exam_type)) {
-                DB::table('exam_types')->insert($exam_type);
-            } else {
-                Log::warning('No Exam types to insert.');
+            if (DB::table('exam_types')->where($match)->exists()) {
+                DB::table('exam_types')->where($match)->update([
+                    'description' => $row['description'],
+                    'semester'    => $row['semester'],
+                    'updated_at'  => $timestamp,
+                ]);
+                continue;
             }
+
+            DB::table('exam_types')->insert($match + [
+                'id'          => Str::uuid()->toString(),
+                'semester'    => $row['semester'],
+                'description' => $row['description'],
+                'created_at'  => $timestamp,
+                'updated_at'  => $timestamp,
+            ]);
         }
     }
 }
