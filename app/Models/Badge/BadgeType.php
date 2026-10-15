@@ -2,13 +2,16 @@
 
 namespace App\Models\Badge;
 
+use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
-use MongoDB\Laravel\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BadgeType extends Model
 {
+    use GeneratesUuid;
     protected $fillable = [
          'name',
+         'key',
          'badge_category_id',
          'description',
          'color',

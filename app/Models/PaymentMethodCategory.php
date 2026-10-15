@@ -15,7 +15,7 @@ class PaymentMethodCategory extends Model
     ];
 
     public $incrementing = false;
-    public $table = "payment_method_category";
+    public $table = "payment_method_categories";
     public $keyType = "string";
 
     public function paymentMethod(): HasMany

@@ -56,66 +56,66 @@ class PermissionSeeder extends Seeder
     private function studentManagerPermissions()
     {
         $studentMananger = PermissionCategory::where("title", "Student Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id,
             "desc_name" => "Create Student",
             "desc_text" => "Manages Student Creation"
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id,
             "desc_name" => "Update Student",
             "desc_text" => "Manages Student Updates"
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.mark.student.as.dropout",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.reinstate.dropout.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.view.student.dropout",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.delete.student.dropout",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.view.student.details",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.view.students",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.delete.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.promote",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentMananger->id
@@ -124,42 +124,42 @@ class PermissionSeeder extends Seeder
     private function studentBatchManagerPermissions()
     {
         $studentBatchMananger = PermissionCategory::where("title", "Student Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.view.graduation.dates",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.create.graduation.dates",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.student.batch.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $studentBatchMananger->id
@@ -169,67 +169,67 @@ class PermissionSeeder extends Seeder
     {
         $specialtyMananger = PermissionCategory::where("title", "Specialty Manager")->firstOrFail();
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.show.details",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.timetable.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.timetable.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.timetable.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.timetable.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.timetable.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialty.timetable.avialability.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $specialtyMananger->id
@@ -239,87 +239,87 @@ class PermissionSeeder extends Seeder
     {
         //teacher permission
         $teacherMananager = PermissionCategory::where("title", "Teacher Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.view.time.timetable",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.add.specialty.peference",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.view.specialty.peference",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.teacher.view.specialty.peference",
             "guard_name" => "teacher",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacher.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.avialability.view",
             "guard_name" => "teacher",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.avialability.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.avialability.create",
             "guard_name" => "teacher",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.avialability.show.teacher",
             "guard_name" => "teacher",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.avialability.delete",
             "guard_name" => "teacher",
             "permission_category_id" => $teacherMananager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.avialability.update",
             "guard_name" => "teacher",
             "permission_category_id" => $teacherMananager->id
@@ -328,151 +328,151 @@ class PermissionSeeder extends Seeder
     private function examManagerPermissions()
     {
         $examMananger = PermissionCategory::where("title", "Exam Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.exam.show",
             "guard_name" => "student",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.exam.show",
             "guard_name" => "teacher",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examGradeScale.add",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examGradeScale.remove",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examGradeScale.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.candidate.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examCandidate.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.timetable.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.timetable.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.timetable.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.timetable.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.exam.timetable.course.data",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
         //exam results
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examResults.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examResults.view.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.examResults.view.student",
             "guard_name" => "teacher",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.examResults.view.student",
             "guard_name" => "student",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examResults.view.standings",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
 
         //exam permissions
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.examType.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.examType.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.examType.view",
             "guard_name" => "appAdmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examType.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.examType.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examEvaluation.addScore",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examEvaluation.updateScore",
             "guard_name" => "schooladmin",
             "permission_category_id" => $examMananger->id
@@ -481,185 +481,185 @@ class PermissionSeeder extends Seeder
     private function electionManagerPermissions()
     {
         $electionMananger = PermissionCategory::where("title", "Election Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.add.participants",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.view.participants",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.vote",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.view.results",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.view.past.winners",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.election.view.winners.current",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
 
         //election candidates
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionCandidate.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionCandidate.disqualify",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionCandidate.reinstate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
 
         //election type permissions
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionType.view.active",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
 
         //election Applications
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionApplications.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.electionApplications.create",
             "guard_name" => "student",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionApplications.view.elections",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.electionApplications.update",
             "guard_name" => "student",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionApplications.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionApplications.approve",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
 
         //electionTypes Permissions
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.electionRole.view.election",
             "guard_name" => "student",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.view.election",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.electionRole.view.active.election",
             "guard_name" => "student",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionRole.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $electionMananger->id
@@ -668,112 +668,112 @@ class PermissionSeeder extends Seeder
     private function resitManagerPermissions()
     {
         $resitMananger = PermissionCategory::where("title", "Resit Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "student.studentResits.view.student",
             "guard_name" => "student",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.view.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.pay",
             "guard_name" => "student",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.transactions.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.transactions.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.transaction.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.transaction.reverse",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.store.scores",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.update.scores",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.view.evaluation.data",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.view.student.resitExam",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.view.eligable.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.studentResits.view.eligable.student.resitExam",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.timetable.resitexam.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.timetable.resitexam.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.timetable.resitexam.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.timetable.resitexam.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.timetable.resitexam.courses.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $resitMananger->id
@@ -782,42 +782,42 @@ class PermissionSeeder extends Seeder
     private function courseManagerPermissions()
     {
         $courseMananger = PermissionCategory::where("title", "Course Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.view.active",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.course.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
@@ -826,17 +826,17 @@ class PermissionSeeder extends Seeder
     private function teacherCoursePreferenceManagementPermission()
     {
         $courseMananger = PermissionCategory::where("title", "Teacher Course Preference Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacherCoursePreference.assign",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacherCoursePreference.remove",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.teacherCoursePreference.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $courseMananger->id
@@ -845,22 +845,22 @@ class PermissionSeeder extends Seeder
     private function countryManagerPermissions()
     {
         $countryMananger = PermissionCategory::where("title", "Country Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.country.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $countryMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.country.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $countryMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.country.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $countryMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.country.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $countryMananger->id
@@ -869,37 +869,37 @@ class PermissionSeeder extends Seeder
     private function departmentManagerPermissions()
     {
         $departmentMananger = PermissionCategory::where("title", "Department Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.department.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $departmentMananger->id
@@ -908,47 +908,47 @@ class PermissionSeeder extends Seeder
     private function schoolEventManagerPermissions()
     {
         $eventManager = PermissionCategory::where("title", "Event Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.event.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.event.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.event.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.event.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.event.view",
             "guard_name" => "student",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.event.view",
             "guard_name" => "teacher",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "teacher.event.show",
             "guard_name" => "teacher",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.event.show",
             "guard_name" => "student",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.event.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
@@ -957,32 +957,32 @@ class PermissionSeeder extends Seeder
     private function schoolEventCategoryManagerPermission()
     {
         $eventManager = PermissionCategory::where("title", "Event Category Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.eventCategory.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.eventCategory.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.eventCategory.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.eventCategory.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.eventCategory.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.eventCategory.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $eventManager->id
@@ -991,57 +991,57 @@ class PermissionSeeder extends Seeder
     private function additionalFeeManagerPermissions()
     {
         $additionalFeeManager = PermissionCategory::where("title", "Additional Fee Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.view.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "student.additionalFee.view.student",
             "guard_name" => "student",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.pay",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.transactions.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.transactions.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.transactions.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFee.transactions.reverse",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
@@ -1050,22 +1050,22 @@ class PermissionSeeder extends Seeder
     private function additionalFeeCategoryManagerPermissions()
     {
         $additionalFeeManager = PermissionCategory::where("title", "Additional Fee Category Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFeeCategory.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFeeCategory.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFeeCategory.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.additionalFeeCategory.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $additionalFeeManager->id
@@ -1075,128 +1075,128 @@ class PermissionSeeder extends Seeder
     {
 
         $tuitionFeeManager = PermissionCategory::where("title", "Tuition Fee Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.pay",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.view.paid",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.view.deptors",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.view.transactions",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.show.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.reverse.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.tuitionFee.delete.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
 
         //Fee Payment Schedule Slots
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeScheduleSlots.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeScheduleSlots.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeScheduleSlots.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeScheduleSlot.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
 
         //Fee Payment Schedule Permissions
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeSchedule.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeSchedule.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeSchedule.view.specialty",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeSchedule.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeSchedule.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
 
         //Fee Waiver Permissions
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeWaiver.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeWaiver.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeWaiver.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeWaiver.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.feeWaiver.view.student",
             "guard_name" => "schooladmin",
             "permission_category_id" => $tuitionFeeManager->id
@@ -1205,32 +1205,32 @@ class PermissionSeeder extends Seeder
     private function registrationFeeManagerPermissions()
     {
         $registrationFeeManager = PermissionCategory::where("title", "Registration Fee Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.registrationFee.pay",
             "guard_name" => "schooladmin",
             "permission_category_id" => $registrationFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.registrationFee.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $registrationFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.registrationFee.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $registrationFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.registrationFee.view.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $registrationFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.registrationFee.delete.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $registrationFeeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.registrationFee.reverse.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $registrationFeeManager->id
@@ -1240,59 +1240,59 @@ class PermissionSeeder extends Seeder
     {
         //grade permissions
         $gradeManager = PermissionCategory::where("title", "Grades Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.update.grade.config",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.relatedexam.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.grades.config.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $gradeManager->id
         ]);
 
         //grade category
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.gradesCategory.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.gradesCategory.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.gradesCategory.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $gradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.gradesCategory.view",
             "guard_name" => "appAdmin",
             "permission_category_id" => $gradeManager->id
@@ -1301,17 +1301,17 @@ class PermissionSeeder extends Seeder
     private function letterGradeManagerPermissions()
     {
         $letterGradeManager = PermissionCategory::where("title", "Letter Grade Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.letterGrade.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $letterGradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.letterGrade.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $letterGradeManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.letterGrade.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $letterGradeManager->id
@@ -1320,17 +1320,17 @@ class PermissionSeeder extends Seeder
     private function levelManagerPermissions()
     {
         $levelManager = PermissionCategory::where("title", "Level Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.level.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $levelManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.level.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $levelManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.level.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $levelManager->id
@@ -1339,47 +1339,47 @@ class PermissionSeeder extends Seeder
     private function semesterManagerPermissions()
     {
         $semesterManager = PermissionCategory::where("title", "Semester Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.semester.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.semester.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.semester.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolSemester.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolSemester.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolSemester.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolSemester.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolSemester.view.active",
             "guard_name" => "schooladmin",
             "permission_category_id" => $semesterManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolSemester.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $semesterManager->id
@@ -1388,17 +1388,17 @@ class PermissionSeeder extends Seeder
     private function ratesManagerPermissions()
     {
         $ratesManager = PermissionCategory::where("title", "Rate Card Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.rateCard.create",
             "guard_name" => "appAdmin",
             "permission_category_id" => $ratesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.rateCard.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" => $ratesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.rateCard.update",
             "guard_name" => "appAdmin",
             "permission_category_id" => $ratesManager->id
@@ -1407,22 +1407,22 @@ class PermissionSeeder extends Seeder
     private function subscriptionManagerPermissions()
     {
         $subscriptionManager = PermissionCategory::where("title", "Subscription Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.subscription.view.subscribed.schools",
             "guard_name" => "appAdmin",
             "permission_category_id" => $subscriptionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.subscription.show.schoolBranch",
             "guard_name" => "schooladmin",
             "permission_category_id" => $subscriptionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.subscription.delete.transaction",
             "guard_name" => "schooladmin",
             "permission_category_id" => $subscriptionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.subscription.view.transactions.schoolBranch",
             "guard_name" => "schooladmin",
             "permission_category_id" => $subscriptionManager->id
@@ -1431,49 +1431,49 @@ class PermissionSeeder extends Seeder
     private function schoolExpensesManagerPermissions()
     {
         $schoolExpensesManager = PermissionCategory::where("title", "School Expenses Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
 
         //expenses category permissions
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.category.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.category.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.category.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolExpenses.category.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolExpensesManager->id
@@ -1482,77 +1482,77 @@ class PermissionSeeder extends Seeder
     private function schoolAdminManagerPermissions()
     {
         $schoolAdminManager = PermissionCategory::where("title", "School Admin Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.create",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.update",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.show",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.upload.avatar",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.delete.avatar",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.permission.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.permission.revoke",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.permission.assign",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.role.assign",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.role.revoke",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolAdmin.role.view",
             "guard_name" => "schooladmin",
             "permission_category_id" => $schoolAdminManager->id
@@ -1561,17 +1561,17 @@ class PermissionSeeder extends Seeder
     private function schoolBranchManagerPermissions()
     {
         $schoolBranchManager = PermissionCategory::where("title", "School Branch Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolBranch.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $schoolBranchManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.schoolBranch.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $schoolBranchManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.schoolBranch.view",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $schoolBranchManager->id
@@ -1580,17 +1580,17 @@ class PermissionSeeder extends Seeder
     private function schoolManagerPermissions()
     {
         $schoolManager = PermissionCategory::where("title", "School Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.school.show",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $schoolManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.school.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $schoolManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.school.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $schoolManager->id
@@ -1599,27 +1599,27 @@ class PermissionSeeder extends Seeder
     private function roleManagerPermissions()
     {
         $roleManager = PermissionCategory::where("title", "Role Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.role.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $roleManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.role.update",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $roleManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.role.create",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $roleManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.role.assign",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $roleManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.role.remove",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $roleManager->id
@@ -1628,32 +1628,32 @@ class PermissionSeeder extends Seeder
     private function appManagerPermissions()
     {
         $permissionManager = PermissionCategory::where("title", "Permission Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.permission.delete",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $permissionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.permission.create",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $permissionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "appAdmin.permission.update",
             "guard_name" => "appAdmin",
             "permission_category_id" =>  $permissionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.permission.view.schoolAdmin",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $permissionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.permission.assign",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $permissionManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.permission.remove",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $permissionManager->id
@@ -1662,27 +1662,27 @@ class PermissionSeeder extends Seeder
     private function parentManagerPermissions()
     {
         $parentManager = PermissionCategory::Where("title", "Parent Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.parent.create",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $parentManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.parent.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $parentManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.parent.view",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $parentManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.parent.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $parentManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.parent.show",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $parentManager->id
@@ -1691,47 +1691,47 @@ class PermissionSeeder extends Seeder
     private function marksManagerPermissions()
     {
         $marksManager = PermissionCategory::where("title", "Marks Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.create.ca.marks",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.update.ca.marks",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.create.exam.marks",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.update.exam.marks",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.view.accessed.courses",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.view.ca.evaluation.data",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.view.exam.evaluation.data",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.view.ca.result.data",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.mark.view.student",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
@@ -1740,32 +1740,32 @@ class PermissionSeeder extends Seeder
     private function anouncementCategoryPermission()
     {
         $marksManager = PermissionCategory::where("title", "Announcement Category Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcementCategory.create",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcementCategory.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcementCategory.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcementCategory.get",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcementCategory.activate",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcementCategory.deactivate",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
@@ -1774,22 +1774,22 @@ class PermissionSeeder extends Seeder
     private function anouncementPermission()
     {
         $marksManager = PermissionCategory::where("title", "Announcement Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcement.create",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcement.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcement.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.announcement.get",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
@@ -1798,32 +1798,32 @@ class PermissionSeeder extends Seeder
     private function schoolAppSettingPermission()
     {
         $marksManager = PermissionCategory::where("title", "School Branch Setting Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.electionSetting.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.examSetting.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.gradeScaleSetting.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.promotionSetting.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitSetting.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.timetableSetting.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
@@ -1832,47 +1832,47 @@ class PermissionSeeder extends Seeder
     private function hallPermission()
     {
         $marksManager = PermissionCategory::where("title", "Hall Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.hall.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.hall.create",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.hall.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.hall.view",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.hall.deactivated",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialtyHall.available.view",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.hall.activated",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialtyHall.assign",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.specialtyHall.remove",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
@@ -1881,116 +1881,124 @@ class PermissionSeeder extends Seeder
     private function resitManager()
     {
         $marksManager = PermissionCategory::where("title", "Resit Manager")->firstOrFail();
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitTimetable.create",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitTimetable.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitTimetable.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitExam.create",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitExam.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitExam.view",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitExam.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitExam.gradeScaleAdd",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitExam.gradeScaleRemove",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitCandidate.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitCandidate.view",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitEvaluation.addScore",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitEvaluation.updateScore",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitEvaluation.deleteResult",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitEvaluation.viewResult",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resit.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resit.update",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resit.view",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitPayment.pay",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitTransaction.delete",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
 
-        Permission::create([
+        $this->createPermission([
             'name' => "schoolAdmin.resitTransaction.reverse",
             "guard_name" => "schooladmin",
             "permission_category_id" =>  $marksManager->id
         ]);
+    }
+
+    private function createPermission(array $attributes): void
+    {
+        Permission::updateOrCreate(
+            ['name' => $attributes['name'], 'guard_name' => $attributes['guard_name']],
+            $attributes
+        );
     }
 }

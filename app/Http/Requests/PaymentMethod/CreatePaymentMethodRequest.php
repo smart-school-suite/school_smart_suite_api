@@ -15,7 +15,7 @@ class CreatePaymentMethodRequest extends FormRequest
     {
         return [
             'country_id' => 'required|string|exists:countries,id',
-            'category_id' => 'required|string|exists:payment_method_category,id',
+            'category_id' => 'required|string|exists:payment_method_categories,id',
             'name' => 'required|string|max:150',
             'description' => 'required|string|max:500',
             'max_deposit' => 'required|numeric|min:0.01|max:9999999.99',

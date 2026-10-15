@@ -51,6 +51,7 @@ class UserBadgeSeeder extends Seeder
             [
                 "name"        => "Admin Verification",
                 "key"         => "verfication.badge",
+                "category"    => "verfication.badges",
                 "description" => "Official verification badge granted by administrators. Indicates the account has been manually reviewed and confirmed as authentic (usually for teachers, staff, or special student roles).",
                 "color"       => "#1e40af",
                 "icon_code"   => "ADMIN_VERFICATION"
@@ -58,6 +59,7 @@ class UserBadgeSeeder extends Seeder
             [
                 "name"        => "School Top Performer",
                 "key"         => "performance.badge",
+                "category"    => "performance.badges",
                 "description" => "Awarded to students who demonstrate exceptional academic performance, highest grades, or outstanding results in exams, projects, or overall ranking during a term or academic year.",
                 "color"       => "#d97706",
                 "icon_code"   => "TOP_PERFORMER"
@@ -65,6 +67,7 @@ class UserBadgeSeeder extends Seeder
             [
                 "name"        => "Student Election Role Winner",
                 "key"         => "election.badge",
+                "category"    => "election.badges",
                 "description" => "Badge earned by winning a student leadership position through school elections (e.g., Class Representative, SRC/Student Council member, Prefect, Club President, etc.). Recognizes democratic participation and leadership.",
                 "color"       => "#6d28d9",
                 "icon_code"   => "ELECTION_ROLE_WINNER"
@@ -74,7 +77,7 @@ class UserBadgeSeeder extends Seeder
         $categoriesByKey = BadgeCategory::pluck('id', 'key');
 
         foreach ($badgeTypes as $badgeType) {
-            $badgeCategoryId = $categoriesByKey[$badgeType['key']] ?? null;
+            $badgeCategoryId = $categoriesByKey[$badgeType['category']] ?? null;
 
             BadgeType::updateOrCreate(
                 ['key' => $badgeType['key']],

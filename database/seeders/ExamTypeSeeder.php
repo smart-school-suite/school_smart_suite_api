@@ -65,8 +65,6 @@ class ExamTypeSeeder extends Seeder
             ],
         ];
 
-        $examTypes = [];
-
         foreach ($examTypesData as $row) {
             $semesterId = $semestersByCount[$row['count']] ?? null;
 
@@ -74,25 +72,29 @@ class ExamTypeSeeder extends Seeder
                 continue;
             }
 
-            $examTypes[] = [
-                'id'           => Str::uuid()->toString(),
+            $match = [
                 'exam_name'    => $row['exam_name'],
                 'program_name' => $row['program_name'],
-                'semester'     => $row['semester'],
-                'type'         => $row['type'],
-                'description'  => $row['description'],
                 'semester_id'  => $semesterId,
-                'created_at'   => $timestamp,
-                'updated_at'   => $timestamp,
+                'type'         => $row['type'],
             ];
-        }
 
-        if (!empty($examTypes)) {
-            DB::table('exam_types')->upsert(
-                $examTypes,
-                ['exam_name', 'program_name', 'semester_id', 'type'],
-                ['description', 'semester', 'updated_at']
-            );
+            if (DB::table('exam_types')->where($match)->exists()) {
+                DB::table('exam_types')->where($match)->update([
+                    'description' => $row['description'],
+                    'semester'    => $row['semester'],
+                    'updated_at'  => $timestamp,
+                ]);
+                continue;
+            }
+
+            DB::table('exam_types')->insert($match + [
+                'id'          => Str::uuid()->toString(),
+                'semester'    => $row['semester'],
+                'description' => $row['description'],
+                'created_at'  => $timestamp,
+                'updated_at'  => $timestamp,
+            ]);
         }
     }
 }
