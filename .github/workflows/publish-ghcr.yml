@@ -57,8 +57,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  migration-check:
+    # The previous commit on this branch is what is deployed now, so its schema stands in for the live database.
+    uses: ./.github/workflows/migration-check.yml
+    with:
+      base_ref: ${{ (github.event.before && github.event.before != '0000000000000000000000000000000000000000') && github.event.before || github.sha }}
+
   deploy:
-    needs: build-push
+    needs: [build-push, migration-check]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/master')
     runs-on: self-hosted
     concurrency:

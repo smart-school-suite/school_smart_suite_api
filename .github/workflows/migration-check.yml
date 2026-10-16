@@ -1,0 +1,90 @@
+name: Migration check
+
+# Checks that a change can be deployed on top of the database the current code built:
+# migrations apply, the result matches a fresh build, seeders are idempotent and routes cache.
+# Runs on pull requests, and is called by publish-ghcr.yml so a failure blocks the deploy.
+
+on:
+  pull_request:
+    branches: [staging, master]
+  workflow_call:
+    inputs:
+      base_ref:
+        description: Commit whose schema stands in for the deployed database
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: migration_check
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      APP_ENV: production
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      MYSQL_DB_CONNECTION: mysql
+      MYSQL_DB_HOST: 127.0.0.1
+      MYSQL_DB_PORT: "3306"
+      MYSQL_DB_DATABASE: migration_check
+      MYSQL_DB_USERNAME: root
+      MYSQL_DB_PASSWORD: root
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      BROADCAST_CONNECTION: log
+      MAIL_MAILER: log
+      LOG_CHANNEL: stderr
+    steps:
+      - name: Resolve commits
+        id: refs
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=${{ inputs.base_ref }}" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.refs.outputs.head }}
+          path: head
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.refs.outputs.base }}
+          path: base
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, exif, gd, intl, mongodb, pcntl, pdo_mysql, redis, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          for dir in base head; do
+            (cd "$dir" && composer install --no-dev --no-interaction --prefer-dist --no-progress)
+          done
+
+      - name: Check migrations
+        run: bash head/scripts/ci/check-migrations.sh base head
