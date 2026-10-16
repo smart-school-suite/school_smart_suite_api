@@ -93,11 +93,12 @@ jobs:
         shell: bash
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Write environment file
+      - name: Write environment file from Infisical
         shell: bash
         env:
-          VPS_ENV_PRODUCTION: ${{ secrets.VPS_ENV_PRODUCTION }}
-          VPS_ENV_STAGING: ${{ secrets.VPS_ENV_STAGING }}
+          INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
+          INFISICAL_CLIENT_SECRET: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
         run: |
           set -e
           DEPLOY_DIR="${{ steps.target.outputs.deploy_dir }}"
@@ -105,11 +106,34 @@ jobs:
           mkdir -p "$DEPLOY_DIR"
 
           if [ "$ENV_NAME" = "production" ]; then
-            printf '%s\n' "$VPS_ENV_PRODUCTION" > "$DEPLOY_DIR/.env"
+            INFISICAL_ENV="prod"
           else
-            printf '%s\n' "$VPS_ENV_STAGING" > "$DEPLOY_DIR/.env"
+            INFISICAL_ENV="staging"
           fi
-          chmod 600 "$DEPLOY_DIR/.env"
+
+          INFISICAL_TOKEN="$(infisical login --method=universal-auth \
+            --client-id="$INFISICAL_CLIENT_ID" \
+            --client-secret="$INFISICAL_CLIENT_SECRET" \
+            --silent --plain)"
+          echo "::add-mask::$INFISICAL_TOKEN"
+
+          # Write to a temp file first so a failed export never replaces a working .env.
+          TMP_ENV="$(mktemp "$DEPLOY_DIR/.env.XXXXXX")"
+          trap 'rm -f "$TMP_ENV"' EXIT
+          infisical export \
+            --projectId="$INFISICAL_PROJECT_ID" \
+            --env="$INFISICAL_ENV" \
+            --token="$INFISICAL_TOKEN" \
+            --format=dotenv > "$TMP_ENV"
+
+          if ! grep -q '^APP_KEY=' "$TMP_ENV"; then
+            echo "::error::Infisical export for '$INFISICAL_ENV' has no APP_KEY; keeping the existing .env"
+            exit 1
+          fi
+
+          chmod 600 "$TMP_ENV"
+          mv "$TMP_ENV" "$DEPLOY_DIR/.env"
+          echo "Wrote $(grep -c '=' "$DEPLOY_DIR/.env") variables from Infisical ($INFISICAL_ENV)"
 
       - name: Deploy container
         shell: bash
