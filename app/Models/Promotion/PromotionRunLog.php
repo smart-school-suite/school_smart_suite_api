@@ -18,13 +18,6 @@ class PromotionRunLog extends Model
         'rule_logs',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'rule_logs' => 'array',
-        ];
-    }
-
 
     public function getTable()
     {

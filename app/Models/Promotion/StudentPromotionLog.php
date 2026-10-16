@@ -19,14 +19,6 @@ class StudentPromotionLog extends Model
         'rule_logs',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'rule_logs' => 'array',
-        ];
-    }
-
-
     public function getTable()
     {
         return 'student_promotion_run_logs';

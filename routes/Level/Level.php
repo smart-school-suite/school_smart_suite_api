@@ -7,7 +7,7 @@ use App\Http\Middleware\IdentifyTenant;
 Route::post('/', [LevelController::class, 'createEducationLevel'])
     ->name('education-levels.store');
 
-Route::middleware([IdentifyTenant::class])->get('/', [LevelController::class, ''])
+Route::middleware([IdentifyTenant::class])->get('/', [LevelController::class, 'getEducationLevelBySchoolBranch'])
     ->name('education-levels.index');
 
 Route::put('/{levelId}', [LevelController::class, 'updateEducationLevel'])

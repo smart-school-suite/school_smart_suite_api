@@ -67,13 +67,14 @@ class StudentPromotionJob implements ShouldQueue
         if ($students->isEmpty()) {
             $reasons[] = new PromotionRunLogReasonDTO(
                 reason: "No students found attached to the current specialty/school year.",
-                details: ['specialty_id' => $specialty?->id]
+                details: ['specialty' => $specialty ?? null]
             );
             $this->failAndLog($runId, $schoolBranchId, "No Students Found", $reasons, $promotionRun);
             return;
         }
 
         $levelSettings = $this->levelSetting($schoolBranchId);
+
         $levels = Educationlevels::whereHas(
             "levelType",
             fn($query) => $query->where("program_name", $levelSettings?->value)
@@ -89,47 +90,85 @@ class StudentPromotionJob implements ShouldQueue
         }
 
         $nextSpecialty = $this->getNextSpecialty($specialty, $levels);
+
         if (!$nextSpecialty) {
             $reasons[] = new PromotionRunLogReasonDTO(
                 reason: "Target next specialty could not be determined.",
-                details: ['current_specialty_id' => $specialty->id]
+                details: [
+                    'next_specialty' => null,
+                    'current_specialty' => $specialty ?? null
+                ]
             );
             $this->failAndLog($runId, $schoolBranchId, "Next Specialty Missing", $reasons, $promotionRun);
             return;
         }
 
         $nextSpecialtySchoolYear = SchoolAcademicYear::where("school_branch_id", $schoolBranchId)
-            ->with(["specialty", "level"])
+            ->with(["specialty", "level", 'systemAcademicYear'])
             ->where("specialty_id", $nextSpecialty->id)
             ->where("end_date", ">=", now())
             ->first();
 
-        if (!$nextSpecialtySchoolYear) {
+        $nextSpecialtyName = $nextSpecialty->specialty_name ?? 'Unknown Specialty';
+        $currentSpecialtyName = $specialty->specialty_name ?? 'Unknown Specialty';
+
+        if ($nextSpecialtySchoolYear) {
             $reasons[] = new PromotionRunLogReasonDTO(
-                reason: "No active or future academic year found for the target promotion specialty.",
-                details: ['next_specialty_id' => $nextSpecialty->id]
+                reason: "Active academic year already exists for target specialty '{$nextSpecialtyName}'. Unable to promote from '{$currentSpecialtyName}'.",
+                details: [
+                    'next_specialty' => [
+                        'id' => $nextSpecialty->id ?? null,
+                        "name" => $nextSpecialty->specialty_name ?? null,
+                        "level_name" => $nextSpecialty->level->name ?? null,
+                        "level_number" => $nextSpecialty->level->level ?? null
+                    ] ?? null,
+                    'current_specialty' =>  [
+                        'id' => $specialty->id ?? null,
+                        "name" => $specialty->specialty_name ?? null,
+                        "level_name" => $specialty->level->name ?? null,
+                        "level_number" => $specialty->level->level ?? null
+                    ] ?? null,
+                    'academic_year' => [
+                        'id' => $nextSpecialtySchoolYear->id ?? null,
+                        'start_date' => $nextSpecialtySchoolYear->start_date ?? null,
+                        'end_date' => $nextSpecialtySchoolYear->end_date ?? null,
+                        'academic_year' => $nextSpecialtySchoolYear->systemAcademicYear->name ?? null
+
+                    ] ?? null,
+                ]
             );
-            $this->failAndLog($runId, $schoolBranchId, "Next Specialty Academic Year Missing", $reasons, $promotionRun);
+            $this->failAndLog($runId, $schoolBranchId, "Target Specialty Currently Active", $reasons, $promotionRun);
             return;
         }
 
         $reasons[] = new PromotionRunLogReasonDTO(
-            reason: "Target specialty and academic year resolved successfully.",
+            reason: "Target specialty '{$nextSpecialtyName}' is free (no active academic year found). Proceeding with promotion.",
             details: [
-                'next_specialty_id' => $nextSpecialty->id,
-                'next_academic_year_id' => $nextSpecialtySchoolYear->id,
+                'next_specialty' => [
+                    'id' => $nextSpecialty->id ?? null,
+                    "name" => $nextSpecialty->specialty_name ?? null,
+                    "level_name" => $nextSpecialty->level->name ?? null,
+                    "level_number" => $nextSpecialty->level->level ?? null
+                ] ?? null,
+                'current_specialty' =>  [
+                    'id' => $specialty->id ?? null,
+                    "name" => $specialty->specialty_name ?? null,
+                    "level_name" => $specialty->level->name ?? null,
+                    "level_number" => $specialty->level->level ?? null
+                ] ?? null,
+                'academic_year' => $nextSpecialtySchoolYear ?? null,
             ]
         );
 
         $studentIds = $students->pluck('id');
 
         $examTypes = Examtype::with(['semesters' => function ($query) {
-            $query->where("count", "<", 3)->where("type", "!=", "resit");
-        }])->get();
+            $query->where("count", "<", 3);
+        }])->where("type", "!=", "resit")->get();
 
         $studentMarks = ExamScore::where("school_branch_id", $schoolBranchId)
             ->whereHas('candidate', fn($q) => $q->whereIn("student_id", $studentIds))
-            ->with(['exam.semester', 'candidate.student', 'course', 'exam.examType', 'grade'])
+            ->with(['exam.examType.semesters', 'candidate.student', 'course', 'exam.examType', 'grade'])
             ->get();
 
         $studentAdditionalFees = AdditionalFees::where("school_branch_id", $schoolBranchId)
@@ -144,7 +183,7 @@ class StudentPromotionJob implements ShouldQueue
 
         $studentResits = Studentresit::where("school_branch_id", $schoolBranchId)
             ->whereIn("student_id", $studentIds)
-            ->with(['student', 'course'])
+            ->with(['student', 'courses'])
             ->get();
 
         $promotionSetting = $this->getPromotionSetting($schoolBranchId);
@@ -193,22 +232,33 @@ class StudentPromotionJob implements ShouldQueue
                 $toSpecialtyId = $specialty->id;
             }
 
-            $studentPromotionRecord = StudentPromotionRecord::create([
-                'outcome' => $outcome,
-                'status' => $status,
-                'processed_at' => now(),
-                'promotion_run_id' => $runId,
-                'student_id' => $student->id,
-                'from_specialty_id' => $specialty->id,
-                'to_specialty_id' => $toSpecialtyId,
-            ]);
+            $studentPromotionRecord = StudentPromotionRecord::updateOrCreate(
+                [
+                    'promotion_run_id' => $runId,
+                    'student_id'       => $student->id,
+                ],
+                [
+                    'outcome'           => $outcome,
+                    'status'            => $status,
+                    'processed_at'      => now(),
+                    'from_specialty_id' => $specialty->id,
+                    'to_specialty_id'   => $toSpecialtyId,
+                ]
+            );
 
-            StudentPromotionLog::create([
-                'record_id' => $studentPromotionRecord->id,
-                'student_id' => $student->id,
-                'school_branch_id' => $schoolBranchId,
-                'rule_logs' => $rules->map(fn($r) => $r->toArray())->values()->toArray(),
-            ]);
+            StudentPromotionLog::updateOrCreate(
+                [
+                    'record_id'        => $studentPromotionRecord->id,
+                    'student_id'       => $student->id,
+                    'school_branch_id' => $schoolBranchId,
+                ],
+                [
+                    'rule_logs' => $rules
+                        ->map(fn($rule) => $rule->toArray())
+                        ->values()
+                        ->all(),
+                ]
+            );
         }
 
         $promotionRun->update([
@@ -235,11 +285,15 @@ class StudentPromotionJob implements ShouldQueue
             reasons: $reasons
         );
 
-        PromotionRunLog::create([
-            'promotion_run_id' => $runId,
-            'school_branch_id' => $schoolBranchId,
-            'rule_logs' => $logDto->toArray(),
-        ]);
+        PromotionRunLog::updateOrCreate(
+            [
+                'promotion_run_id' => $runId,
+                'school_branch_id' => $schoolBranchId,
+            ],
+            [
+                'rule_logs' => $logDto->toArray(),
+            ]
+        );
     }
 
     private function failAndLog(
@@ -262,11 +316,15 @@ class StudentPromotionJob implements ShouldQueue
             reasons: $reasons
         );
 
-        PromotionRunLog::create([
-            'promotion_run_id' => $runId,
-            'school_branch_id' => $schoolBranchId,
-            'rule_logs' => $logDto->toArray(),
-        ]);
+        PromotionRunLog::updateOrCreate(
+            [
+                'promotion_run_id' => $runId,
+                'school_branch_id' => $schoolBranchId,
+            ],
+            [
+                'rule_logs' => $logDto,
+            ]
+        );
     }
     private function getNextSpecialty(Specialty $specialty, Collection $levels): ?Specialty
     {

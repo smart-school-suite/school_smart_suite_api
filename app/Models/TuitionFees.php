@@ -44,7 +44,7 @@ class TuitionFees extends Model
     }
 
     public function tuitionFeeTransactions(): HasMany {
-         return $this->hasMany(TuitionFeeTransactions::class);
+         return $this->hasMany(TuitionFeeTransactions::class, 'tuition_id');
     }
 
 }
