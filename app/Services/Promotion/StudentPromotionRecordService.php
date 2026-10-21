@@ -17,11 +17,10 @@ class StudentPromotionRecordService
     {
         $promotionRecords = StudentPromotionRecord::where("school_branch_id", $currentSchool->id)
             ->with([
-                'promotionRun',
+                'promotionRun.schoolYear.systemAcademicYear',
                 'student',
-                'fromSpecialty',
-                'toSpecialty',
-                'schoolYear'
+                'fromSpecialty.level',
+                'toSpecialty.level',
             ])
             ->latest()
             ->get();
@@ -67,7 +66,7 @@ class StudentPromotionRecordService
     {
         $recordId = $payload['record_id'];
         $promotionRecord = StudentPromotionRecord::where("school_branch_id", $currentSchool->id)
-            ->with(['promotionRun', 'student', 'fromSpecialty', 'toSpecialty', 'schoolYear'])
+            ->with(['promotionRun.schoolYear', 'student.specialty', 'fromSpecialty', 'toSpecialty'])
             ->where("id", $recordId)
             ->first();
 
@@ -103,7 +102,16 @@ class StudentPromotionRecordService
             );
         }
 
-        $nextSpecialty = $this->getNextSpecialty($currentSchool, $student->id);
+        $levelSettings = $this->levelSetting($currentSchool->id);
+
+        $levels = Educationlevels::whereHas(
+            "levelType",
+            fn($query) =>
+            $query->where("program_name", $levelSettings->value)
+        )->get();
+
+
+        $nextSpecialty = $this->getNextSpecialty($student->specialty, $levels);
 
         if (!$nextSpecialty) {
             throw new AppException(
@@ -271,7 +279,7 @@ class StudentPromotionRecordService
         );
 
         return Specialty::where("school_branch_id", $specialty->school_branch_id)
-            ->where("name", $specialty->name)
+            ->where("specialty_name", $specialty->specialty_name)
             ->where("level_id", $nextEducationLevel->id)
             ->first();
     }

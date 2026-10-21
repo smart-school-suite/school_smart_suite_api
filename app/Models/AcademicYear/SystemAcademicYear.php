@@ -5,6 +5,7 @@ namespace App\Models\AcademicYear;
 use App\Models\Course\SemesterJointCourse;
 use App\Models\Elections;
 use App\Models\ExamJointCourse\ExamJointCourse;
+use App\Models\Graduation\GraduationBatch;
 use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,14 +31,17 @@ class SystemAcademicYear extends Model
     {
         return $this->hasMany(SchoolAcademicYear::class, 'school_year_id');
     }
-
     public function examJointCourse(): HasMany
     {
         return $this->hasMany(ExamJointCourse::class);
     }
-
     public function election(): HasMany
     {
         return $this->hasMany(Elections::class, "academic_year_id");
+    }
+
+    public function graduationBatch(): HasMany
+    {
+        return $this->hasMany(GraduationBatch::class, 'school_year_id');
     }
 }

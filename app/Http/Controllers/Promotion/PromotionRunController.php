@@ -21,7 +21,7 @@ class PromotionRunController extends Controller
         $promotionRuns = $this->promotionRunService->getPromotionRuns($currentSchool);
         return ApiResponseService::success("Promotion Runs Fetched Successfully", $promotionRuns, null, 200);
     }
-    public function triggerPromotionRun(TriggerPromotionRunRequest $request, string $runId)
+    public function triggerPromotionRun(TriggerPromotionRunRequest $request)
     {
         $authUser = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');

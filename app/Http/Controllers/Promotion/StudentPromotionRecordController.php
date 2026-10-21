@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Promotion;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Promotion\PromoteStudentRequest;
+use App\Http\Resources\Promotion\PromotionRecordResource;
 use App\Services\ApiResponseService;
 use App\Services\Promotion\StudentPromotionRecordService;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class StudentPromotionRecordController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $promotionRecords = $this->studentPromotionRecordService->getStudentPromotionRecords($currentSchool);
-        return ApiResponseService::success("Promotion Records Fetched Successfully", $promotionRecords, null, 200);
+        return ApiResponseService::success("Promotion Records Fetched Successfully", PromotionRecordResource::collection($promotionRecords), null, 200);
     }
     public function getStudentPromotionDetails(Request $request, string $recordId)
     {

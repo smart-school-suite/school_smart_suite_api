@@ -66,7 +66,7 @@ class PromotionRunService
             );
         }
 
-        if (in_array($promotionRun->status, ['processing', 'queued', 'pending'])) {
+        if (in_array($promotionRun->status, ['processing', 'queued'])) {
             throw new AppException(
                 "Promotion run is already in progress.",
                 409,
@@ -151,7 +151,7 @@ class PromotionRunService
             );
         }
 
-        if (in_array($promotionRun->status, ['processing', 'queued', 'pending'])) {
+        if (in_array($promotionRun->status, ['processing', 'queued'])) {
             throw new AppException(
                 "Promotion run is currently processing.",
                 409,
@@ -162,7 +162,7 @@ class PromotionRunService
         }
 
         $promotionRun->update([
-            'status' => 'pending'
+            'status' => 'processing'
         ]);
 
         StudentPromotionJob::dispatch(

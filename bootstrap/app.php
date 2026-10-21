@@ -125,6 +125,15 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/promotion-run')
                 ->group(base_path('routes/Promotion/PromotionRun.php'));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/graduation-batch')
+                ->group(base_path('routes/Graduation/GraduationBatch.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/graduation-record')
+                ->group(base_path('routes/Graduation/GraduationRecord.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/alumni')
+                ->group(base_path('routes/Graduation/Alumni.php'));
+
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/grade')
                 ->group(base_path('routes/Grade/Grade.php'));
 

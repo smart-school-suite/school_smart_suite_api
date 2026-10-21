@@ -6,6 +6,7 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\ExamJointCourse\ExamJCSessionHall;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\Course\CourseSpecialty;
+use App\Models\Graduation\GraduationRecord;
 use App\Models\Courses;
 use App\Models\Promotion\StudentPromotionRecord;
 use App\Models\Teacher\TeacherSpecialty;
@@ -28,16 +29,24 @@ class Specialty extends Model
         'status',
         'description',
         'school_branch_id',
+        'final_level',
+        'graduation_level'
     ];
 
     protected $casts = [
         'school_fee' => 'decimal:2',
-        'registration_fee' => 'decimal:2'
+        'registration_fee' => 'decimal:2',
+        'graduation_level' => 'boolean',
+        'final_level' => 'boolean'
     ];
     public $keyType = 'string';
     public $table = 'specialties';
     public $incrementing = false;
 
+    public function graduationRecord(): HasMany
+    {
+        return $this->hasMany(GraduationRecord::class, 'specialty_id');
+    }
     public function examJcSessionHall(): HasMany
     {
         return $this->hasMany(ExamJCSessionHall::class);
@@ -49,10 +58,10 @@ class Specialty extends Model
     public function courses()
     {
         return $this->belongsToMany(
-            Courses::class,              // Related model
-            'course_specialties',         // Pivot table name
-            'specialty_id',             // Foreign key on pivot for this model
-            'course_id'                 // Foreign key on pivot for the related model
+            Courses::class,
+            'course_specialties',
+            'specialty_id',
+            'course_id'
         )
             ->using(CourseSpecialty::class)
             ->withPivot(['id'])

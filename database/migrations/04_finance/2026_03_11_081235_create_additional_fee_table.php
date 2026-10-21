@@ -13,7 +13,7 @@ return new class extends Migration
             $table->text('reason')->nullable();
             $table->decimal('amount', 8, 2);
             $table->enum('status', ['paid', 'unpaid', 'due'])->default('unpaid');
-            $table->date('due_date');
+            $table->date('due_date')->nullable();
             $table->timestamps();
         });
 

@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class AdditionalFeesCategory extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'title',
@@ -18,7 +18,7 @@ class AdditionalFeesCategory extends Model
         'school_branch_id',
      ];
 
-     public $incrementing = 'false';
+     public $incrementing = false;
      public $table = 'additional_fee_categories';
      public $keyType = 'string';
 

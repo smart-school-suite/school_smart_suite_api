@@ -26,8 +26,10 @@ return new class extends Migration
 
             $table->foreignUuid('from_specialty_id')->nullable()->constrained('specialties');
             $table->foreignUuid('to_specialty_id')->nullable()->constrained('specialties');
-        });
 
+            $table->uuid('school_branch_id');
+            $table->foreign('school_branch_id')->references('id')->on('school_branches');
+        });
     }
 
     public function down(): void
@@ -38,12 +40,15 @@ return new class extends Migration
             $table->dropForeign(['student_id']);
             $table->dropForeign(['from_specialty_id']);
             $table->dropForeign(['to_specialty_id']);
+            $table->dropForeign(['school_branch_id']);
 
             $table->dropColumn([
                 'promotion_run_id',
                 'student_id',
                 'from_specialty_id',
                 'to_specialty_id',
+                'school_branch_id',
+
             ]);
         });
 

@@ -21,6 +21,7 @@ class SettingDefinationSeeder extends Seeder
         $this->gradeSettingDefination();
         $this->electionTieBreakerSettingDefination();
         $this->levelSetting();
+        $this->graduationSetting();
     }
 
     public function studentPromotionSettingDefination(): void
@@ -214,6 +215,35 @@ class SettingDefinationSeeder extends Seeder
         ];
 
         $this->seedDefinitions('Level Setting', $settingDefs);
+    }
+
+    public function graduationSetting(): void
+    {
+        $settingDefs = [
+            [
+                'key' => 'graduation.fee_enabled',
+                'label' => 'Graduation Fee Enabled',
+                'data_type' => 'boolean',
+                'default_value' => true,
+                'description' => 'Determines whether students must pay a graduation fee before completing graduation clearance.',
+            ],
+            [
+                'key' => 'graduation.fee',
+                'label' => 'Graduation Fee',
+                'data_type' => 'decimal',
+                'default_value' => 50000,
+                'description' => 'Defines the graduation fee charged to eligible students.',
+            ],
+            [
+                'key' => 'graduation.default_status',
+                'label' => 'Default Graduation Status',
+                'data_type' => 'string',
+                'default_value' => 'pending',
+                'description' => 'Defines the initial status assigned to a student when a graduation record is created.',
+            ],
+        ];
+
+        $this->seedDefinitions('Graduation Settings', $settingDefs);
     }
 
     private function seedDefinitions(string $categoryName, array $settingDefs): void

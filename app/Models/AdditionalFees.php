@@ -18,14 +18,13 @@ class AdditionalFees extends Model
        'status',
        'school_branch_id',
        'specialty_id',
-       'level_id',
        'student_id',
        'due_date',
        'additionalfee_category_id'
     ];
 
     protected $cast = [
-         'amount' => 'decimal:2'
+         'amount' => 'float'
     ];
     public $incrementint = 'false';
     public $keyType = 'string';

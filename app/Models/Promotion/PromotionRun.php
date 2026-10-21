@@ -3,6 +3,7 @@
 namespace App\Models\Promotion;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Graduation\GraduationRecord;
 use App\Models\Schoolbranches;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -51,6 +52,10 @@ class PromotionRun extends Model
         'processed_students' => 'integer',
     ];
 
+    public function graduationRecord(): HasMany
+    {
+        return $this->hasMany(GraduationRecord::class, 'promotion_run_id');
+    }
     public function studentPromotionRecord(): HasMany
     {
         return $this->hasMany(StudentPromotionRecord::class,  'promotion_run_id');

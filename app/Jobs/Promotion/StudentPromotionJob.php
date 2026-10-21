@@ -95,8 +95,12 @@ class StudentPromotionJob implements ShouldQueue
             $reasons[] = new PromotionRunLogReasonDTO(
                 reason: "Target next specialty could not be determined.",
                 details: [
-                    'next_specialty' => null,
-                    'current_specialty' => $specialty ?? null
+                    'current_specialty' =>  [
+                        'id' => $specialty->id ?? null,
+                        "name" => $specialty->specialty_name ?? null,
+                        "level_name" => $specialty->level->name ?? null,
+                        "level_number" => $specialty->level->level ?? null
+                    ] ?? null,
                 ]
             );
             $this->failAndLog($runId, $schoolBranchId, "Next Specialty Missing", $reasons, $promotionRun);
@@ -219,7 +223,7 @@ class StudentPromotionJob implements ShouldQueue
                 $needsReviewCount++;
                 $outcome = 'pending_review';
                 $status = 'pending';
-                $toSpecialtyId = null;
+                $toSpecialtyId = $nextSpecialty->id;
             } elseif ($overallPassed) {
                 $passedCount++;
                 $outcome = 'promoted';
@@ -236,6 +240,7 @@ class StudentPromotionJob implements ShouldQueue
                 [
                     'promotion_run_id' => $runId,
                     'student_id'       => $student->id,
+                    'school_branch_id' => $schoolBranchId,
                 ],
                 [
                     'outcome'           => $outcome,
@@ -294,6 +299,10 @@ class StudentPromotionJob implements ShouldQueue
                 'rule_logs' => $logDto->toArray(),
             ]
         );
+
+        if ($specialty->graduation_level) {
+            StudentGraduationJob::dispatch($runId, $schoolBranchId);
+        }
     }
 
     private function failAndLog(

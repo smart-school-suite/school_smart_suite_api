@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Badge\UserBadge;
+use App\Models\Graduation\GraduationRecord;
 use App\Traits\Currency;
 use App\Models\Exam\ExamCandidate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -62,6 +63,10 @@ class Student extends Model
         ];
     }
 
+    public function graduationRecord(): HasMany
+    {
+        return $this->hasMany(GraduationRecord::class, 'student_id');
+    }
     public function studentPromotionRecord(): HasMany
     {
         return $this->hasMany(StudentPromotionRecord::class, 'student_id');

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Country;
+use App\Models\Graduation\GraduationBatch;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schoolbranches extends Model
@@ -37,6 +38,10 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = 'false';
 
+    public function graduationBatch(): HasMany
+    {
+        return $this->hasMany(GraduationBatch::class, 'school_branch_id');
+    }
     public function schoolAcademicYear(): HasMany
     {
         return $this->hasMany(SchoolAcademicYear::class, 'school_branch_id');

@@ -26,7 +26,8 @@ class StudentPromotionRecord extends Model
         'promotion_run_id',
         'student_id',
         'from_specialty_id',
-        'to_specialty_id'
+        'to_specialty_id',
+        'school_branch_id'
     ];
 
     public $incrementing = false;
