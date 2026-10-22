@@ -18,13 +18,13 @@ use App\Models\Job\SystemJob;
 use App\Models\OTP;
 use App\Models\Promotion\PromotionRun;
 use App\Models\Promotion\StudentPromotionRecord;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Schooladmin extends Authenticatable
 {
-    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency;
+    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency, HasUuids;
 
     protected $fillable = [
-        'id',
         'name',
         'first_name',
         'last_name',
@@ -51,7 +51,7 @@ class Schooladmin extends Authenticatable
      * @return array<string, string>
      */
     public $keyType = 'string';
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'school_admins';
     protected $authTokenColumn = 'token';
 

@@ -25,24 +25,15 @@ return new class extends Migration
             $table->string('address', 100)->nullable();
             $table->string('city', 50)->nullable();
             $table->string('state', 50)->nullable();
-            $table->string('postal_code')->nullable();
-            $table->string('phone_one', 20)->nullable();
-            $table->string('phone_two', 20)->nullable();
+            $table->string('phone', 20)->nullable();
             $table->string('email')->nullable();
             $table->string('website')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('school_branch_api_keys', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('api_key')->unique();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('school_branch_api_keys');
         Schema::dropIfExists('school_branches');
         Schema::dropIfExists('schools');
     }

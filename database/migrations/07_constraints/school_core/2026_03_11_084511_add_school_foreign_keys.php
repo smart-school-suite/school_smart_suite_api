@@ -11,11 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('school_branch_api_keys', function (Blueprint $table) {
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches');
-        });
-
         Schema::table('schools', function (Blueprint $table) {
             $table->string('country_id')->after('id');
             $table->foreign('country_id')->references('id')->on('countries');
@@ -32,12 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('school_branch_api_keys')) {
-            Schema::table('school_branch_api_keys', function (Blueprint $table) {
-                $table->dropForeign(['school_branch_id']);
-            });
-        }
-
         if (Schema::hasTable('school_branches')) {
             Schema::table('school_branches', function (Blueprint $table) {
                 $table->dropForeign(['school_id']);

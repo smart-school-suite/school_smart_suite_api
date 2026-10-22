@@ -18,7 +18,7 @@ Route::post('/login', [LoginSchoolAdminController::class, 'loginShoolAdmin'])
 Route::post('/verify-otp', [ValidateOtpController::class, 'verifySchoolAdminOtp'])
     ->name('school-admin.otp.verify');
 
-Route::post('/request-otp', [ValidateOtpController::class, 'requestNewCode'])
+Route::post('/resend-otp', [ValidateOtpController::class, 'requestNewCode'])
     ->name('school-admin.otp.resend');
 
 Route::post('/password/reset', [PasswordResetController::class, 'resetSchoolAdminPassword'])

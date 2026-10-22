@@ -52,7 +52,8 @@ return [
         'X-XSRF-TOKEN',    // Required for Sanctum CSRF cookie flow
         'Origin',
         'api-key',
-        'otp_token_header'
+        'X-OTP-Token',
+        'X-PASSWORD-RESET-Token'
     ],
 
     'exposed_headers' => [

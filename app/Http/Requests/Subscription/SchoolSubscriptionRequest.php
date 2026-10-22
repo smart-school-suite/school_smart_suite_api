@@ -25,7 +25,12 @@ class SchoolSubscriptionRequest extends FormRequest
             'country_id' => 'required|string|exists:countries,id',
             'type' => 'required|string|in:private,government',
             'school_branch_name' => 'required|string|max:300',
-            'abbreviation' => 'required|string|max:20'
+            'abbreviation' => 'required|string|max:20',
+            'admin_full_name'  => ['required', 'string', 'max:255'],
+            'admin_last_name'  => ['nullable', 'string', 'max:150'],
+            'admin_first_name' => ['nullable', 'string', 'max:150'],
+            'admin_email'      => ['required', 'email', 'max:255', 'unique:school_admins,email'],
+            'admin_password'   => ['required', 'string', 'min:8'],
         ];
     }
 }

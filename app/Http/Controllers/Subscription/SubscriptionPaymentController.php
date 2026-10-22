@@ -20,13 +20,13 @@ class SubscriptionPaymentController extends Controller
          return ApiResponseService::success("Transactions Fetched Successfully", $transactions, null, 200);
     }
 
-    public function deleteTransaction(Request $request, $transactionId){
+    public function deleteTransaction(Request $request, string $transactionId){
          $currentSchool = $request->attributes->get('currentSchool');
          $deleteTransaction = $this->subscriptionPaymentService->deleteTransaction($currentSchool, $transactionId);
          return ApiResponseService::success("Transaction Deleted Successfully", $deleteTransaction, null, 200);
     }
 
-    public function getTransactionDetails(Request $request, $transactionId){
+    public function getTransactionDetails(Request $request, string $transactionId){
         $currentSchool = $request->attributes->get('currentSchool');
         $transactionDetails = $this->subscriptionPaymentService->getTransactionDetails($currentSchool, $transactionId);
         return ApiResponseService::success("Transaction Details Fetched Successfully", $transactionDetails, null, 200);

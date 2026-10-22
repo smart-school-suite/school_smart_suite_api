@@ -17,14 +17,14 @@ class SchoolController extends Controller
         $this->schoolService = $schoolService;
     }
 
-    public function updateSchool(UpdateSchoolRequest $request, $schoolId)
+    public function updateSchool(UpdateSchoolRequest $request, string $schoolId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
         $updateSchool = $this->schoolService->updateSchool($request->validated(), $schoolId, $currentSchool, $authAdmin);
         return ApiResponseService::success("School Updated Sucessfully", $updateSchool, null, 200);
     }
-    public function deleteSchool(Request $request, $schoolId)
+    public function deleteSchool(Request $request, string $schoolId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
@@ -37,7 +37,7 @@ class SchoolController extends Controller
         $getSchoolDetails = $this->schoolService->getSchoolDetails($currentSchool->school_id);
         return ApiResponseService::success("School Details Fetched Sucessfully", $getSchoolDetails, null, 200);
     }
-    public function uploadSchoolLogo(UploadSchoolLogoRequest $request, $schoolId)
+    public function uploadSchoolLogo(UploadSchoolLogoRequest $request, string $schoolId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');

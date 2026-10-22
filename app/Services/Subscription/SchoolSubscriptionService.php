@@ -3,9 +3,9 @@
 namespace App\Services\Subscription;
 
 use App\Exceptions\AppException;
+use App\Models\Schooladmin;
 use App\Models\Schoolbranches;
 use App\Models\School;
-use App\Models\SchoolBranchApiKey;
 use App\Models\GradesCategory;
 use App\Models\Plan;
 use App\Models\SchoolGradesConfig;
@@ -17,21 +17,39 @@ use App\Models\SchoolTransaction;
 use App\Models\SchoolSubscription;
 use App\Models\SubscriptionUsage;
 use App\Models\PaymentMethod;
+use App\Services\Helpers\Actor\ActorHelperService;
+use Illuminate\Support\Facades\Hash;
 
 class SchoolSubscriptionService
 {
 
     public function subscribe(array $data): array
     {
-        $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+        $paymentMethod = PaymentMethod::find($data['payment_method_id'] ?? null);
+        if (!$paymentMethod) {
+            throw new AppException(
+                'Payment Method Not Found',
+                400,
+                'Payment Method Not Found',
+                'The selected payment method is invalid or does not exist.'
+            );
+        }
 
-        $plan = Plan::with(['country', 'planFeature'])
-            ->where('id', $data['plan_id'])
-            ->where("status", "active")
-            ->lockForUpdate()
-            ->first();
+        $emailExists = Schooladmin::where('email', $data['admin_mail'] ?? null)->exists();
+        if ($emailExists) {
+            throw new AppException(
+                'Email Already Exists',
+                422,
+                'Email Already Exists',
+                'An admin account with this email address already exists.'
+            );
+        }
 
-        if (!$plan) {
+        $planExists = Plan::where('id', $data['plan_id'] ?? null)
+            ->where('status', 'active')
+            ->exists();
+
+        if (!$planExists) {
             throw new AppException(
                 'Plan Not Found',
                 400,
@@ -40,11 +58,26 @@ class SchoolSubscriptionService
             );
         }
 
-        return DB::transaction(function () use ($data, $plan, $paymentMethod) {
-            $schoolId     = (string) Str::uuid();
-            $branchId     = (string) Str::uuid();
-            $rawApiKey    = (string) Str::uuid();
+        return DB::transaction(function () use ($data, $paymentMethod) {
+            $plan = Plan::with(['country', 'planFeature'])
+                ->where('id', $data['plan_id'])
+                ->where('status', 'active')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$plan) {
+                throw new AppException(
+                    'Plan Not Found',
+                    400,
+                    'Plan Not Found',
+                    'The selected plan does not exist or is no longer active.'
+                );
+            }
+
+            $schoolId       = (string) Str::uuid();
+            $branchId       = (string) Str::uuid();
             $subscriptionId = (string) Str::uuid();
+
             School::create([
                 'id'         => $schoolId,
                 'name'       => $data['school_name'],
@@ -64,7 +97,7 @@ class SchoolSubscriptionService
             $endsAt   = $startsAt->clone()->addDays($plan->duration_days ?? 365);
 
             SchoolSubscription::create([
-                'id' => $subscriptionId,
+                'id'               => $subscriptionId,
                 'school_branch_id' => $branchId,
                 'plan_id'          => $plan->id,
                 'country_id'       => $plan->country_id,
@@ -73,39 +106,53 @@ class SchoolSubscriptionService
                 'end_date'         => $endsAt,
             ]);
 
-            SchoolBranchApiKey::create([
-                'school_branch_id' => $branchId,
-                'api_key'          => $rawApiKey,
-                'issued_at'        => now(),
-            ]);
-
             $transactionId = (string) Str::uuid();
 
             SchoolTransaction::create([
-                'id'               => $transactionId,
-                'school_branch_id' => $branchId,
-                'country_id'       => $plan->country_id,
-                'plan_id'          => $plan->id,
-                'amount'           => $plan->price,
-                'currency'         => $plan->country->currency ?? 'USD',
-                'type'             => 'subscription_purchase',
-                'status'           => 'completed',
-                'payment_method_id'   => $paymentMethod->id,
-                'payment_ref'      => $data['payment_ref'] ?? (string) Str::uuid(),
-                'transaction_id'   => $transactionId,
+                'id'                => $transactionId,
+                'school_branch_id'  => $branchId,
+                'country_id'        => $plan->country_id,
+                'plan_id'           => $plan->id,
+                'amount'            => $plan->price,
+                'currency'          => $plan->country->currency ?? 'USD',
+                'type'              => 'subscription_purchase',
+                'status'            => 'completed',
+                'payment_method_id' => $paymentMethod->id,
+                'payment_ref'       => $data['payment_ref'] ?? (string) Str::uuid(),
+                'transaction_id'    => $transactionId,
             ]);
 
             $this->createGradesCategory($branchId);
             $this->createSchoolBranchSetting($branchId);
             $this->handleCreateSubscriptionUsage($branchId, $plan->id, $subscriptionId);
+
+            $actorHelper = app(ActorHelperService::class);
+
+            $fullName = trim(($data['admin_first_name'] ?? '') . ' ' . ($data['admin_last_name'] ?? ''));
+            if (empty($fullName)) {
+                $fullName = $data['admin_full_name'] ?? 'Admin';
+            }
+
+            $username = $actorHelper->generateUsername($fullName, Schooladmin::class);
+
+            $schoolAdmin = Schooladmin::create([
+                'name'       => $data['admin_full_name'] ?? $fullName,
+                'first_name' => $data['admin_first_name'] ?? null,
+                'last_name'  => $data['admin_last_name'] ?? null,
+                'username'   => $username,
+                'email'      => $data['admin_email'],
+                'school_branch_id'  => $branchId,
+                'password'   => Hash::make($data['admin_password']),
+            ]);
+
+            $token = $schoolAdmin->createToken('schoolAdminToken')->plainTextToken;
+
             return [
-                'api_key'    => $rawApiKey,
-                'school_id'  => $schoolId,
-                'branch_id'  => $branchId
+                'authToken' => $token,
             ];
         }, 3);
     }
-    public function renewSubscription(array $data, $currentSchool): array
+    public function renewSubscription(array $data, object $currentSchool): array
     {
         return DB::transaction(function () use ($data, $currentSchool) {
             $paymentMethod = PaymentMethod::find($data['payment_method_id']);
@@ -165,7 +212,7 @@ class SchoolSubscriptionService
             ];
         }, 3);
     }
-    public function upgradePlan(array $data, $currentSchool): array
+    public function upgradePlan(array $data, object $currentSchool): array
     {
         return DB::transaction(function () use ($data, $currentSchool) {
             $branchId = $currentSchool->id;
@@ -261,7 +308,7 @@ class SchoolSubscriptionService
             ];
         }, 3);
     }
-    protected function createSchoolBranchSetting($schoolBranchId)
+    protected function createSchoolBranchSetting(string $schoolBranchId)
     {
         $settingDefs = SettingDefination::all();
         foreach ($settingDefs as $settingDef) {
@@ -272,7 +319,7 @@ class SchoolSubscriptionService
             ]);
         }
     }
-    protected function createGradesCategory($schoolBranchId)
+    protected function createGradesCategory(string $schoolBranchId)
     {
         $gradeCategories = GradesCategory::all();
         $configs = $gradeCategories->map(function ($gradeCategory) use ($schoolBranchId) {
@@ -287,7 +334,7 @@ class SchoolSubscriptionService
 
         SchoolGradesConfig::insert($configs);
     }
-    protected function handleCreateSubscriptionUsage($schoolBranchId, $planId, $subscriptionId)
+    protected function handleCreateSubscriptionUsage(string $schoolBranchId, string $planId, string $subscriptionId)
     {
         $plan = Plan::where("id", $planId)
             ->with(['planFeature.feature'])
@@ -304,7 +351,7 @@ class SchoolSubscriptionService
             ]);
         }
     }
-    public function handleUpdateSubscriptionUsage($newSub, $oldSub)
+    public function handleUpdateSubscriptionUsage(array $newSub, array $oldSub)
     {
         $oldUsage = SubscriptionUsage::where('school_branch_id', $oldSub['school_branch_id'])
             ->where('subscription_id', $oldSub['subscription_id'])
@@ -344,7 +391,7 @@ class SchoolSubscriptionService
             }
         }
     }
-    public function getSchoolBranchSubscription($currentSchool)
+    public function getSchoolBranchSubscription(object $currentSchool)
     {
         return SchoolSubscription::where("school_branch_id", $currentSchool->id)
             ->with(['schoolBranch', 'plan', 'country'])->get();

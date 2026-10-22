@@ -5,39 +5,46 @@ namespace App\Services\Auth\SchoolAdmin;
 use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\OTP;
 use Exception;
-use App\Exceptions\AuthException; // Ensure this is imported
+use App\Exceptions\AuthException;
 
 class LoginSchoolAdminService
 {
-    /**
-     * Attempts to log in a school administrator and sends an OTP.
-     *
-     * @param array $loginData
-     * @return array
-     * @throws AuthException
-     */
-    public function loginSchoolAdmin(array $loginData)
+    public function loginSchoolAdmin(array $payload)
     {
         try {
-            if (empty($loginData['email']) || empty($loginData['password'])) {
-                throw new AuthException("Email and password are required.", 400, "Validation Error", "Please ensure both email and password are provided.");
+            if (empty($payload['email']) || empty($payload['password'])) {
+                throw new AuthException(
+                    "Email and password are required.",
+                    400,
+                    "Validation Error",
+                    "Please ensure both email and password are provided."
+                );
             }
 
-            $user = Schooladmin::where('email', $loginData['email'])->first();
+            $user = Schooladmin::where('email', $payload['email'])->first();
 
             if (!$user) {
-                throw new AuthException("The email you entered is not registered.", 401, "Authentication Failed", "This email address is not in our records. Please check for typos or register an account.");
+                throw new AuthException(
+                    "The email you entered is not registered.",
+                    401,
+                    "Authentication Failed",
+                    "This email address is not in our records. Please check for typos or register an account."
+                );
             }
 
-            if (!Hash::check($loginData['password'], $user->password)) {
-                throw new AuthException("The password you entered is incorrect.", 401, "Authentication Failed", "The password you provided does not match our records.");
+            if (!Hash::check($payload['password'], $user->password)) {
+                throw new AuthException(
+                    "The password you entered is incorrect.",
+                    401,
+                    "Authentication Failed",
+                    "The password you provided does not match our records."
+                );
             }
 
-            if ($user->status == "inactive") {
+            if ($user->status === "inactive") {
                 throw new AuthException(
                     "ACCOUNT_DEACTIVATED",
                     403,
@@ -46,21 +53,22 @@ class LoginSchoolAdminService
                     null
                 );
             }
-            $otp = random_int(100000, 999999);
-            $otp_header = Str::random(200);
+
+            $otp = (string) random_int(100000, 999999);
+            $otpHeader = bin2hex(random_bytes(32));
             $expiresAt = Carbon::now()->addMinutes(config('auth.otp_expiry_minutes', 5));
 
             OTP::create([
-                'token_header' => $otp_header,
-                'actorable_id' => $user->id,
+                'token_header'   => Hash::make($otpHeader),
+                'actorable_id'   => $user->id,
                 'actorable_type' => Schooladmin::class,
-                'otp' => $otp,
-                'expires_at' => $expiresAt,
+                'otp'            => Hash::make($otp),
+                'expires_at'     => $expiresAt,
             ]);
 
             SendOTPViaEmailJob::dispatch($user->email, $otp);
 
-            return ['otp_token_header' => $otp_header];
+            return ['otp_token_header' => $otpHeader];
         } catch (AuthException $e) {
             throw $e;
         } catch (Exception $e) {
