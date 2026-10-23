@@ -62,37 +62,6 @@ class CourseService
                 ]
             ]);
         }
-
-        // AdminActionEvent::dispatch(
-        //     [
-        //         "permissions" =>  ["schoolAdmin.course.create"],
-        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-        //         "schoolBranch" =>  $currentSchool->id,
-        //         "feature" => "courseManagement",
-        //         "action" => "course.created",
-        //         "authAdmin" => $authAdmin,
-        //         "data" => $course,
-        //         "message" => "Course Created",
-        //     ]
-        // );
-        // StudentActionEvent::dispatch([
-        //     'schoolBranch'  => $currentSchool->id,
-        //     'specialtyIds'  => [$specialty->id],
-        //     'feature'       => 'courseCreate',
-        //     'message'       => "New Course Created",
-        //     'data'          => $course,
-        // ]);
-        // event(new OperationalAnalyticsEvent(
-        //     eventType: OperationalEvent::COURSE_CREATED,
-        //     version: 1,
-        //     payload: [
-        //         "school_branch_id" => $currentSchool,
-        //         "specialty_id" => $specialty->id,
-        //         "department_id" => $specialty->department_id,
-        //         "level_id" => $specialty->level_id,
-        //         "value" => 1
-        //     ]
-        // ));
         return $course;
     }
     public function deleteCourse(string $courseId, object $currentSchool, object $authAdmin)
