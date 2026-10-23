@@ -22,8 +22,12 @@ return [
     'allowed_origins' => [
         // --- Tauri desktop app ---
         'tauri://localhost',
+        'http://tauri.localhost',
         'https://tauri.localhost',
-        'http://localhost:1420',
+
+        // Your exact Tauri bundle identifier origin variant
+        'http://com.sss.app.localhost',
+        'https://com.sss.app.localhost',
 
         // --- React Native (Expo Go / dev builds) ---
         'http://localhost:8081',
@@ -38,10 +42,8 @@ return [
 
     'allowed_origins_patterns' => [
         // Allows any Expo dev-client URL on the local network (e.g. exp://192.168.x.x:8081)
-        '#^exp://\d+\.\d+\.\d+\.\d+:\d+$#',
-
-        // Tauri custom protocol variations across platforms
-        '#^tauri://[a-zA-Z0-9\-\.]+$#',
+        '#^https?://([a-zA-Z0-9\-\.]+\.)?com\.sss\.app\.localhost$#',
+        '#^https?://([a-zA-Z0-9\-\.]+\.)?tauri\.localhost$#',
     ],
 
     'allowed_headers' => [
