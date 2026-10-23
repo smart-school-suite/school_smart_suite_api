@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Exam;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Exam\PublishExamResultRequest;
-use App\Http\Resources\ExamResultResource;
+use App\Http\Resources\Exam\ExamResultResource;
 use App\Services\ApiResponseService;
 use App\Services\Exam\ExamResultService;
 use Illuminate\Http\Request;
