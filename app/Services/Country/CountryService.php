@@ -285,7 +285,7 @@ class CountryService
         try {
             $countries = Country::where("status", true)->get();
 
-            if ($countries->isEmpty()) {
+            if ($countries->isNotEmpty()) {
                 throw new AppException(
                     "No active country records found in the database.",
                     404,
