@@ -287,7 +287,7 @@ class CountryService
 
             if ($countries->isNotEmpty()) {
                 throw new AppException(
-                    "No active country records found in the database.",
+                    "No active country records found in the database testing.",
                     404,
                     "No Countries Found 🌍",
                     "There are currently no active country records in the system. Please add a new country to populate the list.",
