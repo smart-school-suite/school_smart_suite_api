@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-use App\Traits\GeneratesUuid;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolTransaction extends Model
 {
-    use GeneratesUuid;
+    use HasFactory, HasUuids;
     protected $fillable = [
         'type',
         'amount',
@@ -24,7 +26,7 @@ class SchoolTransaction extends Model
 
     public $table = 'school_transactions';
     public $keyType = 'string';
-    public $incrementing = 'false';
+    public $incrementing = false;
 
     public function paymentMethod(): BelongsTo {
          return $this->belongsTo(PaymentMethod::class, 'payment_method_id');

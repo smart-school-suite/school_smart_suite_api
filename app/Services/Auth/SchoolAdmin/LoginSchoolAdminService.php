@@ -2,13 +2,14 @@
 
 namespace App\Services\Auth\SchoolAdmin;
 
-use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
 use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use App\Models\OTP;
 use Exception;
 use App\Exceptions\AuthException;
+use App\Mail\SendOtpMail;
+use Illuminate\Support\Facades\Mail;
 
 class LoginSchoolAdminService
 {
@@ -54,9 +55,11 @@ class LoginSchoolAdminService
                 );
             }
 
+
             $otp = (string) random_int(100000, 999999);
             $otpHeader = bin2hex(random_bytes(32));
-            $expiresAt = Carbon::now()->addMinutes(config('auth.otp_expiry_minutes', 5));
+            $expiresInMinutes = (int) config('auth.otp_expiry_minutes', 5);
+            $expiresAt = Carbon::now()->addMinutes($expiresInMinutes);
 
             OTP::create([
                 'token_header'   => Hash::make($otpHeader),
@@ -66,7 +69,13 @@ class LoginSchoolAdminService
                 'expires_at'     => $expiresAt,
             ]);
 
-            SendOTPViaEmailJob::dispatch($user->email, $otp);
+            Mail::to($user->email)->queue(
+                new SendOtpMail(
+                    otp: $otp,
+                    expiresInMinutes: $expiresInMinutes,
+                    recipientName: $user->name ?? $user->first_name ?? 'School Admin'
+                )
+            );
 
             return ['otp_token_header' => $otpHeader];
         } catch (AuthException $e) {

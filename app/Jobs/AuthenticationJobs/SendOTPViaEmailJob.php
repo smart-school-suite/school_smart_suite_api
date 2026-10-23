@@ -14,22 +14,21 @@ class SendOTPViaEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
-    public $email;
-    public $otp;
-    public function __construct($email, $otp)
-    {
-        $this->email = $email;
-        $this->otp = $otp;
-    }
+    public function __construct(
+        public readonly string $email,
+        public readonly string $otp,
+        public readonly int $expiresInMinutes = 10,
+        public readonly string $recipientName = 'User'
+    ) {}
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-        Mail::to($this->email)->send(new SendOtpMail($this->otp));
+        Mail::to($this->email)->send(
+            new SendOtpMail(
+                otp: $this->otp,
+                expiresInMinutes: $this->expiresInMinutes,
+                recipientName: $this->recipientName
+            )
+        );
     }
 }

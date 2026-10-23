@@ -3,6 +3,7 @@
 namespace App\Services\Subscription;
 
 use App\Exceptions\AppException;
+use App\Mail\Subscription\SubscriptionSuccessfulMail;
 use App\Models\Schooladmin;
 use App\Models\Schoolbranches;
 use App\Models\School;
@@ -19,6 +20,7 @@ use App\Models\SubscriptionUsage;
 use App\Models\PaymentMethod;
 use App\Services\Helpers\Actor\ActorHelperService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class SchoolSubscriptionService
 {
@@ -35,7 +37,17 @@ class SchoolSubscriptionService
             );
         }
 
-        $emailExists = Schooladmin::where('email', $data['admin_mail'] ?? null)->exists();
+        $adminEmail = $data['admin_email'] ?? $data['admin_mail'] ?? null;
+        if (empty($adminEmail)) {
+            throw new AppException(
+                'Email Required',
+                400,
+                'Validation Error',
+                'An admin email address is required.'
+            );
+        }
+
+        $emailExists = Schooladmin::where('email', $adminEmail)->exists();
         if ($emailExists) {
             throw new AppException(
                 'Email Already Exists',
@@ -58,7 +70,7 @@ class SchoolSubscriptionService
             );
         }
 
-        return DB::transaction(function () use ($data, $paymentMethod) {
+        return DB::transaction(function () use ($data, $paymentMethod, $adminEmail) {
             $plan = Plan::with(['country', 'planFeature'])
                 ->where('id', $data['plan_id'])
                 ->where('status', 'active')
@@ -74,30 +86,25 @@ class SchoolSubscriptionService
                 );
             }
 
-            $schoolId       = (string) Str::uuid();
-            $branchId       = (string) Str::uuid();
-            $subscriptionId = (string) Str::uuid();
-
-            School::create([
-                'id'         => $schoolId,
+            $school = School::create([
                 'name'       => $data['school_name'],
                 'country_id' => $data['country_id'],
                 'type'       => $data['type'],
                 'status'     => 'active',
             ]);
 
-            Schoolbranches::create([
-                'id'           => $branchId,
+            $schoolId = $school->id;
+            $schoolBranch = Schoolbranches::create([
                 'school_id'    => $schoolId,
                 'name'         => $data['school_branch_name'],
                 'abbreviation' => $data['abbreviation'] ?? null,
             ]);
+            $branchId = $schoolBranch->id;
 
             $startsAt = now();
             $endsAt   = $startsAt->clone()->addDays($plan->duration_days ?? 365);
 
-            SchoolSubscription::create([
-                'id'               => $subscriptionId,
+            $subscription = SchoolSubscription::create([
                 'school_branch_id' => $branchId,
                 'plan_id'          => $plan->id,
                 'country_id'       => $plan->country_id,
@@ -106,19 +113,22 @@ class SchoolSubscriptionService
                 'end_date'         => $endsAt,
             ]);
 
-            $transactionId = (string) Str::uuid();
+            $subscriptionId = $subscription->id;
+            $transactionId  = (string) Str::uuid();
+            $paymentRef     = $data['payment_ref'] ?? (string) Str::uuid();
+            $currency       = $plan->country->currency ?? 'USD';
+            $formattedAmount = number_format($plan->price, 2);
 
             SchoolTransaction::create([
-                'id'                => $transactionId,
                 'school_branch_id'  => $branchId,
                 'country_id'        => $plan->country_id,
                 'plan_id'           => $plan->id,
                 'amount'            => $plan->price,
-                'currency'          => $plan->country->currency ?? 'USD',
+                'currency'          => $currency,
                 'type'              => 'subscription_purchase',
                 'status'            => 'completed',
                 'payment_method_id' => $paymentMethod->id,
-                'payment_ref'       => $data['payment_ref'] ?? (string) Str::uuid(),
+                'payment_ref'       => $paymentRef,
                 'transaction_id'    => $transactionId,
             ]);
 
@@ -136,16 +146,30 @@ class SchoolSubscriptionService
             $username = $actorHelper->generateUsername($fullName, Schooladmin::class);
 
             $schoolAdmin = Schooladmin::create([
-                'name'       => $data['admin_full_name'] ?? $fullName,
-                'first_name' => $data['admin_first_name'] ?? null,
-                'last_name'  => $data['admin_last_name'] ?? null,
-                'username'   => $username,
-                'email'      => $data['admin_email'],
-                'school_branch_id'  => $branchId,
-                'password'   => Hash::make($data['admin_password']),
+                'name'             => $data['admin_full_name'] ?? $fullName,
+                'first_name'       => $data['admin_first_name'] ?? null,
+                'last_name'        => $data['admin_last_name'] ?? null,
+                'username'         => $username,
+                'email'            => $adminEmail,
+                'school_branch_id' => $branchId,
+                'password'         => Hash::make($data['admin_password']),
             ]);
 
             $token = $schoolAdmin->createToken('schoolAdminToken')->plainTextToken;
+
+            Mail::to($schoolAdmin->email)->queue(
+                new SubscriptionSuccessfulMail(
+                    schoolName: $school->name,
+                    planName: $plan->name,
+                    amount: $formattedAmount,
+                    currency: $currency,
+                    startsAt: $startsAt,
+                    endsAt: $endsAt,
+                    paymentReference: $paymentRef,
+                    status: 'Active',
+                    recipientName: $schoolAdmin->name
+                )
+            );
 
             return [
                 'authToken' => $token,

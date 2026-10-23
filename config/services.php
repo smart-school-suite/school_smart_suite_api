@@ -43,4 +43,8 @@ return [
     'semester_timetable_scheduler' => [
         'base_url' => env('SEMESTER_TIMETABLE_SCHEDULER_BASE_URL', 'http://localhost:8000'),
     ],
+
+    'resend' => [
+        'key' => env('RESEND_API_KEY'),
+    ],
 ];

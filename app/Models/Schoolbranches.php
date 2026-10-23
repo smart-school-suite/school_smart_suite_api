@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Country;
 use App\Models\Graduation\GraduationBatch;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schoolbranches extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
-        'id',
         'school_id',
         'name',
         'address',
@@ -36,7 +36,7 @@ class Schoolbranches extends Model
     ];
     public $keyType = 'string';
     public $table = 'school_branches';
-    public $incrementing = 'false';
+    public $incrementing = false;
 
     public function graduationBatch(): HasMany
     {

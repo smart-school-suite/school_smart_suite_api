@@ -20,6 +20,8 @@
         "mongodb/laravel-mongodb": "^5.5",
         "phpoffice/phpspreadsheet": "^5.9",
         "pusher/pusher-php-server": "^7.2",
+        "resend/resend-php": "^1.17",
+        "sentry/sentry-laravel": "^4.29",
         "spatie/laravel-ignition": "^2.8",
         "spatie/laravel-medialibrary": "^11.23",
         "spatie/laravel-permission": "^6.10"

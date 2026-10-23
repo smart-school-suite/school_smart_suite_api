@@ -9,6 +9,8 @@ use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Services\ApiResponseService;
+use Sentry\Laravel\Integration;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -376,6 +378,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        Integration::handles($exceptions);
+        $exceptions->report(function (AppException $e) {
+            if ($e->getCode() >= 500) {
+                Log::error($e->getMessage(), [
+                    'exception' => $e,
+                ]);
+            }
+        });
         $exceptions->render(function (AuthException $e, Request $request) {
             if ($request->expectsJson()) {
                 $structuredError = [

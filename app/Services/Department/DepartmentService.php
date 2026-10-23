@@ -41,25 +41,6 @@ class DepartmentService
             $department->save();
             DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
             SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->id, $data);
-            // AdminActionEvent::dispatch(
-            //     [
-            //         "permissions" =>  ["schoolAdmin.department.create"],
-            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            //         "schoolBranch" =>  $currentSchool->id,
-            //         "feature" => "departmentManagement",
-            //         "authAdmin" => $authAdmin,
-            //         "data" => $department,
-            //         "message" => "Department Created",
-            //     ]
-            // );
-            // event(new OperationalAnalyticsEvent(
-            //     eventType:OperationalEvent::DEPARTMENT_CREATED,
-            //     version:1,
-            //     payload:[
-            //         "school_branch_id" => $currentSchool->id,
-            //         "value" => 1
-            //     ]
-            // ));
             return $department;
         } catch (Exception $e) {
             throw new AppException(

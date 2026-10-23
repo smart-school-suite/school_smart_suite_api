@@ -8,7 +8,8 @@ use App\Models\Schooladmin;
 use Illuminate\Support\Facades\Hash;
 use Exception;
 use App\Exceptions\AuthException;
-use App\Jobs\AuthenticationJobs\SendOTPViaEmailJob;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendOtpMail;
 
 class ValidateOtpService
 {
@@ -100,17 +101,35 @@ class ValidateOtpService
                 );
             }
 
+            $user = $otpRecord->actorable;
+
+            if (!$user) {
+                throw new AuthException(
+                    "User associated with this OTP token was not found.",
+                    404,
+                    "User Not Found",
+                    "The account linked to this OTP request could not be located."
+                );
+            }
+
             $newOtp = (string) random_int(100000, 999999);
-            $expiresAt = Carbon::now()->addMinutes(config('auth.otp_expiry_minutes', 5));
+            $expiresInMinutes = (int) config('auth.otp_expiry_minutes', 5);
+            $expiresAt = Carbon::now()->addMinutes($expiresInMinutes);
 
             $otpRecord->update([
                 'otp'        => Hash::make($newOtp),
                 'expires_at' => $expiresAt,
             ]);
 
-            SendOTPViaEmailJob::dispatch($otpRecord->actorable->email, $newOtp);
+            Mail::to($user->email)->queue(
+                new SendOtpMail(
+                    otp: $newOtp,
+                    expiresInMinutes: $expiresInMinutes,
+                    recipientName: $user->name ?? $user->first_name ?? 'School Admin'
+                )
+            );
 
-            return $newOtp;
+            return true;
         } catch (AuthException $e) {
             throw $e;
         } catch (Exception $e) {

@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Country;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class School extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
-       'id',
        'country_id',
        'name',
        'type',
@@ -23,7 +23,7 @@ class School extends Model
     ];
 
     public $keyType = 'string';
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'schools';
 
     public function country(): BelongsTo {
