@@ -12,14 +12,14 @@ class SemesterService
         return $createSemester;
     }
 
-    public function deleteSemester($semsterId)
+    public function deleteSemester(string $semsterId)
     {
         $semster = Semester::findOrFail($semsterId);
         $semster->delete();
         return $semster;
     }
 
-    public function updateSemester($semsterId, array $data)
+    public function updateSemester(string $semsterId, array $data)
     {
         $semester = Semester::findOrFail($semsterId);
         $filterData = array_filter($data);
@@ -27,10 +27,9 @@ class SemesterService
         return $semester;
     }
 
-    public function getSemester($currentSchool)
+    public function getSemester(object $currentSchool)
     {
-        $numSemesters = $currentSchool->semester_count;
-        $filteredSemesters = Semester::whereBetween('count', [1, $numSemesters])->get();
+        $filteredSemesters = Semester::whereBetween('count', [1, 2])->get();
         return $filteredSemesters;
     }
 }
