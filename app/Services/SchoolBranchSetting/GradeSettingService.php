@@ -10,7 +10,7 @@ use Throwable;
 use App\Events\Actions\AdminActionEvent;
 class GradeSettingService
 {
-    public function updateGradeSetting($currentSchool, $updateData, $authAdmin)
+    public function updateGradeSetting(object $currentSchool, array $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;

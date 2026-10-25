@@ -9,7 +9,7 @@ use Throwable;
 use App\Events\Actions\AdminActionEvent;
 class PromotionSettingService
 {
-    public function updatePromotionSetting($currentSchool, $updateData, $authAdmin)
+    public function updatePromotionSetting(object $currentSchool, array $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;

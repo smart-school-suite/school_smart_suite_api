@@ -28,7 +28,6 @@ class AudienceService
                 ];
             });
     }
-
     public function getStudentAudienceByLevel(object $currentSchool)
     {
         return EducationLevels::whereHas('specialty', function ($query) use ($currentSchool) {
@@ -47,7 +46,6 @@ class AudienceService
                 ];
             });
     }
-
     public function getStudentAudienceByDepartment(object $currentSchool)
     {
         return Department::where("departments.school_branch_id", $currentSchool->id)
@@ -63,7 +61,6 @@ class AudienceService
                 ];
             });
     }
-
     public function getStudents(object $currentSchool)
     {
         return Student::where("school_branch_id", $currentSchool->id)
@@ -80,7 +77,6 @@ class AudienceService
                 "level_name" => $s->specialty->level->name
             ]);
     }
-
     public function getTeacherAudience(object $currentSchool)
     {
        return Teacher::where("school_branch_id", $currentSchool->id)
@@ -94,7 +90,6 @@ class AudienceService
                 "profile_picture" => $t->profile_picture
             ]);
     }
-
     public function getTeacherAudienceByDepartment(object $currentSchool)
     {
         return Department::where("school_branch_id", $currentSchool->id)
@@ -113,7 +108,6 @@ class AudienceService
                 ];
             });
     }
-
     public function getTeacherAudienceBySpecialty(object $currentSchool)
     {
         return Specialty::where("school_branch_id", $currentSchool->id)
@@ -130,7 +124,6 @@ class AudienceService
                 ];
             });
     }
-
     public function getTeacherAudienceByLevel(object $currentSchool)
     {
         return EducationLevels::whereHas('specialty', function ($query) use ($currentSchool) {
@@ -152,8 +145,6 @@ class AudienceService
                 ];
             });
     }
-
-
     public function getSchoolAdminAudience(object $currentSchool)
     {
         return Schooladmin::where("school_branch_id", $currentSchool->id)

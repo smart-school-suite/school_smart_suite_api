@@ -10,7 +10,7 @@ use App\Events\Actions\AdminActionEvent;
 
 class TimetableSettingService
 {
-    public function updateTimetableSetting($currentSchool, $updateData, $authAdmin)
+    public function updateTimetableSetting(object $currentSchool, array $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;

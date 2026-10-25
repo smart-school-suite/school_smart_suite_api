@@ -7,12 +7,12 @@ use App\Models\Educationlevels;
 use App\Models\SchoolBranchSetting;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-use App\Events\Actions\AdminActionEvent;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ResitSettingService
 {
 
-    public function updateResitSetting($currentSchool, $updateData, $authAdmin)
+    public function updateResitSetting(object $currentSchool, array $updateData, $authAdmin)
     {
         $settingId = $updateData['school_branch_setting_id'] ?? null;
         $newValue = $updateData['value'] ?? null;
@@ -66,19 +66,8 @@ class ResitSettingService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.timetableSetting.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolSettingManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $setting,
-                "message" => "Resit Setting Updated",
-            ]
-        );
             return $setting;
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             DB::rollBack();
             throw new AppException(
                 "Setting ID '{$settingId}' not found for school branch.",

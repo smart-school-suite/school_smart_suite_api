@@ -216,7 +216,6 @@ class SettingDefinationSeeder extends Seeder
 
         $this->seedDefinitions('Level Setting', $settingDefs);
     }
-
     public function graduationSetting(): void
     {
         $settingDefs = [

@@ -6,7 +6,7 @@ use App\Models\SchoolBranchSetting;
 
 class SchoolBranchSettingService
 {
-    public function getSchoolBranchSetting($currentSchool)
+    public function getSchoolBranchSetting(object $currentSchool)
     {
         $schoolBranchSettings = SchoolBranchSetting::where("school_branch_id", $currentSchool->id)
             ->with(['settingDefination.settingCategory'])
