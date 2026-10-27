@@ -7,9 +7,6 @@ use Illuminate\Database\Seeder;
 
 class SettingCategorySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $this->createSettingCategories();
@@ -31,7 +28,7 @@ class SettingCategorySeeder extends Seeder
                 'key' => 'setting.category.resit'
             ],
             [
-                'name' => 'Time-table Settings',
+                'name' => 'Timetable Settings',
                 'key' => 'setting.category.timetable'
             ],
             [
@@ -43,11 +40,11 @@ class SettingCategorySeeder extends Seeder
                 'key' => 'setting.category.grade'
             ],
             [
-                'name' => 'Election Tie Breaker Setting',
+                'name' => 'Election Setting',
                 'key' => 'setting.category.election.tie.breaker'
             ],
             [
-                'name' => 'Level Setting',
+                'name' => 'Level Settings',
                 'key' => 'setting.category.level'
             ],
             [
@@ -57,10 +54,21 @@ class SettingCategorySeeder extends Seeder
         ];
 
         foreach ($data as $setting) {
-            SettingCategory::updateOrCreate(
-                ['key' => $setting['key']],
-                ['name' => $setting['name']]
-            );
+            try {
+                $nameExists = SettingCategory::where('name', $setting['name'])
+                    ->where('key', '!=', $setting['key'])
+                    ->exists();
+
+                if ($nameExists) {
+                    continue;
+                }
+
+                SettingCategory::updateOrCreate(
+                    ['key' => $setting['key']],
+                    ['name' => $setting['name']]
+                );
+            } catch (\Throwable $e) {
+            }
         }
     }
 }

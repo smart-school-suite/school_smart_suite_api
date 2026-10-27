@@ -20,7 +20,7 @@ class SchoolBranchSetting extends Model
         'value' => 'json',
     ];
 
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $keyType = 'string';
     public $table = 'school_branch_settings';
 
@@ -34,7 +34,7 @@ class SchoolBranchSetting extends Model
     }
     public function getTypedValueAttribute()
     {
-        $definition = $this->settingDefinition;
+        $definition = $this->settingDefination;
         if (! $definition) {
             return $this->value;
         }

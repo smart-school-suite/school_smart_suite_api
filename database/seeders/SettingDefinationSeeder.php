@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Educationlevels;
 use Illuminate\Database\Seeder;
 use App\Models\SettingCategory;
 use App\Models\SettingDefination;
@@ -24,36 +25,51 @@ class SettingDefinationSeeder extends Seeder
         $this->graduationSetting();
     }
 
+
     public function studentPromotionSettingDefination(): void
     {
         $promotionSettingDefs = [
             [
                 'key' => 'promotion.min_gpa',
-                'label' => 'Minimum GPA',
+                'label' => 'Minimum Average GPA for Promotion',
                 'data_type' => 'decimal',
                 'default_value' => 2.00,
-                'description' => 'The lowest Grade Point Average (GPA) a student must achieve to be eligible for promotion to the next academic level.',
+                'description' => 'The minimum Grade Point Average (GPA) a student must attain to qualify for promotion to the next academic level.',
             ],
             [
                 'key' => 'promotion.max_tuition_fee_debt',
-                'label' => 'Max Tuition Fee Debt',
+                'label' => 'Maximum Outstanding Tuition Fees',
                 'data_type' => 'decimal',
                 'default_value' => 300000.00,
-                'description' => 'The maximum amount of tuition fee debt (in local currency) a student can have and still be considered for promotion.',
+                'description' => 'The maximum outstanding tuition fee balance a student may owe and still qualify for promotion. Students whose outstanding tuition fees exceed this amount will not meet this promotion criterion.',
             ],
             [
                 'key' => 'promotion.max_additional_fee_debt',
-                'label' => 'Max Additional Fee Debt',
+                'label' => 'Maximum Outstanding Additional Fees',
                 'data_type' => 'decimal',
                 'default_value' => 50000.00,
-                'description' => 'The maximum amount of debt from non-tuition fees (e.g., library fees, lab fees) a student can have and still be considered for promotion.',
+                'description' => 'The maximum outstanding balance a student may owe for additional school fees, such as library, laboratory, or other non-tuition charges, and still qualify for promotion.',
             ],
             [
                 'key' => 'promotion.max_carry_overs',
-                'label' => 'Max Carry Overs',
+                'label' => 'Maximum Carry-Over Courses',
                 'data_type' => 'integer',
                 'default_value' => 5,
-                'description' => 'The maximum number of courses/modules a student is permitted to have carried over (failed and needing to be retaken) from the previous level for promotion eligibility.',
+                'description' => 'The maximum number of failed courses from a previous academic level that a student may carry over and still qualify for promotion to the next level.',
+            ],
+            [
+                'key' => 'promotion.max_resits',
+                'label' => 'Maximum Resits',
+                'data_type' => 'integer',
+                'default_value' => 2,
+                'description' => 'The maximum number of resit examinations a student may have and still qualify for promotion to the next academic level.',
+            ],
+            [
+                'key' => 'promotion.bill_student_registration_fee',
+                'label' => 'Charge Registration Fee Upon Promotion',
+                'data_type' => 'boolean',
+                'default_value' => true,
+                'description' => 'When enabled, students are charged the applicable registration fee when they are promoted to the next academic level. Disable this option if students should not be charged a registration fee upon promotion.',
             ],
         ];
 
@@ -64,59 +80,59 @@ class SettingDefinationSeeder extends Seeder
         $settingDefs = [
             [
                 'key' => 'timetable.ignore_teacher_preference',
-                'label' => 'Ignore Teacher Preferences',
+                'label' => 'Ignore Teacher Scheduling Preferences',
                 'data_type' => 'boolean',
                 'default_value' => false,
-                'description' => 'When set to TRUE, the system will **create the timetable without considering** or enforcing teachers’ preferred or restricted teaching times. This provides maximum flexibility for scheduling.',
+                'description' => 'When enabled, the timetable generator may disregard teachers’ preferred teaching times and scheduling restrictions when assigning lessons. This gives the system greater scheduling flexibility but may result in lessons being scheduled outside teachers’ stated preferences or availability.',
             ],
             [
                 'key' => 'timetable.respect_teacher_preference',
-                'label' => 'Respect Teacher Preferences',
+                'label' => 'Respect Teacher Scheduling Preferences',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'When set to TRUE, the system will **enforce teachers’ preferred teaching times** when generating the timetable. This setting considers their availability and restrictions.',
-            ]
+                'description' => 'When enabled, the timetable generator considers teachers’ preferred teaching times and scheduling restrictions when assigning lessons. This helps produce timetables that accommodate teacher availability and scheduling preferences wherever possible.',
+            ],
+            [
+                'key' => 'timetable.period_duration',
+                'label' => 'Teaching Period Duration',
+                'data_type' => 'integer',
+                'default_value' => 60,
+                'description' => 'The duration of each teaching period, measured in minutes. This value determines the length of an individual lesson period when generating the timetable.',
+            ],
         ];
 
-        $this->seedDefinitions('Time-table Settings', $settingDefs);
+        $this->seedDefinitions('Timetable Settings', $settingDefs);
     }
     public function resitSettingDefination(): void
     {
         $settingDefs = [
             [
                 'key' => 'resitFee.generalBilling',
-                'label' => 'Use General Resit Fee (Per Course)',
+                'label' => 'Use a Standard Resit Fee',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'When TRUE, all students will be charged the single "General Resit Fee" amount per resit course, regardless of their academic level.',
+                'description' => 'Charge the same resit examination fee for every course, regardless of the student’s academic level.',
             ],
             [
                 'key' => 'resitFee.levelBilling',
-                'label' => 'Use Level-Specific Resit Fee',
+                'label' => 'Use Different Resit Fees by Academic Level',
                 'data_type' => 'boolean',
                 'default_value' => false,
-                'description' => 'When TRUE, the system will use a different resit fee for each academic level (e.g., Level 100 fee, Level 200 fee, etc.), which must be configured in the "Level-Specific Fees" setting.',
+                'description' => 'Set different resit examination fees for each academic level. Choose this option if students at different levels should pay different amounts.',
             ],
             [
                 'key' => 'resitFee.generalBillingFee',
-                'label' => 'General Resit Fee Amount',
+                'label' => 'Standard Resit Fee Amount',
                 'data_type' => 'decimal',
                 'default_value' => 3000.00,
-                'description' => 'The flat fee amount charged for a single resit course when "Use General Resit Fee" is enabled.',
+                'description' => 'The amount students must pay for each course they resit when the standard resit fee option is selected.',
             ],
             [
                 'key' => 'resitFee.levelBillingFee',
-                'label' => 'Level-Specific Fees',
+                'label' => 'Resit Fees by Academic Level',
                 'data_type' => 'json',
                 'default_value' => '[]',
-                'description' => 'A JSON array/object containing the resit fee amounts, keyed by the academic level (e.g., {"100": 2500.00, "200": 3500.00}). This is used when "Use Level-Specific Resit Fee" is enabled.',
-            ],
-            [
-                'key' => 'resit.period',
-                'label' => 'Resit Examination Period',
-                'data_type' => 'string',
-                'default_value' => 'August',
-                'description' => 'The designated month or time of year when resit examinations are generally scheduled (e.g., "August", "Summer Break").'
+                'description' => 'Set the resit examination fee for each academic level, such as Level 100 or Level 200. These amounts apply when different fees by academic level are enabled.',
             ]
         ];
 
@@ -126,19 +142,33 @@ class SettingDefinationSeeder extends Seeder
     {
         $settingDefs = [
             [
-                'key' => 'exam.final_exam',
-                'label' => 'Final Exam',
-                'data_type' => 'json',
-                'default_value' => '[]',
-                'description' => 'Represents the final exam to conclude the academic year'
-            ],
-            [
                 'key' => 'exam.auto_create',
-                'label' => 'Auto Create Exam',
+                'label' => 'Automatically Create Exams Each Semester',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => "Automatically generate exams when a new semester is created for seamless planning"
-            ]
+                'description' => 'When enabled, exams are automatically created when a new semester is created, reducing the need to set them up manually.',
+            ],
+            [
+                'key' => 'exam.ca_default_max_score',
+                'label' => 'Maximum Continuous Assessment Score',
+                'data_type' => 'decimal',
+                'default_value' => 30,
+                'description' => 'The maximum score students can earn in Continuous Assessment (CA). This score contributes to the overall course result.',
+            ],
+            [
+                'key' => 'exam.exam_default_max_score',
+                'label' => 'Maximum Final Exam Score',
+                'data_type' => 'decimal',
+                'default_value' => 70,
+                'description' => 'The maximum score students can earn in the final examination. This score contributes to the overall course result.',
+            ],
+            [
+                'key' => 'exam.resit_exam_default_max_score',
+                'label' => 'Maximum Resit Exam Score',
+                'data_type' => 'decimal',
+                'default_value' => 100,
+                'description' => 'The maximum score a student can earn in a resit examination.',
+            ],
         ];
 
         $this->seedDefinitions('Exam Settings', $settingDefs);
@@ -178,73 +208,102 @@ class SettingDefinationSeeder extends Seeder
         $settingDefs = [
             [
                 'key' => 'election_tie_breaker.highest_gpa_winner',
-                'label' => 'Use Highest GPA as Tie-Breaker',
+                'label' => 'Use Highest GPA to Resolve Ties',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'When TRUE, if two or more candidates receive the same number of votes, the candidate with the **highest cumulative Grade Point Average (GPA)** will be declared the winner.',
+                'description' => 'When enabled, the candidate with the highest cumulative Grade Point Average (GPA) wins if two or more candidates receive the same number of votes.',
             ],
             [
                 'key' => 'election_tie_breaker.highest_admin_votes',
-                'label' => 'Allow Administrative Vote as Tie-Breaker',
+                'label' => 'Allow Administrative Votes to Resolve Ties',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'When TRUE, in the event of a tie, the system will allow designated **administrative votes** (e.g., from a Dean or Electoral Committee) to break the tie, if the GPA method is insufficient or disabled.',
-            ]
+                'description' => 'When enabled, designated election administrators or committee members can cast additional votes to resolve a tie when the GPA method is disabled or does not determine a winner.',
+            ],
         ];
 
-        $this->seedDefinitions('Election Tie Breaker Setting', $settingDefs);
+        $this->seedDefinitions('Election Setting', $settingDefs);
     }
     public function levelSetting(): void
     {
+        $levels = Educationlevels::whereHas("levelType", function ($query) {
+            $query->where("program_name", "level_start_100");
+        })->get();
 
         $settingDefs = [
             [
                 'key' => 'level.start',
-                'label' => 'Level Start',
+                'label' => 'Starting Academic Level',
                 'data_type' => 'string',
                 'default_value' => "level_start_100",
-                'description' => 'Defines the starting academic level used by the institution (e.g., 100, 200, 300)',
+                'description' => 'The academic level at which students begin their studies at your institution, such as Level 100, Level 200, or Level 300.',
             ],
             [
                 'key' => 'specialties.auto_generate_levels',
-                'label' => "Auto-Generate Across All Levels",
-                "data_type" => 'boolean',
+                'label' => 'Automatically Create Specialties Across All Levels',
+                'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => "Automatically creates a copy of a new specialty for every active level upon creation."
-            ]
+                'description' => 'When enabled, a new specialty is automatically created for every active academic level. Disable this option if you prefer to create specialties for each level individually.',
+            ],
+            [
+                'key' => 'level.registration_fees',
+                'label' => 'Registration Fees by Academic Level',
+                'data_type' => 'json',
+                'default_value' => json_encode($levels->map(fn($l) => [
+                    'level_id' => $l->id,
+                    'fee' => 50000
+                ])),
+                'description' => 'Set the registration fee for each academic level. Students are charged the fee configured for their level when registration fees apply.',
+            ],
+            [
+                'key' => 'level.tuition_fees',
+                'label' => 'Tuition Fees by Academic Level',
+                'data_type' => 'json',
+                'default_value' => json_encode($levels->map(fn($l) => [
+                    'level_id' => $l->id,
+                    'fee' => 350000
+                ])),
+                'description' => 'Set the tuition fee for each academic level. Students are charged the tuition fee configured for their level.',
+            ],
         ];
 
-        $this->seedDefinitions('Level Setting', $settingDefs);
+        $this->seedDefinitions('Level Settings', $settingDefs);
     }
     public function graduationSetting(): void
     {
         $settingDefs = [
             [
                 'key' => 'graduation.fee_enabled',
-                'label' => 'Graduation Fee Enabled',
+                'label' => 'Charge a Graduation Fee',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'Determines whether students must pay a graduation fee before completing graduation clearance.',
+                'description' => 'When enabled, students are required to pay the applicable graduation fee before completing graduation clearance.',
             ],
             [
                 'key' => 'graduation.fee',
-                'label' => 'Graduation Fee',
+                'label' => 'Standard Graduation Fee Amount',
                 'data_type' => 'decimal',
                 'default_value' => 50000,
-                'description' => 'Defines the graduation fee charged to eligible students.',
+                'description' => 'The graduation fee charged to eligible students when the standard fee option is used, regardless of their academic level.',
             ],
             [
-                'key' => 'graduation.default_status',
-                'label' => 'Default Graduation Status',
-                'data_type' => 'string',
-                'default_value' => 'pending',
-                'description' => 'Defines the initial status assigned to a student when a graduation record is created.',
+                'key' => 'graduation.level_graduation_fee_enabled',
+                'label' => 'Use Different Graduation Fees by Academic Level',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, graduation fees can be set separately for each academic level instead of using one standard amount for all eligible students.',
+            ],
+            [
+                'key' => 'graduation.level_graduation_fee',
+                'label' => 'Graduation Fees by Academic Level',
+                'data_type' => 'json',
+                'default_value' => '[]',
+                'description' => 'Set the graduation fee for each academic level. These amounts apply when different fees by academic level are enabled.',
             ],
         ];
 
         $this->seedDefinitions('Graduation Settings', $settingDefs);
     }
-
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {
         $settingCategory = SettingCategory::where('name', $categoryName)->first();
