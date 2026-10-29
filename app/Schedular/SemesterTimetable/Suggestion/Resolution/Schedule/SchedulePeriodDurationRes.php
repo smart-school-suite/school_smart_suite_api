@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration  as Period
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration as PeriodDurationViolation;
 use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Resolution\Contract\ResolutionContract;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 class SchedulePeriodDurationRes extends SuggestionContext implements ResolutionContract
@@ -26,7 +27,8 @@ class SchedulePeriodDurationRes extends SuggestionContext implements ResolutionC
                 "id" => Str::uuid()->toString(),
                 "day" => $pDay,
                 "start_time" => $pStart,
-                "end_time" => $pEnd
+                "end_time" => $pEnd,
+                "duration_minutes" => Carbon::parse($pStart)->diffInMinutes(Carbon::parse($pEnd))
             ]
         ];
     }

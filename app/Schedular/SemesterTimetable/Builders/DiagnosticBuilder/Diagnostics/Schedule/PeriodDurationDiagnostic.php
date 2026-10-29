@@ -6,6 +6,7 @@ use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Core\BlockerRegistry;
 use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Contracts\DiagnosticBuilder;
 use App\Schedular\SemesterTimetable\DTO\DiagnosticDTO;
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 
 class PeriodDurationDiagnostic implements DiagnosticBuilder
 {
@@ -22,6 +23,11 @@ class PeriodDurationDiagnostic implements DiagnosticBuilder
         $blockers = $diagnostics["blockers"];
         $diagnostic->constraint_failed = [
             "type" => PeriodDuration::KEY,
+            "id" => app(GenerateId::class)->generateId([
+                "type" => PeriodDuration::KEY,
+                "day" => $constraintFailed["day"],
+                "period_duration" => $constraintFailed["duration"],
+            ]),
             "details" => [
                 "day" => $constraintFailed["day"],
                 "duration_minutes" => $constraintFailed["duration"],

@@ -21,7 +21,7 @@ class DayProcessor
         if (!empty($diagnostic['hard'])) {
             $hardConstraintMap = app(ConstraintMapBuilder::class)->build($diagnostic['hard']);
             $hardGroupBuilder = app(ConflictGroupBuilder::class)->buildHard($hardConstraintMap);
-            $hardScenarioBuilder = app(ConflictGroupBuilder::class)->buildHard($hardGroupBuilder);
+            $hardScenarioBuilder = app(ScenarioBuilder::class)->buildHard($hardGroupBuilder);
 
             $result[] = $hardScenarioBuilder;
         }

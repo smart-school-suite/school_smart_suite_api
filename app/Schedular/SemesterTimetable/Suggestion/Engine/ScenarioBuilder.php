@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 use App\Schedular\SemesterTimetable\Suggestion\Handlers\Registry\HandlerRegistry;
 use App\Schedular\SemesterTimetable\Suggestion\Engine\DependencyExtractor;
 use App\Schedular\SemesterTimetable\Suggestion\Normalization\ScenarioNormalizationEngine;
+use App\Schedular\SemesterTimetable\Suggestion\Resolution\Core\ResolutionEngine;
 
 class ScenarioBuilder
 {
@@ -36,7 +37,14 @@ class ScenarioBuilder
                     $h = $this->registry->get($node['type']);
                     if (!$h) continue;
 
-                    $options = $h->conflictOptions($node);
+                    // Hard group nodes are flat; handlers expect the soft shape
+                    $options = $h->conflictOptions([
+                        'id'      => $node['id'],
+                        'type'    => $node['type'],
+                        'details' => collect($node)->except(['id', 'type'])->all(),
+                    ]);
+                    if (empty($options)) continue;
+
                     $resolutions[] = new ResolutionDTO(
                         type: 'conflict',
                         target_id: $node['id'],
@@ -47,6 +55,9 @@ class ScenarioBuilder
                         ]
                     );
                 }
+
+                // Nothing else in the group can change, so keeping this one fixes nothing
+                if (empty($resolutions)) continue;
 
                 $allScenarios[] = new ScenarioDTO(
                     id: uniqid('scenario_'),
@@ -62,7 +73,9 @@ class ScenarioBuilder
             }
         }
         SuggestionContext::setScenarioMode(true);
-        app(ScenarioNormalizationEngine::class)->normalize($allScenarios);
+        // Hard resolvers fit proposals inside the kept constraint's window
+        // themselves, so slot normalization is skipped for hard scenarios
+        app(ResolutionEngine::class)->resolve($allScenarios);
         return $allScenarios;
     }
     public function buildSoft(array $groups): array

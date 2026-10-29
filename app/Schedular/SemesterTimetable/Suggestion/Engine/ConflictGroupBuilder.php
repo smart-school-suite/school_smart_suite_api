@@ -53,7 +53,7 @@ class ConflictGroupBuilder
 
             foreach ($constraint['blockers'] as $blocker) {
                 $group[] = array_merge(
-                    ['id' => $blocker->id],
+                    ['id' => $blocker->id, 'type' => $blocker->type],
                     (array) $blocker->entity
                 );
 

@@ -20,11 +20,10 @@ class ResolutionEngine
 
             foreach ($scenario->resolutions as $resolution) {
                 $resolver = app(ResolutionRegistry::class)->handle($resolution);
-                $solution = $resolver->resolve($resolution, $params);
 
                 $hasResolver = (bool) $resolver;
 
-                $defaultProposal = $hasResolver ? $solution : [];
+                $defaultProposal = $hasResolver ? $resolver->resolve($resolution, $params) : [];
 
                 if ($resolution->type === $this->conflict) {
                     $modOption = collect($resolution->options)->firstWhere("action", AppActions::MODIFY);

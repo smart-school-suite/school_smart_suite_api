@@ -43,18 +43,29 @@ class OperationalPeriodRes extends SuggestionContext implements ResolutionContra
     protected function resolveHard(ResolutionDTO $resolution, array $params): array
     {
         $pSlot = $params['preserve_slot'];
-        $pEnd = Carbon::parse($pSlot['end_time']);
         $pDay = strtolower($pSlot['day']);
 
-        // User intent break that failed constraint
+        // Operational period that blocks the kept constraint
         $intent = $resolution->meta["constraint_failed"];
-        $intentStart = Carbon::parse($intent["start_time"]);
+        $start = Carbon::parse($intent["start_time"]);
+        $end = Carbon::parse($intent["end_time"]);
+
+        if (isset($pSlot['start_time'], $pSlot['end_time'])) {
+            // Kept slot (break, joint course): widen the window to cover it
+            $start = $start->min(Carbon::parse($pSlot['start_time']));
+            $end = $end->max(Carbon::parse($pSlot['end_time']));
+        } else {
+            // Kept period duration: the window must fit at least one period
+            $duration = (int) ($pSlot['period_duration'] ?? $pSlot['duration_minutes'] ?? 0);
+            $end = $end->max($start->copy()->addMinutes($duration));
+        }
+
         return [
             [
                 "id" => Str::uuid()->toString(),
                 "day" => $pDay,
-                "start_time" => $intentStart->format('H:s'),
-                "end_time" => $pEnd->format('H:s')
+                "start_time" => $start->format('H:i'),
+                "end_time" => $end->format('H:i')
             ]
         ];
     }
