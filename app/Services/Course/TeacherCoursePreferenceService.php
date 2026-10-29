@@ -7,11 +7,8 @@ use App\Exceptions\AppException;
 use App\Models\Courses;
 use App\Models\Course\CourseSpecialty;
 use Illuminate\Support\Facades\DB;
-use App\Events\Actions\AdminActionEvent;
 use Illuminate\Support\Str;
 use App\Models\Teacher;
-use App\Events\Analytics\OperationalAnalyticsEvent;
-use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 use App\Models\Teacher\TeacherSpecialty;
 
 class TeacherCoursePreferenceService
@@ -100,37 +97,6 @@ class TeacherCoursePreferenceService
             })->toArray();
 
             TeacherCoursePreference::insert($insertData);
-
-
-
-            // AdminActionEvent::dispatch([
-            //     "permissions"  => ["schoolAdmin.teacherCoursePreference.assign"],
-            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-            //     "schoolBranch" => $currentSchool->id,
-            //     "feature"      => "teacherCoursePreferenceManagement",
-            //     "action"       => "teacherCourse.assigned",
-            //     "authAdmin"    => $authAdmin,
-            //     "data"         => [
-            //         'teacher_id'   => $teacher->id,
-            //         'teacher_name' => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
-            //         'courses_assigned' => $assignedCount,
-            //         'course_ids'   => $requestedCourseIds->toArray(),
-            //     ],
-            //     "message" => "Courses assigned to teacher successfully",
-            // ]);
-            foreach ($requestedCourseIds as $courseId) {
-                event(new OperationalAnalyticsEvent(
-                    eventType: OperationalEvent::TEACHER_COURSE_ASSIGNED,
-                    version: 1,
-                    payload: [
-                        "school_branch_id" => $currentSchool->id,
-                        "course_id" => $courseId,
-                        "teacher_id" => $teacher->id,
-                        "value" => 1
-                    ]
-                ));
-            }
-
 
             return [
                 'teacher_id'       => $teacherId,
@@ -256,22 +222,6 @@ class TeacherCoursePreferenceService
                 ->values()
                 ->toArray();
 
-            AdminActionEvent::dispatch([
-                "permissions"  => ["schoolAdmin.teacherCoursePreference.remove"],
-                "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature"      => "teacherCoursePreferenceManagement",
-                "authAdmin"    => $authAdmin,
-                "action" => "teacherCourse.removed",
-                "data"         => [
-                    'teacher_id'     => $teacher->id,
-                    'teacher_name'   => $teacher->name ?? trim("{$teacher->first_name} {$teacher->last_name}"),
-                    'removed_courses_count' => $deletedCount,
-                    'removed_course_ids'    => $assignedCourseIds,
-                    'removed_course_titles'  => $courseNames,
-                ],
-                "message" => "Courses removed from teacher successfully",
-            ]);
 
             return [
                 'teacher_id'              => $teacherId,

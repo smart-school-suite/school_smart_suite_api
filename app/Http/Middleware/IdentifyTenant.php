@@ -25,7 +25,7 @@ class IdentifyTenant
         if (!$authUser) {
         }
 
-        $schoolBranch = Schoolbranches::find($authUser->school_branch_id);
+        $schoolBranch = Schoolbranches::with(['school'])->find($authUser->school_branch_id);
         if (!$schoolBranch) {
             return ApiResponseService::error("School Branch Not found", null, 404);
         }

@@ -38,5 +38,6 @@ class DatabaseSeeder extends Seeder
         $this->call(JobCategorySeeder::class);
         $this->call(PaymentMethodCategorySeeder::class);
         $this->call(PaymentMethodSeeder::class);
+        $this->call(AssetPolicySeeder::class);
     }
 }

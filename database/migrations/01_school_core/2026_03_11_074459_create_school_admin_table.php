@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone')->nullable();
             $table->string('username')->index();
-            $table->string('profile_picture')->nullable();
             $table->string('address')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->rememberToken();

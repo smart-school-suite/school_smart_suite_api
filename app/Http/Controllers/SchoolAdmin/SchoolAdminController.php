@@ -5,15 +5,11 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SchoolAdmin\SchoolAdminIdRequest;
 use App\Services\ApiResponseService;
-use App\Models\SchoolBranchApiKey;
-use App\Http\Requests\Auth\UpdateProfilePictureRequest;
 use App\Http\Requests\SchoolAdmin\BulkUpdateSchoolAdminRequest;
-use App\Http\Requests\SchoolAdmin\CreateSchoolSuperAdminRequest;
 use App\Http\Requests\SchoolAdmin\ImportSchoolAdminRequest;
 use App\Http\Requests\SchoolAdmin\UpdateSchoolAdminRequest;
 use App\Jobs\SchoolAdmin\SchoolAdminImportJob;
 use App\Services\SchoolAdmin\SchoolAdminService;
-use Exception;
 use Illuminate\Http\Request;
 use App\Models\Job\SystemJob;
 use App\Models\Job\SystemJobCategory;
@@ -54,45 +50,6 @@ class SchoolAdminController extends Controller
         $schoolAdminId = $request->route('schoolAdminId');
         $schoolAdminDetails = $this->schoolAdminService->getSchoolAdminDetails($currentSchool, $schoolAdminId);
         return ApiResponseService::success("School Admin Details Fetched Successfully", $schoolAdminDetails, null, 200);
-    }
-    public function createAdminOnSignup(CreateSchoolSuperAdminRequest $request)
-    {
-        try {
-            $providedKey = $request->header('API-KEY');
-
-            if (!$providedKey) {
-                return ApiResponseService::error("School Branch Api Key is required please provide a valid api key", null, 400);
-            }
-
-            $apiKeyRecord = SchoolBranchApiKey::with('schoolBranch')
-                ->where("api_key", $providedKey)
-                ->first();
-
-            if (!$apiKeyRecord?->schoolBranch) {
-                return ApiResponseService::error("Invalid or unauthorized API key", null, 401);
-            }
-
-            $createSchoolAdmin = $this->schoolAdminService->createSchoolAdmin(
-                $request->validated(),
-                $apiKeyRecord->schoolBranch->id
-            );
-
-            return ApiResponseService::success("School Admin Created Successfully", $createSchoolAdmin, null, 201);
-        } catch (Exception $e) {
-            return ApiResponseService::error($e->getMessage(), null, 400);
-        }
-    }
-    public function uploadProfilePicture(UpdateProfilePictureRequest $request)
-    {
-        $authSchoolAdmin = auth()->guard('schooladmin')->user();
-        $updateProfilePicture = $this->schoolAdminService->uploadProfilePicture($request, $authSchoolAdmin);
-        return ApiResponseService::success("School Admin Profile Picture Updated Succesfully", $updateProfilePicture, null, 201);
-    }
-    public function deleteProfilePicture()
-    {
-        $authSchoolAdmin = auth()->guard('schooladmin')->user();
-        $deleteProfilePicture = $this->schoolAdminService->deleteProfilePicture($authSchoolAdmin);
-        return ApiResponseService::success("School Admin Profile Picture Deleted Succesfully", $deleteProfilePicture, null, 200);
     }
     public function deactivateAccount(Request $request, string $schoolAdminId)
     {

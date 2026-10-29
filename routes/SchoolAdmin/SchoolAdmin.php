@@ -18,13 +18,6 @@ Route::put('/{schoolAdminId}', [SchoolAdminController::class, 'updateSchoolAdmin
 Route::delete('/{schoolAdminId}', [SchoolAdminController::class, 'deleteSchoolAdmin'])
     ->name('school-admins.destroy');
 
-Route::post('/profile-picture', [SchoolAdminController::class, 'uploadProfilePicture'])
-    ->name('school-admins.profile-picture.upload');
-
-
-Route::delete('/profile-picture', [SchoolAdminController::class, 'deleteProfilePicture'])
-    ->name('school-admins.profile-picture.destroy');
-
 Route::post('/{schoolAdminId}/deactivate', [SchoolAdminController::class, 'deactivateAccount'])
     ->name('school-admins.deactivate');
 

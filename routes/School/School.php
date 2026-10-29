@@ -15,5 +15,4 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
     Route::delete('/', [SchoolController::class, 'deleteSchool'])
         ->name('schools.destroy');
 
-    Route::post('/upload-school-logo', [SchoolController::class, "uploadSchoolLogo"]);
 });

@@ -83,60 +83,7 @@ class AdditionalFeePaymentService
 
             DB::commit();
 
-            if ($additionalFee->student) {
-                $additionalFee->student->notify(new AdditionalFeePaidNotification(
-                    $amountPaid,
-                    $additionalFee->reason,
-                    $additionalFee->feeCategory->title ?? 'N/A',
-                    'XAF'
-                ));
-            }
 
-            $adminNotificationData = [
-                'student' => $additionalFee->student ?? null,
-                'amount_paid' => $amountPaid,
-                'fee_reason' => $additionalFee->reason,
-                'fee_category_title' => $additionalFee->feeCategory->title ?? 'N/A',
-                'payment_method' => $additionalFeesData['payment_method'],
-            ];
-
-            SendAdminAdditionalFeeNotificationJob::dispatch(
-                $currentSchool->id,
-                $adminNotificationData
-            );
-
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.additionalFee.pay"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalFeeManagement",
-                    "action" => "additionalFee.Paid",
-                    "authAdmin" => $authAdmin,
-                    "data" => $additionalFee,
-                    "message" => "Additional Fee Paid",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$additionalFee->student_id],
-                'feature'      => 'studentAdditionalFeePaid',
-                'message'      => 'Student Additional Fee Paid',
-                'data'         =>  $additionalFee,
-            ]);
-
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::ADDITIONAL_FEE_PAID,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "category_id" => $additionalFee->additionalfee_category_id,
-                    "amount" => $additionalFee->amount,
-                    "specialty_id" => $additionalFee->specialty->id,
-                    "department_id" => $additionalFee->specialty->department_id,
-                    "level_id" => $additionalFee->specialty->level_id
-                ]
-            ));
 
             return $transaction;
         } catch (AppException $e) {
@@ -193,37 +140,6 @@ class AdditionalFeePaymentService
             $transaction->delete();
             DB::commit();
 
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.reverse"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalFeeTransactionManagement",
-                    "action" => "additionalFeePayment.reversed",
-                    "authAdmin" => $authAdmin,
-                    "data" => $additionalFees,
-                    "message" => "Additional Fee Transaction Reversed",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$additionalFees->student_id],
-                'feature'      => 'AdditionalFeeTransactionReversed',
-                'message'      => 'Student Additional Fee Paid',
-                'data'         =>  $additionalFees,
-            ]);
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::ADDITIONAL_FEE_REVERSED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "category_id" => $transaction->additionFee->additionalfee_category_id,
-                    "amount" => $transaction->amount,
-                    "specialty_id" => $transaction->additionFee->specialty->id,
-                    "department_id" => $transaction->additionFee->specialty->department_id,
-                    "level_id" => $transaction->additionFee->specialty->level_id
-                ]
-            ));
             return $transaction;
         } catch (AppException $e) {
             DB::rollBack();
@@ -281,25 +197,6 @@ class AdditionalFeePaymentService
 
             DB::commit();
 
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalFeeTransactionManagement",
-                    "action" => "additionalFeeTransaction.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $transaction,
-                    "message" => "Additional Fee Transaction Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$transaction->additionFee->student_id],
-                'feature'      => 'AdditionalFeeTransactionDelete',
-                'message'      => 'Additional Fee Transaction Deleted',
-                'data'         =>  $transaction,
-            ]);
             return $transaction;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -396,25 +293,6 @@ class AdditionalFeePaymentService
                 );
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalFeeTransactionManagement",
-                    "action" => "additionalFeeTransaction.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $allTransactionIds,
-                    "message" => "Additional Fee Transaction Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'AdditionalFeeTransactionDelete',
-                'message'      => 'Additional Fee Transaction Deleted',
-                'data'         =>  $transaction,
-            ]);
             return $successfulDeletions;
         } catch (AppException $e) {
             DB::rollBack();
@@ -508,37 +386,6 @@ class AdditionalFeePaymentService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.additionalFee.transactions.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalFeeTransactionManagement",
-                    "action" => "additionalFeeTransaction.reversed",
-                    "authAdmin" => $authAdmin,
-                    "data" => $allTransactionIds,
-                    "message" => "Additional Fee Transaction Reversed",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'AdditionalFeeTransactionDelete',
-                'message'      => 'Additional Fee Transaction Deleted',
-                'data'         =>  $transaction,
-            ]);
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::ADDITIONAL_FEE_REVERSED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "category_id" => $additionalFees->additionalfee_category_id,
-                    "amount" => $additionalFees->amount,
-                    "specialty_id" => $additionalFees->specialty->id,
-                    "department_id" => $additionalFees->specialty->department_id,
-                    "level_id" => $additionalFees->specialty->level_id
-                ]
-            ));
             return $reversedTransactions;
         } catch (AppException $e) {
             DB::rollBack();
@@ -567,9 +414,7 @@ class AdditionalFeePaymentService
         }
 
         $transactionsToInsert = [];
-        $notificationData = [];
         $failedPayments = [];
-        $studentIds = [];
         $feeIds = collect($feeDataList)->pluck('fee_id')->toArray();
 
         $additionalFees = AdditionalFees::where('school_branch_id', $currentSchool->id)
@@ -655,48 +500,6 @@ class AdditionalFeePaymentService
             AdditionalFees::whereIn('id', $successfulFeeIds)->update(['status' => 'paid']);
 
             DB::commit();
-
-            if (!empty($notificationData)) {
-                AdminActionEvent::dispatch(
-                    [
-                        "permissions" =>  ["schoolAdmin.additionalFee.pay"],
-                        "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                        "schoolBranch" =>  $currentSchool->id,
-                        "feature" => "additionalFeeManagement",
-                        "authAdmin" => $authAdmin,
-                        "data" => $notificationData,
-                        "message" => "Additional Fee Paid",
-                    ]
-                );
-                StudentActionEvent::dispatch([
-                    'schoolBranch' => $currentSchool->id,
-                    'studentIds'   => $studentIds,
-                    'feature'      => 'AdditionalFeeTransactionDelete',
-                    'message'      => 'Additional Fee Transaction Deleted',
-                    'data'         =>  $notificationData,
-                ]);
-                SendAdminAdditionalFeeNotificationJob::dispatch(
-                    $currentSchool->id,
-                    $notificationData,
-                );
-
-                SendAdditionalFeePaidNotificationJob::dispatch(
-                    $notificationData
-                );
-
-                event(new FinancialAnalyticsEvent(
-                    eventType: FinancialEventConstant::ADDITIONAL_FEE_PAID,
-                    version: 1,
-                    payload: [
-                        "school_branch_id" => $currentSchool->id,
-                        "category_id" => $additionalFee->additionalfee_category_id,
-                        "amount" => $additionalFee->amount,
-                        "specialty_id" => $additionalFee->specialty->id,
-                        "department_id" => $additionalFee->specialty->department_id,
-                        "level_id" => $additionalFee->specialty->level_id
-                    ]
-                ));
-            }
 
             $newTransactionIds = collect($transactionsToInsert)->pluck('id')->toArray();
             return AdditionalFeeTransactions::whereIn('id', $newTransactionIds)->get();

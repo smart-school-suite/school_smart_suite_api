@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Announcement\AnnouncementRecipient;
+use App\Models\Asset\SchoolAdminAvatar;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,7 @@ use App\Models\OTP;
 use App\Models\Promotion\PromotionRun;
 use App\Models\Promotion\StudentPromotionRecord;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Schooladmin extends Authenticatable
 {
@@ -31,7 +33,6 @@ class Schooladmin extends Authenticatable
         'username',
         'email',
         'password',
-        'profile_picture',
         'address',
         'phone',
         'school_branch_id',
@@ -45,11 +46,6 @@ class Schooladmin extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     public $keyType = 'string';
     public $incrementing = false;
     public $table = 'school_admins';
@@ -62,6 +58,10 @@ class Schooladmin extends Authenticatable
         ];
     }
 
+    public function currentAvatar(): HasOne
+    {
+        return $this->hasOne(SchoolAdminAvatar::class, 'school_admin_id');
+    }
     public function gender(): BelongsTo
     {
         return $this->belongsTo(Gender::class, 'gender_id');

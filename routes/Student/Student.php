@@ -44,12 +44,6 @@ use App\Http\Controllers\Student\StudentController;
     Route::delete('/{studentId}', [StudentController::class, 'deleteStudent'])
         ->name('students.destroy');
 
-    Route::post('/avatar/upload', [StudentController::class, 'uploadProfilePicture'])
-    ->name('student.avatar.upload');
-
-    Route::delete('/avatar/delete', [StudentController::class, 'deleteProfilePicture'])
-    ->name('student.avatar.delete');
-
     Route::get('/{studentId}/profile', [StudentController::class, 'getStudentProfileDetails'])->name('get.student.profile.details');
 
     Route::post('/bulk-reinstate/dropout', [StudentController::class, "bulkReinstateDropedOutStudent"])->name("Bulk.reinstate.dropdout.student");

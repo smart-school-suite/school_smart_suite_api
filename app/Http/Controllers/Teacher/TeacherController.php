@@ -7,7 +7,6 @@ use App\Jobs\Teacher\TeacherImportJob;
 use App\Models\Job\SystemJobDetail;
 use App\Models\Job\SystemJob;
 use Illuminate\Http\Request;
-use App\Http\Requests\Auth\UpdateProfilePictureRequest;
 use App\Http\Requests\Teacher\ImportTeacherRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\Teacher\UpdateTeacherRequest;
@@ -92,20 +91,6 @@ class TeacherController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $bulkDeleteTeacher = $this->teacherService->bulkDeleteTeacher($request->teacherIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Teachers Deleted Successfully", $bulkDeleteTeacher, null, 200);
-    }
-
-    public function uploadProfilePicture(UpdateProfilePictureRequest $request)
-    {
-        $authTeacher = auth()->guard('teacher')->user();
-        $updateProfilePicture = $this->teacherService->uploadProfilePicture($request, $authTeacher);
-        return ApiResponseService::success("Profile Picture Uploaded Successfully", $updateProfilePicture, null, 200);
-    }
-
-    public function deleteProfilePicture(Request $request)
-    {
-        $authTeacher = auth()->guard('teacher')->user();
-        $deleteProfilePicture = $this->teacherService->deleteProfilePicture($authTeacher);
-        return ApiResponseService::success("Profile Picture Deleted Successfully", $deleteProfilePicture, null, 200);
     }
 
     public function getTeacherBySpecialtyPreference(Request $request, string $specialtyId)

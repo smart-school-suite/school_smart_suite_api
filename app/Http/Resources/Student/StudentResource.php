@@ -25,7 +25,7 @@ class StudentResource extends JsonResource
             'phone' => $this->phone ?? null,
             'email' => $this->email ?? null,
             'status' => $this->status ?? null,
-            'profile_picture' => $this->profile_picture ?? null,
+            'profile_picture' => $this->currentAvatar?->object_key ?? null,
             'guardian_name' => $this->guardian->name ?? null,
             'relationship' => $this->relationship->name ?? null,
             'specialty_name' => $this->specialty->specialty_name ?? null,

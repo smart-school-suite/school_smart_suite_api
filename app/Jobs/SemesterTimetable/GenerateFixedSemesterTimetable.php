@@ -87,7 +87,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $branchId    = $this->currentSchool->id;
         $timetableVersionId = $this->payload['version_id'] ?? null;
-        Log::info("timetable version: {$timetableVersionId}");
         $specialty = $schoolSemester->schoolYear->specialty;
         $requestPayload = $this->payload;
 

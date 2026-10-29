@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('last_name', 50);
             $table->string('password');
             $table->string('username', 150)->index();
-            $table->string('profile_picture')->nullable();
             $table->string('phone')->nullable();
             $table->string('email');
             $table->enum('status', ['active', 'inactive'])->default('active');

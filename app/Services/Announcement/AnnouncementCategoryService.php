@@ -33,18 +33,6 @@ class AnnouncementCategoryService
                 'school_branch_id' => $currentSchool->id
             ]);
 
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.announcementCategory.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "announcementCategoryManagement",
-                    "action" => "announcementCategory.created",
-                    "authAdmin" => $authAdmin,
-                    "data" => $category,
-                    "message" => "Announcement Category Created",
-                ]
-            );
             return $category;
         } catch (Throwable $e) {
             throw new AppException(
@@ -82,18 +70,6 @@ class AnnouncementCategoryService
             }
 
             $announcementCategory->update($filterData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.announcementCategory.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "announcementCategoryManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $announcementCategory,
-                    "message" => "Announcement Category Updated",
-                    "action" => "announcementCategory.updated"
-                ]
-            );
             return $announcementCategory;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -154,18 +130,6 @@ class AnnouncementCategoryService
             $categoryName = $announcementCategory->name;
 
             $announcementCategory->delete();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.announcementCategory.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "announcementCategoryManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $announcementCategory,
-                    "action" => "announcementCategory.deleted",
-                    "message" => "Announcement Category Deleted",
-                ]
-            );
             return $announcementCategory;
         } catch (ModelNotFoundException $e) {
 

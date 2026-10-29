@@ -20,7 +20,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Announcement\AnnouncementRecipient;
+use App\Models\Asset\TeacherAvatar;
 use App\Models\Exam\ExamResultPublication;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Teacher extends Model
 {
@@ -34,7 +36,6 @@ class Teacher extends Model
         'first_name',
         'last_name',
         'status',
-        'profile_picture',
         'address',
         'username',
         'password',
@@ -59,6 +60,10 @@ class Teacher extends Model
         ];
     }
 
+    public function currentAvatar(): HasOne
+    {
+        return $this->hasOne(TeacherAvatar::class, 'teacher_id');
+    }
     public function examPublicationAuthor()
     {
         return $this->morphMany(ExamResultPublication::class, 'authorable');

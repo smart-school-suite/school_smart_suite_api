@@ -10,6 +10,7 @@ use App\Http\Requests\Country\UpdateCountryRequest;
 use App\Http\Requests\Country\BulkUpdateCountryRequest;
 use App\Services\ApiResponseService;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class CountryController extends Controller
 {
@@ -31,6 +32,7 @@ class CountryController extends Controller
         return ApiResponseService::success('Country Delete succesfully', $deleteCountry, null, 200);
     }
     public function getCountries(){
+        Log::info("ASKAJLKDJALSKJDALKJDLAKSJD LAKSJD ALSKJD LAKSJDLK");
         $country = $this->countryService->getCountries();
         return ApiResponseService::success('Countries Fetched Succefully', $country, null, 200);
     }

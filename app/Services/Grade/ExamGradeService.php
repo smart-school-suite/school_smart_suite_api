@@ -40,17 +40,6 @@ class ExamGradeService
             $exam->grades_category_id = null;
             $exam->grading_added = false;
             $exam->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.examGradeScale.remove"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "examManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $exam,
-                    "message" => "Exam Grade Scale Romoved",
-                ]
-            );
             return $exam;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -85,17 +74,6 @@ class ExamGradeService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.examGradeScale.remove"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "examManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $results,
-                    "message" => "Exam Grade Scale Romoved",
-                ]
-            );
             return $results;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -124,17 +102,6 @@ class ExamGradeService
             $exams->grades_category_id = $updateData['grades_category_id'];
             $exams->grading_added = true;
             $exams->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.examGradeScale.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "examManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $exams,
-                    "message" => "Exam Grade Scale Updated",
-                ]
-            );
             return $exams;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

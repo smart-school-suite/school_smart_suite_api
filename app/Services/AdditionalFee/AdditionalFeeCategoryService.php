@@ -26,18 +26,6 @@ class AdditionalFeeCategoryService
         $additionalFeeCategory->school_branch_id = $currentSchool->id;
         $additionalFeeCategory->title = $categoryData["title"];
         $additionalFeeCategory->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFeeCategory.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeCategoryManagement",
-                "action" => "additionalFeeCategory.created",
-                "authAdmin" => $authAdmin,
-                "data" => $additionalFeeCategory,
-                "message" => "Additional Fee Category Created",
-            ]
-        );
         return $additionalFeeCategory;
     }
 
@@ -76,18 +64,6 @@ class AdditionalFeeCategoryService
 
         try {
             $feeCategoryExists->update($filterData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.additionalFeeCategory.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "additionalFeeCategoryManagement",
-                    "action" => "additionalFeeCategory.updated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $feeCategoryExists,
-                    "message" => "Additional Fee Category Updated",
-                ]
-            );
             return $feeCategoryExists;
         } catch (\Exception $e) {
             throw new AppException(
@@ -113,18 +89,6 @@ class AdditionalFeeCategoryService
             );
         }
         $feeCategoryExists->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.additionalFeeCategory.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "additionalFeeCategoryManagement",
-                "action" => "additionalFeeCategory.deleted",
-                "authAdmin" => $authAdmin,
-                "data" => $feeCategoryExists,
-                "message" => "Additional Fee Category Deleted",
-            ]
-        );
         return $feeCategoryExists;
     }
 

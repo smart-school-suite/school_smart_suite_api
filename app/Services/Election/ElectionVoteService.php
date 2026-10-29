@@ -12,8 +12,6 @@ use App\Models\VoterStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Events\Analytics\ElectionAnalyticsEvent;
-use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
 
 class ElectionVoteService
 {
@@ -90,17 +88,6 @@ class ElectionVoteService
             broadcast(new VoteCastEvent($updatedResult))->toOthers();
 
             DB::commit();
-            event(new ElectionAnalyticsEvent(
-                eventType: ElectionEvent::VOTE_CASTED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "election_id" => $data['election_id'],
-                    "candidate_id" => $data['candidate_id'],
-                    "election_role_id" => $data["position_id"],
-                    "election_type_id" => $election->election_type_id
-                ]
-            ));
             return $updatedResult;
         } catch (AppException $e) {
             DB::rollBack();

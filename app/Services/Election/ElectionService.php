@@ -2,13 +2,6 @@
 
 namespace App\Services\Election;
 
-use App\Jobs\DataCleanupJobs\UpdateElectionResultStatus;
-use App\Jobs\DataCleanupJobs\UpdateElectionStatusJob;
-use App\Jobs\NotificationJobs\SendAdminElectionConcludedNotificationJob;
-use App\Jobs\NotificationJobs\SendElectionConcludedNotificationJob;
-use App\Jobs\NotificationJobs\SendElectionOpenNotificationJob;
-use App\Jobs\NotificationJobs\SendElectionVoteOpenNotification;
-use App\Jobs\StatisticalJobs\OperationalJobs\ElectionStatJob;
 use App\Models\ElectionParticipants;
 use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Elections;
@@ -20,8 +13,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use App\Exceptions\AppException;
 use Exception;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
 
 class ElectionService
 {
@@ -101,19 +92,6 @@ class ElectionService
             );
         }
     }
-    private function dispatchJobs(string $electionId, object $currentSchool, array $data)
-    {
-        ElectionStatJob::dispatch($electionId, $currentSchool->id);
-        SendElectionOpenNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_start"]));
-        SendElectionVoteOpenNotification::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_start"]));
-        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_end"]));
-        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["application_start"]));
-        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_start"]));
-        UpdateElectionStatusJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
-        UpdateElectionResultStatus::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
-        SendAdminElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
-        SendElectionConcludedNotificationJob::dispatch($electionId, $currentSchool->id)->delay(Carbon::parse($data["voting_end"]));
-    }
     public function bulkDeleteElection(array $electionIds, object $currentSchool, array $authAdmin)
     {
         $result = [];
@@ -171,17 +149,6 @@ class ElectionService
             }
 
             DB::commit();
-            // AdminActionEvent::dispatch(
-            //     [
-            //         "permissions" =>  ["schoolAdmin.election.delete"],
-            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            //         "schoolBranch" =>  $currentSchool->id,
-            //         "feature" => "electionManagement",
-            //         "authAdmin" => $authAdmin,
-            //         "data" => $electionIds,
-            //         "message" => "Election Deleted",
-            //     ]
-            // );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -214,17 +181,6 @@ class ElectionService
 
         try {
             $election->delete();
-            // AdminActionEvent::dispatch(
-            //     [
-            //         "permissions" =>  ["schoolAdmin.election.delete"],
-            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            //         "schoolBranch" =>  $currentSchool->id,
-            //         "feature" => "electionManagement",
-            //         "authAdmin" => $authAdmin,
-            //         "data" => $election,
-            //         "message" => "Election Deleted",
-            //     ]
-            // );
             return $election;
         } catch (Throwable $e) {
             throw new AppException(
@@ -300,17 +256,6 @@ class ElectionService
 
         try {
             $election->update($filterData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.election.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $election,
-                    "message" => "Election Updated",
-                ]
-            );
             return $election;
         } catch (Throwable $e) {
             throw new AppException(
@@ -358,17 +303,6 @@ class ElectionService
                     $schoolElection = Elections::findOrFail($electionId);
                     $schoolElection->update($filterData);
                     $result[] = $schoolElection;
-                    // AdminActionEvent::dispatch(
-                    //     [
-                    //         "permissions" =>  ["schoolAdmin.election.update"],
-                    //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    //         "schoolBranch" =>  $currentSchool->id,
-                    //         "feature" => "electionManagement",
-                    //         "authAdmin" => $authAdmin,
-                    //         "data" => $result,
-                    //         "message" => "Elections Updated",
-                    //     ]
-                    // );
                 } catch (ModelNotFoundException $e) {
                     DB::rollBack();
                     throw new AppException(
@@ -483,24 +417,6 @@ class ElectionService
                 $specialtyIds[] = $electionParticipant['specialty_id'];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.election.add.participants"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Election Participants Added",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => $specialtyIds,
-                'feature'      => 'electionCreate',
-                'message'      => 'Election Created',
-                'data'         => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -530,17 +446,6 @@ class ElectionService
                 ]);
                 $result[] = $allowedParticipants;
             }
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.election.add.participants"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Election Participants Added",
-                ]
-            );
             DB::commit();
             return $result;
         } catch (Exception $e) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Asset\StudentAvatar;
 use App\Models\Badge\UserBadge;
 use App\Models\Graduation\GraduationRecord;
 use App\Traits\Currency;
@@ -19,6 +20,7 @@ use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\OTP;
 use App\Models\Job\SystemJob;
 use App\Models\Promotion\StudentPromotionRecord;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
@@ -42,7 +44,6 @@ class Student extends Model
         'email',
         'password',
         "sub_status",
-        'profile_picture',
         'relationship_id',
         'student_source_id'
     ];
@@ -63,6 +64,10 @@ class Student extends Model
         ];
     }
 
+    public function currentAvatar(): HasOne
+    {
+        return $this->hasOne(StudentAvatar::class, 'student_id');
+    }
     public function graduationRecord(): HasMany
     {
         return $this->hasMany(GraduationRecord::class, 'student_id');

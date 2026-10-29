@@ -3,7 +3,6 @@
 namespace App\Services\Specialty;
 
 use App\Exceptions\AppException;
-use App\Jobs\NotificationJobs\SendAdminSpecialtyCreatedNotificationJob;
 use App\Models\Specialty;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -41,18 +40,6 @@ class SpecialtyService
             $specialty->level_id = $data["level_id"];
             $specialty->save();
 
-            SendAdminSpecialtyCreatedNotificationJob::dispatch($currentSchool->id, $data);
-            // AdminActionEvent::dispatch(
-            //     [
-            //         "permissions" =>  ["schoolAdmin.specialty.create"],
-            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            //         "schoolBranch" =>  $currentSchool->id,
-            //         "feature" => "specialtyManagement",
-            //         "authAdmin" => $authAdmin,
-            //         "data" => $specialty,
-            //         "message" => "Specialty Created",
-            //     ]
-            // );
             return $specialty;
         } catch (AppException $e) {
             throw $e;

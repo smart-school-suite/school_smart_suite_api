@@ -9,7 +9,7 @@ class UploadSchoolLogoRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-       public function rules(): array
+    public function rules(): array
     {
         return [
             'school_logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',

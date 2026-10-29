@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use App\Exceptions\AppException;
 use Illuminate\Support\Facades\DB;
-use App\Events\Actions\AdminActionEvent;
 
 class ElectionCandidateService
 {
@@ -75,18 +74,6 @@ class ElectionCandidateService
 
             $candidate->isActive = false;
             $candidate->save();
-
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionCandidate.disqualify"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionRoleManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $candidate,
-                    "message" => "Election Candidate Disqualified",
-                ]
-            );
             return $candidate;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -114,18 +101,6 @@ class ElectionCandidateService
 
             $candidate->isActive = true;
             $candidate->save();
-
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionCandidate.reinstate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionRoleManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $candidate,
-                    "message" => "Election Candidate Reinstated",
-                ]
-            );
             return $candidate;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -198,17 +173,6 @@ class ElectionCandidateService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionCandidate.disqualify"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionRoleManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Election Candidates Disqualified",
-                ]
-            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();
@@ -278,17 +242,6 @@ class ElectionCandidateService
 
             DB::commit();
 
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionCandidate.reinstate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionRoleManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $candidate,
-                    "message" => "Election Candidates Reinstated",
-                ]
-            );
             return $result;
         } catch (Throwable $e) {
             DB::rollBack();

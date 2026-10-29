@@ -27,7 +27,7 @@ class LevelStartHandler implements SettingUpdateHandler
             );
         }
 
-        $levelType = LevelType::where('program_name', $value)->first();
+        $levelType = LevelType::where('id', $value)->first();
 
         if (!$levelType) {
             throw new AppException(

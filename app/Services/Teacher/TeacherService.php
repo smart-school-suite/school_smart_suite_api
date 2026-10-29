@@ -7,11 +7,8 @@ use App\Models\Teacher;
 use App\Notifications\SpecialtyAssignedToTeacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
-use Throwable;
 use App\Services\ApiResponseService;
-use App\Events\Actions\AdminActionEvent;
 use App\Models\Teacher\TeacherSpecialty;
 
 class TeacherService
@@ -26,17 +23,6 @@ class TeacherService
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
         $teacher->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.teacher.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "teacherManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $teacher,
-                "message" => "Teacher Deleted",
-            ]
-        );
         return $teacher;
     }
     public function updateTeacher(array $data, string $teacherId, object $currentSchool, object $authAdmin)
@@ -45,17 +31,6 @@ class TeacherService
             ->findOrFail($teacherId);
         $filterData = array_filter($data);
         $teacher->update($filterData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.teacher.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "teacherManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $teacher,
-                "message" => "Teacher Updated",
-            ]
-        );
         return $teacher;
     }
     public function getTeacherSchedule(string $teacherId, $currentSchool)
@@ -101,7 +76,7 @@ class TeacherService
     public function getAllTeachers(object $currentSchool)
     {
         $getInstructors = Teacher::where("school_branch_id", $currentSchool->id)
-            ->with(['gender', 'specialties']) // Fixed typo: 'specailty' to 'specialty'
+            ->with(['gender', 'specialties', 'currentAvatar']) // Fixed typo: 'specailty' to 'specialty'
             ->withCount(['specialties as num_assigned_specialties']) // Count specialty preferences
             //  ->withCount(['teacherCoursePreferences as num_assigned_courses']) // Count assigned courses if needed
             ->get();
@@ -112,7 +87,7 @@ class TeacherService
             "last_name" => $teacher->last_name ?? null,
             'username' => $teacher->username ?? null,
             "name" => $teacher->name ?? null,
-            "profile_picture" => $teacher->profile_picture ?? null,
+            "profile_picture" => $teacher->currentAvatar?->object_key ?? null,
             "gender" => $teacher->gender->name ?? null,
             "email" => $teacher->email ?? null,
             "status" => $teacher->status ?? null,
@@ -165,17 +140,6 @@ class TeacherService
             ->findOrFail($teacherId);
         $teacher->status = "inactive";
         $teacher->save();
-        // AdminActionEvent::dispatch(
-        //     [
-        //         "permissions" =>  ["schoolAdmin.teacher.deactivate"],
-        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-        //         "schoolBranch" =>  $currentSchool->id,
-        //         "feature" => "teacherManagement",
-        //         "authAdmin" => $authAdmin,
-        //         "data" => $teacher,
-        //         "message" => "Teacher Account Deactivated",
-        //     ]
-        // );
         return $teacher;
     }
     public function activateTeacher(string $teacherId, object $currentSchool, object $authAdmin)
@@ -184,17 +148,6 @@ class TeacherService
             ->findOrFail($teacherId);
         $teacher->status = "active";
         $teacher->save();
-        // AdminActionEvent::dispatch(
-        //     [
-        //         "permissions" =>  ["schoolAdmin.teacher.activate"],
-        //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-        //         "schoolBranch" =>  $currentSchool->id,
-        //         "feature" => "teacherManagement",
-        //         "authAdmin" => $authAdmin,
-        //         "data" => $teacher,
-        //         "message" => "Teacher Account Activated",
-        //     ]
-        // );
         return $teacher;
     }
     public function bulkDeactivateTeacher(array $teacherIds, object $currentSchool, object $authAdmin)
@@ -212,17 +165,6 @@ class TeacherService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.teacher.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "teacherManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $teacher,
-                    "message" => "Teacher Account Deactivated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -244,17 +186,6 @@ class TeacherService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.teacher.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "teacherManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Teacher Account Activated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -275,17 +206,6 @@ class TeacherService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.teacher.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "teacherManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Teacher Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -314,59 +234,9 @@ class TeacherService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.teacher.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "teacherManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Teacher Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
-            throw $e;
-        }
-    }
-    public function uploadProfilePicture(object $request, object $authTeacher)
-    {
-
-        try {
-            $teacher = Teacher::findOrFail($authTeacher->id);
-            DB::transaction(function () use ($request, $teacher) {
-
-                if ($teacher->profile_picture) {
-                    Storage::disk('public')->delete('TeacherAvatars/' . $teacher->profile_picture);
-                }
-                $profilePicture = $request->file('profile_picture');
-                $fileName = time() . '.' . $profilePicture->getClientOriginalExtension();
-                $profilePicture->storeAs('public/TeacherAvatars', $fileName);
-
-                $teacher->profile_picture = $fileName;
-                $teacher->save();
-            });
-            return true;
-        } catch (Throwable $e) {
-            throw $e;
-        }
-    }
-    public function deleteProfilePicture(object $authTeacher)
-    {
-        try {
-            $teacher = Teacher::findOrFail($authTeacher->id);
-            if (!$teacher->profile_picture) {
-                return ApiResponseService::error("No Profile Picture to Delete {$teacher->name}", null, 400);
-            }
-            Storage::disk('public')->delete('TeacherAvatars/' . $teacher->profile_picture);
-
-            $teacher->profile_picture = null;
-            $teacher->save();
-
-            return $teacher;
-        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -375,7 +245,13 @@ class TeacherService
 
         $teachers = TeacherSpecialty::where('specialty_id', $specialtyId)
             ->where('school_branch_id', $currentSchool->id)
-            ->with(['teacher.specialties', 'teacher.teacherCoursePreference', 'teacher.qualifications', 'teacher.levels'])
+            ->with([
+                'teacher.specialties',
+                'teacher.teacherCoursePreference',
+                'teacher.qualifications',
+                'teacher.levels',
+                'teacher.currentAvatar'
+            ])
             ->get();
 
         if ($teachers->isEmpty()) {
@@ -391,7 +267,7 @@ class TeacherService
                 'name' => $teacher->name,
                 'first_name' => $teacher->first_name,
                 'last_name' => $teacher->last_name,
-                'profile_picture' => $teacher->profile_picture,
+                'profile_picture' => $teacher->currentAvatar?->object_key ?? null,
                 'username' => $teacher->username ?? null,
                 'address' => $teacher->address,
                 'qualifications' => $teacher->qualifications ?? null,

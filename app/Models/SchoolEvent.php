@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Asset\SchoolEventImage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\GeneratesUuid;
@@ -35,28 +36,36 @@ class SchoolEvent extends Model
     ];
 
     protected $casts = [
-         'likes' => 'integer',
-         'invitee_count' => 'integer',
-         'tags' => 'json',
-         'audience' => 'json'
+        'likes' => 'integer',
+        'invitee_count' => 'integer',
+        'tags' => 'json',
+        'audience' => 'json'
     ];
     public $incrementing = 'false';
     public $table = 'school_events';
     public $keyType = 'string';
 
-    public function eventCategory(): BelongsTo {
+    public function currentImages(): HasMany
+    {
+        return $this->hasMany(SchoolEventImage::class, 'event_id');
+    }
+    public function eventCategory(): BelongsTo
+    {
         return $this->belongsTo(EventCategory::class, 'event_category_id');
     }
 
-    public function schoolBranch(): BelongsTo {
+    public function schoolBranch(): BelongsTo
+    {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
 
-    public function EventAuthor(): HasMany {
+    public function EventAuthor(): HasMany
+    {
         return $this->hasMany(EventAuthor::class, 'event_id');
     }
 
-    public function eventAudience(): HasMany {
+    public function eventAudience(): HasMany
+    {
         return $this->hasMany(EventAudience::class);
     }
 }

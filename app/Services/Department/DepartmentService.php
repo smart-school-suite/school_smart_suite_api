@@ -2,8 +2,6 @@
 
 namespace App\Services\Department;
 
-use App\Jobs\NotificationJobs\SendAdminDepartmentCreatedNotificationJob;
-use App\Jobs\StatisticalJobs\OperationalJobs\DepartmentStatJob;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\Department;
@@ -11,9 +9,6 @@ use Illuminate\Support\Str;
 use App\Exceptions\AppException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Analytics\OperationalAnalyticsEvent;
-use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 
 class DepartmentService
 {
@@ -39,8 +34,6 @@ class DepartmentService
             $department->description = $data["description"];
             $department->school_branch_id = $currentSchool->id;
             $department->save();
-            DepartmentStatJob::dispatch($departmentId, $currentSchool->id);
-            SendAdminDepartmentCreatedNotificationJob::dispatch($currentSchool->id, $data);
             return $department;
         } catch (Exception $e) {
             throw new AppException(
@@ -100,17 +93,6 @@ class DepartmentService
             }
 
             $department->update($filterData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Updated",
-                ]
-            );
             return $department;
         } catch (AppException $e) {
             throw $e;
@@ -129,17 +111,6 @@ class DepartmentService
         try {
             $department = Department::where("school_branch_id", $currentSchool->id)->findOrFail($departmentId);
             $department->delete();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Deleted",
-                ]
-            );
             return $department;
         } catch (Exception $e) {
             throw new AppException(
@@ -207,17 +178,6 @@ class DepartmentService
             }
             $department->status = 'inactive';
             $department->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Deactivated",
-                ]
-            );
             return $department;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -253,25 +213,6 @@ class DepartmentService
             }
             $department->status = "active";
             $department->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Activated",
-                ]
-            );
-            event(new OperationalAnalyticsEvent(
-                 eventType:OperationalEvent::DEPARTMENT_ACTIVATED,
-                 version:1,
-                 payload:[
-                    "school_branch_id" => $currentSchool->id,
-                    "value" => 1
-                 ]
-            ));
             return $department;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -301,27 +242,6 @@ class DepartmentService
                     $department->status = 'inactive';
                     $department->save();
                 }
-            }
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Deactivated",
-                ]
-            );
-            foreach($departmentIds as $departmentId){
-                event(new OperationalAnalyticsEvent(
-                     eventType:OperationalEvent::DEPARTMENT_DEACTIVATED,
-                     version:1,
-                     payload:[
-                         "school_branch_id" => $currentSchool->id,
-                         "value" => 1
-                     ]
-                ));
             }
             return true;
         } catch (Exception $e) {
@@ -353,27 +273,6 @@ class DepartmentService
                 }
                 $department->status = 'active';
                 $department->save();
-            }
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Activated",
-                ]
-            );
-            foreach($departmentIds as $departmentId){
-                event(new OperationalAnalyticsEvent(
-                     eventType:OperationalEvent::DEPARTMENT_ACTIVATED,
-                     version:1,
-                     payload:[
-                        "school_branch_id" => $currentSchool->id,
-                        "value" => 1
-                     ]
-                ));
             }
             return true;
         } catch (ModelNotFoundException $e) {
@@ -414,17 +313,6 @@ class DepartmentService
                 }
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Department Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -445,17 +333,6 @@ class DepartmentService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.department.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "departmentManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $department,
-                    "message" => "Department Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

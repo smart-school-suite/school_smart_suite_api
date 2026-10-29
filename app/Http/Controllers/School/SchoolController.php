@@ -37,13 +37,6 @@ class SchoolController extends Controller
         $getSchoolDetails = $this->schoolService->getSchoolDetails($currentSchool->school_id);
         return ApiResponseService::success("School Details Fetched Sucessfully", $getSchoolDetails, null, 200);
     }
-    public function uploadSchoolLogo(UploadSchoolLogoRequest $request, string $schoolId)
-    {
-        $authAdmin = $this->resolveUser();
-        $currentSchool = $request->attributes->get('currentSchool');
-        $this->schoolService->uploadSchoolLogo($request, $schoolId, $currentSchool, $authAdmin);
-        return ApiResponseService::success("School Logo Updated Successfully", null, null, 200);
-    }
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {

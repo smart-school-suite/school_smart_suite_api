@@ -13,7 +13,6 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->enum('type', ['private', 'government']);
             $table->date('established_year')->nullable();
-            $table->string('school_logo')->nullable();
             $table->text('motor')->nullable();
             $table->timestamps();
         });

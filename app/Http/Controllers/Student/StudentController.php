@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\UpdateProfilePictureRequest;
 use Illuminate\Http\Request;
 use App\Services\Student\StudentService;
 use App\Http\Requests\Student\UpdateStudentRequest;
@@ -18,7 +17,6 @@ use App\Models\Job\SystemJobCategory;
 use App\Models\Job\SystemJobDetail;
 use App\Models\Student;
 use App\Services\ApiResponseService;
-use Throwable;
 
 class StudentController extends Controller
 {
@@ -141,22 +139,6 @@ class StudentController extends Controller
         $authAdmin = $this->resolveUser();
         $bulkReinstateStudent = $this->studentService->bulkReinstateStudent($request->studentIds, $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Reinstated Succesfully", $bulkReinstateStudent, null, 200);
-    }
-    public function uploadProfilePicture(UpdateProfilePictureRequest $request)
-    {
-        try {
-            $authStudent = auth()->guard('student')->user();
-            $updateProfilePicture = $this->studentService->uploadProfilePicture($request, $authStudent);
-            return ApiResponseService::success("Profile Picture Uploaded Successfully", $updateProfilePicture, null, 200);
-        } catch (Throwable $e) {
-            return ApiResponseService::error($e->getMessage(), null, 500);
-        }
-    }
-    public function deleteProfilePicture(Request $request)
-    {
-        $authStudent = auth()->guard('student')->user();
-        $deleteProfilePicture = $this->studentService->deleteProfilePicture($authStudent);
-        return ApiResponseService::success("Profile Picture Deleted Successfully", $deleteProfilePicture, null, 200);
     }
 
     public function importStudents(ImportStudentRequest $request)

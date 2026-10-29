@@ -8,9 +8,7 @@ use Throwable;
 use App\Exceptions\AppException;
 use App\Models\Elections;
 use Illuminate\Support\Facades\DB;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Analytics\ElectionAnalyticsEvent;
-use App\Constant\Analytics\Election\ElectionAnalyticsEvent as ElectionEvent;
+
 class ElectionTypeService
 {
     public function createElectionType($electionTypeData, $currentSchool, $authAdmin)
@@ -34,26 +32,6 @@ class ElectionTypeService
                 'description' => $electionTypeData['description'] ?? null,
                 'school_branch_id' => $currentSchool->id
             ]);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionType.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionTypeManagement",
-                    "action" => "electionType.created",
-                    "authAdmin" => $authAdmin,
-                    "data" => $electionType,
-                    "message" => "Election Type Created",
-                ]
-            );
-            event(new ElectionAnalyticsEvent(
-                eventType:ElectionEvent::ELECTION_TYPE_CREATED,
-                version:1,
-                payload:[
-                    "school_branch_id" => $currentSchool->id,
-                    "value" => 1
-                ]
-            ));
             return $electionType;
         } catch (Throwable $e) {
             throw new AppException(
@@ -110,17 +88,6 @@ class ElectionTypeService
             }
 
             $electionType->update($cleanedData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionType.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionTypeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $electionType,
-                    "message" => "Election Type Updated",
-                ]
-            );
             return $electionType;
         } catch (Throwable $e) {
             if ($e instanceof AppException) {
@@ -166,17 +133,6 @@ class ElectionTypeService
             }
 
             $electionType->delete();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionType.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionTypeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $electionType,
-                    "message" => "Election Type Deleted",
-                ]
-            );
             return $electionType;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -231,17 +187,6 @@ class ElectionTypeService
 
             $electionType->status = 'inactive';
             $electionType->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionType.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionTypeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $electionType,
-                    "message" => "Election Type Deactivated",
-                ]
-            );
             return $electionType;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -278,17 +223,6 @@ class ElectionTypeService
                     $electionType->status = 'inactive';
                     $electionType->save();
                     $result[] = $electionType;
-                    AdminActionEvent::dispatch(
-                        [
-                            "permissions" =>  ["schoolAdmin.electionType.deactivate"],
-                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                            "schoolBranch" =>  $currentSchool->id,
-                            "feature" => "electionTypeManagement",
-                            "authAdmin" => $authAdmin,
-                            "data" => $result,
-                            "message" => "Election Type Deactivated",
-                        ]
-                    );
                 } catch (ModelNotFoundException $e) {
                     DB::rollBack();
                     throw new AppException(
@@ -344,17 +278,6 @@ class ElectionTypeService
                     $electionType->status = 'active';
                     $electionType->save();
                     $result[] = $electionType;
-                    AdminActionEvent::dispatch(
-                        [
-                            "permissions" =>  ["schoolAdmin.electionType.activate"],
-                            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                            "schoolBranch" =>  $currentSchool->id,
-                            "feature" => "electionTypeManagement",
-                            "authAdmin" => $authAdmin,
-                            "data" => $result,
-                            "message" => "Election Type Activated",
-                        ]
-                    );
                 } catch (ModelNotFoundException $e) {
                     DB::rollBack();
                     throw new AppException(
@@ -413,17 +336,6 @@ class ElectionTypeService
 
             $electionType->status = 'active';
             $electionType->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.electionType.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "electionTypeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $electionType,
-                    "message" => "Election Type Activated",
-                ]
-            );
             return $electionType;
         } catch (ModelNotFoundException $e) {
             throw new AppException(

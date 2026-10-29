@@ -4,12 +4,10 @@ namespace App\Services\SchoolAdmin;
 
 use App\Models\Schooladmin;
 use Exception;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Services\ApiResponseService;
-use App\Events\Actions\AdminActionEvent;
 use App\Services\Helpers\Actor\ActorHelperService;
 
 class SchoolAdminService
@@ -22,17 +20,6 @@ class SchoolAdminService
         }
         $filterData = array_filter($data);
         $SchoolAdminExists->update($filterData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolAdmin.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolAdminManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $SchoolAdminExists,
-                "message" => "School Admin Updated",
-            ]
-        );
         return $SchoolAdminExists;
     }
 
@@ -43,24 +30,13 @@ class SchoolAdminService
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
         $SchoolAdminExists->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolAdmin.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolAdminManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $SchoolAdminExists,
-                "message" => "School Admin Deleted",
-            ]
-        );
         return $SchoolAdminExists;
     }
 
     public function getSchoolAdmins(object $currentSchool)
     {
         $SchoolAdminExists =  Schooladmin::where("school_branch_id", $currentSchool->id)
-            ->with(['gender', 'roles'])->get();
+            ->with(['gender', 'roles', 'currentAvatar'])->get();
         return $SchoolAdminExists->map(fn($admin) => [
             "id" => $admin->id,
             "username" => $admin->username ?? null,
@@ -70,7 +46,7 @@ class SchoolAdminService
             "email" => $admin->email ?? null,
             "phone" => $admin->phone ?? null,
             "address" => $admin->address ?? null,
-            "profile_picture" => $admin->profile_picture ?? null,
+            "profile_picture" => $admin->currentAvatar?->object_key ?? null,
             "status" => $admin->status ?? null,
             'role' => $admin->roles->first()?->name ?? 'No Role',
             "gender" => $admin->gender->name ?? null,
@@ -81,7 +57,8 @@ class SchoolAdminService
 
     public function getSchoolAdminDetails(object $currentSchool, string $schoolAdminId)
     {
-        $SchoolAdminExists =  Schooladmin::where("school_branch_id", $currentSchool->id)->find($schoolAdminId);
+        $SchoolAdminExists =  Schooladmin::where("school_branch_id", $currentSchool->id)
+            ->with(['currentAvatar'])->find($schoolAdminId);
         if (!$SchoolAdminExists) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }
@@ -118,71 +95,12 @@ class SchoolAdminService
             return $schoolAdmin;
         });
     }
-
-    public function uploadProfilePicture(object $request, object $authSchoolAdmin)
-    {
-        $schoolAdminExists = Schooladmin::find($authSchoolAdmin->id);
-        if (!$schoolAdminExists) {
-            return ApiResponseService::error("School Admin Not found", null, 400);
-        }
-        try {
-            DB::transaction(function () use ($request, $schoolAdminExists) {
-
-                if ($schoolAdminExists->profile_picture) {
-                    Storage::disk('public')->delete('SchoolAdminAvatars/' . $schoolAdminExists->profile_picture);
-                }
-                $profilePicture = $request->file('profile_picture');
-                $fileName = time() . '.' . $profilePicture->getClientOriginalExtension();
-                $profilePicture->storeAs('public/SchoolAdminAvatars', $fileName);
-
-                $schoolAdminExists->profile_picture = $fileName;
-                $schoolAdminExists->save();
-            });
-            return true;
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
-
-    public function deleteProfilePicture(object $authSchoolAdmin)
-    {
-        $schoolAdminExists = Schooladmin::find($authSchoolAdmin->id);
-        if (!$schoolAdminExists) {
-            return ApiResponseService::error("School Admin Not found", null, 400);
-        }
-        if (!$schoolAdminExists->profile_picture) {
-            return ApiResponseService::error("No Profile Picture to Delete {$schoolAdminExists->name}", null, 400);
-        }
-
-        try {
-            Storage::disk('public')->delete('SchoolAdminAvatars/' . $schoolAdminExists->profile_picture);
-
-            $schoolAdminExists->profile_picture = null;
-            $schoolAdminExists->save();
-
-            return $schoolAdminExists;
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
-
     public function deactivateAccount(string $schoolAdminId, object $currentSchool, object $authAdmin)
     {
         $schoolAdmin = Schooladmin::where("school_branch_id", $currentSchool->id)
             ->findOrFail($schoolAdminId);
         $schoolAdmin->status = 'inactive';
         $schoolAdmin->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolAdmin.deactivate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolAdminManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolAdmin,
-                "message" => "School Admin Account Deactivated",
-            ]
-        );
         return $schoolAdmin;
     }
 
@@ -192,17 +110,6 @@ class SchoolAdminService
             ->findOrFail($schoolAdminId);
         $schoolAdmin->status = "active";
         $schoolAdmin->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolAdmin.activate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolAdminManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolAdmin,
-                "message" => "School Admin Account Activated",
-            ]
-        );
         return $schoolAdmin;
     }
 
@@ -212,7 +119,7 @@ class SchoolAdminService
             DB::beginTransaction();
             $updateSchoolAdmin = [];
             foreach ($schoolAdminList as $schoolAdmin) {
-                $admin = SchoolAdmin::where("school_branch_id", $currentSchool->id)
+                $admin = Schooladmin::where("school_branch_id", $currentSchool->id)
                     ->find($schoolAdmin['id']);
                 if ($admin) {
                     $updateData = array_filter($schoolAdmin, function ($value) {
@@ -230,17 +137,6 @@ class SchoolAdminService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolAdmin.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolAdminManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $updateSchoolAdmin,
-                    "message" => "School Admin Updated",
-                ]
-            );
             return $updateSchoolAdmin;
         } catch (Exception $e) {
             DB::rollBack();
@@ -255,7 +151,7 @@ class SchoolAdminService
         try {
             DB::beginTransaction();
             foreach ($deleteAdminList as $adminData) {
-                $schoolAdmin = SchoolAdmin::where("school_branch_id", $currentSchool->id)
+                $schoolAdmin = Schooladmin::where("school_branch_id", $currentSchool->id)
                     ->find($adminData['school_admin_id']);
                 $schoolAdmin->delete();
                 $deletedSchoolAdmin[] = [
@@ -265,17 +161,6 @@ class SchoolAdminService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolAdmin.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolAdminManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $deletedSchoolAdmin,
-                    "message" => "School Admin Deleted",
-                ]
-            );
             return $deletedSchoolAdmin;
         } catch (Exception $e) {
             DB::rollBack();
@@ -289,7 +174,7 @@ class SchoolAdminService
         try {
             DB::beginTransaction();
             foreach ($schoolAdminList as $schoolAdminData) {
-                $schoolAdmin = SchoolAdmin::where("school_branch_id", $currentSchool->id)
+                $schoolAdmin = Schooladmin::where("school_branch_id", $currentSchool->id)
                     ->find($schoolAdminData['school_admin_id']);
                 $schoolAdmin->status = "inactive";
                 $schoolAdmin->save();
@@ -300,17 +185,6 @@ class SchoolAdminService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolAdmin.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolAdminManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $schoolAdmin,
-                    "message" => "School Admin Account Deactivated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -324,7 +198,7 @@ class SchoolAdminService
         try {
             DB::beginTransaction();
             foreach ($schoolAdminList as $schoolAdminData) {
-                $schoolAdmin = SchoolAdmin::where("school_branch_id", $currentSchool->id)
+                $schoolAdmin = Schooladmin::where("school_branch_id", $currentSchool->id)
                     ->find($schoolAdminData['school_admin_id']);
                 $schoolAdmin->status = "active";
                 $schoolAdmin->save();
@@ -335,17 +209,6 @@ class SchoolAdminService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolAdmin.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolAdminManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $schoolAdmin,
-                    "message" => "School Admin Account Activated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

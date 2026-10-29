@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Asset\SchoolAdminAvatar;
+use App\Models\Asset\SchoolEventImage;
+use App\Models\Asset\StudentAvatar;
+use App\Models\Asset\TeacherAvatar;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +42,22 @@ class Schoolbranches extends Model
     public $table = 'school_branches';
     public $incrementing = false;
 
+    public function teacherAvatars(): HasMany
+    {
+        return $this->hasMany(TeacherAvatar::class, 'school_branch_id');
+    }
+    public function studentAvatars(): HasMany
+    {
+        return $this->hasMany(StudentAvatar::class, 'school_branch_id');
+    }
+    public function schoolEventAssets(): HasMany
+    {
+        return $this->hasMany(SchoolEventImage::class, 'school_branch_id');
+    }
+    public function schoolAdminAvatar(): HasMany
+    {
+        return $this->hasMany(SchoolAdminAvatar::class, 'school_branch_id');
+    }
     public function graduationBatch(): HasMany
     {
         return $this->hasMany(GraduationBatch::class, 'school_branch_id');

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('phone')->unique()->nullable();
             $table->string('email');
             $table->string('password');
-            $table->string('profile_picture')->nullable();
             $table->boolean('deactivate')->default(false);
             $table->string('username', 150);
             $table->enum('status', ['active', 'inactive'])->default('active');

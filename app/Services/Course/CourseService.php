@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Collection;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
 // use App\Events\Analytics\OperationalAnalyticsEvent;
 // use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 use App\Models\Course\CourseSpecialty;
@@ -77,25 +75,6 @@ class CourseService
             );
         }
         $course->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.course.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "courseManagement",
-                "action" => "course.deleted",
-                "authAdmin" => $authAdmin,
-                "data" => $course,
-                "message" => "Course Deleted",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$course->specialty_id],
-            'feature'       => 'courseDelete',
-            'message'       => "Course Deleted",
-            'data'          => $course,
-        ]);
         return $course;
     }
     public function bulkDeleteCourse(array $coursesIds, object $currentSchool, object $authAdmin)
@@ -111,25 +90,6 @@ class CourseService
                 $specialtyIds[] = $course->specialty_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.course.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "courseManagement",
-                    "action" => "course.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $course,
-                    "message" => "Course Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch'  => $currentSchool->id,
-                'specialtyIds'  => $specialtyIds,
-                'feature'       => 'courseDelete',
-                'message'       => "Course Deleted",
-                'data'          => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -195,26 +155,6 @@ class CourseService
         }
 
         $course->update($filteredData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.course.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "courseManagement",
-                "action" => "course.updated",
-                "authAdmin" => $authAdmin,
-                "data" => $course,
-                "message" => "Course Updated",
-            ]
-        );
-
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$course->specialtyId],
-            'feature'       => 'courseUpdate',
-            'message'       => "Course Updated",
-            'data'          => $course,
-        ]);
         return $course;
     }
     public function bulkUpdateCourse(array $updateCourseList, object $currentSchool, object $authAdmin)
@@ -231,25 +171,6 @@ class CourseService
                 $specialtyIds[] = $course->specialty_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.course.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "courseManagement",
-                    "action" => "course.updated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Course Updated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch'  => $currentSchool->id,
-                'specialtyIds'  => [$specialtyIds],
-                'feature'       => 'courseUpdate',
-                'message'       => "Course Updated",
-                'data'          => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -385,25 +306,6 @@ class CourseService
         }
         $course->status = "inactive";
         $course->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.course.deactivate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "courseManagement",
-                "action" => "course.deactivated",
-                "authAdmin" => $authAdmin,
-                "data" => $course,
-                "message" => "Course Deactivated",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$course->specialty_id],
-            'feature'       => 'courseDeactivate',
-            'message'       => "Course Deactivated",
-            'data'          => $course,
-        ]);
 
         return $course;
     }
@@ -423,25 +325,6 @@ class CourseService
                 $specialtyIds[] = $course->specialty_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.course.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "courseManagement",
-                    "action" => "course.deactivated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Course Deactivated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch'  => $currentSchool->id,
-                'specialtyIds'  => $specialtyIds,
-                'feature'       => 'courseDeactivate',
-                'message'       => "Course Deactivated",
-                'data'          => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -474,31 +357,11 @@ class CourseService
         }
         $course->status = "active";
         $course->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.course.activate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "courseManagement",
-                "action" => "course.activated",
-                "authAdmin" => $authAdmin,
-                "data" => $course,
-                "message" => "Course Activated",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$course->specialty_id],
-            'feature'       => 'courseActivate',
-            'message'       => "Course Activated",
-            'data'          => $course,
-        ]);
         return $course;
     }
     public function bulkActivateCourse(array $courseIds, object $currentSchool, object $authAdmin)
     {
         $result = [];
-        $specialtyIds = [];
         try {
             DB::beginTransaction();
             foreach ($courseIds as $courseId) {
@@ -509,28 +372,9 @@ class CourseService
                 $result[] = [
                     $course
                 ];
-                $specialtyIds = $course->specialty_id;
+
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.course.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "courseManagement",
-                    "action" => "course.activated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Course Deactivated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch'  => $currentSchool->id,
-                'specialtyIds'  => $specialtyIds,
-                'feature'       => 'courseActivate',
-                'message'       => "Course Activated",
-                'data'          => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

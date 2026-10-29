@@ -58,7 +58,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         }
 
         $schoolSemester = SchoolSemester::where('school_branch_id', $this->currentSchool->id)
-            ->with(['semester', 'specialty.level'])
+            ->with(['semester', 'schoolYear.specialty.level'])
             ->where('id', $this->payload['school_semester_id'])
             ->firstOrFail();
 
@@ -80,7 +80,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         $timetableVersionId = $this->payload['version_id'] ?? null;
         $branchId    = $this->currentSchool->id;
-        $specialty = $schoolSemester->specialty;
+        $specialty = $schoolSemester->schoolYear->specialty;
         $requestPayload = $this->payload;
 
         TimetableGenerationEvent::dispatch(

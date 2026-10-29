@@ -82,6 +82,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/country')
                 ->group(base_path('routes/Country/Country.php'));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/school-asset')
+              ->group(base_path('routes/Asset/Asset.php'));
+
             Route::middleware(['auth:sanctum', IdentifyTenant::class,])->prefix('api/v1/department')
                 ->group(base_path('routes/Department/Department.php'));
 
@@ -117,8 +120,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/teacher-avialability')
                 ->group(base_path('routes/Teacher/TeacherAvialability.php'));
 
-            Route::middleware(['auth:sanctum'])->prefix('api/v1/level')
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/level')
                 ->group(base_path('routes/Level/Level.php'));
+
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/level-type')
+                ->group(base_path('routes/Level/LevelType.php'));
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student-promotion-record')
                 ->group(base_path('routes/Promotion/StudentPromotionRecord.php'));
