@@ -86,21 +86,28 @@ return new class extends Migration
         });
 
 
-        Schema::table('teachers', function (Blueprint $table) {
-            $table->dropColumn('profile_picture');
-        });
+        if (Schema::hasColumn('teachers', 'profile_picture')) {
+            Schema::table('teachers', function (Blueprint $table) {
+                $table->dropColumn('profile_picture');
+            });
+        }
 
-        Schema::table('students', function (Blueprint $table) {
-            $table->dropColumn('profile_picture');
-        });
+        if (Schema::hasColumn('students', 'profile_picture')) {
+            Schema::table('students', function (Blueprint $table) {
+                $table->dropColumn('profile_picture');
+            });
+        }
 
-        Schema::table('school_admins', function (Blueprint $table) {
-            $table->dropColumn('profile_picture');
-        });
-
-        Schema::table('schools', function (Blueprint $table) {
-            $table->dropColumn('school_logo');
-        });
+        if (Schema::hasColumn('school_admins', 'profile_picture')) {
+            Schema::table('school_admins', function (Blueprint $table) {
+                $table->dropColumn('profile_picture');
+            });
+        }
+        if (Schema::hasColumn('schools', 'school_logo')) {
+            Schema::table('schools', function (Blueprint $table) {
+                $table->dropColumn('school_logo');
+            });
+        }
     }
 
     public function down(): void

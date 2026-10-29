@@ -20,18 +20,6 @@ class ParentService
             "preferred_language" => $payload['preferred_language'],
             "preferred_contact_method" => $payload["preferred_contact_method"]
         ]);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" => ["schoolAdmin.parent.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature" => "parentManagement",
-                "action" => "parent.created",
-                "authAdmin" => $authAdmin,
-                "data" => $parent,
-                "message" => "Parent Created",
-            ]
-        );
         return $parent;
     }
     public function getAllParents(object $currentSchool)
@@ -47,18 +35,6 @@ class ParentService
             return ApiResponseService::error("Parent Not Found", null, 404);
         }
         $parentExist->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" => ["schoolAdmin.parent.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature" => "parentManagement",
-                "action" => "parent.deleted",
-                "authAdmin" => $authAdmin,
-                "data" => $parentExist,
-                "message" => "Parent Created",
-            ]
-        );
         return $parentExist;
     }
 
@@ -75,18 +51,6 @@ class ParentService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.parent.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "parentManagement",
-                    "action" => "parent.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Parent Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -102,18 +66,6 @@ class ParentService
         }
         $filterData = array_filter($payload);
         $parentExist->update($filterData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" => ["schoolAdmin.parent.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature" => "parentManagement",
-                "action" => "parent.updated",
-                "authAdmin" => $authAdmin,
-                "data" => $parentExist,
-                "message" => "Parent Updated",
-            ]
-        );
         return $parentExist;
     }
 
@@ -129,18 +81,6 @@ class ParentService
                 $result[] = $parent;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.parent.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "parentManagement",
-                    "action" => "parent.updated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Parent Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

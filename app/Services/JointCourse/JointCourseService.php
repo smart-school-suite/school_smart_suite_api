@@ -5,10 +5,6 @@ namespace App\Services\JointCourse;
 use App\Models\Courses;
 use App\Exceptions\AppException;
 use App\Models\Specialty;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
-// use App\Events\Analytics\OperationalAnalyticsEvent;
-// use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvent;
 use Illuminate\Support\Facades\DB;
 
 class JointCourseService
@@ -173,30 +169,11 @@ class JointCourseService
 
             $course->update($filteredData);
 
-            AdminActionEvent::dispatch([
-                "permissions"   => ["schoolAdmin.course.update"],
-                "roles"         => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch"  => $currentSchool->id,
-                "feature"       => "courseManagement",
-                "action"        => "course.updated",
-                "authAdmin"     => auth()->user(),
-                "data"          => $course->fresh(['specialties']),
-                "message"       => "Course Updated",
-            ]);
-
             $specialtyIds = $course->specialties->pluck('id')->toArray();
 
             if (empty($specialtyIds) && $course->specialty_id) {
                 $specialtyIds = [$course->specialty_id];
             }
-
-            StudentActionEvent::dispatch([
-                'schoolBranch'  => $currentSchool->id,
-                'specialtyIds'  => $specialtyIds,
-                'feature'       => 'courseUpdate',
-                'message'       => "Course Updated",
-                'data'          => $course->fresh(),
-            ]);
 
             return $course;
         });
@@ -217,25 +194,6 @@ class JointCourseService
         }
 
         $course->delete();
-
-        AdminActionEvent::dispatch([
-            "permissions" => ["schoolAdmin.course.delete"],
-            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            "schoolBranch" => $currentSchool->id,
-            "feature" => "courseManagement",
-            "action" => "course.deleted",
-            "authAdmin" => $authAdmin,
-            "data" => $course,
-            "message" => "Course Deleted",
-        ]);
-
-        StudentActionEvent::dispatch([
-            'schoolBranch'  => $currentSchool->id,
-            'specialtyIds'  => [$course->specialty_id],
-            'feature'       => 'courseDelete',
-            'message'       => "Course Deleted",
-            'data'          => $course,
-        ]);
 
         return true;
     }

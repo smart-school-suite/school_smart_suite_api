@@ -10,7 +10,6 @@ use App\Models\Exams;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Events\Actions\AdminActionEvent;
 
 class ExamGradeService
 {

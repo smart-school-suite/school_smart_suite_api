@@ -6,7 +6,6 @@ use App\Models\Hall;
 use App\Models\SpecialtyHall;
 use App\Models\Specialty;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
 use Illuminate\Support\Facades\DB;
 
 class SpecialtyHallService
@@ -84,23 +83,6 @@ class SpecialtyHallService
                 $specialty->hall_assignment_status = 'assigned';
                 $specialty->saveQuietly();
             }
-
-            // AdminActionEvent::dispatch([
-            //     'permissions'   => ['schoolAdmin.specialtyHall.assign'],
-            //     'roles'         => ['schoolSuperAdmin', 'schoolAdmin'],
-            //     'schoolBranch'  => $currentSchool->id,
-            //     'feature'       => 'specialtyHallManagement',
-            //     'authAdmin'     => $authAdmin,
-            //     'action'        => 'specialtyHall.assigned',
-            //     'data'          => [
-            //         'halls'        => $halls->pluck('name')->join(', '),
-            //         'specialty'    => $specialty->specialty_name,
-            //         'level'        => $specialty->level?->level_name ?? '—',
-            //         'halls_count'  => $halls->count(),
-            //         'assigned_count' => $createdAssignments->count(),
-            //     ],
-            //     'message'       => "Specialty assigned to hall(s) successfully",
-            // ]);
 
             return [
                 'specialty'     => $specialty,
@@ -249,20 +231,6 @@ class SpecialtyHallService
                 ];
             })->all();
 
-            // AdminActionEvent::dispatch([
-            //     "permissions"  => ["schoolAdmin.specialtyHall.remove"],
-            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-            //     "schoolBranch" => $currentSchool->id,
-            //     "feature"      => "specialtyHallManagement",
-            //     "authAdmin"    => $authAdmin,
-            //     "action"       => "specialtyHall.removed",
-            //     "data"         => [
-            //         'halls'         => $hallsData,
-            //         'halls_count'   => $deletedCount,
-            //         'specialty_id'  => $specialtyId
-            //     ],
-            //     "message" => "Specialty removed from {$deletedCount} hall(s) successfully",
-            // ]);
 
             return $deletedCount;
         });
@@ -315,20 +283,6 @@ class SpecialtyHallService
                     'hall_assignment_status' => 'unassigned',
                 ]);
             }
-
-            // AdminActionEvent::dispatch([
-            //     "permissions"  => ["schoolAdmin.specialtyHall.remove"],
-            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-            //     "schoolBranch" => $currentSchool->id,
-            //     "feature"      => "specialtyHallManagement",
-            //     "authAdmin"    => $authAdmin,
-            //     "action"       => "specialtyHall.allRemoved",
-            //     "data"         => [
-            //         'halls_count'  => $deletedCount,
-            //         'specialty_id' => $specialtyId,
-            //     ],
-            //     "message"      => "All hall assignments removed from specialty ({$deletedCount} hall(s))",
-            // ]);
 
             return $deletedCount;
         });

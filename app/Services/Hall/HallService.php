@@ -41,16 +41,6 @@ class HallService
             $hall->types()->sync($syncData);
         }
 
-        AdminActionEvent::dispatch([
-            'permissions'   => ['schoolAdmin.hall.create'],
-            'roles'         => ['schoolSuperAdmin', 'schoolAdmin'],
-            "action" => "schoolHall.created",
-            'schoolBranch'  => $currentSchool->id,
-            'feature'       => 'hallManagement',
-            'authAdmin'     => $authAdmin,
-            'data'          => $hall,
-            'message'       => 'Hall Created',
-        ]);
 
         return $hall;
     }
@@ -103,16 +93,6 @@ class HallService
 
         $hall->update($filteredUpdateData);
 
-        AdminActionEvent::dispatch([
-            'permissions'   => ['schoolAdmin.hall.update'],
-            'roles'         => ['schoolSuperAdmin', 'schoolAdmin'],
-            "action"        => "hallUpdated",
-            'schoolBranch'  => $currentSchool->id,
-            'feature'       => 'hallManagement',
-            'authAdmin'     => $authAdmin,
-            'data'          => $hall,
-            'message'       => 'Hall Updated',
-        ]);
 
         return $hall;
     }
@@ -131,17 +111,6 @@ class HallService
         }
 
         $hall->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.hall.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "hallManagement",
-                "authAdmin" => $authAdmin,
-                "data" =>  $hall,
-                "message" => "Hall Deleted",
-            ]
-        );
         return $hall;
     }
     public function getAllHalls($currentSchool)
@@ -192,18 +161,6 @@ class HallService
 
         $hall->status = 'available';
         $hall->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.hall.activated"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "hallManagement",
-                "action" => "hall.Deactivated",
-                "authAdmin" => $authAdmin,
-                "data" =>  $hall,
-                "message" => "Hall Activated",
-            ]
-        );
         return $hall;
     }
     public function deactivateHall($currentSchool, $hallId, $authAdmin)
@@ -222,18 +179,6 @@ class HallService
 
         $hall->status = 'unavailable';
         $hall->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.hall.deactivated"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "hallManagement",
-                "authAdmin" => $authAdmin,
-                "action" => "hall.Deactivated",
-                "data" =>  $hall,
-                "message" => "Hall Deactivated",
-            ]
-        );
         return $hall;
     }
     public function getHallDetails($currentSchool, $hallId)
