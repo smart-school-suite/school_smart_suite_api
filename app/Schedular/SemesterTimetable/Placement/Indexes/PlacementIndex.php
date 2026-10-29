@@ -10,6 +10,8 @@ class PlacementIndex
     private array $teacherBusy = [];
     private array $hallBusy = [];
     private array $halls = [];
+    private array $teacherTotalMinutes = [];
+    private array $hallTotalMinutes = [];
 
     public static function fromPayload(array $requestPayload): self
     {
@@ -33,21 +35,29 @@ class PlacementIndex
         }
 
         foreach ($requestPayload['teacher_busy_periods'] ?? [] as $tb) {
+            $start = TimeHelper::toMinutes($tb['start_time']);
+            $end   = TimeHelper::toMinutes($tb['end_time']);
+
             $this->teacherBusy[$tb['teacher_id']][] = [
                 'day'    => strtolower($tb['day']),
-                'start'  => TimeHelper::toMinutes($tb['start_time']),
-                'end'    => TimeHelper::toMinutes($tb['end_time']),
+                'start'  => $start,
+                'end'    => $end,
                 'placed' => false,
             ];
+            $this->addTeacherMinutes($tb['teacher_id'], $end - $start);
         }
 
         foreach ($requestPayload['hall_busy_periods'] ?? [] as $hb) {
+            $start = TimeHelper::toMinutes($hb['start_time']);
+            $end   = TimeHelper::toMinutes($hb['end_time']);
+
             $this->hallBusy[$hb['hall_id']][] = [
                 'day'    => strtolower($hb['day']),
-                'start'  => TimeHelper::toMinutes($hb['start_time']),
-                'end'    => TimeHelper::toMinutes($hb['end_time']),
+                'start'  => $start,
+                'end'    => $end,
                 'placed' => false,
             ];
+            $this->addHallMinutes($hb['hall_id'], $end - $start);
         }
 
         foreach ($requestPayload['halls'] ?? [] as $hall) {
@@ -65,6 +75,7 @@ class PlacementIndex
             'end'    => $end,
             'placed' => true,
         ];
+        $this->addTeacherMinutes($teacherId, $end - $start);
     }
 
     public function commitHallPeriod(string $hallId, string $day, int $start, int $end): void
@@ -75,6 +86,17 @@ class PlacementIndex
             'end'    => $end,
             'placed' => true,
         ];
+        $this->addHallMinutes($hallId, $end - $start);
+    }
+
+    private function addTeacherMinutes(string $teacherId, int $minutes): void
+    {
+        $this->teacherTotalMinutes[$teacherId] = ($this->teacherTotalMinutes[$teacherId] ?? 0) + $minutes;
+    }
+
+    private function addHallMinutes(string $hallId, int $minutes): void
+    {
+        $this->hallTotalMinutes[$hallId] = ($this->hallTotalMinutes[$hallId] ?? 0) + $minutes;
     }
 
     // ─── Queries ──────────────────────────────────────────────────────────
@@ -102,6 +124,24 @@ class PlacementIndex
     public function hallBusy(string $hallId): array
     {
         return $this->hallBusy[$hallId] ?? [];
+    }
+
+    /**
+     * Running total of busy minutes for a teacher across the whole week.
+     * Counts both payload-seeded and placement-grown periods.
+     */
+    public function teacherTotalMinutes(string $teacherId): int
+    {
+        return $this->teacherTotalMinutes[$teacherId] ?? 0;
+    }
+
+    /**
+     * Running total of busy minutes for a hall across the whole week.
+     * Counts both payload-seeded and placement-grown periods.
+     */
+    public function hallTotalMinutes(string $hallId): int
+    {
+        return $this->hallTotalMinutes[$hallId] ?? 0;
     }
 
     /**

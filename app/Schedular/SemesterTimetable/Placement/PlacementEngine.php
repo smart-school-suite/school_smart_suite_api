@@ -94,14 +94,20 @@ class PlacementEngine extends TimetableContext
 
     public function selectBest(array $candidates, string $day, PlacementIndex $index): array
     {
-        usort(
-            $candidates,
-            fn($a, $b) =>
-            $this->scorer->score($b, $day, $index)
-                <=> $this->scorer->score($a, $day, $index)
-        );
+        // Score each candidate once so the random tiebreak stays consistent
+        $best      = null;
+        $bestScore = -INF;
 
-        return $candidates[0];
+        foreach ($candidates as $candidate) {
+            $score = $this->scorer->score($candidate, $day, $index);
+
+            if ($score > $bestScore) {
+                $best      = $candidate;
+                $bestScore = $score;
+            }
+        }
+
+        return $best;
     }
 
     // ─── Commit ───────────────────────────────────────────────────────────
