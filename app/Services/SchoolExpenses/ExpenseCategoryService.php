@@ -6,7 +6,6 @@ use App\Models\Schoolexpensescategory;
 use App\Exceptions\AppException;
 use Exception;
 use App\Services\ApiResponseService;
-use App\Events\Actions\AdminActionEvent;
 
 class ExpenseCategoryService
 {
@@ -16,18 +15,6 @@ class ExpenseCategoryService
         $expensesCategory->name = $data["name"];
         $expensesCategory->school_branch_id = $currentSchool->id;
         $expensesCategory->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolExpenses.category.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolExpenseManager",
-                "action" => "schoolExpenseCategory.created",
-                "authAdmin" => $authAdmin,
-                "data" => $expensesCategory,
-                "message" => "Expense Category Created",
-            ]
-        );
         return $expensesCategory;
     }
 
@@ -40,18 +27,6 @@ class ExpenseCategoryService
         }
         $filterData = array_filter($data);
         $schoolExpensesExists->update($filterData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolExpenses.category.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "expenseCategoryManagement",
-                "action" => "schoolExpenseCategory.updated",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolExpensesExists,
-                "message" => "Expense Category Updated",
-            ]
-        );
         return $schoolExpensesExists;
     }
     public function deleteSchoolExpenseCategory($schoolExpenseCategoryId, $currentSchool, $authAdmin)
@@ -62,18 +37,6 @@ class ExpenseCategoryService
             return ApiResponseService::error("School Expenses Not found", null, 400);
         }
         $schoolExpensesCategoryExists->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolExpenses.category.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "expenseCategoryManagement",
-                "action" => "schoolExpenseCategory.deleted",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolExpensesCategoryExists,
-                "message" => "Expense Category Updated",
-            ]
-        );
         return $schoolExpensesCategoryExists;
     }
 

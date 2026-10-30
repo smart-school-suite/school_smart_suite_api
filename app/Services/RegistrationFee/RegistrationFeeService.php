@@ -8,8 +8,6 @@ use Exception;
 use Throwable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
 
 class RegistrationFeeService
 {
@@ -64,25 +62,6 @@ class RegistrationFeeService
 
             RegistrationFee::whereIn('id', $feeIds)->delete();
             DB::commit();
-
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $registrationFees,
-                    "message" => "Registration Fee Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $registrationFees->pluck('student_id')->toArray(),
-                'feature'      => 'registrationFeeDeleted',
-                'message'      => 'Registration Fees Deleted',
-                'data'         => $registrationFees,
-            ]);
             return true;
         } catch (Exception $e) {
             DB::rollBack();
@@ -105,24 +84,6 @@ class RegistrationFeeService
             $registrationFee->delete();
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $registrationFee,
-                    "message" => "Registration Fee Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$registrationFee->student_id],
-                'feature'      => 'registrationFeeDeleted',
-                'message'      => 'Registration Fees Deleted',
-                'data'         =>  $registrationFee,
-            ]);
             return true;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();

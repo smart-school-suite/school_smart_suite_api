@@ -3,13 +3,9 @@
 namespace App\Services\Semester;
 
 use App\Constant\Enums\SystemState;
-//use App\Jobs\DataCreationJob\CreateExamJob;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
 use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
-use App\Jobs\NotificationJobs\SendNewSemesterAvialableNotificationJob;
-
 use App\Models\SchoolSemester;
-use App\Models\Semester;
 use App\Models\SchoolBranchSetting;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +13,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
-use App\Events\Actions\AdminActionEvent;
 use App\Events\Actions\StudentActionEvent;
 use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
 use App\Models\AcademicYear\SchoolAcademicYear;
@@ -82,31 +77,6 @@ class SchoolSemesterService
 
             DB::commit();
 
-            $data = [
-                'startDate' => $semesterData['start_date'],
-                'endDate' => $semesterData['end_date'],
-                'semester' => Semester::find($semesterData['semester_id'])->name,
-                'level' => $specialty->level->name,
-                'school_year_id' => $semesterData['school_year_id']
-            ];
-
-            $autoCreateExamSetting = $this->getSettingByKey($currentSchool->id, "exam.auto_create");
-            if ($autoCreateExamSetting->value === true) {
-                // CreateExamJob::dispatch([
-                //     'specialty_id' => $semesterData['specialty_id'],
-                //     'student_batch_id' => $semesterData['student_batch_id'],
-                //     'semester_id' => $semesterData['semester_id'],
-                //     'level_id' => $specialty->level_id,
-                //     'school_year_id' => $semesterData['school_year_id']
-                // ], $currentSchool->id);
-            }
-
-            SendNewSemesterAvialableNotificationJob::dispatch(
-                $schoolYear->specialty_id,
-                $currentSchool->id,
-                $data
-            );
-
             CreateInstructorAvailabilityJob::dispatch(
                 $currentSchool->id,
                 $schoolSemester->id
@@ -117,24 +87,6 @@ class SchoolSemesterService
                 $currentSchool
             );
 
-            // AdminActionEvent::dispatch(
-            //     [
-            //         "permissions" =>  ["schoolAdmin.schoolSemester.create"],
-            //         "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            //         "schoolBranch" =>  $currentSchool->id,
-            //         "feature" => "schoolSemesterManagement",
-            //         "authAdmin" => $authAdmin,
-            //         "data" => $schoolSemester,
-            //         "message" => "School Semester Created ",
-            //     ]
-            // );
-            // StudentActionEvent::dispatch([
-            //     'schoolBranch' => $currentSchool->id,
-            //     'specialtyIds'   => [$semesterData['specialty_id']],
-            //     'feature'      => 'semesterCreated',
-            //     'message'      => 'Semester Created',
-            //     'data'         => $schoolSemester,
-            // ]);
             return $schoolSemester;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -176,17 +128,6 @@ class SchoolSemesterService
 
         $filteredData = array_filter($semesterData);
         $schoolSemester->update($filteredData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolSemester.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolSemesterManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolSemester,
-                "message" => "School Semester Updated",
-            ]
-        );
         StudentActionEvent::dispatch([
             'schoolBranch' => $currentSchool->id,
             'specialtyIds'   => [$schoolSemester->specialty_id],
@@ -212,24 +153,6 @@ class SchoolSemesterService
                 $specialtyIds[] = $schoolSemester->specialty_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolSemester.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolSemesterManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "School Semester Updated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => $specialtyIds,
-                'feature'      => 'semesterUpdate',
-                'message'      => 'Semester Semester Updated',
-                'data'         => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -250,24 +173,6 @@ class SchoolSemesterService
             );
         }
         $schoolSemester->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolSemester.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolSemesterManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolSemester,
-                "message" => "School Semester Deleted",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch' => $currentSchool->id,
-            'specialtyIds'   => [$schoolSemester->specialty_id],
-            'feature'      => 'semesterDelete',
-            'message'      => 'Semester Deleted',
-            'data'         => $schoolSemester,
-        ]);
         return $schoolSemester;
     }
     public function bulkDeleteSchoolSemester(array $schoolSemesterIds, object $currentSchool, $authAdmin): array
@@ -296,24 +201,6 @@ class SchoolSemesterService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolSemester.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolSemesterManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $deletedSemesters,
-                    "message" => "School Semester Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => $specialtyIds,
-                'feature'      => 'semesterDelete',
-                'message'      => 'Semester Deleted',
-                'data'         => $schoolSemester,
-            ]);
             return $deletedSemesters;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();

@@ -11,10 +11,6 @@ class UpdateTeacherRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
-    {
-        return true; // Update this as needed
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -24,13 +20,20 @@ class UpdateTeacherRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'sometimes|nullable|string',
-            'last_name' => 'sometimes|nullable|string',
-            'name' => 'sometimes|nullable|string',
-            'email' => 'sometimes|nullable|email',
-            'address' => 'sometimes|nullable|string',
-            'gender_id' => 'sometimes|nullable|string|exists:genders,id',
-            'phone' => 'sometimes|nullable|string',
+            'first_name' => 'sometimes|string|max:50',
+            'last_name' => 'sometimes|string|max:50',
+            'name' => 'sometimes|string|max:50',
+            'email' => 'sometimes|email|string|max:100',
+            'phone' => 'sometimes|nullable|string|max:20',
+            'address' => 'sometimes|nullable|string|max:200',
+            'gender_id' => 'sometimes|string|exists:genders,id',
+            'allowed_level_ids' => 'sometimes|array|min:1',
+            'allowed_level_ids.*' => 'required_with:allowed_level_ids|uuid|exists:levels,id',
+            'qualifications' => 'sometimes|array|min:1',
+            'qualifications.*.qualification_id' => 'required_with:qualifications|uuid|exists:qualifications,id',
+            'qualifications.*.field_of_study' => 'required_with:qualifications|string|max:200',
+            'qualifications.*.institution' => 'required_with:qualifications|string|max:150',
+            'qualifications.*.year' => 'required_with:qualifications|string|max:50',
         ];
     }
 }

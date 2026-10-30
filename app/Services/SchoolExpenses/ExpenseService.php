@@ -24,19 +24,6 @@ class ExpenseService
         $schoolExpenses->description = $data["description"] ?? null;
         $schoolExpenses->school_branch_id = $currentSchool->id;
         $schoolExpenses->save();
-        SchoolExpensesStatJob::dispatch($schoolExpensesId, $currentSchool->id);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolExpenses.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolExpenseManagement",
-                "action" => "schoolExpense.created",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolExpenses,
-                "message" => "School Expense Created",
-            ]
-        );
         return $schoolExpenses;
     }
 
@@ -47,18 +34,6 @@ class ExpenseService
             return ApiResponseService::error("Expenses Not Found", null, 404);
         }
         $expenses->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolExpenses.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolExpenseManagement",
-                "authAdmin" => $authAdmin,
-                "action" => "schoolExpense.deleted",
-                "data" => $expenses,
-                "message" => "School Expense Deleted",
-            ]
-        );
         return $expenses;
     }
 
@@ -70,18 +45,6 @@ class ExpenseService
         }
         $filterData = array_filter($data);
         $expenses->update($filterData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolExpenses.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolExpenseManagement",
-                "action" => "schoolExpense.updated",
-                "authAdmin" => $authAdmin,
-                "data" => $expenses,
-                "message" => "School Expense Updated",
-            ]
-        );
         return $expenses;
     }
 
@@ -139,18 +102,6 @@ class ExpenseService
                 $result[] =  $schoolExpense;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolExpenses.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolExpenseManagement",
-                    "action" => "schoolExpense.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "School Expense Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -180,18 +131,6 @@ class ExpenseService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.schoolExpenses.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "schoolExpenseManagement",
-                    "authAdmin" => $authAdmin,
-                    "action" => "schoolExpense.updated",
-                    "data" => $result,
-                    "message" => "School Expense Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

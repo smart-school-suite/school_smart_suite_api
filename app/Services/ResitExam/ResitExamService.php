@@ -8,7 +8,6 @@ use App\Models\GradeScale\SchoolGradeScaleCategory;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
 use Carbon\Carbon;
 
 class ResitExamService
@@ -71,17 +70,6 @@ class ResitExamService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.resitExam.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "resitExamManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Resit Exam Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -235,17 +223,6 @@ class ResitExamService
                 $result[] = $resitExam;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.resitExam.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "resitExamManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Resit Exam Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             throw $e;

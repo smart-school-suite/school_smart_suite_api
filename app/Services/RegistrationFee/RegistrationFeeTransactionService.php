@@ -8,10 +8,6 @@ use App\Models\RegistrationFeeTransactions;
 use App\Models\RegistrationFee;
 use Exception;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
-use App\Events\Analytics\FinancialAnalyticsEvent;
-use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class RegistrationFeeTransactionService
 {
@@ -30,24 +26,6 @@ class RegistrationFeeTransactionService
                 $studentIds[] = $transaction->registrationFee->student_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.delete.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Registration Fee Transaction Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'registrationFeeTransactionDelete',
-                'message'      => 'Registration Fees Transaction Deleted',
-                'data'         => $result,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -79,35 +57,6 @@ class RegistrationFeeTransactionService
             $registrationFees->save();
             $transaction->delete();
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.reverse.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $transaction,
-                    "message" => "Registration Fee Payment Transaction Reversed",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$transaction->registrationFee->student_id],
-                'feature'      => 'registrationFeeTransactionReverse',
-                'message'      => 'Registration Fees Transaction Reversed',
-                'data'         => $transaction,
-            ]);
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::REGISTRATION_FEE_REVERSED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "level_id" => $transaction->registrationFee->level_id,
-                    "specialty_id" => $transaction->registrationFee->specialty->id,
-                    "department_id" => $transaction->registrationFee->specialty->department_id,
-                    "value" => $transaction->registrationFee->amount
-                ]
-            ));
             return $transaction;
         } catch (QueryException $e) {
             DB::rollBack();
@@ -161,24 +110,6 @@ class RegistrationFeeTransactionService
             ->findorFail($transactionId);
         $transaction->delete();
 
-        AdminActionEvent::dispatch(
-            [
-                "permissions" => ["schoolAdmin.registrationFee.delete.transaction"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" => $currentSchool->id,
-                "feature" => "registrationFeeManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $transaction,
-                "message" => "Registration Fee Transaction Deleted",
-            ]
-        );
-        StudentActionEvent::dispatch([
-            'schoolBranch' => $currentSchool->id,
-            'studentIds'   => [$transaction->registrationFee->student_id],
-            'feature'      => 'registrationFeeTransactionDelete',
-            'message'      => 'Registration Fees Transaction Deleted',
-            'data'         => $transaction,
-        ]);
         return true;
     }
     public function bulkReverseRegistrationFeeTransaction($transactionIds, $currentSchool, $authAdmin)
@@ -214,35 +145,6 @@ class RegistrationFeeTransactionService
                 $studentIds[] = $transaction->registrationFee->student_id;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.reverse.transaction"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Registration Fee Payment Transaction Reversed",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'registrationFeeTransactionReverse',
-                'message'      => 'Registration Fees Transaction Reversed',
-                'data'         => $transaction,
-            ]);
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::REGISTRATION_FEE_REVERSED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "level_id" => $transaction->registrationFee->level_id,
-                    "specialty_id" => $transaction->registrationFee->specialty->id,
-                    "department_id" => $transaction->registrationFee->specialty->department_id,
-                    "value" => $transaction->registrationFee->amount
-                ]
-            ));
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

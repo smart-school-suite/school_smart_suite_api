@@ -4,7 +4,6 @@ namespace App\Services\School;
 
 use App\Services\ApiResponseService;
 use App\Models\Schoolbranches;
-use App\Events\Actions\AdminActionEvent;
 
 class SchoolBranchService
 {
@@ -22,17 +21,6 @@ class SchoolBranchService
         }
         $filterData = array_filter($data);
         $schoolBranchExist->update($filterData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolBranch.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $schoolBranchId,
-                "feature" => "schoolBranchManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolBranchExist,
-                "message" => "School Branch Updated",
-            ]
-        );
         return $schoolBranchExist;
     }
 
@@ -43,17 +31,6 @@ class SchoolBranchService
             return ApiResponseService::error("School Branch not found", null, 404);
         }
         $schoolBranchExist->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.schoolBranch.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $schoolBranchId,
-                "feature" => "schoolBranchManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolBranchExist,
-                "message" => "School Branch Deleted",
-            ]
-        );
         return $schoolBranchExist;
     }
 

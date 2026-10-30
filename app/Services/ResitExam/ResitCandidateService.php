@@ -4,7 +4,6 @@ namespace App\Services\ResitExam;
 
 use App\Models\ResitCandidates;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
 
 class ResitCandidateService
 {
@@ -45,17 +44,6 @@ class ResitCandidateService
             );
         }
         $candidate->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.resitCandidate.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "resitExamCandidateManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $candidate,
-                "message" => "Resit Exam Candidate Deleted",
-            ]
-        );
         return $candidate;
     }
 }

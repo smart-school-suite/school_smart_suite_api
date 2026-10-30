@@ -31,17 +31,6 @@ class EventCategoryService
             'status' => true
         ]);
 
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.eventCategory.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "announcementCategoryManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $category,
-                "message" => "Announcement Category Created",
-            ]
-        );
         return $category;
     }
 
@@ -80,17 +69,7 @@ class EventCategoryService
         }
 
         $category->update($cleanData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.eventCategory.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "announcementCategoryManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $category,
-                "message" => "Announcement Category Update",
-            ]
-        );
+
         return $category;
     }
 
@@ -120,17 +99,6 @@ class EventCategoryService
         }
 
         $eventCategory->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.eventCategory.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "announcementCategoryManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $eventCategory,
-                "message" => "Announcement Category Deleted",
-            ]
-        );
         return $eventCategory;
     }
     public function getEventCategory($currentSchool)
@@ -178,17 +146,6 @@ class EventCategoryService
 
         $eventCategory->status = true;
         $eventCategory->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.eventCategory.activate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "announcementCategoryManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $eventCategory,
-                "message" => "Announcement Category Activated",
-            ]
-        );
         return $eventCategory;
     }
 
@@ -219,17 +176,6 @@ class EventCategoryService
 
         $eventCategory->status = false;
         $eventCategory->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.eventCategory.deactivate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "announcementCategoryManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $eventCategory,
-                "message" => "Announcement Category Deactivated",
-            ]
-        );
         return $eventCategory;
     }
 

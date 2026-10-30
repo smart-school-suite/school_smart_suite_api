@@ -2,19 +2,12 @@
 
 namespace App\Services\RegistrationFee;
 
-use App\Jobs\NotificationJobs\SendAdminRegistrationFeePaidNotificationJob;
-use App\Jobs\NotificationJobs\SendRegistrationFeePaidNotificationJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\RegistrationFeeStatJob;
 use Illuminate\Support\Facades\DB;
 use App\Models\RegistrationFeeTransactions;
 use Illuminate\Support\Str;
 use App\Models\RegistrationFee;
 use Exception;
 use App\Services\ApiResponseService;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
-use App\Events\Analytics\FinancialAnalyticsEvent;
-use App\Constant\Analytics\Financial\FinancialAnalyticsEvent as FinancialEventConstant;
 
 class RegistrationFeePayment
 {
@@ -55,48 +48,14 @@ class RegistrationFeePayment
                 'amount' => $data['amount'],
             ];
             DB::commit();
-            RegistrationFeeStatJob::dispatch($feePaymentId, $currentSchool->id);
-            SendAdminRegistrationFeePaidNotificationJob::dispatch(
-                $registrationFeeData,
-                $currentSchool->id
-            );
-            SendRegistrationFeePaidNotificationJob::dispatch(
-                $registrationFeeData,
-                $currentSchool->id
-            );
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.pay"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "authAdmin" => $authAdmin,
-                    "action" => "registrationFee.paid",
-                    "data" => [
-                        "transaction" => $transaction,
-                        "registration_fee" => $registrationFee
-                    ],
-                    "message" => "Registration Fee Paid",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => [$registrationFee->student_id],
-                'feature'      => 'registrationFeePaid',
-                'message'      => 'Registration Fees Paid',
-                'data'         => $registrationFeeData,
-            ]);
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::REGISTRATION_FEE_PAID,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "level_id" => $registrationFee->level_id,
-                    "specialty_id" => $registrationFee->specialty->id,
-                    "department_id" => $registrationFee->specialty->department_id,
-                    "value" => $registrationFee->amount
-                ]
-            ));
+            // SendAdminRegistrationFeePaidNotificationJob::dispatch(
+            //     $registrationFeeData,
+            //     $currentSchool->id
+            // );
+            // SendRegistrationFeePaidNotificationJob::dispatch(
+            //     $registrationFeeData,
+            //     $currentSchool->id
+            // );
             return $transaction;
         } catch (Exception $e) {
             DB::rollBack();
@@ -143,44 +102,14 @@ class RegistrationFeePayment
                 $studentIds[] =  $registrationFee->student_id;
             }
             DB::commit();
-            SendAdminRegistrationFeePaidNotificationJob::dispatch(
-                $registrationFeeData,
-                $currentSchool->id
-            );
-            SendRegistrationFeePaidNotificationJob::dispatch(
-                $registrationFeeData,
-                $currentSchool->id
-            );
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" => ["schoolAdmin.registrationFee.pay"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" => $currentSchool->id,
-                    "feature" => "registrationFeeManagement",
-                    "action" => "registrationFee.paid",
-                    "authAdmin" => $authAdmin,
-                    "data" => $registrationFeeData,
-                    "message" => "Registration Fee Paid",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'studentIds'   => $studentIds,
-                'feature'      => 'registrationFeePaid',
-                'message'      => 'Registration Fees Paid',
-                'data'         => $registrationFeeData,
-            ]);
-            event(new FinancialAnalyticsEvent(
-                eventType: FinancialEventConstant::REGISTRATION_FEE_PAID,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "level_id" => $registrationFee->level_id,
-                    "specialty_id" => $registrationFee->specialty->id,
-                    "department_id" => $registrationFee->specialty->department_id,
-                    "value" => $registrationFee->amount
-                ]
-            ));
+            // SendAdminRegistrationFeePaidNotificationJob::dispatch(
+            //     $registrationFeeData,
+            //     $currentSchool->id
+            // );
+            // SendRegistrationFeePaidNotificationJob::dispatch(
+            //     $registrationFeeData,
+            //     $currentSchool->id
+            // );
             return true;
         } catch (Exception $e) {
             DB::rollBack();

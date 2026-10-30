@@ -36,18 +36,6 @@ class StudentBatchService
         $newBatch->description = $data["description"];
         $newBatch->school_branch_id = $currentSchool->id;
         $newBatch->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.student.batch.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "studentBatchManagement",
-                "authAdmin" => $authAdmin,
-                "action" => "studentBatch.created",
-                "data" => $newBatch,
-                "message" => "Student Batch Created",
-            ]
-        );
         return $newBatch;
     }
 
@@ -59,18 +47,6 @@ class StudentBatchService
         }
         $filteredData = array_filter($data);
         $studentBatch->update($filteredData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.student.batch.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "studentBatchManagement",
-                "action" => "studentBatch.updated",
-                "authAdmin" => $authAdmin,
-                "data" => $studentBatch,
-                "message" => "Student Batch Updated",
-            ]
-        );
         return $studentBatch;
     }
 
@@ -88,18 +64,6 @@ class StudentBatchService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.student.batch.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "studentBatchManagement",
-                    "action" => "studentBatch.updated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Student Batch Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -114,18 +78,6 @@ class StudentBatchService
             return ApiResponseService::error("Student Batch Not Found", null, 404);
         }
         $studentBatch->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.student.batch.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "studentBatchManagement",
-                "action" => "studentBatch.deleted",
-                "authAdmin" => $authAdmin,
-                "data" => $studentBatch,
-                "message" => "Student Batch Deleted",
-            ]
-        );
         return $studentBatch;
     }
 
@@ -140,18 +92,6 @@ class StudentBatchService
                 $result[] = $studentBatch;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.student.batch.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "studentBatchManagement",
-                    "action" => "studentBatch.deleted",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Student Batch Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -169,18 +109,6 @@ class StudentBatchService
         $studentBatch = Studentbatch::where("school_branch_id", $currentSchool->id)->findOrFail($batchId);
         $studentBatch->status = "inactive";
         $studentBatch->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.student.batch.deactivate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "studentBatchManagement",
-                "action" => "studentBatch.deactivated",
-                "authAdmin" => $authAdmin,
-                "data" => $studentBatch,
-                "message" => "Student Batch Deactivated",
-            ]
-        );
         return $studentBatch;
     }
 
@@ -196,18 +124,6 @@ class StudentBatchService
                 $result[] = $studentBatch;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.student.batch.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "studentBatchManagement",
-                    "action" => "studentBatch.deactivated",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Student Batch Deactivated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -220,18 +136,6 @@ class StudentBatchService
         $studentBatch = Studentbatch::where("school_branch_id", $currentSchool->id)->findOrFail($batchId);
         $studentBatch->status = "active";
         $studentBatch->save();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.student.batch.activate"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "studentBatchManagement",
-                "authAdmin" => $authAdmin,
-                "action" => "studentBatch.activated",
-                "data" => $studentBatch,
-                "message" => "Student Batch Activated",
-            ]
-        );
         return $studentBatch;
     }
 
@@ -247,18 +151,6 @@ class StudentBatchService
                 $result[] = $studentBatch;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.student.batch.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "studentBatchManagement",
-                    "authAdmin" => $authAdmin,
-                    "action" => "studentBatch.activated",
-                    "data" => $result,
-                    "message" => "Student Batch Activated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

@@ -14,7 +14,6 @@ use Exception;
 use Throwable;
 use App\Models\Studentresit;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
 
 class ResitService
 {
@@ -26,17 +25,6 @@ class ResitService
         }
         $filteredData = array_filter($data);
         $studentResitExists->update($filteredData);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.resit.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "resitManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $studentResitExists,
-                "message" => "Resit Updated",
-            ]
-        );
         return $studentResitExists;
     }
     public function deleteStudentResit(string $studentResitId, object $currentSchool, object $authAdmin)
@@ -46,17 +34,6 @@ class ResitService
             return ApiResponseService::error("Student Resit Not found", null, 404);
         }
         $studentResitExists->delete();
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.resit.delete"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "resitManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $studentResitExists,
-                "message" => "Resit Deleted",
-            ]
-        );
         return $studentResitExists;
     }
     public function getResitableCourses(object $currentSchool)
@@ -246,17 +223,6 @@ class ResitService
                 $result[] = $studentResit;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.resit.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "resitManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Resit Deleted",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -284,17 +250,6 @@ class ResitService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.resit.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "resitManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Resit Updated",
-                ]
-            );
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

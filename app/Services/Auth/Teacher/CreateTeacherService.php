@@ -2,17 +2,12 @@
 
 namespace App\Services\Auth\Teacher;
 
-use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
-use App\Jobs\StatisticalJobs\OperationalJobs\TeacherRegistrationStatsJob;
 use App\Models\Teacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
-// use App\Events\Actions\AdminActionEvent;
-use App\Constant\Analytics\Operational\OperationalAnalyticsEvent as OperationalEvents;
-use App\Events\Analytics\OperationalAnalyticsEvent;
 
 class CreateTeacherService
 {
@@ -23,8 +18,8 @@ class CreateTeacherService
                 throw new AuthException(
                     "This email address is already in use at this school branch.",
                     409,
-                    "Email Already Exists",
-                    "The email '{$teacherData['email']}' is already associated with an account in your school branch. Please use a different email or check the existing account."
+                    "Email Already Registered",
+                    "The email address '{$teacherData['email']}' is already linked to another staff member at this school branch. Please use a different email address or search for the existing staff account to update it."
                 );
             }
 
@@ -32,8 +27,8 @@ class CreateTeacherService
                 throw new AppException(
                     "A teacher with the name '{$teacherData['name']}' already exists at this school branch.",
                     409,
-                    "Duplicate Teacher Name 📛",
-                    "A teacher with the exact name '{$teacherData['name']}' is already registered at this school. Please ensure you are not creating a duplicate or consider adding a middle initial or suffix to differentiate the record.",
+                    "Teacher Name Already Exists",
+                    "An instructor named '{$teacherData['name']}' is already registered in this school system. If this is a different person with the same name, please include a middle name, initial, or suffix to distinguish them.",
                     null
                 );
             }
@@ -55,7 +50,6 @@ class CreateTeacherService
                 'password'         => Hash::make($password),
                 'phone'            => $teacherData['phone'],
                 'address'          => $teacherData['address'] ?? null,
-                'profile_picture'  => $teacherData['profile_picture'] ?? null,
                 'status'           => $teacherData['status'] ?? 'active',
                 'school_branch_id' => $currentSchool->id,
             ]);
@@ -77,36 +71,15 @@ class CreateTeacherService
                 if (!empty($item['qualification_id'])) {
                     $qualificationsSyncData[$item['qualification_id']] = [
                         'school_branch_id' => $currentSchool->id,
-                        'field_of_study'   => $item['field_of_study'] ?? null
+                        'field_of_study'   => $item['field_of_study'] ?? null,
+                        'year'             => $item['year'] ?? null,
+                        'institution'      => $item['institution'] ?? null
                     ];
                 }
             }
             $instructor->qualifications()->sync($qualificationsSyncData);
 
             DB::commit();
-
-            SendPasswordVaiMailJob::dispatch($password, $teacherData['email']);
-            TeacherRegistrationStatsJob::dispatch($instructor->id, $currentSchool->id);
-
-            // AdminActionEvent::dispatch([
-            //     "permissions"  => ["schoolAdmin.teacher.create"],
-            //     "roles"        => ["schoolSuperAdmin", "schoolAdmin"],
-            //     "schoolBranch" => $currentSchool->id,
-            //     "feature"      => "teacherManagement",
-            //     "action"       => "teacher.created",
-            //     "authAdmin"    => $authAdmin,
-            //     "data"         => $instructor,
-            //     "message"      => "Teacher Created",
-            // ]);
-
-            event(new OperationalAnalyticsEvent(
-                eventType: OperationalEvents::TEACHER_CREATED,
-                version: 1,
-                payload: [
-                    "school_branch_id" => $currentSchool->id,
-                    "value"            => 1,
-                ]
-            ));
 
             return $instructor;
         } catch (AuthException | AppException $e) {
@@ -117,8 +90,8 @@ class CreateTeacherService
             throw new AppException(
                 "Failed to create the instructor record: " . $e->getMessage(),
                 500,
-                "Instructor Creation Failed 🛑",
-                "We were unable to create the new instructor account due to a system error. The operation has been rolled back. Please ensure all required fields are correct and try again, or contact support.",
+                "Unable to Complete Registration",
+                "We encountered an unexpected technical issue while trying to create this instructor profile, and all changes have been safely reverted. Please double-check the entered information and try submitting again. If the issue continues, reach out to technical support for assistance.",
                 null
             );
         }

@@ -81,17 +81,6 @@ class SpecialtyService
             }
 
             $specialty->update($filteredData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Updated",
-                ]
-            );
             return $specialty;
         } catch (AppException $e) {
             throw $e;
@@ -122,17 +111,6 @@ class SpecialtyService
             }
 
             $specialty->delete();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Deleted",
-                ]
-            );
             return $specialty;
         } catch (AppException $e) {
             throw $e;
@@ -212,17 +190,6 @@ class SpecialtyService
             }
             $specialty->status = "inactive";
             $specialty->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Deactivated",
-                ]
-            );
             return $specialty;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -260,17 +227,6 @@ class SpecialtyService
             }
             $specialty->status = "active";
             $specialty->save();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Activated",
-                ]
-            );
             return $specialty;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -327,17 +283,6 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Updated",
-                ]
-            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -394,17 +339,6 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.deactivate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Deactivated",
-                ]
-            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -461,17 +395,6 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.activate"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Activated",
-                ]
-            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -518,17 +441,6 @@ class SpecialtyService
                 $result[] = $specialty;
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.specialty.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "specialtyManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $specialty,
-                    "message" => "Specialty Deleted",
-                ]
-            );
             return $result;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
