@@ -12,11 +12,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
-use App\Events\Actions\AdminActionEvent;
 
 class EventService
 {
-    public function likeSchoolEvent($currentSchool, $authUser, $schoolEventId)
+    public function likeSchoolEvent(object $currentSchool, array $authUser, string $schoolEventId)
     {
         try {
             $schoolEvent = SchoolEvent::where('school_branch_id', $currentSchool->id)
@@ -71,7 +70,7 @@ class EventService
             'is_liked' => $isLiked,
         ];
     }
-    public function getSchoolEventsByCategory($currentSchool, $authUser, $eventCategoryId)
+    public function getSchoolEventsByCategory(object $currentSchool, array $authUser, string $eventCategoryId)
     {
         try {
             $eventCategory = EventCategory::findOrFail($eventCategoryId);
@@ -115,7 +114,7 @@ class EventService
 
         return  $schoolEvents->values()->all();
     }
-    public function getSchoolEvents($currentSchool, $authUser)
+    public function getSchoolEvents(object $currentSchool, array $authUser)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->where("status", "!=", "expired")
@@ -155,7 +154,7 @@ class EventService
 
         return $groupedEvents;
     }
-    public function getExpiredSchoolEvents($currentSchool, $authUser)
+    public function getExpiredSchoolEvents(object $currentSchool, array $authUser)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->where("status",  "expired")
@@ -195,7 +194,7 @@ class EventService
 
         return $groupedEvents;
     }
-    public function getExpiredSchoolEventsByCategory($currentSchool, $authUser, $eventCategoryId)
+    public function getExpiredSchoolEventsByCategory(object $currentSchool, array $authUser, string $eventCategoryId)
     {
         try {
             $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
@@ -240,7 +239,7 @@ class EventService
 
         return  $schoolEvents->values()->all();
     }
-    public function getScheduledSchoolEventsByCategory($currentSchool, $eventCategoryId)
+    public function getScheduledSchoolEventsByCategory(object $currentSchool, string $eventCategoryId)
     {
         try {
             $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
@@ -273,7 +272,7 @@ class EventService
 
         return $schoolEvents->values()->all();
     }
-    public function getScheduledSchoolEvents($currentSchool)
+    public function getScheduledSchoolEvents(object $currentSchool)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->where("status", "scheduled")
@@ -301,7 +300,7 @@ class EventService
 
         return $groupedEvents;
     }
-    public function getDraftSchoolEvents($currentSchool)
+    public function getDraftSchoolEvents(object $currentSchool)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->where("status", "draft")
@@ -327,7 +326,7 @@ class EventService
 
         return $groupedEvents;
     }
-    public function getDraftSchoolEventsByCategory($currentSchool, $eventCategoryId)
+    public function getDraftSchoolEventsByCategory(object $currentSchool, string $eventCategoryId)
     {
         try {
             $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
@@ -352,7 +351,7 @@ class EventService
             throw new AppException(
                 "No draft '{$eventCategory->name}' events found for school branch ID '{$currentSchool->id}'.",
                 404,
-                "No Draft School Events Found 📅 For this category",
+                "No Draft School Events Found For this category",
                 "We couldn't find any draft events scheduled under the '{$eventCategory->name}' category. Please ensure events have been created and their status is set to 'draft'.",
                 null
             );
@@ -360,7 +359,7 @@ class EventService
 
         return $schoolEvents->values()->all();
     }
-    public function deleteSchoolEvent($currentSchool, $eventId, $authAdmin)
+    public function deleteSchoolEvent(object $currentSchool, string $eventId, $authAdmin)
     {
         $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->find($eventId);
@@ -376,20 +375,9 @@ class EventService
         }
 
         $schoolEvent->delete();
-                AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.event.create"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolEventManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolEvent,
-                "message" => "School Event Deleted",
-            ]
-        );
         return $schoolEvent;
     }
-    public function getSchoolEventDetails($currentSchool, $eventId)
+    public function getSchoolEventDetails(object $currentSchool, string $eventId)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->with(['eventCategory'])
@@ -407,7 +395,7 @@ class EventService
 
         return $schoolEvents;
     }
-    public function updateSchoolEventContent($eventData, $currentSchool, $eventId, $authAdmin)
+    public function updateSchoolEventContent(array $eventData, object $currentSchool, string $eventId, $authAdmin)
     {
         $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
             ->find($eventId);
@@ -450,17 +438,6 @@ class EventService
         }
 
         $schoolEvents->update($dataToUpdate);
-        AdminActionEvent::dispatch(
-            [
-                "permissions" =>  ["schoolAdmin.event.update"],
-                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                "schoolBranch" =>  $currentSchool->id,
-                "feature" => "schoolEventManagement",
-                "authAdmin" => $authAdmin,
-                "data" => $schoolEvents,
-                "message" => "School Event Updated",
-            ]
-        );
         return $schoolEvents;
     }
     protected function getTags(array $data): Collection
@@ -484,7 +461,7 @@ class EventService
 
         return $tags;
     }
-    public function getStudentUpcomingEvents($currentSchool, $student)
+    public function getStudentUpcomingEvents(object $currentSchool, object $student)
     {
         $now = Carbon::now();
         $studentSpecialtyId = $student->specialty_id;

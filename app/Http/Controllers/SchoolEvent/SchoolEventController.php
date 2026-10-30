@@ -31,13 +31,13 @@ class SchoolEventController extends Controller
         $this->updateDraftEventStatusService = $updateDraftEventStatusService;
     }
 
-    public function likeSchoolEvent(Request $request, $schoolEventId)
+    public function likeSchoolEvent(Request $request, string $schoolEventId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $this->eventService->likeSchoolEvent($currentSchool, $this->getAuthenticatedUser(), $schoolEventId);
         return ApiResponseService::success("Event Liked Successfully", null, null, 200);
     }
-    public function getSchoolEventByCategory(Request $request, $eventCategoryId)
+    public function getSchoolEventByCategory(Request $request, string $eventCategoryId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $schoolEvents = $this->eventService->getSchoolEventsByCategory($currentSchool, $this->getAuthenticatedUser(), $eventCategoryId,);
@@ -55,21 +55,21 @@ class SchoolEventController extends Controller
         $updateDraftSchoolEvent = $this->updateDraftEventStatusService->updateDraftSchoolEvent($currentSchool, $this->getAuthenticatedUser(), $request->validated());
         return ApiResponseService::success("Draft School Event Updated Successfully", $updateDraftSchoolEvent, null, 200);
     }
-    public function updateSchoolEventContent(UpdateEventContentRequest $request, $schoolEventId)
+    public function updateSchoolEventContent(UpdateEventContentRequest $request, string $schoolEventId)
     {
         $authAdmin = $this->getAuthenticatedUser();
         $currentSchool = $request->attributes->get('currentSchool');
         $updateEventContent = $this->eventService->updateSchoolEventContent($request->validated(), $currentSchool, $schoolEventId, $authAdmin['authUser']);
         return ApiResponseService::success("School Event Content Updated Successfully", $updateEventContent, null, 200);
     }
-    public function deleteSchoolEventContent(Request $request, $schoolEventId)
+    public function deleteSchoolEventContent(Request $request, string $schoolEventId)
     {
         $authAdmin = $this->getAuthenticatedUser();
         $currentSchool = $request->attributes->get('currentSchool');
         $this->eventService->deleteSchoolEvent($currentSchool, $schoolEventId, $authAdmin['authUser']);
         return ApiResponseService::success("School Event Deleted Successfully", null, null, 200);
     }
-    public function getSchoolEventDetails(Request $request, $schoolEventId)
+    public function getSchoolEventDetails(Request $request, string $schoolEventId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $schoolEventDetails = $this->eventService->getSchoolEventDetails($currentSchool, $schoolEventId);
@@ -81,7 +81,7 @@ class SchoolEventController extends Controller
         $schoolEvents = $this->eventService->getExpiredSchoolEvents($currentSchool, $this->getAuthenticatedUser());
         return ApiResponseService::success("Expired School Events Fetched Successfully", $schoolEvents, null, 200);
     }
-    public function getExpiredSchoolEventsByCategory(Request $request, $eventCategoryId)
+    public function getExpiredSchoolEventsByCategory(Request $request, string $eventCategoryId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $schoolEvents = $this->eventService->getExpiredSchoolEventsByCategory($currentSchool, $this->getAuthenticatedUser(), $eventCategoryId);
@@ -93,7 +93,7 @@ class SchoolEventController extends Controller
         $schoolEvents = $this->eventService->getSchoolEvents($currentSchool, $this->getAuthenticatedUser());
         return ApiResponseService::success("School Events Fetched Successfully", $schoolEvents, null, 200);
     }
-    public function getScheduledSchoolEventsByCategory(Request $request, $eventCategoryId)
+    public function getScheduledSchoolEventsByCategory(Request $request, string $eventCategoryId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $scheduledSchoolEvents = $this->eventService->getScheduledSchoolEventsByCategory($currentSchool,  $eventCategoryId);
@@ -111,7 +111,7 @@ class SchoolEventController extends Controller
         $draftSchoolEvents = $this->eventService->getDraftSchoolEvents($currentSchool);
         return ApiResponseService::success("Draft School Events Fetched Successfully", $draftSchoolEvents, null, 200);
     }
-    public function getDraftSchoolEventsByCategory(Request $request, $eventCategoryId)
+    public function getDraftSchoolEventsByCategory(Request $request, string $eventCategoryId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $draftSchoolEvents = $this->eventService->getDraftSchoolEventsByCategory($currentSchool,  $eventCategoryId);
