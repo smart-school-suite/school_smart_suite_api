@@ -237,7 +237,7 @@ class Student extends Model
     }
     public function studentBatch(): BelongsTo
     {
-        return $this->belongsTo(StudentBatch::class, 'student_batch_id');
+        return $this->belongsTo(Studentbatch::class, 'student_batch_id');
     }
 
     public function studentresit(): HasMany
