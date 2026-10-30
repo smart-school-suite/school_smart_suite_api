@@ -23,7 +23,7 @@ class TuitionFees extends Model
         'amount_paid' => "float",
         'tuition_fee_total' => "float"
     ];
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $keyType = 'string';
     public $table = 'tuition_fees';
 
