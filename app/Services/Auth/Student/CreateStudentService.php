@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
+use App\Services\Helpers\Actor\ActorHelperService;
 
 class CreateStudentService
 {
@@ -17,6 +18,14 @@ class CreateStudentService
     {
 
         try {
+
+            $actorHelper = app(ActorHelperService::class);
+            $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+            if (empty($fullName)) {
+                $fullName = $data['name'] ?? 'Student';
+            }
+
+            $username = $actorHelper->generateUsername($fullName, Student::class);
 
             $specialty = Specialty::where('school_branch_id', $currentSchool->id)
                 ->with(['level'])
@@ -67,6 +76,7 @@ class CreateStudentService
             $student->specialty_id = $specialty->id;
             $student->student_batch_id = $studentData["student_batch_id"];
             $student->school_branch_id = $currentSchool->id;
+            $student->username = $username;
             $student->password = Hash::make($password);
             $student->save();
             $student->assignRole('student');
@@ -82,7 +92,6 @@ class CreateStudentService
             TuitionFees::create([
                 'specialty_id' => $specialty->id,
                 'amount_paid' => 0.00,
-                'amount_left' => $specialty->school_fee,
                 'school_branch_id' => $currentSchool->id,
                 'tution_fee_total' => $specialty->school_fee,
                 'student_id' => $student->id,
