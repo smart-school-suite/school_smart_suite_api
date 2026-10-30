@@ -4,57 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Audiences;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Parents extends Model
 {
-    use HasFactory, HasApiTokens;
+    use HasFactory, HasApiTokens, HasUuids;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'address',
         'email',
         'phone',
         'preferred_language',
+        'preferred_contact_method',
         'school_branch_id'
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'remember_token',
     ];
 
     public $keyType = 'string';
     public $table = 'parents';
-    public $incrementing = 'false';
-    protected $authTokenColumn = 'token';
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    public $incrementing = false;
 
 
     public function school(): BelongsTo
@@ -69,13 +40,5 @@ class Parents extends Model
     public function student(): HasMany
     {
         return $this->hasMany(Student::class, 'guardian_id');
-    }
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $user->id = (string) Str::uuid();
-        });
     }
 }
