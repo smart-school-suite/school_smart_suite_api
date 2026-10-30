@@ -18,15 +18,6 @@ class ResitCandidateService
                 'resitScores'
             ])
             ->get();
-        if ($resitCandidates->isEmpty()) {
-            throw new AppException(
-                "No resit candidates found for this school branch.",
-                404,
-                "No Candidates Found",
-                "There are no resit candidates available. Candidates are automatically created when you create a resit exam.",
-                "/resit-exams"
-            );
-        }
         return $resitCandidates;
     }
 

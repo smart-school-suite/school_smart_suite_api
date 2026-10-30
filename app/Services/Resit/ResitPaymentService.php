@@ -66,16 +66,6 @@ class ResitPaymentService
                 ->with(['studentResit', 'studentResit.student.specialty.level', 'studentResit.courses', 'studentResit.exam'])
                 ->get();
 
-            if ($getResitPaymentTransactions->isEmpty()) {
-                throw new AppException(
-                    "No resit payment transactions were found for this school branch.",
-                    404,
-                    "No Transactions Found",
-                    "There are currently no resit fee transaction records available in the system for your school branch.",
-                    null
-                );
-            }
-
             return $getResitPaymentTransactions;
         } catch (AppException $e) {
             throw $e;

@@ -89,16 +89,6 @@ class ResitExamService
                 ])
                 ->get();
 
-            if ($resitExams->isEmpty()) {
-                throw new AppException(
-                    "No resit exams were found for this school branch.",
-                    404,
-                    "No Resit Exams Found",
-                    "The system could not find any resit exams associated with your school branch. Please ensure resit exams have been configured.",
-                    null
-                );
-            }
-
             return $resitExams;
         } catch (AppException $e) {
             throw $e;

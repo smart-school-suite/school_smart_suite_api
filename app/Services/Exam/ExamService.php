@@ -20,8 +20,6 @@ use App\Models\ResitExam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Grades;
-use App\Events\Actions\AdminActionEvent;
-use App\Events\Actions\StudentActionEvent;
 
 class ExamService
 {
@@ -178,24 +176,6 @@ class ExamService
             }
 
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.exam.delete"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "examManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $deletedExams,
-                    "message" => "Exam Deleted",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => $specialtyIds,
-                'feature'      => 'examDelete',
-                'message'      => 'Exam  Deleted',
-                'data'         => $deletedExams,
-            ]);
             return $deletedExams;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
@@ -236,24 +216,6 @@ class ExamService
             $filteredData = array_filter($data);
 
             $exam->update($filteredData);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.exam.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "examManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $exam,
-                    "message" => "Exam Updated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => [$exam->specialty_id],
-                'feature'      => 'examUpdate',
-                'message'      => 'Exam Updated',
-                'data'         => $exam,
-            ]);
             return $exam;
         } catch (AppException $e) {
             throw $e;
@@ -284,24 +246,6 @@ class ExamService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.exam.update"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "examManagement",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Exam Updated",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => $specialtyIds,
-                'feature'      => 'examUpdate',
-                'message'      => 'Exam Updated',
-                'data'         => $exam,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();
@@ -318,16 +262,6 @@ class ExamService
                 'schoolYear.systemAcademicYear'
             ])
             ->get();
-
-        if ($exams->isEmpty()) {
-            throw new AppException(
-                "There are no exams available for this school branch yet.",
-                404,
-                "No Exams Found",
-                "We could not find any exams associated with your school branch. Please try creating one first.",
-                null
-            );
-        }
 
         return $exams;
     }
@@ -546,25 +480,6 @@ class ExamService
                 ];
             }
             DB::commit();
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.exam.add.grade.config"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "examManagement",
-                    "action" => "examGradeScale.added",
-                    "authAdmin" => $authAdmin,
-                    "data" => $result,
-                    "message" => "Exam Grade Scale Added",
-                ]
-            );
-            StudentActionEvent::dispatch([
-                'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => $specialtyIds,
-                'feature'      => 'examGradeScale',
-                'message'      => 'Exam Grade Scale Added',
-                'data'         => $exam,
-            ]);
             return $result;
         } catch (Exception $e) {
             DB::rollBack();

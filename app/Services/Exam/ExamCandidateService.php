@@ -24,16 +24,6 @@ class ExamCandidateService
                 ])
                 ->get();
 
-            if ($getExamCandidates->isEmpty()) {
-                throw new AppException(
-                    "No exam candidates found for this school branch.",
-                    404,
-                    "No Candidates Found",
-                    "There are no exam candidates available. Candidates are automatically created when you create an exam.",
-                    "/exams"
-                );
-            }
-
             return $getExamCandidates;
         } catch (AppException $e) {
             throw $e;
