@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('event_categories', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->boolean('status')->default(true);
             $table->text('description')->nullable();
@@ -17,20 +17,20 @@ return new class extends Migration
         });
 
         Schema::create('event_tags', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->timestamps();
         });
 
         Schema::create('event_audiences', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('audienceable_id');
             $table->string('audienceable_type');
             $table->timestamps();
         });
 
         Schema::create('school_events', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('background_image')->nullable();
@@ -49,14 +49,14 @@ return new class extends Migration
         });
 
         Schema::create('event_authors', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('authorable_id')->nullable();
             $table->string('authorable_type')->nullable();
             $table->timestamps();
         });
 
         Schema::create('event_like_statuses', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->boolean('status')->default(false);
             $table->string('likeable_id');
             $table->string('likeable_type');
