@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Studentbatch extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'name',
@@ -20,7 +20,7 @@ class Studentbatch extends Model
         'school_branch_id'
     ];
 
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'student_batches';
     public $keyType = 'string';
 

@@ -14,7 +14,7 @@ use App\Services\Helpers\Actor\ActorHelperService;
 
 class CreateStudentService
 {
-    public function createStudent($studentData, $currentSchool, $authAdmin)
+    public function createStudent(array $studentData, object $currentSchool, $authAdmin)
     {
 
         try {
@@ -40,7 +40,7 @@ class CreateStudentService
                 throw new AuthException(
                     "This student email address is already registered at this school branch.",
                     409,
-                    "Student Email Already Exists 📧",
+                    "Student Email Already Exists",
                     "The email '{$studentData['email']}' is already associated with a student account in your school branch. Please use a different email or check the existing account."
                 );
             }
@@ -53,7 +53,7 @@ class CreateStudentService
                 throw new AppException(
                     "A student with the name '{$studentData['name']}' already exists at this school branch.",
                     409,
-                    "Duplicate Student Name 📛",
+                    "Duplicate Student Name",
                     "A student with the exact name '{$studentData['name']}' is already registered at this school. Please ensure you are not creating a duplicate or consider adding a middle initial or suffix for differentiation.",
                     null
                 );
@@ -105,7 +105,7 @@ class CreateStudentService
             throw new AppException(
                 "The specified specialty ID '{$studentData["specialty_id"]}' was not found.",
                 404,
-                "Specialty Not Found 🧩",
+                "Specialty Not Found",
                 "The requested subject or specialty (ID: {$studentData["specialty_id"]}) does not exist or is not available at your school branch.",
                 null
             );
@@ -117,7 +117,7 @@ class CreateStudentService
             throw new AppException(
                 "A fatal system error occurred during student registration: " . $e->getMessage(),
                 500,
-                "Registration Failed Due to System Error 🛑",
+                "Registration Failed Due to System Error",
                 "We were unable to complete the student registration due to an unexpected system issue. The attempt has been rolled back. Please try again or contact support.",
                 null
             );
