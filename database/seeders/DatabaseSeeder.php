@@ -41,5 +41,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AssetPolicySeeder::class);
         $this->call(CourseTypeSeeder::class);
         $this->call(QualificationSeeder::class);
+        $this->call(TagSeeder::class);
     }
 }
