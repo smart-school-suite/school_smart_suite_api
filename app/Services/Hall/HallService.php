@@ -118,14 +118,6 @@ class HallService
         $halls = Hall::where("school_branch_id", $currentSchool->id)
             ->with(['types'])
             ->get();
-        if ($halls->isEmpty()) {
-            throw new AppException(
-                "No Halls Added",
-                404,
-                "No Halls Found",
-                "There are no Halls available for this school branch.",
-            );
-        }
 
         return $halls;
     }

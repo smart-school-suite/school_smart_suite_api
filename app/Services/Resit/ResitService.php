@@ -50,16 +50,6 @@ class ResitService
                 ])
                 ->get();
 
-            if ($resitableCourses->isEmpty()) {
-                throw new AppException(
-                    "No resitable courses were found for this school branch.",
-                    404,
-                    "No Resitable Courses Found",
-                    "The system could not find any courses available for resitting. This may be because no students have failed a relevant exam yet, which automatically creates a resit record.",
-                    null
-                );
-            }
-
             return $resitableCourses;
         } catch (AppException $e) {
             throw $e;
