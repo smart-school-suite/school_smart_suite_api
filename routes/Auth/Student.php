@@ -9,7 +9,6 @@ use App\Http\Controllers\Auth\Student\ChangePasswordController;
 use App\Http\Controllers\Auth\Student\ResetPasswordController;
 use App\Http\Controllers\Auth\Student\ValidateOtpController;
 use App\Http\Middleware\IdentifyTenant;
-use App\Http\Middleware\Limitstudents;
 
 // Login
 Route::post('/login', [LoginStudentController::class, 'loginStudent'])

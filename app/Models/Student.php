@@ -20,13 +20,13 @@ use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\OTP;
 use App\Models\Job\SystemJob;
 use App\Models\Promotion\StudentPromotionRecord;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
-    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency;
+    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency, HasUuids;
     protected $fillable = [
-        'id',
         'name',
         'first_name',
         'last_name',

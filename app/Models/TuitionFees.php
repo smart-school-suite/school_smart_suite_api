@@ -12,7 +12,6 @@ class TuitionFees extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'id',
         'student_id',
         'school_branch_id',
         'specialty_id',

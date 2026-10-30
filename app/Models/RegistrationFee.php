@@ -12,7 +12,6 @@ class RegistrationFee extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'id',
         'title',
         'amount',
         'status',

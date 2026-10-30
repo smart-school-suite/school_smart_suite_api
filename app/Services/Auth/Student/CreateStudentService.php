@@ -2,22 +2,14 @@
 
 namespace App\Services\Auth\Student;
 
-use App\Jobs\AuthenticationJobs\SendPasswordVaiMailJob;
-use App\Jobs\NotificationJobs\SendAdminStudentCreatedNotificationJob;
-use App\Jobs\StatisticalJobs\FinancialJobs\TuitionFeeStatJob;
-use App\Jobs\StatisticalJobs\OperationalJobs\StudentRegistrationStatsJob;
 use App\Models\Specialty;
 use App\Models\Student;
 use App\Models\TuitionFees;
 use App\Models\RegistrationFee;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\AuthException;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
-use App\Constant\Analytics\Enrollment\EnrollmentAnalyticsEvent as EnrollmentEvent;
-use App\Events\Analytics\EnrollmentAnalyticsEvent;
 
 class CreateStudentService
 {
@@ -61,10 +53,8 @@ class CreateStudentService
             DB::beginTransaction();
 
             $password = $this->generateRandomPassword();
-            $randomId = Str::uuid()->toString();
 
             $student = new Student();
-            $student->id = $randomId;
             $student->name = $studentData["name"];
             $student->first_name = $studentData["first_name"];
             $student->gender_id = $studentData['gender_id'];
@@ -73,75 +63,33 @@ class CreateStudentService
             $student->last_name = $studentData["last_name"];
             $student->guardian_id = $studentData["guardian_id"];
             $student->email = $studentData["email"];
-            $student->level_id = $specialty->level_id;
             $student->relationship_id = $studentData['relationship_id'];
             $student->specialty_id = $specialty->id;
-            $student->department_id = $specialty->department_id;
             $student->student_batch_id = $studentData["student_batch_id"];
             $student->school_branch_id = $currentSchool->id;
             $student->password = Hash::make($password);
             $student->save();
             $student->assignRole('student');
 
-            $registrationFeeId = Str::uuid();
             RegistrationFee::create([
-                'id' => $registrationFeeId,
                 'specialty_id' => $specialty->id,
                 'school_branch_id' => $currentSchool->id,
                 'amount' => $specialty->registration_fee,
                 'status' => "not paid",
-                'student_id' => $randomId,
+                'student_id' => $student->id,
             ]);
 
-            $tuitionFeeId = Str::uuid();
             TuitionFees::create([
-                'id' => $tuitionFeeId,
-                'level_id' => $specialty->level_id,
                 'specialty_id' => $specialty->id,
                 'amount_paid' => 0.00,
                 'amount_left' => $specialty->school_fee,
                 'school_branch_id' => $currentSchool->id,
                 'tution_fee_total' => $specialty->school_fee,
-                'student_id' => $randomId,
+                'student_id' => $student->id,
             ]);
 
             DB::commit();
 
-            SendPasswordVaiMailJob::dispatch($password, $studentData["email"]);
-            TuitionFeeStatJob::dispatch($tuitionFeeId, $currentSchool->id);
-            StudentRegistrationStatsJob::dispatch($randomId, $currentSchool->id);
-            AdminActionEvent::dispatch(
-                [
-                    "permissions" =>  ["schoolAdmin.student.create"],
-                    "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                    "schoolBranch" =>  $currentSchool->id,
-                    "feature" => "studentManagement",
-                    "action" => "student.created",
-                    "authAdmin" => $authAdmin,
-                    "data" => $student,
-                    "message" => "Student Created",
-                ]
-            );
-            SendAdminStudentCreatedNotificationJob::dispatch(
-                $specialty->specialty_name,
-                $studentData["name"],
-                $specialty->level->name,
-                $currentSchool->id
-            );
-
-            event(new EnrollmentAnalyticsEvent(
-                 eventType:EnrollmentEvent::STUDENT_ENROLLED,
-                 version:1,
-                 payload:[
-                    "school_branch_id" => $currentSchool->id,
-                    "specialty_id" => $specialty->id,
-                    "department_id" => $specialty->department_id,
-                    "level_id" => $specialty->level_id,
-                    "gender_id" => $studentData['gender_id'],
-                    "student_source_id" => $studentData['student_source_id'],
-                    "value" => 1
-                 ]
-            ));
             return $student;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
