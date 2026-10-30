@@ -2,20 +2,19 @@
 
 namespace Database\Seeders;
 
+use App\Models\Examtype;
 use App\Models\Semester;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ExamTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $timestamp = now();
         $semestersByCount = Semester::pluck('id', 'count');
 
         $examTypesData = [
             [
+                'key'          => 'second_semester_exam',
                 'exam_name'    => 'Second Semester Exam',
                 'program_name' => 'SSE',
                 'semester'     => 'second',
@@ -24,6 +23,7 @@ class ExamTypeSeeder extends Seeder
                 'description'  => 'The final major exam of the entire academic session, usually written in May/June or June/July. Covers only second-semester topics, but your result here combines with everything else to determine if you pass or move to the next class/level. Typically 60–70%. Clear this and you’re done for the year – no more tension!',
             ],
             [
+                'key'          => 'second_semester_ca',
                 'exam_name'    => 'Second Semester CA (Continous Accessment)',
                 'program_name' => 'SSC',
                 'semester'     => 'second',
@@ -32,6 +32,7 @@ class ExamTypeSeeder extends Seeder
                 'description'  => 'Just like first semester CA, but for the second half of the session (January/February to May/June). All your tests, assignments, quizzes, practicals, and attendance during this period count here. Still 30–40% of your final grade. Many students use this semester to boost subjects they were weak in earlier.',
             ],
             [
+                'key'          => 'second_semester_resit',
                 'exam_name'    => 'Second Semester Resit',
                 'program_name' => 'SSR',
                 'semester'     => 'second',
@@ -40,6 +41,7 @@ class ExamTypeSeeder extends Seeder
                 'description'  => 'A supplementary examination opportunity provided at the end of the academic session for students needing to clear failed or missed courses from the second semester. Passing this allows you to satisfy academic requirements without repeating the entire semester.',
             ],
             [
+                'key'          => 'first_semester_resit',
                 'exam_name'    => 'First Semester Resit',
                 'program_name' => 'FSR',
                 'semester'     => 'first',
@@ -48,6 +50,7 @@ class ExamTypeSeeder extends Seeder
                 'description'  => 'A makeup assessment offered to students who scored below the passing threshold or missed the main first semester examination. It provides a second chance to earn necessary course credits before progressing further.',
             ],
             [
+                'key'          => 'first_semester_ca',
                 'exam_name'    => 'First Semester CA (Continous Accessment)',
                 'program_name' => 'FSC',
                 'semester'     => 'first',
@@ -56,6 +59,7 @@ class ExamTypeSeeder extends Seeder
                 'description'  => 'This is your day-to-day score throughout the first semester (usually August/September to December). It includes quizzes, class tests, assignments, projects, attendance, and participation. In most schools, CA is worth 30–40% of your total grade for each subject. Staying consistent here reduces the pressure on the final exam and keeps your GP high from the start!',
             ],
             [
+                'key'          => 'first_semester_exam',
                 'exam_name'    => 'First Semester Exam',
                 'program_name' => 'FSE',
                 'semester'     => 'first',
@@ -72,29 +76,17 @@ class ExamTypeSeeder extends Seeder
                 continue;
             }
 
-            $match = [
-                'exam_name'    => $row['exam_name'],
-                'program_name' => $row['program_name'],
-                'semester_id'  => $semesterId,
-                'type'         => $row['type'],
-            ];
-
-            if (DB::table('exam_types')->where($match)->exists()) {
-                DB::table('exam_types')->where($match)->update([
-                    'description' => $row['description'],
-                    'semester'    => $row['semester'],
-                    'updated_at'  => $timestamp,
-                ]);
-                continue;
-            }
-
-            DB::table('exam_types')->insert($match + [
-                'id'          => Str::uuid()->toString(),
-                'semester'    => $row['semester'],
-                'description' => $row['description'],
-                'created_at'  => $timestamp,
-                'updated_at'  => $timestamp,
-            ]);
+            Examtype::updateOrCreate(
+                ['key' => $row['key']],
+                [
+                    'exam_name'    => $row['exam_name'],
+                    'program_name' => $row['program_name'],
+                    'semester'     => $row['semester'],
+                    'semester_id'  => $semesterId,
+                    'type'         => $row['type'],
+                    'description'  => $row['description'],
+                ]
+            );
         }
     }
 }

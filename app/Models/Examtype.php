@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Examtype extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'semester_id',
@@ -24,7 +24,7 @@ class Examtype extends Model
     ];
 
 
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $keyType = 'string';
     public $table = 'exam_types';
 
