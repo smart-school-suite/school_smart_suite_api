@@ -20,8 +20,8 @@ class ParentResource extends JsonResource
             'address' => $this->address ?? null,
             'phone' => $this->phone ?? null,
             'total_students' => $this->student->count() ?? 0,
-            'contact_method' => $this->preferred_contact_method,
-            'language' => $this->preferred_language,
+            'contact_method' => $this->preferred_contact_method ?? null,
+            'language' => $this->preferred_language ?? null,
             'created_at' => $this->created_at ?? null,
             'updated_at' => $this->updated_at ?? null
         ];

@@ -114,16 +114,6 @@ class StudentService
                 ->where('dropout_status', true)
                 ->get();
 
-            if ($dropoutStudents->isEmpty()) {
-                throw new AppException(
-                    "No dropout students were found for this school branch.",
-                    404,
-                    "No Dropout Students Found",
-                    "There are currently no students marked with a dropout status in the system for your school.",
-                    null
-                );
-            }
-
             return $dropoutStudents;
         } catch (AppException $e) {
             throw $e;

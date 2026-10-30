@@ -34,7 +34,7 @@ class ExamService
                     "Exam Type Not Found",
                     404,
                     "Exam Type Not Found",
-                    "Exam Type Not Found. Please ensure that this exam type exists and is not accidentally deleted."
+                    "The selected exam type could not be found. Please ensure the exam type exists and has not been deleted before proceeding."
                 );
             }
 
@@ -47,8 +47,33 @@ class ExamService
                 throw new AppException(
                     "Duplicate Exam Details",
                     409,
-                    "Duplicate Exam Credentials",
-                    "You are trying to create an exam that already exists. Please check exam details and try again."
+                    "Exam Already Exists",
+                    "An exam with this exact type and academic year has already been created for this school branch. Please review your settings or update the existing exam."
+                );
+            }
+
+            $schoolYear = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
+                ->where("id", $data['school_year_id'])
+                ->with(['specialty'])
+                ->first();
+            if (!$schoolYear) {
+                throw new AppException(
+                    "Academic Year Not Found",
+                    404,
+                    "Academic Year Not Found",
+                    "The selected academic year or term could not be found within your school branch. Please verify the academic year and try again."
+                );
+            }
+
+            $students = Student::where("school_branch_id", $currentSchool->id)
+                ->where("specialty_id", $schoolYear->specialty->id)
+                ->count();
+            if ($students <= 0) {
+                throw new AppException(
+                    "No Students Enrolled",
+                    422,
+                    "No Students Available",
+                    "There are no students enrolled in the specialty associated with this academic year. You must add students to this specialty before you can create an exam."
                 );
             }
 
@@ -96,8 +121,8 @@ class ExamService
             throw new AppException(
                 $e->getMessage(),
                 500,
-                "Server Error",
-                "An unexpected error occurred while creating the exam. Please try again later."
+                "Unable to Complete Request",
+                "An unexpected technical error occurred while trying to create the exam. Please verify your information and try again. If the issue persists, contact support."
             );
         }
     }

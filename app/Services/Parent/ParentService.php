@@ -6,7 +6,6 @@ use App\Models\Parents;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Services\ApiResponseService;
-use App\Events\Actions\AdminActionEvent;
 
 class ParentService
 {
@@ -24,7 +23,8 @@ class ParentService
     }
     public function getAllParents(object $currentSchool)
     {
-        $parents = Parents::Where('school_branch_id', $currentSchool->id)->with('student')->get();
+        $parents = Parents::Where('school_branch_id', $currentSchool->id)
+            ->with('student')->get();
         return $parents;
     }
 
