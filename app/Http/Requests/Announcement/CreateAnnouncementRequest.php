@@ -70,6 +70,10 @@ class CreateAnnouncementRequest extends FormRequest
         $validator->after(function (Validator $validator) {
             $data = $this->all();
 
+            if ($this->boolean('school_wide')) {
+                return;
+            }
+
             $hasAdminAudience = !empty(array_filter($data['admin_audience'] ?? []));
             $hasStudentAudience = !empty(array_filter($data['student_audience'] ?? []));
             $hasTeacherAudience = !empty(array_filter($data['teacher_audience'] ?? []));

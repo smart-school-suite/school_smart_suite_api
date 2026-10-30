@@ -82,6 +82,7 @@ class CreateAnnouncementService
     {
         return DB::transaction(function () use ($currentSchool, $authenticatedUser, $data, $tags, $audience) {
             $isDraft = ($data['status'] ?? null) === 'draft';
+            $isSchoolWide = filter_var($data['school_wide'] ?? false, FILTER_VALIDATE_BOOLEAN);
             $hasPublishedAt = !empty($data['published_at']);
             $intendedScheduled = ($data['status'] ?? null) === 'scheduled' || ($hasPublishedAt && Carbon::parse($data['published_at'])->isFuture());
 
@@ -141,7 +142,7 @@ class CreateAnnouncementService
                 'category_id' => $data['category_id'] ?? null,
                 'label_id' => $data['label_id'] ?? null,
                 'notification_sent_at' => null,
-                'audience' => json_encode([
+                'audience' => json_encode($isSchoolWide ? ['school_wide' => true] : [
                     'admin_audience' => $data['admin_audience'] ?? [],
                     'student_audience' => $data['student_audience'] ?? [],
                     'teacher_audience' => $data['teacher_audience'] ?? [],
