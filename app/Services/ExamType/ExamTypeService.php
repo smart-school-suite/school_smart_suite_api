@@ -14,7 +14,7 @@ class ExamTypeService
         $examName = $data["exam_name"];
         $programName = $data["program_name"];
 
-        $existingExamType = ExamType::where('semester_id', $semesterId)
+        $existingExamType = Examtype::where('semester_id', $semesterId)
             ->where('exam_name', $examName)
             ->where('program_name', $programName)
             ->first();
@@ -30,7 +30,7 @@ class ExamTypeService
         }
 
         try {
-            $new_exam_type_instance = new ExamType();
+            $new_exam_type_instance = new Examtype();
             $new_exam_type_instance->semester_id = $semesterId;
             $new_exam_type_instance->exam_name = $examName;
             $new_exam_type_instance->program_name = $programName;
@@ -50,7 +50,7 @@ class ExamTypeService
     public function updateExamType(array $data, $exam_type_id)
     {
         try {
-            $findExam = ExamType::find($exam_type_id);
+            $findExam = Examtype::find($exam_type_id);
 
             if (!$findExam) {
                 throw new AppException(
@@ -69,7 +69,7 @@ class ExamTypeService
                 $examName = $filterData['exam_name'] ?? $findExam->exam_name;
                 $programName = $filterData['program_name'] ?? $findExam->program_name;
 
-                $existingExamType = ExamType::where('semester_id', $semesterId)
+                $existingExamType = Examtype::where('semester_id', $semesterId)
                     ->where('exam_name', $examName)
                     ->where('program_name', $programName)
                     ->where('id', '!=', $exam_type_id)
@@ -105,7 +105,7 @@ class ExamTypeService
     {
         $examName = 'Unknown Exam Type';
         try {
-            $findExam = ExamType::find($exam_type_id);
+            $findExam = Examtype::find($exam_type_id);
 
             if (!$findExam) {
                 throw new AppException(
@@ -148,16 +148,15 @@ class ExamTypeService
     public function getExamType($currentSchool)
     {
         try {
-            $num_semesters = $currentSchool->semester_count;
 
-            $exam_type_data = ExamType::with('semesters')
-                ->whereHas('semesters', function ($query) use ($num_semesters) {
-                    $query->whereBetween('count', [1, $num_semesters + 1]);
+            $exam_type_data = Examtype::with('semesters')
+                ->whereHas('semesters', function ($query) {
+                    $query->whereBetween('count', [1, 2]);
                 })->get();
 
             if ($exam_type_data->isEmpty()) {
                 throw new AppException(
-                    "No exam types found within the specified semester count range ({$num_semesters}).",
+                    "No exam types found within the specified semester count range 2",
                     404,
                     "No Exam Types Found 📝",
                     "There are no exam types defined for the semesters configured for your school. Please create a new exam type.",
