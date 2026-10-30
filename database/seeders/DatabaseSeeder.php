@@ -39,5 +39,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PaymentMethodCategorySeeder::class);
         $this->call(PaymentMethodSeeder::class);
         $this->call(AssetPolicySeeder::class);
+        $this->call(CourseTypeSeeder::class);
     }
 }

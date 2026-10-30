@@ -200,17 +200,6 @@ class CourseService
             ->having('specialties_count', '=', 1)
             ->get();
 
-
-        if ($courses->isEmpty()) {
-            throw new AppException(
-                "No courses found",
-                404,
-                "No Courses Found",
-                "There are no courses available for this school branch.",
-                "/courses"
-            );
-        }
-
         return $courses->map(fn($course) => [
             "id" => $course->id ?? null,
             "course_code" => $course->course_code ?? null,
