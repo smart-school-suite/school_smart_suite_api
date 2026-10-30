@@ -40,7 +40,7 @@ class TeacherController extends Controller
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateTeacher = $this->teacherService->updateTeacher($request->all(), $teacherId, $currentSchool, $authAdmin);
+        $updateTeacher = $this->teacherService->updateTeacher($request->validated(), $teacherId, $currentSchool, $authAdmin);
         return ApiResponseService::success("Teacher Updated Sucessfully", $updateTeacher, null, 200);
     }
     public function getTimettableByTeacher(Request $request, string $teacherId)

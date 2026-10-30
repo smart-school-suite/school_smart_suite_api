@@ -24,7 +24,7 @@ class CreateTeacherRequest extends FormRequest
             'allowed_level_ids' => 'required|array|min:1',
             'allowed_level_ids.*' => 'required|uuid|exists:levels,id',
             'qualifications' => "required|array|min:1",
-            'qualifications.*.qualification_id' => 'required|uuid|exists:qualifications,id',
+            'qualifications.*.qualification_id' => 'required|uuid|distinct|exists:qualifications,id',
             'qualifications.*.field_of_study' => 'required|string|max:200',
             'qualifications.*.institution' => 'required|string|max:150',
             'qualifications.*.year' => 'required|string|max:50'

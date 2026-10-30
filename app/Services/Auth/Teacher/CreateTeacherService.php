@@ -38,7 +38,7 @@ class CreateTeacherService
                 );
             }
 
-            $levelIds = $teacherData['level_ids'] ?? [];
+            $levelIds = $teacherData['allowed_level_ids'] ?? [];
             $qualifications = $teacherData['qualifications'] ?? [];
 
             DB::beginTransaction();
@@ -77,7 +77,9 @@ class CreateTeacherService
                 if (!empty($item['qualification_id'])) {
                     $qualificationsSyncData[$item['qualification_id']] = [
                         'school_branch_id' => $currentSchool->id,
-                        'field_of_study'   => $item['field_of_study'] ?? null
+                        'field_of_study'   => $item['field_of_study'] ?? null,
+                        'institution'      => $item['institution'] ?? null,
+                        'year'             => $item['year'] ?? null,
                     ];
                 }
             }

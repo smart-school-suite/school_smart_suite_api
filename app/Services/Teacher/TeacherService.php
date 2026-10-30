@@ -7,6 +7,8 @@ use App\Models\Teacher;
 use App\Notifications\SpecialtyAssignedToTeacher;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+use App\Exceptions\AppException;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Models\Teacher\TeacherSpecialty;
@@ -29,9 +31,75 @@ class TeacherService
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
-        $filterData = array_filter($data);
-        $teacher->update($filterData);
-        return $teacher;
+
+        if (
+            isset($data['email']) &&
+            Teacher::where('school_branch_id', $currentSchool->id)
+                ->where('email', $data['email'])
+                ->where('id', '!=', $teacher->id)
+                ->exists()
+        ) {
+            throw new AppException(
+                "This email address is already in use at this school branch.",
+                409,
+                "Email Already Exists",
+                "The email '{$data['email']}' is already associated with another account in your school branch. Please use a different email.",
+                null
+            );
+        }
+
+        if (
+            isset($data['name']) &&
+            Teacher::where('school_branch_id', $currentSchool->id)
+                ->where('name', $data['name'])
+                ->where('id', '!=', $teacher->id)
+                ->exists()
+        ) {
+            throw new AppException(
+                "A teacher with the name '{$data['name']}' already exists at this school branch.",
+                409,
+                "Duplicate Teacher Name 📛",
+                "Another teacher with the exact name '{$data['name']}' is already registered at this school. Consider adding a middle initial or suffix to differentiate the record.",
+                null
+            );
+        }
+
+        DB::transaction(function () use ($teacher, $data, $currentSchool) {
+            $teacher->update(Arr::only($data, [
+                'first_name',
+                'last_name',
+                'name',
+                'email',
+                'address',
+                'gender_id',
+                'phone',
+            ]));
+
+            if (array_key_exists('allowed_level_ids', $data)) {
+                $levelsSyncData = [];
+                foreach ($data['allowed_level_ids'] as $levelId) {
+                    $levelsSyncData[$levelId] = [
+                        'school_branch_id' => $currentSchool->id
+                    ];
+                }
+                $teacher->levels()->sync($levelsSyncData);
+            }
+
+            if (array_key_exists('qualifications', $data)) {
+                $qualificationsSyncData = [];
+                foreach ($data['qualifications'] as $item) {
+                    $qualificationsSyncData[$item['qualification_id']] = [
+                        'school_branch_id' => $currentSchool->id,
+                        'field_of_study'   => $item['field_of_study'],
+                        'institution'      => $item['institution'],
+                        'year'             => $item['year'],
+                    ];
+                }
+                $teacher->qualifications()->sync($qualificationsSyncData);
+            }
+        });
+
+        return $teacher->fresh(['qualifications', 'levels']);
     }
     public function getTeacherSchedule(string $teacherId, $currentSchool)
     {

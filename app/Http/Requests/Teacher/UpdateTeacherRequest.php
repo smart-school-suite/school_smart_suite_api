@@ -24,13 +24,20 @@ class UpdateTeacherRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'sometimes|nullable|string',
-            'last_name' => 'sometimes|nullable|string',
-            'name' => 'sometimes|nullable|string',
-            'email' => 'sometimes|nullable|email',
-            'address' => 'sometimes|nullable|string',
-            'gender_id' => 'sometimes|nullable|string|exists:genders,id',
-            'phone' => 'sometimes|nullable|string',
+            'first_name' => 'sometimes|required|string|max:50',
+            'last_name' => 'sometimes|required|string|max:50',
+            'name' => 'sometimes|required|string|max:50',
+            'email' => 'sometimes|required|email|string|max:100',
+            'address' => 'sometimes|nullable|string|max:200',
+            'gender_id' => 'sometimes|required|string|exists:genders,id',
+            'phone' => 'sometimes|nullable|string|max:20',
+            'allowed_level_ids' => 'sometimes|required|array|min:1',
+            'allowed_level_ids.*' => 'required|uuid|exists:levels,id',
+            'qualifications' => 'sometimes|required|array|min:1',
+            'qualifications.*.qualification_id' => 'required|uuid|distinct|exists:qualifications,id',
+            'qualifications.*.field_of_study' => 'required|string|max:200',
+            'qualifications.*.institution' => 'required|string|max:150',
+            'qualifications.*.year' => 'required|string|max:50'
         ];
     }
 }
