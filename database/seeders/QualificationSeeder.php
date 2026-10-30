@@ -44,8 +44,7 @@ class QualificationSeeder extends Seeder
                 ['abbreviation' => $q['abbreviation']],
                 [
                     'name' => $q['name'],
-                    'level' => $q['level'],
-                    'obtained_from' => $q['obtained_from'],
+                    'level' => $q['level']
                 ]
             );
         }
