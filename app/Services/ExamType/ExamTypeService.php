@@ -23,7 +23,7 @@ class ExamTypeService
             throw new AppException(
                 "An exam type with the name '{$examName}' already exists for the program '{$programName}' in semester ID '{$semesterId}'.",
                 409,
-                "Duplicate Exam Type 📛",
+                "Duplicate Exam Type",
                 "This exact exam type configuration (Name, Program, Semester) is already defined. Please ensure uniqueness.",
                 null
             );
@@ -41,22 +41,22 @@ class ExamTypeService
             throw new AppException(
                 "Failed to create exam type '{$examName}'. Error: " . $e->getMessage(),
                 500,
-                "Creation Failed 🛑",
+                "Creation Failed",
                 "A system error occurred while trying to save the new exam type. Please try again or contact support.",
                 null
             );
         }
     }
-    public function updateExamType(array $data, $exam_type_id)
+    public function updateExamType(array $data, string $examTypeId)
     {
         try {
-            $findExam = Examtype::find($exam_type_id);
+            $findExam = Examtype::find($examTypeId);
 
             if (!$findExam) {
                 throw new AppException(
-                    "Exam type ID '{$exam_type_id}' not found.",
+                    "Exam type ID '{$examTypeId}' not found.",
                     404,
-                    "Exam Type Not Found 🔎",
+                    "Exam Type Not Found",
                     "The exam type you are trying to update could not be found.",
                     null
                 );
@@ -72,14 +72,14 @@ class ExamTypeService
                 $existingExamType = Examtype::where('semester_id', $semesterId)
                     ->where('exam_name', $examName)
                     ->where('program_name', $programName)
-                    ->where('id', '!=', $exam_type_id)
+                    ->where('id', '!=', $examTypeId)
                     ->first();
 
                 if ($existingExamType) {
                     throw new AppException(
                         "The updated exam type configuration (Name, Program, Semester) already exists.",
                         409,
-                        "Duplicate Exam Type 📛",
+                        "Duplicate Exam Type ",
                         "The resulting exam type configuration is not unique. Please change the Name, Program, or Semester ID.",
                         null
                     );
@@ -93,25 +93,25 @@ class ExamTypeService
         } catch (Throwable $e) {
 
             throw new AppException(
-                "Failed to update exam type ID '{$exam_type_id}'. Error: " . $e->getMessage(),
+                "Failed to update exam type ID '{$examTypeId}'. Error: " . $e->getMessage(),
                 500,
-                "Update Failed 🛑",
+                "Update Failed",
                 "A system error occurred while trying to save the changes. Please try again or contact support.",
                 null
             );
         }
     }
-    public function deleteExamType($exam_type_id)
+    public function deleteExamType(string $examTypeId)
     {
         $examName = 'Unknown Exam Type';
         try {
-            $findExam = Examtype::find($exam_type_id);
+            $findExam = Examtype::find($examTypeId);
 
             if (!$findExam) {
                 throw new AppException(
-                    "Exam Type ID '{$exam_type_id}' not found for deletion.",
-                    404, // Not Found
-                    "Exam Type Not Found 🗑️",
+                    "Exam Type ID '{$examTypeId}' not found for deletion.",
+                    404,
+                    "Exam Type Not Found",
                     "The exam type you are trying to delete could not be found. It may have already been deleted.",
                     null
                 );
@@ -124,13 +124,13 @@ class ExamTypeService
         } catch (AppException $e) {
             throw $e;
         } catch (Throwable $e) {
-            $message = "Failed to delete exam type '{$examName}' (ID: {$exam_type_id}). Error: " . $e->getMessage();
+            $message = "Failed to delete exam type '{$examName}' (ID: {$examTypeId}). Error: " . $e->getMessage();
 
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 throw new AppException(
                     $message,
                     409,
-                    "Deletion Blocked 🔒",
+                    "Deletion Blocked",
                     "Cannot delete the exam type '{$examName}' because it is linked to active exam results or grading configurations. Please remove all associations first.",
                     null
                 );
@@ -139,13 +139,13 @@ class ExamTypeService
             throw new AppException(
                 $message,
                 500,
-                "Deletion Failed 🛑",
+                "Deletion Failed",
                 "A system error occurred during deletion. Please try again or contact support.",
                 null
             );
         }
     }
-    public function getExamType($currentSchool)
+    public function getExamType(object $currentSchool)
     {
         try {
 
@@ -158,7 +158,7 @@ class ExamTypeService
                 throw new AppException(
                     "No exam types found within the specified semester count range 2",
                     404,
-                    "No Exam Types Found 📝",
+                    "No Exam Types Found",
                     "There are no exam types defined for the semesters configured for your school. Please create a new exam type.",
                     null
                 );
@@ -171,7 +171,7 @@ class ExamTypeService
             throw new AppException(
                 "Failed to retrieve exam types. Error: " . $e->getMessage(),
                 500,
-                "Data Retrieval Failed 🛑",
+                "Data Retrieval Failed",
                 "A system error occurred while trying to load the exam types. Please try again or contact support.",
                 null
             );
