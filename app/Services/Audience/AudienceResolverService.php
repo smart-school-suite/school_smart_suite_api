@@ -3,6 +3,7 @@
 namespace App\Services\Audience;
 
 use App\Models\Schooladmin;
+use App\Models\Schoolbranches;
 use App\Models\Student;
 use App\Models\Teacher;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,10 @@ class AudienceResolverService
 
     public function resolve(object $currentSchool, array $data): ResolvedAudienceService
     {
+        if (filter_var($data['school_wide'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            return $this->resolveSchoolWide($currentSchool);
+        }
+
         $result = new ResolvedAudienceService();
 
         $admins   = AudienceCriteriaService::fromBlocks($data['admin_audience'] ?? null);
@@ -24,6 +29,30 @@ class AudienceResolverService
 
         return $result;
     }
+
+    private function resolveSchoolWide(object $currentSchool): ResolvedAudienceService
+    {
+        $result = new ResolvedAudienceService();
+        $branch = $this->getAllAudience($currentSchool);
+
+        $result->add(Schooladmin::class, $branch->schooladmin->pluck('id')->all());
+        $result->add(Teacher::class, $branch->teacher->pluck('id')->all());
+        $result->add(Student::class, $branch->student->pluck('id')->all());
+
+        return $result;
+    }
+
+    private function getAllAudience(object $currentSchool): Schoolbranches
+    {
+        return Schoolbranches::where("id", $currentSchool->id)
+            ->with([
+                'student:id,school_branch_id',
+                'teacher:id,school_branch_id',
+                'schooladmin:id,school_branch_id',
+            ])
+            ->firstOrFail();
+    }
+
     public function adminQuery(object $currentSchool, AudienceCriteriaService $criteria): Builder
     {
         $query = $this->baseQuery(Schooladmin::class, $currentSchool);
