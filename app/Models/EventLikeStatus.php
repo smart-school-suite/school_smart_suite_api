@@ -19,7 +19,7 @@ class EventLikeStatus extends Model
 
     public $incrementing = 'false';
     public $keyType  = 'string';
-    public $table = 'event_like_statuses';
+    public $table = 'event_likes';
 
     protected $casts = [
          'status' => 'boolean',

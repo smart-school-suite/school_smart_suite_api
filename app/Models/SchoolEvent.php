@@ -5,43 +5,35 @@ namespace App\Models;
 use App\Models\Asset\SchoolEventImage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolEvent extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
-        'id',
         'title',
         'description',
-        'background_image',
         'organizer',
         'location',
-        'likes',
-        'invitee_count',
         'status',
         'start_date',
         'end_date',
         'published_at',
         'notification_sent_at',
-        'expires_at',
         'school_branch_id',
         'event_category_id',
         'tags',
-        'visibility_status',
         'audience'
     ];
 
     protected $casts = [
-        'likes' => 'integer',
-        'invitee_count' => 'integer',
-        'tags' => 'json',
-        'audience' => 'json'
+        'tags' => 'array',
+        'audience' => 'array'
     ];
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'school_events';
     public $keyType = 'string';
 

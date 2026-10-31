@@ -19,7 +19,7 @@ class EventAudience extends Model
 
     public $incrementing = 'false';
     public $keyType = 'string';
-    public $table = 'event_audiences';
+    public $table = 'event_invitee';
 
     public function schoolEvent(): BelongsTo
     {
