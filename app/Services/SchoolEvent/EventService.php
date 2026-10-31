@@ -3,9 +3,9 @@
 namespace App\Services\SchoolEvent;
 
 use App\Exceptions\AppException;
-use App\Models\EventCategory;
-use App\Models\EventLikeStatus;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEventCategory;
+use App\Models\SchoolEvent\SchoolEventLike;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Services\Asset\SchoolEventImageService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +39,7 @@ class EventService
         }
 
         $isLiked = DB::transaction(function () use ($currentSchool, $authUser, $schoolEvent) {
-            $deleted = EventLikeStatus::where('school_branch_id', $currentSchool->id)
+            $deleted = SchoolEventLike::where('school_branch_id', $currentSchool->id)
                 ->where('event_id', $schoolEvent->id)
                 ->where('likeable_id', $authUser['userId'])
                 ->where('likeable_type', $authUser['userType'])
@@ -49,7 +49,7 @@ class EventService
                 return false;
             }
 
-            EventLikeStatus::create([
+            SchoolEventLike::create([
                 'school_branch_id' => $currentSchool->id,
                 'event_id' => $schoolEvent->id,
                 'likeable_id' => $authUser['userId'],
@@ -61,7 +61,7 @@ class EventService
 
         return [
             'event_id' => $schoolEvent->id,
-            'likes_count' => EventLikeStatus::where('event_id', $schoolEvent->id)->count(),
+            'likes_count' => SchoolEventLike::where('event_id', $schoolEvent->id)->count(),
             'is_liked' => $isLiked,
         ];
     }
@@ -264,7 +264,7 @@ class EventService
     public function getSchoolEventDetails(object $currentSchool, string $eventId, ?array $authUser = null)
     {
         $schoolEvent = $this->eventQuery($currentSchool, $authUser)
-            ->withCount('eventAudience as invitee_count')
+            ->withCount('invitees as invitee_count')
             ->find($eventId);
 
         if (!$schoolEvent) {
@@ -355,7 +355,7 @@ class EventService
         return $this->eventQuery($currentSchool, $authUser)
             ->where('status', 'active')
             ->where('end_date', '>=', Carbon::now())
-            ->whereHas('eventAudience', function (Builder $query) use ($student) {
+            ->whereHas('invitees', function (Builder $query) use ($student) {
                 $query->where('actorable_id', $student->id)
                     ->where('actorable_type', $student->getMorphClass());
             })
@@ -388,10 +388,10 @@ class EventService
         $query = SchoolEvent::query()
             ->where("school_branch_id", $currentSchool->id)
             ->with(['eventCategory', 'currentImages'])
-            ->withCount('likes as likes_count');
+            ->withCount('schoolEventLikes as likes_count');
 
         if (!empty($authUser['userId'])) {
-            $query->withExists(['likes as is_liked' => function (Builder $likes) use ($authUser) {
+            $query->withExists(['schoolEventLikes as is_liked' => function (Builder $likes) use ($authUser) {
                 $likes->where('likeable_id', $authUser['userId'])
                     ->where('likeable_type', $authUser['userType']);
             }]);
@@ -400,9 +400,9 @@ class EventService
         return $query;
     }
 
-    private function findCategory(object $currentSchool, string $eventCategoryId): EventCategory
+    private function findCategory(object $currentSchool, string $eventCategoryId): SchoolEventCategory
     {
-        $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)->find($eventCategoryId);
+        $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)->find($eventCategoryId);
 
         if (!$eventCategory) {
             throw new AppException(

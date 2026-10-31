@@ -21,10 +21,10 @@ class UpdateEventDraftRequest extends FormRequest
     {
         return [
             'school_event_id' => 'required|uuid|exists:school_events,id',
-            'title' => 'sometimes|nullable|string|max:200',
+            'title' => 'sometimes|nullable|string|max:150',
             'description' => 'sometimes|nullable|string|max:5000',
-            'organizer' => 'sometimes|nullable|string|max:255',
-            'location' => 'sometimes|nullable|string|max:255',
+            'organizer' => 'sometimes|nullable|string|max:200',
+            'location' => 'sometimes|nullable|string|max:150',
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'scheduled'])],
             'start_date' => 'sometimes|nullable|date_format:Y-m-d H:i',
             'end_date' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:start_date',

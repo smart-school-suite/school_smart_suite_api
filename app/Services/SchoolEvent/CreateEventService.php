@@ -3,8 +3,8 @@
 namespace App\Services\SchoolEvent;
 
 use App\Exceptions\AppException;
-use App\Models\EventAuthor;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEventAuthor;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Services\Asset\SchoolEventImageService;
 use App\Services\Audience\ResolvedAudienceService;
 use Carbon\Carbon;
@@ -77,10 +77,10 @@ class CreateEventService
                     $this->publishing->seedInvitees($currentSchool, $schoolEvent->id, $audience);
                 }
 
-                EventAuthor::create([
+                SchoolEventAuthor::create([
                     'school_branch_id' => $currentSchool->id,
-                    'authorable_id' => $authenticatedUser['userId'],
-                    'authorable_type' => $authenticatedUser['userType'],
+                    'actorable_id' => $authenticatedUser['userId'],
+                    'actorable_type' => $authenticatedUser['userType'],
                     'event_id' => $schoolEvent->id,
                 ]);
 

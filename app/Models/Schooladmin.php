@@ -19,6 +19,7 @@ use App\Models\Job\SystemJob;
 use App\Models\OTP;
 use App\Models\Promotion\PromotionRun;
 use App\Models\Promotion\StudentPromotionRecord;
+use App\Models\SchoolEvent\SchoolEventAuthor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -69,6 +70,11 @@ class Schooladmin extends Authenticatable
     public function systemJob(): MorphMany
     {
         return $this->morphMany(SystemJob::class, 'initiatedBy');
+    }
+
+    public function schoolEventAuthor(): MorphMany
+    {
+        return $this->morphMany(SchoolEventAuthor::class, 'actorable');
     }
     public function routeNotificationForFcm()
     {
@@ -136,7 +142,7 @@ class Schooladmin extends Authenticatable
 
     public function eventAuthor(): MorphMany
     {
-        return $this->morphMany(EventAuthor::class, 'authorable');
+        return $this->morphMany(EventAuthor::class, 'actorable');
     }
 
     // public function badges()
@@ -145,7 +151,7 @@ class Schooladmin extends Authenticatable
     // }
     public function eventAudience()
     {
-        return $this->morphMany(EventAudience::class, 'actorable');
+        return $this->morphMany(EventAudience::class, 'audienceable');
     }
 
     public function announcementRecipient()

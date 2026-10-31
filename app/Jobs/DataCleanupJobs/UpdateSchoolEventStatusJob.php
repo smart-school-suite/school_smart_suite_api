@@ -2,7 +2,7 @@
 
 namespace App\Jobs\DataCleanupJobs;
 
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;

@@ -14,7 +14,8 @@ class SchoolEventCategory extends Model
     protected $fillable = [
         'name',
         'status',
-        'description'
+        'description',
+        'school_branch_id'
     ];
 
     public $incrementing = false;

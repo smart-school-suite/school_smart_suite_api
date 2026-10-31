@@ -14,12 +14,16 @@ class EventLikeStatus extends Model
         'school_branch_id',
         'likeable_id',
         'likeable_type',
+        'status'
     ];
 
     public $incrementing = 'false';
     public $keyType  = 'string';
     public $table = 'event_likes';
 
+    protected $casts = [
+         'status' => 'boolean',
+    ];
 
     public function schoolEvent(): BelongsTo {
          return $this->belongsTo(SchoolEvent::class, 'event_id');

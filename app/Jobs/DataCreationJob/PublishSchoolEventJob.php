@@ -2,8 +2,8 @@
 
 namespace App\Jobs\DataCreationJob;
 
-use App\Models\EventAudience;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEventInvitee;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Notifications\SchoolEventNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -35,11 +35,11 @@ class PublishSchoolEventJob implements ShouldQueue
             $schoolEvent->update(['status' => 'active']);
         }
 
-        EventAudience::where("school_branch_id", $this->schoolBranchId)
+        SchoolEventInvitee::where("school_branch_id", $this->schoolBranchId)
             ->where("event_id", $schoolEvent->id)
-            ->with('actorable')
+            ->with('inviteeable')
             ->chunkById(500, function ($invitees) use ($schoolEvent) {
-                $users = $invitees->pluck('actorable')->filter();
+                $users = $invitees->pluck('inviteeable')->filter();
 
                 if ($users->isNotEmpty()) {
                     Notification::send($users, new SchoolEventNotification($schoolEvent));

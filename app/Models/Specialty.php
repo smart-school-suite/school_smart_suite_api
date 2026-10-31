@@ -180,7 +180,7 @@ class Specialty extends Model
 
     public function eventAudience()
     {
-        return $this->morphMany(EventAudience::class, 'actorable');
+        return $this->morphMany(EventAudience::class, 'audienceable');
     }
     public function announcementAudience()
     {

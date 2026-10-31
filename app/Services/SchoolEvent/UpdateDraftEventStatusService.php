@@ -3,7 +3,7 @@
 namespace App\Services\SchoolEvent;
 
 use App\Exceptions\AppException;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Services\Asset\SchoolEventImageService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;

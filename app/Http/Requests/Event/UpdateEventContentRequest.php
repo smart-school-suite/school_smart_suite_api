@@ -9,10 +9,10 @@ class UpdateEventContentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'sometimes|nullable|string|max:200',
+            'title' => 'sometimes|nullable|string|max:150',
             'description' => 'sometimes|nullable|string|max:5000',
-            'organizer' => 'sometimes|nullable|string|max:255',
-            'location' => 'sometimes|nullable|string|max:255',
+            'organizer' => 'sometimes|nullable|string|max:200',
+            'location' => 'sometimes|nullable|string|max:150',
             'start_date' => 'sometimes|nullable|date_format:Y-m-d H:i',
             'end_date' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:start_date',
             'event_category_id' => 'sometimes|nullable|uuid|exists:event_categories,id',

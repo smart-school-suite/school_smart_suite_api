@@ -22,7 +22,7 @@ class EventAuthor extends Model
     public $keyType = 'string';
     public $table = 'event_authors';
 
-    public function authorable(): MorphTo {
+    public function actorable(): MorphTo {
         return $this->morphTo();
     }
 

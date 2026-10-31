@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Carbon\Carbon;
 
 class AdminEventScheduledNotification extends Notification implements ShouldQueue

@@ -2,7 +2,7 @@
 
 namespace App\Jobs\NotificationJobs;
 
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Notifications\ScheduledSchoolEventReminderNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;

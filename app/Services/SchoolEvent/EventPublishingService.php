@@ -9,9 +9,9 @@ use App\Jobs\DataCreationJob\PublishSchoolEventJob;
 use App\Jobs\NotificationJobs\SendAdminEventCreatedNotificationJob;
 use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
 use App\Jobs\NotificationJobs\SendAdminScheduledSchoolEventNotiJob;
-use App\Models\EventAudience;
-use App\Models\EventTag;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEventInvitee;
+use App\Models\SchoolEvent\SchoolEventTag;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Services\Audience\AudienceResolverService;
 use App\Services\Audience\ResolvedAudienceService;
 use Carbon\Carbon;
@@ -84,7 +84,7 @@ class EventPublishingService
         }
 
         $tagIds = collect($data['tag_ids'])->pluck('tag_id')->filter()->unique()->values()->toArray();
-        $tags = EventTag::whereIn("id", $tagIds)->get();
+        $tags = SchoolEventTag::whereIn("id", $tagIds)->get();
 
         if ($tags->count() < count($tagIds)) {
             throw new AppException(
@@ -169,14 +169,14 @@ class EventPublishingService
 
     public function seedInvitees(object $currentSchool, string $schoolEventId, ResolvedAudienceService $audience): void
     {
-        EventAudience::where("school_branch_id", $currentSchool->id)
+        SchoolEventInvitee::where("school_branch_id", $currentSchool->id)
             ->where("event_id", $schoolEventId)
             ->delete();
 
         $now = Carbon::now();
 
         $audience->recipients()->chunk(1000)->each(function ($chunk) use ($currentSchool, $schoolEventId, $now) {
-            EventAudience::insert(
+            SchoolEventInvitee::insert(
                 $chunk->map(fn($invitee) => [
                     "id" => Str::uuid()->toString(),
                     "event_id" => $schoolEventId,

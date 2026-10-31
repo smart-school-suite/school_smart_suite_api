@@ -20,10 +20,10 @@ class CreateEventRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:200',
+            'title' => 'required|string|max:150',
             'description' => 'required|string|max:5000',
-            'organizer' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
+            'organizer' => 'required|string|max:200',
+            'location' => 'required|string|max:150',
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'scheduled'])],
             'start_date' => 'required|date_format:Y-m-d H:i',
             'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',

@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Notifications\AdminSchoolEventPublishedNotification;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 class SendAdminEventCreatedNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

@@ -5,7 +5,7 @@ namespace App\Services\Stats;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection; // Added for type hinting
 use App\Models\Announcement;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Models\Elections;
 use App\Models\StatTypes;
 use App\Models\Department; // Added for fetching department names

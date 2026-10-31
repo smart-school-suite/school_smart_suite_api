@@ -23,6 +23,17 @@ return new class extends Migration
             });
         }
 
+        if (Schema::hasTable('event_authors')) {
+            Schema::table('event_authors', function (Blueprint $table) {
+                if (Schema::hasColumn('event_authors', 'authorable_id')) {
+                    $table->renameColumn('authorable_id', 'actorable_id');
+                }
+                if (Schema::hasColumn('event_authors', 'authorable_type')) {
+                    $table->renameColumn('authorable_type', 'actorable_type');
+                }
+            });
+        }
+
         if (Schema::hasTable('event_like_statuses') && ! Schema::hasTable('event_likes')) {
             Schema::rename('event_like_statuses', 'event_likes');
         }
@@ -65,6 +76,17 @@ return new class extends Migration
                 }
                 if (Schema::hasColumn('school_events', 'tags')) {
                     $table->dropColumn('tags');
+                }
+            });
+        }
+
+        if (Schema::hasTable('event_authors')) {
+            Schema::table('event_authors', function (Blueprint $table) {
+                if (Schema::hasColumn('event_authors', 'actorable_id')) {
+                    $table->renameColumn('actorable_id', 'authorable_id');
+                }
+                if (Schema::hasColumn('event_authors', 'actorable_type')) {
+                    $table->renameColumn('actorable_type', 'authorable_type');
                 }
             });
         }

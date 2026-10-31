@@ -31,10 +31,10 @@ return new class extends Migration
 
         Schema::create('school_events', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('title');
+            $table->string('title', 150);
             $table->text('description')->nullable();
-            $table->string('organizer')->nullable();
-            $table->string('location')->nullable();
+            $table->string('organizer', 200)->nullable();
+            $table->string('location', 150)->nullable();
             $table->enum('status', ['draft', 'scheduled', 'active', 'expired'])->default('draft');
             $table->timestamp('start_date')->nullable();
             $table->timestamp('end_date')->nullable();
@@ -48,14 +48,13 @@ return new class extends Migration
 
         Schema::create('event_authors', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('authorable_id')->nullable();
-            $table->string('authorable_type')->nullable();
+            $table->uuid('actorable_id')->nullable();
+            $table->string('actorable_type')->nullable();
             $table->timestamps();
         });
 
         Schema::create('event_likes', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->boolean('status')->default(false);
             $table->string('likeable_id');
             $table->string('likeable_type');
             $table->timestamps();

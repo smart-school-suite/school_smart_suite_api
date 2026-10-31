@@ -2,8 +2,8 @@
 
 namespace App\Jobs\DataCleanupJobs;
 
-use App\Models\EventLikeStatus;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEventLike;
+use App\Models\SchoolEvent\SchoolEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -29,7 +29,7 @@ class CleanSchoolEventData implements ShouldQueue
         $schoolBranchId = $this->schoolBranchId;
         $schoolEvent = SchoolEvent::where("school_branch_id", $schoolBranchId)
                         ->find($schoolEventId);
-        $eventLikeStatuses = EventLikeStatus::where("school_branch_id", $schoolBranchId)
+        $eventLikeStatuses = SchoolEventLike::where("school_branch_id", $schoolBranchId)
                                            ->where("event_id", $schoolEvent->id)
                                            ->get();
         foreach($eventLikeStatuses as $eventLikeStatus){

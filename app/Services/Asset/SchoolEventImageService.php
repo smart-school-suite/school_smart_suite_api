@@ -5,7 +5,7 @@ namespace App\Services\Asset;
 use App\Exceptions\AppException;
 use App\Models\Asset\AssetUploadPolicy;
 use App\Models\Asset\SchoolEventImage;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
