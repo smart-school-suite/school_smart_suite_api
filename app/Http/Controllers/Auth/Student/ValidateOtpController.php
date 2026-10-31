@@ -10,22 +10,33 @@ use Illuminate\Http\Request;
 
 class ValidateOtpController extends Controller
 {
-    //
     protected ValidateOtpService $validateOtpService;
+
     public function __construct(ValidateOtpService $validateOtpService)
     {
         $this->validateOtpService = $validateOtpService;
     }
+
     public function verifyOtp(OtpRequest $request)
     {
-        $tokenheader = $request->header('otp-token-header');
-        $verifyOtp = $this->validateOtpService->verifyOtp($tokenheader, $request->otp);
-        return ApiResponseService::success("OTP verified Sucessfully OTP verification complete", $verifyOtp, null, 200);
+        $tokenHeader = $this->otpTokenHeader($request);
+        $verifyOtp = $this->validateOtpService->verifyOtp($tokenHeader, $request->otp);
+        return ApiResponseService::success("OTP token verified Succesfully", $verifyOtp, null, 200);
     }
-    public function request_another_code(Request $request)
+
+    public function requestNewOtp(Request $request)
     {
-        $token_header = $request->header('OTP_TOKEN_HEADER');
-        $requestNewOtp = $this->validateOtpService->requestOtp($token_header);
-        return ApiResponseService::success("OTP token sent successfully", $requestNewOtp, null, 200);
+        $tokenHeader = $this->otpTokenHeader($request);
+        $requestNewOtp = $this->validateOtpService->requestOtp($tokenHeader);
+        return ApiResponseService::success("OTP token sent succesfully to email", $requestNewOtp, null, 200);
+    }
+
+    /**
+     * X-OTP-Token is the standard header (same as school admin). The legacy
+     * OTP-TOKEN-HEADER name is still accepted for older clients.
+     */
+    private function otpTokenHeader(Request $request): ?string
+    {
+        return $request->header('X-OTP-Token') ?? $request->header('OTP-TOKEN-HEADER');
     }
 }

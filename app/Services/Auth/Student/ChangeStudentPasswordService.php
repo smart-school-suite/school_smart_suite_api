@@ -2,59 +2,44 @@
 
 namespace App\Services\Auth\Student;
 
-use App\Services\ApiResponseService;
+use App\Exceptions\AuthException;
 use Illuminate\Support\Facades\Hash;
-use App\Exceptions\AppException;
 
 class ChangeStudentPasswordService
 {
-    // Implement your logic here
-    public function changeStudentPassword($passwordData)
+    public function changeStudentPassword(array $passwordData)
     {
+        $authStudent = auth()->guard('student')->user();
 
-        $authenticated_student = auth()->guard('student')->user();
-
-        if (!$authenticated_student) {
-            throw new AppException(
-                "No authenticated student session found.",
-                401,
-                "Authentication Required 🔒",
-                "You must be logged in as a student to change your password. Please log in and try again.",
-                null
-            );
+        if (!$authStudent) {
+            throw new AuthException("Authentication failed. Please log in again.", 401, "Authentication Failed", "You must be logged in as a student to change your password.");
         }
 
-        if (!$this->checkCurrentPassword($authenticated_student, $passwordData["current_password"])) {
-            throw new AppException(
-                "The provided current password is not valid for student ID '{$authenticated_student->id}'.",
-                401,
-                "Incorrect Current Password ❌",
-                "The password you entered for your current password is not correct. Please re-enter your current password accurately and try again.",
-                null
-            );
+        if (!$this->checkCurrentPassword($authStudent, $passwordData["current_password"])) {
+            throw new AuthException("Current password is incorrect.", 401, "Authentication Failed", "The current password you entered does not match our records.");
         }
 
-        if ($this->updatePassword($authenticated_student, $passwordData["new_password"])) {
-            return ApiResponseService::success("Password changed successfully", null, null, 200);
+        if ($this->checkCurrentPassword($authStudent, $passwordData["new_password"])) {
+            throw new AuthException("You cannot reuse your current password.", 409, "Password Conflict", "Your new password cannot be the same as your old password. Please choose a different one.");
         }
 
-        throw new AppException(
-            "Password update failed for student ID '{$authenticated_student->id}' due to a database issue.",
-            500,
-            "Password Change Failed 🛑",
-            "We were unable to save your new password due to a system error. Please try again in a moment or contact support.",
-            null
-        );
+        if (strlen($passwordData['new_password']) < 8) {
+            throw new AuthException("The new password must be at least 8 characters long.", 400, "Validation Error", "Please choose a new password with a minimum of 8 characters.");
+        }
+
+        if (!$this->updatePassword($authStudent, $passwordData["new_password"])) {
+            throw new AuthException("An unexpected error occurred while saving the new password.", 500, "Server Error", "We encountered an issue while updating your password. Please try again later.");
+        }
     }
 
-    protected function checkCurrentPassword($authenticated_schooladmin, string $currentPassword): bool
+    protected function checkCurrentPassword($authStudent, string $password): bool
     {
-        return Hash::check($currentPassword, $authenticated_schooladmin->password);
+        return Hash::check($password, $authStudent->password);
     }
 
-    protected function updatePassword($authenticated_schooladmin, string $newPassword): bool
+    protected function updatePassword($authStudent, string $newPassword): bool
     {
-        $authenticated_schooladmin->password = Hash::make($newPassword);
-        return $authenticated_schooladmin->save();
+        $authStudent->password = Hash::make($newPassword);
+        return $authStudent->save();
     }
 }

@@ -21,6 +21,8 @@ Route::post('/verify-otp', [ValidateOtpController::class, 'verifyOtp'])
 // Request New OTP (for login)
 Route::post('/request-otp', [ValidateOtpController::class, 'requestNewOtp'])
     ->name('student.otp.resend');
+Route::post('/resend-otp', [ValidateOtpController::class, 'requestNewOtp'])
+    ->name('student.otp.resend.alias');
 
 // Password Reset
 Route::post('/password/reset', [ResetPasswordController::class, 'resetStudentPassword'])
@@ -37,7 +39,7 @@ Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
         ->name('student.logout');
 
     // Get authenticated student details
-        Route::get('/me', [GetAuthStudentController::class, 'getAuthStudent'])
+    Route::get('/me', [GetAuthStudentController::class, 'getAuthStudent'])
         ->name('student.me');
 
     // Change Password (authenticated)
