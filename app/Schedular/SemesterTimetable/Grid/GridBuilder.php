@@ -94,6 +94,7 @@ class GridBuilder
                             'key' => OperationalPeriodViolation::KEY,
                             'start_time' => $this->toTime($window['start']),
                             'end_time'   => $this->toTime($window['end']),
+                            'day'        => $day,
                         ]
                     ],
                 ];

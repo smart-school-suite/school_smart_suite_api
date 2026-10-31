@@ -138,7 +138,7 @@ class SolutionContext
 
         $preferences = $this->constraints->tPreferredSlotsFor($teacherId, $day);
 
-        return $preferences->isEmpty() || $preferences->contains(
+        return $preferences->contains(
             fn($slot) => $start >= Time::toMinutes($slot['start_time']) && $end <= Time::toMinutes($slot['end_time'])
         );
     }

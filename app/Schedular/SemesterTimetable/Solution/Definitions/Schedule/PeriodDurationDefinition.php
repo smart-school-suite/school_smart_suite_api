@@ -57,9 +57,12 @@ class PeriodDurationDefinition extends AbstractDefinition
         $span = $end - $start;
         $current = (int) ($issue->subject->get('duration_minutes') ?? $context->periodDuration($day));
 
-        return collect([$span, ...self::COMMON_DURATIONS])
+        $candidates = collect([$span, ...self::COMMON_DURATIONS])
             ->unique()
-            ->filter(fn($minutes) => $minutes > 0 && $minutes <= $span && $minutes !== $current)
+            ->filter(fn($minutes) => $minutes > 0 && $minutes <= $span && $minutes !== $current);
+        $even = $candidates->filter(fn($minutes) => $span % $minutes === 0);
+
+        return ($even->isNotEmpty() ? $even : $candidates)
             ->sortBy(fn($minutes) => ($span % $minutes === 0 ? 0 : 10) + intdiv(abs($current - $minutes), 5))
             ->take(SolutionContext::MAX_ALTERNATIVES)
             ->map(fn($minutes) => $this->change($issue->subject, $day, $current, $minutes, $span))

@@ -259,9 +259,10 @@ class PathPlanner
         $betterIssues = array_map(fn(Issue $issue) => $issue->id(), $better->issues);
         $worseIssues = array_map(fn(Issue $issue) => $issue->id(), $worse->issues);
 
-        return count($betterSteps) < count($worseSteps)
+        return count($betterSteps) <= count($worseSteps)
             && !array_diff($betterSteps, $worseSteps)
-            && !array_diff($worseIssues, $betterIssues);
+            && !array_diff($worseIssues, $betterIssues)
+            && (count($betterSteps) < count($worseSteps) || count($betterIssues) > count($worseIssues));
     }
 
     private function path(string $strategy, Issue $primary, array $issues, array $steps): SolutionPath

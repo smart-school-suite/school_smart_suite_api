@@ -12,16 +12,18 @@ final class Remedy
     public const REVIEW = 'review';
 
     public readonly string $id;
+    public readonly array $changes;
 
     public function __construct(
         public readonly string $action,
         public readonly Subject $target,
         public readonly string $label,
-        public readonly array $changes,
+        array $changes,
         public readonly array $result,
         public readonly int $cost,
         public readonly ?array $occupies = null,
     ) {
+        $this->changes = array_values(array_filter($changes, fn(array $change) => ($change['from'] ?? null) !== ($change['to'] ?? null)));
         $this->id = md5(implode('|', [$action, $target->id, json_encode($result)]));
     }
 

@@ -24,8 +24,14 @@ class SolutionEngine
             }
         }
 
+        $paths = collect($this->planner->plan($issues, $context))->sortBy([
+            fn(SolutionPath $a, SolutionPath $b) => $b->resolvedCount() <=> $a->resolvedCount(),
+            fn(SolutionPath $a, SolutionPath $b) => $a->cost <=> $b->cost,
+            fn(SolutionPath $a, SolutionPath $b) => count($a->steps) <=> count($b->steps),
+        ]);
+
         $byDay = [];
-        foreach ($this->planner->plan($issues, $context) as $path) {
+        foreach ($paths as $path) {
             $byDay[$path->day][] = $path->toArray();
         }
 
