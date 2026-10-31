@@ -2,7 +2,7 @@
 
 namespace App\Jobs\SemesterTimetable;
 
-use App\Events\SemesterTimetable\TimetableGenerationEvent;
+use App\Jobs\SemesterTimetable\Concerns\BroadcastsTimetableGeneration;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Exceptions\AppException;
@@ -31,11 +31,12 @@ use App\Models\SemesterTimetable\SemesterTimetable;
 use App\Models\Teacher\TeacherSpecialty;
 use Illuminate\Support\Str;
 use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use Throwable;
 
 class GenerateFixedSemesterTimetable implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration;
     public int $tries = 3;
     public int $timeout = 120;
     public int $backoff = 30;
@@ -67,6 +68,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             $this->process($systemJob, $schoolSemester);
         } catch (AppException $e) {
             $this->failJob($systemJob, $e->getMessage(), $e->getCode());
+            $this->broadcastFailure($systemJob, $e);
             $this->fail($e);
             Log::error('AppException in process method: ' . $e->getMessage());
             Log::error('Exception details: ' . json_encode([
@@ -78,6 +80,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             ]));
         } catch (Throwable $e) {
             $this->failJob($systemJob, $e->getMessage(), 500);
+            $this->broadcastFailure($systemJob, $e);
             $this->fail($e);
         }
     }
@@ -90,15 +93,11 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $specialty = $schoolSemester->schoolYear->specialty;
         $requestPayload = $this->payload;
 
-        TimetableGenerationEvent::dispatch(
-            $systemJob->initiatedBy,
-            $this->currentSchool,
-            [
-                'stage' => 'Gathering Data....',
-                'percentage' => 10,
-                'details' => 'Fetching teachers, courses, halls, and constraints to prepare for timetable generation.',
-            ]
-        );
+        $this->broadcastGeneration($systemJob, [
+            'stage' => 'Gathering Data....',
+            'percentage' => 10,
+            'details' => 'Fetching teachers, courses, halls, and constraints to prepare for timetable generation.',
+        ]);
 
         $teachers           = $this->getTeachers($branchId, $specialty);
         $teacherIds         = $teachers->pluck('teacher_id')->toArray();
@@ -130,19 +129,17 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             $version = SemesterTimetableVersion::find($timetableVersionId);
             $errorCount = $this->userErrors->count();
 
-            TimetableGenerationEvent::dispatch(
-                $systemJob->initiatedBy,
-                $this->currentSchool,
-                [
-                    'stage' => 'Validation Failed',
-                    'percentage' => 90,
-                    'status' => 'failed',
-                    'details' => "Timetable generation failed due to {$errorCount} issue(s)",
-                    'errors' => $this->userErrors->toArray(),
-                    'error_count' => $errorCount,
-                    'version' => $version ?? null,
-                ]
-            );
+            $this->broadcastGeneration($systemJob, [
+                'stage' => 'Validation Failed',
+                'percentage' => 100,
+                'status' => 'failed',
+                'details' => "Timetable generation failed due to {$errorCount} issue(s)",
+                'errors' => $this->userErrors->toArray(),
+                'error_count' => $errorCount,
+                'version' => $version ?? null,
+            ]);
+
+            $this->finalEventBroadcasted = true;
 
             if ($version) {
                 $version->update(['scheduler_status' => 'error']);
@@ -168,16 +165,13 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Generating Timetable', 50);
 
-        TimetableGenerationEvent::dispatch(
-            $systemJob->initiatedBy,
-            $this->currentSchool,
-            [
-                'stage' => 'Generating Timetable....',
-                'percentage' => 50,
-                'details' => 'Generating the optimal timetable based on gathered data and constraints.',
-            ]
-        );
+        $this->broadcastGeneration($systemJob, [
+            'stage' => 'Generating Timetable....',
+            'percentage' => 50,
+            'details' => 'Generating the optimal timetable based on gathered data and constraints.',
+        ]);
 
+        TimetableContext::setPreferenceMode(false);
         $schedulingEngine = app(SchedularEngine::class);
         $response = $schedulingEngine->run($body);
 
@@ -202,19 +196,25 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $finalStatus = $this->isErrorResponse($response) ? 'FAILED' : 'COMPLETED';
 
-        TimetableGenerationEvent::dispatch(
-            $systemJob->initiatedBy,
-            $this->currentSchool,
-            [
-                'stage' => 'Interpreting Results....',
-                'percentage' => 90,
-                'details' => 'Interpreting the results from the timetable generation process.',
-                'version' => SemesterTimetableVersion::find($timetableVersionId) ?? null,
-            ]
-        );
+        $this->broadcastGeneration($systemJob, [
+            'stage' => 'Interpreting Results....',
+            'percentage' => 90,
+            'details' => 'Interpreting the results from the timetable generation process.',
+            'version' => SemesterTimetableVersion::find($timetableVersionId) ?? null,
+        ]);
 
-        $this->handleDiagnostics($response, $timetableVersionId);
+        try {
+            $this->handleDiagnostics($response, $timetableVersionId);
+        } catch (Throwable $e) {
+            report($e);
+            $systemJob->systemJobEvent()->create([
+                'event_type' => 'error',
+                'message' => 'Diagnostics could not be interpreted: ' . $e->getMessage(),
+            ]);
+        }
+
         $this->updateJobProgress($systemJob, $finalStatus, 'Done', 100);
+        $this->broadcastCompletion($systemJob, $response, $timetableVersionId);
     }
     private function getTeachers(string $branchId, object $specialty): Collection
     {
@@ -645,7 +645,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     ): array {
         return [
             'teachers'             => $this->formatTeachers($teachers),
-            'teacher_busy_period'  => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
+            'teacher_busy_periods' => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
             'teacher_courses'      => $this->formatTeacherCourses($teacherCourses),
             'halls'                => $this->formatHalls($halls),
             'hall_busy_periods'    => $this->formatHallBusyPeriods($hallBusyPeriods),
@@ -752,6 +752,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'status'     => $status,
             'stage'      => $stage,
             'progress'   => $progress,
+            'finished_at' => in_array($status, ['COMPLETED', 'FAILED'], true) ? Carbon::now() : null,
             'updated_at' => Carbon::now(),
         ]);
     }
@@ -794,6 +795,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'progress'      => 0,
             'error_code'    => (string) $code,
             'error_message' => $message,
+            'finished_at'   => Carbon::now(),
             'updated_at'    => Carbon::now(),
         ]);
 
@@ -816,10 +818,15 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'payload'   => $this->payload,
         ]);
 
-        $systemJob = SystemJob::find($this->jobId);
+        $systemJob = SystemJob::with('initiatedBy')->find($this->jobId);
 
         if ($systemJob) {
+            $alreadyReported = $systemJob->status === 'FAILED';
             $this->failJob($systemJob, $exception->getMessage(), 500);
+
+            if (!$alreadyReported) {
+                $this->broadcastFailure($systemJob, $exception);
+            }
         }
     }
     private function getErrorSource(Throwable $exception): string
