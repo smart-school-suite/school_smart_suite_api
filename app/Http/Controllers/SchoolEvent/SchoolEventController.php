@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Event\CreateEventRequest;
 use App\Http\Requests\Event\UpdateEventContentRequest;
 use App\Http\Requests\Event\UpdateEventDraftRequest;
+use App\Http\Requests\Event\UploadEventImagesRequest;
+use App\Http\Requests\Event\RemoveEventImagesRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\SchoolEvent\CreateEventService;
@@ -61,6 +63,18 @@ class SchoolEventController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $updateEventContent = $this->eventService->updateSchoolEventContent($request->validated(), $currentSchool, $schoolEventId, $authAdmin['authUser']);
         return ApiResponseService::success("School Event Content Updated Successfully", $updateEventContent, null, 200);
+    }
+    public function uploadSchoolEventImages(UploadEventImagesRequest $request, string $schoolEventId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $schoolEvent = $this->eventService->uploadSchoolEventImages($currentSchool, $schoolEventId, $request->validated()['images']);
+        return ApiResponseService::success("School Event Images Uploaded Successfully", $schoolEvent, null, 201);
+    }
+    public function removeSchoolEventImages(RemoveEventImagesRequest $request, string $schoolEventId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $schoolEvent = $this->eventService->removeSchoolEventImages($currentSchool, $schoolEventId, $request->validated()['image_ids']);
+        return ApiResponseService::success("School Event Images Removed Successfully", $schoolEvent, null, 200);
     }
     public function deleteSchoolEventContent(Request $request, string $schoolEventId)
     {

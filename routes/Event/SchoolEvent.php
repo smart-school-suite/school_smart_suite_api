@@ -11,6 +11,9 @@ Route::post('/{schoolEventId}/like', [SchoolEventController::class, 'likeSchoolE
 Route::get('/event-category/{eventCategoryId}', [SchoolEventController::class, 'getSchoolEventByCategory'])->name('get.school.events.by.category');
 Route::get('/expired', [SchoolEventController::class, 'getExpiredSchoolEvents'])->name("get.expired.school-events");
 Route::patch('/update/content/{schoolEventId}', [SchoolEventController::class, 'updateSchoolEventContent'])->name("school-event.update");
+Route::post('/update/content/{schoolEventId}', [SchoolEventController::class, 'updateSchoolEventContent'])->name("school-event.update.multipart");
+Route::post('/{schoolEventId}/images', [SchoolEventController::class, 'uploadSchoolEventImages'])->name("school-event.images.upload");
+Route::delete('/{schoolEventId}/images', [SchoolEventController::class, 'removeSchoolEventImages'])->name("school-event.images.remove");
 Route::delete('/{eventCategoryId}', [SchoolEventController::class, 'deleteSchoolEventContent'])->name("school-event.delete");
 Route::patch('/draft/update', [SchoolEventController::class, 'updateDraftSchoolEvent'])->name('school-event.draft.status.update');
 Route::get('details/{eventCategoryId}', [SchoolEventController::class, 'getSchoolEventDetails'])->name("school-event.details");

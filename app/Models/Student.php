@@ -22,6 +22,9 @@ use App\Models\Job\SystemJob;
 use App\Models\Promotion\StudentPromotionRecord;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\SchoolEvent\SchoolEventInvitee;
+use App\Models\SchoolEvent\SchoolEventLike;
+
 
 class Student extends Model
 {
@@ -64,6 +67,14 @@ class Student extends Model
         ];
     }
 
+    public function schoolEventInvitee()
+    {
+        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable', 'actorable_type', 'actorable_id');
+    }
+    public function schoolEventLike()
+    {
+        return $this->morphMany(SchoolEventLike::class, 'likeable');
+    }
     public function currentAvatar(): HasOne
     {
         return $this->hasOne(StudentAvatar::class, 'student_id');

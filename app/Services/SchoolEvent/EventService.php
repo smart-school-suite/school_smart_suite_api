@@ -4,6 +4,7 @@ namespace App\Services\SchoolEvent;
 
 use App\Exceptions\AppException;
 use App\Models\SchoolEvent\SchoolEventCategory;
+use App\Models\SchoolEvent\SchoolEventInvitee;
 use App\Models\SchoolEvent\SchoolEventLike;
 use App\Models\SchoolEvent\SchoolEvent;
 use App\Services\Asset\SchoolEventImageService;
@@ -34,6 +35,22 @@ class EventService
                 404,
                 "Event Not Found ❌",
                 "The event you are trying to like either does not exist, is not published yet, or does not belong to this school branch. Please verify the event ID.",
+                null
+            );
+        }
+
+        $isInvitee = SchoolEventInvitee::where('school_branch_id', $currentSchool->id)
+            ->where('event_id', $schoolEvent->id)
+            ->where('actorable_id', $authUser['userId'])
+            ->where('actorable_type', $authUser['userType'])
+            ->exists();
+
+        if (!$isInvitee) {
+            throw new AppException(
+                "User {$authUser['userId']} is not an invitee of school event {$schoolEvent->id}.",
+                403,
+                "Not Invited",
+                "Only people invited to this event can like it.",
                 null
             );
         }
@@ -348,6 +365,24 @@ class EventService
         }
     }
 
+    public function uploadSchoolEventImages(object $currentSchool, string $eventId, array $images)
+    {
+        $schoolEvent = $this->findEditableEvent($currentSchool, $eventId);
+
+        $this->imageService->uploadImages($schoolEvent, $images, $currentSchool->id);
+
+        return $schoolEvent->load(['currentImages']);
+    }
+
+    public function removeSchoolEventImages(object $currentSchool, string $eventId, array $imageIds)
+    {
+        $schoolEvent = $this->findEditableEvent($currentSchool, $eventId);
+
+        $this->imageService->removeImages($schoolEvent, $currentSchool->id, $imageIds);
+
+        return $schoolEvent->load(['currentImages']);
+    }
+
     public function getStudentUpcomingEvents(object $currentSchool, object $student)
     {
         $authUser = ['userId' => $student->id, 'userType' => get_class($student)];
@@ -398,6 +433,33 @@ class EventService
         }
 
         return $query;
+    }
+
+    private function findEditableEvent(object $currentSchool, string $eventId): SchoolEvent
+    {
+        $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)->find($eventId);
+
+        if (!$schoolEvent) {
+            throw new AppException(
+                "School Event Not Found",
+                404,
+                "Event Not Found",
+                "The specified school event does not exist or does not belong to the current school.",
+                null
+            );
+        }
+
+        if ($schoolEvent->status === 'expired') {
+            throw new AppException(
+                "Expired school event {$eventId} cannot be edited.",
+                400,
+                "Event Already Ended",
+                "This event has already ended, so its images can no longer be changed.",
+                null
+            );
+        }
+
+        return $schoolEvent;
     }
 
     private function findCategory(object $currentSchool, string $eventCategoryId): SchoolEventCategory

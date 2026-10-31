@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\Asset\SchoolAdminAvatar;
 use App\Models\ExamTimetable\ExamInvigilator;
+use App\Models\SchoolEvent\SchoolEventInvitee;
+use App\Models\SchoolEvent\SchoolEventLike;
 use App\Traits\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
@@ -71,11 +73,6 @@ class Schooladmin extends Authenticatable
     {
         return $this->morphMany(SystemJob::class, 'initiatedBy');
     }
-
-    public function schoolEventAuthor(): MorphMany
-    {
-        return $this->morphMany(SchoolEventAuthor::class, 'actorable');
-    }
     public function routeNotificationForFcm()
     {
         return $this->devices()->pluck('token')->toArray();
@@ -116,16 +113,10 @@ class Schooladmin extends Authenticatable
     {
         return $this->belongsTo(School::class, 'school_branch_id');
     }
-
     public function examInvigilator()
     {
         return $this->morphMany(ExamInvigilator::class, 'invigilatable');
     }
-
-    // public function userBadge()
-    // {
-    //     return $this->morphMany(UserBadge::class, 'actorable');
-    // }
     public function passwordResetTokens()
     {
         return $this->morphMany(PasswordResetToken::class, 'actorable');
@@ -134,26 +125,22 @@ class Schooladmin extends Authenticatable
     {
         return $this->morphMany(OTP::class, 'actorable');
     }
-
     public function announcementAuthor(): MorphMany
     {
         return $this->morphMany(AnnouncementAuthor::class, 'authorable');
     }
-
-    public function eventAuthor(): MorphMany
+    public function schoolEventAuthor(): MorphMany
     {
-        return $this->morphMany(EventAuthor::class, 'actorable');
+        return $this->morphMany(SchoolEventAuthor::class, 'autorable', 'actorable_type', 'actorable_id');
     }
-
-    // public function badges()
-    // {
-    //     return $this->morphMany(BadgeAssignment::class, 'assignable');
-    // }
-    public function eventAudience()
+    public function schoolEventInvitee()
     {
-        return $this->morphMany(EventAudience::class, 'audienceable');
+        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable', 'actorable_type', 'actorable_id');
     }
-
+    public function schoolEventLike()
+    {
+        return $this->morphMany(SchoolEventLike::class, 'likeable');
+    }
     public function announcementRecipient()
     {
         return $this->morphMany(AnnouncementRecipient::class, 'recipient');
