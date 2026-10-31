@@ -18,6 +18,6 @@ class LoginStudentController extends Controller
     public function loginStudent(LoginStudentRequest $request)
     {
         $loginStudent = $this->loginStudentService->loginStudent($request->validated());
-        return ApiResponseService::success("OTP sent to your email", $loginStudent, null, 200);
+        return ApiResponseService::success("OTP sent successfully to your email", $loginStudent, null, 200);
     }
 }
