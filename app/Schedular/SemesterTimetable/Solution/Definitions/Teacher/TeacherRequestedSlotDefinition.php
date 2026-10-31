@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Diagnostics\Teach
 use App\Schedular\SemesterTimetable\Solution\Definitions\AbstractRequestDefinition;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class TeacherRequestedSlotDefinition extends AbstractRequestDefinition
 {
@@ -43,5 +44,15 @@ class TeacherRequestedSlotDefinition extends AbstractRequestDefinition
 
         return fn(string $day, int $start, int $end) => ($teacherId ? $context->teacherFree($teacherId, $day, $start, $end) : $context->anyTeacherFree($day, $start, $end))
             && $context->anyHallFree($day, $start, $end);
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return Text::teacher($subject, $context) . "'s requested time on " . Text::when($subject) . " can't be honoured";
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::teacher($obstacle, $context) . ' has asked to teach at ' . Text::period($obstacle);
     }
 }

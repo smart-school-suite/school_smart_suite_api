@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Diagnostics\Hall\
 use App\Schedular\SemesterTimetable\Solution\Definitions\AbstractRequestDefinition;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class HallRequestedSlotDefinition extends AbstractRequestDefinition
 {
@@ -43,5 +44,15 @@ class HallRequestedSlotDefinition extends AbstractRequestDefinition
 
         return fn(string $day, int $start, int $end) => ($hallId ? $context->hallFree($hallId, $day, $start, $end) : $context->anyHallFree($day, $start, $end))
             && $context->anyTeacherFree($day, $start, $end);
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return Text::hall($subject, $context) . ' can\'t be reserved on ' . Text::when($subject);
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::hall($obstacle, $context) . ' is reserved for another request at ' . Text::period($obstacle);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions;
 
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
@@ -46,7 +47,7 @@ abstract class AbstractResourceDefinition extends AbstractDefinition
         return new Remedy(
             action: Remedy::REPLACE,
             target: $obstacle,
-            label: "Assign {$this->resourceLabel()} {$name} instead" . ' on ' . ucfirst($issue->day()) . ' ' . $issue->subject->get('start_time') . '-' . $issue->subject->get('end_time'),
+            label: "Use {$this->resourceLabel()} {$name} instead for this class on " . Text::when($issue->subject),
             changes: [['field' => $field, 'from' => $current, 'to' => $newId]],
             result: [$field => $newId, 'name' => $name, 'for_issue_id' => $issue->id()],
             cost: Cost::REPLACE_RESOURCE + intdiv((int) ($candidate['load_minutes'] ?? 0), 600),
