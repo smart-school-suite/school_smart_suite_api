@@ -15,13 +15,13 @@ use App\Jobs\NotificationJobs\SendAdminEventCreatedNotificationJob;
 use App\Models\Schooladmin;
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Events\Actions\AdminActionEvent;
-use App\Models\EventAudience;
+use App\Models\SchoolEvent\SchoolEventInvitee;
 use App\Models\Specialty;
 
 class CreateEventService
@@ -252,7 +252,7 @@ class CreateEventService
                 ];
             }
         }
-        EventAudience::insert($audienceList);
+        SchoolEventInvitee::insert($audienceList);
     }
     protected function collectRecipients($currentSchool, array $data): Collection
     {

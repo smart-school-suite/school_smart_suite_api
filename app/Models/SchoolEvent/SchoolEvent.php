@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SchoolEvent extends Model
 {
@@ -41,5 +43,13 @@ class SchoolEvent extends Model
     public function eventCategory(): BelongsTo
     {
         return $this->belongsTo(SchoolEventCategory::class, 'event_category_id');
+    }
+    public function eventAuthor(): HasOne
+    {
+        return $this->hasOne(SchoolEventAuthor::class, 'event_id');
+    }
+    public function schoolEventLikes(): HasMany
+    {
+        return $this->hasMany(SchoolEventLike::class, 'event_id');
     }
 }

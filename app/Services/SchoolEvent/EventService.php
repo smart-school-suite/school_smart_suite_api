@@ -2,11 +2,11 @@
 
 namespace App\Services\SchoolEvent;
 
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use App\Models\Student;
 use App\Exceptions\AppException;
-use App\Models\EventLikeStatus;
-use App\Models\EventTag;
+use App\Models\SchoolEvent\SchoolEventTag;
+use App\Models\SchoolEvent\SchoolEventLike;
 use App\Models\EventCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +30,7 @@ class EventService
             );
         }
 
-        $likeStatus = EventLikeStatus::where('school_branch_id', $currentSchool->id)
+        $likeStatus = SchoolEventLike::where('school_branch_id', $currentSchool->id)
             ->where('likeable_id', $authUser['userId'])
             ->where('likeable_type', $authUser['userType'])
             ->where('event_id', $schoolEventId)
@@ -50,7 +50,7 @@ class EventService
             }
             $likeStatus->save();
         } else {
-            EventLikeStatus::create([
+            SchoolEventLike::create([
                 'school_branch_id' => $currentSchool->id,
                 'likeable_id' => $authUser['userId'],
                 'likeable_type' => $authUser['userType'],
@@ -100,7 +100,7 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
+        $likedEventIds = SchoolEventLike::where("school_branch_id", $currentSchool->id)
             ->where("likeable_id", $authUser['userId'])
             ->where("likeable_type", $authUser['userType'])
             ->whereIn("event_id", $schoolEvents->pluck('id'))
@@ -131,7 +131,7 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
+        $likedEventIds = SchoolEventLike::where("school_branch_id", $currentSchool->id)
             ->where("likeable_id", $authUser['userId'])
             ->where("likeable_type", $authUser['userType'])
             ->whereIn("event_id", $schoolEvents->pluck('id'))
@@ -171,7 +171,7 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
+        $likedEventIds = SchoolEventLike::where("school_branch_id", $currentSchool->id)
             ->where("likeable_id", $authUser['userId'])
             ->where("likeable_type", $authUser['userType'])
             ->whereIn("event_id", $schoolEvents->pluck('id'))
@@ -225,7 +225,7 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
+        $likedEventIds = SchoolEventLike::where("school_branch_id", $currentSchool->id)
             ->where("likeable_id", $authUser['userId'])
             ->where("likeable_type", $authUser['userType'])
             ->whereIn("event_id", $schoolEvents->pluck('id'))
@@ -447,7 +447,7 @@ class EventService
         }
 
         $tagIds = collect($data['tag_ids'])->pluck('tag_id')->unique()->toArray();
-        $tags = EventTag::whereIn("id", $tagIds)->get();
+        $tags = SchoolEventTag::whereIn("id", $tagIds)->get();
 
         if ($tags->count() < count($tagIds)) {
             throw new AppException(
@@ -486,7 +486,7 @@ class EventService
             return false;
         });
 
-        $likedEventIds = EventLikeStatus::where('likeable_type', Student::class)
+        $likedEventIds = SchoolEventLike::where('likeable_type', Student::class)
             ->where('likeable_id', $student->id)
             ->where('event_id', $visibleEvents->pluck('id')->toArray())
             ->where('status', true)

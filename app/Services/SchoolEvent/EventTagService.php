@@ -1,30 +1,30 @@
 <?php
 
 namespace App\Services\SchoolEvent;
-use App\Models\EventTag;
+use App\Models\SchoolEvent\SchoolEventTag;
 class EventTagService
 {
    public function createEventTag($tagData){
-       $tag = EventTag::create([
+       $tag = SchoolEventTag::create([
                  'name' => $tagData['name']
              ]);
             return $tag;
    }
 
    public function getTags(){
-         $tags = EventTag::all();
+         $tags = SchoolEventTag::all();
          return $tags;
    }
 
    public function deleteTag( $tagId){
-         $tag = EventTag::findOrFail($tagId);
+         $tag = SchoolEventTag::findOrFail($tagId);
          $tag->delete();
          return $tag;
 
    }
 
    public function updateTag($tagData, $tagId){
-      $tag = EventTag::findOrFail($tagId);
+      $tag = SchoolEventTag::findOrFail($tagId);
          $cleanData = array_filter($tagData);
          $tag->update($cleanData);
          return $tag;

@@ -3,15 +3,13 @@
 namespace App\Services\SchoolEvent;
 
 use App\Exceptions\AppException;
-use App\Models\EventCategory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Events\Actions\AdminActionEvent;
-
+use App\Models\SchoolEvent\SchoolEventCategory;
 class EventCategoryService
 {
     public function createEventCategory($currentSchool, $data, $authAdmin)
     {
-        $categoryExist = EventCategory::where("school_branch_id", $currentSchool->id)
+        $categoryExist = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
             ->where("name", $data['name'])
             ->exists();
         if ($categoryExist) {
@@ -24,7 +22,7 @@ class EventCategoryService
             );
         }
 
-        $category = EventCategory::create([
+        $category = SchoolEventCategory::create([
             'school_branch_id' => $currentSchool->id,
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
@@ -37,7 +35,7 @@ class EventCategoryService
     public function updateEventCategory($currentSchool, $updateData, $eventCategoryId, $authAdmin)
     {
         try {
-            $category = EventCategory::where("school_branch_id", $currentSchool->id)
+            $category = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -52,7 +50,7 @@ class EventCategoryService
         $cleanData = array_filter($updateData);
 
         if (isset($cleanData['name'])) {
-            $categoryExist = EventCategory::where("school_branch_id", $currentSchool->id)
+            $categoryExist = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
                 ->where("name", $cleanData['name'])
                 ->where("id", "!=", $eventCategoryId)
                 ->exists();
@@ -76,7 +74,7 @@ class EventCategoryService
     public function deleteEventCategory($currentSchool, $eventCategoryId, $authAdmin)
     {
         try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+            $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -103,7 +101,7 @@ class EventCategoryService
     }
     public function getEventCategory($currentSchool)
     {
-        $eventCategories = EventCategory::where("school_branch_id", $currentSchool->id)
+        $eventCategories = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
             ->get();
 
         if ($eventCategories->isEmpty()) {
@@ -121,7 +119,7 @@ class EventCategoryService
 
     public function activateEventCategory($currentSchool, $eventCategoryId, $authAdmin)
     {
-        $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+        $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
             ->find($eventCategoryId);
 
         if (!$eventCategory) {
@@ -151,7 +149,7 @@ class EventCategoryService
 
     public function deactivateEventCategory($currentSchool, $eventCategoryId, $authAdmin)
     {
-        $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+        $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
             ->find($eventCategoryId);
 
         if (!$eventCategory) {
@@ -181,7 +179,7 @@ class EventCategoryService
 
     public function getActiveEventCategory($currentSchool)
     {
-        $eventCategories = EventCategory::where("school_branch_id", $currentSchool->id)
+        $eventCategories = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
             ->where("status", true)
             ->get();
 
@@ -200,7 +198,7 @@ class EventCategoryService
 
     public function getEventCategoryDetails($currentSchool, $eventCategoryId)
     {
-        $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+        $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
             ->find($eventCategoryId);
 
         if (!$eventCategory) {

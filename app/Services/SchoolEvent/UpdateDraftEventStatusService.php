@@ -6,14 +6,14 @@ use App\Jobs\DataCleanupJobs\CleanSchoolEventData;
 use App\Jobs\DataCleanupJobs\UpdateSchoolEventStatusJob;
 use App\Jobs\DataCreationJob\CreateSchoolEventLikeStatusJob;
 use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
-use App\Models\EventTag;
+use App\Models\SchoolEvent\SchoolEventTag;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
 use App\Jobs\DataCleanupJobs\UpdateSchoolEventVisibilityStatusJob;
 use App\Models\Schooladmin;
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -313,7 +313,7 @@ class UpdateDraftEventStatusService
         }
 
         $tagIds = collect($data['tag_ids'])->pluck('tag_id')->unique()->toArray();
-        $tags = EventTag::whereIn("id", $tagIds)->get();
+        $tags = SchoolEventTag::whereIn("id", $tagIds)->get();
 
         if ($tags->count() < count($tagIds)) {
             throw new AppException(
