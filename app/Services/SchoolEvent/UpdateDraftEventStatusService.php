@@ -2,14 +2,10 @@
 
 namespace App\Services\SchoolEvent;
 
-use App\Jobs\DataCleanupJobs\CleanSchoolEventData;
-use App\Jobs\DataCleanupJobs\UpdateSchoolEventStatusJob;
-use App\Jobs\DataCreationJob\CreateSchoolEventLikeStatusJob;
-use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
 use App\Models\SchoolEvent\SchoolEventTag;
+use App\Models\SchoolEvent\SchoolEventInvitee;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
-use App\Jobs\DataCleanupJobs\UpdateSchoolEventVisibilityStatusJob;
 use App\Models\Schooladmin;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -17,9 +13,7 @@ use App\Models\SchoolEvent\SchoolEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Events\Actions\AdminActionEvent;
 use Throwable;
-use App\Models\EventAudience;
 use App\Models\Specialty;
 use Illuminate\Support\Str;
 
@@ -212,49 +206,6 @@ class UpdateDraftEventStatusService
                         'students' => $eventData['student_audience']
                 ]);
 
-                if ($status !== 'draft') {
-                    $startDate = Carbon::parse($eventData['start_date'] ?? $schoolEvent->start_date);
-                    $endDate = Carbon::parse($eventData['end_date'] ?? $schoolEvent->end_date);
-
-                    if ($status === 'active') {
-                        UpdateSchoolEventStatusJob::dispatch($schoolEvent->id, $currentSchool->id, $authenticatedUser)->delay($endDate->add('minute', 1));
-                        CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEvent->id);
-                        CleanSchoolEventData::dispatch($schoolEvent->id, $currentSchool->id)->delay($endDate);
-                        UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEvent->id);
-                        AdminActionEvent::dispatch(
-                            [
-                                "permissions" =>  ["schoolAdmin.event.create"],
-                                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                                "schoolBranch" =>  $currentSchool->id,
-                                "feature" => "schoolEventManagement",
-                                "authAdmin" => $authenticatedUser['authUser'],
-                                "data" =>  $schoolEvent,
-                                "message" => "School Event Published",
-                            ]
-                        );
-                    } elseif ($status === 'scheduled') {
-                        CreateSchoolEventLikeStatusJob::dispatch($currentSchool->id, $recipients, $schoolEvent->id)->delay($publishedAt);
-                        UpdateSchoolEventStatusJob::dispatch($schoolEvent->id, $currentSchool->id, $authenticatedUser)->delay($endDate);
-                        UpdateSchoolEventStatusJob::dispatch($schoolEvent->id, $currentSchool->id, $authenticatedUser)->delay($startDate);
-                        UpdateSchoolEventVisibilityStatusJob::dispatch($currentSchool->id, $schoolEvent->id)->delay($publishedAt);
-                        AdminActionEvent::dispatch(
-                            [
-                                "permissions" =>  ["schoolAdmin.event.create"],
-                                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-                                "schoolBranch" =>  $currentSchool->id,
-                                "feature" => "schoolEventManagement",
-                                "authAdmin" => $authenticatedUser['authUser'],
-                                "data" =>  $schoolEvent,
-                                "message" => "School Event Scheduled",
-                            ]
-                        );
-                        if ($publishedAt->greaterThan(now()->addMinutes(10))) {
-                            SendAdminEventScheduleReminderNotiJob::dispatch($schoolEvent->id, $authenticatedUser, $currentSchool->id)
-                                ->delay($publishedAt->copy()->subMinutes(5));
-                        }
-                    }
-                }
-
                 return $schoolEvent;
             });
         } catch (Throwable $e) {
@@ -264,7 +215,7 @@ class UpdateDraftEventStatusService
 
     private function createAudience($currentSchool, $schoolEventId, $audience)
     {
-        EventAudience::where("event_id", $schoolEventId)->where("school_branch_id", $currentSchool->id)
+        SchoolEventInvitee::where("event_id", $schoolEventId)->where("school_branch_id", $currentSchool->id)
             ->delete();
         $audienceList = [];
         if (!empty($audience['teachers'])) {
@@ -304,7 +255,7 @@ class UpdateDraftEventStatusService
                 ];
             }
         }
-        EventAudience::insert($audienceList);
+        SchoolEventInvitee::insert($audienceList);
     }
     protected function getTags(array $data): Collection
     {

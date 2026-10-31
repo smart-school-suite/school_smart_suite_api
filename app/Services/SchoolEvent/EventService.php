@@ -7,7 +7,7 @@ use App\Models\Student;
 use App\Exceptions\AppException;
 use App\Models\SchoolEvent\SchoolEventTag;
 use App\Models\SchoolEvent\SchoolEventLike;
-use App\Models\EventCategory;
+use App\Models\SchoolEvent\SchoolEventCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -73,7 +73,7 @@ class EventService
     public function getSchoolEventsByCategory(object $currentSchool, array $authUser, string $eventCategoryId)
     {
         try {
-            $eventCategory = EventCategory::findOrFail($eventCategoryId);
+            $eventCategory = SchoolEventCategory::findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(
                 "Event category with ID '{$eventCategoryId}' not found.",
@@ -197,7 +197,7 @@ class EventService
     public function getExpiredSchoolEventsByCategory(object $currentSchool, array $authUser, string $eventCategoryId)
     {
         try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+            $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -242,7 +242,7 @@ class EventService
     public function getScheduledSchoolEventsByCategory(object $currentSchool, string $eventCategoryId)
     {
         try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+            $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(
@@ -329,7 +329,7 @@ class EventService
     public function getDraftSchoolEventsByCategory(object $currentSchool, string $eventCategoryId)
     {
         try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
+            $eventCategory = SchoolEventCategory::where("school_branch_id", $currentSchool->id)
                 ->findOrFail($eventCategoryId);
         } catch (ModelNotFoundException $e) {
             throw new AppException(

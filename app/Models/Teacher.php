@@ -23,6 +23,8 @@ use App\Models\Announcement\AnnouncementRecipient;
 use App\Models\Asset\TeacherAvatar;
 use App\Models\Exam\ExamResultPublication;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\SchoolEvent\SchoolEventInvitee;
+use App\Models\SchoolEvent\SchoolEventLike;
 
 class Teacher extends Model
 {
@@ -55,7 +57,6 @@ class Teacher extends Model
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -141,9 +142,13 @@ class Teacher extends Model
     {
         return $this->hasMany(Courses::class);
     }
-    public function eventAudience()
+    public function schoolEventInvitee()
     {
-        return $this->morphMany(EventAudience::class, 'audienceable');
+        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable');
+    }
+    public function schoolEventLike()
+    {
+        return $this->morphMany(SchoolEventLike::class, 'likeable');
     }
     public function announcementAudience()
     {

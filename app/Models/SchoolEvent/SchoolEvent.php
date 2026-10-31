@@ -2,6 +2,7 @@
 
 namespace App\Models\SchoolEvent;
 
+use App\Models\Asset\SchoolEventImage;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +41,10 @@ class SchoolEvent extends Model
     public $table = "school_events";
     public $keyType = 'string';
 
+     public function currentImages(): HasMany
+    {
+        return $this->hasMany(SchoolEventImage::class, 'event_id');
+    }
     public function eventCategory(): BelongsTo
     {
         return $this->belongsTo(SchoolEventCategory::class, 'event_category_id');
