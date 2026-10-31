@@ -174,6 +174,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'status' => $response->status,
             'timetable_slots' => $response->timetable,
             'request_payload' => $this->payload,
+            'scheduler_input' => $body,
             'raw_diagnostics' => [
                 "hard" => $response->diagnostics['hard']->toArray(),
                 "soft" => $response->diagnostics['soft']->toArray()

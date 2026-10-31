@@ -6,6 +6,7 @@ use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 abstract class AbstractLimitDefinition extends AbstractDefinition
 {
@@ -36,5 +37,15 @@ abstract class AbstractLimitDefinition extends AbstractDefinition
             ]),
             cost: Cost::RELAX_LIMIT,
         )];
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return 'Too many ' . $this->unit() . ' on ' . Text::day($subject->day());
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::day($obstacle->day()) . ' already has the maximum of ' . ($obstacle->get('max') ?? 'the allowed') . ' ' . $this->unit();
     }
 }

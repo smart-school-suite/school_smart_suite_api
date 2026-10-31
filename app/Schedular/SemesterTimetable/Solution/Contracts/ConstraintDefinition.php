@@ -23,6 +23,12 @@ interface ConstraintDefinition
 
     public function describe(Subject $subject, ?SolutionContext $context = null): string;
 
+    public function shortName(Subject $subject, ?SolutionContext $context = null): string;
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string;
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string;
+
     /** @return Remedy[] */
     public function adjustRequest(Issue $issue, SolutionContext $context): array;
 

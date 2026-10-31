@@ -112,3 +112,27 @@ so an unhandled constraint never stops path generation.
 Shared helpers live in `Support/SolutionContext.php`: operational window, periods, break, joint courses,
 teacher and hall availability, and nearest free windows. Use them instead of reading the payload directly.
 Costs live in `Support/Cost.php`.
+
+## Reading results through the API
+
+`TimetableInsightService` turns a version's stored diagnostics and solution paths into plain language. Names come
+from the `scheduler_input` stored with each run (or, for older runs, from the database).
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/v1/semester-timetable/version/{versionId}/issues` | `version`, `summary`, `issues` |
+| `GET /api/v1/semester-timetable/version/{versionId}/solutions` | `version`, `summary`, `problems` with their options |
+| `GET /api/v1/semester-timetable/version/{versionId}/issues/{issueId}/solutions` | the problem containing that issue, with only the options that fix it |
+
+- `summary`: `headline` and `message` for the version's `scheduler_status` (pending, generating, optimal, partial,
+  failed, error), plus `blocking_count`, `warning_count` and `days_affected`.
+- `issues[]`: `id`, `severity` (`blocking` for hard, `warning` for soft), `severity_label`, `day_label`, `time`,
+  `title`, `reasons[]`, `affected[]` (course, teacher, hall with names), `can_be_changed`, `solution_count`.
+  Setup problems from a `failed` version also appear here, with `fix_in` pointing at the page that fixes them.
+- `problems[]`: issues that are fixed together, with `title`, `description`, `issues[]` and ranked `options[]`.
+- `options[]`: `rank`, `recommended`, `title`, `summary`, `fixes` (`count`, `of`, `all`, `label`), `effort`
+  (`small`, `medium`, `large`), `checked` (the hard path was re-verified), and `steps[]` with `action_label`, `text`
+  and `changes[]` (`label`, `from`, `to`, with names and times already formatted).
+
+Each definition's `title()` and `reason()` provide the wording, so a new constraint only needs those two methods to
+read well in the API.

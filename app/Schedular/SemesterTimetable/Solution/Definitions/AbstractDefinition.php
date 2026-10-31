@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions;
 
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 use App\Schedular\SemesterTimetable\Solution\Contracts\ConstraintDefinition;
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
@@ -55,8 +56,27 @@ abstract class AbstractDefinition implements ConstraintDefinition
             $this->name(),
             $identity ? "({$identity})" : null,
             $day ? 'on ' . ucfirst($day) : null,
-            $start && $end ? "{$start}-{$end}" : null,
+            $start && $end ? Text::time($start, $end) : null,
         ])));
+    }
+
+    public function shortName(Subject $subject, ?SolutionContext $context = null): string
+    {
+        $entity = $subject->get('course_id') ? Text::course($subject, $context, '')
+            : ($subject->get('teacher_id') ? Text::teacher($subject, $context, '')
+                : ($subject->get('hall_id') ? Text::hall($subject, $context, '') : ''));
+
+        return 'the ' . lcfirst($this->name()) . ($entity !== '' ? " ({$entity})" : '');
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return $this->describe($subject, $context) . ' could not be scheduled';
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return 'It clashes with ' . lcfirst($this->describe($obstacle, $context));
     }
 
     public function adjustRequest(Issue $issue, SolutionContext $context): array
@@ -118,7 +138,7 @@ abstract class AbstractDefinition implements ConstraintDefinition
             ->map(function ($candidate) use ($target, $window, $day, $baseCost, $occupiesWith, $context) {
                 $newStart = Time::toTime($candidate['start']);
                 $newEnd = Time::toTime($candidate['end']);
-                $where = $candidate['day_changed'] ? ucfirst($candidate['day']) . " {$newStart}-{$newEnd}" : "{$newStart}-{$newEnd}";
+                $where = ($candidate['day_changed'] ? ucfirst($candidate['day']) . ' ' : '') . Text::time($newStart, $newEnd);
 
                 return new Remedy(
                     action: Remedy::MOVE,

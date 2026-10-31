@@ -15,28 +15,30 @@ final class Issue
         public readonly array $obstacles,
     ) {}
 
-    public static function fromDiagnostic(object $diagnostic, string $severity): ?self
+    public static function fromDiagnostic(object|array $diagnostic, string $severity): ?self
     {
-        $failed = $diagnostic->constraint_failed ?? [];
+        $diagnostic = (object) $diagnostic;
+        $failed = (array) ($diagnostic->constraint_failed ?? []);
         $type = $failed['type'] ?? null;
 
         if (!$type) {
             return null;
         }
 
-        $details = $failed['details'] ?? [];
+        $details = (array) ($failed['details'] ?? []);
         $id = $failed['id'] ?? md5($type . json_encode($details));
 
         $obstacles = collect($diagnostic->blockers ?? [])
+            ->map(fn($blocker) => (object) $blocker)
             ->filter(fn($blocker) => !empty($blocker->type))
             ->map(fn($blocker) => new Subject(
                 id: $blocker->id ?? md5($blocker->type . json_encode($blocker->entity ?? [])),
                 type: $blocker->type,
                 role: Subject::ROLE_OBSTACLE,
                 details: array_filter([
-                    ...($blocker->evidence ?? []),
-                    ...($blocker->entity ?? []),
-                    'conflict' => $blocker->conflict ?? [],
+                    ...((array) ($blocker->evidence ?? [])),
+                    ...((array) ($blocker->entity ?? [])),
+                    'conflict' => (array) ($blocker->conflict ?? []),
                 ], fn($value) => $value !== null),
             ))
             ->unique('id')

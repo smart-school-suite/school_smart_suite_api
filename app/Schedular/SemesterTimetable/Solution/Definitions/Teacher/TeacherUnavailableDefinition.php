@@ -8,6 +8,7 @@ use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class TeacherUnavailableDefinition extends TeacherBusyDefinition
 {
@@ -34,7 +35,7 @@ class TeacherUnavailableDefinition extends TeacherBusyDefinition
         $relax = $teacherId && $issue ? [new Remedy(
             action: Remedy::RELAX,
             target: $obstacle,
-            label: 'Allow ' . ($context->constraints->teacher($teacherId)['name'] ?? 'the teacher') . ' to teach outside their preferred hours on ' . ucfirst($issue->day()) . ' ' . $issue->subject->get('start_time') . '-' . $issue->subject->get('end_time'),
+            label: 'Allow ' . ($context->constraints->teacher($teacherId)['name'] ?? 'the teacher') . ' to teach outside their preferred hours on ' . Text::when($issue->subject),
             changes: [['field' => 'allow_outside_preference', 'from' => false, 'to' => true]],
             result: [
                 'teacher_id' => $teacherId,
@@ -47,5 +48,10 @@ class TeacherUnavailableDefinition extends TeacherBusyDefinition
         )] : [];
 
         return [...parent::clearObstacle($obstacle, $issues, $context), ...$relax];
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::teacher($obstacle, $context) . ' prefers not to teach at ' . Text::period($obstacle);
     }
 }

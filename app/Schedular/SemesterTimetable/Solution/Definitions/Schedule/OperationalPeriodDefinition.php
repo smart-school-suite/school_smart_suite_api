@@ -14,6 +14,7 @@ use App\Schedular\SemesterTimetable\Solution\Support\Cost;
 use App\Schedular\SemesterTimetable\Solution\Support\PayloadPatch;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class OperationalPeriodDefinition extends AbstractDefinition
 {
@@ -89,14 +90,14 @@ class OperationalPeriodDefinition extends AbstractDefinition
 
     private function extend(Subject $obstacle, string $day, array $current, array $new): Remedy
     {
-        $from = Time::toTime($current[0]) . '-' . Time::toTime($current[1]);
-        $to = Time::toTime($new[0]) . '-' . Time::toTime($new[1]);
+        $from = Text::time(Time::toTime($current[0]), Time::toTime($current[1]));
+        $to = Text::time(Time::toTime($new[0]), Time::toTime($new[1]));
         $extra = ($current[0] - $new[0]) + ($new[1] - $current[1]);
 
         return new Remedy(
             action: Remedy::MODIFY,
             target: $obstacle,
-            label: 'Extend the operational period on ' . ucfirst($day) . " from {$from} to {$to}",
+            label: 'Extend the school day on ' . ucfirst($day) . " to {$to} (it is {$from} now)",
             changes: [
                 ['field' => 'start_time', 'from' => Time::toTime($current[0]), 'to' => Time::toTime($new[0])],
                 ['field' => 'end_time', 'from' => Time::toTime($current[1]), 'to' => Time::toTime($new[1])],
@@ -113,5 +114,15 @@ class OperationalPeriodDefinition extends AbstractDefinition
                 'end_time' => Time::toTime($new[1]),
             ]),
         );
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return 'The school day on ' . Text::day($subject->day()) . ' is too short';
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return 'The school day on ' . Text::day($obstacle->day()) . ' only runs ' . Text::period($obstacle);
     }
 }

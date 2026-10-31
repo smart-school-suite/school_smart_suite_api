@@ -9,6 +9,8 @@ use App\Schedular\SemesterTimetable\Solution\Definitions\AbstractResourceDefinit
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use Illuminate\Support\Collection;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
+use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 
 class HallBusyDefinition extends AbstractResourceDefinition
 {
@@ -45,5 +47,10 @@ class HallBusyDefinition extends AbstractResourceDefinition
     protected function candidates(Issue $issue, array $window, ?string $current, SolutionContext $context): Collection
     {
         return $context->freeHalls($issue->day(), $window[0], $window[1], array_filter([$current]));
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::hall($obstacle, $context) . ' is already in use at ' . Text::period($obstacle);
     }
 }

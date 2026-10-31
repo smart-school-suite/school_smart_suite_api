@@ -24,7 +24,7 @@ class CheckStudentAccountStatus
             );
         }
 
-        if ($student->deactivated == true || $student->status === 'inactive') {
+        if ((bool) $student->deactivate || $student->status === 'inactive') {
             return $this->errorResponse(
                 'Account Deactivated',
                 'Your account has been deactivated.',

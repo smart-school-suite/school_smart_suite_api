@@ -9,6 +9,8 @@ use App\Schedular\SemesterTimetable\Solution\Definitions\AbstractResourceDefinit
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use Illuminate\Support\Collection;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
+use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 
 class TeacherBusyDefinition extends AbstractResourceDefinition
 {
@@ -51,5 +53,10 @@ class TeacherBusyDefinition extends AbstractResourceDefinition
         }
 
         return $context->freeTeachers($issue->day(), $window[0], $window[1], $courseId, array_filter([$current]));
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::teacher($obstacle, $context) . ' is already teaching elsewhere at ' . Text::period($obstacle);
     }
 }
