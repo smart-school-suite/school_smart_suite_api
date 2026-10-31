@@ -19,9 +19,10 @@ final class SolutionPath
         public readonly Issue $primary,
         public readonly array $issues,
         public readonly array $steps,
+        public readonly ?Subject $kept = null,
     ) {
         $this->cost = array_sum(array_map(fn(Remedy $remedy) => $remedy->cost, $steps));
-        $this->id = md5($strategy . '|' . $primary->id() . '|' . $this->signature());
+        $this->id = md5($strategy . '|' . ($kept?->id ?? $primary->id()) . '|' . $this->signature());
     }
 
     public function signature(): string
@@ -52,9 +53,9 @@ final class SolutionPath
             'issue_ids' => array_map(fn(Issue $issue) => $issue->id(), $this->issues),
             'decision' => [
                 'type' => $this->strategy === self::KEEP_ONE ? 'keep' : 'fix',
-                'target_id' => $this->primary->id(),
-                'target_type' => $this->primary->type(),
-                'target_details' => $this->primary->subject->details,
+                'target_id' => $this->kept?->id ?? $this->primary->id(),
+                'target_type' => $this->kept?->type ?? $this->primary->type(),
+                'target_details' => $this->kept?->details ?? $this->primary->subject->details,
             ],
             'steps' => $steps,
             'step_count' => count($steps),

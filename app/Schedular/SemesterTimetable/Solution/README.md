@@ -30,6 +30,25 @@ Combinations are searched best-first with a cap, so they cannot explode. Remedie
 the same teacher, hall or exclusive time slot, are never combined. Paths are ranked by issues resolved, then by cost,
 then by step count. A path that only adds steps to a cheaper path fixing the same issues is dropped.
 
+## Locked constraints
+
+A definition can return `true` from `isLocked()`. The planner then never moves, resizes or removes that constraint:
+
+- When a locked constraint fails, only the things around it are changed (`clear_obstacles`).
+- `keep_one` never keeps another request if that would require changing the locked one.
+- When a locked constraint blocks two or more requests, a `keep_one` path keeps it and moves all of them.
+  That path's `decision.target_*` points at the locked constraint.
+
+`required_joint_course_periods` is locked. Joint courses may span several whole periods; they must start and end
+on period boundaries.
+
+## Availability
+
+A move is only offered where the teacher and hall are free of real commitments: busy periods from other
+specialties, joint courses, and other requests in the payload. Classes the placement engine put in the grid are
+not commitments, because the timetable is generated again after a fix is applied. When several moved requests land
+in the same slot, there must be a free hall for each of them.
+
 ## Output format
 
 ```json

@@ -81,7 +81,7 @@ class PeriodDurationDefinition extends AbstractDefinition
         [$start, $end] = $context->window($day);
         $lengths = collect($this->issueWindows($issues, $day))->map(fn($window) => $window[1] - $window[0])->unique();
 
-        if ($lengths->count() !== 1 || $lengths->first() > $end - $start) {
+        if ($lengths->count() !== 1 || $lengths->first() > $end - $start || $lengths->first() === $context->periodDuration($day)) {
             return [];
         }
 

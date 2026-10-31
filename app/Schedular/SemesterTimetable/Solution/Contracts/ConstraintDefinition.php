@@ -17,6 +17,8 @@ interface ConstraintDefinition
 
     public function blockerBuilder(): ?string;
 
+    public function isLocked(): bool;
+
     public function describe(Subject $subject, ?SolutionContext $context = null): string;
 
     /** @return Remedy[] */

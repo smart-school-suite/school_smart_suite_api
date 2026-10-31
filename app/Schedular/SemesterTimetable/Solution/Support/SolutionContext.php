@@ -129,7 +129,7 @@ class SolutionContext
         $busy = $this->constraints->tBusySlotsFor($teacherId, $day)
             ->contains(fn($slot) => Time::overlaps($start, $end, Time::toMinutes($slot['start_time']), Time::toMinutes($slot['end_time'])));
 
-        if ($busy || $this->gridOccupied($day, $start, $end, teacherId: $teacherId)) {
+        if ($busy || $this->committed($day, $start, $end, teacherId: $teacherId)) {
             return false;
         }
 
@@ -149,7 +149,7 @@ class SolutionContext
         $busy = $this->constraints->hBusySlotsForHallIdDay($hallId, $day)
             ->contains(fn($slot) => Time::overlaps($start, $end, Time::toMinutes($slot['start_time']), Time::toMinutes($slot['end_time'])));
 
-        return !$busy && !$this->gridOccupied($day, $start, $end, hallId: $hallId);
+        return !$busy && !$this->committed($day, $start, $end, hallId: $hallId);
     }
 
     public function anyTeacherFree(string $day, int $start, int $end, ?string $courseId = null): bool
@@ -264,16 +264,25 @@ class SolutionContext
         return $sameDay->concat($otherDays)->values()->all();
     }
 
-    private function gridOccupied(string $day, int $start, int $end, ?string $teacherId = null, ?string $hallId = null): bool
+    private function committed(string $day, int $start, int $end, ?string $teacherId = null, ?string $hallId = null): bool
     {
-        return collect($this->grid)->contains(function ($slot) use ($day, $start, $end, $teacherId, $hallId) {
-            if (!$slot instanceof GridSlotDTO || strtolower($slot->day) !== strtolower($day)) {
-                return false;
-            }
+        $requests = collect([
+            ...$this->constraints->requestedAssignmentsFor($day),
+            ...$this->constraints->tRequestedWindowsFor($day),
+            ...$this->constraints->hRequestedWindowsFor($day),
+        ]);
 
-            $matches = ($teacherId && $slot->teacher_id === $teacherId) || ($hallId && $slot->hall_id === $hallId);
+        $jointCourses = $this->jointCourses($day)->map(fn($course) => [
+            ...$course,
+            'start_time' => Time::toTime($course['start']),
+            'end_time' => Time::toTime($course['end']),
+        ]);
 
-            return $matches && Time::overlaps($start, $end, Time::toMinutes($slot->start_time), Time::toMinutes($slot->end_time));
+        return $requests->concat($jointCourses)->contains(function ($commitment) use ($start, $end, $teacherId, $hallId) {
+            $matches = ($teacherId && ($commitment['teacher_id'] ?? null) === $teacherId)
+                || ($hallId && ($commitment['hall_id'] ?? null) === $hallId);
+
+            return $matches && Time::overlaps($start, $end, Time::toMinutes($commitment['start_time'] ?? null) ?? -1, Time::toMinutes($commitment['end_time'] ?? null) ?? -1);
         });
     }
 }

@@ -16,6 +16,7 @@ abstract class AbstractRequestDefinition extends AbstractDefinition
         return array_filter([
             'teacher_id' => $target->get('teacher_id'),
             'hall_id' => $target->get('hall_id'),
+            'needs_hall' => !$target->get('hall_id'),
         ]);
     }
 

@@ -53,11 +53,17 @@ class PathPlanner
             array_push($paths, ...$this->sharedFix($group));
         }
 
+        array_push($paths, ...$this->keepLocked($group));
+
         return $this->rank($paths);
     }
 
     private function adjustRequest(Issue $issue): array
     {
+        if ($this->locked($issue->type())) {
+            return [];
+        }
+
         $remedies = $this->safely(fn() => $this->catalog->for($issue->type())->adjustRequest($issue, $this->context));
 
         return array_map(
@@ -99,6 +105,10 @@ class PathPlanner
         foreach ($group as $other) {
             if ($other->id() === $kept->id()) {
                 continue;
+            }
+
+            if ($this->locked($other->type())) {
+                return [];
             }
 
             $options = collect($this->safely(fn() => $this->catalog->for($other->type())->adjustRequest($other, $this->context)))
@@ -167,8 +177,59 @@ class PathPlanner
         );
     }
 
+    private function keepLocked(array $group): array
+    {
+        $locked = [];
+
+        foreach ($group as $issue) {
+            foreach ($issue->obstacles as $obstacle) {
+                if ($this->locked($obstacle->type)) {
+                    $locked[$obstacle->id]['subject'] = $obstacle;
+                    $locked[$obstacle->id]['issues'][$issue->id()] = $issue;
+                }
+            }
+        }
+
+        $paths = [];
+
+        foreach ($locked as $entry) {
+            $issues = array_values($entry['issues']);
+
+            if (count($issues) < 2) {
+                continue;
+            }
+
+            $choices = [];
+
+            foreach ($issues as $issue) {
+                $options = $this->adjustRequest($issue);
+
+                if (empty($options)) {
+                    continue 2;
+                }
+
+                $choices[] = array_map(fn(SolutionPath $path) => $path->steps[0], $options);
+            }
+
+            foreach ($this->combine($choices) as $steps) {
+                $paths[] = $this->path(SolutionPath::KEEP_ONE, $issues[0], $issues, $steps, $entry['subject']);
+            }
+        }
+
+        return $paths;
+    }
+
+    private function locked(string $type): bool
+    {
+        return $this->catalog->for($type)->isLocked();
+    }
+
     private function obstacleOptions(Subject $obstacle, array $issues): array
     {
+        if ($this->locked($obstacle->type)) {
+            return [];
+        }
+
         return $this->best($this->safely(
             fn() => $this->catalog->for($obstacle->type)->clearObstacle($obstacle, $issues, $this->context)
         ));
@@ -220,7 +281,22 @@ class PathPlanner
             }
         }
 
-        return true;
+        return $this->enoughHalls($chosen, $candidate);
+    }
+
+    private function enoughHalls(array $chosen, Remedy $candidate): bool
+    {
+        $slot = $candidate->occupies;
+
+        if (empty($slot['needs_hall'])) {
+            return true;
+        }
+
+        $sharing = collect($chosen)->filter(fn(Remedy $remedy) => !empty($remedy->occupies['needs_hall'])
+            && $remedy->occupies['day'] === $slot['day']
+            && Time::overlaps($remedy->occupies['start'], $remedy->occupies['end'], $slot['start'], $slot['end']))->count();
+
+        return $sharing === 0 || $this->context->freeHalls($slot['day'], $slot['start'], $slot['end'])->count() > $sharing;
     }
 
     private function best(array $remedies): array
@@ -249,7 +325,7 @@ class PathPlanner
             ])
             ->values();
 
-        $bestPerDecision = $ranked->unique(fn(SolutionPath $path) => $path->strategy . '|' . $path->primary->id());
+        $bestPerDecision = $ranked->unique(fn(SolutionPath $path) => $path->strategy . '|' . ($path->kept?->id ?? $path->primary->id()));
         $rest = $ranked->reject(fn(SolutionPath $path) => $bestPerDecision->contains(fn(SolutionPath $best) => $best === $path));
         $kept = $bestPerDecision->concat($rest)->take(self::MAX_PATHS_PER_GROUP);
 
@@ -269,11 +345,11 @@ class PathPlanner
             && (count($betterSteps) < count($worseSteps) || count($betterIssues) > count($worseIssues));
     }
 
-    private function path(string $strategy, Issue $primary, array $issues, array $steps): SolutionPath
+    private function path(string $strategy, Issue $primary, array $issues, array $steps, ?Subject $kept = null): SolutionPath
     {
         $severity = collect($issues)->contains(fn(Issue $issue) => $issue->severity === Issue::HARD) ? Issue::HARD : Issue::SOFT;
 
-        return new SolutionPath($primary->day(), $severity, $strategy, $primary, array_values($issues), array_values($steps));
+        return new SolutionPath($primary->day(), $severity, $strategy, $primary, array_values($issues), array_values($steps), $kept);
     }
 
     private function group(array $issues): array

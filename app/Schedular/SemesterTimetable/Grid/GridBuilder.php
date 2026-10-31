@@ -174,7 +174,7 @@ class GridBuilder
                     ];
                 }
 
-                if ($jcDuration !== $duration) {
+                if (!$this->fitsWholePeriods($day, $jcStart, $jcEnd, $opWin, $duration, $breakWin)) {
                     $violations[] = [
                         'key'      => PeriodDurationViolation::KEY,
                         'expected_duration' => $duration,
@@ -202,6 +202,27 @@ class GridBuilder
         }
         return $reasons;
     }
+    private function fitsWholePeriods(string $day, int $start, int $end, array $opWindow, int $duration, ?array $breakWindow): bool
+    {
+        if ($end <= $start || ($end - $start) % $duration !== 0) {
+            return false;
+        }
+
+        if ($start < $opWindow['start'] || $end > $opWindow['end']) {
+            return true;
+        }
+
+        if ($breakWindow && $this->overlapsBreak($start, $end, $breakWindow)) {
+            return true;
+        }
+
+        $periods = collect($this->generateRegularSlots($day, $opWindow, $duration, $breakWindow))
+            ->map(fn(GridSlotDTO $slot) => [$this->toMinutes($slot->start_time), $this->toMinutes($slot->end_time)]);
+
+        return $periods->contains(fn($period) => $period[0] === $start)
+            && $periods->contains(fn($period) => $period[1] === $end);
+    }
+
     public function buildDaySlots(string $day, array $constraints): array
     {
         $opWindow = $this->resolveOperationalWindow($day, $constraints);
@@ -332,20 +353,18 @@ class GridBuilder
             return $slots;
         }
 
-        $jcIndex = [];
-        foreach ($dayCourses as $jc) {
-            $key           = $jc['start_time'] . '-' . $jc['end_time'];
-            $jcIndex[$key] = $jc;
-        }
-
         foreach ($slots as $slot) {
             if ($slot->isBreak()) {
                 continue;
             }
 
-            $key = $slot->start_time . '-' . $slot->end_time;
-            if (isset($jcIndex[$key])) {
-                $jc = $jcIndex[$key];
+            $slotStart = $this->toMinutes($slot->start_time);
+            $slotEnd = $this->toMinutes($slot->end_time);
+            $jc = collect($dayCourses)->first(
+                fn($course) => $slotStart >= $this->toMinutes($course['start_time']) && $slotEnd <= $this->toMinutes($course['end_time'])
+            );
+
+            if ($jc) {
                 $slot->type       = GridSlotDTO::TYPE_JOINT;
                 $slot->course_id  = $jc['course_id']  ?? null;
                 $slot->teacher_id = $jc['teacher_id'] ?? null;

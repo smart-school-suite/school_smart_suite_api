@@ -14,6 +14,11 @@ abstract class AbstractDefinition implements ConstraintDefinition
 {
     abstract protected function name(): string;
 
+    public function isLocked(): bool
+    {
+        return false;
+    }
+
     public function constraintKey(): ?string
     {
         return null;
