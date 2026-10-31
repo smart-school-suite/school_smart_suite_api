@@ -13,7 +13,7 @@ use Throwable;
 
 class PathPlanner
 {
-    public const MAX_PATHS_PER_GROUP = 8;
+    public const MAX_PATHS_PER_GROUP = 10;
     public const MAX_COMBINATIONS = 5;
     public const MAX_EXPLORED = 400;
 
@@ -240,16 +240,20 @@ class PathPlanner
             ->unique(fn(SolutionPath $path) => $path->signature() . '|' . implode(',', array_map(fn(Issue $issue) => $issue->id(), $path->issues)))
             ->values();
 
-        return $paths
+        $ranked = $paths
             ->reject(fn(SolutionPath $path) => $paths->contains(fn(SolutionPath $other) => $other !== $path && $this->dominates($other, $path)))
             ->sortBy([
                 fn(SolutionPath $a, SolutionPath $b) => $b->resolvedCount() <=> $a->resolvedCount(),
                 fn(SolutionPath $a, SolutionPath $b) => $a->cost <=> $b->cost,
                 fn(SolutionPath $a, SolutionPath $b) => count($a->steps) <=> count($b->steps),
             ])
-            ->take(self::MAX_PATHS_PER_GROUP)
-            ->values()
-            ->all();
+            ->values();
+
+        $bestPerDecision = $ranked->unique(fn(SolutionPath $path) => $path->strategy . '|' . $path->primary->id());
+        $rest = $ranked->reject(fn(SolutionPath $path) => $bestPerDecision->contains(fn(SolutionPath $best) => $best === $path));
+        $kept = $bestPerDecision->concat($rest)->take(self::MAX_PATHS_PER_GROUP);
+
+        return $ranked->filter(fn(SolutionPath $path) => $kept->contains(fn(SolutionPath $keptPath) => $keptPath === $path))->values()->all();
     }
 
     private function dominates(SolutionPath $better, SolutionPath $worse): bool

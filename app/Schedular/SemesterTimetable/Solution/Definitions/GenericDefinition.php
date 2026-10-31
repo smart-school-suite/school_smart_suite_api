@@ -28,7 +28,7 @@ class GenericDefinition extends AbstractDefinition
 
     public function adjustRequest(Issue $issue, SolutionContext $context): array
     {
-        return [$this->remove($issue->subject, Cost::REMOVE_REQUEST + Cost::RELAX_LIMIT, 'Relax or remove ' . lcfirst($this->describe($issue->subject)))];
+        return [$this->remove($issue->subject, Cost::REMOVE_REQUEST + Cost::RELAX_LIMIT, 'Relax or remove ' . lcfirst($this->describe($issue->subject, $context)))];
     }
 
     public function clearObstacle(Subject $obstacle, array $issues, SolutionContext $context): array
@@ -36,7 +36,7 @@ class GenericDefinition extends AbstractDefinition
         return [new Remedy(
             action: Remedy::REVIEW,
             target: $obstacle,
-            label: 'Review ' . lcfirst($this->describe($obstacle)) . ' manually',
+            label: 'Review ' . lcfirst($this->describe($obstacle, $context)) . ' manually',
             changes: [],
             result: ['manual' => true],
             cost: Cost::MANUAL_REVIEW,

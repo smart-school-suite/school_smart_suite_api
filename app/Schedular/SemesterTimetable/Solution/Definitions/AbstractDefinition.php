@@ -34,14 +34,16 @@ abstract class AbstractDefinition implements ConstraintDefinition
         return null;
     }
 
-    public function describe(Subject $subject): string
+    public function describe(Subject $subject, ?SolutionContext $context = null): string
     {
         $day = $subject->day();
         $start = $subject->get('start_time');
         $end = $subject->get('end_time');
+        $identity = $context?->identify($subject);
 
         return trim(implode(' ', array_filter([
             $this->name(),
+            $identity ? "({$identity})" : null,
             $day ? 'on ' . ucfirst($day) : null,
             $start && $end ? "{$start}-{$end}" : null,
         ])));
@@ -74,12 +76,12 @@ abstract class AbstractDefinition implements ConstraintDefinition
             ->all();
     }
 
-    protected function remove(Subject $target, int $cost, ?string $label = null): Remedy
+    protected function remove(Subject $target, int $cost, ?string $label = null, ?SolutionContext $context = null): Remedy
     {
         return new Remedy(
             action: Remedy::REMOVE,
             target: $target,
-            label: $label ?? 'Remove ' . lcfirst($this->describe($target)),
+            label: $label ?? 'Remove ' . lcfirst($this->describe($target, $context)),
             changes: [],
             result: ['removed' => true],
             cost: $cost,
@@ -103,7 +105,7 @@ abstract class AbstractDefinition implements ConstraintDefinition
         }
 
         return collect($context->nearestWindows($day, $window[0], $window[1], $accepts, $avoid, $ignore))
-            ->map(function ($candidate) use ($target, $window, $day, $baseCost, $occupiesWith) {
+            ->map(function ($candidate) use ($target, $window, $day, $baseCost, $occupiesWith, $context) {
                 $newStart = Time::toTime($candidate['start']);
                 $newEnd = Time::toTime($candidate['end']);
                 $where = $candidate['day_changed'] ? ucfirst($candidate['day']) . " {$newStart}-{$newEnd}" : "{$newStart}-{$newEnd}";
@@ -111,7 +113,7 @@ abstract class AbstractDefinition implements ConstraintDefinition
                 return new Remedy(
                     action: Remedy::MOVE,
                     target: $target,
-                    label: 'Move ' . lcfirst($this->describe($target)) . " to {$where}",
+                    label: 'Move ' . lcfirst($this->describe($target, $context)) . " to {$where}",
                     changes: array_values(array_filter([
                         $candidate['day_changed'] ? ['field' => 'day', 'from' => $day, 'to' => $candidate['day']] : null,
                         ['field' => 'start_time', 'from' => Time::toTime($window[0]), 'to' => $newStart],

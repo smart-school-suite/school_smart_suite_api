@@ -44,7 +44,7 @@ class RequiredJointCourseDefinition extends AbstractDefinition
     public function adjustRequest(Issue $issue, SolutionContext $context): array
     {
         $remedies = $this->reschedule($issue->subject, $context->periodDuration($issue->day()), [], $context, Cost::MOVE_JOINT_COURSE);
-        $remedies[] = $this->remove($issue->subject, Cost::REMOVE_JOINT_COURSE);
+        $remedies[] = $this->remove($issue->subject, Cost::REMOVE_JOINT_COURSE, context: $context);
 
         return $remedies;
     }
@@ -59,7 +59,7 @@ class RequiredJointCourseDefinition extends AbstractDefinition
 
         return [
             ...$this->reschedule($obstacle, $window[1] - $window[0], $this->issueWindows($issues, $obstacle->day()), $context, Cost::MOVE_JOINT_COURSE + Cost::MOVE_OTHER_REQUEST),
-            $this->remove($obstacle, Cost::REMOVE_JOINT_COURSE),
+            $this->remove($obstacle, Cost::REMOVE_JOINT_COURSE, context: $context),
         ];
     }
 

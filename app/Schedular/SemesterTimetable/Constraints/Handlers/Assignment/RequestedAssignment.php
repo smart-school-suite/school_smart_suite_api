@@ -5,6 +5,7 @@ namespace App\Schedular\SemesterTimetable\Constraints\Handlers\Assignment;
 use App\Constant\Constraint\SemesterTimetable\Assignment\RequestedAssignment as RequestedAssignmentConstraint;
 use App\Schedular\SemesterTimetable\Constraints\Contracts\ConstraintHandler;
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
+use App\Schedular\SemesterTimetable\Constraints\Validator\Assignment\RequestedAssignmentValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Course\CourseRequestedTimeSlotValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Course\JointCoursePeriodValidator;
 use App\Schedular\SemesterTimetable\Constraints\Validator\Hall\HallBusyValidator;
@@ -53,7 +54,8 @@ class RequestedAssignment extends TimetableContext implements ConstraintHandler
                 ...app(JointCoursePeriodValidator::class)->check($context, $params),
                 ...app(RequestedFreePeriodValidator::class)->check($context, $params),
                 ...app(HallRequestedTimeSlotValidator::class)->check($context, $params),
-                ...app(CourseRequestedTimeSlotValidator::class)->check($context, $params)
+                ...app(CourseRequestedTimeSlotValidator::class)->check($context, $params),
+                ...$this->competingAssignments($context, $params),
             ]);
 
             if (!empty($blockers)) {
@@ -111,5 +113,24 @@ class RequestedAssignment extends TimetableContext implements ConstraintHandler
 
             $state->grid[] = $gridSlotDto;
         }
+    }
+
+    private function competingAssignments(ConstraintContext $context, array $params): array
+    {
+        return array_values(array_filter(
+            app(RequestedAssignmentValidator::class)->check($context, $params),
+            function (array $other) use ($params) {
+                $isSelf = ($other['course_id'] ?? null) === $params['course_id']
+                    && ($other['teacher_id'] ?? null) === $params['teacher_id']
+                    && ($other['hall_id'] ?? null) === $params['hall_id']
+                    && ($other['start_time'] ?? null) === $params['start_time']
+                    && ($other['end_time'] ?? null) === $params['end_time'];
+
+                $sharesResource = (!empty($other['hall_id']) && $other['hall_id'] === $params['hall_id'])
+                    || (!empty($other['teacher_id']) && $other['teacher_id'] === $params['teacher_id']);
+
+                return !$isSelf && $sharesResource;
+            }
+        ));
     }
 }

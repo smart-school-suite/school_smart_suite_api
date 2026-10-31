@@ -42,7 +42,7 @@ class PeriodDurationDefinition extends AbstractDefinition
         return PeriodDurationBlocker::class;
     }
 
-    public function describe(Subject $subject): string
+    public function describe(Subject $subject, ?SolutionContext $context = null): string
     {
         $minutes = $subject->get('duration_minutes') ?? $subject->get('period_duration');
         $day = $subject->day();

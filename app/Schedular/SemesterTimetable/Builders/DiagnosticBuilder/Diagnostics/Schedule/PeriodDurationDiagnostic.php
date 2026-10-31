@@ -26,7 +26,7 @@ class PeriodDurationDiagnostic implements DiagnosticBuilder
             "id" => app(GenerateId::class)->generateId([
                 "type" => PeriodDuration::KEY,
                 "day" => $constraintFailed["day"],
-                "duration_minutes" => $constraintFailed["duration"],
+                "period_duration" => $constraintFailed["duration"],
             ]),
             "details" => [
                 "day" => $constraintFailed["day"],

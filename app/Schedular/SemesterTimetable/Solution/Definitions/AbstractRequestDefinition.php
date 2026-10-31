@@ -25,7 +25,7 @@ abstract class AbstractRequestDefinition extends AbstractDefinition
 
         return [
             ...$this->moves($target, $context, $this->accepts($target, $context), Cost::MOVE_REQUEST, occupiesWith: $this->occupiesWith($target)),
-            $this->remove($target, Cost::REMOVE_REQUEST),
+            $this->remove($target, Cost::REMOVE_REQUEST, context: $context),
         ];
     }
 
@@ -40,7 +40,7 @@ abstract class AbstractRequestDefinition extends AbstractDefinition
                 avoid: $this->issueWindows($issues),
                 occupiesWith: $this->occupiesWith($obstacle),
             ),
-            $this->remove($obstacle, Cost::REMOVE_REQUEST),
+            $this->remove($obstacle, Cost::REMOVE_REQUEST, context: $context),
         ];
     }
 }

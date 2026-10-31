@@ -3,6 +3,7 @@
 namespace App\Schedular\SemesterTimetable\Solution\Support;
 
 use App\Schedular\SemesterTimetable\Constraints\Core\ConstraintContext;
+use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\DTO\GridSlotDTO;
 use Illuminate\Support\Collection;
 
@@ -184,6 +185,21 @@ class SolutionContext
             ->filter(fn($hall) => $this->hallFree($hall['hall_id'], $day, $start, $end))
             ->sortByDesc(fn($hall) => $hall['hall_capacity'] ?? 0)
             ->values();
+    }
+
+    public function identify(Subject $subject): ?string
+    {
+        $courseId = $subject->get('course_id');
+        $teacherId = $subject->get('teacher_id');
+        $hallId = $subject->get('hall_id');
+
+        $course = $courseId
+            ? trim($courseId . ' ' . ($this->constraints->tCourses()->firstWhere('course_id', $courseId)['course_title'] ?? ''))
+            : null;
+        $teacher = $teacherId ? ($this->constraints->teacher($teacherId)['name'] ?? $teacherId) : null;
+        $hall = $hallId ? ($this->constraints->hall($hallId)['hall_name'] ?? $hallId) : null;
+
+        return implode(', ', array_filter([$course, $teacher, $hall])) ?: null;
     }
 
     public function teacherLoad(string $teacherId): int

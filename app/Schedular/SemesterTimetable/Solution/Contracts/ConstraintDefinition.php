@@ -17,7 +17,7 @@ interface ConstraintDefinition
 
     public function blockerBuilder(): ?string;
 
-    public function describe(Subject $subject): string;
+    public function describe(Subject $subject, ?SolutionContext $context = null): string;
 
     /** @return Remedy[] */
     public function adjustRequest(Issue $issue, SolutionContext $context): array;
