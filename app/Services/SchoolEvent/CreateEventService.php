@@ -86,7 +86,7 @@ class CreateEventService
 
                 $uploadedImages = $this->imageService->uploadImages($schoolEvent, $data['images'] ?? [], $currentSchool->id);
 
-                $this->publishing->dispatchLifecycleJobs($schoolEvent, $authenticatedUser, $currentSchool);
+                $this->publishing->dispatchScheduleNotifications($schoolEvent, $authenticatedUser, $currentSchool);
 
                 return $schoolEvent->load(['currentImages', 'eventCategory']);
             });

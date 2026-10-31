@@ -81,7 +81,7 @@ class UpdateDraftEventStatusService
                 ])->save();
 
                 $this->publishing->seedInvitees($currentSchool, $schoolEvent->id, $audience);
-                $this->publishing->dispatchLifecycleJobs($schoolEvent, $authenticatedUser, $currentSchool);
+                $this->publishing->dispatchScheduleNotifications($schoolEvent, $authenticatedUser, $currentSchool);
 
                 return $schoolEvent->load(['currentImages', 'eventCategory']);
             });

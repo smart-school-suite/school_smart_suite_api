@@ -2,11 +2,7 @@
 
 namespace App\Services\SchoolEvent;
 
-use App\Events\Actions\AdminActionEvent;
 use App\Exceptions\AppException;
-use App\Jobs\DataCleanupJobs\UpdateSchoolEventStatusJob;
-use App\Jobs\DataCreationJob\PublishSchoolEventJob;
-use App\Jobs\NotificationJobs\SendAdminEventCreatedNotificationJob;
 use App\Jobs\NotificationJobs\SendAdminEventScheduleReminderNotiJob;
 use App\Jobs\NotificationJobs\SendAdminScheduledSchoolEventNotiJob;
 use App\Models\SchoolEvent\SchoolEventInvitee;
@@ -190,46 +186,20 @@ class EventPublishingService
         });
     }
 
-    public function dispatchLifecycleJobs(SchoolEvent $schoolEvent, array $authenticatedUser, object $currentSchool): void
+    public function dispatchScheduleNotifications(SchoolEvent $schoolEvent, array $authenticatedUser, object $currentSchool): void
     {
-        $schoolEventId = $schoolEvent->id;
-        $branchId = $currentSchool->id;
-        $publishedAt = Carbon::parse($schoolEvent->published_at);
-        $startDate = Carbon::parse($schoolEvent->start_date);
-        $endDate = Carbon::parse($schoolEvent->end_date);
-
-        if ($schoolEvent->status === 'active') {
-            SendAdminEventCreatedNotificationJob::dispatch($schoolEventId, $authenticatedUser, $branchId)->afterCommit();
-            PublishSchoolEventJob::dispatch($branchId, $schoolEventId)->afterCommit();
-        } elseif ($schoolEvent->status === 'scheduled') {
-            SendAdminScheduledSchoolEventNotiJob::dispatch($schoolEventId, $authenticatedUser, $branchId)->afterCommit();
-            PublishSchoolEventJob::dispatch($branchId, $schoolEventId)->delay($publishedAt)->afterCommit();
-            SendAdminEventCreatedNotificationJob::dispatch($schoolEventId, $authenticatedUser, $branchId)->delay($publishedAt)->afterCommit();
-
-            if ($publishedAt->greaterThan(now()->addMinutes(10))) {
-                SendAdminEventScheduleReminderNotiJob::dispatch($schoolEventId, $authenticatedUser, $branchId)
-                    ->delay($publishedAt->copy()->subMinutes(5))
-                    ->afterCommit();
-            }
-        } else {
+        if ($schoolEvent->status !== 'scheduled') {
             return;
         }
 
-        if ($startDate->isFuture()) {
-            UpdateSchoolEventStatusJob::dispatch($schoolEventId, $branchId, $authenticatedUser)->delay($startDate)->afterCommit();
+        $publishedAt = Carbon::parse($schoolEvent->published_at);
+
+        SendAdminScheduledSchoolEventNotiJob::dispatch($schoolEvent->id, $authenticatedUser, $currentSchool->id)->afterCommit();
+
+        if ($publishedAt->greaterThan(now()->addMinutes(10))) {
+            SendAdminEventScheduleReminderNotiJob::dispatch($schoolEvent->id, $authenticatedUser, $currentSchool->id)
+                ->delay($publishedAt->copy()->subMinutes(5))
+                ->afterCommit();
         }
-
-        UpdateSchoolEventStatusJob::dispatch($schoolEventId, $branchId, $authenticatedUser)->delay($endDate)->afterCommit();
-
-        AdminActionEvent::dispatch([
-            "permissions" => ["schoolAdmin.event.create"],
-            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
-            "schoolBranch" => $branchId,
-            "feature" => "schoolEventManagement",
-            "action" => $schoolEvent->status === 'scheduled' ? "schoolEvent.scheduled" : "schoolEvent.published",
-            "authAdmin" => $authenticatedUser['authUser'],
-            "data" => $schoolEvent,
-            "message" => $schoolEvent->status === 'scheduled' ? "School Event Scheduled" : "School Event Published",
-        ]);
     }
 }

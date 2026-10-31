@@ -26,7 +26,8 @@ class EventService
     public function likeSchoolEvent(object $currentSchool, array $authUser, string $schoolEventId)
     {
         $schoolEvent = SchoolEvent::where('school_branch_id', $currentSchool->id)
-            ->whereIn('status', ['active', 'expired'])
+            ->where('status', '!=', 'draft')
+            ->where('published_at', '<=', Carbon::now())
             ->find($schoolEventId);
 
         if (!$schoolEvent) {
@@ -317,16 +318,6 @@ class EventService
                     );
                 }
 
-                if ($schoolEvent->status === 'expired') {
-                    throw new AppException(
-                        "Expired school event {$eventId} cannot be edited.",
-                        400,
-                        "Event Already Ended",
-                        "This event has already ended, so its content can no longer be changed.",
-                        null
-                    );
-                }
-
                 $updates = array_filter(
                     array_intersect_key($eventData, array_flip(self::CONTENT_FIELDS)),
                     fn($value) => !is_null($value) && $value !== ''
@@ -367,7 +358,7 @@ class EventService
 
     public function uploadSchoolEventImages(object $currentSchool, string $eventId, array $images)
     {
-        $schoolEvent = $this->findEditableEvent($currentSchool, $eventId);
+        $schoolEvent = $this->findEvent($currentSchool, $eventId);
 
         $this->imageService->uploadImages($schoolEvent, $images, $currentSchool->id);
 
@@ -376,7 +367,7 @@ class EventService
 
     public function removeSchoolEventImages(object $currentSchool, string $eventId, array $imageIds)
     {
-        $schoolEvent = $this->findEditableEvent($currentSchool, $eventId);
+        $schoolEvent = $this->findEvent($currentSchool, $eventId);
 
         $this->imageService->removeImages($schoolEvent, $currentSchool->id, $imageIds);
 
@@ -388,7 +379,8 @@ class EventService
         $authUser = ['userId' => $student->id, 'userType' => get_class($student)];
 
         return $this->eventQuery($currentSchool, $authUser)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'scheduled'])
+            ->where('published_at', '<=', Carbon::now())
             ->where('end_date', '>=', Carbon::now())
             ->whereHas('invitees', function (Builder $query) use ($student) {
                 $query->where('actorable_id', $student->id)
@@ -435,7 +427,7 @@ class EventService
         return $query;
     }
 
-    private function findEditableEvent(object $currentSchool, string $eventId): SchoolEvent
+    private function findEvent(object $currentSchool, string $eventId): SchoolEvent
     {
         $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)->find($eventId);
 
@@ -445,16 +437,6 @@ class EventService
                 404,
                 "Event Not Found",
                 "The specified school event does not exist or does not belong to the current school.",
-                null
-            );
-        }
-
-        if ($schoolEvent->status === 'expired') {
-            throw new AppException(
-                "Expired school event {$eventId} cannot be edited.",
-                400,
-                "Event Already Ended",
-                "This event has already ended, so its images can no longer be changed.",
                 null
             );
         }
