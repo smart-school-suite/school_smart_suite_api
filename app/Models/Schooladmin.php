@@ -136,7 +136,7 @@ class Schooladmin extends Authenticatable
 
     public function eventAuthor(): MorphMany
     {
-        return $this->morphMany(EventAuthor::class, 'actorable');
+        return $this->morphMany(EventAuthor::class, 'authorable');
     }
 
     // public function badges()
@@ -145,7 +145,7 @@ class Schooladmin extends Authenticatable
     // }
     public function eventAudience()
     {
-        return $this->morphMany(EventAudience::class, 'audienceable');
+        return $this->morphMany(EventAudience::class, 'actorable');
     }
 
     public function announcementRecipient()

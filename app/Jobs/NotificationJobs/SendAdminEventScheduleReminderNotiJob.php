@@ -33,8 +33,14 @@ class SendAdminEventScheduleReminderNotiJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $schoolEvent = SchoolEvent::where("school_branch_id", $this->schoolEventId)
+        $schoolEvent = SchoolEvent::where("school_branch_id", $this->schoolBranchId)
+                                ->where("status", "scheduled")
                                 ->find($this->schoolEventId);
-         $this->author['authUser']->notify(new ScheduledSchoolEventReminderNotification($schoolEvent));
+
+        if (!$schoolEvent) {
+            return;
+        }
+
+        $this->author['authUser']->notify(new ScheduledSchoolEventReminderNotification($schoolEvent));
     }
 }

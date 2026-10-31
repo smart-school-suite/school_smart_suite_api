@@ -143,7 +143,7 @@ class Teacher extends Model
     }
     public function eventAudience()
     {
-        return $this->morphMany(EventAudience::class, 'audienceable');
+        return $this->morphMany(EventAudience::class, 'actorable');
     }
     public function announcementAudience()
     {

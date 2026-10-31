@@ -2,92 +2,78 @@
 
 namespace App\Services\SchoolEvent;
 
-use App\Models\SchoolEvent;
-use App\Models\Student;
 use App\Exceptions\AppException;
-use App\Models\EventLikeStatus;
-use App\Models\EventTag;
 use App\Models\EventCategory;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\EventLikeStatus;
+use App\Models\SchoolEvent;
+use App\Services\Asset\SchoolEventImageService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class EventService
 {
+    private const CONTENT_FIELDS = ['title', 'description', 'organizer', 'location', 'start_date', 'end_date', 'event_category_id'];
+
+    public function __construct(
+        private EventPublishingService $publishing,
+        private SchoolEventImageService $imageService
+    ) {}
+
     public function likeSchoolEvent(object $currentSchool, array $authUser, string $schoolEventId)
     {
-        try {
-            $schoolEvent = SchoolEvent::where('school_branch_id', $currentSchool->id)
-                ->findOrFail($schoolEventId);
-        } catch (ModelNotFoundException $e) {
+        $schoolEvent = SchoolEvent::where('school_branch_id', $currentSchool->id)
+            ->whereIn('status', ['active', 'expired'])
+            ->find($schoolEventId);
+
+        if (!$schoolEvent) {
             throw new AppException(
                 "School Event with ID '{$schoolEventId}' not found for school branch ID '{$currentSchool->id}'.",
                 404,
                 "Event Not Found ❌",
-                "The event you are trying to like either does not exist or does not belong to this school branch. Please verify the event ID.",
+                "The event you are trying to like either does not exist, is not published yet, or does not belong to this school branch. Please verify the event ID.",
                 null
             );
         }
 
-        $likeStatus = EventLikeStatus::where('school_branch_id', $currentSchool->id)
-            ->where('likeable_id', $authUser['userId'])
-            ->where('likeable_type', $authUser['userType'])
-            ->where('event_id', $schoolEventId)
-            ->first();
+        $isLiked = DB::transaction(function () use ($currentSchool, $authUser, $schoolEvent) {
+            $deleted = EventLikeStatus::where('school_branch_id', $currentSchool->id)
+                ->where('event_id', $schoolEvent->id)
+                ->where('likeable_id', $authUser['userId'])
+                ->where('likeable_type', $authUser['userType'])
+                ->delete();
 
-        $isLiked = false;
-
-        if ($likeStatus) {
-            if ($likeStatus->status) {
-                $schoolEvent->likes = max(0, $schoolEvent->likes - 1);
-                $likeStatus->status = false;
-                $isLiked = false;
-            } else {
-                $schoolEvent->likes += 1;
-                $likeStatus->status = true;
-                $isLiked = true;
+            if ($deleted > 0) {
+                return false;
             }
-            $likeStatus->save();
-        } else {
+
             EventLikeStatus::create([
                 'school_branch_id' => $currentSchool->id,
+                'event_id' => $schoolEvent->id,
                 'likeable_id' => $authUser['userId'],
                 'likeable_type' => $authUser['userType'],
-                'status' => true,
-                'event_id' => $schoolEvent->id,
             ]);
 
-            $schoolEvent->likes += 1;
-            $isLiked = true;
-        }
-
-        $schoolEvent->save();
+            return true;
+        });
 
         return [
             'event_id' => $schoolEvent->id,
-            'likes_count' => $schoolEvent->likes,
+            'likes_count' => EventLikeStatus::where('event_id', $schoolEvent->id)->count(),
             'is_liked' => $isLiked,
         ];
     }
+
     public function getSchoolEventsByCategory(object $currentSchool, array $authUser, string $eventCategoryId)
     {
-        try {
-            $eventCategory = EventCategory::findOrFail($eventCategoryId);
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Event category with ID '{$eventCategoryId}' not found.",
-                404,
-                "Category Not Found 🏷️",
-                "The event category you requested does not exist. Please check the category ID.",
-                null
-            );
-        }
+        $eventCategory = $this->findCategory($currentSchool, $eventCategoryId);
 
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
+        $schoolEvents = $this->eventQuery($currentSchool, $authUser)
             ->where("event_category_id", $eventCategoryId)
-            ->where("status", "!=", "expired")
-            ->with(['eventCategory'])
+            ->whereIn("status", ['active', 'scheduled'])
+            ->orderBy('start_date')
             ->get();
 
         if ($schoolEvents->isEmpty()) {
@@ -100,25 +86,14 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
-            ->where("likeable_id", $authUser['userId'])
-            ->where("likeable_type", $authUser['userType'])
-            ->whereIn("event_id", $schoolEvents->pluck('id'))
-            ->where("status", true)
-            ->pluck('event_id');
-
-        $schoolEvents = $schoolEvents->map(function ($event) use ($likedEventIds) {
-            $event->event_like_status = $likedEventIds->contains($event->id);
-            return $event;
-        });
-
-        return  $schoolEvents->values()->all();
+        return $schoolEvents->values()->all();
     }
+
     public function getSchoolEvents(object $currentSchool, array $authUser)
     {
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
-            ->where("status", "!=", "expired")
-            ->with(['eventCategory'])
+        $schoolEvents = $this->eventQuery($currentSchool, $authUser)
+            ->whereIn("status", ['active', 'scheduled'])
+            ->orderBy('start_date')
             ->get();
 
         if ($schoolEvents->isEmpty()) {
@@ -131,39 +106,19 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
-            ->where("likeable_id", $authUser['userId'])
-            ->where("likeable_type", $authUser['userType'])
-            ->whereIn("event_id", $schoolEvents->pluck('id'))
-            ->where("status", true)
-            ->pluck('event_id');
-
-        $schoolEvents = $schoolEvents->map(function ($event) use ($likedEventIds) {
-            $event->event_like_status = $likedEventIds->contains($event->id);
-            return $event;
-        });
-
-        $groupedEvents = $schoolEvents->groupBy(function ($event) {
-            return optional($event->eventCategory)->name ?? 'Uncategorized';
-        })->map(function ($events, $categoryName) {
-            return [
-                "category_name" => $categoryName,
-                "events" => $events->values()->all()
-            ];
-        })->values();
-
-        return $groupedEvents;
+        return $this->groupByCategory($schoolEvents);
     }
+
     public function getExpiredSchoolEvents(object $currentSchool, array $authUser)
     {
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
-            ->where("status",  "expired")
-            ->with(['eventCategory'])
+        $schoolEvents = $this->eventQuery($currentSchool, $authUser)
+            ->where("status", "expired")
+            ->orderByDesc('end_date')
             ->get();
 
         if ($schoolEvents->isEmpty()) {
             throw new AppException(
-                "No current or upcoming school events found for school branch ID '{$currentSchool->id}'.",
+                "No expired school events found for school branch ID '{$currentSchool->id}'.",
                 404,
                 "No Expired School Events Found 📅",
                 "We couldn't find any Expired School Events for your school branch.",
@@ -171,48 +126,17 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
-            ->where("likeable_id", $authUser['userId'])
-            ->where("likeable_type", $authUser['userType'])
-            ->whereIn("event_id", $schoolEvents->pluck('id'))
-            ->where("status", true)
-            ->pluck('event_id');
-
-        $schoolEvents = $schoolEvents->map(function ($event) use ($likedEventIds) {
-            $event->event_like_status = $likedEventIds->contains($event->id);
-            return $event;
-        });
-
-        $groupedEvents = $schoolEvents->groupBy(function ($event) {
-            return optional($event->eventCategory)->name ?? 'Uncategorized';
-        })->map(function ($events, $categoryName) {
-            return [
-                "category_name" => $categoryName,
-                "events" => $events->values()->all()
-            ];
-        })->values();
-
-        return $groupedEvents;
+        return $this->groupByCategory($schoolEvents);
     }
+
     public function getExpiredSchoolEventsByCategory(object $currentSchool, array $authUser, string $eventCategoryId)
     {
-        try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
-                ->findOrFail($eventCategoryId);
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Event category with ID '{$eventCategoryId}' not found.",
-                404,
-                "Category Not Found 🏷️",
-                "The event category you requested does not exist. Please check the category ID.",
-                null
-            );
-        }
+        $eventCategory = $this->findCategory($currentSchool, $eventCategoryId);
 
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
+        $schoolEvents = $this->eventQuery($currentSchool, $authUser)
             ->where("event_category_id", $eventCategoryId)
             ->where("status", "expired")
-            ->with(['eventCategory'])
+            ->orderByDesc('end_date')
             ->get();
 
         if ($schoolEvents->isEmpty()) {
@@ -225,58 +149,37 @@ class EventService
             );
         }
 
-        $likedEventIds = EventLikeStatus::where("school_branch_id", $currentSchool->id)
-            ->where("likeable_id", $authUser['userId'])
-            ->where("likeable_type", $authUser['userType'])
-            ->whereIn("event_id", $schoolEvents->pluck('id'))
-            ->where("status", true)
-            ->pluck('event_id');
-
-        $schoolEvents = $schoolEvents->map(function ($event) use ($likedEventIds) {
-            $event->event_like_status = $likedEventIds->contains($event->id);
-            return $event;
-        });
-
-        return  $schoolEvents->values()->all();
+        return $schoolEvents->values()->all();
     }
+
     public function getScheduledSchoolEventsByCategory(object $currentSchool, string $eventCategoryId)
     {
-        try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
-                ->findOrFail($eventCategoryId);
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Event category with ID '{$eventCategoryId}' not found.",
-                404,
-                "Category Not Found 🏷️",
-                "The event category you requested does not exist. Please check the category ID.",
-                null
-            );
-        }
+        $eventCategory = $this->findCategory($currentSchool, $eventCategoryId);
 
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
+        $schoolEvents = $this->eventQuery($currentSchool)
             ->where("event_category_id", $eventCategoryId)
             ->where("status", "scheduled")
-            ->with(['eventCategory'])
+            ->orderBy('published_at')
             ->get();
 
         if ($schoolEvents->isEmpty()) {
             throw new AppException(
-                "No current or upcoming '{$eventCategory->name}' events found for school branch ID '{$currentSchool->id}'.",
+                "No scheduled '{$eventCategory->name}' events found for school branch ID '{$currentSchool->id}'.",
                 404,
-                "No Active School Events Found 📅 For this category",
-                "We couldn't find any events scheduled under the '{$eventCategory->name}' category. Please ensure events have been created and their status set to scheduled'.",
+                "No Scheduled School Events Found 📅 For this category",
+                "We couldn't find any events scheduled under the '{$eventCategory->name}' category. Please ensure events have been created and their status set to scheduled.",
                 null
             );
         }
 
         return $schoolEvents->values()->all();
     }
+
     public function getScheduledSchoolEvents(object $currentSchool)
     {
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
+        $schoolEvents = $this->eventQuery($currentSchool)
             ->where("status", "scheduled")
-            ->with(['eventCategory'])
+            ->orderBy('published_at')
             ->get();
 
         if ($schoolEvents->isEmpty()) {
@@ -289,62 +192,37 @@ class EventService
             );
         }
 
-        $groupedEvents = $schoolEvents->groupBy(function ($event) {
-            return optional($event->eventCategory)->name ?? 'Uncategorized';
-        })->map(function ($events, $categoryName) {
-            return [
-                "category_name" => $categoryName,
-                "events" => $events->values()->all()
-            ];
-        })->values();
-
-        return $groupedEvents;
+        return $this->groupByCategory($schoolEvents);
     }
+
     public function getDraftSchoolEvents(object $currentSchool)
     {
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
+        $schoolEvents = $this->eventQuery($currentSchool)
             ->where("status", "draft")
-            ->with(['eventCategory'])
+            ->latest()
             ->get();
+
         if ($schoolEvents->isEmpty()) {
             throw new AppException(
                 "No draft school events found for school branch ID '{$currentSchool->id}'.",
                 404,
                 "No Draft School Events Found 📅",
-                "We couldn't find any draft events scheduled for your school branch. Please ensure that events have been created and their status is set to 'draft'.",
+                "We couldn't find any draft events for your school branch. Please ensure that events have been created and their status is set to 'draft'.",
                 null
             );
         }
-        $groupedEvents = $schoolEvents->groupBy(function ($event) {
-            return optional($event->eventCategory)->name ?? 'Uncategorized';
-        })->map(function ($events, $categoryName) {
-            return [
-                "category_name" => $categoryName,
-                "events" => $events->values()->all()
-            ];
-        })->values();
 
-        return $groupedEvents;
+        return $this->groupByCategory($schoolEvents);
     }
+
     public function getDraftSchoolEventsByCategory(object $currentSchool, string $eventCategoryId)
     {
-        try {
-            $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)
-                ->findOrFail($eventCategoryId);
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Event category with ID '{$eventCategoryId}' not found.",
-                404,
-                "Category Not Found 🏷️",
-                "The event category you requested does not exist. Please check the category ID.",
-                null
-            );
-        }
+        $eventCategory = $this->findCategory($currentSchool, $eventCategoryId);
 
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
+        $schoolEvents = $this->eventQuery($currentSchool)
             ->where("event_category_id", $eventCategoryId)
             ->where("status", "draft")
-            ->with(['eventCategory'])
+            ->latest()
             ->get();
 
         if ($schoolEvents->isEmpty()) {
@@ -352,13 +230,14 @@ class EventService
                 "No draft '{$eventCategory->name}' events found for school branch ID '{$currentSchool->id}'.",
                 404,
                 "No Draft School Events Found For this category",
-                "We couldn't find any draft events scheduled under the '{$eventCategory->name}' category. Please ensure events have been created and their status is set to 'draft'.",
+                "We couldn't find any draft events under the '{$eventCategory->name}' category. Please ensure events have been created and their status is set to 'draft'.",
                 null
             );
         }
 
         return $schoolEvents->values()->all();
     }
+
     public function deleteSchoolEvent(object $currentSchool, string $eventId, $authAdmin)
     {
         $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)
@@ -374,16 +253,21 @@ class EventService
             );
         }
 
-        $schoolEvent->delete();
+        DB::transaction(function () use ($currentSchool, $schoolEvent) {
+            $this->imageService->removeAllImages($schoolEvent, $currentSchool->id);
+            $schoolEvent->delete();
+        });
+
         return $schoolEvent;
     }
-    public function getSchoolEventDetails(object $currentSchool, string $eventId)
+
+    public function getSchoolEventDetails(object $currentSchool, string $eventId, ?array $authUser = null)
     {
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
-            ->with(['eventCategory'])
+        $schoolEvent = $this->eventQuery($currentSchool, $authUser)
+            ->withCount('eventAudience as invitee_count')
             ->find($eventId);
 
-        if (!$schoolEvents) {
+        if (!$schoolEvent) {
             throw new AppException(
                 "School event ID '{$eventId}' not found for school branch ID '{$currentSchool->id}'.",
                 404,
@@ -393,122 +277,154 @@ class EventService
             );
         }
 
-        return $schoolEvents;
+        return $schoolEvent;
     }
+
     public function updateSchoolEventContent(array $eventData, object $currentSchool, string $eventId, $authAdmin)
     {
-        $schoolEvents = SchoolEvent::where("school_branch_id", $currentSchool->id)
-            ->find($eventId);
+        $uploadedImages = collect();
 
-        if (!$schoolEvents) {
-            throw new AppException(
-                "School Event Not Found",
-                404,
-                "Event Not Found",
-                "The specified school event does not exist or does not belong to the current school.",
-                null
-            );
+        try {
+            return DB::transaction(function () use ($eventData, $currentSchool, $eventId, &$uploadedImages) {
+                $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)
+                    ->lockForUpdate()
+                    ->find($eventId);
+
+                if (!$schoolEvent) {
+                    throw new AppException(
+                        "School Event Not Found",
+                        404,
+                        "Event Not Found",
+                        "The specified school event does not exist or does not belong to the current school.",
+                        null
+                    );
+                }
+
+                if ($schoolEvent->status === 'expired') {
+                    throw new AppException(
+                        "Expired school event {$eventId} cannot be edited.",
+                        400,
+                        "Event Already Ended",
+                        "This event has already ended, so its content can no longer be changed.",
+                        null
+                    );
+                }
+
+                $updates = array_filter(
+                    array_intersect_key($eventData, array_flip(self::CONTENT_FIELDS)),
+                    fn($value) => !is_null($value) && $value !== ''
+                );
+
+                if (array_key_exists('tag_ids', $eventData)) {
+                    $updates['tags'] = $this->publishing->getTags($eventData)->toArray();
+                }
+
+                $schoolEvent->fill($updates);
+
+                if (Carbon::parse($schoolEvent->end_date)->lessThan(Carbon::parse($schoolEvent->start_date))) {
+                    throw new AppException(
+                        "Event end date is before its start date.",
+                        422,
+                        "Invalid Event Dates",
+                        "The event end date must be on or after its start date.",
+                        null
+                    );
+                }
+
+                if ($schoolEvent->isDirty('end_date')) {
+                    $schoolEvent->expires_at = $schoolEvent->end_date;
+                }
+
+                $schoolEvent->save();
+
+                $this->imageService->removeImages($schoolEvent, $currentSchool->id, $eventData['remove_image_ids'] ?? []);
+                $uploadedImages = $this->imageService->uploadImages($schoolEvent, $eventData['images'] ?? [], $currentSchool->id);
+
+                return $schoolEvent->load(['currentImages', 'eventCategory']);
+            });
+        } catch (Throwable $exception) {
+            $this->imageService->deleteObjects($uploadedImages->pluck('object_key')->all());
+            throw $exception;
         }
-
-        $dataToUpdate = array_filter($eventData, function ($value) {
-            return !is_null($value) && $value !== '';
-        });
-
-        if (isset($dataToUpdate['tag_ids'])) {
-            if (!empty($dataToUpdate['tag_ids'])) {
-                $tags = $this->getTags($dataToUpdate);
-                $dataToUpdate['tags'] = json_encode($tags->toArray());
-            } else {
-                $dataToUpdate['tags'] = '[]';
-            }
-        }
-
-        if (isset($dataToUpdate['background_image'])) {
-            if ($schoolEvents->background_image) {
-                Storage::disk('public')->delete('school_events/' . $schoolEvents->background_image);
-            }
-
-            if ($dataToUpdate['background_image'] instanceof \Illuminate\Http\UploadedFile) {
-                $fileName = time() . '.' . $dataToUpdate['background_image']->getClientOriginalExtension();
-                $dataToUpdate['background_image']->storeAs('public/school_events', $fileName);
-                $dataToUpdate['background_image'] = $fileName;
-            } else {
-                $dataToUpdate['background_image'] = '';
-            }
-        }
-
-        $schoolEvents->update($dataToUpdate);
-        return $schoolEvents;
     }
-    protected function getTags(array $data): Collection
-    {
-        if (empty($data['tag_ids'])) {
-            return collect();
-        }
 
-        $tagIds = collect($data['tag_ids'])->pluck('tag_id')->unique()->toArray();
-        $tags = EventTag::whereIn("id", $tagIds)->get();
-
-        if ($tags->count() < count($tagIds)) {
-            throw new AppException(
-                "Some Tags Not Found",
-                404,
-                "Some Tags Not Found",
-                "One or more selected tags could not be found. Please check that the tags exist and have not been deleted.",
-                null
-            );
-        }
-
-        return $tags;
-    }
     public function getStudentUpcomingEvents(object $currentSchool, object $student)
     {
-        $now = Carbon::now();
-        $studentSpecialtyId = $student->specialty_id;
+        $authUser = ['userId' => $student->id, 'userType' => get_class($student)];
 
-        $events = SchoolEvent::where('school_branch_id', $currentSchool->id)
+        return $this->eventQuery($currentSchool, $authUser)
             ->where('status', 'active')
-            ->where('end_date', '>=', $now)
-            ->orderBy('start_date', 'asc')
-            ->get();
+            ->where('end_date', '>=', Carbon::now())
+            ->whereHas('eventAudience', function (Builder $query) use ($student) {
+                $query->where('actorable_id', $student->id)
+                    ->where('actorable_type', $student->getMorphClass());
+            })
+            ->orderBy('start_date')
+            ->get()
+            ->map(fn($event) => [
+                "event_id" => $event->id,
+                "title" => $event->title,
+                "description" => $event->description ?? "No description available",
+                "images" => $event->currentImages->map(fn($image) => [
+                    "id" => $image->id,
+                    "object_key" => $image->object_key,
+                    "width" => $image->width,
+                    "height" => $image->height,
+                ])->values(),
+                "location" => $event->location,
+                "organizer" => $event->organizer,
+                "start_date" => $event->start_date,
+                "end_date" => $event->end_date,
+                "category" => $event->eventCategory?->name,
+                "tags" => $event->tags ?? [],
+                "likes_count" => $event->likes_count ?? 0,
+                "is_liked" => (bool) ($event->is_liked ?? false),
+            ])
+            ->values();
+    }
 
-        $visibleEvents = $events->filter(function ($event) use ($studentSpecialtyId) {
-            $audience = $event->audience;
+    private function eventQuery(object $currentSchool, ?array $authUser = null): Builder
+    {
+        $query = SchoolEvent::query()
+            ->where("school_branch_id", $currentSchool->id)
+            ->with(['eventCategory', 'currentImages'])
+            ->withCount('likes as likes_count');
 
-            if (empty($audience->students) && empty($audience->teachers) && empty($audience->admins)) {
-                return true;
-            }
+        if (!empty($authUser['userId'])) {
+            $query->withExists(['likes as is_liked' => function (Builder $likes) use ($authUser) {
+                $likes->where('likeable_id', $authUser['userId'])
+                    ->where('likeable_type', $authUser['userType']);
+            }]);
+        }
 
-            if (!empty($audience->students) && is_array($audience->students)) {
-                return in_array($studentSpecialtyId, $audience->students);
-            }
+        return $query;
+    }
 
-            return false;
-        });
+    private function findCategory(object $currentSchool, string $eventCategoryId): EventCategory
+    {
+        $eventCategory = EventCategory::where("school_branch_id", $currentSchool->id)->find($eventCategoryId);
 
-        $likedEventIds = EventLikeStatus::where('likeable_type', Student::class)
-            ->where('likeable_id', $student->id)
-            ->where('event_id', $visibleEvents->pluck('id')->toArray())
-            ->where('status', true)
-            ->pluck('event_id')
-            ->toArray();
+        if (!$eventCategory) {
+            throw new AppException(
+                "Event category with ID '{$eventCategoryId}' not found.",
+                404,
+                "Category Not Found 🏷️",
+                "The event category you requested does not exist. Please check the category ID.",
+                null
+            );
+        }
 
-        $formatted = $visibleEvents->map(function ($event) use ($likedEventIds) {
-            return [
-                "event_id"        => $event->id,
-                "title"           => $event->title,
-                "description"     => $event->description ?? "No description available",
-                "background_image" => $event->background_image,
-                "location"        => $event->location,
-                "organizer"       => $event->organizer,
-                "start_date"      => $event->start_date,
-                "end_date"        => $event->end_date,
-                "tags"            => $event->tags ?? [],
-                "likes_count"     => $event->likes ?? 0,
-                "is_liked"        => in_array($event->id, $likedEventIds)
-            ];
-        })->values();
+        return $eventCategory;
+    }
 
-        return $formatted;
+    private function groupByCategory(Collection $schoolEvents): Collection
+    {
+        return $schoolEvents
+            ->groupBy(fn($event) => $event->eventCategory?->name ?? 'Uncategorized')
+            ->map(fn($events, $categoryName) => [
+                "category_name" => $categoryName,
+                "events" => $events->values()->all(),
+            ])
+            ->values();
     }
 }

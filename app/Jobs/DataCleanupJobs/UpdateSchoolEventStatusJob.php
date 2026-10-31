@@ -27,7 +27,11 @@ class UpdateSchoolEventStatusJob implements ShouldQueue
     {
         $schoolEvent = SchoolEvent::query()
             ->where('school_branch_id', $this->schoolBranchId)
-            ->findOrFail($this->schoolEventId);
+            ->find($this->schoolEventId);
+
+        if (!$schoolEvent || $schoolEvent->status === 'draft') {
+            return;
+        }
 
         $currentDate = Carbon::now();
         $startDate = Carbon::parse($schoolEvent->start_date);
@@ -37,10 +41,6 @@ class UpdateSchoolEventStatusJob implements ShouldQueue
 
         if ($schoolEvent->status !== $newStatus) {
             $schoolEvent->update(['status' => $newStatus]);
-        }
-
-        if($newStatus == 'expired'){
-           $schoolEvent->update(['visibility_status' => "hidden"]);
         }
     }
 }

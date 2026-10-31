@@ -12,8 +12,8 @@ class EventAudience extends Model
     use GeneratesUuid;
     protected $fillable = [
         'school_branch_id',
-        'audienceable_id',
-        'audienceable_type',
+        'actorable_id',
+        'actorable_type',
         'event_id'
     ];
 
@@ -26,7 +26,7 @@ class EventAudience extends Model
         return $this->belongsTo(SchoolEvent::class, 'event_id');
     }
 
-    public function audienceable(): MorphTo
+    public function actorable(): MorphTo
     {
         return $this->morphTo();
     }
