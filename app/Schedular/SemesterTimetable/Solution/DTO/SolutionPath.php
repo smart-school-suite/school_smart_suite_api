@@ -11,6 +11,7 @@ final class SolutionPath
 
     public readonly string $id;
     public readonly int $cost;
+    public ?bool $verified = null;
 
     public function __construct(
         public readonly string $day,
@@ -23,6 +24,13 @@ final class SolutionPath
     ) {
         $this->cost = array_sum(array_map(fn(Remedy $remedy) => $remedy->cost, $steps));
         $this->id = md5($strategy . '|' . ($kept?->id ?? $primary->id()) . '|' . $this->signature());
+    }
+
+    public function withVerification(?bool $verified): self
+    {
+        $this->verified = $verified;
+
+        return $this;
     }
 
     public function signature(): string
@@ -50,6 +58,7 @@ final class SolutionPath
             'day' => $this->day,
             'severity' => $this->severity,
             'strategy' => $this->strategy,
+            'verified' => $this->verified,
             'issue_ids' => array_map(fn(Issue $issue) => $issue->id(), $this->issues),
             'decision' => [
                 'type' => $this->strategy === self::KEEP_ONE ? 'keep' : 'fix',

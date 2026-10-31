@@ -11,6 +11,7 @@ use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
+use App\Schedular\SemesterTimetable\Solution\Support\PayloadPatch;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 
 class PeriodDurationDefinition extends AbstractDefinition
@@ -20,6 +21,11 @@ class PeriodDurationDefinition extends AbstractDefinition
     protected function name(): string
     {
         return 'Period duration';
+    }
+
+    public function priority(): int
+    {
+        return 20;
     }
 
     public function constraintKey(): ?string
@@ -52,40 +58,38 @@ class PeriodDurationDefinition extends AbstractDefinition
 
     public function adjustRequest(Issue $issue, SolutionContext $context): array
     {
-        $day = $issue->day();
-        [$start, $end] = $context->window($day);
-        $span = $end - $start;
-        $current = (int) ($issue->subject->get('duration_minutes') ?? $context->periodDuration($day));
-
-        $candidates = collect([$span, ...self::COMMON_DURATIONS])
-            ->unique()
-            ->filter(fn($minutes) => $minutes > 0 && $minutes <= $span && $minutes !== $current);
-        $even = $candidates->filter(fn($minutes) => $span % $minutes === 0);
-
-        return ($even->isNotEmpty() ? $even : $candidates)
-            ->sortBy(fn($minutes) => ($span % $minutes === 0 ? 0 : 10) + intdiv(abs($current - $minutes), 5))
-            ->take(SolutionContext::MAX_ALTERNATIVES)
-            ->map(fn($minutes) => $this->change($issue->subject, $day, $current, $minutes, $span))
-            ->values()
-            ->all();
+        return $this->changes($issue->subject, $issue->day(), $context);
     }
 
     public function clearObstacle(Subject $obstacle, array $issues, SolutionContext $context): array
     {
         $day = $obstacle->day() ?? ($issues[0] ?? null)?->day();
 
-        if (!$day) {
-            return [];
-        }
+        return $day ? $this->changes($obstacle, $day, $context) : [];
+    }
 
+    private function changes(Subject $target, string $day, SolutionContext $context): array
+    {
         [$start, $end] = $context->window($day);
-        $lengths = collect($this->issueWindows($issues, $day))->map(fn($window) => $window[1] - $window[0])->unique();
+        $span = $end - $start;
+        $current = $context->periodDuration($day);
+        $joints = $context->jointCourses($day);
 
-        if ($lengths->count() !== 1 || $lengths->first() > $end - $start || $lengths->first() === $context->periodDuration($day)) {
-            return [];
-        }
+        $candidates = collect([$span, ...self::COMMON_DURATIONS, ...$joints->map(fn($course) => $course['end'] - $course['start'])])
+            ->unique()
+            ->filter(fn($minutes) => $minutes > 0 && $minutes <= $span && $minutes !== $current)
+            ->filter(fn($minutes) => $joints->every(
+                fn($course) => ($course['end'] - $course['start']) % $minutes === 0 && ($course['start'] - $start) % $minutes === 0
+            ));
 
-        return [$this->change($obstacle, $day, $context->periodDuration($day), $lengths->first(), $end - $start)];
+        $even = $candidates->filter(fn($minutes) => $span % $minutes === 0);
+
+        return ($even->isNotEmpty() ? $even : $candidates)
+            ->sortBy(fn($minutes) => abs($current - $minutes))
+            ->take(SolutionContext::MAX_ALTERNATIVES)
+            ->map(fn($minutes) => $this->change($target, $day, $current, $minutes, $span))
+            ->values()
+            ->all();
     }
 
     private function change(Subject $target, string $day, int $current, int $minutes, int $span): Remedy
@@ -99,6 +103,7 @@ class PeriodDurationDefinition extends AbstractDefinition
             changes: [['field' => 'duration_minutes', 'from' => $current, 'to' => $minutes]],
             result: ['day' => $day, 'duration_minutes' => $minutes, 'scope' => 'day_exception'],
             cost: Cost::CHANGE_PERIOD_DURATION + intdiv(abs($current - $minutes), 10) + ($span % $minutes === 0 ? 0 : 5),
+            apply: PayloadPatch::dayException(Constraint::KEY, $day, ['duration_minutes' => $minutes]),
         );
     }
 }

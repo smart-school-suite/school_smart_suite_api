@@ -19,6 +19,8 @@ interface ConstraintDefinition
 
     public function isLocked(): bool;
 
+    public function priority(): int;
+
     public function describe(Subject $subject, ?SolutionContext $context = null): string;
 
     /** @return Remedy[] */

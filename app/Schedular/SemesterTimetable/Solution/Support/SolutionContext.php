@@ -22,6 +22,11 @@ class SolutionContext
         $this->constraints = ConstraintContext::fromPayload($payload);
     }
 
+    public function withPayload(array $payload): self
+    {
+        return $payload === $this->payload ? $this : new self($payload, $this->grid, $this->withPreference);
+    }
+
     public function days(): array
     {
         return $this->constraints->opDays()->map(fn($day) => strtolower($day))->values()->all();

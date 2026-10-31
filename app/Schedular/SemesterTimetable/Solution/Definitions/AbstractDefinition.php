@@ -19,6 +19,11 @@ abstract class AbstractDefinition implements ConstraintDefinition
         return false;
     }
 
+    public function priority(): int
+    {
+        return 50;
+    }
+
     public function constraintKey(): ?string
     {
         return null;

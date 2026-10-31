@@ -11,6 +11,7 @@ use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
+use App\Schedular\SemesterTimetable\Solution\Support\PayloadPatch;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
 
@@ -19,6 +20,11 @@ class OperationalPeriodDefinition extends AbstractDefinition
     protected function name(): string
     {
         return 'Operational period';
+    }
+
+    public function priority(): int
+    {
+        return 10;
     }
 
     public function constraintKey(): ?string
@@ -102,6 +108,10 @@ class OperationalPeriodDefinition extends AbstractDefinition
                 'scope' => 'day_exception',
             ],
             cost: Cost::EXTEND_OPERATIONAL_PERIOD + Cost::shift($extra),
+            apply: PayloadPatch::dayException(Constraint::KEY, $day, [
+                'start_time' => Time::toTime($new[0]),
+                'end_time' => Time::toTime($new[1]),
+            ]),
         );
     }
 }

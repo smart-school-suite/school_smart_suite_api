@@ -22,6 +22,7 @@ final class Remedy
         public readonly array $result,
         public readonly int $cost,
         public readonly ?array $occupies = null,
+        public readonly ?\Closure $apply = null,
     ) {
         $this->changes = array_values(array_filter($changes, fn(array $change) => ($change['from'] ?? null) !== ($change['to'] ?? null)));
         $this->id = md5(implode('|', [$action, $target->id, json_encode($result)]));

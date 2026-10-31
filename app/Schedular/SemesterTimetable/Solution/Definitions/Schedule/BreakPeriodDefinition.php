@@ -11,6 +11,7 @@ use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
+use App\Schedular\SemesterTimetable\Solution\Support\PayloadPatch;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
 
@@ -19,6 +20,11 @@ class BreakPeriodDefinition extends AbstractDefinition
     protected function name(): string
     {
         return 'Break period';
+    }
+
+    public function priority(): int
+    {
+        return 30;
     }
 
     public function constraintKey(): ?string
@@ -98,6 +104,10 @@ class BreakPeriodDefinition extends AbstractDefinition
                 ],
                 cost: Cost::MOVE_BREAK + Cost::shift($start - $window[0], 30),
                 occupies: ['day' => $day, 'start' => $start, 'end' => $start + $length, 'exclusive' => true],
+                apply: PayloadPatch::dayException(Constraint::KEY, $day, [
+                    'start_time' => Time::toTime($start),
+                    'end_time' => Time::toTime($start + $length),
+                ]),
             ))
             ->values()
             ->all();
@@ -109,6 +119,7 @@ class BreakPeriodDefinition extends AbstractDefinition
             changes: [['field' => 'no_break_exceptions', 'from' => null, 'to' => $day]],
             result: ['day' => $day, 'no_break' => true],
             cost: Cost::REMOVE_BREAK,
+            apply: PayloadPatch::noBreakOn($day),
         );
 
         return $moves;

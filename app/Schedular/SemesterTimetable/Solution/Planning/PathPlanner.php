@@ -2,6 +2,10 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Planning;
 
+use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRegistry;
+use App\Schedular\SemesterTimetable\Core\State;
+use App\Schedular\SemesterTimetable\Exceptions\HardConstraintFailureException;
+use App\Schedular\SemesterTimetable\Grid\GridBuilder;
 use App\Schedular\SemesterTimetable\Solution\Catalog\ConstraintCatalog;
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
@@ -19,7 +23,11 @@ class PathPlanner
 
     private SolutionContext $context;
 
-    public function __construct(private ConstraintCatalog $catalog) {}
+    public function __construct(
+        private ConstraintCatalog $catalog,
+        private GridBuilder $gridBuilder,
+        private DiagnosticRegistry $diagnostics,
+    ) {}
 
     /**
      * @param Issue[] $issues
@@ -55,21 +63,12 @@ class PathPlanner
 
         array_push($paths, ...$this->keepLocked($group));
 
-        return $this->rank($paths);
+        return $this->rank(array_map(fn(SolutionPath $path) => $path->withVerification($this->verify($path)), $paths));
     }
 
     private function adjustRequest(Issue $issue): array
     {
-        if ($this->locked($issue->type())) {
-            return [];
-        }
-
-        $remedies = $this->safely(fn() => $this->catalog->for($issue->type())->adjustRequest($issue, $this->context));
-
-        return array_map(
-            fn(Remedy $remedy) => $this->path(SolutionPath::ADJUST_REQUEST, $issue, [$issue], [$remedy]),
-            $this->best($remedies)
-        );
+        return $this->build(SolutionPath::ADJUST_REQUEST, $issue, [$issue], [$this->adjustChoice($issue)]);
     }
 
     private function clearObstacles(Issue $issue): array
@@ -78,22 +77,9 @@ class PathPlanner
             return [];
         }
 
-        $choices = [];
+        $choices = array_map(fn(Subject $obstacle) => $this->obstacleChoice($obstacle, [$issue]), $issue->obstacles);
 
-        foreach ($issue->obstacles as $obstacle) {
-            $options = $this->obstacleOptions($obstacle, [$issue]);
-
-            if (empty($options)) {
-                return [];
-            }
-
-            $choices[] = $options;
-        }
-
-        return array_map(
-            fn(array $steps) => $this->path(SolutionPath::CLEAR_OBSTACLES, $issue, [$issue], $steps),
-            $this->combine($choices)
-        );
+        return $this->build(SolutionPath::CLEAR_OBSTACLES, $issue, [$issue], $choices);
     }
 
     private function keepOne(Issue $kept, array $group): array
@@ -111,37 +97,18 @@ class PathPlanner
                 return [];
             }
 
-            $options = collect($this->safely(fn() => $this->catalog->for($other->type())->adjustRequest($other, $this->context)))
-                ->reject(fn(Remedy $remedy) => $keptWindow && $remedy->occupies
-                    && $remedy->occupies['day'] === $kept->day()
-                    && Time::overlaps($remedy->occupies['start'], $remedy->occupies['end'], $keptWindow[0], $keptWindow[1]))
-                ->all();
-
-            if (empty($options)) {
-                return [];
-            }
-
-            $choices[] = $this->best($options);
+            $choices[] = $this->adjustChoice($other, fn(Remedy $remedy) => !($keptWindow && $remedy->occupies
+                && $remedy->occupies['day'] === $kept->day()
+                && Time::overlaps($remedy->occupies['start'], $remedy->occupies['end'], $keptWindow[0], $keptWindow[1])));
         }
 
         foreach ($kept->obstacles as $obstacle) {
-            if (in_array($obstacle->id, $groupIds, true)) {
-                continue;
+            if (!in_array($obstacle->id, $groupIds, true)) {
+                $choices[] = $this->obstacleChoice($obstacle, [$kept]);
             }
-
-            $options = $this->obstacleOptions($obstacle, [$kept]);
-
-            if (empty($options)) {
-                return [];
-            }
-
-            $choices[] = $options;
         }
 
-        return array_map(
-            fn(array $steps) => $this->path(SolutionPath::KEEP_ONE, $kept, $group, $steps),
-            $this->combine($choices)
-        );
+        return $this->build(SolutionPath::KEEP_ONE, $kept, $group, $choices);
     }
 
     private function sharedFix(array $group): array
@@ -159,22 +126,9 @@ class PathPlanner
             return [];
         }
 
-        $choices = [];
+        $choices = array_map(fn($entry) => $this->obstacleChoice($entry['subject'], $entry['issues']), array_values($obstacles));
 
-        foreach ($obstacles as $entry) {
-            $options = $this->obstacleOptions($entry['subject'], $entry['issues']);
-
-            if (empty($options)) {
-                return [];
-            }
-
-            $choices[] = $options;
-        }
-
-        return array_map(
-            fn(array $steps) => $this->path(SolutionPath::SHARED_FIX, $group[0], $group, $steps),
-            $this->combine($choices)
-        );
+        return $this->build(SolutionPath::SHARED_FIX, $group[0], $group, $choices);
     }
 
     private function keepLocked(array $group): array
@@ -199,48 +153,54 @@ class PathPlanner
                 continue;
             }
 
-            $choices = [];
-
-            foreach ($issues as $issue) {
-                $options = $this->adjustRequest($issue);
-
-                if (empty($options)) {
-                    continue 2;
-                }
-
-                $choices[] = array_map(fn(SolutionPath $path) => $path->steps[0], $options);
-            }
-
-            foreach ($this->combine($choices) as $steps) {
-                $paths[] = $this->path(SolutionPath::KEEP_ONE, $issues[0], $issues, $steps, $entry['subject']);
-            }
+            $choices = array_map(fn(Issue $issue) => $this->adjustChoice($issue), $issues);
+            array_push($paths, ...$this->build(SolutionPath::KEEP_ONE, $issues[0], $issues, $choices, $entry['subject']));
         }
 
         return $paths;
     }
 
-    private function locked(string $type): bool
+    private function adjustChoice(Issue $issue, ?callable $accept = null): array
     {
-        return $this->catalog->for($type)->isLocked();
+        $definition = $this->catalog->for($issue->type());
+
+        return [
+            'priority' => $definition->priority(),
+            'options' => fn(SolutionContext $context) => $definition->isLocked() ? [] : $this->best(array_filter(
+                $this->safely(fn() => $definition->adjustRequest($issue, $context)),
+                $accept ?? fn() => true
+            )),
+        ];
     }
 
-    private function obstacleOptions(Subject $obstacle, array $issues): array
+    private function obstacleChoice(Subject $obstacle, array $issues): array
     {
-        if ($this->locked($obstacle->type)) {
-            return [];
-        }
+        $definition = $this->catalog->for($obstacle->type);
 
-        return $this->best($this->safely(
-            fn() => $this->catalog->for($obstacle->type)->clearObstacle($obstacle, $issues, $this->context)
-        ));
+        return [
+            'priority' => $definition->priority(),
+            'options' => fn(SolutionContext $context) => $definition->isLocked() ? [] : $this->best(
+                $this->safely(fn() => $definition->clearObstacle($obstacle, $issues, $context))
+            ),
+        ];
+    }
+
+    private function build(string $strategy, Issue $primary, array $issues, array $choices, ?Subject $kept = null): array
+    {
+        return array_map(
+            fn(array $steps) => $this->path($strategy, $primary, $issues, $steps, $kept),
+            $this->combine($choices)
+        );
     }
 
     private function combine(array $choices): array
     {
+        usort($choices, fn($a, $b) => $a['priority'] <=> $b['priority']);
+
         $results = [];
         $explored = 0;
 
-        $walk = function (int $index, array $chosen) use (&$walk, &$results, &$explored, $choices) {
+        $walk = function (int $index, array $chosen, SolutionContext $context) use (&$walk, &$results, &$explored, $choices) {
             if ($explored++ > self::MAX_EXPLORED || count($results) >= self::MAX_COMBINATIONS * 4) {
                 return;
             }
@@ -250,9 +210,9 @@ class PathPlanner
                 return;
             }
 
-            foreach ($choices[$index] as $remedy) {
+            foreach ($choices[$index]['options']($context) as $remedy) {
                 if (isset($chosen[$remedy->id])) {
-                    $walk($index + 1, $chosen);
+                    $walk($index + 1, $chosen, $context);
                     continue;
                 }
 
@@ -260,17 +220,51 @@ class PathPlanner
                     continue;
                 }
 
-                $walk($index + 1, [...$chosen, $remedy->id => $remedy]);
+                $next = $remedy->apply ? $context->withPayload(($remedy->apply)($context->payload)) : $context;
+                $walk($index + 1, [...$chosen, $remedy->id => $remedy], $next);
             }
         };
 
-        $walk(0, []);
+        $walk(0, [], $this->context);
 
         return collect($results)
             ->sortBy(fn(array $steps) => array_sum(array_map(fn(Remedy $remedy) => $remedy->cost, $steps)))
             ->take(self::MAX_COMBINATIONS)
             ->values()
             ->all();
+    }
+
+    private function verify(SolutionPath $path): ?bool
+    {
+        if ($path->severity !== Issue::HARD) {
+            return null;
+        }
+
+        $payload = $this->context->payload;
+        foreach ($path->steps as $remedy) {
+            if ($remedy->apply) {
+                $payload = ($remedy->apply)($payload);
+            }
+        }
+
+        $state = new State();
+
+        try {
+            $this->gridBuilder->buildGrid($state, $payload);
+        } catch (HardConstraintFailureException) {
+        } catch (Throwable $exception) {
+            report($exception);
+            return false;
+        }
+
+        $remaining = $this->diagnostics->build($state->violations['hard'] ?? [])
+            ->map(fn($diagnostic) => $diagnostic->constraint_failed['id'] ?? null)
+            ->filter()
+            ->all();
+
+        $fixed = array_map(fn(Issue $issue) => $issue->id(), $path->issues);
+
+        return !array_intersect($fixed, $remaining);
     }
 
     private function compatible(array $chosen, Remedy $candidate): bool
@@ -299,6 +293,11 @@ class PathPlanner
         return $sharing === 0 || $this->context->freeHalls($slot['day'], $slot['start'], $slot['end'])->count() > $sharing;
     }
 
+    private function locked(string $type): bool
+    {
+        return $this->catalog->for($type)->isLocked();
+    }
+
     private function best(array $remedies): array
     {
         return collect($remedies)
@@ -315,6 +314,10 @@ class PathPlanner
         $paths = collect($paths)
             ->unique(fn(SolutionPath $path) => $path->signature() . '|' . implode(',', array_map(fn(Issue $issue) => $issue->id(), $path->issues)))
             ->values();
+
+        if ($paths->contains(fn(SolutionPath $path) => $path->verified === true)) {
+            $paths = $paths->reject(fn(SolutionPath $path) => $path->verified === false)->values();
+        }
 
         $ranked = $paths
             ->reject(fn(SolutionPath $path) => $paths->contains(fn(SolutionPath $other) => $other !== $path && $this->dominates($other, $path)))

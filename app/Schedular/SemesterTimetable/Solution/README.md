@@ -30,6 +30,15 @@ Combinations are searched best-first with a cap, so they cannot explode. Remedie
 the same teacher, hall or exclusive time slot, are never combined. Paths are ranked by issues resolved, then by cost,
 then by step count. A path that only adds steps to a cheaper path fixing the same issues is dropped.
 
+## Steps build on each other
+
+Remedies that change hard constraints carry an `apply` closure that patches the request payload (a day exception for
+the operational period, period duration or break, or a no-break day). While a path is assembled, choices are taken in
+`priority()` order (operational period, then period duration, then break, then the rest), and each later choice is
+computed against the payload as patched by the steps before it. Every hard path is then re-checked by applying all of
+its patches and running the grid validation again; `verified` is `true` when its issues are gone. When a group has
+verified paths, unverified ones are dropped. Soft paths have `verified: null`.
+
 ## Locked constraints
 
 A definition can return `true` from `isLocked()`. The planner then never moves, resizes or removes that constraint:
@@ -59,6 +68,7 @@ in the same slot, there must be a free hall for each of them.
       "day": "monday",
       "severity": "hard | soft",
       "strategy": "adjust_request | clear_obstacles | keep_one | shared_fix",
+      "verified": "true | false for hard paths, null for soft paths",
       "issue_ids": ["..."],
       "decision": { "type": "fix | keep", "target_id": "...", "target_type": "constraint key", "target_details": {} },
       "steps": [
