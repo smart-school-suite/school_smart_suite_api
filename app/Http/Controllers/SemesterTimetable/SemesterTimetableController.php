@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SemesterTimetable\GenerateSemesterTimetableRequest;
 use App\Jobs\SemesterTimetable\GenerateFixedSemesterTimetable;
 use App\Jobs\SemesterTimetable\GeneratePreferenceSemesterTimetable;
+use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Models\Job\SystemJob;
 use App\Models\SchoolBranchSetting;
 use App\Models\SchoolSemester;
@@ -41,45 +42,44 @@ class SemesterTimetableController extends Controller
 
     protected function generatePreferenceTimetable(object $currentSchool, object $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $systemJob = SystemJob::create([
-            'type' => "Semester Timetable Generation",
-            'context_type' => SchoolSemester::class,
-            'stage' => "Processing",
-            'context_id' => $request->validated()['school_semester_id'],
-            'initiated_by_id' => $this->resolveUser()->id,
-            'initiated_by_type' => $this->resolveUser()::class,
-            'queue' => "database",
-            'started_at' => now(),
-            'payload' => $request->validated(),
-        ]);
-        GeneratePreferenceSemesterTimetable::dispatch(
-            $currentSchool,
-            $request->validated(),
-            $systemJob->id,
-        );
-        return ApiResponseService::success("Timetable generation initiated successfully", null, null, 200);
+        return $this->dispatchGeneration(GeneratePreferenceSemesterTimetable::class, $currentSchool, $request);
     }
     protected function generateFixedTimetable(object $currentSchool, object $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
+        return $this->dispatchGeneration(GenerateFixedSemesterTimetable::class, $currentSchool, $request);
+    }
+
+    private function dispatchGeneration(string $jobClass, object $currentSchool, object $request)
+    {
+        $payload = $request->validated();
+
+        $version = !empty($payload['version_id'])
+            ? SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)->find($payload['version_id'])
+            : null;
+        $version ??= SemesterTimetableVersion::createNext($currentSchool->id, $payload['school_semester_id']);
+        $version->update(['scheduler_status' => SemesterTimetableVersion::STATUS_GENERATING]);
+        $payload['version_id'] = $version->id;
+
         $systemJob = SystemJob::create([
             'type' => "Semester Timetable Generation",
             'context_type' => SchoolSemester::class,
             'stage' => "Processing",
-            'context_id' => $request->validated()['school_semester_id'],
+            'context_id' => $payload['school_semester_id'],
             'initiated_by_id' => $this->resolveUser()->id,
             'initiated_by_type' => $this->resolveUser()::class,
             'queue' => "database",
             'started_at' => now(),
-            'payload' => $request->validated(),
+            'payload' => $payload,
         ]);
-        GenerateFixedSemesterTimetable::dispatch(
-            $currentSchool,
-            $request->validated(),
-            $systemJob->id,
+
+        $jobClass::dispatch($currentSchool, $payload, $systemJob->id);
+
+        return ApiResponseService::success(
+            "Timetable generation initiated successfully",
+            ['version' => $version->only(['id', 'version_number', 'label', 'scheduler_status'])],
+            null,
+            200
         );
-        return ApiResponseService::success("Timetable generation initiated successfully", null, null, 200);
     }
 
     public function generateTimetableWithPreference(GenerateSemesterTimetableRequest $request)

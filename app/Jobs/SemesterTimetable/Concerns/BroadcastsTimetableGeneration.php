@@ -95,7 +95,7 @@ trait BroadcastsTimetableGeneration
                 : 'Timetable Generation Failed',
             'percentage' => 100,
             'status' => 'failed',
-            'scheduler_status' => 'error',
+            'scheduler_status' => $exception instanceof AppException ? SemesterTimetableVersion::STATUS_FAILED : SemesterTimetableVersion::STATUS_ERROR,
             'details' => $details,
             'version' => $versionId ? SemesterTimetableVersion::find($versionId) : null,
         ]);
