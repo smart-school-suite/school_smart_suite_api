@@ -16,7 +16,9 @@ class SolutionEngine
         $context = new SolutionContext($payload, $grid, $withPreference);
         $issues = [];
 
-        foreach ([Issue::HARD, Issue::SOFT] as $severity) {
+        $severities = empty($diagnostics[Issue::HARD]) ? [Issue::SOFT] : [Issue::HARD];
+
+        foreach ($severities as $severity) {
             foreach ($diagnostics[$severity] ?? [] as $diagnostic) {
                 if ($issue = Issue::fromDiagnostic($diagnostic, $severity)) {
                     $issues[] = $issue;

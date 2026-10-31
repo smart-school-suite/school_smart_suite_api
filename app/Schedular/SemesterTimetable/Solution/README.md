@@ -4,6 +4,9 @@ When the scheduler cannot satisfy a constraint, this module works out concrete w
 It runs for **hard** failures (the grid could not be built) and **soft** failures (a request could not be honoured).
 Its output is stored in Mongo as `raw_suggestions` on the `SemesterTimetable` document.
 
+If any hard constraint failed, generation failed, so only the hard issues get solution paths and soft issues are ignored.
+Soft issues are planned only when every hard constraint passed.
+
 ## Flow
 
 ```
