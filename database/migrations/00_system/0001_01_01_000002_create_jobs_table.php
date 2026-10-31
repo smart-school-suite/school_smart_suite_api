@@ -71,7 +71,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('attempts')->default(0);
             $table->unsignedTinyInteger('max_attempts')->default(3);
             $table->timestamp('started_at');
-            $table->timestamp('finished_at');
+            $table->timestamp('finished_at')->nullable();
             $table->timestamps();
         });
     }

@@ -20,10 +20,12 @@ class ConstraintContext
 
     private static function parseHard(array $hc, array $requestPayload): array
     {
+        $hc['operational_hours'] = $hc['operational_period'] ?? $hc['operational_hours'] ?? [];
+
         return [
             'teachers'        => $requestPayload['teachers']                  ?? [],
             'halls'           => $requestPayload['halls']                     ?? [],
-            'tBusySlots'      => $requestPayload['teacher_busy_periods']      ?? [],
+            'tBusySlots'      => $requestPayload['teacher_busy_periods'] ?? $requestPayload['teacher_busy_period'] ?? [],
             'hBusySlots'      => $requestPayload['hall_busy_periods']         ?? [],
             'tCourses'        => $requestPayload['teacher_courses']           ?? [],
             'tPreferredSlots' => $requestPayload['teacher_preferred_periods'] ?? [],
@@ -144,8 +146,9 @@ class ConstraintContext
     public function teachersForCourse(string $courseId): Collection
     {
         return $this->tCourses()
-            ->filter(fn($tc) => in_array($courseId, $tc['course_ids'] ?? []))
+            ->filter(fn($tc) => ($tc['course_id'] ?? null) === $courseId || in_array($courseId, $tc['course_ids'] ?? [], true))
             ->pluck('teacher_id')
+            ->unique()
             ->values();
     }
 

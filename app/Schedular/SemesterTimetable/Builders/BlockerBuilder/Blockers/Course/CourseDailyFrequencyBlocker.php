@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Course;
 
+use App\Schedular\SemesterTimetable\Helpers\GenerateId;
 use App\Constant\Violation\SemesterTimetable\Course\CourseDailyFrequency;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
 use App\Schedular\SemesterTimetable\DTO\BlockerDTO;
@@ -37,6 +38,8 @@ class CourseDailyFrequencyBlocker implements BlockerBuilder
             "teacher_id" => $blocker["conflict"]["teacher_id"] ?? null,
             "hall_id" => $blocker["conflict"]["hall_id"] ?? null
         ]);
+        $violation->id = app(GenerateId::class)->generateId($violation->entity);
+
         return $violation;
     }
 }
