@@ -8,7 +8,6 @@ use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\Exceptions\HardConstraintFailureException;
 use App\Schedular\SemesterTimetable\Grid\GridBuilder;
 use App\Schedular\SemesterTimetable\Placement\PlacementEngine;
-use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
 
 class SchedularEngine
 {
@@ -24,16 +23,15 @@ class SchedularEngine
     {
         $responseBuilder = app(ResponseBuilder::class);
         $constraintEnforcerEngine = app(ConstraintRegistry::class);
-        SuggestionContext::setRequestPayload($requestPayload);
         $state = new State();
 
         try {
             $this->gridBuilder->buildGrid($state, $requestPayload);
             $this->placementEngine->place($state, $requestPayload);
             $constraintEnforcerEngine->enforceConstraints($requestPayload, $state);
-            return $responseBuilder->build($state);
+            return $responseBuilder->build($state, $requestPayload);
         } catch (HardConstraintFailureException $e) {
-            return $responseBuilder->build($state);
+            return $responseBuilder->build($state, $requestPayload);
         }
     }
 }

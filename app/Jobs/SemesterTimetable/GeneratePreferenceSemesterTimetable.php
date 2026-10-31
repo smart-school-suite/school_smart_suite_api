@@ -20,6 +20,7 @@ use App\Models\SemesterTimetable\SemesterTimetable;
 use App\Models\Teacher\TeacherSpecialty;
 use App\Models\TeacherCoursePreference;
 use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -131,6 +132,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'details' => 'Generating the optimal timetable based on gathered data and constraints.',
         ]);
 
+        TimetableContext::setPreferenceMode(true);
         $schedulingEngine = app(SchedularEngine::class);
         $response = $schedulingEngine->run($body);
 
@@ -343,7 +345,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
     ): array {
         return [
             'teachers'             => $this->formatTeachers($teachers),
-            'teacher_busy_period'  => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
+            'teacher_busy_periods' => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
             'teacher_courses'      => $this->formatTeacherCourses($teacherCourses),
             'halls'                => $this->formatHalls($halls),
             'hall_busy_periods'    => $this->formatHallBusyPeriods($hallBusyPeriods),

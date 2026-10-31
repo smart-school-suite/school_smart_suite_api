@@ -31,6 +31,7 @@ use App\Models\SemesterTimetable\SemesterTimetable;
 use App\Models\Teacher\TeacherSpecialty;
 use Illuminate\Support\Str;
 use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
+use App\Schedular\SemesterTimetable\DTO\TimetableContext;
 use Throwable;
 
 class GenerateFixedSemesterTimetable implements ShouldQueue
@@ -170,6 +171,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'details' => 'Generating the optimal timetable based on gathered data and constraints.',
         ]);
 
+        TimetableContext::setPreferenceMode(false);
         $schedulingEngine = app(SchedularEngine::class);
         $response = $schedulingEngine->run($body);
 
@@ -643,7 +645,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     ): array {
         return [
             'teachers'             => $this->formatTeachers($teachers),
-            'teacher_busy_period'  => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
+            'teacher_busy_periods' => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
             'teacher_courses'      => $this->formatTeacherCourses($teacherCourses),
             'halls'                => $this->formatHalls($halls),
             'hall_busy_periods'    => $this->formatHallBusyPeriods($hallBusyPeriods),

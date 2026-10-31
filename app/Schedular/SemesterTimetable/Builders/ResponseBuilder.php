@@ -9,15 +9,14 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRe
 use App\Schedular\SemesterTimetable\Core\State;
 use App\Schedular\SemesterTimetable\DTO\ResponseDTO;
 use App\Schedular\SemesterTimetable\DTO\TimetableContext;
-use App\Schedular\SemesterTimetable\Suggestion\DTO\SuggestionContext;
-use App\Schedular\SemesterTimetable\Suggestion\Engine\SuggestionEngine;
+use App\Schedular\SemesterTimetable\Solution\SolutionEngine;
+use Throwable;
 
 class ResponseBuilder extends TimetableContext
 {
-    public function build(State $state): ResponseDTO
+    public function build(State $state, array $requestPayload = []): ResponseDTO
     {
         $diagnosticBuilder = app(DiagnosticRegistry::class);
-        $suggestionEngine = app(SuggestionEngine::class);
         $response = new ResponseDTO();
         $response->status = match (true) {
             !empty($state->violations["hard"]) => "error",
@@ -25,44 +24,29 @@ class ResponseBuilder extends TimetableContext
             default => "optimal",
         };
         $response->timetable = $this->formatAndGroupTimetableByDay($state->grid);
-        $diagnostics = [
+        $response->diagnostics = [
             "hard" => $diagnosticBuilder->build($state->violations["hard"] ?? []),
             "soft" => $diagnosticBuilder->build($state->violations["soft"] ?? [])
         ];
-        $this->seedSuggestionContext($state, $diagnostics);
-        $response->diagnostics = $diagnostics;
-        $generatedSuggestions = $suggestionEngine->generate([
-            "hard" => $diagnostics["hard"]->toArray() ?? [],
-            "soft" => $diagnostics["soft"]->toArray() ?? []
-        ] ?? []);
-        $response->suggestions = $generatedSuggestions;
-        $response->options = $this->formatOptions($generatedSuggestions) ?? [];
-        return $response;
-    }
 
-    private function formatOptions(array $suggestions)
-    {
-        return  collect($suggestions)
-            ->map(function ($scenarios, $day) {
-                return collect($scenarios)
-                    ->flatMap(function ($scenario) {
-                        return collect($scenario->flow ?? [])
-                            ->flatMap(function ($step) {
-                                return $step['options'] ?? [];
-                            });
-                    })
-                    ->unique('option_id')
-                    ->values()
-                    ->all();
-            })
-            ->filter()
-            ->all();
-    }
-    private function seedSuggestionContext(State $state, array $diagnostics)
-    {
-        SuggestionContext::setTimetableGrid($state->grid);
-        SuggestionContext::setDiagnostics($diagnostics);
-        SuggestionContext::setPreferenceMode(self::isWithPreference());
+        try {
+            $response->suggestions = app(SolutionEngine::class)->generate(
+                [
+                    "hard" => $response->diagnostics["hard"]->all(),
+                    "soft" => $response->diagnostics["soft"]->all(),
+                ],
+                $requestPayload,
+                $state->grid,
+                self::isWithPreference()
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+            $response->suggestions = [];
+        }
+
+        $response->options = SolutionEngine::options($response->suggestions);
+
+        return $response;
     }
     private function formatAndGroupTimetableByDay(array $grid): array
     {

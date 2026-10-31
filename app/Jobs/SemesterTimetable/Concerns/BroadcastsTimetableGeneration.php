@@ -69,6 +69,7 @@ trait BroadcastsTimetableGeneration
             'details' => $details,
             'hard_diagnostic_count' => $hardCount,
             'soft_diagnostic_count' => $softCount,
+            'solution_path_count' => collect($response->suggestions ?? [])->sum(fn($paths) => count($paths)),
             'semester_timetable_id' => $semesterTimetable?->id,
             'version' => SemesterTimetableVersion::find($timetableVersionId),
         ]);
