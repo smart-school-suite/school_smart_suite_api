@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Carbon\Carbon;
 class StudentSchoolEventNotification extends Notification
 {

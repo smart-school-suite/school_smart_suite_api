@@ -30,7 +30,7 @@ class SchoolEventInvitee extends Model
     public function inviteeable(): MorphTo
     {
         return $this->morphTo(
-            name: 'actorable',
+            name: 'inviteeable',
             type: 'actorable_type',
             id: 'actorable_id'
         );

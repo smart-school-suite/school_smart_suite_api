@@ -31,7 +31,7 @@ class SchoolEventAuthor extends Model
     public function autorable(): MorphTo
     {
         return $this->morphTo(
-            name: 'actorable',
+            name: 'autorable',
             type: 'actorable_type',
             id: 'actorable_id'
         );

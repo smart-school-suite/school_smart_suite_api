@@ -131,11 +131,11 @@ class Schooladmin extends Authenticatable
     }
     public function schoolEventAuthor(): MorphMany
     {
-        return $this->morphMany(SchoolEventAuthor::class, 'autorable');
+        return $this->morphMany(SchoolEventAuthor::class, 'autorable', 'actorable_type', 'actorable_id');
     }
     public function schoolEventInvitee()
     {
-        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable');
+        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable', 'actorable_type', 'actorable_id');
     }
     public function schoolEventLike()
     {

@@ -23,6 +23,7 @@ class SchoolEvent extends Model
         'end_date',
         'published_at',
         'notification_sent_at',
+        'expires_at',
         'school_branch_id',
         'event_category_id',
         'tags',
@@ -35,16 +36,13 @@ class SchoolEvent extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'published_at' => 'datetime',
-        'notification_sent_at' => 'datetime'
+        'notification_sent_at' => 'datetime',
+        'expires_at' => 'datetime'
     ];
     public $incrementing = false;
     public $table = "school_events";
     public $keyType = 'string';
 
-     public function currentImages(): HasMany
-    {
-        return $this->hasMany(SchoolEventImage::class, 'event_id');
-    }
     public function eventCategory(): BelongsTo
     {
         return $this->belongsTo(SchoolEventCategory::class, 'event_category_id');
@@ -56,5 +54,17 @@ class SchoolEvent extends Model
     public function schoolEventLikes(): HasMany
     {
         return $this->hasMany(SchoolEventLike::class, 'event_id');
+    }
+    public function invitees(): HasMany
+    {
+        return $this->hasMany(SchoolEventInvitee::class, 'event_id');
+    }
+    public function images(): HasMany
+    {
+        return $this->hasMany(SchoolEventImage::class, 'event_id');
+    }
+    public function currentImages(): HasMany
+    {
+        return $this->hasMany(SchoolEventImage::class, 'event_id')->where('is_current', true);
     }
 }

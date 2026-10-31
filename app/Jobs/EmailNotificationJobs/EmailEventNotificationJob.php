@@ -4,7 +4,7 @@ namespace App\Jobs\EmailNotificationJobs;
 
 use App\Mail\EventEmailNotification;
 use App\Models\EventInvitedMember;
-use App\Models\SchoolEvent;
+use App\Models\SchoolEvent\SchoolEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;

@@ -71,7 +71,7 @@ class AssetPolicySeeder extends Seeder
                     'image/png',
                     'image/webp',
                 ],
-                'max_images_per_owner' => 10,
+                'max_images_per_owner' => 5,
                 'max_changes' => null,
                 'period_days' => null,
                 'is_enabled' => true,

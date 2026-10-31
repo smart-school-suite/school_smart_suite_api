@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Event\CreateEventRequest;
 use App\Http\Requests\Event\UpdateEventContentRequest;
 use App\Http\Requests\Event\UpdateEventDraftRequest;
+use App\Http\Requests\Event\UploadEventImagesRequest;
+use App\Http\Requests\Event\RemoveEventImagesRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\SchoolEvent\CreateEventService;
@@ -62,6 +64,18 @@ class SchoolEventController extends Controller
         $updateEventContent = $this->eventService->updateSchoolEventContent($request->validated(), $currentSchool, $schoolEventId, $authAdmin['authUser']);
         return ApiResponseService::success("School Event Content Updated Successfully", $updateEventContent, null, 200);
     }
+    public function uploadSchoolEventImages(UploadEventImagesRequest $request, string $schoolEventId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $schoolEvent = $this->eventService->uploadSchoolEventImages($currentSchool, $schoolEventId, $request->validated()['images']);
+        return ApiResponseService::success("School Event Images Uploaded Successfully", $schoolEvent, null, 201);
+    }
+    public function removeSchoolEventImages(RemoveEventImagesRequest $request, string $schoolEventId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $schoolEvent = $this->eventService->removeSchoolEventImages($currentSchool, $schoolEventId, $request->validated()['image_ids']);
+        return ApiResponseService::success("School Event Images Removed Successfully", $schoolEvent, null, 200);
+    }
     public function deleteSchoolEventContent(Request $request, string $schoolEventId)
     {
         $authAdmin = $this->getAuthenticatedUser();
@@ -72,7 +86,7 @@ class SchoolEventController extends Controller
     public function getSchoolEventDetails(Request $request, string $schoolEventId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $schoolEventDetails = $this->eventService->getSchoolEventDetails($currentSchool, $schoolEventId);
+        $schoolEventDetails = $this->eventService->getSchoolEventDetails($currentSchool, $schoolEventId, $this->getAuthenticatedUser());
         return ApiResponseService::success("School Event Details Fetched Successfully", $schoolEventDetails, null, 200);
     }
     public function getExpiredSchoolEvents(Request $request)
@@ -97,7 +111,7 @@ class SchoolEventController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $scheduledSchoolEvents = $this->eventService->getScheduledSchoolEventsByCategory($currentSchool,  $eventCategoryId);
-        return ApiResponseService::success("Scheduled School Events Fetched Successfully", $scheduledSchoolEvents, null, 2000);
+        return ApiResponseService::success("Scheduled School Events Fetched Successfully", $scheduledSchoolEvents, null, 200);
     }
     public function getScheduledSchoolEvents(Request $request)
     {

@@ -44,6 +44,15 @@ return new class extends Migration
             $table->uuid('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
+
+        Schema::table('event_invitee', function (Blueprint $table) {
+            $table->index(['event_id', 'actorable_type', 'actorable_id'], 'event_invitee_event_actor_idx');
+            $table->index(['actorable_type', 'actorable_id'], 'event_invitee_actor_idx');
+        });
+
+        Schema::table('event_likes', function (Blueprint $table) {
+            $table->unique(['event_id', 'likeable_type', 'likeable_id'], 'event_likes_event_likeable_unique');
+        });
     }
 
     /**
@@ -63,8 +72,8 @@ return new class extends Migration
                 $table->dropForeign(['school_branch_id']);
             });
         }
-        if (Schema::hasTable('event_audiences')) {
-            Schema::table('event_audiences', function (Blueprint $table) {
+        if (Schema::hasTable('event_invitee')) {
+            Schema::table('event_invitee', function (Blueprint $table) {
                 $table->dropForeign(['event_id']);
                 $table->dropForeign(['school_branch_id']);
             });

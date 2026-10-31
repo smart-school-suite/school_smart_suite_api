@@ -48,8 +48,8 @@ return new class extends Migration
 
         Schema::create('event_authors', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('authorable_id')->nullable();
-            $table->string('authorable_type')->nullable();
+            $table->uuid('actorable_id')->nullable();
+            $table->string('actorable_type')->nullable();
             $table->timestamps();
         });
 

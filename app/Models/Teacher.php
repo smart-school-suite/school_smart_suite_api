@@ -144,7 +144,7 @@ class Teacher extends Model
     }
     public function schoolEventInvitee()
     {
-        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable');
+        return $this->morphMany(SchoolEventInvitee::class, 'inviteeable', 'actorable_type', 'actorable_id');
     }
     public function schoolEventLike()
     {
