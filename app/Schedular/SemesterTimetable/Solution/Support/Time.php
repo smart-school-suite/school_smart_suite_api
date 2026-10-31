@@ -8,7 +8,7 @@ final class Time
 
     public static function toMinutes(?string $time): ?int
     {
-        if ($time === null || !preg_match('/^(\d{1,2}):(\d{2})/', $time, $matches)) {
+        if ($time === null || !preg_match('/(\d{1,2}):(\d{2})/', $time, $matches)) {
             return null;
         }
 

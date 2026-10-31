@@ -13,6 +13,7 @@ use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
 use App\Schedular\SemesterTimetable\Solution\Support\PayloadPatch;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class PeriodDurationDefinition extends AbstractDefinition
 {
@@ -99,11 +100,21 @@ class PeriodDurationDefinition extends AbstractDefinition
         return new Remedy(
             action: Remedy::MODIFY,
             target: $target,
-            label: 'Change the period duration on ' . ucfirst($day) . " from {$current} to {$minutes} minutes ({$fits} period(s) fit the operational window)",
+            label: 'Make lessons on ' . ucfirst($day) . " {$minutes} minutes long instead of {$current} ({$fits} lesson(s) fit in the day)",
             changes: [['field' => 'duration_minutes', 'from' => $current, 'to' => $minutes]],
             result: ['day' => $day, 'duration_minutes' => $minutes, 'scope' => 'day_exception'],
             cost: Cost::CHANGE_PERIOD_DURATION + intdiv(abs($current - $minutes), 10) + ($span % $minutes === 0 ? 0 : 5),
             apply: PayloadPatch::dayException(Constraint::KEY, $day, ['duration_minutes' => $minutes]),
         );
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return ($subject->get('duration_minutes') ?? 'These') . '-minute lessons don\'t fit into the school day on ' . Text::day($subject->day());
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return 'Lessons on ' . Text::day($obstacle->day()) . ' must be ' . ($obstacle->get('period_duration') ?? $context?->periodDuration($obstacle->day() ?? 'monday')) . ' minutes long';
     }
 }

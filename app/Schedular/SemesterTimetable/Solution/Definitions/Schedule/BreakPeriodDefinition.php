@@ -14,6 +14,7 @@ use App\Schedular\SemesterTimetable\Solution\Support\Cost;
 use App\Schedular\SemesterTimetable\Solution\Support\PayloadPatch;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class BreakPeriodDefinition extends AbstractDefinition
 {
@@ -91,7 +92,7 @@ class BreakPeriodDefinition extends AbstractDefinition
             ->map(fn($start) => new Remedy(
                 action: Remedy::MOVE,
                 target: $target,
-                label: 'Move the break on ' . ucfirst($day) . ' to ' . Time::toTime($start) . '-' . Time::toTime($start + $length),
+                label: 'Move the break on ' . ucfirst($day) . ' to ' . Text::time(Time::toTime($start), Time::toTime($start + $length)),
                 changes: [
                     ['field' => 'start_time', 'from' => Time::toTime($window[0]), 'to' => Time::toTime($start)],
                     ['field' => 'end_time', 'from' => Time::toTime($window[1]), 'to' => Time::toTime($start + $length)],
@@ -115,13 +116,23 @@ class BreakPeriodDefinition extends AbstractDefinition
         $moves[] = new Remedy(
             action: Remedy::REMOVE,
             target: $target,
-            label: 'Remove the break on ' . ucfirst($day),
-            changes: [['field' => 'no_break_exceptions', 'from' => null, 'to' => $day]],
+            label: 'Have no break on ' . ucfirst($day),
+            changes: [['field' => 'break', 'from' => Text::time(Time::toTime($window[0]), Time::toTime($window[1])), 'to' => 'No break']],
             result: ['day' => $day, 'no_break' => true],
             cost: Cost::REMOVE_BREAK,
             apply: PayloadPatch::noBreakOn($day),
         );
 
         return $moves;
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return 'The break on ' . Text::day($subject->day()) . ' (' . Text::period($subject) . ') doesn\'t fit inside the school day';
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return 'The break is at ' . Text::period($obstacle);
     }
 }

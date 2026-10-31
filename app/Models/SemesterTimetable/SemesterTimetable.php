@@ -20,6 +20,7 @@ class SemesterTimetable extends Model
         'status',
         'timetable_slots',
         'request_payload',
+        'scheduler_input',
         'raw_diagnostics',
         'parsed_diagnostics',
         'options_pool',

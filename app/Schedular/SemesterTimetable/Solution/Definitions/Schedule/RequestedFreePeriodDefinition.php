@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Diagnostics\Sched
 use App\Schedular\SemesterTimetable\Solution\Definitions\AbstractRequestDefinition;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class RequestedFreePeriodDefinition extends AbstractRequestDefinition
 {
@@ -45,5 +46,15 @@ class RequestedFreePeriodDefinition extends AbstractRequestDefinition
     protected function occupiesWith(Subject $target): array
     {
         return ['exclusive' => true];
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return 'The free period on ' . Text::when($subject) . ' can\'t be kept';
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return 'A free period is requested at ' . Text::period($obstacle);
     }
 }

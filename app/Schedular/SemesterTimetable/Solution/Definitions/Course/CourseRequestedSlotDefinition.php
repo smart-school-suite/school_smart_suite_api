@@ -9,6 +9,7 @@ use App\Schedular\SemesterTimetable\Builders\DiagnosticBuilder\Diagnostics\Cours
 use App\Schedular\SemesterTimetable\Solution\Definitions\AbstractRequestDefinition;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
+use App\Schedular\SemesterTimetable\Solution\Support\Text;
 
 class CourseRequestedSlotDefinition extends AbstractRequestDefinition
 {
@@ -43,5 +44,15 @@ class CourseRequestedSlotDefinition extends AbstractRequestDefinition
 
         return fn(string $day, int $start, int $end) => $context->anyTeacherFree($day, $start, $end, $courseId)
             && $context->anyHallFree($day, $start, $end);
+    }
+
+    public function title(Subject $subject, ?SolutionContext $context = null): string
+    {
+        return Text::course($subject, $context) . ' can\'t be placed at its requested time on ' . Text::when($subject);
+    }
+
+    public function reason(Subject $obstacle, ?SolutionContext $context = null): string
+    {
+        return Text::course($obstacle, $context) . ' is requested at ' . Text::period($obstacle);
     }
 }

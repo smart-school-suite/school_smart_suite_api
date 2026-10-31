@@ -14,6 +14,7 @@ use App\Services\ApiResponseService;
 use App\Services\SemesterTimetable\CreateActiveSemesterTimetableService;
 use App\Services\SemesterTimetable\GeneratePreferenceSemesterTimetableService;
 use App\Services\SemesterTimetable\SemesterTimetableService;
+use App\Services\SemesterTimetable\TimetableInsightService;
 use Illuminate\Http\Request;
 
 class SemesterTimetableController extends Controller
@@ -164,5 +165,26 @@ class SemesterTimetableController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $errors = $this->semesterTimetableService->getErrors($versionId, $currentSchool);
         return ApiResponseService::success("Timetable Errors Fetched Successfully", $errors, null, 200);
+    }
+
+    public function getTimetableIssues(Request $request, TimetableInsightService $insights, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $issues = $insights->issues($currentSchool, $versionId);
+        return ApiResponseService::success("Timetable Issues Fetched Successfully", $issues, null, 200);
+    }
+
+    public function getTimetableSolutions(Request $request, TimetableInsightService $insights, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $solutions = $insights->solutions($currentSchool, $versionId);
+        return ApiResponseService::success("Timetable Solutions Fetched Successfully", $solutions, null, 200);
+    }
+
+    public function getIssueSolutions(Request $request, TimetableInsightService $insights, string $versionId, string $issueId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $solutions = $insights->solutions($currentSchool, $versionId, $issueId);
+        return ApiResponseService::success("Issue Solutions Fetched Successfully", $solutions, null, 200);
     }
 }

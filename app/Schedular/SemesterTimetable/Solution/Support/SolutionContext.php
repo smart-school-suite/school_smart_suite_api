@@ -192,6 +192,21 @@ class SolutionContext
             ->values();
     }
 
+    public function teacherName(string $teacherId): ?string
+    {
+        return $this->constraints->teacher($teacherId)['name'] ?? null;
+    }
+
+    public function hallName(string $hallId): ?string
+    {
+        return $this->constraints->hall($hallId)['hall_name'] ?? null;
+    }
+
+    public function courseName(string $courseId): ?string
+    {
+        return $this->constraints->tCourses()->firstWhere('course_id', $courseId)['course_title'] ?? null;
+    }
+
     public function identify(Subject $subject): ?string
     {
         $courseId = $subject->get('course_id');
