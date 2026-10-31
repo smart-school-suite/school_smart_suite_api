@@ -3,6 +3,7 @@
 namespace App\Jobs\SemesterTimetable;
 
 use App\Jobs\SemesterTimetable\Concerns\BroadcastsTimetableGeneration;
+use App\Jobs\SemesterTimetable\Concerns\TracksVersionStatus;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Exceptions\AppException;
@@ -36,7 +37,7 @@ use Throwable;
 
 class GenerateFixedSemesterTimetable implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration, TracksVersionStatus;
     public int $tries = 3;
     public int $timeout = 120;
     public int $backoff = 30;
@@ -67,7 +68,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         try {
             $this->process($systemJob, $schoolSemester);
         } catch (AppException $e) {
-            $this->failJob($systemJob, $e->getMessage(), $e->getCode());
+            $this->failJob($systemJob, $e->getMessage(), $e->getCode(), SemesterTimetableVersion::STATUS_FAILED);
             $this->broadcastFailure($systemJob, $e);
             $this->fail($e);
             Log::error('AppException in process method: ' . $e->getMessage());
@@ -89,7 +90,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Gathering Data', 10);
 
         $branchId    = $this->currentSchool->id;
-        $timetableVersionId = $this->payload['version_id'] ?? null;
+        $timetableVersionId = $this->startVersion($schoolSemester->id);
         $specialty = $schoolSemester->schoolYear->specialty;
         $requestPayload = $this->payload;
 
@@ -117,13 +118,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         $jointCourses       = $this->getJointCourses($schoolSemester);
 
-        if ($timetableVersionId == null) {
-            $timetableVersionId = $this->createTimetableVersion(
-                $this->payload['school_semester_id'],
-                $this->currentSchool
-            );
-        }
-
         if ($this->hasUserErrors()) {
             $this->createUserError($timetableVersionId, $schoolSemester->id);
             $version = SemesterTimetableVersion::find($timetableVersionId);
@@ -140,10 +134,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             ]);
 
             $this->finalEventBroadcasted = true;
-
-            if ($version) {
-                $version->update(['scheduler_status' => 'error']);
-            }
 
             throw new AppException(
                 "Validation Process Failed: {$errorCount} error(s) found",
@@ -724,24 +714,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'schedule_period_duration_minutes' => $requestPayload['schedule_period_duration_minutes'] ?? null,
         ], fn($value) => !is_null($value));
     }
-    private function createTimetableVersion(
-        string $schoolSemesterId,
-        object $currentSchool
-    ): string {
-        $nextVersion = (SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)
-            ->where('school_semester_id', $schoolSemesterId)
-            ->max('version_number') ?? 0) + 1;
-
-        $version = SemesterTimetableVersion::create([
-            'label'            => "Version {$nextVersion}",
-            'scheduler_status' => null,
-            'school_branch_id' => $currentSchool->id,
-            'school_semester_id'      => $schoolSemesterId,
-            'version_number'   => $nextVersion
-        ]);
-
-        return $version->id;
-    }
     private function isErrorResponse(object $response): bool
     {
         return Str::lower($response->status ?? self::ERROR) === self::ERROR;
@@ -787,7 +759,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             }
         }
     }
-    private function failJob(SystemJob $systemJob, string $message, int|string $code): void
+    private function failJob(SystemJob $systemJob, string $message, int|string $code, string $versionStatus = SemesterTimetableVersion::STATUS_ERROR): void
     {
         $systemJob->update([
             'status'        => 'FAILED',
@@ -803,6 +775,8 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'event_type' => 'error',
             'message'    => $message,
         ]);
+
+        $this->finishVersion($versionStatus);
     }
     public function failed(Throwable $exception): void
     {

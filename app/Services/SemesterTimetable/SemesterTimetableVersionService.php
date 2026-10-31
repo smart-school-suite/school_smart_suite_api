@@ -31,20 +31,11 @@ class SemesterTimetableVersionService
     }
     public function createVersion(object $currentSchool, array $data)
     {
-        $latest = SemesterTimetableVersion::where([
-            'school_branch_id'   => $currentSchool->id,
-            'school_semester_id' => $data['school_semester_id'],
-        ])
-            ->max('version_number');
-
-        $nextNumber = ($latest ?? 0) + 1;
-
-        return SemesterTimetableVersion::create([
-            'version_number'     => $nextNumber,
-            'label'              => "Version $nextNumber",
-            'school_branch_id'   => $currentSchool->id,
-            'school_semester_id' => $data['school_semester_id'],
-        ]);
+        return SemesterTimetableVersion::createNext(
+            $currentSchool->id,
+            $data['school_semester_id'],
+            SemesterTimetableVersion::STATUS_PENDING
+        );
     }
 
     public function deleteVersion(object $currentSchool, string $versionId)

@@ -3,6 +3,7 @@
 namespace App\Jobs\SemesterTimetable;
 
 use App\Jobs\SemesterTimetable\Concerns\BroadcastsTimetableGeneration;
+use App\Jobs\SemesterTimetable\Concerns\TracksVersionStatus;
 use App\Exceptions\AppException;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
@@ -34,7 +35,7 @@ use Throwable;
 
 class GeneratePreferenceSemesterTimetable implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration, TracksVersionStatus;
 
     public int $tries = 3;
     public int $timeout = 120;
@@ -66,7 +67,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         try {
             $this->process($systemJob, $schoolSemester);
         } catch (AppException $e) {
-            $this->failJob($systemJob, $e->getMessage(), $e->getCode());
+            $this->failJob($systemJob, $e->getMessage(), $e->getCode(), SemesterTimetableVersion::STATUS_FAILED);
             $this->broadcastFailure($systemJob, $e);
             $this->fail($e);
         } catch (Throwable $e) {
@@ -81,7 +82,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Gathering Data', 10);
 
-        $timetableVersionId = $this->payload['version_id'] ?? null;
+        $timetableVersionId = $this->startVersion($schoolSemester->id);
         $branchId    = $this->currentSchool->id;
         $specialty = $schoolSemester->schoolYear->specialty;
         $requestPayload = $this->payload;
@@ -139,17 +140,9 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         $this->updateJobProgress($systemJob, 'PROCESSING', 'Generating Timetable', 50);
 
 
-        if (is_null($timetableVersionId)) {
-            $timetableVersionId = $this->createTimetableVersion(
-                $this->payload['school_semester_id'],
-                $this->currentSchool,
-                $response
-            );
-        } else {
-            SemesterTimetableVersion::where('school_branch_id', $this->currentSchool->id)
-                ->where('id', $timetableVersionId)
-                ->update(['scheduler_status' => $response->status ?? self::ERROR]);
-        }
+        SemesterTimetableVersion::where('school_branch_id', $this->currentSchool->id)
+            ->where('id', $timetableVersionId)
+            ->update(['scheduler_status' => $response->status ?? self::ERROR]);
 
         SemesterTimetable::create([
             'school_semester_id' => $schoolSemester->id,
@@ -435,25 +428,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'schedule_period_duration_minutes' => $requestPayload['schedule_period_duration_minutes'] ?? null,
         ], fn($value) => !is_null($value));
     }
-    private function createTimetableVersion(
-        string $schoolSemesterId,
-        object $currentSchool,
-        object $response
-    ): string {
-        $nextVersion = (SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)
-            ->where('school_semester_id', $schoolSemesterId)
-            ->max('version_number') ?? 0) + 1;
-
-        $version = SemesterTimetableVersion::create([
-            'label'            => "Version {$nextVersion}",
-            'scheduler_status' => $response->status ?? 'error',
-            'school_branch_id' => $currentSchool->id,
-            'school_semester_id' => $schoolSemesterId,
-            'version_number'   => $nextVersion,
-        ]);
-
-        return $version->id;
-    }
     private function isErrorResponse(object $response): bool
     {
         return Str::lower($response->status ?? 'error') === 'error';
@@ -468,7 +442,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'updated_at' => Carbon::now(),
         ]);
     }
-    private function failJob(SystemJob $systemJob, string $message, int|string $code): void
+    private function failJob(SystemJob $systemJob, string $message, int|string $code, string $versionStatus = SemesterTimetableVersion::STATUS_ERROR): void
     {
         $systemJob->update([
             'status'        => 'FAILED',
@@ -484,6 +458,8 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'event_type' => 'error',
             'message'    => $message,
         ]);
+
+        $this->finishVersion($versionStatus);
     }
     public function failed(Throwable $exception): void
     {
