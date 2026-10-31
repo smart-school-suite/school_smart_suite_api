@@ -22,6 +22,10 @@ trait BroadcastsTimetableGeneration
             return;
         }
 
+        // Every event names its version so clients can ignore events for
+        // versions they are not displaying and match progress to the right one.
+        $payload['version_id'] ??= $this->versionId ?? ($this->payload['version_id'] ?? null);
+
         try {
             TimetableGenerationEvent::dispatch($actor, $this->currentSchool, $payload);
         } catch (Throwable $exception) {
