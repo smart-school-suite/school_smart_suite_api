@@ -9,6 +9,8 @@ use App\Http\Requests\SemesterTimetable\GetAvailableHallRequest;
 use App\Http\Requests\SemesterTimetable\GetCourseRequest;
 use App\Services\ApiResponseService;
 use App\Services\SemesterTimetable\SemesterTimetableHelperService;
+use App\Services\SemesterTimetable\SlotRecommendationService;
+use App\Http\Requests\SemesterTimetable\RecommendSlotRequest;
 use Illuminate\Http\Request;
 
 class SemesterTimetableHelperController extends Controller
@@ -58,5 +60,12 @@ class SemesterTimetableHelperController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $courses = $this->semesterTimetableHelperService->getCourses($currentSchool, $request->validated());
         return ApiResponseService::success("Courses Fetched Successfully", $courses, null, 200);
+    }
+
+    public function getRecommendedSlots(RecommendSlotRequest $request, SlotRecommendationService $recommendations)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $slots = $recommendations->recommend($currentSchool, $request->validated());
+        return ApiResponseService::success("Recommended Slots Fetched Successfully", $slots, null, 200);
     }
 }

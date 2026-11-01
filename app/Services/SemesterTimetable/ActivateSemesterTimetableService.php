@@ -4,7 +4,6 @@ namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
 use App\Exceptions\SemesterTimetable\TimetableActivationConflict;
-use App\Models\Course\JointCourseSlot;
 use App\Models\SchoolSemester;
 use App\Models\Schoolbranches;
 use App\Models\SemesterTimetable\SemesterTimetable;
@@ -12,6 +11,7 @@ use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Schedular\SemesterTimetable\Solution\Support\Text;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
+use App\Services\SemesterTimetable\Support\ActiveCommitments;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,6 +19,8 @@ use Illuminate\Support\Str;
 class ActivateSemesterTimetableService
 {
     private const ACTIVATABLE = [SemesterTimetableVersion::STATUS_OPTIMAL, SemesterTimetableVersion::STATUS_PARTIAL];
+
+    public function __construct(private ActiveCommitments $commitments) {}
 
     public function check(object $currentSchool, string $versionId): array
     {
@@ -200,24 +202,7 @@ class ActivateSemesterTimetableService
             }
         }
 
-        $others = SemesterTimetableSlot::where('school_branch_id', $currentSchool->id)
-            ->where('break', false)
-            ->whereHas('semesterTimetableVersion', fn($query) => $query->active()->where('school_semester_id', '!=', $semester->id))
-            ->with(['course', 'teacher', 'hall', 'semesterTimetableVersion.schoolSemester.semester'])
-            ->get()
-            ->map(fn(SemesterTimetableSlot $slot) => $this->normalize([
-                'day' => strtolower($slot->day_of_week),
-                'start_time' => $slot->start_time,
-                'end_time' => $slot->end_time,
-                'teacher_id' => $slot->teacher_id,
-                'teacher_name' => $slot->teacher?->name,
-                'course_id' => $slot->course_id,
-                'course_name' => $slot->course?->course_title,
-                'hall_id' => $slot->hall_id,
-                'hall_name' => $slot->hall?->name,
-                'source' => $this->sourceLabel($slot->semesterTimetableVersion),
-            ], 'regular'))
-            ->filter();
+        $others = $this->commitments->timetableLessons($currentSchool->id, exceptSemesterId: $semester->id);
 
         foreach ($lessons as $slot) {
             foreach ($others as $other) {
@@ -231,25 +216,7 @@ class ActivateSemesterTimetableService
             }
         }
 
-        $jointSlots = JointCourseSlot::where('school_branch_id', $currentSchool->id)
-            ->whereHas('semesterJointCourse.semesterJointCourseRef.schoolSemester', fn($query) => $query->stillRunning())
-            ->with(['teacher', 'hall', 'semesterJointCourse.course', 'semesterJointCourse.semesterJointCourseRef'])
-            ->get()
-            ->map(fn(JointCourseSlot $slot) => $this->normalize([
-                'day' => strtolower($slot->day),
-                'start_time' => $slot->start_time,
-                'end_time' => $slot->end_time,
-                'teacher_id' => $slot->teacher_id,
-                'teacher_name' => $slot->teacher?->name,
-                'course_id' => $slot->semesterJointCourse?->course_id,
-                'course_name' => $slot->semesterJointCourse?->course?->course_title,
-                'hall_id' => $slot->hall_id,
-                'hall_name' => $slot->hall?->name,
-                'source' => 'Joint course',
-                'shared_with_semester' => $slot->semesterJointCourse?->semesterJointCourseRef
-                    ->contains('school_semester_id', $semester->id) ?? false,
-            ], 'joint'))
-            ->filter();
+        $jointSlots = $this->commitments->jointCourseSlots($currentSchool->id, sharedWithSemesterId: $semester->id);
 
         foreach ($lessons->where('type', 'regular') as $slot) {
             foreach ($jointSlots as $joint) {
@@ -330,24 +297,7 @@ class ActivateSemesterTimetableService
 
     private function normalize(array $slot, string $type): ?array
     {
-        $start = Time::toMinutes((string) ($slot['start_time'] ?? ''));
-        $end = Time::toMinutes((string) ($slot['end_time'] ?? ''));
-
-        if ($start === null || $end === null || $end <= $start || empty($slot['day']) || $type === 'free') {
-            return null;
-        }
-
-        return [
-            ...$slot,
-            'type' => $type,
-            'start' => $start,
-            'end' => $end,
-            'start_time' => Time::toTime($start),
-            'end_time' => Time::toTime($end),
-            'teacher_id' => $slot['teacher_id'] ?? null,
-            'course_id' => $slot['course_id'] ?? null,
-            'hall_id' => $slot['hall_id'] ?? null,
-        ];
+        return ActiveCommitments::normalize($slot, $type);
     }
 
     private function slotSummary(array $slot): array
@@ -359,13 +309,6 @@ class ActivateSemesterTimetableService
             'teacher' => ['id' => $slot['teacher_id'], 'name' => $slot['teacher_name'] ?? null],
             'hall' => ['id' => $slot['hall_id'], 'name' => $slot['hall_name'] ?? null],
         ];
-    }
-
-    private function sourceLabel(?SemesterTimetableVersion $version): string
-    {
-        $semester = $version?->schoolSemester?->semester?->name;
-
-        return trim(($version?->label ?? 'An active timetable') . ($semester ? " of {$semester}" : ''));
     }
 
     private function currentlyActive(object $currentSchool, string $schoolSemesterId, ?string $exceptId = null): ?SemesterTimetableVersion
