@@ -31,14 +31,6 @@ return new class extends Migration
             $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
         });
 
-        Schema::table('active_timetables', function (Blueprint $table) {
-            $table->uuid('school_branch_id');
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-            $table->uuid('timetable_version_id');
-            $table->foreign('timetable_version_id')->references('id')->on('timetable_versions')->onDelete('cascade');
-            $table->uuid('school_semester_id');
-            $table->foreign('school_semester_id')->references('id')->on('school_semesters')->onDelete('cascade');
-        });
     }
 
     /**
@@ -46,13 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('active_timetables')) {
-            Schema::table('active_timetables', function (Blueprint $table) {
-                $table->dropForeign(['school_branch_id']);
-                $table->dropForeign(['timetable_version_id']);
-                $table->dropForeign(['school_semester_id']);
-            });
-        }
 
         if (Schema::hasTable('timetable_versions')) {
             Schema::table('timetable_versions', function (Blueprint $table) {
