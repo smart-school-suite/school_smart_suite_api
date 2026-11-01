@@ -18,7 +18,7 @@ class SemesterTimetableSlot extends Model
         'school_branch_id',
         'course_id',
         'teacher_id',
-        'day',
+        'day_of_week',
         'start_time',
         'end_time',
         'break',
@@ -27,8 +27,6 @@ class SemesterTimetableSlot extends Model
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
         'break' => 'boolean'
     ];
 

@@ -14,4 +14,7 @@ Route::get('/version/{versionId}/issues', [SemesterTimetableController::class, '
 Route::get('/version/{versionId}/solutions', [SemesterTimetableController::class, 'getTimetableSolutions'])->name('semesterTimetable.solutions');
 Route::get('/version/{versionId}/issues/{issueId}/solutions', [SemesterTimetableController::class, 'getIssueSolutions'])->name('semesterTimetable.issue.solutions');
 Route::post('/create/active', [SemesterTimetableController::class, 'createActiveSemesterTimetable'])->name('semesterTimetable.active.create');
+Route::post('/version/{versionId}/activate', [SemesterTimetableController::class, 'activateTimetableVersion'])->name('semesterTimetable.version.activate');
+Route::get('/version/{versionId}/activation-check', [SemesterTimetableController::class, 'checkTimetableActivation'])->name('semesterTimetable.version.activationCheck');
+Route::get('/school-semester/{schoolSemesterId}/active-timetable', [SemesterTimetableController::class, 'getActiveTimetable'])->name('semesterTimetable.active.get');
 Route::post('/test/test/preference-engine', [SemesterTimetableController::class, 'generateTimetableWithPreference'])->name('semesterTimetable.test.preference');
