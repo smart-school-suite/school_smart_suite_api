@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('timetable_slots', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('day_of_week');
             $table->time('start_time');
             $table->time('end_time');
@@ -18,7 +18,7 @@ return new class extends Migration
         });
 
         Schema::create('timetable_versions', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->integer('version_number');
             $table->string('label');
             $table->enum('scheduler_status', ['optimal', 'partial', 'failed', 'error', 'pending', 'generating'])->default('pending');
@@ -27,17 +27,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('active_timetables', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->timestamps();
-        });
-
 
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('active_timetables');
         Schema::dropIfExists('timetable_versions');
         Schema::dropIfExists('timetable_slots');
     }

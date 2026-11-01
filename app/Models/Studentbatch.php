@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,9 +43,5 @@ class Studentbatch extends Model
     public function student(): HasMany
     {
         return $this->hasMany(Student::class, 'student_batch_id');
-    }
-    public function semesterTimetableSlot(): HasMany
-    {
-        return $this->hasMany(SemesterTimetableSlot::class, 'student_batch_id');
     }
 }

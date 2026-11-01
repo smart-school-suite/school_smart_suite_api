@@ -94,11 +94,6 @@ class Educationlevels extends Model
         return $this->belongsTo(LevelType::class, 'level_type_id');
     }
 
-    public function semesterTimetableSlot(): HasMany
-    {
-        return $this->hasMany(SemesterTimetableSlot::class);
-    }
-
     public function students(): HasManyThrough
     {
         return $this->hasManyThrough(Student::class, Specialty::class, 'level_id', 'specialty_id', 'id', 'id');

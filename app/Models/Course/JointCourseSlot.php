@@ -6,13 +6,14 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Courses;
 use App\Models\Hall;
 use App\Models\Teacher;
-use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JointCourseSlot extends Model
 {
-    use GeneratesUuid;
+    use HasFactory, HasUuids;
     protected $fillable = [
         'start_time',
         'end_time',

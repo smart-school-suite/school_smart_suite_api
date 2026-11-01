@@ -178,10 +178,6 @@ class Specialty extends Model
         return $this->hasMany(Marks::class, 'specialty_id');
     }
 
-    public function eventAudience()
-    {
-        return $this->morphMany(EventAudience::class, 'audienceable');
-    }
     public function announcementAudience()
     {
         return $this->morphMany(AnnouncementAudience::class, 'audienceable');

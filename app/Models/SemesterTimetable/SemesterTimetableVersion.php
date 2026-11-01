@@ -50,11 +50,6 @@ class SemesterTimetableVersion extends Model
         ]);
     }
 
-    public function semesterActiveTimetable(): HasMany
-    {
-        return $this->hasMany(SemesterActiveTimetable::class, 'timetable_version_id');
-    }
-
     public function timeTableSlot(): HasMany
     {
 

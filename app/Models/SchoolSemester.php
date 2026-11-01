@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Course\SemesterJoinCourseReference;
 use App\Models\SemesterTimetable\SemesterActiveTimetable;
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -63,12 +62,6 @@ class SchoolSemester extends Model
     {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
     }
-
-    public function semesterTimetableSlot(): HasMany
-    {
-        return $this->hasMany(SemesterTimetableSlot::class, 'school_semester_id');
-    }
-
     public function semesterTimetableVersion(): HasMany
     {
         return $this->hasMany(SemesterTimetableVersion::class, 'school_semester_id');
