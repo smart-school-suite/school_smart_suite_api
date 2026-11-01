@@ -70,7 +70,6 @@ class SemesterTimetableHelperService
         $busyTeacherIds = SemesterTimetableSlot::where("school_branch_id", $currentSchool->id)
             ->whereIn("teacher_id", $teacherIds)
             ->where("day_of_week", $day)
-            ->where("school_semester_id", $schoolSemesterId)
             ->where(function ($query) use ($startTime, $endTime) {
                 $startTimeStr = $startTime->format('H:i:s');
                 $endTimeStr = $endTime->format('H:i:s');
@@ -80,9 +79,7 @@ class SemesterTimetableHelperService
                         ->where('end_time', '>', $startTimeStr);
                 });
             })
-            ->whereHas('semesterTimetableVersion', function ($query) {
-                $query->whereHas('semesterActiveTimetable');
-            })
+            ->whereHas('semesterTimetableVersion', fn($query) => $query->active())
             ->distinct()
             ->pluck('teacher_id')
             ->toArray();
@@ -177,11 +174,8 @@ class SemesterTimetableHelperService
 
         $busyTeacherIds = SemesterTimetableSlot::where("school_branch_id", $currentSchool->id)
             ->whereIn("teacher_id", $teacherIds)
-            ->where("day", $day)
-            ->where("school_semester_id", $schoolSemesterId)
-            ->whereHas('semesterTimetableVersion', function ($query) {
-                $query->whereHas('semesterActiveTimetable');
-            })
+            ->where("day_of_week", $day)
+            ->whereHas('semesterTimetableVersion', fn($query) => $query->active())
             // ->with(['schoolSemester', function ($query) {
             //      $query->where("end_date", '>=', now());
             // }])
@@ -444,16 +438,13 @@ class SemesterTimetableHelperService
         $busyHallIds = SemesterTimetableSlot::where("school_branch_id", $currentSchool->id)
             ->whereIn("hall_id", $hallIds)
             ->where("day_of_week", $day)
-            ->where("school_semester_id", $schoolSemesterId)
             ->where(function ($query) use ($startTimeStr, $endTimeStr) {
                 $query->where(function ($q) use ($startTimeStr, $endTimeStr) {
                     $q->where('start_time', '<', $endTimeStr)
                         ->where('end_time', '>', $startTimeStr);
                 });
             })
-            ->whereHas('semesterTimetableVersion', function ($query) {
-                $query->whereHas('semesterActiveTimetable');
-            })
+            ->whereHas('semesterTimetableVersion', fn($query) => $query->active())
             ->distinct()
             ->pluck('hall_id')
             ->toArray();

@@ -11,7 +11,8 @@ use App\Models\Job\SystemJob;
 use App\Models\SchoolBranchSetting;
 use App\Models\SchoolSemester;
 use App\Services\ApiResponseService;
-use App\Services\SemesterTimetable\CreateActiveSemesterTimetableService;
+use App\Exceptions\SemesterTimetable\TimetableActivationConflict;
+use App\Services\SemesterTimetable\ActivateSemesterTimetableService;
 use App\Services\SemesterTimetable\GeneratePreferenceSemesterTimetableService;
 use App\Services\SemesterTimetable\SemesterTimetableService;
 use App\Services\SemesterTimetable\TimetableInsightService;
@@ -91,16 +92,45 @@ class SemesterTimetableController extends Controller
         return ApiResponseService::success("Timetable generated successfully", $response, null, 200);
     }
 
-    public function createActiveSemesterTimetable(
-        Request $request,
-        CreateActiveSemesterTimetableService $createActiveSemesterTimetable
-    ) {
-        $currentSchool = $request->attributes->get('currentSchool');
+    public function createActiveSemesterTimetable(Request $request, ActivateSemesterTimetableService $activation)
+    {
         $data = $request->validate([
-            'school_semester_id' => 'required|string',
+            'timetable_version_id' => 'required|string',
         ]);
-        $activeTimetable = $createActiveSemesterTimetable->createActiveSemesterTimetable($currentSchool, $data);
-        return ApiResponseService::success("Active Semester Timetable Created Successfully", $activeTimetable, null, 201);
+
+        return $this->activateTimetableVersion($request, $activation, $data['timetable_version_id']);
+    }
+
+    public function activateTimetableVersion(Request $request, ActivateSemesterTimetableService $activation, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+
+        try {
+            $result = $activation->activate($currentSchool, $versionId);
+        } catch (TimetableActivationConflict $conflict) {
+            return ApiResponseService::error($conflict->getMessage(), null, 422, [
+                'title' => $conflict->getTitle(),
+                'description' => $conflict->getDescription(),
+                'path' => null,
+                'conflicts' => $conflict->conflicts(),
+            ]);
+        }
+
+        return ApiResponseService::success("Timetable Activated Successfully", $result, null, 200);
+    }
+
+    public function checkTimetableActivation(Request $request, ActivateSemesterTimetableService $activation, string $versionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $check = $activation->check($currentSchool, $versionId);
+        return ApiResponseService::success("Timetable Activation Checked Successfully", $check, null, 200);
+    }
+
+    public function getActiveTimetable(Request $request, ActivateSemesterTimetableService $activation, string $schoolSemesterId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $active = $activation->activeFor($currentSchool, $schoolSemesterId);
+        return ApiResponseService::success("Active Timetable Fetched Successfully", $active, null, 200);
     }
 
     protected function resolveUser()

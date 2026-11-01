@@ -4,8 +4,9 @@ namespace App\Models;
 
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Course\SemesterJoinCourseReference;
-use App\Models\SemesterTimetable\SemesterActiveTimetable;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,9 +43,15 @@ class SchoolSemester extends Model
     {
         return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
     }
-    public function semesterActiveTimetable(): HasMany
+    public function scopeStillRunning(Builder $query): Builder
     {
-        return $this->hasMany(SemesterActiveTimetable::class);
+        return $query->whereDate('end_date', '>=', now()->toDateString())
+            ->where(fn(Builder $status) => $status->whereNull('status')->orWhere('status', '!=', 'expired'));
+    }
+
+    public function isStillRunning(): bool
+    {
+        return $this->status !== 'expired' && Carbon::parse($this->end_date)->endOfDay()->isFuture();
     }
     public function instructorAvailability(): HasMany
     {

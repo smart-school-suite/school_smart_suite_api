@@ -60,7 +60,6 @@ class SemesterTimetableVersionService
     {
         $timetableVersion = SemesterTimetableVersion::where("school_branch_id", $currentSchool->id)
             ->with([
-                'semesterActiveTimetable',
                 'timeTableSlot.course.types',
                 'timeTableSlot.teacher',
                 'timeTableSlot.hall.types'
@@ -79,7 +78,7 @@ class SemesterTimetableVersionService
         $slots = $timetableVersion->timeTableSlot;
 
         $formattedSlots = $slots
-            ->groupBy('day')
+            ->groupBy('day_of_week')
             ->map(function ($daySlots, $day) {
                 return [
                     'day' => $day,
@@ -89,7 +88,7 @@ class SemesterTimetableVersionService
                         ->map(function ($slot) {
                             return [
                                 'id' => $slot->id ?? null,
-                                'day' => $slot->day ?? null,
+                                'day' => $slot->day_of_week ?? null,
 
                                 'start_time' => $slot->start_time ? Carbon::parse($slot->start_time)->format('H:i') : null,
                                 'end_time' => $slot->end_time ? Carbon::parse($slot->end_time)->format('H:i') : null,

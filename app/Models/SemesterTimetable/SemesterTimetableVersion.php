@@ -4,6 +4,7 @@ namespace App\Models\SemesterTimetable;
 
 use App\Models\SchoolSemester;
 use App\Traits\GeneratesUuid;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,6 +49,12 @@ class SemesterTimetableVersion extends Model
             'school_branch_id' => $schoolBranchId,
             'school_semester_id' => $schoolSemesterId,
         ]);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereHas('timeTableSlot')
+            ->whereHas('schoolSemester', fn(Builder $semester) => $semester->stillRunning());
     }
 
     public function timeTableSlot(): HasMany
