@@ -2,6 +2,8 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions\Teacher;
 
+use App\Schedular\SemesterTimetable\Solution\Exceptions\CannotApplyRemedy;
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Constant\Violation\SemesterTimetable\Teacher\TeacherUnavailable as Violation;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Teacher\TeacherUnavailableBlocker;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
@@ -53,5 +55,14 @@ class TeacherUnavailableDefinition extends TeacherBusyDefinition
     public function reason(Subject $obstacle, ?SolutionContext $context = null): string
     {
         return Text::teacher($obstacle, $context) . ' prefers not to teach at ' . Text::period($obstacle);
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        if ($step['action'] === Remedy::RELAX) {
+            throw new CannotApplyRemedy("A teacher's preferred hours are changed in their availability settings, so this step has to be done there first.");
+        }
+
+        return parent::applyToRequest($request, $step, $edit);
     }
 }

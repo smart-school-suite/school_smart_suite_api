@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions\Schedule;
 
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration as Constraint;
 use App\Constant\Violation\SemesterTimetable\Schedule\PeriodDuration as Violation;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Schedule\PeriodDurationBlocker;
@@ -116,5 +117,14 @@ class PeriodDurationDefinition extends AbstractDefinition
     public function reason(Subject $obstacle, ?SolutionContext $context = null): string
     {
         return 'Lessons on ' . Text::day($obstacle->day()) . ' must be ' . ($obstacle->get('period_duration') ?? $context?->periodDuration($obstacle->day() ?? 'monday')) . ' minutes long';
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        $result = $step['result'];
+
+        return RequestEdit::dayException($request, 'schedule_period_duration_minutes', $result['day'], [
+            'duration_minutes' => (int) $result['duration_minutes'],
+        ]);
     }
 }

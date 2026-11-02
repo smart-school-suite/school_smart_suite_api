@@ -55,4 +55,14 @@ class CourseRequestedSlotDefinition extends AbstractRequestDefinition
     {
         return Text::course($obstacle, $context) . ' is requested at ' . Text::period($obstacle);
     }
+
+    protected function requestKey(): string
+    {
+        return 'course_requested_time_slots';
+    }
+
+    protected function identityFields(): array
+    {
+        return ['course_id'];
+    }
 }

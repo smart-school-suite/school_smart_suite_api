@@ -5,6 +5,7 @@ namespace App\Schedular\SemesterTimetable\Solution\Contracts;
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 
 interface ConstraintDefinition
@@ -37,4 +38,11 @@ interface ConstraintDefinition
      * @return Remedy[]
      */
     public function clearObstacle(Subject $obstacle, array $issues, SolutionContext $context): array;
+
+    /**
+     * Returns the generation request with one solution step applied.
+     *
+     * @throws \App\Schedular\SemesterTimetable\Solution\Exceptions\CannotApplyRemedy
+     */
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array;
 }

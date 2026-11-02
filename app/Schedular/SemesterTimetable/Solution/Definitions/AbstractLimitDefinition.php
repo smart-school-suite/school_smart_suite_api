@@ -2,6 +2,8 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions;
 
+use App\Schedular\SemesterTimetable\Solution\Exceptions\CannotApplyRemedy;
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
@@ -47,5 +49,43 @@ abstract class AbstractLimitDefinition extends AbstractDefinition
     public function reason(Subject $obstacle, ?SolutionContext $context = null): string
     {
         return Text::day($obstacle->day()) . ' already has the maximum of ' . ($obstacle->get('max') ?? 'the allowed') . ' ' . $this->unit();
+    }
+
+    /**
+     * [request key, value field, matched by]
+     */
+    protected function requestLimit(): ?array
+    {
+        return null;
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        $limit = $this->requestLimit();
+        $result = $step['result'];
+
+        if (!$limit) {
+            return parent::applyToRequest($request, $step, $edit);
+        }
+
+        [$key, $field, $match] = $limit;
+        $scope = $match === 'teacher_id' ? ($result['teacher_id'] ?? null) : ($result['day'] ?? null);
+
+        if (!$scope) {
+            throw new CannotApplyRemedy('This limit applies to the whole week, so it has to be raised by hand.');
+        }
+
+        if ($match === 'teacher_id') {
+            $exceptions = collect($request[$key]['teacher_exceptions'] ?? [])
+                ->reject(fn($exception) => ($exception['teacher_id'] ?? null) === $scope)
+                ->values()
+                ->push(['teacher_id' => $scope, $field => (int) $result['max']])
+                ->all();
+            $request[$key]['teacher_exceptions'] = $exceptions;
+
+            return $request;
+        }
+
+        return RequestEdit::dayException($request, $key, $scope, [$field => (int) $result['max']]);
     }
 }

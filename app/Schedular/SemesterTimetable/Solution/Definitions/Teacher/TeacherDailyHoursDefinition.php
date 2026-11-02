@@ -33,4 +33,9 @@ class TeacherDailyHoursDefinition extends AbstractLimitDefinition
     {
         return TeacherDailyHourBlocker::class;
     }
+
+    protected function requestLimit(): ?array
+    {
+        return ['teacher_max_daily_hours', 'max_hours', 'teacher_id'];
+    }
 }

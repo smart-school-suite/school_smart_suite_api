@@ -4,17 +4,13 @@ namespace App\Http\Controllers\SemesterTimetable;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SemesterTimetable\GenerateSemesterTimetableRequest;
-use App\Jobs\SemesterTimetable\GenerateFixedSemesterTimetable;
-use App\Jobs\SemesterTimetable\GeneratePreferenceSemesterTimetable;
-use App\Models\SemesterTimetable\SemesterTimetableVersion;
-use App\Models\Job\SystemJob;
-use App\Models\SchoolBranchSetting;
-use App\Models\SchoolSemester;
 use App\Services\ApiResponseService;
 use App\Exceptions\SemesterTimetable\TimetableActivationConflict;
 use App\Services\SemesterTimetable\ActivateSemesterTimetableService;
+use App\Services\SemesterTimetable\ApplySolutionService;
 use App\Services\SemesterTimetable\GeneratePreferenceSemesterTimetableService;
 use App\Services\SemesterTimetable\SemesterTimetableService;
+use App\Services\SemesterTimetable\TimetableGenerationDispatcher;
 use App\Services\SemesterTimetable\TimetableInsightService;
 use Illuminate\Http\Request;
 
@@ -31,50 +27,10 @@ class SemesterTimetableController extends Controller
         $this->semesterTimetableService = $semesterTimetableService;
     }
 
-    public function generateTimetable(GenerateSemesterTimetableRequest $request)
+    public function generateTimetable(GenerateSemesterTimetableRequest $request, TimetableGenerationDispatcher $dispatcher)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $timetableSettings = $this->getTimetableSetting($currentSchool);
-        if (!empty($timetableSettings['timetable.ignore_teacher_preference'] ?? null)) {
-            return $this->generateFixedTimetable($currentSchool, $request);
-        } else {
-            return $this->generatePreferenceTimetable($currentSchool, $request);
-        }
-    }
-
-    protected function generatePreferenceTimetable(object $currentSchool, object $request)
-    {
-        return $this->dispatchGeneration(GeneratePreferenceSemesterTimetable::class, $currentSchool, $request);
-    }
-    protected function generateFixedTimetable(object $currentSchool, object $request)
-    {
-        return $this->dispatchGeneration(GenerateFixedSemesterTimetable::class, $currentSchool, $request);
-    }
-
-    private function dispatchGeneration(string $jobClass, object $currentSchool, object $request)
-    {
-        $payload = $request->validated();
-
-        $version = !empty($payload['version_id'])
-            ? SemesterTimetableVersion::where('school_branch_id', $currentSchool->id)->find($payload['version_id'])
-            : null;
-        $version ??= SemesterTimetableVersion::createNext($currentSchool->id, $payload['school_semester_id']);
-        $version->update(['scheduler_status' => SemesterTimetableVersion::STATUS_GENERATING]);
-        $payload['version_id'] = $version->id;
-
-        $systemJob = SystemJob::create([
-            'type' => "Semester Timetable Generation",
-            'context_type' => SchoolSemester::class,
-            'stage' => "Processing",
-            'context_id' => $payload['school_semester_id'],
-            'initiated_by_id' => $this->resolveUser()->id,
-            'initiated_by_type' => $this->resolveUser()::class,
-            'queue' => "database",
-            'started_at' => now(),
-            'payload' => $payload,
-        ]);
-
-        $jobClass::dispatch($currentSchool, $payload, $systemJob->id);
+        $version = $dispatcher->dispatch($currentSchool, $request->validated(), $this->resolveUser());
 
         return ApiResponseService::success(
             "Timetable generation initiated successfully",
@@ -143,20 +99,6 @@ class SemesterTimetableController extends Controller
         }
         return null;
     }
-
-    private function getTimetableSetting(object $currentSchool)
-    {
-        $settings = SchoolBranchSetting::where("school_branch_id", $currentSchool->id)
-            ->with(['settingDefination'])
-            ->whereHas('settingDefination', function ($query) {
-                $query->whereIn('key', ['timetable.ignore_teacher_preference', 'timetable.respect_teacher_preference']);
-            })
-            ->get()
-            ->mapWithKeys(function ($setting) {
-                return [$setting->settingDefination->key => $setting->value];
-            });
-        return $settings;
-    }
     public function getTimetableStatus(Request $request, string $versionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
@@ -216,5 +158,35 @@ class SemesterTimetableController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $solutions = $insights->solutions($currentSchool, $versionId, $issueId);
         return ApiResponseService::success("Issue Solutions Fetched Successfully", $solutions, null, 200);
+    }
+
+    public function previewSolution(Request $request, ApplySolutionService $solutions, string $versionId, string $solutionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $preview = $solutions->preview($currentSchool, $versionId, $solutionId);
+        return ApiResponseService::success("Solution Preview Fetched Successfully", $preview, null, 200);
+    }
+
+    public function applySolution(Request $request, ApplySolutionService $solutions, string $versionId, string $solutionId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $solutions->apply($currentSchool, $versionId, $solutionId, $this->resolveUser());
+        return ApiResponseService::success("Solution Applied Successfully", $result, null, 200);
+    }
+
+    public function previewSolutions(Request $request, ApplySolutionService $solutions, string $versionId)
+    {
+        $data = $request->validate(['solution_ids' => 'required|array|min:1', 'solution_ids.*' => 'required|string']);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $preview = $solutions->preview($currentSchool, $versionId, $data['solution_ids']);
+        return ApiResponseService::success("Solutions Preview Fetched Successfully", $preview, null, 200);
+    }
+
+    public function applySolutions(Request $request, ApplySolutionService $solutions, string $versionId)
+    {
+        $data = $request->validate(['solution_ids' => 'required|array|min:1', 'solution_ids.*' => 'required|string']);
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $solutions->apply($currentSchool, $versionId, $data['solution_ids'], $this->resolveUser());
+        return ApiResponseService::success("Solutions Applied Successfully", $result, null, 200);
     }
 }

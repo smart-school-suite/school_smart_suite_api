@@ -136,3 +136,24 @@ from the `scheduler_input` stored with each run (or, for older runs, from the da
 
 Each definition's `title()` and `reason()` provide the wording, so a new constraint only needs those two methods to
 read well in the API.
+
+## Applying a solution
+
+`ApplySolutionService` turns a chosen solution into a new version. Each definition's `applyToRequest()` changes the
+stored generation request for one step (move or remove a request, add a day exception, swap a teacher or hall,
+raise a limit). A step that can only be done by hand throws `CannotApplyRemedy` with a plain reason. The adjusted
+request is checked with the same rules as the generate endpoint, then a new version is created and generated.
+The source version is never changed.
+
+| Endpoint | Does |
+|---|---|
+| `GET /api/v1/semester-timetable/version/{versionId}/solutions/{solutionId}/preview` | shows the changes one solution would make |
+| `POST /api/v1/semester-timetable/version/{versionId}/solutions/{solutionId}/apply` | generates a new version with that solution |
+| `POST /api/v1/semester-timetable/version/{versionId}/solutions/preview` | same as preview, for `solution_ids[]` |
+| `POST /api/v1/semester-timetable/version/{versionId}/solutions/apply` | applies several solutions (one per problem) in one new version |
+
+- `solutionId` is an option's `id` from the solutions endpoint. Options carry `apply.possible` and `apply.manual_steps[]`.
+- Preview returns `can_apply`, `changes[]` (`step`, `text`, `applied`, `reason`, `solution_id`) and `validation_errors`.
+- Apply returns `source_version`, `new_version`, `solutions` and `changes`.
+- Refusals: 404 when a solution is not on the version, 422 when a step needs a manual change, when two chosen
+  solutions fix the same problem, or when the version has no stored generation settings.

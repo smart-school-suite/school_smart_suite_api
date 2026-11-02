@@ -2,6 +2,8 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions;
 
+use App\Schedular\SemesterTimetable\Solution\Exceptions\CannotApplyRemedy;
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Schedular\SemesterTimetable\Solution\Support\Text;
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
@@ -53,5 +55,21 @@ abstract class AbstractResourceDefinition extends AbstractDefinition
             cost: Cost::REPLACE_RESOURCE + intdiv((int) ($candidate['load_minutes'] ?? 0), 600),
             occupies: ['day' => $issue->day(), 'start' => $start, 'end' => $end, $field => $newId],
         );
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        if ($step['action'] !== Remedy::REPLACE) {
+            return parent::applyToRequest($request, $step, $edit);
+        }
+
+        $issue = $edit->subject($step['result']['for_issue_id'] ?? '');
+        $definition = $edit->definition($issue->type);
+
+        if (!$definition instanceof AbstractRequestDefinition) {
+            throw new CannotApplyRemedy('The ' . $this->resourceLabel() . ' for this lesson is chosen by the scheduler, so it cannot be swapped automatically.');
+        }
+
+        return $definition->replaceResource($request, $issue, $this->field(), $step['result'][$this->field()]);
     }
 }

@@ -33,4 +33,9 @@ class ScheduleDailyPeriodDefinition extends AbstractLimitDefinition
     {
         return ScheduleDailyPeriodBlocker::class;
     }
+
+    protected function requestLimit(): ?array
+    {
+        return ['schedule_periods_per_day', 'max_periods', 'day'];
+    }
 }

@@ -55,4 +55,14 @@ class TeacherRequestedSlotDefinition extends AbstractRequestDefinition
     {
         return Text::teacher($obstacle, $context) . ' has asked to teach at ' . Text::period($obstacle);
     }
+
+    protected function requestKey(): string
+    {
+        return 'teacher_requested_time_windows';
+    }
+
+    protected function identityFields(): array
+    {
+        return ['teacher_id'];
+    }
 }

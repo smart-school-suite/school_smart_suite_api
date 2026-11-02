@@ -41,7 +41,10 @@ class TimetableInsightService
         'allow_outside_preference' => 'Outside preferred hours',
     ];
 
-    public function __construct(private ConstraintCatalog $catalog) {}
+    public function __construct(
+        private ConstraintCatalog $catalog,
+        private ApplySolutionService $solutions,
+    ) {}
 
     public function issues(object $currentSchool, string $versionId): array
     {
@@ -130,6 +133,8 @@ class TimetableInsightService
             'issues' => $issues,
             'paths' => $paths,
             'context' => $context,
+            'request' => collect($this->asArray($timetable?->request_payload ?? []))->except('version_id')->all(),
+            'edit' => $this->solutions->editFor($diagnostics),
         ];
     }
 
@@ -224,7 +229,7 @@ class TimetableInsightService
                 $options = $paths
                     ->filter(fn($path) => !array_diff($path['issue_ids'], $ids->all()))
                     ->values()
-                    ->map(fn($path, $index) => $this->presentOption($path, $index, $members, $run['context']))
+                    ->map(fn($path, $index) => $this->presentOption($path, $index, $members, $run))
                     ->all();
                 $first = $members->first();
 
@@ -247,8 +252,12 @@ class TimetableInsightService
             ->values();
     }
 
-    private function presentOption(array $path, int $index, Collection $members, SolutionContext $context): array
+    private function presentOption(array $path, int $index, Collection $members, array $run): array
     {
+        $context = $run['context'];
+        [, $applied] = $this->solutions->assess($run['request'], $path, $run['edit']);
+        $manual = collect($applied)->where('applied', false);
+
         $fixed = count($path['issue_ids']);
 
         return [
@@ -268,6 +277,10 @@ class TimetableInsightService
             ],
             'effort' => $this->effort((int) $path['cost']),
             'checked' => $path['verified'] ?? null,
+            'apply' => [
+                'possible' => !empty($run['request']) && $manual->isEmpty(),
+                'manual_steps' => $manual->map(fn($change) => ['step' => $change['step'], 'reason' => $change['reason']])->values()->all(),
+            ],
             'steps' => collect($path['steps'])->map(fn($step) => [
                 'number' => $step['step'],
                 'id' => $step['id'],
