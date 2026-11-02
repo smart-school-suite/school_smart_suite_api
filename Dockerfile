@@ -66,7 +66,10 @@ COPY docker/php-fpm/zz-listen.conf /usr/local/etc/php-fpm.d/zz-listen.conf
 COPY docker/nginx/default.conf /etc/nginx/sites-available/default
 RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/php-fpm.program.conf /etc/supervisor/conf.d/php-fpm.program.conf
+COPY docker/nginx.program.conf /etc/supervisor/conf.d/nginx.program.conf
+COPY docker/laravel-scheduler.conf /usr/local/etc/supervisor/laravel-scheduler.conf
 
 WORKDIR /var/www/html
 

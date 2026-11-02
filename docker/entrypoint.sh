@@ -30,4 +30,14 @@ touch storage/logs/laravel.log 2>/dev/null || true
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 chmod -R ug+rwx storage bootstrap/cache
 
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+# Run Laravel's scheduler in production (or when explicitly enabled).
+# schedule:work invokes schedule:run every minute; baked into the image so deploys keep it.
+if [ "$APP_ENV" = "production" ] || [ "$ENABLE_SCHEDULER" = "true" ] || [ "$ENABLE_SCHEDULER" = "1" ]; then
+  cp /usr/local/etc/supervisor/laravel-scheduler.conf /etc/supervisor/conf.d/laravel-scheduler.program.conf
+  echo "Laravel scheduler enabled (schedule:work)"
+else
+  rm -f /etc/supervisor/conf.d/laravel-scheduler.program.conf
+  echo "Laravel scheduler disabled (APP_ENV=$APP_ENV)"
+fi
+
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
