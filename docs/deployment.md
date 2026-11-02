@@ -109,7 +109,9 @@ The Infisical CLI must be installed on the server, because the deploy job runs t
 1. Exits if `APP_KEY` is not set.
 2. If `RUN_MIGRATIONS=true`: runs `php artisan migrate --force`, then `php artisan db:seed --force`.
 3. If `APP_ENV=production`: runs `config:cache`, `route:cache` and `view:cache`.
-4. Starts supervisor, which runs php-fpm and nginx.
+4. If `APP_ENV=production` (or `ENABLE_SCHEDULER=true`): enables the Laravel scheduler supervisor
+   program.
+5. Starts supervisor, which runs php-fpm, nginx, and (in production) the scheduler.
 
 The script stops at the first failing command. A failed migration or seeder therefore stops the
 container, and Docker restarts it in a loop. This is deliberate: the app never serves traffic
@@ -117,12 +119,24 @@ against a half-migrated database.
 
 The container exposes a health check at `/up`.
 
-### Known gap: no queue worker or scheduler
+### Scheduler
 
-Supervisor only runs php-fpm and nginx. Nothing in the container runs `php artisan queue:work`
-or `php artisan schedule:run`. Queued jobs and scheduled commands, such as the nightly
-`students:promote`, will not run unless they are started some other way. If the app depends on
-them, add supervisor programs for both.
+In production, supervisor runs `php artisan schedule:work`, which calls `schedule:run` every
+minute. The program is defined in [docker/laravel-scheduler.conf](../docker/laravel-scheduler.conf)
+and enabled by [docker/entrypoint.sh](../docker/entrypoint.sh) when `APP_ENV=production` (or when
+`ENABLE_SCHEDULER=true`). Because it ships inside the image, every deploy recreates the container
+with the scheduler still running — no host crontab to maintain.
+
+Scheduled commands are registered in [routes/console.php](../routes/console.php) (for example
+`students:promote`, reminder notifications, semester status updates).
+
+Staging does not start the scheduler by default, so production-only jobs do not fire against the
+staging database. Set `ENABLE_SCHEDULER=true` in Infisical staging if you need to test them.
+
+### Known gap: no queue worker
+
+Supervisor does not run `php artisan queue:work`. Queued jobs will not process unless a worker is
+started some other way. If the app depends on the queue, add a supervisor program for it.
 
 ## Database
 
