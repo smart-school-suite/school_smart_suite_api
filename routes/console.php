@@ -58,3 +58,10 @@ Schedule::command('students:promote')
     ->withoutOverlapping()
     ->runInBackground()
     ->onOneServer();
+
+Schedule::command('exams:create-missing-candidates')
+    ->dailyAt('01:00')
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(3600)
+    ->runInBackground()
+    ->onOneServer();
