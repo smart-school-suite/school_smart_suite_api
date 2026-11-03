@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions\Schedule;
 
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Constant\Constraint\SemesterTimetable\Schedule\BreakPeriod as Constraint;
 use App\Constant\Violation\SemesterTimetable\Schedule\BreakPeriod as Violation;
 use App\Schedular\SemesterTimetable\Builders\BlockerBuilder\Blockers\Schedule\BreakPeriodBlocker;
@@ -134,5 +135,28 @@ class BreakPeriodDefinition extends AbstractDefinition
     public function reason(Subject $obstacle, ?SolutionContext $context = null): string
     {
         return 'The break is at ' . Text::period($obstacle);
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        $result = $step['result'];
+
+        if ($step['action'] === Remedy::REMOVE) {
+            $days = $request['break_period']['no_break_exceptions'] ?? [];
+            $days = is_array($days) ? $days : [];
+
+            if (!in_array($result['day'], array_map('strtolower', $days), true)) {
+                $days[] = $result['day'];
+            }
+
+            $request['break_period']['no_break_exceptions'] = array_values($days);
+
+            return $request;
+        }
+
+        return RequestEdit::dayException($request, 'break_period', $result['day'], [
+            'start_time' => $result['start_time'],
+            'end_time' => $result['end_time'],
+        ]);
     }
 }

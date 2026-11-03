@@ -7,7 +7,9 @@ use App\Schedular\SemesterTimetable\Solution\Contracts\ConstraintDefinition;
 use App\Schedular\SemesterTimetable\Solution\DTO\Issue;
 use App\Schedular\SemesterTimetable\Solution\DTO\Remedy;
 use App\Schedular\SemesterTimetable\Solution\DTO\Subject;
+use App\Schedular\SemesterTimetable\Solution\Exceptions\CannotApplyRemedy;
 use App\Schedular\SemesterTimetable\Solution\Support\Cost;
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Schedular\SemesterTimetable\Solution\Support\SolutionContext;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
 
@@ -87,6 +89,11 @@ abstract class AbstractDefinition implements ConstraintDefinition
     public function clearObstacle(Subject $obstacle, array $issues, SolutionContext $context): array
     {
         return [];
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        throw new CannotApplyRemedy('This step has to be done by hand: ' . lcfirst($step['label'] ?? 'review it') . '.');
     }
 
     protected function window(Subject $subject): ?array

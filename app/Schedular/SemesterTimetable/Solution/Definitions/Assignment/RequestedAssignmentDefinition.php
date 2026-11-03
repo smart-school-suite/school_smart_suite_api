@@ -57,4 +57,14 @@ class RequestedAssignmentDefinition extends AbstractRequestDefinition
     {
         return Text::course($obstacle, $context) . ' with ' . Text::teacher($obstacle, $context, 'the teacher') . ' in ' . Text::hall($obstacle, $context, 'the hall') . ' needs the same teacher or hall at ' . Text::period($obstacle);
     }
+
+    protected function requestKey(): string
+    {
+        return 'requested_assignments';
+    }
+
+    protected function identityFields(): array
+    {
+        return ['course_id', 'teacher_id', 'hall_id'];
+    }
 }

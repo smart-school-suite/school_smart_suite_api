@@ -57,4 +57,14 @@ class RequestedFreePeriodDefinition extends AbstractRequestDefinition
     {
         return 'A free period is requested at ' . Text::period($obstacle);
     }
+
+    protected function requestKey(): string
+    {
+        return 'requested_free_periods';
+    }
+
+    protected function identityFields(): array
+    {
+        return [];
+    }
 }

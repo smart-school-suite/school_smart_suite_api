@@ -55,4 +55,14 @@ class HallRequestedSlotDefinition extends AbstractRequestDefinition
     {
         return Text::hall($obstacle, $context) . ' is reserved for another request at ' . Text::period($obstacle);
     }
+
+    protected function requestKey(): string
+    {
+        return 'hall_requested_time_windows';
+    }
+
+    protected function identityFields(): array
+    {
+        return ['hall_id'];
+    }
 }

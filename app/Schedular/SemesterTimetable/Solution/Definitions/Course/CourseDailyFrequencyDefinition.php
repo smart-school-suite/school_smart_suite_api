@@ -33,4 +33,9 @@ class CourseDailyFrequencyDefinition extends AbstractLimitDefinition
     {
         return CourseDailyFrequencyBlocker::class;
     }
+
+    protected function requestLimit(): ?array
+    {
+        return ['course_max_daily_frequency', 'max_frequency', 'day'];
+    }
 }

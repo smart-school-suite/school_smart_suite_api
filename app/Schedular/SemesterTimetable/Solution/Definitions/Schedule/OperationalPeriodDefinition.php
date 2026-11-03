@@ -2,6 +2,7 @@
 
 namespace App\Schedular\SemesterTimetable\Solution\Definitions\Schedule;
 
+use App\Schedular\SemesterTimetable\Solution\Support\RequestEdit;
 use App\Constant\Constraint\SemesterTimetable\Schedule\OperationalPeriod as Constraint;
 use App\Constant\Constraint\SemesterTimetable\Schedule\PeriodDuration;
 use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod as Violation;
@@ -124,5 +125,15 @@ class OperationalPeriodDefinition extends AbstractDefinition
     public function reason(Subject $obstacle, ?SolutionContext $context = null): string
     {
         return 'The school day on ' . Text::day($obstacle->day()) . ' only runs ' . Text::period($obstacle);
+    }
+
+    public function applyToRequest(array $request, array $step, RequestEdit $edit): array
+    {
+        $result = $step['result'];
+
+        return RequestEdit::dayException($request, 'operational_period', $result['day'], [
+            'start_time' => $result['start_time'],
+            'end_time' => $result['end_time'],
+        ]);
     }
 }
