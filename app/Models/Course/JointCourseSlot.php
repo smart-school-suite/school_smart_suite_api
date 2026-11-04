@@ -19,7 +19,6 @@ class JointCourseSlot extends Model
         'end_time',
         'day',
         'school_branch_id',
-        'course_id',
         'hall_id',
         'teacher_id',
         'semester_joint_course_id'

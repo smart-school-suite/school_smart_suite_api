@@ -35,9 +35,19 @@ class CreateJointCourseSemesterJob implements ShouldQueue
             ->select(['id', 'semester_id', 'school_year_id'])
             ->firstOrFail();
 
+        $specialtyId = $semester->schoolYear?->specialty_id;
+
+        if (!$specialtyId) {
+            return;
+        }
+
         $jointCourseIds = CourseSpecialty::query()
             ->where('school_branch_id', $this->currentSchool->id)
             ->whereHas('course', fn($q) => $q->where('semester_id', $semester->semester_id))
+            ->whereIn('course_id', CourseSpecialty::query()
+                ->where('school_branch_id', $this->currentSchool->id)
+                ->where('specialty_id', $specialtyId)
+                ->select('course_id'))
             ->groupBy('course_id')
             ->havingRaw('COUNT(*) > 1')
             ->pluck('course_id')
@@ -51,10 +61,10 @@ class CreateJointCourseSemesterJob implements ShouldQueue
             ->where('school_branch_id', $this->currentSchool->id)
             ->where('school_year_id', $semester?->schoolYear?->systemAcademicYear?->id)
             ->where('semester_id', $semester->semester_id)
-            ->pluck('course_id', 'id')
+            ->pluck('id', 'course_id')
             ->all();
 
-        $coursesToCreate = array_diff($jointCourseIds, array_values($existingJointCourseIds));
+        $coursesToCreate = array_diff($jointCourseIds, array_keys($existingJointCourseIds));
 
         $createdJointIdsByCourse = $existingJointCourseIds;
 
