@@ -3,194 +3,161 @@
 namespace App\Schedular\ExamTimetable\Grid;
 
 use App\Constant\Constraint\ExamTimetable\Course\RequiredJointCourseSession;
-use App\Constant\Violation\ExamTimetable\Schedule\OperationalPeriod;
+use App\Constant\Violation\ExamTimetable\Course\RequiredJointCourse;
+use App\Constant\Violation\ExamTimetable\Hall\HallUnavailable;
+use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorUnavailable;
+use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\OperationalPeriodValidator;
 use App\Schedular\ExamTimetable\Core\State;
 use App\Schedular\ExamTimetable\DTO\ExamDateDTO;
-use App\Schedular\ExamTimetable\Context\RequestContext;
-use App\Schedular\ExamTimetable\DTO\AllocationDTO;
-use App\Schedular\ExamTimetable\Exceptions\HardConstraintFailureException;
+use App\Schedular\ExamTimetable\DTO\ExamSessionDTO;
 use App\Schedular\ExamTimetable\Helpers\HallAvailability;
-use App\Schedular\ExamTimetable\Helpers\HallBuilder;
 use App\Schedular\ExamTimetable\Helpers\InvigilatorAvailability;
+use App\Schedular\ExamTimetable\Support\Time;
 
+/**
+ * Builds one grid entry per operational exam date and fixes the joint course sessions in it.
+ *
+ * Joint course sessions are shared with other classes, so their date and time cannot move. When one cannot
+ * be held (date outside the exam, outside opening hours, clashing with another joint course, no hall
+ * seats or no invigilator) it is a hard violation.
+ */
 class DayBuilder
 {
-    public function build(State $state)
+    public function __construct(
+        private OperationalPeriodValidator $operational,
+        private HallAvailability $halls,
+        private InvigilatorAvailability $invigilators,
+    ) {}
+
+    public function build(State $state): void
     {
-
-        $context = RequestContext::fromPayload();
-        if (collect($this->validateJointCourses($context))->isNotEmpty()) {
-            $state->violations["hard"] = [
-                ...$this->validateJointCourses($context)
-            ];
-            throw new HardConstraintFailureException();
-        }
-        $examDuration = $context->examDuration();
-        $state->dateGrid = $this->generateDateGrid($context, $examDuration);
-        $this->buildJointCourse($state);
-    }
-
-    protected function buildJointCourse(State $state)
-    {
-        $context = RequestContext::fromPayload();
-        $jointCourseReqs = $context->jointCourses();
-        $candidateCount = $context->candidateCount();
-        $specialtyId = $context->specialty();
-
-        $hallService = app(HallAvailability::class);
-        $invigService = app(InvigilatorAvailability::class);
-
-        foreach ($jointCourseReqs as $jointCourse) {
-            $date = $jointCourse['date'];
-
-            $availableInvigs = collect($invigService->getAvailableInvigilators([
-                'date' => $date,
-                'start_time' => $jointCourse['start_time'],
-                'end_time' => $jointCourse['end_time']
-            ]))->first();
-
-            $hall = $hallService->availableHalls(
-                $date,
-                $jointCourse['start_time'],
-                $jointCourse['end_time']
-            )->first();
-
-            $state->dateGrid[$date]->allocations[] = [
-                "type" => AllocationDTO::TYPE_JOINT,
-                "start_time" => $jointCourse['start_time'],
-                "end_time" => $jointCourse['end_time'],
-                "hall" => isset($hall['group']) ?  app(HallBuilder::class)->buildGroupedHall(
-                    $jointCourse["course_id"],
-                    $hall,
-                    $availableInvigs,
-                    $candidateCount,
-                    $specialtyId
-                ) : app(HallBuilder::class)->buildSingleHall(
-                    $jointCourse["course_id"],
-                    $hall,
-                    $availableInvigs,
-                    $candidateCount,
-                    $specialtyId
-                ),
-            ];
+        foreach ($state->context->dates() as $date) {
+            [$start, $end] = $state->context->window($date);
+            $state->dateGrid[$date] = new ExamDateDTO($date, $start, $end);
         }
 
-        return null;
-    }
-    protected function generateDateGrid(RequestContext $context, array $examDuration): array
-    {
-        $grid = [];
-        $operationalDates = $context->operationalDates();
-
-        $startDate = $examDuration['start_date'];
-        $endDate = $examDuration['end_date'];
-
-        foreach ($operationalDates as $dateString) {
-            if ($dateString >= $startDate && $dateString <= $endDate) {
-                $operationalHours = $context->operationalHourDate($dateString);
-
-                $startTime = $operationalHours['start_time'] ?? '08:00';
-                $endTime = $operationalHours['end_time'] ?? '17:00';
-
-                $grid[$dateString] = new ExamDateDTO(
-                    date: $dateString,
-                    startTime: $startTime,
-                    endTime: $endTime,
-                    allocations: []
-                );
-            }
+        foreach ($state->context->jointCourses() as $joint) {
+            $this->placeJoint($state, $joint);
         }
-
-        return $grid;
     }
-    protected function validateJointCourses(RequestContext $context)
+
+    private function placeJoint(State $state, array $joint): void
     {
-        $reasons = [];
-        $hallService = app(HallAvailability::class);
-        $invigService = app(InvigilatorAvailability::class);
+        $params = [
+            'date' => $joint['date'],
+            'start' => $joint['start'],
+            'end' => $joint['end'],
+            'course_id' => $joint['course_id'] ?? null,
+            'slot_type' => RequiredJointCourseSession::KEY,
+        ];
 
-        foreach ($context->jointCourses() as $jointCourse) {
-            $jcDate = $jointCourse["date"];
-            $jcStart = $jointCourse["start_time"];
-            $jcEnd = $jointCourse["end_time"];
-            $jcCourseId = $jointCourse["course_id"];
+        $blockers = $this->operational->check($state, $params);
 
-            $violations = [];
-
-            // Fix #1: Check if date is NOT operational
-            if (!$context->isOperationalDate($jcDate)) {
-                $violations[] = [
-                    "key" => OperationalPeriod::KEY,
-                    "type" => "invalid_operational_date",
-                    "allowed_dates" => $context->operationalDates()
-                ];
-            }
-
-            $opWin = $context->operationalHourDate($jcDate);
-
-            if ($opWin === null) {
-                $violations[] = [
-                    "key" => OperationalPeriod::KEY,
-                    "type" => "date_excluded_from_operations",
-                    "date" => $jcDate
-                ];
-            } else {
-                // Fix #3: Only check hours if opWin exists
-                if ($jcStart < $opWin['start_time'] || $jcEnd > $opWin['end_time']) {
-                    $violations[] = [
-                        "key" => OperationalPeriod::KEY,
-                        "type" => "invalid_operational_hour",
-                        "allowed_time" => [
-                            "start_time" => $opWin["start_time"],
-                            "end_time" => $opWin["end_time"],
-                            "date" => $jcDate
-                        ]
+        if (empty($blockers)) {
+            foreach ($state->sessionsOn($joint['date']) as $other) {
+                if ($other->overlaps($joint['start'], $joint['end'])) {
+                    $blockers[] = [
+                        'key' => RequiredJointCourse::KEY,
+                        'course_id' => $other->courseId,
+                        'date' => $other->date,
+                        'start_time' => $other->startTime(),
+                        'end_time' => $other->endTime(),
+                        'conflict' => $this->conflict($joint),
                     ];
                 }
             }
+        }
 
-            $availableInvigs = collect($invigService->getAvailableInvigilators([
-                'date' => $jcDate,
-                'start_time' => $jcStart,
-                'end_time' => $jcEnd
-            ]));
+        $halls = null;
 
-            if ($availableInvigs->isEmpty()) {
-                $violations[] = [
-                    "key" => "invigilator_unavailable",
-                    "resource" => "invigilator",
-                    "available_invigs" => $availableInvigs->count()
+        if (empty($blockers)) {
+            $candidates = $state->context->candidateCount($joint['course_id'] ?? null);
+            $halls = $this->presetHalls($state, $joint)
+                ?? $this->halls->allocate($state, $joint['date'], $joint['start'], $joint['end'], $candidates);
+
+            if ($halls === null) {
+                $blockers[] = [
+                    'key' => HallUnavailable::KEY,
+                    'date' => $joint['date'],
+                    'start_time' => Time::toTime($joint['start']),
+                    'end_time' => Time::toTime($joint['end']),
+                    'seats_needed' => $candidates,
+                    'seats_available' => $this->halls->seatsAvailable($state, $joint['date'], $joint['start'], $joint['end']),
+                    'conflict' => $this->conflict($joint),
                 ];
-            }
+            } else {
+                $staffed = $this->invigilators->staff($state, $halls, $joint['course_id'] ?? null, $joint['date'], $joint['start'], $joint['end']);
 
-            $halls = $hallService->availableHalls(
-                $jcDate,
-                $jcStart,
-                $jcEnd
-            );
+                if ($staffed === null) {
+                    $blockers[] = [
+                        'key' => InvigilatorUnavailable::KEY,
+                        'date' => $joint['date'],
+                        'start_time' => Time::toTime($joint['start']),
+                        'end_time' => Time::toTime($joint['end']),
+                        'invigilators_needed' => $this->invigilators->needed($halls),
+                        'invigilators_available' => count($this->invigilators->available($state, $joint['course_id'] ?? null, $joint['date'], $joint['start'], $joint['end'])),
+                        'conflict' => $this->conflict($joint),
+                    ];
+                }
 
-            if ($halls->isEmpty()) {
-                $violations[] = [
-                    "key" => "hall_unavailable",
-                    "resource" => "hall",
-                    "available_halls" => $halls->count()
-                ];
-            }
-
-            if (!empty($violations)) {
-                $reasons[] = [
-                    'constraint_failed' => [
-                        'key'        => RequiredJointCourseSession::KEY,
-                        'date'       => $jcDate,
-                        'course_id'  => $jcCourseId ?? null,
-                        'start_time' => $jcStart,
-                        'end_time'   => $jcEnd,
-                    ],
-                    "violations" => $violations
-                ];
+                $halls = $staffed;
             }
         }
 
-        return $reasons;
+        if (!empty($blockers)) {
+            $state->addViolation('hard', [
+                'constraint_failed' => [
+                    'key' => RequiredJointCourseSession::KEY,
+                    'course_id' => $joint['course_id'] ?? null,
+                    'date' => $joint['date'],
+                    'start_time' => Time::toTime($joint['start']),
+                    'end_time' => Time::toTime($joint['end']),
+                ],
+                'blockers' => $blockers,
+            ]);
+
+            return;
+        }
+
+        $state->place(new ExamSessionDTO(
+            type: ExamSessionDTO::TYPE_JOINT,
+            courseId: $joint['course_id'],
+            date: $joint['date'],
+            start: $joint['start'],
+            end: $joint['end'],
+            candidateCount: $state->context->candidateCount($joint['course_id']),
+            halls: $halls,
+            source: RequiredJointCourseSession::KEY,
+        ));
+    }
+
+    /** Halls already booked for this joint session by the joint course setup. */
+    private function presetHalls(State $state, array $joint): ?array
+    {
+        $preset = collect($joint['halls'] ?? [])->filter(fn($hall) => !empty($hall['hall_id']));
+
+        if ($preset->isEmpty()) {
+            return null;
+        }
+
+        return $preset->map(fn($hall) => [
+            'hall_id' => $hall['hall_id'],
+            'hall_name' => $hall['hall_name'] ?? $state->context->hallName($hall['hall_id']),
+            'capacity' => (int) ($hall['capacity'] ?? $state->context->hall($hall['hall_id'])['capacity'] ?? 0),
+            'candidate_count' => (int) ($hall['candidate_count'] ?? 0),
+            'shared' => false,
+            'invigilators' => array_values($hall['invigilators'] ?? []),
+        ])->values()->all();
+    }
+
+    private function conflict(array $joint): array
+    {
+        return array_filter([
+            'slot_type' => RequiredJointCourseSession::KEY,
+            'course_id' => $joint['course_id'] ?? null,
+            'date' => $joint['date'],
+            'start_time' => Time::toTime($joint['start']),
+            'end_time' => Time::toTime($joint['end']),
+        ]);
     }
 }

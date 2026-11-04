@@ -30,20 +30,7 @@ class ExamTimetableVersionService
     }
     public function createVersion(object $currentSchool, array $data)
     {
-        $latest = ExamTimetableVersion::where([
-            'school_branch_id'   => $currentSchool->id,
-            'exam_id' => $data['exam_id'],
-        ])
-            ->max('version_number');
-
-        $nextNumber = ($latest ?? 0) + 1;
-
-        return ExamTimetableVersion::create([
-            'version_number'     => $nextNumber,
-            'label'              => "Version $nextNumber",
-            'school_branch_id'   => $currentSchool->id,
-            'exam_id' => $data['exam_id'],
-        ]);
+        return ExamTimetableVersion::createNext($currentSchool->id, $data['exam_id']);
     }
     public function deleteVersion(object $currentSchool, string $versionId)
     {

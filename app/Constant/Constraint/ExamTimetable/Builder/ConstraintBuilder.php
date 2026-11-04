@@ -6,8 +6,11 @@ use App\Constant\Constraint\ExamTimetable\Assignment\RequestedAssignment;
 use App\Constant\Constraint\ExamTimetable\Course\CourseTimeRequest;
 use App\Constant\Constraint\ExamTimetable\Course\RequiredJointCourseSession;
 use App\Constant\Constraint\ExamTimetable\Invigilator\InvigilatorRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Course\CourseExamSession;
+use App\Constant\Constraint\ExamTimetable\Hall\HallRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Schedule\OperationalPeriod;
 use App\Constant\Constraint\ExamTimetable\Schedule\SessionDuration;
-use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
+use App\Constant\Constraint\ExamTimetable\Student\StudentDailyLoadRange;
 
 class ConstraintBuilder
 {
@@ -18,6 +21,9 @@ class ConstraintBuilder
             CourseTimeRequest::toArray(),
             RequiredJointCourseSession::toArray(),
             InvigilatorRequestedSlot::toArray(),
+            HallRequestedSlot::toArray(),
+            StudentDailyLoadRange::toArray(),
+            CourseExamSession::toArray(),
             OperationalPeriod::toArray(),
             SessionDuration::toArray()
         ];
@@ -36,6 +42,11 @@ class ConstraintBuilder
     public static function title(string $key, string $default = 'Unknown violation'): string
     {
         return self::titles()[$key] ?? $default;
+    }
+
+    public static function getConstraintTitle(string $key): ?string
+    {
+        return self::get($key)['title'] ?? null;
     }
 
     public static function getConstraintType(string $key): ?string

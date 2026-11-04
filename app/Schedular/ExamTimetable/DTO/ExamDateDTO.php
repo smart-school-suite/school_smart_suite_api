@@ -5,15 +5,12 @@ namespace App\Schedular\ExamTimetable\DTO;
 class ExamDateDTO
 {
     /**
-     * Create a new class instance.
+     * @param ExamSessionDTO[] $sessions
      */
     public function __construct(
         public string $date,
-        public string $startTime,
-        public string $endTime,
-        public array $allocations = []
-    )
-    {
-        //
-    }
+        public int $start,
+        public int $end,
+        public array $sessions = [],
+    ) {}
 }

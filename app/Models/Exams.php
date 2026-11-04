@@ -136,6 +136,6 @@ class Exams extends Model
 
     public function examTimetableSlots(): HasMany
     {
-        return $this->hasMany(ExamTimetableSlot::class);
+        return $this->hasMany(ExamTimetableSlot::class, 'exam_id');
     }
 }

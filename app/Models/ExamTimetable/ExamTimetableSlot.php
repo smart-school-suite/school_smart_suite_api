@@ -19,13 +19,12 @@ class ExamTimetableSlot extends Model
         'course_id',
         'version_id',
         'exam_id',
+        'type',
         'school_branch_id'
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-        'date' => 'date'
+        'date' => 'date:Y-m-d'
     ];
     public $incrementing = false;
     public $table = "exam_timetable_slots";
@@ -33,7 +32,7 @@ class ExamTimetableSlot extends Model
 
     public function examSessionHall(): HasMany
     {
-        return $this->hasMany(ExamSessionHall::class);
+        return $this->hasMany(ExamSessionHall::class, 'exam_slot_id');
     }
     public function course(): BelongsTo
     {
@@ -50,6 +49,6 @@ class ExamTimetableSlot extends Model
 
     public function examSessionInvig(): HasMany
     {
-        return $this->hasMany(ExamSessionInvigilator::class);
+        return $this->hasMany(ExamSessionInvigilator::class, 'exam_slot_id');
     }
 }

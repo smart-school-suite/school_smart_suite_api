@@ -36,6 +36,10 @@ Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.se
     return (string) $user->school_branch_id === (string) $schoolBranchId;
 }, ['guards' => ['schooladmin']]);
 
+Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.examTimetable', function ($user, $schoolBranchId) {
+    return (string) $user->school_branch_id === (string) $schoolBranchId;
+}, ['guards' => ['schooladmin']]);
+
 Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.jobs', function ($user, $schoolBranchId) {
     return (string) $user->school_branch_id === (string) $schoolBranchId;
 }, ['guards' => ['schooladmin']]);

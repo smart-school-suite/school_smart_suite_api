@@ -35,6 +35,11 @@ class ExamSessionHall extends Model
         return $this->belongsTo(Specialty::class, 'specialty_id');
     }
 
+    public function invigilators(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ExamSessionInvigilator::class, 'exam_session_hall_id');
+    }
+
     public function hall(): BelongsTo
     {
         return $this->belongsTo(Hall::class, 'hall_id');

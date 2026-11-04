@@ -2,13 +2,18 @@
 
 namespace App\Schedular\ExamTimetable\Builders\DiagnosticBuilder\Diagnostics\Hall;
 
-class HallRequestedSlotDiagnostic
+use App\Constant\Constraint\ExamTimetable\Hall\HallRequestedSlot as Constraint;
+use App\Schedular\ExamTimetable\Builders\DiagnosticBuilder\Diagnostics\AbstractDiagnostic;
+
+class HallRequestedSlotDiagnostic extends AbstractDiagnostic
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public static function type(): string
     {
-        //
+        return Constraint::KEY;
+    }
+
+    protected function fields(): array
+    {
+        return ['hall_id', 'date', 'start_time', 'end_time'];
     }
 }

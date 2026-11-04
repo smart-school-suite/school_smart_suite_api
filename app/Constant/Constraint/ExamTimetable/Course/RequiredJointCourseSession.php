@@ -6,10 +6,9 @@ class RequiredJointCourseSession
 {
     public const KEY = "required_joint_course_periods";
     public const TITLE = "Required Joint Course Periods";
-    public const HANDLER = \App\Constant\Constraint\SemesterTimetable\Course\CourseDailyFrequency::class;
     // public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Course\CourseDailyFrequencyInterpreter::class;
     // public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Course\CourseDailyFrequencySuggestion::class;
-    public const TYPE = "soft";
+    public const TYPE = "hard";
     public const DESCRIPTION = "Ensures that certain courses are scheduled together in the same periods across different department.";
     public const EXAMPLE = [
         [
@@ -24,7 +23,6 @@ class RequiredJointCourseSession
         return [
             'key' => self::KEY,
             'title' => self::TITLE,
-            'handler' => self::HANDLER,
             'type' => self::TYPE,
             'description' => self::DESCRIPTION,
             // 'interpreter_handler' => self::INTERPRETER_HANDLER,

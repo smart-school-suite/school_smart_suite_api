@@ -2,85 +2,56 @@
 
 namespace App\Schedular\ExamTimetable\Constraints\Validator\Schedule;
 
+use App\Constant\Violation\ExamTimetable\Schedule\OperationalPeriod;
+use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\BuildsConflict;
 use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\ValidatorInterface;
-use App\Schedular\ExamTimetable\Context\RequestContext;
-use Carbon\Carbon;
+use App\Schedular\ExamTimetable\Core\State;
+use App\Schedular\ExamTimetable\Support\Time;
 
 class OperationalPeriodValidator implements ValidatorInterface
 {
-    protected const OPERATIONAL_DATE = "operational_date";
-    protected const OPERATIONAL_HOUR = "operational_hour";
-    public function check(array $params): ?array
+    use BuildsConflict;
+
+    public const NOT_EXAM_DATE = 'not_exam_date';
+    public const EXCLUDED_DATE = 'excluded_date';
+    public const OUTSIDE_HOURS = 'outside_hours';
+
+    public function check(State $state, array $params): array
     {
-        $context = RequestContext::fromPayload();
+        $context = $state->context;
         $date = $params['date'];
 
-        $start = Carbon::parse($params['start_time']);
-        $end   = Carbon::parse($params['end_time']);
-
-        $opWin   = $context->operationalHourDate($date);
-        $opStart = Carbon::parse($opWin['start']);
-        $opEnd   = Carbon::parse($opWin['end']);
+        if (!$context->isInExamWindow($date)) {
+            return [$this->blocker(self::NOT_EXAM_DATE, $params, [
+                'allowed_start_date' => $context->startDate(),
+                'allowed_end_date' => $context->endDate(),
+            ])];
+        }
 
         if (!$context->isOperationalDate($date)) {
-            return  [
-                "entity_type" => self::OPERATIONAL_DATE,
-                "type" => "invalid_operational_date",
-                "allowed_dates" => $context->operationalDates(),
-                "conflict"   => array_filter([
-                    "course_id"  => $params["course_id"] ?? null,
-                    "start_time" => $params["start_time"] ?? null,
-                    "end_time"   => $params["end_time"] ?? null,
-                    "date"        => $params["date"] ?? null,
-                    "slot_type"  => $params["slot_type"] ?? null,
-                    "teacher_id" => $params["teacher_id"] ?? null,
-                    "hall_id"    => $params["hall_id"] ?? null,
-                ])
-            ];
+            return [$this->blocker(self::EXCLUDED_DATE, $params)];
         }
 
-        $opWin = $context->operationalHourDate($date);
+        [$open, $close] = $context->window($date);
 
-        if ($opWin === null) {
-            return [
-                "entity_type" => self::OPERATIONAL_DATE,
-                "type" => "date_excluded_from_operations",
-                "date" => $date,
-                "allowed_dates" => $context->operationalDates(),
-                "conflict"   => array_filter([
-                    "course_id"  => $params["course_id"] ?? null,
-                    "start_time" => $params["start_time"] ?? null,
-                    "end_time"   => $params["end_time"] ?? null,
-                    "date"        => $params["date"] ?? null,
-                    "slot_type"  => $params["slot_type"] ?? null,
-                    "teacher_id" => $params["teacher_id"] ?? null,
-                    "hall_id"    => $params["hall_id"] ?? null,
-                ])
-            ];
+        if ($params['start'] < $open || $params['end'] > $close) {
+            return [$this->blocker(self::OUTSIDE_HOURS, $params, [
+                'start_time' => Time::toTime($open),
+                'end_time' => Time::toTime($close),
+            ])];
         }
-        if ($start->lessThan($opStart) || $end->greaterThan($opEnd)) {
-            return [
-                'key'        => self::OPERATIONAL_HOUR,
-                "type" => "invalid_operational_hour",
-                'date'        => $date,
-                "allowed_time" => [
-                    'start_time' => $opWin['start'],
-                    'end_time'   => $opWin['end'],
-                ],
-                "conflict"   => array_filter([
-                    "course_id"  => $params["course_id"] ?? null,
-                    "start_time" => $params["start_time"] ?? null,
-                    "end_time"   => $params["end_time"] ?? null,
-                    "day"        => $params["day"] ?? null,
-                    "slot_type"  => $params["slot_type"] ?? null,
-                    "teacher_id" => $params["teacher_id"] ?? null,
-                    "hall_id"    => $params["hall_id"] ?? null,
-                ])
-            ];
-        }
-
-
 
         return [];
+    }
+
+    private function blocker(string $reason, array $params, array $details = []): array
+    {
+        return [
+            'key' => OperationalPeriod::KEY,
+            'reason' => $reason,
+            'date' => $params['date'],
+            ...$details,
+            'conflict' => $this->conflict($params),
+        ];
     }
 }

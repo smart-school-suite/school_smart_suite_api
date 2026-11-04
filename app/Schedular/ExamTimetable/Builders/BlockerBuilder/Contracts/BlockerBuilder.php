@@ -6,6 +6,7 @@ use App\Schedular\ExamTimetable\DTO\BlockerDTO;
 
 interface BlockerBuilder
 {
-   public function supports(string $type): bool;
-   public function build(array $blocker): BlockerDTO;
+    public static function type(): string;
+
+    public function build(array $blocker): BlockerDTO;
 }

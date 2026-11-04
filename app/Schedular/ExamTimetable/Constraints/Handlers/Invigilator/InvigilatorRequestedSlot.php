@@ -3,102 +3,63 @@
 namespace App\Schedular\ExamTimetable\Constraints\Handlers\Invigilator;
 
 use App\Constant\Constraint\ExamTimetable\Invigilator\InvigilatorRequestedSlot as InvigilatorRequestedSlotConstraint;
-use App\Schedular\ExamTimetable\Constraints\Contracts\ConstraintHandler;
-use App\Schedular\ExamTimetable\Context\RequestContext;
+use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorBusy;
+use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorUnavailable;
+use App\Schedular\ExamTimetable\Constraints\Handlers\Support\ReviewsResourceRequests;
 use App\Schedular\ExamTimetable\Core\State;
-use App\Schedular\ExamTimetable\Constraints\Validator\Assignment\RequestedAssignmentValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Course\CourseRequestedSlotValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Hall\HallCapacityValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Course\RequiredJointCourseSlotValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Invigilator\InvigilatorRequestedSlotValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\OperationalPeriodValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\SessionDurationValidator;
-use App\Schedular\ExamTimetable\Helpers\HallAvailability;
-use App\Schedular\ExamTimetable\Helpers\HallBuilder;
-use Illuminate\Support\Arr;
-use Override;
+use App\Schedular\ExamTimetable\Support\Time;
 
-class InvigilatorRequestedSlot implements ConstraintHandler
+class InvigilatorRequestedSlot extends ReviewsResourceRequests
 {
-    #[Override]
     public static function supports(): string
     {
         return InvigilatorRequestedSlotConstraint::KEY;
     }
 
-    #[Override]
-    public function handle(State $state): void
+    protected function field(): string
     {
-        $context = RequestContext::fromPayload();
-        $iRs = $context->invigilatorRequestedSlot();
-        if ($iRs->isEmpty()) {
-            return;
-        }
-        foreach ($iRs as $iR) {
-            $params = [
-                'invigilator_id'    => $iR['invigilator_id'],
-                'start_time' => $iR['start_time'],
-                'end_time'   => $iR['end_time'],
-                'date'        => $iR['date'],
-                'slot_type'  => InvigilatorRequestedSlotConstraint::KEY,
-            ];
-
-            $blockers = array_filter([
-                ...app(OperationalPeriodValidator::class)->check($params),
-                ...app(SessionDurationValidator::class)->check($params),
-                app(RequestedAssignmentValidator::class)->check($params),
-                app(RequiredJointCourseSlotValidator::class)->check($params),
-                app(HallCapacityValidator::class)->check($params),
-                app(InvigilatorRequestedSlotValidator::class)->check($params),
-                app(CourseRequestedSlotValidator::class)->check($params)
-            ]);
-
-            if (!empty($blockers)) {
-                $state->violations['soft'][] = [
-                    'constraint_failed' => array_filter([
-                        'key'        => InvigilatorRequestedSlotConstraint::KEY,
-                        'invigilator_id'    => $iR['invigilator_id'],
-                        'start_time' => $iR['start_time'],
-                        'end_time'   => $iR['end_time'],
-                        'date'        => $iR['date'],
-                    ]),
-                    'blockers' => array_values($blockers),
-                ];
-                continue;
-            }
-        }
+        return 'invigilator_id';
     }
 
-    protected function enforce(State $state, array $iR, RequestContext $context)
+    protected function entries(State $state): array
     {
-        $candidateCount = $context->candidateCount();
-        $specialtyId = $context->specialty();
-        $courses = $context->courses()->pluck("course_id")->toArray();
-        $hall = app(HallAvailability::class)->availableHalls($iR["date"], $iR['start_time'], $iR['end_time'])->first();
+        return $state->context->invigilatorRequestedSlots();
+    }
 
-        $invig = [
-            "invigilator_id" => $iR["invigilator_id"]
-        ];
+    protected function resourceBlockers(State $state, array $params): array
+    {
+        $id = $params['invigilator_id'];
 
-        $randomCourseId = Arr::random($courses);
-        $state->dateGrid[$iR["date"]]->allocations[] = [
-            'start_time' => $iR['start_time'],
-            'end_time'   => $iR['end_time'],
-            'hall'       => isset($hall['group'])
-                ? app(HallBuilder::class)->buildGroupedHall(
-                    $randomCourseId,
-                    $hall,
-                    $invig,
-                    $candidateCount,
-                    $specialtyId
-                )
-                : app(HallBuilder::class)->buildSingleHall(
-                    $randomCourseId,
-                    $hall,
-                    $invig,
-                    $candidateCount,
-                    $specialtyId
-                ),
-        ];
+        if (!$state->context->invigilator($id)) {
+            return [[
+                'key' => InvigilatorUnavailable::KEY,
+                'invigilator_id' => $id,
+                'reason' => 'not_assigned_to_exam',
+                'date' => $params['date'],
+                'conflict' => ['slot_type' => static::supports(), 'invigilator_id' => $id, 'date' => $params['date']],
+            ]];
+        }
+
+        foreach ($state->context->invigilatorBusy($id, $params['date']) as $slot) {
+            if (Time::overlaps($params['start'], $params['end'], $slot['start'], $slot['end'])) {
+                return [[
+                    'key' => InvigilatorBusy::KEY,
+                    'invigilator_id' => $id,
+                    'reason' => 'busy',
+                    'date' => $params['date'],
+                    'start_time' => Time::toTime($slot['start']),
+                    'end_time' => Time::toTime($slot['end']),
+                    'conflict' => [
+                        'slot_type' => static::supports(),
+                        'invigilator_id' => $id,
+                        'date' => $params['date'],
+                        'start_time' => Time::toTime($params['start']),
+                        'end_time' => Time::toTime($params['end']),
+                    ],
+                ]];
+            }
+        }
+
+        return [];
     }
 }

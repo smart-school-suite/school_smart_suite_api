@@ -11,6 +11,7 @@ use App\Constant\Violation\ExamTimetable\Hall\HallUnavailable;
 use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorBusy;
 use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorRequestedSlot;
 use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorUnavailable;
+use App\Constant\Violation\ExamTimetable\Schedule\NoExamInWindow;
 use App\Constant\Violation\ExamTimetable\Schedule\OperationalPeriod;
 use App\Constant\Violation\ExamTimetable\Schedule\SessionDuration;
 use App\Constant\Violation\ExamTimetable\Student\StudentDailyLoad;
@@ -31,7 +32,8 @@ class ViolationBuilder
             InvigilatorUnavailable::toArray(),
             OperationalPeriod::toArray(),
             SessionDuration::toArray(),
-            StudentDailyLoad::toArray()
+            StudentDailyLoad::toArray(),
+            NoExamInWindow::toArray(),
         ];
     }
 
