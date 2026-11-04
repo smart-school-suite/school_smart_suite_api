@@ -17,6 +17,7 @@ class ActiveCommitments
         ?string $day = null,
         array $teacherIds = [],
         array $hallIds = [],
+        array $exceptSemesterIds = [],
     ): Collection {
         return SemesterTimetableSlot::where('school_branch_id', $schoolBranchId)
             ->where('break', false)
@@ -26,6 +27,7 @@ class ActiveCommitments
                 ->when($hallIds, fn($q) => $q->orWhereIn('hall_id', $hallIds))))
             ->whereHas('semesterTimetableVersion', fn($query) => $query->active()
                 ->when($exceptSemesterId, fn($q) => $q->where('school_semester_id', '!=', $exceptSemesterId))
+                ->when($exceptSemesterIds, fn($q) => $q->whereNotIn('school_semester_id', $exceptSemesterIds))
                 ->when($onlySemesterId, fn($q) => $q->where('school_semester_id', $onlySemesterId)))
             ->with(['course', 'teacher', 'hall', 'semesterTimetableVersion.schoolSemester.semester'])
             ->get()
@@ -40,6 +42,7 @@ class ActiveCommitments
                 'hall_id' => $slot->hall_id,
                 'hall_name' => $slot->hall?->name,
                 'source' => self::sourceLabel($slot->semesterTimetableVersion),
+                'school_semester_id' => $slot->semesterTimetableVersion?->school_semester_id,
             ], 'regular'))
             ->filter()
             ->values();

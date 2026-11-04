@@ -8,12 +8,10 @@ use App\Exceptions\AppException;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
 use App\Models\Course\CourseSpecialty;
-use App\Models\Course\JointCourseSlot;
-use App\Models\Course\SemesterJoinCourseReference;
-use App\Models\Course\SemesterJointCourse;
 use App\Models\InstructorAvailabilitySlot;
 use App\Models\Job\SystemJob;
 use App\Models\SchoolSemester;
+use App\Services\JointCourse\JointCoursePeriods;
 use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Models\SpecialtyHall;
@@ -292,40 +290,22 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
     }
     private function getJointCourses(SchoolSemester $schoolSemester): ?array
     {
-        $branchId   = $this->currentSchool->id;
-        $semesterId = $schoolSemester->id;
+        $jointCourses = app(JointCoursePeriods::class)->forSchoolSemester($this->currentSchool->id, $schoolSemester->id);
 
-        $existingJointCourses = SemesterJointCourse::where('school_branch_id', $branchId)
-            ->where('semester_id', $semesterId)
-            ->exists();
-
-        if (!$existingJointCourses) {
-            return null;
-        }
-
-        $reference = SemesterJoinCourseReference::where('school_branch_id', $branchId)
-            ->where('school_semester_id', $semesterId)
-            ->first();
-
-        if (!$reference) {
-            return null;
-        }
-
-        $jointCourseSlots = JointCourseSlot::where('school_branch_id', $branchId)
-            ->where('semester_joint_course_id', $reference->semester_joint_course_id)
-            ->with(['course', 'teacher', 'hall'])
-            ->get();
-
-        if ($jointCourseSlots->isEmpty()) {
-            throw new AppException(
-                "No Joint Course Slots Found",
-                404,
-                "No Joint Course Slots Found",
-                "Joint courses exist for this semester but no slots have been created. Please create slots for all joint courses before generating the timetable.",
+        foreach ($jointCourses['missing'] as $course) {
+            $this->addUserError(
+                'Joint Course Has No Time',
+                "{$course['course_title']} is shared with other specialties but has no time set yet. Set its time on the joint course timetable page, then generate again.",
+                [
+                    'course_id' => $course['course_id'],
+                    'semester_joint_course_id' => $course['semester_joint_course_id'],
+                    'reason' => 'joint_course_without_slots',
+                    'path' => '/joint-course-timetable',
+                ]
             );
         }
 
-        return $jointCourseSlots->toArray();
+        return $jointCourses['periods'] ?: null;
     }
     private function buildRequestBody(
         Collection $teachers,
