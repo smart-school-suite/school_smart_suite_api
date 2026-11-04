@@ -19,31 +19,15 @@ class ApplySolutionService
         private TimetableGenerationDispatcher $dispatcher,
     ) {}
 
-    public function preview(object $currentSchool, string $versionId, string|array $solutionIds): array
+    public function apply(object $currentSchool, string $versionId, array $solutionIds, object $user): array
     {
-        $plan = $this->plan($currentSchool, $versionId, (array) $solutionIds);
-
-        return [
-            'source_version' => $this->versionSummary($plan['version']),
-            'solutions' => array_map(fn($path) => $this->solutionSummary($path), $plan['paths']),
-            'can_apply' => $plan['can_apply'],
-            'message' => $plan['can_apply']
-                ? 'A new version will be generated with these changes. The current version stays as it is.'
-                : 'Some steps have to be done by hand before this solution can be applied.',
-            'changes' => $plan['changes'],
-            'validation_errors' => $plan['validation_errors'],
-        ];
-    }
-
-    public function apply(object $currentSchool, string $versionId, string|array $solutionIds, object $user): array
-    {
-        $plan = $this->plan($currentSchool, $versionId, (array) $solutionIds);
+        $plan = $this->plan($currentSchool, $versionId, $solutionIds);
 
         if (!$plan['can_apply']) {
             $manual = collect($plan['changes'])->where('applied', false)->pluck('reason')->filter()->values();
 
             throw new AppException(
-                'Solution(s) ' . implode(', ', (array) $solutionIds) . ' cannot be applied automatically.',
+                'Solution(s) ' . implode(', ', $solutionIds) . ' cannot be applied automatically.',
                 422,
                 'Solution Needs Manual Steps',
                 $manual->isNotEmpty()

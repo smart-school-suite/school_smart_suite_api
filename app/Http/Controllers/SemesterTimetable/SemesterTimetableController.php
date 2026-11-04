@@ -139,47 +139,11 @@ class SemesterTimetableController extends Controller
         return ApiResponseService::success("Timetable Errors Fetched Successfully", $errors, null, 200);
     }
 
-    public function getTimetableIssues(Request $request, TimetableInsightService $insights, string $versionId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $issues = $insights->issues($currentSchool, $versionId);
-        return ApiResponseService::success("Timetable Issues Fetched Successfully", $issues, null, 200);
-    }
-
     public function getTimetableSolutions(Request $request, TimetableInsightService $insights, string $versionId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $solutions = $insights->solutions($currentSchool, $versionId);
         return ApiResponseService::success("Timetable Solutions Fetched Successfully", $solutions, null, 200);
-    }
-
-    public function getIssueSolutions(Request $request, TimetableInsightService $insights, string $versionId, string $issueId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $solutions = $insights->solutions($currentSchool, $versionId, $issueId);
-        return ApiResponseService::success("Issue Solutions Fetched Successfully", $solutions, null, 200);
-    }
-
-    public function previewSolution(Request $request, ApplySolutionService $solutions, string $versionId, string $solutionId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $preview = $solutions->preview($currentSchool, $versionId, $solutionId);
-        return ApiResponseService::success("Solution Preview Fetched Successfully", $preview, null, 200);
-    }
-
-    public function applySolution(Request $request, ApplySolutionService $solutions, string $versionId, string $solutionId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $result = $solutions->apply($currentSchool, $versionId, $solutionId, $this->resolveUser());
-        return ApiResponseService::success("Solution Applied Successfully", $result, null, 200);
-    }
-
-    public function previewSolutions(Request $request, ApplySolutionService $solutions, string $versionId)
-    {
-        $data = $request->validate(['solution_ids' => 'required|array|min:1', 'solution_ids.*' => 'required|string']);
-        $currentSchool = $request->attributes->get('currentSchool');
-        $preview = $solutions->preview($currentSchool, $versionId, $data['solution_ids']);
-        return ApiResponseService::success("Solutions Preview Fetched Successfully", $preview, null, 200);
     }
 
     public function applySolutions(Request $request, ApplySolutionService $solutions, string $versionId)

@@ -46,42 +46,27 @@ class TimetableInsightService
         private ApplySolutionService $solutions,
     ) {}
 
-    public function issues(object $currentSchool, string $versionId): array
+    public function solutions(object $currentSchool, string $versionId): array
     {
         $run = $this->load($currentSchool, $versionId);
+        $problems = $this->problems($run);
 
         return [
             'version' => $run['version'],
             'summary' => $this->summary($run),
-            'issues' => $run['issues']->values()->all(),
-        ];
-    }
-
-    public function solutions(object $currentSchool, string $versionId, ?string $issueId = null): array
-    {
-        $run = $this->load($currentSchool, $versionId);
-
-        if ($issueId && !$run['issues']->contains('id', $issueId)) {
-            throw new AppException(
-                "Issue {$issueId} was not found on timetable version {$versionId}.",
-                404,
-                "Issue Not Found",
-                "This problem no longer exists on this timetable version. It may have been fixed by a newer generation.",
-                null
-            );
-        }
-
-        $problems = $this->problems($run)
-            ->when($issueId, fn(Collection $problems) => $problems
-                ->filter(fn(array $problem) => collect($problem['issues'])->contains('id', $issueId))
-                ->map(fn(array $problem) => $this->onlyOptionsFixing($problem, $issueId)))
-            ->values()
-            ->all();
-
-        return [
-            'version' => $run['version'],
-            'summary' => $this->summary($run),
-            'problems' => $problems,
+            'days' => $problems
+                ->filter(fn(array $problem) => $problem['day'])
+                ->groupBy('day')
+                ->map(fn(Collection $problems, string $day) => [
+                    'day' => $day,
+                    'day_label' => Text::day($day),
+                    'issue_count' => $problems->sum(fn(array $problem) => count($problem['issues'])),
+                    'problem_count' => $problems->count(),
+                    'problems' => $problems->values()->all(),
+                ])
+                ->values()
+                ->all(),
+            'setup_problems' => $run['issues']->where('type', 'setup')->values()->all(),
         ];
     }
 
@@ -208,7 +193,7 @@ class TimetableInsightService
 
     private function problems(array $run): Collection
     {
-        $issues = $run['issues']->keyBy('id');
+        $issues = $run['issues']->where('type', '!=', 'setup')->keyBy('id');
         $paths = $run['paths']->filter(fn($path) => collect($path['issue_ids'])->every(fn($id) => $issues->has($id)));
 
         $parent = $issues->keys()->mapWithKeys(fn($id) => [$id => $id])->all();
@@ -243,7 +228,7 @@ class TimetableInsightService
                     'description' => $members->count() === 1
                         ? implode('. ', $first['reasons'])
                         : 'These problems affect each other, so they are best fixed together.',
-                    'issues' => $members->map(fn($issue) => ['id' => $issue['id'], 'title' => $issue['title'], 'severity' => $issue['severity']])->all(),
+                    'issues' => $members->all(),
                     'option_count' => count($options),
                     'options' => $options,
                 ];
@@ -383,17 +368,6 @@ class TimetableInsightService
             'warning_count' => $warnings,
             'days_affected' => $days,
         ];
-    }
-
-    private function onlyOptionsFixing(array $problem, string $issueId): array
-    {
-        $options = collect($problem['options'])
-            ->filter(fn($option) => in_array($issueId, $option['fixes']['issue_ids'], true))
-            ->values()
-            ->map(fn($option, $index) => [...$option, 'rank' => $index + 1, 'recommended' => $index === 0])
-            ->all();
-
-        return [...$problem, 'option_count' => count($options), 'options' => $options];
     }
 
     private function schedulerInput(?SemesterTimetable $timetable, array $diagnostics): array
