@@ -113,47 +113,41 @@ Shared helpers live in `Support/SolutionContext.php`: operational window, period
 teacher and hall availability, and nearest free windows. Use them instead of reading the payload directly.
 Costs live in `Support/Cost.php`.
 
-## Reading results through the API
+## Reading and applying solutions through the API
 
-`TimetableInsightService` turns a version's stored diagnostics and solution paths into plain language. Names come
-from the `scheduler_input` stored with each run (or, for older runs, from the database).
+Two endpoints cover the whole flow.
 
-| Endpoint | Returns |
+| Endpoint | Does |
 |---|---|
-| `GET /api/v1/semester-timetable/version/{versionId}/issues` | `version`, `summary`, `issues` |
-| `GET /api/v1/semester-timetable/version/{versionId}/solutions` | `version`, `summary`, `problems` with their options |
-| `GET /api/v1/semester-timetable/version/{versionId}/issues/{issueId}/solutions` | the problem containing that issue, with only the options that fix it |
+| `GET /api/v1/semester-timetable/version/{versionId}/solutions` | every problem and its options, grouped by day |
+| `POST /api/v1/semester-timetable/version/{versionId}/solutions/apply` | applies the chosen options (`solution_ids[]`, one per problem) and generates a new version |
+
+`TimetableInsightService` builds the read response from the version's stored diagnostics and solution paths. Names
+come from the `scheduler_input` stored with each run (or, for older runs, from the database).
 
 - `summary`: `headline` and `message` for the version's `scheduler_status` (pending, generating, optimal, partial,
   failed, error), plus `blocking_count`, `warning_count` and `days_affected`.
+- `days[]`: `day`, `day_label`, `issue_count`, `problem_count` and `problems[]`. Days without problems are left out.
+- `problems[]`: issues that are fixed together, with `id`, `title`, `description`, `issues[]` and ranked `options[]`.
+  A problem never spans two days.
 - `issues[]`: `id`, `severity` (`blocking` for hard, `warning` for soft), `severity_label`, `day_label`, `time`,
   `title`, `reasons[]`, `affected[]` (course, teacher, hall with names), `can_be_changed`, `solution_count`.
-  Setup problems from a `failed` version also appear here, with `fix_in` pointing at the page that fixes them.
-- `problems[]`: issues that are fixed together, with `title`, `description`, `issues[]` and ranked `options[]`.
-- `options[]`: `rank`, `recommended`, `title`, `summary`, `fixes` (`count`, `of`, `all`, `label`), `effort`
-  (`small`, `medium`, `large`), `checked` (the hard path was re-verified), and `steps[]` with `action_label`, `text`
-  and `changes[]` (`label`, `from`, `to`, with names and times already formatted).
+- `options[]`: full solution paths. `id` (send it to apply), `rank`, `recommended`, `title`, `summary`, `fixes`,
+  `effort` (`small`, `medium`, `large`), `checked` (the hard path was re-verified), `apply` (`possible`,
+  `manual_steps[]`) and `steps[]` with `action_label`, `text` and `changes[]` (`label`, `from`, `to`).
+- `setup_problems[]`: setup problems of a `failed` version, with `fix_in` pointing at the page that fixes them.
 
 Each definition's `title()` and `reason()` provide the wording, so a new constraint only needs those two methods to
 read well in the API.
 
-## Applying a solution
+## Applying solutions
 
-`ApplySolutionService` turns a chosen solution into a new version. Each definition's `applyToRequest()` changes the
+`ApplySolutionService` applies every step of each chosen path. Each definition's `applyToRequest()` changes the
 stored generation request for one step (move or remove a request, add a day exception, swap a teacher or hall,
 raise a limit). A step that can only be done by hand throws `CannotApplyRemedy` with a plain reason. The adjusted
 request is checked with the same rules as the generate endpoint, then a new version is created and generated.
 The source version is never changed.
 
-| Endpoint | Does |
-|---|---|
-| `GET /api/v1/semester-timetable/version/{versionId}/solutions/{solutionId}/preview` | shows the changes one solution would make |
-| `POST /api/v1/semester-timetable/version/{versionId}/solutions/{solutionId}/apply` | generates a new version with that solution |
-| `POST /api/v1/semester-timetable/version/{versionId}/solutions/preview` | same as preview, for `solution_ids[]` |
-| `POST /api/v1/semester-timetable/version/{versionId}/solutions/apply` | applies several solutions (one per problem) in one new version |
-
-- `solutionId` is an option's `id` from the solutions endpoint. Options carry `apply.possible` and `apply.manual_steps[]`.
-- Preview returns `can_apply`, `changes[]` (`step`, `text`, `applied`, `reason`, `solution_id`) and `validation_errors`.
-- Apply returns `source_version`, `new_version`, `solutions` and `changes`.
+- Apply returns `source_version`, `new_version`, `solutions` and `changes[]` (`step`, `text`, `applied`, `reason`, `solution_id`).
 - Refusals: 404 when a solution is not on the version, 422 when a step needs a manual change, when two chosen
   solutions fix the same problem, or when the version has no stored generation settings.

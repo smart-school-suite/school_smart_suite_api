@@ -10,12 +10,7 @@ Route::get('/version/{versionId}/slots', [SemesterTimetableController::class, 'g
 Route::get('/version/{versionId}/payload', [SemesterTimetableController::class, 'getTimetableRequestPayload'])->name('semesterTimetable.payload');
 Route::get('/version/{versionId}/parsed-diagnostics', [SemesterTimetableController::class, 'getParsedDiagnostics'])->name('parsedDiagnostics.get');
 Route::get('/version/{versionId}/raw-diagnostics', [SemesterTimetableController::class, 'getRawDiagnostics'])->name('rawDiagnostic.get');
-Route::get('/version/{versionId}/issues', [SemesterTimetableController::class, 'getTimetableIssues'])->name('semesterTimetable.issues');
 Route::get('/version/{versionId}/solutions', [SemesterTimetableController::class, 'getTimetableSolutions'])->name('semesterTimetable.solutions');
-Route::get('/version/{versionId}/issues/{issueId}/solutions', [SemesterTimetableController::class, 'getIssueSolutions'])->name('semesterTimetable.issue.solutions');
-Route::get('/version/{versionId}/solutions/{solutionId}/preview', [SemesterTimetableController::class, 'previewSolution'])->name('semesterTimetable.solution.preview');
-Route::post('/version/{versionId}/solutions/{solutionId}/apply', [SemesterTimetableController::class, 'applySolution'])->name('semesterTimetable.solution.apply');
-Route::post('/version/{versionId}/solutions/preview', [SemesterTimetableController::class, 'previewSolutions'])->name('semesterTimetable.solutions.preview');
 Route::post('/version/{versionId}/solutions/apply', [SemesterTimetableController::class, 'applySolutions'])->name('semesterTimetable.solutions.apply');
 Route::post('/create/active', [SemesterTimetableController::class, 'createActiveSemesterTimetable'])->name('semesterTimetable.active.create');
 Route::post('/version/{versionId}/activate', [SemesterTimetableController::class, 'activateTimetableVersion'])->name('semesterTimetable.version.activate');
