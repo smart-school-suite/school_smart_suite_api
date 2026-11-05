@@ -229,46 +229,130 @@ class JointCourseTimetableService
         $jointCourse = $this->findCourse($currentSchool, $semesterJointCourseId);
         $day = strtolower($params['day']);
         $minutes = (int) $params['duration_minutes'];
-        $teachers = $this->courseTeachers($jointCourse);
+        $teachers = $this->teachersFor($jointCourse, $params['teacher_id'] ?? null);
+        $hall = !empty($params['hall_id']) ? $this->hall($currentSchool, $params['hall_id']) : null;
+        [$windowStart, $windowEnd] = $this->window($params, $minutes);
 
-        if (!empty($params['teacher_id'])) {
-            $teachers = $teachers->where('id', $params['teacher_id'])->values();
-        }
+        $busy = $this->recommendationBusy($jointCourse, $teachers, array_filter([$hall?->id]), $day);
+        [$recommended, $unavailable] = $this->scan($busy, $day, $minutes, $teachers, $hall, $windowStart, $windowEnd);
 
-        if ($teachers->isEmpty()) {
-            throw new AppException(
-                "No usable teacher for course {$jointCourse->course_id}.",
-                422,
-                empty($params['teacher_id']) ? 'No Teacher For This Course' : 'Teacher Does Not Teach This Course',
-                empty($params['teacher_id'])
-                    ? "No teacher is assigned to teach {$jointCourse->course->course_title} yet. Assign a teacher to the course first."
-                    : "The chosen teacher is not assigned to {$jointCourse->course->course_title}. Choose one of its teachers.",
-                null
-            );
-        }
+        return [
+            'day' => $day,
+            'day_label' => Text::day($day),
+            'duration_minutes' => $minutes,
+            'window' => ['start_time' => Time::toTime($windowStart), 'end_time' => Time::toTime($windowEnd)],
+            'teachers' => $this->people($teachers),
+            'hall' => $hall ? ['id' => $hall->id, 'name' => $hall->name] : null,
+            'recommended' => $recommended,
+            'unavailable' => $unavailable,
+            'summary' => [
+                'recommended_count' => count($recommended),
+                'unavailable_count' => count($unavailable),
+                'message' => count($recommended) > 0
+                    ? count($recommended) . " free {$minutes}-minute time(s) on " . Text::day($day) . " for {$jointCourse->course->course_title}."
+                    : "No free {$minutes}-minute time on " . Text::day($day) . ' for ' . $jointCourse->course->course_title . '. Try another day' . ($hall ? ', hall' : '') . ' or a shorter duration.',
+            ],
+        ];
+    }
 
-        $hall = null;
-        if (!empty($params['hall_id'])) {
-            $hall = Hall::where('school_branch_id', $currentSchool->id)->find($params['hall_id'])
-                ?? throw new AppException('Hall not found.', 404, 'Hall Not Found', "We couldn't find this hall in your school.", null);
-        }
+    public function hallAvailability(object $currentSchool, string $semesterJointCourseId, array $params): array
+    {
+        $jointCourse = $this->findCourse($currentSchool, $semesterJointCourseId);
+        $minutes = (int) $params['duration_minutes'];
+        $days = $this->days($params);
+        $teachers = $this->teachersFor($jointCourse, $params['teacher_id'] ?? null);
+        [$windowStart, $windowEnd] = $this->window($params, $minutes);
 
-        $windowStart = Time::toMinutes($params['start_time'] ?? self::DEFAULT_START);
-        $windowEnd = Time::toMinutes($params['end_time'] ?? self::DEFAULT_END);
+        $halls = Hall::where('school_branch_id', $currentSchool->id)
+            ->where('status', 'available')
+            ->orderBy('name')
+            ->get();
 
-        if ($windowEnd - $windowStart < $minutes) {
-            throw new AppException(
-                'Time window is shorter than the duration.',
-                422,
-                'Time Window Too Short',
-                'The time window ' . Text::time(Time::toTime($windowStart), Time::toTime($windowEnd)) . " is shorter than {$minutes} minutes. Choose a longer window or a shorter duration.",
-                null
-            );
-        }
+        $busy = $this->recommendationBusy($jointCourse, $teachers, $halls->pluck('id')->all());
 
-        $busy = $this->busy($jointCourse, $day, $teachers->pluck('id')->all(), array_filter([$hall?->id]))
-            ->reject(fn(array $other) => $other['kind'] === 'linked_timetable');
+        $rows = $halls->map(function (Hall $hall) use ($busy, $days, $minutes, $teachers, $windowStart, $windowEnd) {
+            $perDay = collect($days)->map(function (string $day) use ($busy, $hall, $minutes, $teachers, $windowStart, $windowEnd) {
+                [$recommended] = $this->scan($busy, $day, $minutes, $teachers, $hall, $windowStart, $windowEnd);
 
+                return ['day' => $day, 'day_label' => Text::day($day), 'free_count' => count($recommended), 'first_free' => $recommended[0]['time'] ?? null];
+            });
+            $free = $perDay->sum('free_count');
+
+            return [
+                'id' => $hall->id,
+                'name' => $hall->name,
+                'capacity' => $hall->capacity,
+                'location' => $hall->location,
+                'free_count' => $free,
+                'free_day_count' => $perDay->where('free_count', '>', 0)->count(),
+                'days' => $perDay->values()->all(),
+                'message' => $free > 0
+                    ? "{$free} free time(s) on " . $perDay->where('free_count', '>', 0)->count() . ' of ' . count($days) . ' day(s)'
+                    : 'Not free when the course can be taught on these days',
+            ];
+        })
+            ->sortByDesc('free_count')
+            ->values();
+
+        return [
+            'duration_minutes' => $minutes,
+            'days' => $days,
+            'teachers' => $this->people($teachers),
+            'halls' => $rows->all(),
+            'summary' => [
+                'hall_count' => $rows->count(),
+                'usable_count' => $rows->where('free_count', '>', 0)->count(),
+                'message' => $rows->isEmpty()
+                    ? 'No hall is available in your school. Add a hall or mark one as available first.'
+                    : $rows->where('free_count', '>', 0)->count() . ' of ' . $rows->count() . " hall(s) have a free {$minutes}-minute time for {$jointCourse->course->course_title}.",
+            ],
+        ];
+    }
+
+    public function recommendWeek(object $currentSchool, string $semesterJointCourseId, array $params): array
+    {
+        $jointCourse = $this->findCourse($currentSchool, $semesterJointCourseId);
+        $minutes = (int) $params['duration_minutes'];
+        $days = $this->days($params);
+        $teachers = $this->teachersFor($jointCourse, $params['teacher_id'] ?? null);
+        $hall = $this->hall($currentSchool, $params['hall_id']);
+        [$windowStart, $windowEnd] = $this->window($params, $minutes);
+
+        $busy = $this->recommendationBusy($jointCourse, $teachers, [$hall->id]);
+
+        $perDay = collect($days)->map(function (string $day) use ($busy, $minutes, $teachers, $hall, $windowStart, $windowEnd) {
+            [$recommended, $unavailable] = $this->scan($busy, $day, $minutes, $teachers, $hall, $windowStart, $windowEnd);
+
+            return [
+                'day' => $day,
+                'day_label' => Text::day($day),
+                'recommended' => $recommended,
+                'unavailable' => $unavailable,
+                'message' => $recommended
+                    ? count($recommended) . ' free time(s)'
+                    : 'No free time: ' . (collect($unavailable)->flatMap(fn($slot) => $slot['reasons'])->countBy()->sortDesc()->keys()->first() ?? 'everything is taken'),
+            ];
+        });
+        $free = $perDay->sum(fn(array $day) => count($day['recommended']));
+
+        return [
+            'duration_minutes' => $minutes,
+            'window' => ['start_time' => Time::toTime($windowStart), 'end_time' => Time::toTime($windowEnd)],
+            'teachers' => $this->people($teachers),
+            'hall' => ['id' => $hall->id, 'name' => $hall->name, 'capacity' => $hall->capacity],
+            'days' => $perDay->values()->all(),
+            'summary' => [
+                'free_count' => $free,
+                'free_day_count' => $perDay->filter(fn(array $day) => $day['recommended'])->count(),
+                'message' => $free > 0
+                    ? "{$hall->name} and a teacher of {$jointCourse->course->course_title} are both free at {$free} time(s) on " . $perDay->filter(fn(array $day) => $day['recommended'])->count() . ' day(s).'
+                    : "{$hall->name} has no free {$minutes}-minute time on these days. Pick another hall, more days or a shorter duration.",
+            ],
+        ];
+    }
+
+    private function scan(Collection $busy, string $day, int $minutes, Collection $teachers, ?Hall $hall, int $windowStart, int $windowEnd): array
+    {
         $recommended = [];
         $unavailable = [];
 
@@ -300,7 +384,7 @@ class JointCourseTimetableService
             if ($freeTeachers->isNotEmpty() && $reasons->isEmpty()) {
                 $recommended[] = [
                     ...$entry,
-                    'teachers' => $freeTeachers->map(fn($teacher) => ['id' => $teacher->id, 'name' => $teacher->name])->all(),
+                    'teachers' => $this->people($freeTeachers),
                     'hall' => $hall ? ['id' => $hall->id, 'name' => $hall->name] : null,
                 ];
             } else {
@@ -308,23 +392,78 @@ class JointCourseTimetableService
             }
         }
 
-        return [
-            'day' => $day,
-            'day_label' => Text::day($day),
-            'duration_minutes' => $minutes,
-            'window' => ['start_time' => Time::toTime($windowStart), 'end_time' => Time::toTime($windowEnd)],
-            'teachers' => $teachers->map(fn($teacher) => ['id' => $teacher->id, 'name' => $teacher->name])->values()->all(),
-            'hall' => $hall ? ['id' => $hall->id, 'name' => $hall->name] : null,
-            'recommended' => $recommended,
-            'unavailable' => $unavailable,
-            'summary' => [
-                'recommended_count' => count($recommended),
-                'unavailable_count' => count($unavailable),
-                'message' => count($recommended) > 0
-                    ? count($recommended) . " free {$minutes}-minute time(s) on " . Text::day($day) . " for {$jointCourse->course->course_title}."
-                    : "No free {$minutes}-minute time on " . Text::day($day) . ' for ' . $jointCourse->course->course_title . '. Try another day' . ($hall ? ', hall' : '') . ' or a shorter duration.',
-            ],
-        ];
+        return [$recommended, $unavailable];
+    }
+
+    private function recommendationBusy(SemesterJointCourse $jointCourse, Collection $teachers, array $hallIds, ?string $day = null): Collection
+    {
+        return $this->busy($jointCourse, $day, $teachers->pluck('id')->all(), $hallIds)
+            ->reject(fn(array $other) => $other['kind'] === 'linked_timetable')
+            ->values();
+    }
+
+    private function teachersFor(SemesterJointCourse $jointCourse, ?string $teacherId): Collection
+    {
+        $teachers = $this->courseTeachers($jointCourse);
+
+        if ($teacherId) {
+            $teachers = $teachers->where('id', $teacherId)->values();
+        }
+
+        if ($teachers->isEmpty()) {
+            throw new AppException(
+                "No usable teacher for course {$jointCourse->course_id}.",
+                422,
+                $teacherId ? 'Teacher Does Not Teach This Course' : 'No Teacher For This Course',
+                $teacherId
+                    ? "The chosen teacher is not assigned to {$jointCourse->course->course_title}. Choose one of its teachers."
+                    : "No teacher is assigned to teach {$jointCourse->course->course_title} yet. Assign a teacher to the course first.",
+                null
+            );
+        }
+
+        return $teachers;
+    }
+
+    private function hall(object $currentSchool, string $hallId): Hall
+    {
+        return Hall::where('school_branch_id', $currentSchool->id)->find($hallId)
+            ?? throw new AppException('Hall not found.', 404, 'Hall Not Found', "We couldn't find this hall in your school.", null);
+    }
+
+    private function window(array $params, int $minutes): array
+    {
+        $windowStart = Time::toMinutes($params['start_time'] ?? self::DEFAULT_START);
+        $windowEnd = Time::toMinutes($params['end_time'] ?? self::DEFAULT_END);
+
+        if ($windowEnd - $windowStart < $minutes) {
+            throw new AppException(
+                'Time window is shorter than the duration.',
+                422,
+                'Time Window Too Short',
+                'The time window ' . Text::time(Time::toTime($windowStart), Time::toTime($windowEnd)) . " is shorter than {$minutes} minutes. Choose a longer window or a shorter duration.",
+                null
+            );
+        }
+
+        return [$windowStart, $windowEnd];
+    }
+
+    private function days(array $params): array
+    {
+        $days = collect($params['days'] ?? array_slice(self::DAYS, 0, 5))
+            ->map(fn($day) => strtolower($day))
+            ->unique()
+            ->sortBy(fn($day) => $this->dayOrder($day))
+            ->values()
+            ->all();
+
+        return $days ?: array_slice(self::DAYS, 0, 5);
+    }
+
+    private function people(Collection $teachers): array
+    {
+        return $teachers->map(fn($teacher) => ['id' => $teacher->id, 'name' => $teacher->name])->values()->all();
     }
 
     private function busy(SemesterJointCourse $jointCourse, ?string $day = null, array $teacherIds = [], array $hallIds = []): Collection

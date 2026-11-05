@@ -4,6 +4,7 @@ namespace App\Http\Controllers\JointCourse;
 
 use App\Exceptions\JointCourse\JointCourseSlotConflict;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\JointCourse\JointCourseWeekRequest;
 use App\Http\Requests\JointCourse\RecommendJointCourseSlotsRequest;
 use App\Http\Requests\JointCourse\SaveJointCourseSlotsRequest;
 use App\Services\ApiResponseService;
@@ -48,5 +49,17 @@ class JointCourseTimetableController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         return ApiResponseService::success('Recommended Times Fetched Successfully', $this->timetable->recommend($currentSchool, $semesterJointCourseId, $request->validated()), null, 200);
+    }
+
+    public function getHallAvailability(JointCourseWeekRequest $request, string $semesterJointCourseId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        return ApiResponseService::success('Hall Availability Fetched Successfully', $this->timetable->hallAvailability($currentSchool, $semesterJointCourseId, $request->validated()), null, 200);
+    }
+
+    public function getRecommendedWeek(JointCourseWeekRequest $request, string $semesterJointCourseId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        return ApiResponseService::success('Recommended Times Fetched Successfully', $this->timetable->recommendWeek($currentSchool, $semesterJointCourseId, $request->validated()), null, 200);
     }
 }
