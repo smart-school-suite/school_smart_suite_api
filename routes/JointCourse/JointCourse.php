@@ -16,5 +16,8 @@ Route::delete('/delete/{jointCourseId}', [JointCourseController::class, 'deleteJ
 Route::get('/details/{jointCourseId}', [JointCourseController::class, 'getJointCourseDetails'])
     ->name('joint-courses.show');
 
+Route::get('/{jointCourseId}/assignment', [JointCourseController::class, 'getJointCourseAssignment'])
+    ->name('joint-courses.assignment');
+
 Route::get('/', [JointCourseController::class, 'getJointCourses'])
     ->name('joint-courses.index');
