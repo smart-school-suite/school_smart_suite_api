@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JointCourse\CreateJointCourseRequest;
 use App\Http\Requests\JointCourse\UpdateJointCourseRequest;
 use App\Services\ApiResponseService;
+use App\Services\JointCourse\JointCourseAssignmentService;
 use App\Services\JointCourse\JointCourseService;
 use Illuminate\Http\Request;
 
@@ -52,6 +53,12 @@ class JointCourseController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $courseDetails = $this->jointCourseService->getJointCourseDetails($jointCourseId, $currentSchool);
         return ApiResponseService::success("Joint course details retrieved successfully", $courseDetails, null, 200);
+    }
+    public function getJointCourseAssignment(Request $request, string $jointCourseId, JointCourseAssignmentService $assignmentService)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $assignment = $assignmentService->getAssignment($jointCourseId, $currentSchool);
+        return ApiResponseService::success("Joint course assignment retrieved successfully", $assignment, null, 200);
     }
     protected function resolveUser()
     {
