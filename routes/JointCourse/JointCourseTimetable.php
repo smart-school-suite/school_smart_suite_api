@@ -9,3 +9,5 @@ Route::put('/{semesterJointCourseId}/slots', [JointCourseTimetableController::cl
 Route::post('/{semesterJointCourseId}/recommended-slots', [JointCourseTimetableController::class, 'getRecommendedSlots'])->name('jointCourseTimetable.slots.recommended');
 Route::post('/{semesterJointCourseId}/hall-availability', [JointCourseTimetableController::class, 'getHallAvailability'])->name('jointCourseTimetable.halls.availability');
 Route::post('/{semesterJointCourseId}/recommended-week', [JointCourseTimetableController::class, 'getRecommendedWeek'])->name('jointCourseTimetable.slots.week');
+Route::post('/{semesterJointCourseId}/generate', [JointCourseTimetableController::class, 'generateTimetable'])->name('jointCourseTimetable.generate');
+Route::post('/{semesterJointCourseId}/proposals/{proposalId}/confirm', [JointCourseTimetableController::class, 'confirmTimetable'])->name('jointCourseTimetable.proposals.confirm');
