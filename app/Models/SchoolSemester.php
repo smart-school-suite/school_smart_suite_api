@@ -43,15 +43,16 @@ class SchoolSemester extends Model
     {
         return $this->belongsTo(SchoolAcademicYear::class, 'school_year_id');
     }
+    // A semester is running until the end of its end date. Only the dates
+    // decide this; there is no status column to rely on.
     public function scopeStillRunning(Builder $query): Builder
     {
-        return $query->whereDate('end_date', '>=', now()->toDateString())
-            ->where(fn(Builder $status) => $status->whereNull('status')->orWhere('status', '!=', 'expired'));
+        return $query->whereDate($query->qualifyColumn('end_date'), '>=', now()->toDateString());
     }
 
     public function isStillRunning(): bool
     {
-        return $this->status !== 'expired' && Carbon::parse($this->end_date)->endOfDay()->isFuture();
+        return Carbon::parse($this->end_date)->endOfDay()->isFuture();
     }
     public function instructorAvailability(): HasMany
     {
