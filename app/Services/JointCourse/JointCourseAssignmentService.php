@@ -19,7 +19,7 @@ class JointCourseAssignmentService
                 'semester',
                 'specialties.department',
                 'specialties.level',
-                'teacherCoursePreference',
+                'teacherCoursePreference' => fn($query) => $query->orderBy('created_at'),
             ])
             ->find($jointCourseId);
 
@@ -35,14 +35,15 @@ class JointCourseAssignmentService
 
         $specialtyIds = $course->specialties->pluck('id')->all();
         $departmentIds = $course->specialties->pluck('department_id')->filter()->unique()->values()->all();
-        $currentTeacherIds = $course->teacherCoursePreference->pluck('teacher_id')->unique()->values()->all();
+        // A course has one teacher for now; if older data holds more, the first assigned counts.
+        $currentTeacherId = $course->teacherCoursePreference->first()?->teacher_id;
 
         $teachers = Teacher::where('school_branch_id', $currentSchool->id)
             ->with(['specialties.department', 'qualifications', 'currentAvatar'])
             ->withCount('teacherCoursePreference as course_count')
             ->orderBy('name')
             ->get()
-            ->map(fn(Teacher $teacher) => $this->presentTeacher($teacher, $specialtyIds, $departmentIds, $currentTeacherIds));
+            ->map(fn(Teacher $teacher) => $this->presentTeacher($teacher, $specialtyIds, $departmentIds, $currentTeacherId));
 
         $sorted = $teachers
             ->sortBy(fn(array $teacher) => [
@@ -56,12 +57,12 @@ class JointCourseAssignmentService
 
         return [
             'course' => $this->presentCourse($course),
-            'current_teachers' => $sorted->where('is_current', true)->values()->all(),
+            'current_teacher' => $sorted->firstWhere('is_current', true),
             'teachers' => $sorted->all(),
             'summary' => [
                 'teacher_count' => $sorted->count(),
                 'eligible_count' => $sorted->where('eligible', true)->count(),
-                'is_assigned' => !empty($currentTeacherIds),
+                'is_assigned' => $currentTeacherId !== null,
             ],
         ];
     }
@@ -97,7 +98,7 @@ class JointCourseAssignmentService
         ];
     }
 
-    private function presentTeacher(Teacher $teacher, array $specialtyIds, array $departmentIds, array $currentTeacherIds): array
+    private function presentTeacher(Teacher $teacher, array $specialtyIds, array $departmentIds, ?string $currentTeacherId): array
     {
         $matching = $teacher->specialties->whereIn('id', $specialtyIds);
         $department = $this->primaryDepartment($teacher->specialties, $departmentIds);
@@ -122,7 +123,7 @@ class JointCourseAssignmentService
             'department' => $department,
             'course_count' => (int) $teacher->course_count,
             'matching_specialty_count' => $matching->count(),
-            'is_current' => in_array($teacher->id, $currentTeacherIds, true),
+            'is_current' => $teacher->id === $currentTeacherId,
             'eligible' => $reason === null,
             'group' => $reason === null ? self::GROUP_ELIGIBLE : self::GROUP_INELIGIBLE,
             'ineligible_reason' => $reason,
