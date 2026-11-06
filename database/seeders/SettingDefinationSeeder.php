@@ -99,6 +99,20 @@ class SettingDefinationSeeder extends Seeder
                 'default_value' => 60,
                 'description' => 'The duration of each teaching period, measured in minutes. This value determines the length of an individual lesson period when generating the timetable.',
             ],
+            [
+                'key' => 'timetable.school_day_start',
+                'label' => 'School Day Opening Time',
+                'data_type' => 'string',
+                'default_value' => '08:00',
+                'description' => 'The time the school day begins, in 24-hour HH:MM format. Lessons are only scheduled from this time onwards.',
+            ],
+            [
+                'key' => 'timetable.school_day_end',
+                'label' => 'School Day Closing Time',
+                'data_type' => 'string',
+                'default_value' => '17:00',
+                'description' => 'The time the school day ends, in 24-hour HH:MM format. Lessons are only scheduled to finish by this time.',
+            ],
         ];
 
         $this->seedDefinitions('Timetable Settings', $settingDefs);

@@ -30,6 +30,7 @@ use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\RespectTeacherPreferenceHandler;
+use App\SchoolBranchSetting\Handlers\SemesterTimetable\SchoolDayHoursHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\TimetablePeriodDurationHandler;
 
 class SettingUpdateRegistry
@@ -77,6 +78,8 @@ class SettingUpdateRegistry
           'timetable.respect_teacher_preference' => RespectTeacherPreferenceHandler::class,
           'timetable.ignore_teacher_preference' => IgnoreTeacherPreferenceHandler::class,
           'timetable.period_duration' => TimetablePeriodDurationHandler::class,
+          'timetable.school_day_start' => SchoolDayHoursHandler::class,
+          'timetable.school_day_end' => SchoolDayHoursHandler::class,
 
           //
           'election_tie_breaker.highest_gpa_winner' => ElectionVoteTieHighestGpaHandler::class,
