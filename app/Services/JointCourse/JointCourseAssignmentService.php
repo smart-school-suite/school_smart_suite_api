@@ -8,19 +8,10 @@ use App\Models\Specialty;
 use App\Models\Teacher;
 use Illuminate\Support\Collection;
 
-/**
- * Read model for the "Manage Assignment" drawer of a joint course: who teaches
- * it now and who could. Assigning and changing teachers stays with
- * TeacherCoursePreferenceService (teacher-course/assign and
- * teacher-course/teacher/change), which applies the same eligibility rule
- * used here: an active teacher with a teaching preference for at least one of
- * the course's specialties.
- */
 class JointCourseAssignmentService
 {
     public const GROUP_ELIGIBLE = 'eligible';
     public const GROUP_INELIGIBLE = 'ineligible';
-
     public function getAssignment(string $jointCourseId, object $currentSchool): array
     {
         $course = Courses::where('school_branch_id', $currentSchool->id)
@@ -78,12 +69,12 @@ class JointCourseAssignmentService
     private function presentCourse(Courses $course): array
     {
         $specialties = $course->specialties;
-
         return [
             'id' => $course->id,
-            'code' => $course->course_code,
-            'title' => $course->course_title,
-            'credit' => $course->credit,
+            'code' => $course->course_code ?? null,
+            'title' => $course->course_title ?? null,
+            'credit' => $course->credit ?? null,
+            'description' => $course->description ?? null,
             'type' => 'joint',
             'type_label' => 'Joint Course',
             'semester' => $course->semester
@@ -110,7 +101,7 @@ class JointCourseAssignmentService
     {
         $matching = $teacher->specialties->whereIn('id', $specialtyIds);
         $department = $this->primaryDepartment($teacher->specialties, $departmentIds);
-        $qualification = $teacher->qualifications->sortByDesc('level')->first();
+        $qualification = $teacher->qualifications;
 
         $reason = match (true) {
             $teacher->status !== 'active' => 'This teacher account is deactivated.',
@@ -127,11 +118,7 @@ class JointCourseAssignmentService
             'username' => $teacher->username,
             'profile_picture' => $teacher->currentAvatar?->object_key,
             'status' => $teacher->status,
-            'qualification' => $qualification ? [
-                'name' => $qualification->name,
-                'abbreviation' => $qualification->abbreviation,
-                'field_of_study' => $qualification->pivot?->field_of_study,
-            ] : null,
+            'qualification' => $qualification ?? null,
             'department' => $department,
             'course_count' => (int) $teacher->course_count,
             'matching_specialty_count' => $matching->count(),
@@ -141,11 +128,6 @@ class JointCourseAssignmentService
             'ineligible_reason' => $reason,
         ];
     }
-
-    /**
-     * The department a teacher mostly teaches in, preferring one of the
-     * course's departments when the teacher teaches there at all.
-     */
     private function primaryDepartment(Collection $specialties, array $departmentIds): ?array
     {
         $departments = $specialties->pluck('department')->filter();
