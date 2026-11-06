@@ -110,7 +110,6 @@ class JointCourseAssignmentService
     {
         $matching = $teacher->specialties->whereIn('id', $specialtyIds);
         $department = $this->primaryDepartment($teacher->specialties, $departmentIds);
-        $qualification = $teacher->qualifications->sortByDesc('level')->first();
 
         $reason = match (true) {
             $teacher->status !== 'active' => 'This teacher account is deactivated.',
@@ -127,11 +126,17 @@ class JointCourseAssignmentService
             'username' => $teacher->username,
             'profile_picture' => $teacher->currentAvatar?->object_key,
             'status' => $teacher->status,
-            'qualification' => $qualification ? [
-                'name' => $qualification->name,
-                'abbreviation' => $qualification->abbreviation,
-                'field_of_study' => $qualification->pivot?->field_of_study,
-            ] : null,
+            'qualifications' => $teacher->qualifications
+                ->map(fn($qualification) => [
+                    'id' => $qualification->id,
+                    'name' => $qualification->name,
+                    'abbreviation' => $qualification->abbreviation,
+                    'field_of_study' => $qualification->pivot?->field_of_study,
+                    'institution' => $qualification->pivot?->institution,
+                    'year' => $qualification->pivot?->year,
+                ])
+                ->values()
+                ->all(),
             'department' => $department,
             'course_count' => (int) $teacher->course_count,
             'matching_specialty_count' => $matching->count(),
