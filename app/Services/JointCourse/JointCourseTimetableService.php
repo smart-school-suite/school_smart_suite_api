@@ -12,6 +12,7 @@ use App\Models\Hall;
 use App\Models\InstructorAvailability;
 use App\Models\PeriodDuration\PeriodDuration;
 use App\Models\SchoolSemester;
+use App\Models\Schoolbranches;
 use App\Models\Semester;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Schedular\SemesterTimetable\Solution\Support\Text;
@@ -172,38 +173,44 @@ class JointCourseTimetableService
             ], 'joint');
         });
 
-        $busy = $this->busy(
-            $jointCourse,
-            teacherIds: $candidates->pluck('teacher_id')->unique()->all(),
-            hallIds: $candidates->pluck('hall_id')->unique()->all(),
-        );
+        // Check and write under the same school-wide lock that activating a
+        // semester timetable takes, so no other joint course save or timetable
+        // activation can claim the same teacher or hall between the check and
+        // the write. A conflict throws inside the transaction and rolls it back.
+        $warnings = DB::transaction(function () use ($currentSchool, $jointCourse, $candidates) {
+            Schoolbranches::whereKey($currentSchool->id)->lockForUpdate()->first();
 
-        $conflicts = [];
-        $warnings = [];
+            $busy = $this->busy(
+                $jointCourse,
+                teacherIds: $candidates->pluck('teacher_id')->unique()->all(),
+                hallIds: $candidates->pluck('hall_id')->unique()->all(),
+            );
 
-        foreach ($candidates as $i => $slot) {
-            foreach ($candidates->slice($i + 1) as $other) {
-                if ($slot['day'] === $other['day'] && Time::overlaps($slot['start'], $slot['end'], $other['start'], $other['end'])) {
-                    $conflicts[] = $this->conflict('overlap', $slot, [...$other, 'source' => 'these times']);
+            $conflicts = [];
+            $warnings = [];
+
+            foreach ($candidates as $i => $slot) {
+                foreach ($candidates->slice($i + 1) as $other) {
+                    if ($slot['day'] === $other['day'] && Time::overlaps($slot['start'], $slot['end'], $other['start'], $other['end'])) {
+                        $conflicts[] = $this->conflict('overlap', $slot, [...$other, 'source' => 'these times']);
+                    }
+                }
+
+                foreach ($busy as $other) {
+                    $clash = $this->clash($slot, $other);
+
+                    if ($clash === 'linked_timetable') {
+                        $warnings[] = $this->conflict($clash, $slot, $other);
+                    } elseif ($clash) {
+                        $conflicts[] = $this->conflict($clash, $slot, $other);
+                    }
                 }
             }
 
-            foreach ($busy as $other) {
-                $clash = $this->clash($slot, $other);
-
-                if ($clash === 'linked_timetable') {
-                    $warnings[] = $this->conflict($clash, $slot, $other);
-                } elseif ($clash) {
-                    $conflicts[] = $this->conflict($clash, $slot, $other);
-                }
+            if ($conflicts) {
+                throw new JointCourseSlotConflict($conflicts);
             }
-        }
 
-        if ($conflicts) {
-            throw new JointCourseSlotConflict($conflicts);
-        }
-
-        DB::transaction(function () use ($currentSchool, $jointCourse, $candidates) {
             JointCourseSlot::where('school_branch_id', $currentSchool->id)
                 ->where('semester_joint_course_id', $jointCourse->id)
                 ->delete();
@@ -219,6 +226,8 @@ class JointCourseTimetableService
                     'end_time' => $slot['end_time'],
                 ]);
             }
+
+            return $warnings;
         });
 
         $course = $this->presentCourse($this->findCourse($currentSchool, $jointCourse->id));
