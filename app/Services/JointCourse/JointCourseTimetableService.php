@@ -13,6 +13,7 @@ use App\Models\InstructorAvailability;
 use App\Models\PeriodDuration\PeriodDuration;
 use App\Models\SchoolSemester;
 use App\Models\Schoolbranches;
+use App\Models\SchoolBranchSetting;
 use App\Models\Semester;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Schedular\SemesterTimetable\Solution\Support\Text;
@@ -29,6 +30,7 @@ class JointCourseTimetableService
 {
     private const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     private const GENERATED = [SemesterTimetableVersion::STATUS_OPTIMAL, SemesterTimetableVersion::STATUS_PARTIAL];
+    // Used only when a school has no school day settings yet.
     private const DEFAULT_START = '08:00';
     private const DEFAULT_END = '17:00';
     private const STEP_MINUTES = 30;
@@ -251,7 +253,7 @@ class JointCourseTimetableService
         $minutes = (int) $params['duration_minutes'];
         $teachers = $this->teachersFor($jointCourse, $params['teacher_id'] ?? null);
         $hall = !empty($params['hall_id']) ? $this->hall($currentSchool, $params['hall_id']) : null;
-        [$windowStart, $windowEnd] = $this->window($params, $minutes);
+        [$windowStart, $windowEnd] = $this->window($jointCourse->school_branch_id, $params, $minutes);
 
         $busy = $this->recommendationBusy($jointCourse, $teachers, array_filter([$hall?->id]), $day);
         [$recommended, $unavailable] = $this->scan($busy, $day, $minutes, $teachers, $hall, $windowStart, $windowEnd);
@@ -281,7 +283,7 @@ class JointCourseTimetableService
         $minutes = (int) $params['duration_minutes'];
         $days = $this->days($params);
         $teachers = $this->teachersFor($jointCourse, $params['teacher_id'] ?? null);
-        [$windowStart, $windowEnd] = $this->window($params, $minutes);
+        [$windowStart, $windowEnd] = $this->window($jointCourse->school_branch_id, $params, $minutes);
 
         $halls = Hall::where('school_branch_id', $currentSchool->id)
             ->where('status', 'available')
@@ -336,7 +338,7 @@ class JointCourseTimetableService
         $days = $this->days($params);
         $teachers = $this->teachersFor($jointCourse, $params['teacher_id'] ?? null);
         $hall = $this->hall($currentSchool, $params['hall_id']);
-        [$windowStart, $windowEnd] = $this->window($params, $minutes);
+        [$windowStart, $windowEnd] = $this->window($jointCourse->school_branch_id, $params, $minutes);
 
         $busy = $this->recommendationBusy($jointCourse, $teachers, [$hall->id]);
 
@@ -392,7 +394,7 @@ class JointCourseTimetableService
         );
 
         $requests = $this->dayRequests($params);
-        [$windowStart, $windowEnd] = $this->window($params, $requests->max('minutes'));
+        [$windowStart, $windowEnd] = $this->window($jointCourse->school_branch_id, $params, $requests->max('minutes'));
 
         $respectPreference = !$this->generation->ignoresTeacherPreference($currentSchool);
         $availability = $respectPreference ? $this->teacherAvailability($jointCourse, $teacher->id) : null;
@@ -737,10 +739,26 @@ class JointCourseTimetableService
             ?? throw new AppException('Hall not found.', 404, 'Hall Not Found', "We couldn't find this hall in your school.", null);
     }
 
-    private function window(array $params, int $minutes): array
+    /**
+     * The time range to search, in minutes. It defaults to the school day from
+     * App Configuration (timetable.school_day_start / school_day_end); a
+     * request may narrow it but not go outside the school day.
+     */
+    private function window(string $schoolBranchId, array $params, int $minutes): array
     {
-        $windowStart = Time::toMinutes($params['start_time'] ?? self::DEFAULT_START);
-        $windowEnd = Time::toMinutes($params['end_time'] ?? self::DEFAULT_END);
+        [$dayStart, $dayEnd] = $this->schoolDay($schoolBranchId);
+        $windowStart = isset($params['start_time']) ? Time::toMinutes($params['start_time']) : $dayStart;
+        $windowEnd = isset($params['end_time']) ? Time::toMinutes($params['end_time']) : $dayEnd;
+
+        if ($windowStart < $dayStart || $windowEnd > $dayEnd) {
+            throw new AppException(
+                'Time window is outside the school day.',
+                422,
+                'Outside School Hours',
+                'The school day runs ' . Text::time(Time::toTime($dayStart), Time::toTime($dayEnd)) . '. Choose times within it.',
+                null
+            );
+        }
 
         if ($windowEnd - $windowStart < $minutes) {
             throw new AppException(
@@ -753,6 +771,26 @@ class JointCourseTimetableService
         }
 
         return [$windowStart, $windowEnd];
+    }
+
+    /** The school day's opening and closing times in minutes, from App Configuration. */
+    private function schoolDay(string $schoolBranchId): array
+    {
+        $settings = SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
+            ->whereHas('settingDefination', fn($query) => $query->whereIn('key', ['timetable.school_day_start', 'timetable.school_day_end']))
+            ->with('settingDefination')
+            ->get()
+            ->mapWithKeys(fn(SchoolBranchSetting $setting) => [$setting->settingDefination->key => Time::toMinutes((string) $setting->value)]);
+
+        $start = $settings['timetable.school_day_start'] ?? null;
+        $end = $settings['timetable.school_day_end'] ?? null;
+
+        // Settings missing or unreadable: fall back so scheduling keeps working.
+        if ($start === null || $end === null || $start >= $end) {
+            return [Time::toMinutes(self::DEFAULT_START), Time::toMinutes(self::DEFAULT_END)];
+        }
+
+        return [$start, $end];
     }
 
     private function days(array $params): array
