@@ -782,10 +782,12 @@ class JointCourseTimetableService
     {
         $linkedSemesterIds = $jointCourse->semesterJointCourseRef->pluck('school_semester_id')->all();
 
+        // Other joint courses block a time while they are still being taught: at
+        // least one of their linked school semesters hasn't ended. Their term
+        // doesn't matter, since semesters of different terms can overlap.
         $otherJointCourses = SemesterJointCourse::where('school_branch_id', $jointCourse->school_branch_id)
-            ->where('school_year_id', $jointCourse->school_year_id)
-            ->where('semester_id', $jointCourse->semester_id)
             ->where('id', '!=', $jointCourse->id)
+            ->whereHas('semesterJointCourseRef.schoolSemester', fn($query) => $query->stillRunning())
             ->with(['course', 'jointCourseSlots.teacher', 'jointCourseSlots.hall', 'semesterJointCourseRef'])
             ->get()
             ->flatMap(fn(SemesterJointCourse $other) => $other->jointCourseSlots
