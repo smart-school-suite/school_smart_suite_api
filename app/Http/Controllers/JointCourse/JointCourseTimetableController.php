@@ -4,6 +4,7 @@ namespace App\Http\Controllers\JointCourse;
 
 use App\Exceptions\JointCourse\JointCourseSlotConflict;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\JointCourse\ConfirmJointCourseTimetableRequest;
 use App\Http\Requests\JointCourse\GenerateJointCourseTimetableRequest;
 use App\Http\Requests\JointCourse\JointCourseWeekRequest;
 use App\Http\Requests\JointCourse\RecommendJointCourseSlotsRequest;
@@ -49,15 +50,15 @@ class JointCourseTimetableController extends Controller
     public function generateTimetable(GenerateJointCourseTimetableRequest $request, string $semesterJointCourseId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        return ApiResponseService::success('Joint Course Timetable Generated Successfully', $this->timetable->generate($currentSchool, $semesterJointCourseId, $request->validated()), null, 200);
+        return ApiResponseService::success('Joint Course Slots Generated Successfully', $this->timetable->generate($currentSchool, $semesterJointCourseId, $request->validated()), null, 200);
     }
 
-    public function confirmTimetable(Request $request, string $semesterJointCourseId, string $proposalId)
+    public function confirmTimetable(ConfirmJointCourseTimetableRequest $request, string $semesterJointCourseId, string $proposalId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
 
         try {
-            $result = $this->timetable->confirmProposal($currentSchool, $semesterJointCourseId, $proposalId);
+            $result = $this->timetable->confirmProposal($currentSchool, $semesterJointCourseId, $proposalId, $request->validated()['option_ids']);
         } catch (JointCourseSlotConflict $conflict) {
             return ApiResponseService::error($conflict->getMessage(), null, 422, [
                 'title' => $conflict->getTitle(),
