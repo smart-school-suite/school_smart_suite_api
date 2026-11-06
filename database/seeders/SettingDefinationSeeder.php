@@ -6,10 +6,15 @@ use App\Models\Educationlevels;
 use Illuminate\Database\Seeder;
 use App\Models\SettingCategory;
 use App\Models\SettingDefination;
+use App\Models\SchoolBranchSetting;
+use Illuminate\Support\Facades\DB;
 use App\Models\LetterGrade;
 
 class SettingDefinationSeeder extends Seeder
 {
+    /** Every key defined in this seeder; anything else in the table is removed. */
+    private array $definedKeys = [];
+
     /**
      * Run the database seeds.
      */
@@ -23,6 +28,33 @@ class SettingDefinationSeeder extends Seeder
         $this->electionTieBreakerSettingDefination();
         $this->levelSetting();
         $this->graduationSetting();
+
+        $this->removeUndefinedSettings();
+    }
+
+    /**
+     * Delete setting definitions that are no longer listed here, together
+     * with every school's value for them. school_branch_settings has no
+     * cascade on setting_defination_id, so its rows go first.
+     */
+    private function removeUndefinedSettings(): void
+    {
+        if (empty($this->definedKeys)) {
+            return;
+        }
+
+        $removed = SettingDefination::whereNotIn('key', $this->definedKeys)->pluck('key', 'id');
+
+        if ($removed->isEmpty()) {
+            return;
+        }
+
+        DB::transaction(function () use ($removed) {
+            SchoolBranchSetting::whereIn('setting_defination_id', $removed->keys())->delete();
+            SettingDefination::whereIn('id', $removed->keys())->delete();
+        });
+
+        $this->command?->info('Removed settings no longer defined: ' . $removed->implode(', '));
     }
 
 
@@ -98,6 +130,20 @@ class SettingDefinationSeeder extends Seeder
                 'data_type' => 'integer',
                 'default_value' => 60,
                 'description' => 'The duration of each teaching period, measured in minutes. This value determines the length of an individual lesson period when generating the timetable.',
+            ],
+            [
+                'key' => 'timetable.school_day_start',
+                'label' => 'School Day Opening Time',
+                'data_type' => 'string',
+                'default_value' => '08:00',
+                'description' => 'The time the school day begins, in 24-hour HH:MM format. Lessons are only scheduled from this time onwards.',
+            ],
+            [
+                'key' => 'timetable.school_day_end',
+                'label' => 'School Day Closing Time',
+                'data_type' => 'string',
+                'default_value' => '17:00',
+                'description' => 'The time the school day ends, in 24-hour HH:MM format. Lessons are only scheduled to finish by this time.',
             ],
         ];
 
@@ -306,6 +352,10 @@ class SettingDefinationSeeder extends Seeder
     }
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {
+        // Recorded before the category check so a missing category never
+        // gets its existing settings deleted as "undefined".
+        array_push($this->definedKeys, ...array_column($settingDefs, 'key'));
+
         $settingCategory = SettingCategory::where('name', $categoryName)->first();
 
         if (!$settingCategory) {
