@@ -45,6 +45,20 @@ class TeacherCoursePreferenceService
                 );
             }
 
+            // Only one teacher can teach a course for now; replacing one goes through changeTeacherForCourse.
+            $alreadyTaught = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
+                ->whereIn('course_id', $requestedCourseIds)
+                ->exists();
+
+            if ($alreadyTaught) {
+                throw new AppException(
+                    "Course Already Assigned",
+                    409,
+                    "Course already has a teacher",
+                    "A course can only have one teacher. Change the current teacher instead of assigning another one."
+                );
+            }
+
             $teacher = Teacher::where('id', $teacherId)
                 ->where('school_branch_id', $schoolBranchId)
                 ->lockForUpdate()
@@ -331,12 +345,8 @@ class TeacherCoursePreferenceService
             $oldTeacherIdToUse = $oldTeacherId ?? $currentAssignmentsList->first()->teacher_id;
 
 
-            $alreadyAssigned = TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
-                ->where('course_id', $courseId)
-                ->where('teacher_id', $newTeacherId)
-                ->exists();
-
-            if ($alreadyAssigned) {
+            // Picking the teacher being replaced changes nothing.
+            if ($newTeacherId === $oldTeacherIdToUse) {
                 throw new AppException(
                     "Already Assigned",
                     409,
@@ -345,9 +355,9 @@ class TeacherCoursePreferenceService
                 );
             }
 
+            // One teacher per course: the new teacher replaces every existing assignment.
             TeacherCoursePreference::where('school_branch_id', $schoolBranchId)
                 ->where('course_id', $courseId)
-                ->where('teacher_id', $oldTeacherIdToUse)
                 ->delete();
 
 
