@@ -9,15 +9,20 @@ use App\Models\Course\JointCourseSlot;
 use App\Models\Course\SemesterJoinCourseReference;
 use App\Models\Course\SemesterJointCourse;
 use App\Models\Hall;
+use App\Models\InstructorAvailability;
+use App\Models\PeriodDuration\PeriodDuration;
 use App\Models\SchoolSemester;
 use App\Models\Semester;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Schedular\SemesterTimetable\Solution\Support\Text;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
 use App\Services\SemesterTimetable\Support\ActiveCommitments;
+use App\Services\SemesterTimetable\TimetableGenerationDispatcher;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class JointCourseTimetableService
 {
@@ -26,8 +31,14 @@ class JointCourseTimetableService
     private const DEFAULT_START = '08:00';
     private const DEFAULT_END = '17:00';
     private const STEP_MINUTES = 30;
+    private const MAX_SLOTS = 20; // matches SaveJointCourseSlotsRequest
+    private const TEACHING_DURATION_TYPE = 'semester_timetable_duration';
+    private const PROPOSAL_TTL_MINUTES = 30;
 
-    public function __construct(private ActiveCommitments $commitments) {}
+    public function __construct(
+        private ActiveCommitments $commitments,
+        private TimetableGenerationDispatcher $generation,
+    ) {}
 
     public function terms(object $currentSchool): array
     {
@@ -349,6 +360,307 @@ class JointCourseTimetableService
                     : "{$hall->name} has no free {$minutes}-minute time on these days. Pick another hall, more days or a shorter duration.",
             ],
         ];
+    }
+
+    /**
+     * Generate a week of slots for a joint course: each requested period becomes
+     * one slot of its period duration, placed where the course's teacher and a
+     * hall are both free. When the school respects teacher preferences, slots
+     * must also fall inside the teacher's availability for one of the course's
+     * linked semesters. The result is stored as a proposal that can only be
+     * confirmed as-is (confirmProposal); nothing is saved here.
+     */
+    public function generate(object $currentSchool, string $semesterJointCourseId, array $params): array
+    {
+        $jointCourse = $this->findCourse($currentSchool, $semesterJointCourseId);
+        $teacher = $this->courseTeachers($jointCourse)->first() ?? throw new AppException(
+            "No teacher for course {$jointCourse->course_id}.",
+            422,
+            'No Teacher For This Course',
+            "No teacher is assigned to teach {$jointCourse->course->course_title} yet. Assign a teacher to the course first.",
+            null
+        );
+
+        $requests = $this->periodRequests($params);
+        [$windowStart, $windowEnd] = $this->window($params, $requests->max('minutes'));
+
+        $respectPreference = !$this->generation->ignoresTeacherPreference($currentSchool);
+        $availability = $respectPreference ? $this->teacherAvailability($jointCourse, $teacher->id) : null;
+
+        if ($respectPreference && $availability->isEmpty()) {
+            throw new AppException(
+                "Teacher {$teacher->id} has no availability for the linked semesters.",
+                422,
+                'No Teaching Availability',
+                "{$teacher->name} hasn't set when they can teach for the semesters that share this course. Add their availability, or switch the timetable setting to ignore teacher preferences.",
+                null
+            );
+        }
+
+        $halls = Hall::where('school_branch_id', $currentSchool->id)
+            ->where('status', 'available')
+            ->orderBy('name')
+            ->get();
+
+        if ($halls->isEmpty()) {
+            throw new AppException(
+                'No available hall.',
+                422,
+                'No Hall Available',
+                'No hall is available in your school. Add a hall or mark one as available first.',
+                null
+            );
+        }
+
+        $teachers = collect([$teacher]);
+        $busy = $this->recommendationBusy($jointCourse, $teachers, $halls->pluck('id')->all());
+
+        // Free start times per day and hall, already limited to the teacher's availability.
+        $free = [];
+        foreach ($requests as $request) {
+            foreach ($halls as $hall) {
+                [$recommended] = $this->scan($busy, $request['day'], $request['minutes'], $teachers, $hall, $windowStart, $windowEnd);
+                $free[$request['day']][$hall->id] = collect($recommended)
+                    ->map(fn(array $time) => ['start' => Time::toMinutes($time['start_time']), 'end' => Time::toMinutes($time['end_time'])])
+                    ->filter(fn(array $time) => !$availability || $this->withinAvailability($availability, $request['day'], $time['start'], $time['end']))
+                    ->values()
+                    ->all();
+            }
+        }
+
+        // Halls with the most room across the requested days first, so the course keeps one hall where it can.
+        $rankedHalls = $halls
+            ->sortBy(fn(Hall $hall) => [-collect($free)->sum(fn(array $byHall) => count($byHall[$hall->id])), $hall->name])
+            ->values();
+
+        $slots = [];
+        $shortfalls = [];
+
+        foreach ($requests as $request) {
+            $placed = [];
+
+            for ($period = 1; $period <= $request['periods']; $period++) {
+                $choice = $this->pickPeriod($free[$request['day']], $rankedHalls, $placed);
+
+                if (!$choice) {
+                    break;
+                }
+
+                $placed[] = $choice;
+            }
+
+            usort($placed, fn(array $a, array $b) => $a['start'] <=> $b['start']);
+
+            foreach ($placed as $choice) {
+                $slots[] = [
+                    'day' => $request['day'],
+                    'day_label' => Text::day($request['day']),
+                    'start_time' => Time::toTime($choice['start']),
+                    'end_time' => Time::toTime($choice['end']),
+                    'time' => Text::time(Time::toTime($choice['start']), Time::toTime($choice['end'])),
+                    'duration_minutes' => $request['minutes'],
+                    'period_duration' => ['id' => $request['duration']->id, 'name' => $request['duration']->name],
+                    'hall' => ['id' => $choice['hall']->id, 'name' => $choice['hall']->name, 'capacity' => $choice['hall']->capacity],
+                ];
+            }
+
+            if (count($placed) < $request['periods']) {
+                $shortfalls[] = [
+                    'day' => $request['day'],
+                    'day_label' => Text::day($request['day']),
+                    'requested' => $request['periods'],
+                    'placed' => count($placed),
+                    'message' => $this->shortfallMessage($request, count($placed), $teacher->name, $availability),
+                ];
+            }
+        }
+
+        $complete = empty($shortfalls);
+        $proposal = [
+            'id' => (string) Str::uuid(),
+            'school_branch_id' => $currentSchool->id,
+            'semester_joint_course_id' => $jointCourse->id,
+            'teacher_id' => $teacher->id,
+            'slots' => $slots,
+            'complete' => $complete,
+        ];
+
+        Cache::put($this->proposalKey($proposal['id']), $proposal, now()->addMinutes(self::PROPOSAL_TTL_MINUTES));
+
+        $requested = $requests->sum('periods');
+
+        return [
+            'proposal_id' => $proposal['id'],
+            'expires_at' => now()->addMinutes(self::PROPOSAL_TTL_MINUTES)->toIso8601String(),
+            'status' => $complete ? 'complete' : 'partial',
+            'teacher' => ['id' => $teacher->id, 'name' => $teacher->name],
+            'teacher_preference' => $respectPreference ? 'respected' : 'ignored',
+            'window' => ['start_time' => Time::toTime($windowStart), 'end_time' => Time::toTime($windowEnd)],
+            'slots' => $slots,
+            'shortfalls' => $shortfalls,
+            'summary' => [
+                'requested_count' => $requested,
+                'placed_count' => count($slots),
+                'message' => $complete
+                    ? count($slots) . " slot(s) found for {$jointCourse->course->course_title}. Confirm to save them."
+                    : count($slots) . " of {$requested} slot(s) could be placed. Change the days, periods or duration and generate again.",
+            ],
+        ];
+    }
+
+    /**
+     * Save a generated proposal exactly as it was generated. The slots are
+     * revalidated and saved in one transaction by saveSlots; a proposal can
+     * be confirmed once.
+     */
+    public function confirmProposal(object $currentSchool, string $semesterJointCourseId, string $proposalId): array
+    {
+        $proposal = Cache::get($this->proposalKey($proposalId));
+
+        if (
+            !$proposal
+            || $proposal['school_branch_id'] !== $currentSchool->id
+            || $proposal['semester_joint_course_id'] !== $semesterJointCourseId
+        ) {
+            throw new AppException(
+                "Proposal {$proposalId} not found.",
+                404,
+                'Proposal Expired',
+                'This generated timetable has expired or was already saved. Generate it again.',
+                null
+            );
+        }
+
+        if (!$proposal['complete']) {
+            throw new AppException(
+                "Proposal {$proposalId} is partial.",
+                422,
+                'Timetable Incomplete',
+                'Not every period could be placed, so this timetable cannot be saved. Change the days, periods or duration and generate again.',
+                null
+            );
+        }
+
+        $result = $this->saveSlots($currentSchool, $semesterJointCourseId, collect($proposal['slots'])
+            ->map(fn(array $slot) => [
+                'day' => $slot['day'],
+                'start_time' => $slot['start_time'],
+                'end_time' => $slot['end_time'],
+                'hall_id' => $slot['hall']['id'],
+                'teacher_id' => $proposal['teacher_id'],
+            ])
+            ->all());
+
+        Cache::forget($this->proposalKey($proposalId));
+
+        return $result;
+    }
+
+    /** Requested days with their period count and duration, in week order. */
+    private function periodRequests(array $params): Collection
+    {
+        $ids = collect($params['days'])->pluck('period_duration_id')->push($params['period_duration_id'])->filter()->unique()->values();
+        $durations = PeriodDuration::with('type')->whereIn('id', $ids)->get()->keyBy('id');
+
+        foreach ($ids as $id) {
+            $duration = $durations->get($id);
+
+            if (!$duration || $duration->status !== 'active' || $duration->type?->key !== self::TEACHING_DURATION_TYPE) {
+                throw new AppException(
+                    "Period duration {$id} cannot be used for teaching.",
+                    422,
+                    'Invalid Period Duration',
+                    'Choose one of the active teaching period durations.',
+                    null
+                );
+            }
+        }
+
+        $requests = collect($params['days'])
+            ->map(function (array $day) use ($params, $durations) {
+                $duration = $durations->get($day['period_duration_id'] ?? $params['period_duration_id']);
+
+                return [
+                    'day' => strtolower($day['day']),
+                    'periods' => (int) $day['periods'],
+                    'minutes' => (int) $duration->minutes,
+                    'duration' => $duration,
+                ];
+            })
+            ->sortBy(fn(array $day) => $this->dayOrder($day['day']))
+            ->values();
+
+        if ($requests->sum('periods') > self::MAX_SLOTS) {
+            throw new AppException(
+                'Too many periods.',
+                422,
+                'Too Many Periods',
+                'A joint course can have at most ' . self::MAX_SLOTS . ' periods a week.',
+                null
+            );
+        }
+
+        return $requests;
+    }
+
+    /**
+     * The teacher's availability windows by day, merged across every semester
+     * linked to the joint course: a time counts if any of them allows it.
+     */
+    private function teacherAvailability(SemesterJointCourse $jointCourse, string $teacherId): Collection
+    {
+        return InstructorAvailability::where('school_branch_id', $jointCourse->school_branch_id)
+            ->where('teacher_id', $teacherId)
+            ->whereIn('school_semester_id', $jointCourse->semesterJointCourseRef->pluck('school_semester_id'))
+            ->with('instructorAvailabilitySlot')
+            ->get()
+            ->flatMap(fn(InstructorAvailability $availability) => $availability->instructorAvailabilitySlot)
+            ->map(fn($slot) => [
+                'day' => strtolower($slot->day_of_week),
+                'start' => Time::toMinutes($slot->start_time),
+                'end' => Time::toMinutes($slot->end_time),
+            ])
+            ->groupBy('day');
+    }
+
+    private function withinAvailability(Collection $availability, string $day, int $start, int $end): bool
+    {
+        return collect($availability->get($day, []))
+            ->contains(fn(array $window) => $start >= $window['start'] && $end <= $window['end']);
+    }
+
+    /** The earliest free time in the best-ranked hall that doesn't overlap the day's other periods. */
+    private function pickPeriod(array $freeByHall, Collection $rankedHalls, array $placed): ?array
+    {
+        foreach ($rankedHalls as $hall) {
+            foreach ($freeByHall[$hall->id] as $time) {
+                $clashes = collect($placed)->contains(fn(array $other) => Time::overlaps($time['start'], $time['end'], $other['start'], $other['end']));
+
+                if (!$clashes) {
+                    return [...$time, 'hall' => $hall];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function shortfallMessage(array $request, int $placed, string $teacherName, ?Collection $availability): string
+    {
+        $day = Text::day($request['day']);
+
+        if ($availability && !$availability->has($request['day'])) {
+            return "{$teacherName} is not available to teach on {$day}.";
+        }
+
+        return "Only {$placed} of {$request['periods']} {$request['minutes']}-minute period(s) fit on {$day}: "
+            . 'the teacher and the halls are not free together for the rest'
+            . ($availability ? " within {$teacherName}'s availability." : '.');
+    }
+
+    private function proposalKey(string $proposalId): string
+    {
+        return "joint-course-timetable:proposal:{$proposalId}";
     }
 
     private function scan(Collection $busy, string $day, int $minutes, Collection $teachers, ?Hall $hall, int $windowStart, int $windowEnd): array

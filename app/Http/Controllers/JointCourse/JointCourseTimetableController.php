@@ -4,6 +4,7 @@ namespace App\Http\Controllers\JointCourse;
 
 use App\Exceptions\JointCourse\JointCourseSlotConflict;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\JointCourse\GenerateJointCourseTimetableRequest;
 use App\Http\Requests\JointCourse\JointCourseWeekRequest;
 use App\Http\Requests\JointCourse\RecommendJointCourseSlotsRequest;
 use App\Http\Requests\JointCourse\SaveJointCourseSlotsRequest;
@@ -33,6 +34,30 @@ class JointCourseTimetableController extends Controller
 
         try {
             $result = $this->timetable->saveSlots($currentSchool, $semesterJointCourseId, $request->validated()['slots']);
+        } catch (JointCourseSlotConflict $conflict) {
+            return ApiResponseService::error($conflict->getMessage(), null, 422, [
+                'title' => $conflict->getTitle(),
+                'description' => $conflict->getDescription(),
+                'path' => null,
+                'conflicts' => $conflict->conflicts(),
+            ]);
+        }
+
+        return ApiResponseService::success('Joint Course Times Saved Successfully', $result, null, 200);
+    }
+
+    public function generateTimetable(GenerateJointCourseTimetableRequest $request, string $semesterJointCourseId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        return ApiResponseService::success('Joint Course Timetable Generated Successfully', $this->timetable->generate($currentSchool, $semesterJointCourseId, $request->validated()), null, 200);
+    }
+
+    public function confirmTimetable(Request $request, string $semesterJointCourseId, string $proposalId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+
+        try {
+            $result = $this->timetable->confirmProposal($currentSchool, $semesterJointCourseId, $proposalId);
         } catch (JointCourseSlotConflict $conflict) {
             return ApiResponseService::error($conflict->getMessage(), null, 422, [
                 'title' => $conflict->getTitle(),
