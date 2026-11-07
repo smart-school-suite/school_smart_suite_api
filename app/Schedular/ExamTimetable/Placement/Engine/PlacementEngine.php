@@ -2,181 +2,227 @@
 
 namespace App\Schedular\ExamTimetable\Placement\Engine;
 
+use App\Constant\Constraint\ExamTimetable\Course\CoursePlacement;
+use App\Constant\Constraint\ExamTimetable\Student\StudentDailyLoadRange;
+use App\Constant\Violation\ExamTimetable\Hall\HallUnavailable;
+use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorTeachesCourse;
+use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorUnavailable;
+use App\Constant\Violation\ExamTimetable\Schedule\OperationalPeriod;
 use App\Constant\Violation\ExamTimetable\Student\StudentDailyLoad;
 use App\Schedular\ExamTimetable\Context\RequestContext;
 use App\Schedular\ExamTimetable\Core\State;
 use App\Schedular\ExamTimetable\DTO\AllocationDTO;
-use App\Schedular\ExamTimetable\Helpers\HallAvailability;
-use App\Schedular\ExamTimetable\Helpers\InvigilatorAvailability;
-use App\Schedular\ExamTimetable\Helpers\HallBuilder;
+use App\Schedular\ExamTimetable\Placement\Resources\ResourceAllocator;
 use App\Schedular\ExamTimetable\Placement\Scoring\ExamDateScoring;
 use App\Schedular\ExamTimetable\Placement\Scoring\ExamSlotScore;
-use Illuminate\Support\Facades\Log;
+use App\Schedular\ExamTimetable\Placement\Support\Time;
 
+/**
+ * Gives every course not placed yet one exam session.
+ *
+ * Courses go hardest first: those that fit on the fewest dates (long exams),
+ * then those whose teachers make up more of the invigilators (fewer people can
+ * invigilate them), then the longest exams.
+ * For each course the dates are tried in ExamDateScoring order and, on each
+ * date, the start times in ExamSlotScore order. The first time where
+ * ResourceAllocator finds halls and invigilators wins.
+ *
+ * Dates already at the daily maximum are only tried when no other date works;
+ * using one is recorded as a student daily load violation. A course that fits
+ * nowhere is recorded as a hard course placement violation with the reasons.
+ */
 class PlacementEngine
 {
-
-    public function run(State $state)
+    public function run(State $state): void
     {
         $context = RequestContext::fromPayload();
-        $hallService = app(HallAvailability::class);
-        $invigService = app(InvigilatorAvailability::class);
-        $examDates = collect(app(ExamDateScoring::class)->ScoreGridByBusyness($state))->sortBy('allocations')->values();
-        $candidateCount = $context->candidateCount();
-        $specialtyId = $context->specialty();
-        $courses = $context->courses();
-        $coursesPlaced = 0;
-        $unplacedCourse = collect();
-        foreach ($courses as $course) {
-            if ($coursesPlaced === $courses->count()) {
-                return;
+
+        foreach ($this->orderCourses($state, $context) as $course) {
+            $courseId = $course['course_id'];
+            if ($state->isPlaced($courseId)) {
+                continue;
             }
 
-            $courseId = $course['course_id'];
-            $sessionDuration = $context->sessionDurationCourse($courseId);
-            $attemptedDates = collect();
+            $this->placeCourse($state, $context, $courseId);
+        }
+    }
 
-            foreach ($examDates as $examDate) {
-                $date = $examDate['date'];
-                $dateAllocations = $examDate['allocations'];
-                $allocation = (int) ($dateAllocations + 1);
-                $studentLoad = $context->sDailyLoadRangeDate($date);
+    private function orderCourses(State $state, RequestContext $context): array
+    {
+        return $context->courses()
+            ->sortBy(fn(array $course) => [
+                $this->datesLongEnough($state, $context->sessionDurationCourse($course['course_id'])),
+                -count($context->teachersOf($course['course_id'])),
+                -$context->sessionDurationCourse($course['course_id']),
+                $course['course_title'] ?? $course['course_id'],
+            ])
+            ->values()
+            ->all();
+    }
 
-                if ($allocation > $studentLoad['max_sessions']) {
-                    $attemptedDates->push($date);
+    /** Dates whose opening hours can hold an exam this long. */
+    private function datesLongEnough(State $state, int $duration): int
+    {
+        return count(array_filter(
+            $state->dateGrid,
+            fn($day) => Time::duration($day->startTime, $day->endTime) >= $duration
+        ));
+    }
 
-                    if ($examDates->pluck('date')->diff($attemptedDates)->isNotEmpty()) {
-                        $slot = collect(app(ExamSlotScore::class)->suggestSlots(
-                            $state->dateGrid[$date],
-                            $sessionDuration
-                        ))->first();
+    private function placeCourse(State $state, RequestContext $context, string $courseId): void
+    {
+        $duration = $context->sessionDurationCourse($courseId);
+        $allocator = app(ResourceAllocator::class);
+        $dates = app(ExamDateScoring::class)->rank($state);
+        $failures = ['times_tried' => 0, 'hall' => null, 'invigilator' => null];
 
-                        $hall = $hallService->availableHalls(
-                            $date,
-                            $slot['start_time'],
-                            $slot['end_time']
-                        )->first();
-
-                        $invigilator = collect($invigService->getAvailableInvigilators([
-                            'date'       => $date,
-                            'start_time' => $slot['start_time'],
-                            'end_time'   => $slot['end_time'],
-                        ]))->first();
-
-
-                        $state->dateGrid[$date]->allocations[] = [
-                            "type"       => AllocationDTO::TYPE_REGULAR,
-                            "start_time" => $slot['start_time'],
-                            "end_time"   => $slot['end_time'],
-                            "hall"       => isset($hall['group'])
-                                ? app(HallBuilder::class)->buildGroupedHall(
-                                    $courseId,
-                                    $hall,
-                                    $invigilator,
-                                    $candidateCount,
-                                    $specialtyId
-                                )
-                                : app(HallBuilder::class)->buildSingleHall(
-                                    $courseId,
-                                    $hall,
-                                    $invigilator,
-                                    $candidateCount,
-                                    $specialtyId
-                                ),
-                        ];
-
-                        $existingKey = collect($state->violations['soft'])->search(function ($item) use ($date) {
-                            return $item['constraint_failed']['key'] === StudentDailyLoad::KEY &&
-                                $item['constraint_failed']['date'] === $date;
-                        });
-
-                        if ($existingKey !== false) {
-                            $state->violations['soft'][$existingKey]['constraint_failed']['count']++;
-                        } else {
-                            $state->violations['soft'][] = [
-                                'constraint_failed' => [
-                                    'key'          => StudentDailyLoad::KEY,
-                                    'date'         => $date,
-                                    'breach'       => 'max',
-                                    'count'        => 1,
-                                    'max_sessions' => $studentLoad['max_sessions'],
-                                ],
-                                'violations' => [],
-                            ];
-                        }
-
-                        $examDates->transform(function ($examDate) use ($date) {
-                            if ($examDate['date'] === $date) {
-                                $examDate['allocations'] += 1;
-                            }
-                            return $examDate;
-                        });
-
-                        $examDates = $examDates->sortBy('allocations')->values();
-
-                        $coursesPlaced++;
-
-                    } else {
-                        $unplacedCourse->push($courseId);
-                    }
-
+        // Dates within the daily maximum first; over-full dates only as a last resort.
+        foreach ([false, true] as $overflow) {
+            foreach ($dates as $entry) {
+                if ($entry['overflow'] !== $overflow) {
                     continue;
                 }
 
-                $slot = collect(app(ExamSlotScore::class)->suggestSlots(
-                    $state->dateGrid[$date],
-                    $sessionDuration
-                ))->first();
+                $date = $entry['date'];
+                $slots = app(ExamSlotScore::class)->suggestSlots($state->dateGrid[$date], $duration);
 
+                foreach ($slots as $slot) {
+                    $failures['times_tried']++;
+                    $start = Time::toMinutes($slot['start_time']);
+                    $end = Time::toMinutes($slot['end_time']);
 
-                $hall = $hallService->availableHalls(
-                    $date,
-                    $slot['start_time'],
-                    $slot['end_time']
-                )->first();
+                    $result = $allocator->allocate($state, [
+                        'course_id' => $courseId,
+                        'date' => $date,
+                        'start_time' => $slot['start_time'],
+                        'end_time' => $slot['end_time'],
+                        'slot_type' => CoursePlacement::KEY,
+                        'preferred_hall_ids' => $context->requestsOverlapping($context->hallRequestedSlots(), $date, $start, $end)->pluck('hall_id')->all(),
+                        'preferred_invigilator_ids' => $context->requestsOverlapping($context->invigilatorRequestedSlots(), $date, $start, $end)->pluck('invigilator_id')->all(),
+                    ]);
 
-
-                $invigilator = collect($invigService->getAvailableInvigilators([
-                    'date'       => $date,
-                    'start_time' => $slot['start_time'],
-                    'end_time'   => $slot['end_time'],
-                ]))->first();
-
-
-                $state->dateGrid[$date]->allocations[] = [
-                    "type"       => AllocationDTO::TYPE_REGULAR,
-                    "start_time" => $slot['start_time'],
-                    "end_time"   => $slot['end_time'],
-                    "hall"       => isset($hall['group'])
-                        ? app(HallBuilder::class)->buildGroupedHall(
-                            $courseId,
-                            $hall,
-                            $invigilator,
-                            $candidateCount,
-                            $specialtyId
-                        )
-                        : app(HallBuilder::class)->buildSingleHall(
-                            $courseId,
-                            $hall,
-                            $invigilator,
-                            $candidateCount,
-                            $specialtyId
-                        ),
-                ];
-
-                $examDates->transform(function ($examDate) use ($date) {
-                    if ($examDate['date'] === $date) {
-                        $examDate['allocations'] += 1;
+                    if (!$result['ok']) {
+                        $this->rememberFailure($failures, $result['blockers']);
+                        continue;
                     }
-                    return $examDate;
-                });
 
-                $examDates = $examDates->sortBy('allocations')->values();
+                    $session = [
+                        'type' => AllocationDTO::TYPE_REGULAR,
+                        'source' => AllocationDTO::SOURCE_PLACEMENT,
+                        'course_id' => $courseId,
+                        'start_time' => $slot['start_time'],
+                        'end_time' => $slot['end_time'],
+                        'candidate_count' => $context->candidateCountFor($courseId),
+                        'halls' => $result['halls'],
+                    ];
 
-                $coursesPlaced++;
+                    if ($overflow) {
+                        $this->recordDailyLoadBreach($state, $context, $date, $courseId);
+                    }
 
-                break;
+                    $state->addSession($date, $session);
+                    $allocator->commit($state, $date, $session);
+                    return;
+                }
             }
         }
+
+        $state->violations['hard'][] = [
+            'constraint_failed' => [
+                'key' => CoursePlacement::KEY,
+                'course_id' => $courseId,
+                'duration' => $duration,
+                'candidate_count' => $context->candidateCountFor($courseId),
+            ],
+            'blockers' => $this->placementBlockers($context, $courseId, $duration, $failures),
+        ];
+    }
+
+    /** Keeps the closest miss of each kind, to explain an unplaced course. */
+    private function rememberFailure(array &$failures, array $blockers): void
+    {
+        foreach ($blockers as $blocker) {
+            if ($blocker['key'] === HallUnavailable::KEY) {
+                if (!$failures['hall'] || $blocker['seats_free'] > $failures['hall']['seats_free']) {
+                    $failures['hall'] = $blocker;
+                }
+            }
+            if ($blocker['key'] === InvigilatorUnavailable::KEY) {
+                if (!$failures['invigilator'] || $blocker['invigilators_free'] > $failures['invigilator']['invigilators_free']) {
+                    $failures['invigilator'] = $blocker;
+                }
+            }
+        }
+    }
+
+    private function placementBlockers(RequestContext $context, string $courseId, int $duration, array $failures): array
+    {
+        $conflict = ['course_id' => $courseId, 'slot_type' => CoursePlacement::KEY];
+
+        if ($failures['times_tried'] === 0) {
+            return [[
+                'key' => OperationalPeriod::KEY,
+                'entity_type' => 'operational_hour',
+                'type' => 'no_time_left',
+                'duration' => $duration,
+                'conflict' => $conflict,
+            ]];
+        }
+
+        $blockers = [];
+
+        if ($failures['hall']) {
+            $blockers[] = $failures['hall'];
+        }
+
+        if ($failures['invigilator']) {
+            $blockers[] = $failures['invigilator'];
+
+            $teachers = $failures['invigilator']['teaching_invigilator_ids'] ?? [];
+            if ($teachers) {
+                $blockers[] = [
+                    'key' => InvigilatorTeachesCourse::KEY,
+                    'course_id' => $courseId,
+                    'invigilator_ids' => $teachers,
+                    'conflict' => $conflict,
+                ];
+            }
+        }
+
+        return $blockers;
+    }
+
+    private function recordDailyLoadBreach(State $state, RequestContext $context, string $date, string $courseId): void
+    {
+        $max = $context->dailyLoadFor($date)['max_sessions'];
+
+        foreach ($state->violations['soft'] as &$violation) {
+            $failed = $violation['constraint_failed'];
+            if ($failed['key'] === StudentDailyLoadRange::KEY && $failed['date'] === $date && $failed['breach'] === 'max') {
+                $violation['constraint_failed']['sessions']++;
+                $violation['blockers'][0]['course_ids'][] = $courseId;
+                return;
+            }
+        }
+        unset($violation);
+
+        $state->violations['soft'][] = [
+            'constraint_failed' => [
+                'key' => StudentDailyLoadRange::KEY,
+                'date' => $date,
+                'breach' => 'max',
+                'max_sessions' => $max,
+                'sessions' => $state->load($date) + 1,
+            ],
+            'blockers' => [[
+                'key' => StudentDailyLoad::KEY,
+                'date' => $date,
+                'breach' => 'max',
+                'max_sessions' => $max,
+                'sessions' => $state->load($date),
+                'course_ids' => [...array_column($state->sessions($date), 'course_id'), $courseId],
+                'conflict' => ['course_id' => $courseId, 'date' => $date, 'slot_type' => CoursePlacement::KEY],
+            ]],
+        ];
     }
 }

@@ -2,41 +2,18 @@
 
 namespace App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Course;
 
-use App\Constant\Constraint\SemesterTimetable\Course\CourseRequestedSlot as CourseRequestedSlotConstraint;
-use App\Constant\Violation\ExamTimetable\Course\CourseRequestedSlot as CourseRequestedSlotViolation;
-use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Contracts\BlockerBuilder;
-use App\Schedular\ExamTimetable\DTO\BlockerDTO;
-use App\Schedular\SemesterTimetable\Helpers\GenerateId;
-use Override;
+use App\Constant\Violation\ExamTimetable\Course\CourseRequestedSlot;
+use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Contracts\AbstractBlocker;
 
-class CourseRequestedSlotBlocker implements BlockerBuilder
+class CourseRequestedSlotBlocker extends AbstractBlocker
 {
-    #[Override]
-    public function supports(string $type): bool
+    public static function type(): string
     {
-        return $type === CourseRequestedSlotViolation::KEY;
+        return CourseRequestedSlot::KEY;
     }
 
-    #[Override]
-    public function build(array $blocker): BlockerDTO
+    protected function fields(): array
     {
-        $violation = new BlockerDTO();
-        $violation->id = app(GenerateId::class)->generateId(array_filter([
-            "type" => CourseRequestedSlotConstraint::KEY,
-            'course_id'  => $blocker['course_id'] ?? null,
-            'date'        => $blocker['date'] ?? null,
-            'start_time' => $blocker['start_time'] ?? null,
-            'end_time'   => $blocker['end_time'] ?? null
-        ]));
-        $violation->type =  CourseRequestedSlotViolation::KEY;
-        $violation->entity = array_filter([
-            "type" => CourseRequestedSlotConstraint::KEY,
-            'course_id'  => $blocker['course_id'] ?? null,
-            'date'        => $blocker['date'] ?? null,
-            'start_time' => $blocker['start_time'] ?? null,
-            'end_time'   => $blocker['end_time'] ?? null
-        ]);
-        $violation->conflict = array_filter([...$blocker['conflict']]);
-        return $violation;
+        return ['course_id', 'date', 'start_time', 'end_time'];
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Specialty;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExamSessionHall extends Model
 {
@@ -33,6 +34,11 @@ class ExamSessionHall extends Model
     public function specialty(): BelongsTo
     {
         return $this->belongsTo(Specialty::class, 'specialty_id');
+    }
+
+    public function invigilators(): HasMany
+    {
+        return $this->hasMany(ExamSessionInvigilator::class, 'exam_session_hall_id');
     }
 
     public function hall(): BelongsTo

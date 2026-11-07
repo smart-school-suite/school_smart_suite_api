@@ -2,84 +2,62 @@
 
 namespace App\Schedular\ExamTimetable\Constraints\Validator\Schedule;
 
-use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\ValidatorInterface;
+use App\Constant\Violation\ExamTimetable\Schedule\OperationalPeriod;
+use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\BaseValidator;
 use App\Schedular\ExamTimetable\Context\RequestContext;
-use Carbon\Carbon;
+use App\Schedular\ExamTimetable\Core\State;
+use App\Schedular\ExamTimetable\Placement\Support\Time;
 
-class OperationalPeriodValidator implements ValidatorInterface
+/** The request must fall on an exam date and inside that date's opening hours. */
+class OperationalPeriodValidator extends BaseValidator
 {
-    protected const OPERATIONAL_DATE = "operational_date";
-    protected const OPERATIONAL_HOUR = "operational_hour";
-    public function check(array $params): ?array
+    public const OPERATIONAL_DATE = "operational_date";
+    public const OPERATIONAL_HOUR = "operational_hour";
+
+    public function check(array $params, State $state): array
     {
         $context = RequestContext::fromPayload();
-        $date = $params['date'];
+        $date = $params['date'] ?? '';
 
-        $start = Carbon::parse($params['start_time']);
-        $end   = Carbon::parse($params['end_time']);
-
-        $opWin   = $context->operationalHourDate($date);
-        $opStart = Carbon::parse($opWin['start']);
-        $opEnd   = Carbon::parse($opWin['end']);
-
-        if (!$context->isOperationalDate($date)) {
-            return  [
-                "entity_type" => self::OPERATIONAL_DATE,
-                "type" => "invalid_operational_date",
-                "allowed_dates" => $context->operationalDates(),
-                "conflict"   => array_filter([
-                    "course_id"  => $params["course_id"] ?? null,
-                    "start_time" => $params["start_time"] ?? null,
-                    "end_time"   => $params["end_time"] ?? null,
-                    "date"        => $params["date"] ?? null,
-                    "slot_type"  => $params["slot_type"] ?? null,
-                    "teacher_id" => $params["teacher_id"] ?? null,
-                    "hall_id"    => $params["hall_id"] ?? null,
-                ])
-            ];
+        if (!$context->isWithinExamPeriod($date)) {
+            return [[
+                'key' => OperationalPeriod::KEY,
+                'entity_type' => self::OPERATIONAL_DATE,
+                'type' => 'outside_exam_period',
+                'date' => $date,
+                'allowed_period' => ['start_date' => $context->examStartDate(), 'end_date' => $context->examEndDate()],
+                'conflict' => $this->conflict($params),
+            ]];
         }
 
-        $opWin = $context->operationalHourDate($date);
-
-        if ($opWin === null) {
-            return [
-                "entity_type" => self::OPERATIONAL_DATE,
-                "type" => "date_excluded_from_operations",
-                "date" => $date,
-                "allowed_dates" => $context->operationalDates(),
-                "conflict"   => array_filter([
-                    "course_id"  => $params["course_id"] ?? null,
-                    "start_time" => $params["start_time"] ?? null,
-                    "end_time"   => $params["end_time"] ?? null,
-                    "date"        => $params["date"] ?? null,
-                    "slot_type"  => $params["slot_type"] ?? null,
-                    "teacher_id" => $params["teacher_id"] ?? null,
-                    "hall_id"    => $params["hall_id"] ?? null,
-                ])
-            ];
-        }
-        if ($start->lessThan($opStart) || $end->greaterThan($opEnd)) {
-            return [
-                'key'        => self::OPERATIONAL_HOUR,
-                "type" => "invalid_operational_hour",
-                'date'        => $date,
-                "allowed_time" => [
-                    'start_time' => $opWin['start'],
-                    'end_time'   => $opWin['end'],
-                ],
-                "conflict"   => array_filter([
-                    "course_id"  => $params["course_id"] ?? null,
-                    "start_time" => $params["start_time"] ?? null,
-                    "end_time"   => $params["end_time"] ?? null,
-                    "day"        => $params["day"] ?? null,
-                    "slot_type"  => $params["slot_type"] ?? null,
-                    "teacher_id" => $params["teacher_id"] ?? null,
-                    "hall_id"    => $params["hall_id"] ?? null,
-                ])
-            ];
+        $window = $context->operationalHourDate($date);
+        if ($window === null) {
+            return [[
+                'key' => OperationalPeriod::KEY,
+                'entity_type' => self::OPERATIONAL_DATE,
+                'type' => 'date_excluded_from_operations',
+                'date' => $date,
+                'conflict' => $this->conflict($params),
+            ]];
         }
 
+        if (empty($params['start_time']) || empty($params['end_time'])) {
+            return [];
+        }
 
+        $start = Time::toMinutes($params['start_time']);
+        $end = Time::toMinutes($params['end_time']);
+
+        if ($end <= $start || $start < Time::toMinutes($window['start_time']) || $end > Time::toMinutes($window['end_time'])) {
+            return [[
+                'key' => OperationalPeriod::KEY,
+                'entity_type' => self::OPERATIONAL_HOUR,
+                'type' => 'invalid_operational_hour',
+                'date' => $date,
+                'allowed_time' => $window,
+                'conflict' => $this->conflict($params),
+            ]];
+        }
 
         return [];
     }

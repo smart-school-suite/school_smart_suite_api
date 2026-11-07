@@ -10,13 +10,13 @@ class HallRequestedSlot
     // public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Course\CourseDailyFrequencyInterpreter::class;
     // public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Course\CourseDailyFrequencySuggestion::class;
     public const TYPE = "soft";
-    public const DESCRIPTION = "Allows courses to request specific time slots for their exams. This constraint can be used to accommodate special needs, avoid conflicts with other courses, or align with students' preferences.";
+    public const DESCRIPTION = "Asks for a hall to be used by the exam that takes place at a given date and time. It is a preference: the scheduler uses the hall when it is free and big enough.";
     public const EXAMPLE = [
         [
             "date" => "2026-10-15",
             "start_time" => "10:00",
             "end_time" => "11:00",
-            "course_id" => "123e4567-e89b-12d3-a456-426614174000"
+            "hall_id" => "123e4567-e89b-12d3-a456-426614174000"
         ]
     ];
     public static function toArray(): array

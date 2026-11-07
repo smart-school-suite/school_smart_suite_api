@@ -2,13 +2,18 @@
 
 namespace App\Schedular\ExamTimetable\Builders\DiagnosticBuilder\Diagnostics\Course;
 
-class RequiredJointCourseDiagnostic
+use App\Constant\Constraint\ExamTimetable\Course\RequiredJointCourseSession;
+use App\Schedular\ExamTimetable\Builders\DiagnosticBuilder\Contracts\AbstractDiagnostic;
+
+class RequiredJointCourseDiagnostic extends AbstractDiagnostic
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public static function type(): string
     {
-        //
+        return RequiredJointCourseSession::KEY;
+    }
+
+    protected function fields(): array
+    {
+        return ['course_id', 'date', 'start_time', 'end_time'];
     }
 }

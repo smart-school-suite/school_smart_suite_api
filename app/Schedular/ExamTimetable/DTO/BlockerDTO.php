@@ -6,7 +6,9 @@ class BlockerDTO
 {
     public string $id;
     public string $type;
-    public array  $entity;
-    public array $conflict;
+    /** What is in the way (a hall, an invigilator, a rule...). */
+    public array $entity = [];
+    /** The request it is in the way of. */
+    public array $conflict = [];
     public function __construct() {}
 }

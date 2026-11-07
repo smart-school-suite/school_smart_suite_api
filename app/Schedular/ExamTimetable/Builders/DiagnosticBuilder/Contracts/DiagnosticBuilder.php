@@ -6,6 +6,6 @@ use App\Schedular\ExamTimetable\DTO\DiagnosticDTO;
 
 interface DiagnosticBuilder
 {
-    public function supports(string $type): bool;
+    public static function type(): string;
     public function build(array $diagnostic): DiagnosticDTO;
 }

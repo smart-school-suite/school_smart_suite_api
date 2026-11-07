@@ -6,7 +6,7 @@ class InvigilatorRequestedSlot
 {
     public const KEY = "invigilator_requested_slot";
     public const TITLE = "Invigilator Requested Slot";
-    public const DESCRIPTION = "Forces an invigilator to be assigned to a specific exam session at a set date and time, ensuring their availability is locked for that period regardless of standard conflict resolution.";
+    public const DESCRIPTION = "Asks for an invigilator to invigilate the exam that takes place at a given date and time. It is honoured only when the invigilator is free and does not teach the course.";
     public const TYPE = "soft";
     public const CATEGORY = "schedule_constraint";
     public const BLOCKERS = ["operational_period"];

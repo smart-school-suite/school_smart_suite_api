@@ -2,13 +2,36 @@
 
 namespace App\Schedular\ExamTimetable\Constraints\Validator\Student;
 
-class StudentDailyLoadValidator
+use App\Constant\Violation\ExamTimetable\Student\StudentDailyLoad;
+use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\BaseValidator;
+use App\Schedular\ExamTimetable\Context\RequestContext;
+use App\Schedular\ExamTimetable\Core\State;
+
+/** One more exam on the date would go over the daily maximum. */
+class StudentDailyLoadValidator extends BaseValidator
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function check(array $params, State $state): array
     {
-        //
+        $date = $params['date'] ?? null;
+        if (!$date || !isset($state->dateGrid[$date])) {
+            return [];
+        }
+
+        $max = RequestContext::fromPayload()->dailyLoadFor($date)['max_sessions'];
+        $load = $state->load($date);
+
+        if ($max === null || $load + 1 <= $max) {
+            return [];
+        }
+
+        return [[
+            'key' => StudentDailyLoad::KEY,
+            'date' => $date,
+            'breach' => 'max',
+            'max_sessions' => $max,
+            'sessions' => $load,
+            'course_ids' => array_column($state->sessions($date), 'course_id'),
+            'conflict' => $this->conflict($params),
+        ]];
     }
 }

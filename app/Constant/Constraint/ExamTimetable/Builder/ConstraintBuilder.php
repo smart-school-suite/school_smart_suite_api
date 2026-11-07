@@ -6,8 +6,11 @@ use App\Constant\Constraint\ExamTimetable\Assignment\RequestedAssignment;
 use App\Constant\Constraint\ExamTimetable\Course\CourseTimeRequest;
 use App\Constant\Constraint\ExamTimetable\Course\RequiredJointCourseSession;
 use App\Constant\Constraint\ExamTimetable\Invigilator\InvigilatorRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Course\CoursePlacement;
+use App\Constant\Constraint\ExamTimetable\Hall\HallRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Schedule\OperationalPeriod;
 use App\Constant\Constraint\ExamTimetable\Schedule\SessionDuration;
-use App\Constant\Violation\SemesterTimetable\Schedule\OperationalPeriod;
+use App\Constant\Constraint\ExamTimetable\Student\StudentDailyLoadRange;
 
 class ConstraintBuilder
 {
@@ -18,8 +21,11 @@ class ConstraintBuilder
             CourseTimeRequest::toArray(),
             RequiredJointCourseSession::toArray(),
             InvigilatorRequestedSlot::toArray(),
+            HallRequestedSlot::toArray(),
+            StudentDailyLoadRange::toArray(),
             OperationalPeriod::toArray(),
-            SessionDuration::toArray()
+            SessionDuration::toArray(),
+            CoursePlacement::toArray(),
         ];
     }
 
