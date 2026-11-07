@@ -17,7 +17,7 @@ class ActiveExamTimetable extends Model
     ];
 
     public $incrementing = false;
-    public $table = "active_exam_timetable";
+    public $table = "active_exam_timetables";
     public $keyType = 'string';
 
     public function version(): BelongsTo

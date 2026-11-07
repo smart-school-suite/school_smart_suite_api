@@ -11,6 +11,7 @@ class ExamSessionInvigilator extends Model
     use HasUuids;
     protected $fillable = [
         'exam_slot_id',
+        'exam_session_hall_id',
         'invigilator_id',
         'school_branch_id'
     ];
@@ -21,6 +22,10 @@ class ExamSessionInvigilator extends Model
     public function slot(): BelongsTo
     {
         return $this->belongsTo(ExamTimetableSlot::class, 'exam_slot_id');
+    }
+    public function sessionHall(): BelongsTo
+    {
+        return $this->belongsTo(ExamSessionHall::class, 'exam_session_hall_id');
     }
     public function invigilator(): BelongsTo
     {

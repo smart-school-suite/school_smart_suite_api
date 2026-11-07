@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
 use App\Http\Requests\ExamTimetable\CreateExamTimetableRequest;
 use App\Http\Requests\ExamTimetable\UpdateExamTimetableRequest;
-use App\Services\ExamTimetable\AutoGenExamTimetableService;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Http\Request;
 use illuminate\Http\JsonResponse;
@@ -15,22 +14,13 @@ use App\Services\ExamTimetable\ExamTimetableService;
 class ExamTimetableController extends Controller
 {
     protected ExamTimetableService $examTimeTableService;
-    protected AutoGenExamTimetableService $autoGenExamTimetableService;
 
     public function __construct(
-        ExamTimetableService $examTimeTableService,
-        AutoGenExamTimetableService $autoGenExamTimetableService
+        ExamTimetableService $examTimeTableService
     ) {
         $this->examTimeTableService = $examTimeTableService;
-        $this->autoGenExamTimetableService = $autoGenExamTimetableService;
     }
 
-    public function autoGenExamTimetable(Request $request)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $generateTimetable = $this->autoGenExamTimetableService->generateExamTimetable();
-        return ApiResponseService::success("Exam Timetable Generated Successfully", $generateTimetable, null, Response::HTTP_OK);
-    }
     public function createTimetable(CreateExamTimetableRequest $request, string $examId): JsonResponse
     {
         $authAdmin = $this->resolveUser();

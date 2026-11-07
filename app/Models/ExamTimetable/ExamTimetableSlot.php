@@ -33,7 +33,7 @@ class ExamTimetableSlot extends Model
 
     public function examSessionHall(): HasMany
     {
-        return $this->hasMany(ExamSessionHall::class);
+        return $this->hasMany(ExamSessionHall::class, 'exam_slot_id');
     }
     public function course(): BelongsTo
     {
@@ -50,6 +50,6 @@ class ExamTimetableSlot extends Model
 
     public function examSessionInvig(): HasMany
     {
-        return $this->hasMany(ExamSessionInvigilator::class);
+        return $this->hasMany(ExamSessionInvigilator::class, 'exam_slot_id');
     }
 }
