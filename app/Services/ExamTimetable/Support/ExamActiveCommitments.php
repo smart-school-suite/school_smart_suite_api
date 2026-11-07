@@ -32,7 +32,8 @@ class ExamActiveCommitments
     ): array {
         $slots = ExamTimetableSlot::where('school_branch_id', $schoolBranchId)
             ->where('exam_id', '!=', $examId)
-            ->whereBetween('date', [$startDate, $endDate])
+            ->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
             ->whereHas('version.activeTimetable')
             ->with([
                 'examSessionHall',
