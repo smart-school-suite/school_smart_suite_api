@@ -15,6 +15,7 @@ use App\Models\SchoolSemester;
 use App\Models\Schoolbranches;
 use App\Models\SchoolBranchSetting;
 use App\Models\Semester;
+use App\Models\Student;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Schedular\SemesterTimetable\Solution\Support\Text;
 use App\Schedular\SemesterTimetable\Solution\Support\Time;
@@ -424,6 +425,7 @@ class JointCourseTimetableService
             );
         }
 
+        $students = $this->studentCount($jointCourse);
         $teachers = collect([$teacher]);
         $busy = $this->recommendationBusy($jointCourse, $teachers, $halls->pluck('id')->all());
 
@@ -452,7 +454,7 @@ class JointCourseTimetableService
 
             ksort($times);
 
-            $dayTimes = collect($times)->values()->map(function (array $time) use ($request, &$options) {
+            $dayTimes = collect($times)->values()->map(function (array $time) use ($request, $students, &$options) {
                 $startTime = Time::toTime($time['start']);
                 $endTime = Time::toTime($time['end']);
 
@@ -460,7 +462,8 @@ class JointCourseTimetableService
                     'start_time' => $startTime,
                     'end_time' => $endTime,
                     'time' => Text::time($startTime, $endTime),
-                    'halls' => collect($time['halls'])->map(function (Hall $hall) use ($request, $startTime, $endTime, &$options) {
+                    'halls' => $this->rankHalls(collect($time['halls']), $students['total'])->map(function (array $ranked) use ($request, $startTime, $endTime, &$options) {
+                        $hall = $ranked['hall'];
                         $id = (string) Str::uuid();
                         $options[$id] = [
                             'day' => $request['day'],
@@ -469,7 +472,14 @@ class JointCourseTimetableService
                             'hall_id' => $hall->id,
                         ];
 
-                        return ['option_id' => $id, 'id' => $hall->id, 'name' => $hall->name, 'capacity' => $hall->capacity];
+                        return [
+                            'option_id' => $id,
+                            'id' => $hall->id,
+                            'name' => $hall->name,
+                            'capacity' => $hall->capacity,
+                            'fits' => $ranked['fits'],
+                            'recommended' => $ranked['recommended'],
+                        ];
                     })->values()->all(),
                 ];
             })->all();
@@ -503,6 +513,7 @@ class JointCourseTimetableService
             'expires_at' => now()->addMinutes(self::PROPOSAL_TTL_MINUTES)->toIso8601String(),
             'teacher' => ['id' => $teacher->id, 'name' => $teacher->name],
             'teacher_preference' => $respectPreference ? 'respected' : 'ignored',
+            'students' => $students,
             'window' => ['start_time' => Time::toTime($windowStart), 'end_time' => Time::toTime($windowEnd)],
             'max_selections' => self::MAX_SLOTS,
             'days' => $days,
@@ -580,6 +591,64 @@ class JointCourseTimetableService
         Cache::forget($this->proposalKey($proposalId));
 
         return $result;
+    }
+
+    /**
+     * How many students take the course: the current (not dropped-out)
+     * students of every specialty linked through the course's refs.
+     */
+    private function studentCount(SemesterJointCourse $jointCourse): array
+    {
+        $specialties = $jointCourse->semesterJointCourseRef
+            ->map(fn(SemesterJoinCourseReference $ref) => $ref->schoolSemester?->schoolYear?->specialty)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $counts = Student::where('school_branch_id', $jointCourse->school_branch_id)
+            ->whereIn('specialty_id', $specialties->pluck('id'))
+            ->where('dropout_status', false)
+            ->selectRaw('specialty_id, COUNT(*) as total')
+            ->groupBy('specialty_id')
+            ->pluck('total', 'specialty_id');
+
+        $bySpecialty = $specialties->map(fn($specialty) => [
+            'specialty_id' => $specialty->id,
+            'label' => trim($specialty->specialty_name . ($specialty->level?->name ? " · {$specialty->level->name}" : '')),
+            'student_count' => (int) ($counts[$specialty->id] ?? 0),
+        ])->all();
+
+        return [
+            'total' => array_sum(array_column($bySpecialty, 'student_count')),
+            'by_specialty' => $bySpecialty,
+        ];
+    }
+
+    /**
+     * Order a time's free halls for the class size: halls that fit, smallest
+     * first (big halls stay free for big classes), then halls with no
+     * capacity recorded, then halls that are too small. The first hall that
+     * fits is recommended. Nothing is removed; small halls are only flagged.
+     */
+    private function rankHalls(Collection $halls, int $studentCount): Collection
+    {
+        $fits = fn(Hall $hall) => $hall->capacity === null ? null : (int) $hall->capacity >= $studentCount;
+
+        $ranked = $halls
+            ->sortBy(fn(Hall $hall) => match ($fits($hall)) {
+                true => [0, (int) $hall->capacity, $hall->name],
+                null => [1, 0, $hall->name],
+                false => [2, -(int) $hall->capacity, $hall->name],
+            })
+            ->values();
+
+        $recommendedId = $ranked->first(fn(Hall $hall) => $fits($hall) === true)?->id;
+
+        return $ranked->map(fn(Hall $hall) => [
+            'hall' => $hall,
+            'fits' => $fits($hall),
+            'recommended' => $hall->id === $recommendedId,
+        ]);
     }
 
     /** Requested days with their period duration, in week order. */
