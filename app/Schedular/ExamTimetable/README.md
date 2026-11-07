@@ -111,3 +111,23 @@ invigilators are busy for other exams' generation.
 3. Add a diagnostic builder and the blocker builders, and register them in `DiagnosticRegistry` and `BlockerRegistry`.
 4. Register the handler in `ConstraintRegistry` and read its input in `RequestContext`.
 5. Add it to `GenerateExamTimetableRequest` and to `GenerateExamTimetable::buildRequestBody()`.
+
+## Joint exams
+
+A course taken by several specialties is examined once, at the same time for all of them. Its time is set before
+the specialties' exam timetables are generated, like the semester joint course timetable
+(`Services/ExamJointCourse`):
+
+1. When an exam is created, `CreateExamJointCourseJob` links it to one joint exam (`exam_jcs`, per academic year
+   and exam type) for each of its courses another specialty also takes. `POST /exam/{examId}/sync` does the same
+   for exams created earlier.
+2. `POST /{examJointCourseId}/generate` (with the exam `duration`) lists the free times, by date: inside every linked
+   exam period, when no linked student sits another exam (active timetables and other joint exams), with enough free
+   exam hall seats for all candidates together and enough free invigilators who do not teach the course.
+3. The user picks one: `POST /{examJointCourseId}/proposals/{proposalId}/confirm` with its `option_id`
+   (or `PUT /{examJointCourseId}/slot` with a date and times). It is checked again and saved as the joint exam's
+   single time (`exam_jc_slots`), replacing any earlier one.
+4. Every linked exam's timetable then places the course at that time (`required_joint_course_periods`).
+
+Endpoints are under `/api/v1/exam-joint-course-timetable`; `GET /terms` and `GET /term/{schoolYearId}/{examTypeId}`
+list the joint exams and which still need a time.
