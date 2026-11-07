@@ -2,13 +2,18 @@
 
 namespace App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Hall;
 
-class HallCapacityBlocker
+use App\Constant\Violation\ExamTimetable\Hall\HallCapacityExceeded;
+use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Contracts\AbstractBlocker;
+
+class HallCapacityBlocker extends AbstractBlocker
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public static function type(): string
     {
-        //
+        return HallCapacityExceeded::KEY;
+    }
+
+    protected function fields(): array
+    {
+        return ['hall_ids', 'total_capacity', 'seats_free', 'total_candidates'];
     }
 }

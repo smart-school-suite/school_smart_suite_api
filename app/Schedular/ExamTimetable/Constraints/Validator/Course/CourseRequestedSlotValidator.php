@@ -2,75 +2,23 @@
 
 namespace App\Schedular\ExamTimetable\Constraints\Validator\Course;
 
+use App\Constant\Constraint\ExamTimetable\Course\CourseTimeRequest;
 use App\Constant\Violation\ExamTimetable\Course\CourseRequestedSlot;
-use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\ValidatorInterface;
-use App\Schedular\ExamTimetable\Context\RequestContext;
-use Carbon\Carbon;
+use App\Schedular\ExamTimetable\Constraints\Validator\Contracts\BaseValidator;
+use App\Schedular\ExamTimetable\Core\State;
 
-class CourseRequestedSlotValidator implements ValidatorInterface
+/** Another course was already requested at that time for the same students. */
+class CourseRequestedSlotValidator extends BaseValidator
 {
-    public function check(array $params): ?array
+    public function check(array $params, State $state): array
     {
-        $context = RequestContext::fromPayload();
-        $date = $params['date'];
-        $startRaw = $params['start_time'] ?? null;
-        $endRaw   = $params['end_time'] ?? null;
-
-        if ($date === '' || empty($startRaw) || empty($endRaw)) {
-            return [];
-        }
-
-        $reqStart = Carbon::parse($startRaw);
-        $reqEnd   = Carbon::parse($endRaw);
-
-        if ($reqEnd->lessThanOrEqualTo($reqStart)) {
-            return [];
-        }
-
-        $windows = $context->courseRequestedSlotDate($date);
-        if ($windows->isEmpty()) {
-            return [];
-        }
-
-        $blockers = [];
-
-        foreach ($windows as $rts) {
-            $rtsStartRaw = $rts['start_time'] ?? null;
-            $rtsEndRaw   = $rts['end_time'] ?? null;
-
-            if (empty($rtsStartRaw) || empty($rtsEndRaw)) {
-                continue;
-            }
-
-            $rtsStart = Carbon::parse($rtsStartRaw);
-            $rtsEnd   = Carbon::parse($rtsEndRaw);
-
-            if ($rtsEnd->lessThanOrEqualTo($rtsStart)) {
-                continue;
-            }
-
-            $overlaps = $reqStart->lt($rtsEnd) && $rtsStart->lt($reqEnd);
-
-            if ($overlaps) {
-                $blockers[] = [
-                    'key'        => CourseRequestedSlot::KEY,
-                    'day'        => $date,
-                    'course_id'  => $rts['course_id'] ?? null,
-                    'start_time' => $rtsStart->format('H:i'),
-                    'end_time'   => $rtsEnd->format('H:i'),
-                    "conflict" => array_filter([
-                        "course_id" => $params["course_id"] ?? null,
-                        "hall_id" => $params["hall_id"] ?? null,
-                        "slot_type" => $params["slot_type"] ?? null,
-                        "teacher_id" => $params["teacher_id"] ?? null,
-                        "day" => $params["day"] ?? null,
-                        "start_time" => $params["start_time"] ?? null,
-                        "end_time" => $params["end_time"] ?? null,
-                    ])
-                ];
-            }
-        }
-
-        return $blockers;
+        return array_map(fn(array $session) => [
+            'key' => CourseRequestedSlot::KEY,
+            'course_id' => $session['course_id'],
+            'date' => $params['date'],
+            'start_time' => $session['start_time'],
+            'end_time' => $session['end_time'],
+            'conflict' => $this->conflict($params),
+        ], $this->overlappingSessions($params, $state, CourseTimeRequest::KEY));
     }
 }

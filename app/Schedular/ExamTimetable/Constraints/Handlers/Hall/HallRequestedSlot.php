@@ -3,127 +3,101 @@
 namespace App\Schedular\ExamTimetable\Constraints\Handlers\Hall;
 
 use App\Constant\Constraint\ExamTimetable\Hall\HallRequestedSlot as HallRequestedSlotConstraint;
-use App\Models\Hall;
+use App\Constant\Violation\ExamTimetable\Hall\HallBusy;
+use App\Constant\Violation\ExamTimetable\Schedule\NoExamSession;
 use App\Schedular\ExamTimetable\Constraints\Contracts\ConstraintHandler;
+use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\OperationalPeriodValidator;
 use App\Schedular\ExamTimetable\Context\RequestContext;
 use App\Schedular\ExamTimetable\Core\State;
-use App\Schedular\ExamTimetable\Constraints\Validator\Assignment\RequestedAssignmentValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Course\CourseRequestedSlotValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Hall\HallCapacityValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Course\RequiredJointCourseSlotValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Invigilator\InvigilatorRequestedSlotValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\OperationalPeriodValidator;
-use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\SessionDurationValidator;
-use App\Schedular\ExamTimetable\Helpers\InvigilatorAvailability;
-use App\Schedular\ExamTimetable\Helpers\HallBuilder;
-use Illuminate\Support\Arr;
-use Override;
+use App\Schedular\ExamTimetable\Placement\Support\Time;
 
+/**
+ * "Use this hall for the exam at this date and time."
+ *
+ * Placement already tries requested halls first, so this checks the result:
+ * the request is met when an exam overlapping the window uses the hall.
+ */
 class HallRequestedSlot implements ConstraintHandler
 {
-    #[Override]
     public static function supports(): string
     {
         return HallRequestedSlotConstraint::KEY;
     }
 
-    #[Override]
+    public static function stage(): string
+    {
+        return self::AFTER_PLACEMENT;
+    }
+
     public function handle(State $state): void
     {
         $context = RequestContext::fromPayload();
-        $hRs = $context->courseRequestedSlots();
-        if ($hRs->isEmpty()) {
-            return;
-        }
 
-        foreach ($hRs as $hR) {
-            $params = [
-                'hall_id'    => $hR['hall_id'],
-                'hall_group' => $hR['hall_group'], // [ "hall" ]
-                'start_time' => $hR['start_time'],
-                'end_time'   => $hR['end_time'],
-                'date'        => $hR['date'],
-                'slot_type'  => HallRequestedSlotConstraint::KEY,
-            ];
+        foreach ($context->hallRequestedSlots() as $request) {
+            if (!$context->hall($request['hall_id'] ?? '')) {
+                continue;
+            }
 
-            $blockers = array_filter([
-                ...app(OperationalPeriodValidator::class)->check($params),
-                ...app(SessionDurationValidator::class)->check($params),
-                app(RequestedAssignmentValidator::class)->check($params),
-                app(RequiredJointCourseSlotValidator::class)->check($params),
-                app(HallCapacityValidator::class)->check($params),
-                app(InvigilatorRequestedSlotValidator::class)->check($params),
-                app(CourseRequestedSlotValidator::class)->check($params)
-            ]);
+            $blockers = $this->blockers($state, $context, $request);
 
-            if (!empty($blockers)) {
+            if ($blockers) {
                 $state->violations['soft'][] = [
-                    'constraint_failed' => array_filter([
-                        'key'        => HallRequestedSlotConstraint::KEY,
-                        'hall_id'    => $hR['hall_id'],
-                        'start_time' => $hR['start_time'],
-                        'end_time'   => $hR['end_time'],
-                        'date'        => $hR['date'],
-                    ]),
+                    'constraint_failed' => [
+                        'key' => self::supports(),
+                        'hall_id' => $request['hall_id'],
+                        'date' => $request['date'],
+                        'start_time' => $request['start_time'],
+                        'end_time' => $request['end_time'],
+                    ],
                     'blockers' => array_values($blockers),
                 ];
-                continue;
             }
         }
     }
 
-    protected function enforce(State $state, array $hR, RequestContext $context)
+    private function blockers(State $state, RequestContext $context, array $request): array
     {
-        $params = [
-            "start_time" => $hR["start_time"],
-            "end_time" => $hR["end_time"],
-            "date" => $hR["date"],
-            "hall_id" => $hR["hall_id"],
-            "hall_group" => $hR["hall_group"]
-        ];
+        $params = [...$request, 'slot_type' => self::supports()];
 
-        $singleHall = [
-            "hall_id" => $hR["hall_id"]
-        ];
+        if ($blockers = app(OperationalPeriodValidator::class)->check($params, $state)) {
+            return $blockers;
+        }
 
-        $groupedHall = collect();
-        if (isset($hR["hall_group"])) {
-            foreach ($hR['hall_group'] as $hallId) {
-                $hall = Hall::find($hallId);
-                $groupedHall->push([
-                    "hall_id" => $hall->id,
-                    "capacity" => $hall->capacity,
-                    'hall_name' => $hall->name
-                ]);
+        $start = Time::toMinutes($request['start_time']);
+        $end = Time::toMinutes($request['end_time']);
+        $sessions = $state->sessionsOverlapping($request['date'], $start, $end);
+
+        if (empty($sessions)) {
+            return [[
+                'key' => NoExamSession::KEY,
+                'date' => $request['date'],
+                'start_time' => $request['start_time'],
+                'end_time' => $request['end_time'],
+                'conflict' => array_filter($params),
+            ]];
+        }
+
+        foreach ($sessions as $session) {
+            if (in_array($request['hall_id'], array_column($session['halls'], 'hall_id'), true)) {
+                return [];
             }
         }
 
+        // The hall was tried first, so it was taken by something else.
+        $session = $sessions[0];
+        $seats = $state->index->hallSeatsFree(
+            $request['hall_id'],
+            $context->hallCapacity($request['hall_id']),
+            $request['date'],
+            Time::toMinutes($session['start_time']),
+            Time::toMinutes($session['end_time'])
+        );
 
-        $candidateCount = $context->candidateCount();
-        $specialtyId = $context->specialty();
-        $courses = $context->courses()->pluck("course_id")->toArray();
-        $invig = collect(app(InvigilatorAvailability::class)->getAvailableInvigilators($params))->first();
-
-        $randomCourseId = Arr::random($courses);
-
-        $state->dateGrid[$hR["date"]]->allocations[] = [
-            'start_time' => $hR['start_time'],
-            'end_time'   => $hR['end_time'],
-            'hall'       => isset($hR['hall_group'])
-                ? app(HallBuilder::class)->buildGroupedHall(
-                    $randomCourseId,
-                    $groupedHall->toArray(),
-                    $invig,
-                    $candidateCount,
-                    $specialtyId
-                )
-                : app(HallBuilder::class)->buildSingleHall(
-                    $randomCourseId,
-                    $singleHall,
-                    $invig,
-                    $candidateCount,
-                    $specialtyId
-                ),
-        ];
+        return [[
+            'key' => HallBusy::KEY,
+            'hall_id' => $request['hall_id'],
+            ...($seats['conflict'] ?? ['date' => $request['date'], 'start_time' => $session['start_time'], 'end_time' => $session['end_time']]),
+            'conflict' => array_filter($params),
+        ]];
     }
 }
