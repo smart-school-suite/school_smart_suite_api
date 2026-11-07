@@ -84,6 +84,70 @@ class ActiveCommitments
             ->values();
     }
 
+    /**
+     * Teacher and hall busy periods for generating a semester's timetable, in
+     * the shape the scheduler reads (teacher_busy_periods / hall_busy_periods).
+     *
+     * Busy = lessons in the active timetables of other running semesters, plus
+     * joint course slots this semester does not share. The semester's own
+     * active timetable is left out because it is the one being regenerated,
+     * and occurrences of its required joint periods are left out because the
+     * grid already holds them (counting them again would double teacher hours).
+     */
+    public function busyPeriodsForGeneration(
+        string $schoolBranchId,
+        string $schoolSemesterId,
+        array $teacherIds,
+        array $hallIds,
+        array $requiredJointPeriods = [],
+    ): array {
+        $teacherIds = array_values(array_filter($teacherIds));
+        $hallIds = array_values(array_filter($hallIds));
+
+        if (!$teacherIds && !$hallIds) {
+            return ['teacher_busy_periods' => [], 'hall_busy_periods' => []];
+        }
+
+        $required = collect($requiredJointPeriods)
+            ->map(fn(array $period) => self::normalize($period, 'joint'))
+            ->filter();
+
+        $isRequiredOccurrence = fn(array $slot) => $required->contains(
+            fn(array $period) => $period['course_id'] === $slot['course_id']
+                && $period['day'] === $slot['day']
+                && $period['start'] === $slot['start']
+                && $period['end'] === $slot['end']
+        );
+
+        $busy = $this->timetableLessons($schoolBranchId, exceptSemesterId: $schoolSemesterId, teacherIds: $teacherIds, hallIds: $hallIds)
+            ->concat(
+                $this->jointCourseSlots($schoolBranchId, sharedWithSemesterId: $schoolSemesterId, teacherIds: $teacherIds, hallIds: $hallIds)
+                    ->reject(fn(array $slot) => $slot['shared_with_semester'])
+            )
+            ->reject($isRequiredOccurrence);
+
+        $period = fn(array $slot) => [
+            'day' => $slot['day'],
+            'start_time' => $slot['start_time'],
+            'end_time' => $slot['end_time'],
+        ];
+
+        return [
+            'teacher_busy_periods' => $busy
+                ->filter(fn(array $slot) => in_array($slot['teacher_id'], $teacherIds, true))
+                ->map(fn(array $slot) => [...$period($slot), 'teacher_id' => $slot['teacher_id'], 'teacher_name' => $slot['teacher_name'] ?? null])
+                ->unique(fn(array $slot) => implode('|', [$slot['teacher_id'], $slot['day'], $slot['start_time'], $slot['end_time']]))
+                ->values()
+                ->all(),
+            'hall_busy_periods' => $busy
+                ->filter(fn(array $slot) => in_array($slot['hall_id'], $hallIds, true))
+                ->map(fn(array $slot) => [...$period($slot), 'hall_id' => $slot['hall_id'], 'hall_name' => $slot['hall_name'] ?? null])
+                ->unique(fn(array $slot) => implode('|', [$slot['hall_id'], $slot['day'], $slot['start_time'], $slot['end_time']]))
+                ->values()
+                ->all(),
+        ];
+    }
+
     public static function normalize(array $slot, string $type): ?array
     {
         $start = Time::toMinutes((string) ($slot['start_time'] ?? ''));

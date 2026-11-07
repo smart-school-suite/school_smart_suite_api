@@ -3,6 +3,7 @@
 namespace App\Jobs\SemesterTimetable;
 
 use App\Jobs\SemesterTimetable\Concerns\BroadcastsTimetableGeneration;
+use App\Jobs\SemesterTimetable\Concerns\CollectsUserErrors;
 use App\Jobs\SemesterTimetable\Concerns\TracksVersionStatus;
 use App\Exceptions\AppException;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
@@ -12,7 +13,7 @@ use App\Models\InstructorAvailabilitySlot;
 use App\Models\Job\SystemJob;
 use App\Models\SchoolSemester;
 use App\Services\JointCourse\JointCoursePeriods;
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
+use App\Services\SemesterTimetable\Support\ActiveCommitments;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
 use App\Models\SpecialtyHall;
 use App\Models\SemesterTimetable\SemesterTimetable;
@@ -33,7 +34,7 @@ use Throwable;
 
 class GeneratePreferenceSemesterTimetable implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration, TracksVersionStatus;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration, TracksVersionStatus, CollectsUserErrors;
 
     public int $tries = 3;
     public int $timeout = 120;
@@ -101,25 +102,29 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         $halls              = $this->getHalls($branchId, $specialty);
         $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Halls fetched']);
 
-        $hallBusyPeriods    = $this->getHallBusyPeriods($branchId, $halls);
-        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Hall busy periods fetched']);
+        $jointCourses       = $this->getJointCourses($schoolSemester);
+        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Joint courses fetched']);
 
-        $teacherBusyPeriods = $this->getTeacherBusyPeriods($branchId, $teacherIds);
-        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Teacher busy periods fetched']);
+        $this->failOnUserErrors($systemJob, $timetableVersionId, $schoolSemester->id);
+
+        // getHalls returns SpecialtyHall rows, so the hall key is hall_id.
+        $busyPeriods        = app(ActiveCommitments::class)->busyPeriodsForGeneration(
+            $branchId,
+            $schoolSemester->id,
+            $teacherIds,
+            $halls->pluck('hall_id')->all(),
+            $jointCourses ?? [],
+        );
+        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Teacher and hall busy periods fetched']);
 
         $teacherPreferredSchedule = $this->getTeacherPreferredSchedule($branchId, $schoolSemester, $teacherIds);
         $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Teacher preferred schedule fetched']);
 
-        $jointCourses       = $this->getJointCourses($schoolSemester);
-
-
-
         $body = $this->buildRequestBody(
             $teachers,
-            $teacherBusyPeriods,
+            $busyPeriods,
             $teacherCourses,
             $halls,
-            $hallBusyPeriods,
             $requestPayload,
             $jointCourses,
             $teacherPreferredSchedule
@@ -263,22 +268,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
 
         return $halls;
     }
-    private function getHallBusyPeriods(string $branchId, Collection $halls)
-    {
-        return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())
-            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
-            ->with('hall')
-            ->get();
-    }
-    private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
-    {
-        return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereIn('teacher_id', $teacherIds)
-            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
-            ->with('teacher')
-            ->get();
-    }
     private function getTeacherPreferredSchedule(string $branchId, object $schoolSemester, array $teacherIds)
     {
         return InstructorAvailabilitySlot::where('school_branch_id', $branchId)
@@ -309,20 +298,19 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
     }
     private function buildRequestBody(
         Collection $teachers,
-        Collection $teacherBusyPeriods,
+        array $busyPeriods,
         Collection $teacherCourses,
         Collection $halls,
-        Collection  $hallBusyPeriods,
         array $requestPayload,
         ?array $jointCourses,
         Collection $teacherPreferredSchedule
     ): array {
         return [
             'teachers'             => $this->formatTeachers($teachers),
-            'teacher_busy_periods' => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
+            'teacher_busy_periods' => $busyPeriods['teacher_busy_periods'],
             'teacher_courses'      => $this->formatTeacherCourses($teacherCourses),
             'halls'                => $this->formatHalls($halls),
-            'hall_busy_periods'    => $this->formatHallBusyPeriods($hallBusyPeriods),
+            'hall_busy_periods'    => $busyPeriods['hall_busy_periods'],
             'soft_constraints'     => $this->buildSoftConstraints($requestPayload),
             'hard_constraints'     => $this->buildHardConstraints($requestPayload, $jointCourses),
             "teacher_preferred_periods" => $this->formatTeacherPreferredSchedule($teacherPreferredSchedule)
@@ -333,16 +321,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         return $teachers->map(fn($t) => [
             'teacher_id' => $t->teacher->id,
             'name'       => $t->teacher->name,
-        ])->all();
-    }
-    private function formatTeacherBusyPeriods(Collection $busyPeriods): array
-    {
-        return $busyPeriods->map(fn($s) => [
-            'start_time'   => $s->start_time,
-            'end_time'     => $s->end_time,
-            'day'          => $s->day,
-            'teacher_id'   => $s->teacher_id,
-            'teacher_name' => $s->teacher->name,
         ])->all();
     }
     private function formatTeacherPreferredSchedule(Collection $preferredSchedule): array
@@ -373,16 +351,6 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
             'hall_id'       => $h->hall->id,
             'hall_capacity' => $h->hall->capacity,
             'hall_type'     => $h->hall->types->pluck('name')->all(),
-        ])->all();
-    }
-    private function formatHallBusyPeriods(Collection $busyPeriods): array
-    {
-        return $busyPeriods->map(fn($s) => [
-            'hall_id'    => $s->hall->id,
-            'hall_name'  => $s->hall->name,
-            'start_time' => $s->start_time,
-            'end_time'   => $s->end_time,
-            'day'        => $s->day,
         ])->all();
     }
     private function buildSoftConstraints(array $requestPayload): array

@@ -3,6 +3,7 @@
 namespace App\Jobs\SemesterTimetable;
 
 use App\Jobs\SemesterTimetable\Concerns\BroadcastsTimetableGeneration;
+use App\Jobs\SemesterTimetable\Concerns\CollectsUserErrors;
 use App\Jobs\SemesterTimetable\Concerns\TracksVersionStatus;
 use App\Interpreter\SemesterTimetable\Core\DiagnosticResponseBuilder;
 use App\Interpreter\SemesterTimetable\DTOs\DiagnosticContext;
@@ -11,10 +12,9 @@ use App\Models\Course\CourseSpecialty;
 use App\Models\Job\SystemJob;
 use App\Models\SchoolSemester;
 use App\Services\JointCourse\JointCoursePeriods;
+use App\Services\SemesterTimetable\Support\ActiveCommitments;
 use App\Models\Hall;
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
 use App\Models\SemesterTimetable\SemesterTimetableVersion;
-use App\Models\SemesterTimetable\SemesterTimetableError;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\Teacher;
@@ -35,7 +35,7 @@ use Throwable;
 
 class GenerateFixedSemesterTimetable implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration, TracksVersionStatus;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BroadcastsTimetableGeneration, TracksVersionStatus, CollectsUserErrors;
     public int $tries = 3;
     public int $timeout = 120;
     public int $backoff = 30;
@@ -43,14 +43,11 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     protected const PARTIAL = "partial";
     protected const ERROR = "error";
     protected const OPTIMAL = "optimal";
-    protected Collection $userErrors;
     public function __construct(
         protected readonly object $currentSchool,
         protected readonly array $payload,
         protected readonly string $jobId,
-    ) {
-        $this->userErrors = collect();
-    }
+    ) {}
     public function handle(): void
     {
         $systemJob = SystemJob::with('initiatedBy')->find($this->jobId);
@@ -108,45 +105,26 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $halls              = $this->getHalls($branchId, $specialty);
         $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Halls fetched']);
 
-        $hallBusyPeriods    = $this->getHallBusyPeriods($branchId, $halls);
-        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Hall busy periods fetched']);
-
-        $teacherBusyPeriods = $this->getTeacherBusyPeriods($branchId, $teacherIds);
-        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Teacher busy periods fetched']);
-
         $jointCourses       = $this->getJointCourses($schoolSemester);
+        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Joint courses fetched']);
 
-        if ($this->hasUserErrors()) {
-            $this->createUserError($timetableVersionId, $schoolSemester->id);
-            $version = SemesterTimetableVersion::find($timetableVersionId);
-            $errorCount = $this->userErrors->count();
+        // getHalls returns Hall models, so their key is id.
+        $busyPeriods        = app(ActiveCommitments::class)->busyPeriodsForGeneration(
+            $branchId,
+            $schoolSemester->id,
+            $teacherIds,
+            $halls->pluck('id')->all(),
+            $jointCourses ?? [],
+        );
+        $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Teacher and hall busy periods fetched']);
 
-            $this->broadcastGeneration($systemJob, [
-                'stage' => 'Validation Failed',
-                'percentage' => 100,
-                'status' => 'failed',
-                'details' => "Timetable generation failed due to {$errorCount} issue(s)",
-                'errors' => $this->userErrors->toArray(),
-                'error_count' => $errorCount,
-                'version' => $version ?? null,
-            ]);
-
-            $this->finalEventBroadcasted = true;
-
-            throw new AppException(
-                "Validation Process Failed: {$errorCount} error(s) found",
-                422,
-                "Validation Error",
-                "Please fix the following issues"
-            );
-        }
+        $this->failOnUserErrors($systemJob, $timetableVersionId, $schoolSemester->id);
 
         $body = $this->buildRequestBody(
             $teachers,
-            $teacherBusyPeriods,
+            $busyPeriods,
             $teacherCourses,
             $halls,
-            $hallBusyPeriods,
             $requestPayload,
             $jointCourses,
         );
@@ -558,22 +536,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
 
         return $availableHalls;
     }
-    private function getHallBusyPeriods(string $branchId, Collection $halls): Collection
-    {
-        return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())
-            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
-            ->with('hall')
-            ->get();
-    }
-    private function getTeacherBusyPeriods(string $branchId, array $teacherIds): Collection
-    {
-        return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereIn('teacher_id', $teacherIds)
-            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
-            ->with('teacher')
-            ->get();
-    }
     private function getJointCourses(SchoolSemester $schoolSemester): ?array
     {
         $jointCourses = app(JointCoursePeriods::class)->forSchoolSemester($this->currentSchool->id, $schoolSemester->id);
@@ -595,19 +557,18 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
     }
     private function buildRequestBody(
         Collection $teachers,
-        Collection  $teacherBusyPeriods,
+        array $busyPeriods,
         Collection $teacherCourses,
         Collection $halls,
-        Collection  $hallBusyPeriods,
         array $requestPayload,
         ?array $jointCourses,
     ): array {
         return [
             'teachers'             => $this->formatTeachers($teachers),
-            'teacher_busy_periods' => $this->formatTeacherBusyPeriods($teacherBusyPeriods),
+            'teacher_busy_periods' => $busyPeriods['teacher_busy_periods'],
             'teacher_courses'      => $this->formatTeacherCourses($teacherCourses),
             'halls'                => $this->formatHalls($halls),
-            'hall_busy_periods'    => $this->formatHallBusyPeriods($hallBusyPeriods),
+            'hall_busy_periods'    => $busyPeriods['hall_busy_periods'],
             'soft_constraints'     => $this->buildSoftConstraints($requestPayload),
             'hard_constraints'     => $this->buildHardConstraints($requestPayload, $jointCourses),
         ];
@@ -617,16 +578,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         return $teachers->map(fn($t) => [
             'teacher_id' => $t->teacher->id,
             'name'       => $t->teacher->name,
-        ])->all();
-    }
-    private function formatTeacherBusyPeriods(Collection $busyPeriods): array
-    {
-        return $busyPeriods->map(fn($s) => [
-            'start_time'   => $s->start_time,
-            'end_time'     => $s->end_time,
-            'day'          => $s->day,
-            'teacher_id'   => $s->teacher_id,
-            'teacher_name' => $s->teacher->name,
         ])->all();
     }
     private function formatTeacherCourses(Collection $teacherCourses): array
@@ -647,16 +598,6 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
             'hall_id'       => $hall->id,
             'hall_capacity' => $hall->capacity,
             'hall_type'     => $hall->types->pluck('name')->all(),
-        ])->all();
-    }
-    private function formatHallBusyPeriods(Collection $busyPeriods): array
-    {
-        return $busyPeriods->map(fn($s) => [
-            'hall_id'    => $s->hall->id,
-            'hall_name'  => $s->hall->name,
-            'start_time' => $s->start_time,
-            'end_time'   => $s->end_time,
-            'day'        => $s->day,
         ])->all();
     }
     private function buildSoftConstraints(array $requestPayload): array
@@ -816,38 +757,5 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         }
 
         return "Unknown source (no trace available)";
-    }
-    private function addUserError(string $title, string $description, array $params = [])
-    {
-        $this->userErrors->push([
-            'title' => $title,
-            'description' => $description,
-            'additional_params' => $params,
-        ]);
-    }
-    private function hasUserErrors(): bool
-    {
-        return $this->userErrors->isNotEmpty();
-    }
-    private function createUserError(string $versionId, string $schoolSemesterId)
-    {
-        if ($this->userErrors->isEmpty()) {
-            return;
-        }
-
-        SemesterTimetableError::create([
-            'id' => Str::uuid()->toString(),
-            'school_semester_id' => $schoolSemesterId,
-            'timetable_version_id' => $versionId,
-            'school_branch_id' => $this->currentSchool->id,
-            'status' => "failed",
-            'request_payload' => $this->payload,
-            'errors' => $this->userErrors->toArray()
-        ]);
-
-        $version = SemesterTimetableVersion::find($versionId);
-        $version->update([
-            "scheduler_status" => "failed"
-        ]);
     }
 }

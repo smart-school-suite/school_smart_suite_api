@@ -3,23 +3,18 @@
 namespace App\Services\SemesterTimetable;
 
 use App\Exceptions\AppException;
-use App\Models\Courses;
 use App\Models\InstructorAvailabilitySlot;
 use App\Models\SchoolSemester;
-use App\Models\SemesterTimetable\SemesterTimetableSlot;
+use App\Services\JointCourse\JointCoursePeriods;
+use App\Services\SemesterTimetable\Support\ActiveCommitments;
 use App\Models\SpecialtyHall;
 use App\Models\TeacherCoursePreference;
 use App\Models\TeacherSpecailtyPreference;
-use App\Models\Course\JointCourseSlot;
-use App\Models\Course\SemesterJoinCourseReference;
-use App\Models\Course\SemesterJointCourse;
 use App\Schedular\SemesterTimetable\Engine\SchedularEngine;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use App\Models\Course\CourseSpecialty;
-use App\Models\Teacher;
 use App\Schedular\SemesterTimetable\DTO\TimetableContext;
-use Illuminate\Support\Arr;
 class GeneratePreferenceSemesterTimetableService
 {
     public function generateTimetable(array $requestPayload, object $currentSchool): array
@@ -51,18 +46,24 @@ class GeneratePreferenceSemesterTimetableService
 
         $halls = $this->getHalls($currentSchool->id, $semester->specialty_id);
 
-        $hallBusy = $this->getHallBusyPeriods($currentSchool->id, $halls);
-        $teacherBusy = $this->getTeacherBusyPeriods($currentSchool->id, $teacherIds);
+        $jointCourses = $this->getJointCourses($semester);
+        // getHalls returns SpecialtyHall rows, so the hall key is hall_id.
+        $busyPeriods = app(ActiveCommitments::class)->busyPeriodsForGeneration(
+            $currentSchool->id,
+            $semester->id,
+            $teacherIds,
+            $halls->pluck('hall_id')->all(),
+            $jointCourses ?? [],
+        );
 
         $payload =  $this->buildBody(
             $preferred,
             $teachers,
-            $teacherBusy,
+            $busyPeriods,
             $teacherCourses,
             $halls,
-            $hallBusy,
             $requestPayload,
-            $this->getJointCourses($semester)
+            $jointCourses
         );
 
         TimetableContext::setPreferenceMode(true);
@@ -169,22 +170,6 @@ class GeneratePreferenceSemesterTimetableService
 
         return $halls;
     }
-    private function getHallBusyPeriods(string $branchId, Collection $halls)
-    {
-        return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereIn('hall_id', $halls->pluck('hall_id')->toArray())
-            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
-            ->with('hall')
-            ->get();
-    }
-    private function getTeacherBusyPeriods(string $branchId, array $teacherIds)
-    {
-        return SemesterTimetableSlot::where('school_branch_id', $branchId)
-            ->whereHas('schoolSemester', fn($q) => $q->where('end_date', '>=', now()))
-            ->whereIn('teacher_id', $teacherIds)
-            ->with('teacher')
-            ->get();
-    }
     private function buildSoftConstraints(array $requestPayload): array
     {
         return array_filter([
@@ -203,14 +188,7 @@ class GeneratePreferenceSemesterTimetableService
     private function buildHardConstraints(array $requestPayload, ?array $jointCourses): array
     {
         return array_filter([
-            'required_joint_course_periods'    => Courses::take(3)->get()->map(fn($c) => [
-                'course_id' => $c->id,
-                'teacher_id' => Teacher::all()->random()->id,
-                'hall_id' => SpecialtyHall::all()->random()->hall_id,
-                'start_time' => '08:00',
-                'end_time' => '09:00',
-                "day" => strtolower(Arr::random(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']))
-            ])->toArray(),
+            'required_joint_course_periods'    => $jointCourses,
             'break_period'                     => $requestPayload['break_period'] ?? null,
             'operational_period'               => $requestPayload['operational_period'] ?? null,
             'schedule_period_duration_minutes' => $requestPayload['schedule_period_duration_minutes'] ?? null,
@@ -218,42 +196,22 @@ class GeneratePreferenceSemesterTimetableService
     }
     private function getJointCourses(SchoolSemester $schoolSemester): ?array
     {
-        $branchId   = $schoolSemester->school_branch_id;
-        $semesterId = $schoolSemester->id;
+        $jointCourses = app(JointCoursePeriods::class)->forSchoolSemester($schoolSemester->school_branch_id, $schoolSemester->id);
 
-        $existingJointCourses = SemesterJointCourse::where('school_branch_id', $branchId)
-            ->where('semester_id', $semesterId)
-            ->exists();
+        if (!empty($jointCourses['missing'])) {
+            $titles = collect($jointCourses['missing'])->pluck('course_title')->implode(', ');
 
-        if (!$existingJointCourses) {
-            return null;
-        }
-
-        $reference = SemesterJoinCourseReference::where('school_branch_id', $branchId)
-            ->where('school_semester_id', $semesterId)
-            ->first();
-
-        if (!$reference) {
-            return null;
-        }
-
-        $jointCourseSlots = JointCourseSlot::where('school_branch_id', $branchId)
-            ->where('semester_joint_course_id', $reference->semester_joint_course_id)
-            ->with(['course', 'teacher', 'hall'])
-            ->get();
-
-        if ($jointCourseSlots->isEmpty()) {
             throw new AppException(
-                "No Joint Course Slots Found",
-                404,
-                "No Joint Course Slots Found",
-                "Joint courses exist for this semester but no slots have been created. Please create slots for all joint courses before generating the timetable.",
+                "Joint courses without slots for school semester {$schoolSemester->id}.",
+                422,
+                'Joint Course Has No Time',
+                "{$titles} " . (count($jointCourses['missing']) === 1 ? 'is' : 'are') . ' shared with other specialties but has no time set yet. Set its time on the joint course timetable page, then generate again.'
             );
         }
 
-        return $jointCourseSlots->toArray();
+        return $jointCourses['periods'] ?: null;
     }
-    private function buildBody($preferred, $teachers, $teacherBusy, $teacherCourses, $halls, $hallBusy, array $requestPayload, ?array $jointCourses): array
+    private function buildBody($preferred, $teachers, array $busyPeriods, $teacherCourses, $halls, array $requestPayload, ?array $jointCourses): array
     {
         return [
             'teacher_preferred_periods' => $preferred->map(fn($s) => [
@@ -267,13 +225,7 @@ class GeneratePreferenceSemesterTimetableService
                 'teacher_id' => $t->teacher->id,
                 'name' => $t->teacher->name,
             ]),
-            'teacher_busy_periods' => $teacherBusy->map(fn($s) => [
-                'start_time' => $s->start_time,
-                'end_time' => $s->end_time,
-                'day' => $s->day_of_week,
-                'teacher_id' => $s->teacher_id,
-                'teacher_name' => $s->teacher->name,
-            ]),
+            'teacher_busy_periods' => $busyPeriods['teacher_busy_periods'],
             'teacher_courses' => $teacherCourses->map(fn($c) => [
                 'course_id' => $c->course->id,
                 'course_title' => $c->course->course_title,
@@ -289,13 +241,7 @@ class GeneratePreferenceSemesterTimetableService
                 'hall_capacity' => $h->hall->capacity,
                 'hall_type' => "lecture",
             ]),
-            'hall_busy_periods' => $hallBusy->map(fn($s) => [
-                'hall_id' => $s->hall->id,
-                'hall_name' => $s->hall->name,
-                'start_time' => $s->start_time,
-                'end_time' => $s->end_time,
-                'day' => $s->day_of_week,
-            ]),
+            'hall_busy_periods' => $busyPeriods['hall_busy_periods'],
             'soft_constraints'     => $this->buildSoftConstraints($requestPayload),
             'hard_constraints'     => $this->buildHardConstraints($requestPayload, $jointCourses),
             ];
