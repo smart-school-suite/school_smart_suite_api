@@ -31,3 +31,8 @@ Route::get('/version/{versionId}/errors', [ExamTimetableGenerationController::cl
 Route::get('/version/{versionId}/slots', [ExamTimetableGenerationController::class, 'getTimetableSlots'])->name('examTimetable.slots');
 Route::get('/version/{versionId}/payload', [ExamTimetableGenerationController::class, 'getTimetableRequestPayload'])->name('examTimetable.payload');
 Route::get('/version/{versionId}/raw-diagnostics', [ExamTimetableGenerationController::class, 'getRawDiagnostics'])->name('examTimetable.rawDiagnostics');
+Route::get('/version/{versionId}/solutions', [ExamTimetableGenerationController::class, 'getTimetableSolutions'])->name('examTimetable.solutions');
+Route::post('/version/{versionId}/solutions/apply', [ExamTimetableGenerationController::class, 'applySolutions'])->name('examTimetable.solutions.apply');
+Route::post('/version/{versionId}/activate', [ExamTimetableGenerationController::class, 'activateTimetableVersion'])->name('examTimetable.version.activate');
+Route::get('/version/{versionId}/activation-check', [ExamTimetableGenerationController::class, 'checkTimetableActivation'])->name('examTimetable.version.activationCheck');
+Route::get('/exam/{examId}/active-timetable', [ExamTimetableGenerationController::class, 'getActiveTimetable'])->name('examTimetable.active.get');

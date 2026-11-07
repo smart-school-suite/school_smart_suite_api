@@ -4,15 +4,19 @@ namespace App\Schedular\ExamTimetable\Builders\ResponseBuilder;
 
 use App\Constant\Constraint\ExamTimetable\Course\CoursePlacement;
 use App\Schedular\ExamTimetable\Builders\DiagnosticBuilder\Core\DiagnosticRegistry;
+use App\Schedular\ExamTimetable\Context\ExamTimetableContext;
 use App\Schedular\ExamTimetable\Context\RequestContext;
 use App\Schedular\ExamTimetable\Core\State;
+use App\Schedular\ExamTimetable\DTO\DiagnosticDTO;
 use App\Schedular\ExamTimetable\DTO\ResponseDTO;
 use App\Schedular\ExamTimetable\Placement\Support\Time;
+use App\Schedular\ExamTimetable\Solution\SolutionEngine;
 use Carbon\Carbon;
+use Throwable;
 
 class ResponseBuilder
 {
-    public function build(State $state): ResponseDTO
+    public function build(State $state, array $requestPayload = [], bool $withSolutions = false): ResponseDTO
     {
         $diagnostics = app(DiagnosticRegistry::class);
 
@@ -32,10 +36,27 @@ class ResponseBuilder
             ->pluck('constraint_failed.course_id')
             ->values()
             ->all();
-        // Solution paths for exam timetables come with the solution engine.
-        $response->suggestions = [];
+        $response->suggestions = $withSolutions && $response->status !== 'optimal'
+            ? $this->suggestions($response, $requestPayload, $state)
+            : [];
 
         return $response;
+    }
+
+    private function suggestions(ResponseDTO $response, array $requestPayload, State $state): array
+    {
+        try {
+            return app(SolutionEngine::class)->generate([
+                'hard' => $response->diagnostics['hard']->map(fn(DiagnosticDTO $diagnostic) => $diagnostic->toArray())->all(),
+                'soft' => $response->diagnostics['soft']->map(fn(DiagnosticDTO $diagnostic) => $diagnostic->toArray())->all(),
+            ], $requestPayload, $state);
+        } catch (Throwable $exception) {
+            report($exception);
+            return [];
+        } finally {
+            // Verifying solutions re-runs the scheduler; put this run's input back.
+            ExamTimetableContext::setRequestPayload($requestPayload);
+        }
     }
 
     /**

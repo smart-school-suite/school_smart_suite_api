@@ -19,11 +19,14 @@ use App\Schedular\ExamTimetable\Placement\Engine\PlacementEngine;
  *  2. ConstraintRegistry  places courses requested at a fixed time (before placement)
  *  3. PlacementEngine     gives every other course a date, a time, halls and invigilators
  *  4. ConstraintRegistry  checks hall, invigilator and daily load requests (after placement)
- *  5. ResponseBuilder     status, timetable and diagnostics
+ *  5. ResponseBuilder     status, timetable, diagnostics and solution paths
  */
 class SchedularEngine
 {
-    public function run(array $requestPayload): ResponseDTO
+    /**
+     * @param bool $withSolutions false when re-running to verify a solution, so it does not plan solutions itself
+     */
+    public function run(array $requestPayload, bool $withSolutions = true): ResponseDTO
     {
         ExamTimetableContext::setRequestPayload($requestPayload);
         $state = new State();
@@ -38,6 +41,6 @@ class SchedularEngine
             // The hard violations are in the state; the response reports them.
         }
 
-        return app(ResponseBuilder::class)->build($state);
+        return app(ResponseBuilder::class)->build($state, $requestPayload, $withSolutions);
     }
 }

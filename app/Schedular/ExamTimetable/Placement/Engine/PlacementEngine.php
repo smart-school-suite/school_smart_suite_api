@@ -20,8 +20,9 @@ use App\Schedular\ExamTimetable\Placement\Support\Time;
 /**
  * Gives every course not placed yet one exam session.
  *
- * Courses go hardest first: those whose teachers make up more of the
- * invigilators (fewer people can invigilate them), then the longest exams.
+ * Courses go hardest first: those that fit on the fewest dates (long exams),
+ * then those whose teachers make up more of the invigilators (fewer people can
+ * invigilate them), then the longest exams.
  * For each course the dates are tried in ExamDateScoring order and, on each
  * date, the start times in ExamSlotScore order. The first time where
  * ResourceAllocator finds halls and invigilators wins.
@@ -36,7 +37,7 @@ class PlacementEngine
     {
         $context = RequestContext::fromPayload();
 
-        foreach ($this->orderCourses($context) as $course) {
+        foreach ($this->orderCourses($state, $context) as $course) {
             $courseId = $course['course_id'];
             if ($state->isPlaced($courseId)) {
                 continue;
@@ -46,16 +47,26 @@ class PlacementEngine
         }
     }
 
-    private function orderCourses(RequestContext $context): array
+    private function orderCourses(State $state, RequestContext $context): array
     {
         return $context->courses()
             ->sortBy(fn(array $course) => [
+                $this->datesLongEnough($state, $context->sessionDurationCourse($course['course_id'])),
                 -count($context->teachersOf($course['course_id'])),
                 -$context->sessionDurationCourse($course['course_id']),
                 $course['course_title'] ?? $course['course_id'],
             ])
             ->values()
             ->all();
+    }
+
+    /** Dates whose opening hours can hold an exam this long. */
+    private function datesLongEnough(State $state, int $duration): int
+    {
+        return count(array_filter(
+            $state->dateGrid,
+            fn($day) => Time::duration($day->startTime, $day->endTime) >= $duration
+        ));
     }
 
     private function placeCourse(State $state, RequestContext $context, string $courseId): void

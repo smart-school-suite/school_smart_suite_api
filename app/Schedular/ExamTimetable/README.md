@@ -60,7 +60,49 @@ into DTOs with stable ids. A course that cannot be placed anywhere is a hard `co
 say what was missing: seats (`hall_unavailable`), invigilators (`invigilator_unavailable`, plus
 `invigilator_teaches_course` when the free invigilators all teach it), or time (`operational_period_violation`).
 
-Solution paths (as in `SemesterTimetable/Solution`) are not built yet; `suggestions` is empty.
+## Solutions
+
+`Solution/` works out ways to fix what a run could not satisfy, like `SemesterTimetable/Solution`:
+
+```
+diagnostics -> Issue[] -> PathPlanner -> SolutionPath[] -> grouped by date ("general" for issues without one)
+```
+
+- Only hard issues get paths when any hard constraint failed; otherwise the soft ones do.
+- Each blocker and constraint key has a definition in `Solution/Definitions` (registered in `Catalog/ConstraintCatalog`)
+  that explains it (`title()`, `reason()`) and proposes remedies: move or remove a request, swap a hall or
+  invigilator, add halls to an assignment, open a date longer, allow an excluded date, change an exam length,
+  raise the daily limit on one date, or a manual step.
+- An invigilator who teaches a course is never offered for its exam. When nobody else is free, the remedy is a
+  manual step: assign another invigilator.
+- Joint course exams are locked: their time is never changed.
+- **Every path without manual steps is verified** by applying it to the scheduler input
+  (`Support/RequestShape`) and running the scheduler again. It is verified when its issues are gone and no new
+  problem appeared; paths that fail are never offered. Paths with manual steps have `verified: null`.
+- `applyToRequest()` of each definition changes the stored generation request for one step;
+  `ExamApplySolutionService` applies the chosen paths and generates a new version.
+
+| Endpoint | Does |
+|---|---|
+| `GET /api/v1/exam-timetable/version/{versionId}/solutions` | problems and their options, grouped by date |
+| `POST /api/v1/exam-timetable/version/{versionId}/solutions/apply` | applies `solution_ids[]` and generates a new version |
+
+## Activation
+
+`ActivateExamTimetableService` makes a generated version the one in use for its exam:
+
+| Endpoint | Does |
+|---|---|
+| `GET /api/v1/exam-timetable/version/{versionId}/activation-check` | `can_activate`, the conflicts, the version it replaces |
+| `POST /api/v1/exam-timetable/version/{versionId}/activate` | activates it (422 with the conflicts when it clashes) |
+| `GET /api/v1/exam-timetable/exam/{examId}/active-timetable` | the active version of an exam |
+
+Only `optimal` and `partial` versions of exams that have not ended can be activated. Activation checks again
+for clashes with other exams' active timetables (a hall at an overlapping time, unless shared at exactly the same
+time within its capacity; a person invigilating two exams at once), since others may have been activated since
+generation. It then writes `exam_timetable_slots`, `exam_session_halls` and `exam_session_invigs` (each
+invigilator linked to their hall), replaces the exam's previous active version, and from then on those halls and
+invigilators are busy for other exams' generation.
 
 ## Adding a constraint
 

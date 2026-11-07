@@ -66,6 +66,12 @@ class RequestContext extends ExamTimetableContext
         return self::$context ??= new self(self::$requestPayload);
     }
 
+    /** A context over any input, independent of the run in progress. */
+    public static function for(array $payload): self
+    {
+        return new self($payload);
+    }
+
     private function hard(string $key, mixed $default = []): mixed
     {
         return $this->payload['hard_constraints'][$key] ?? $default;

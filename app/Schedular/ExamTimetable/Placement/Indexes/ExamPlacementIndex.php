@@ -68,13 +68,13 @@ class ExamPlacementIndex
      *
      * @return array{seats: int, shared: bool, conflict: ?array}
      */
-    public function hallSeatsFree(string $hallId, int $capacity, string $date, int $start, int $end): array
+    public function hallSeatsFree(string $hallId, int $capacity, string $date, int $start, int $end, ?string $ignoreCourseId = null): array
     {
         $used = 0;
         $shared = false;
 
         foreach ($this->hallUse[$hallId][$date] ?? [] as $period) {
-            if (!Time::overlaps($start, $end, $period['start'], $period['end'])) {
+            if ($this->ignored($period, $ignoreCourseId) || !Time::overlaps($start, $end, $period['start'], $period['end'])) {
                 continue;
             }
 
@@ -97,10 +97,10 @@ class ExamPlacementIndex
     }
 
     /** @return ?array the period keeping the invigilator busy, or null when free */
-    public function invigilatorConflict(string $invigilatorId, string $date, int $start, int $end): ?array
+    public function invigilatorConflict(string $invigilatorId, string $date, int $start, int $end, ?string $ignoreCourseId = null): ?array
     {
         foreach ($this->invigilatorUse[$invigilatorId][$date] ?? [] as $period) {
-            if (Time::overlaps($start, $end, $period['start'], $period['end'])) {
+            if (!$this->ignored($period, $ignoreCourseId) && Time::overlaps($start, $end, $period['start'], $period['end'])) {
                 return $this->describe($period, $date);
             }
         }
@@ -143,6 +143,12 @@ class ExamPlacementIndex
             'course_id' => $courseId,
         ];
         $this->invigilatorMinutes[$invigilatorId] = ($this->invigilatorMinutes[$invigilatorId] ?? 0) + ($end - $start);
+    }
+
+    /** Periods of this run's own session for a course, skipped when looking for a new time for it. */
+    private function ignored(array $period, ?string $ignoreCourseId): bool
+    {
+        return $ignoreCourseId !== null && $period['course_id'] === $ignoreCourseId && $period['source'] !== 'other_exam';
     }
 
     private function describe(array $period, string $date): array

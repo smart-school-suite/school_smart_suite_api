@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\ExamTimetable;
 
 use App\Http\Controllers\Controller;
+use App\Exceptions\ExamTimetable\ExamTimetableActivationConflict;
 use App\Http\Requests\ExamTimetable\GenerateExamTimetableRequest;
 use App\Services\ApiResponseService;
+use App\Services\ExamTimetable\ActivateExamTimetableService;
+use App\Services\ExamTimetable\ExamApplySolutionService;
+use App\Services\ExamTimetable\ExamTimetableInsightService;
 use App\Services\ExamTimetable\ExamTimetableGenerationDispatcher;
 use App\Services\ExamTimetable\ExamTimetableResultService;
 use Illuminate\Http\Request;
@@ -54,6 +58,51 @@ class ExamTimetableGenerationController extends Controller
     {
         $errors = $this->results->getErrors($versionId, $request->attributes->get('currentSchool'));
         return ApiResponseService::success("Exam Timetable Errors Fetched Successfully", $errors, null, 200);
+    }
+
+    public function getTimetableSolutions(Request $request, ExamTimetableInsightService $insights, string $versionId)
+    {
+        $solutions = $insights->solutions($request->attributes->get('currentSchool'), $versionId);
+        return ApiResponseService::success("Exam Timetable Solutions Fetched Successfully", $solutions, null, 200);
+    }
+
+    public function applySolutions(Request $request, ExamApplySolutionService $solutions, string $versionId)
+    {
+        $data = $request->validate([
+            'solution_ids' => 'required|array|min:1',
+            'solution_ids.*' => 'required|string',
+        ]);
+
+        $result = $solutions->apply($request->attributes->get('currentSchool'), $versionId, $data['solution_ids'], $this->resolveUser());
+        return ApiResponseService::success("Exam Timetable Solutions Applied Successfully", $result, null, 200);
+    }
+
+    public function activateTimetableVersion(Request $request, ActivateExamTimetableService $activation, string $versionId)
+    {
+        try {
+            $result = $activation->activate($request->attributes->get('currentSchool'), $versionId);
+        } catch (ExamTimetableActivationConflict $conflict) {
+            return ApiResponseService::error($conflict->getMessage(), null, 422, [
+                'title' => $conflict->getTitle(),
+                'description' => $conflict->getDescription(),
+                'path' => null,
+                'conflicts' => $conflict->conflicts(),
+            ]);
+        }
+
+        return ApiResponseService::success("Exam Timetable Activated Successfully", $result, null, 200);
+    }
+
+    public function checkTimetableActivation(Request $request, ActivateExamTimetableService $activation, string $versionId)
+    {
+        $check = $activation->check($request->attributes->get('currentSchool'), $versionId);
+        return ApiResponseService::success("Exam Timetable Activation Checked Successfully", $check, null, 200);
+    }
+
+    public function getActiveTimetable(Request $request, ActivateExamTimetableService $activation, string $examId)
+    {
+        $active = $activation->activeFor($request->attributes->get('currentSchool'), $examId);
+        return ApiResponseService::success("Active Exam Timetable Fetched Successfully", $active, null, 200);
     }
 
     protected function resolveUser()

@@ -50,7 +50,9 @@ class ResourceAllocator
 
         $halls = $this->chooseHalls($state, $context, $request, $date, $start, $end, $needed, $conflict);
         if (!$halls['ok']) {
-            return ['ok' => false, 'halls' => [], 'blockers' => $halls['blockers']];
+            // Report problems with requested invigilators too, so both can be fixed at once.
+            $required = $this->checkRequiredInvigilators($state, $context, $request['invigilator_ids'] ?? [], $date, $start, $end, $courseId, $conflict);
+            return ['ok' => false, 'halls' => [], 'blockers' => [...$halls['blockers'], ...$required]];
         }
 
         $invigilators = $this->assignInvigilators($state, $context, $request, $halls['halls'], $date, $start, $end, $courseId, $conflict);
@@ -211,9 +213,9 @@ class ResourceAllocator
 
     // ── Invigilators ─────────────────────────────────────────────────────
 
-    private function assignInvigilators(State $state, RequestContext $context, array $request, array $halls, string $date, int $start, int $end, string $courseId, array $conflict): array
+    /** Requested invigilators must be free and must not teach the course. */
+    private function checkRequiredInvigilators(State $state, RequestContext $context, array $required, string $date, int $start, int $end, string $courseId, array $conflict): array
     {
-        $required = $request['invigilator_ids'] ?? [];
         $blockers = [];
 
         foreach ($required as $invigilatorId) {
@@ -236,7 +238,14 @@ class ResourceAllocator
             }
         }
 
-        if ($blockers) {
+        return $blockers;
+    }
+
+    private function assignInvigilators(State $state, RequestContext $context, array $request, array $halls, string $date, int $start, int $end, string $courseId, array $conflict): array
+    {
+        $required = $request['invigilator_ids'] ?? [];
+
+        if ($blockers = $this->checkRequiredInvigilators($state, $context, $required, $date, $start, $end, $courseId, $conflict)) {
             return ['ok' => false, 'blockers' => $blockers];
         }
 
