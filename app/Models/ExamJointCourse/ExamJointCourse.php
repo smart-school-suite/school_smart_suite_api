@@ -4,6 +4,7 @@ namespace App\Models\ExamJointCourse;
 
 use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Courses;
+use App\Models\Examtype;
 use App\Models\Semester;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,8 @@ class ExamJointCourse extends Model
         'school_branch_id',
         'course_id',
         'school_year_id',
-        'semester_id'
+        'semester_id',
+        'exam_type_id'
     ];
     public $incrementing = false;
     public $table = 'exam_jcs';
@@ -33,6 +35,10 @@ class ExamJointCourse extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Courses::class, 'course_id');
+    }
+    public function examType(): BelongsTo
+    {
+        return $this->belongsTo(Examtype::class, 'exam_type_id');
     }
     public function schoolYear(): BelongsTo
     {
