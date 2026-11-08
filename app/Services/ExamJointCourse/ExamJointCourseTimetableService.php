@@ -9,7 +9,10 @@ use App\Models\Course\CourseSpecialty;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\ExamJointCourse\ExamJointCourseRef;
 use App\Models\ExamJointCourse\ExamJointCourseSlot;
+use App\Models\AcademicYear\SystemAcademicYear;
 use App\Models\Exams;
+use App\Models\Examtype;
+use App\Models\Semester;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Models\ExamTimetable\ExamTimetableVersion;
@@ -52,25 +55,53 @@ class ExamJointCourseTimetableService
 
     // ── Listing ──────────────────────────────────────────────────────────
 
-    /** Academic year and exam type pairs that have joint exams, with how many have a time. */
+    /**
+     * Every academic year and exam type pair that has an exam, with its joint
+     * exams and how many have a time, like the semester joint course terms.
+     * A pair is listed even before its exams are linked to joint exams
+     * (exams created before joint exams existed), so it can be chosen and
+     * synced instead of the list coming back empty.
+     */
     public function terms(object $currentSchool): array
     {
-        return ExamJointCourse::where('school_branch_id', $currentSchool->id)
+        $terms = [];
+        $blank = ['exam_count' => 0, 'joint_course_count' => 0, 'configured_count' => 0, 'not_configured_count' => 0];
+
+        $exams = Exams::where('school_branch_id', $currentSchool->id)
+            ->with(['schoolYear.systemAcademicYear', 'examtype.semesters'])
+            ->get();
+
+        foreach ($exams as $exam) {
+            $year = $exam->schoolYear?->systemAcademicYear;
+            $type = $exam->examtype;
+
+            if (!$year || !$type) {
+                continue;
+            }
+
+            $key = "{$year->id}:{$type->id}";
+            $terms[$key] ??= [...$this->termSummary($year, $type, $type->semesters), ...$blank];
+            $terms[$key]['exam_count']++;
+        }
+
+        $jointCourses = ExamJointCourse::where('school_branch_id', $currentSchool->id)
             ->with(['schoolYear', 'examType', 'semester'])
             ->withCount('examJointCourseSlot')
-            ->get()
-            ->groupBy(fn(ExamJointCourse $course) => "{$course->school_year_id}:{$course->exam_type_id}")
-            ->map(function (Collection $courses) {
-                $first = $courses->first();
-                $configured = $courses->filter(fn(ExamJointCourse $course) => $course->exam_joint_course_slot_count > 0)->count();
+            ->get();
 
-                return [
-                    ...$this->termSummary($first),
-                    'joint_course_count' => $courses->count(),
-                    'configured_count' => $configured,
-                    'not_configured_count' => $courses->count() - $configured,
-                ];
-            })
+        foreach ($jointCourses as $course) {
+            if (!$course->schoolYear || !$course->examType) {
+                continue;
+            }
+
+            $key = "{$course->school_year_id}:{$course->exam_type_id}";
+            $terms[$key] ??= [...$this->termSummary($course->schoolYear, $course->examType, $course->semester), ...$blank];
+            $terms[$key]['joint_course_count']++;
+            $terms[$key]['configured_count'] += $course->exam_joint_course_slot_count > 0 ? 1 : 0;
+        }
+
+        return collect($terms)
+            ->map(fn(array $term) => [...$term, 'not_configured_count' => $term['joint_course_count'] - $term['configured_count']])
             ->sortBy([['year_start', 'desc'], ['exam_type', 'asc']])
             ->values()
             ->all();
@@ -91,7 +122,9 @@ class ExamJointCourseTimetableService
         $missing = $presented->where('status', 'not_configured')->count();
 
         return [
-            'term' => $courses->first() ? $this->termSummary($courses->first()) : ['school_year_id' => $schoolYearId, 'exam_type_id' => $examTypeId],
+            'term' => ($first = $courses->first())
+                ? $this->termSummary($first->schoolYear, $first->examType, $first->semester)
+                : ['school_year_id' => $schoolYearId, 'exam_type_id' => $examTypeId],
             'summary' => [
                 'course_count' => $presented->count(),
                 'configured_count' => $presented->count() - $missing,
@@ -596,17 +629,17 @@ class ExamJointCourseTimetableService
         ];
     }
 
-    private function termSummary(ExamJointCourse $course): array
+    private function termSummary(?SystemAcademicYear $year, ?Examtype $type, ?Semester $semester): array
     {
         return [
-            'id' => "{$course->school_year_id}:{$course->exam_type_id}",
-            'school_year_id' => $course->school_year_id,
-            'exam_type_id' => $course->exam_type_id,
-            'academic_year' => $course->schoolYear?->name,
-            'year_start' => $course->schoolYear?->year_start,
-            'exam_type' => $course->examType?->exam_name,
-            'semester' => $course->semester?->name,
-            'label' => trim(($course->examType?->exam_name ?? 'Exam') . ' · ' . ($course->schoolYear?->name ?? '')),
+            'id' => "{$year?->id}:{$type?->id}",
+            'school_year_id' => $year?->id,
+            'exam_type_id' => $type?->id,
+            'academic_year' => $year?->name,
+            'year_start' => $year?->year_start,
+            'exam_type' => $type?->exam_name,
+            'semester' => $semester?->name,
+            'label' => trim(($type?->exam_name ?? 'Exam') . ' · ' . ($year?->name ?? '')),
         ];
     }
 
