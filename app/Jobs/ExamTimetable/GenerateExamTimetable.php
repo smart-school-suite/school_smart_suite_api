@@ -355,8 +355,8 @@ class GenerateExamTimetable implements ShouldQueue
                 $title = $jointCourse->course?->course_title ?? 'A joint course';
                 $this->addUserError(
                     'Joint Course Has No Time',
-                    "{$title} is shared with other specialties but has no exam time set yet. Set its time on the joint course exam page, then generate again.",
-                    ['course_id' => $jointCourse->course_id, 'exam_joint_course_id' => $jointCourse->id, 'reason' => 'joint_course_without_slots', 'path' => '/exam-joint-course']
+                    "{$title} is shared with other specialties but has no exam time set yet. Set its time on the joint exam timetable page, then generate again.",
+                    ['course_id' => $jointCourse->course_id, 'exam_joint_course_id' => $jointCourse->id, 'reason' => 'joint_course_without_slots', 'path' => '/exam-joint-course-timetable']
                 );
                 continue;
             }

@@ -336,6 +336,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/joint-course-timetable')
                 ->group(base_path('routes/JointCourse/JointCourseTimetable.php'));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-joint-course-timetable')
+                ->group(base_path('routes/ExamJointCourse/ExamJointCourseTimetable.php'));
+
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/semester-timetable-interpreter')
                 ->group(base_path('routes/SemesterTimetable/SemesterTimetableInterpreter.php'));
 
