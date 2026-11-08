@@ -81,9 +81,9 @@ class TeacherCoursePreferenceService
             }
 
             $validCourseIds = Courses::where('school_branch_id', $schoolBranchId)
-                ->with(['courseSpecialty', function ($query) use ($allowedSpecialties) {
+                ->whereHas('courseSpecialties', function ($query) use ($allowedSpecialties) {
                     $query->whereIn('specialty_id', $allowedSpecialties);
-                }])
+                })
                 ->whereIn('id', $requestedCourseIds)
                 ->pluck('id')
                 ->toArray();
@@ -138,11 +138,11 @@ class TeacherCoursePreferenceService
         }
 
         $courses = Courses::where('courses.school_branch_id', $schoolBranchId)
-            ->whereHas('courseSpecialty', function ($query) use ($preferredSpecialtyIds) {
+            ->whereHas('courseSpecialties', function ($query) use ($preferredSpecialtyIds) {
                 $query->whereIn('specialty_id', $preferredSpecialtyIds);
             })
             ->with([
-                'courseSpecialty' => function ($query) use ($preferredSpecialtyIds) {
+                'courseSpecialties' => function ($query) use ($preferredSpecialtyIds) {
                     $query->whereIn('specialty_id', $preferredSpecialtyIds)
                         ->with(['specialty.level']);
                 },
@@ -159,7 +159,7 @@ class TeacherCoursePreferenceService
 
         return $courses->get()->map(function ($course) {
             // Get the first matching course specialty (since we filtered by preferred specialties)
-            $courseSpecialty = $course->courseSpecialty->first();
+            $courseSpecialty = $course->courseSpecialties->first();
             $specialty = $courseSpecialty->specialty ?? null;
             $level = $specialty->level ?? null;
 

@@ -69,12 +69,12 @@ class JointCourseSlotService
 
         $semesterJointCourse = SemesterJointCourse::where("school_branch_id", $currentSchool->id)
             ->where("id", $semesterJointCourseId)
-            ->with(['course.courseSpecialty', 'semester', 'schoolYear'])
+            ->with(['course.courseSpecialties', 'semester', 'schoolYear'])
             ->firstOrFail();
 
         $course    = $semesterJointCourse->course;
         $semester  = $semesterJointCourse->semester;
-        $specialties = $course->courseSpecialty->pluck('specialty_id')->toArray();
+        $specialties = $course->courseSpecialties->pluck('specialty_id')->toArray();
 
         $teacherCourse = TeacherCoursePreference::where("course_id", $course->id)
             ->where("school_branch_id", $currentSchool->id)
@@ -225,12 +225,12 @@ class JointCourseSlotService
 
         $semesterJointCourse = SemesterJointCourse::where("school_branch_id", $currentSchool->id)
             ->where("id", $semesterJointCourseId)
-            ->with(['course.courseSpecialty', 'semester', 'schoolYear'])
+            ->with(['course.courseSpecialties', 'semester', 'schoolYear'])
             ->firstOrFail();
 
         $course      = $semesterJointCourse->course;
         $semester    = $semesterJointCourse->semester;
-        $specialties = $course->courseSpecialty->pluck('specialty_id')->toArray();
+        $specialties = $course->courseSpecialties->pluck('specialty_id')->toArray();
 
         $teacherCourse = TeacherCoursePreference::where("course_id", $course->id)
             ->where("school_branch_id", $currentSchool->id)
@@ -335,7 +335,7 @@ class JointCourseSlotService
 
         $semesterJointCourse = SemesterJointCourse::where("school_branch_id", $currentSchool->id)
             ->where("id", $updateData['semester_joint_course_id'])
-            ->with(['course.courseSpecialty', 'semester', 'schoolYear'])
+            ->with(['course.courseSpecialties', 'semester', 'schoolYear'])
             ->first();
 
         if (!$semesterJointCourse) {
@@ -349,7 +349,7 @@ class JointCourseSlotService
 
         $course      = $semesterJointCourse->course;
         $semester    = $semesterJointCourse->semester;
-        $specialties = $course->courseSpecialty->pluck('specialty_id')->toArray();
+        $specialties = $course->courseSpecialties->pluck('specialty_id')->toArray();
 
         $existingSlots = JointCourseSlot::where("school_branch_id", $currentSchool->id)
             ->where("semester_joint_course_id", $semesterJointCourse->id)
@@ -523,7 +523,7 @@ class JointCourseSlotService
         $this->validateNoSelfConflicts($updateSlots);
         $semesterJointCourse = SemesterJointCourse::where("school_branch_id", $currentSchool->id)
             ->where("id", $updateData['semester_joint_course_id'])
-            ->with(['course.courseSpecialty', 'semester', 'schoolYear'])
+            ->with(['course.courseSpecialties', 'semester', 'schoolYear'])
             ->first();
 
         if (!$semesterJointCourse) {
@@ -537,7 +537,7 @@ class JointCourseSlotService
 
         $course      = $semesterJointCourse->course;
         $semester    = $semesterJointCourse->semester;
-        $specialties = $course->courseSpecialty->pluck('specialty_id')->toArray();
+        $specialties = $course->courseSpecialties->pluck('specialty_id')->toArray();
 
         $existingSlots = JointCourseSlot::where("school_branch_id", $currentSchool->id)
             ->where("semester_joint_course_id", $semesterJointCourse->id)
