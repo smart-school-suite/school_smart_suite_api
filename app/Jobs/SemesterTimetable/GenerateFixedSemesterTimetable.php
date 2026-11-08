@@ -339,7 +339,7 @@ class GenerateFixedSemesterTimetable implements ShouldQueue
         $teacherCourses = TeacherCoursePreference::where('school_branch_id', $branchId)
             ->whereIn('teacher_id', $teacherIds)
             ->whereIn('course_id', $activeCourseIds)
-            ->with(['course.courseSpecialty', 'teacher'])
+            ->with(['course.courseSpecialties', 'teacher'])
             ->get();
 
         $assignedCourseIds = $teacherCourses->pluck('course_id')->unique()->toArray();

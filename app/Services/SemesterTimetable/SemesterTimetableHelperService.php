@@ -283,7 +283,7 @@ class SemesterTimetableHelperService
                 ->where('teacher_id', $teacher->id)
                 ->whereHas('course', function ($q) use ($schoolSemester) {
                     $q->where("semester_id", $schoolSemester->semester_id)
-                        ->whereHas('courseSpecialty', function ($q2) use ($schoolSemester) {
+                        ->whereHas('courseSpecialties', function ($q2) use ($schoolSemester) {
                             $q2->where("specialty_id", $schoolSemester->specialty_id);
                         });
                 })
@@ -504,7 +504,7 @@ class SemesterTimetableHelperService
                 ->where('teacher_id', $teacherId)
                 ->whereHas('course', function ($q) use ($schoolSemester) {
                     $q->where("semester_id", $schoolSemester->id)
-                        ->with(['courseSpecialty', function ($query) use ($schoolSemester) {
+                        ->with(['courseSpecialties', function ($query) use ($schoolSemester) {
                             $query->where("specialty_id", $schoolSemester->specialty_id);
                         }]);
                 })

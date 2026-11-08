@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Courses extends Model
 {
@@ -52,7 +53,20 @@ class Courses extends Model
         return $this->hasMany(JointCourseSlot::class);
     }
 
-    public function courseSpecialty(): HasMany
+    /**
+     * Single specialty link — used for normal (non-joint) courses,
+     * which belong to exactly one specialty.
+     */
+    public function courseSpecialty(): HasOne
+    {
+        return $this->hasOne(CourseSpecialty::class, 'course_id', 'id');
+    }
+
+    /**
+     * All specialty links — used for joint courses,
+     * which are shared across multiple specialties.
+     */
+    public function courseSpecialties(): HasMany
     {
         return $this->hasMany(CourseSpecialty::class, 'course_id', 'id');
     }

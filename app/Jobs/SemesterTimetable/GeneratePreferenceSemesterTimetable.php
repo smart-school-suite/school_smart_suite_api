@@ -214,7 +214,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
                     ->where('status', 'active')
             )
             ->whereDoesntHave(
-                'course.courseSpecialty',
+                'course.courseSpecialties',
                 fn($q) => $q
                     ->where('school_branch_id', $branchId)
                     ->whereColumn('course_id', 'course_specialties.course_id')
@@ -235,7 +235,7 @@ class GeneratePreferenceSemesterTimetable implements ShouldQueue
         $teacherCourses = TeacherCoursePreference::where('school_branch_id', $branchId)
             ->whereIn('teacher_id', $teacherIds)
             ->whereIn('course_id', $courseIds)
-            ->with(['course.courseSpecialty', 'teacher'])
+            ->with(['course.courseSpecialties', 'teacher'])
             ->get();
 
         if ($teacherCourses->isEmpty()) {
