@@ -4,7 +4,6 @@ namespace Tests\Feature\ExamTimetable;
 
 use App\Exceptions\AppException;
 use App\Exceptions\ExamTimetable\ExamTimetableActivationConflict;
-use App\Models\ExamTimetable\ActiveExamTimetable;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\ExamTimetable\ExamSessionInvigilator;
@@ -13,6 +12,7 @@ use App\Models\ExamTimetable\ExamTimetableVersion;
 use App\Models\Teacher;
 use App\Schedular\ExamTimetable\Engine\SchedularEngine;
 use App\Services\ExamTimetable\ActivateExamTimetableService;
+use App\Services\ExamTimetable\ExamTimetableVersionService;
 use App\Services\ExamTimetable\Support\ExamActiveCommitments;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -126,7 +126,9 @@ class ActivateExamTimetableTest extends TestCase
         $this->assertSame(60, (int) ExamSessionHall::sum('candidate_count') / 2);
         $this->assertSame(0, ExamSessionInvigilator::whereNull('exam_session_hall_id')->count());
         $this->assertGreaterThan(0, ExamSessionInvigilator::count());
-        $this->assertSame($version->id, ActiveExamTimetable::where('exam_id', 'exam-a')->value('version_id'));
+        // The version with slots is the active one; there is no separate active record.
+        $this->assertSame($version->id, $this->activation->activeFor($this->school, 'exam-a')['active_version']['id']);
+        $this->assertSame([$version->id], ExamTimetableVersion::where('exam_id', 'exam-a')->active()->pluck('id')->all());
     }
 
     public function test_activating_another_version_replaces_the_first(): void
@@ -142,7 +144,7 @@ class ActivateExamTimetableTest extends TestCase
         $this->assertSame($first->id, $result['replaced']['id']);
         $this->assertSame(0, ExamTimetableSlot::where('version_id', $first->id)->count());
         $this->assertSame(3, ExamTimetableSlot::where('version_id', $second->id)->count());
-        $this->assertSame(1, ActiveExamTimetable::where('exam_id', 'exam-a')->count());
+        $this->assertSame([$second->id], ExamTimetableVersion::where('exam_id', 'exam-a')->active()->pluck('id')->all());
         $this->assertSame($second->id, $this->activation->activeFor($this->school, 'exam-a')['active_version']['id']);
     }
 
@@ -170,7 +172,7 @@ class ActivateExamTimetableTest extends TestCase
 
         $this->assertTrue($check['can_activate'], json_encode($check['conflicts']));
         $this->activation->activate($this->school, $versionB->id);
-        $this->assertSame(2, ActiveExamTimetable::count());
+        $this->assertSame(2, ExamTimetableVersion::active()->count());
     }
 
     public function test_clash_with_another_active_exam_blocks_activation(): void
@@ -212,5 +214,27 @@ class ActivateExamTimetableTest extends TestCase
 
         $this->expectExceptionMessage('has ended');
         $this->activation->activate($this->school, $old->id);
+    }
+
+    public function test_the_active_version_cannot_be_deleted_but_a_replaced_one_can(): void
+    {
+        $this->exam('exam-a');
+        $invigilators = $this->invigilators('exam-a', ['t1', 't2']);
+        $first = $this->generateVersion('exam-a', $this->input('exam-a', ['c1', 'c2'], $invigilators));
+        $second = $this->generateVersion('exam-a', $this->input('exam-a', ['c1', 'c2'], $invigilators));
+        $versions = app(ExamTimetableVersionService::class);
+
+        $this->activation->activate($this->school, $first->id);
+        try {
+            $versions->deleteVersion($this->school, $first->id);
+            $this->fail('The active version was deleted.');
+        } catch (AppException $exception) {
+            $this->assertSame('Version In Use', $exception->getTitle());
+        }
+
+        $this->activation->activate($this->school, $second->id);
+        $versions->deleteVersion($this->school, $first->id);
+        $this->assertNull(ExamTimetableVersion::find($first->id));
+        $this->assertSame($second->id, $this->activation->activeFor($this->school, 'exam-a')['active_version']['id']);
     }
 }

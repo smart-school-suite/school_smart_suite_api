@@ -24,11 +24,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('active_exam_timetables', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->timestamps();
-        });
-
         Schema::create('exam_invigilators', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('actorable_id');
@@ -53,7 +48,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('exam_invigs');
-        Schema::dropIfExists('active_exam_timetable');
         Schema::dropIfExists('exam_timetable_slots');
         Schema::dropIfExists('exam_timetable_versions');
         Schema::dropIfExists('exam_session_invigs');

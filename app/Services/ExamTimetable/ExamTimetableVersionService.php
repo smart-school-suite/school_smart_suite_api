@@ -59,7 +59,7 @@ class ExamTimetableVersionService
             );
         }
 
-        if ($version->activeTimetable()->exists()) {
+        if ($version->examTimetableSlot()->exists()) {
             throw new AppException(
                 "Exam timetable version {$versionId} is active and cannot be deleted.",
                 422,

@@ -429,7 +429,8 @@ class ExamJointCourseTimetableService
         return ExamTimetableSlot::where('school_branch_id', $branchId)
             ->whereDate('date', '>=', $from)
             ->whereDate('date', '<=', $to)
-            ->whereHas('version.activeTimetable')
+            // Only active versions have slots (activation replaces an exam's slots).
+            ->whereHas('version')
             ->with(['course', 'examSessionHall', 'examSessionInvig.invigilator'])
             ->get()
             ->map(function (ExamTimetableSlot $slot) {
