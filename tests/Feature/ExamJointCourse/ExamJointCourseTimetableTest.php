@@ -147,7 +147,6 @@ class ExamJointCourseTimetableTest extends TestCase
     {
         // Software Engineering's active timetable has Algorithms on Monday 08:00 – 10:00.
         DB::table('exam_timetable_versions')->insert(['id' => 'v1', 'version_number' => 1, 'label' => 'Version 1', 'exam_id' => 'exam-swe', 'school_branch_id' => 'branch-1', 'scheduler_status' => 'optimal']);
-        DB::table('active_exam_timetables')->insert(['id' => 'a1', 'version_id' => 'v1', 'exam_id' => 'exam-swe', 'school_branch_id' => 'branch-1']);
         DB::table('exam_timetable_slots')->insert(['id' => 's1', 'date' => '2099-12-07', 'start_time' => '08:00:00', 'end_time' => '10:00:00', 'course_id' => 'algo', 'version_id' => 'v1', 'exam_id' => 'exam-swe', 'school_branch_id' => 'branch-1']);
 
         $proposal = $this->service->generate($this->school, $this->jointCourse()->id, ['duration' => 120, 'start_time' => '08:00', 'end_time' => '12:00']);

@@ -34,7 +34,8 @@ class ExamActiveCommitments
             ->where('exam_id', '!=', $examId)
             ->whereDate('date', '>=', $startDate)
             ->whereDate('date', '<=', $endDate)
-            ->whereHas('version.activeTimetable')
+            // Only active versions have slots (activation replaces an exam's slots).
+            ->whereHas('version')
             ->with([
                 'examSessionHall',
                 'examSessionInvig.invigilator',
