@@ -2,67 +2,60 @@
 
 namespace App\Schedular\ExamTimetable\Placement\Scoring;
 
+use App\Schedular\ExamTimetable\DTO\ExamDateDTO;
+use App\Schedular\ExamTimetable\Placement\Support\Time;
+
+/**
+ * Start times a session can use on a date, best first.
+ *
+ * Times step by 15 minutes inside the date's opening hours. A time that
+ * overlaps another exam of the same students is never offered. Among the
+ * rest, the one leaving the longest break to the other exams of the day
+ * comes first; on a day without exams the earliest time comes first.
+ */
 class ExamSlotScore
 {
     private const STEP_MINUTES = 15;
 
-    public function suggestSlots(object $examGrid, int $duration): array
+    /** @return array<int, array{start_time: string, end_time: string, min_gap_minutes: ?int}> */
+    public function suggestSlots(ExamDateDTO $day, int $duration): array
     {
-        $dayStart = $this->toMinutes($examGrid->startTime);
-        $dayEnd   = $this->toMinutes($examGrid->endTime);
+        $dayStart = Time::toMinutes($day->startTime);
+        $dayEnd = Time::toMinutes($day->endTime);
 
-        $existingIntervals = array_map(
-            fn($alloc) => [
-                'start' => $this->toMinutes($alloc["start_time"]),
-                'end'   => $this->toMinutes($alloc["end_time"]),
-            ],
-            (array) $examGrid->allocations
-        );
+        $taken = array_map(fn(array $session) => [
+            'start' => Time::toMinutes($session['start_time']),
+            'end' => Time::toMinutes($session['end_time']),
+        ], $day->allocations);
 
-        $firstStart = (int) ceil($dayStart / self::STEP_MINUTES) * self::STEP_MINUTES;
+        $first = (int) ceil($dayStart / self::STEP_MINUTES) * self::STEP_MINUTES;
         $candidates = [];
 
-        for ($start = $firstStart; $start + $duration <= $dayEnd; $start += self::STEP_MINUTES) {
-            $end    = $start + $duration;
-            $minGap = empty($existingIntervals)
-                ? $dayEnd - $dayStart
-                : min(array_map(
-                    fn($iv) => $this->gap($start, $end, $iv['start'], $iv['end']),
-                    $existingIntervals
-                ));
+        for ($start = $first; $start + $duration <= $dayEnd; $start += self::STEP_MINUTES) {
+            $end = $start + $duration;
+            $gap = null;
+
+            foreach ($taken as $interval) {
+                if (Time::overlaps($start, $end, $interval['start'], $interval['end'])) {
+                    continue 2;
+                }
+                $between = Time::gap($start, $end, $interval['start'], $interval['end']);
+                $gap = $gap === null ? $between : min($gap, $between);
+            }
 
             $candidates[] = [
-                'start_time'      => $this->toTime($start),
-                'end_time'        => $this->toTime($end),
-                'score'           => $minGap,
-                'min_gap_minutes' => $minGap,
+                'start_time' => Time::toTime($start),
+                'end_time' => Time::toTime($end),
+                'min_gap_minutes' => $gap,
+                'sort' => [-($gap ?? 0), $start],
             ];
         }
 
-        usort($candidates, fn($a, $b) =>
-            $b['score'] !== $a['score']
-                ? $b['score'] <=> $a['score']
-                : strcmp($b['start_time'], $a['start_time'])
-        );
+        usort($candidates, fn(array $a, array $b) => $a['sort'] <=> $b['sort']);
 
-        return $candidates;
-    }
-
-    private function gap(int $aStart, int $aEnd, int $bStart, int $bEnd): int
-    {
-        if ($aEnd <= $bStart) return $bStart - $aEnd;
-        if ($bEnd <= $aStart) return $aStart - $bEnd;
-        return 0;
-    }
-
-    private function toMinutes(string $time): int
-    {
-        [$h, $m] = explode(':', $time);
-        return (int)$h * 60 + (int)$m;
-    }
-
-    private function toTime(int $minutes): string
-    {
-        return sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
+        return array_map(function (array $candidate) {
+            unset($candidate['sort']);
+            return $candidate;
+        }, $candidates);
     }
 }

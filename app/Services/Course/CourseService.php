@@ -382,6 +382,7 @@ class CourseService
         $courses = Courses::where("school_branch_id", $currentSchool->id)
             ->where("status", "active")
             ->with(['courseSpecialty.specialty.level', 'courseSpecialty.specialty.department', 'semester', 'types'])
+            ->withCount('courseSpecialties')
             ->get();
         if ($courses->isEmpty()) {
             throw new AppException(
@@ -398,15 +399,15 @@ class CourseService
             'course_code' => $course->course_code,
             'course_title' => $course->course_title,
             'credit' => $course->credit,
-            'specialty_name' => $course->courseSpecialty[0]->specialty->specialty_name ?? null,
-            'specialty_id' => $course->courseSpecialty[0]->specialty->id ?? null,
-            'department_name' => $course->courseSpecialty[0]->specialty->department->department_name ?? null,
+            'specialty_name' => $course->courseSpecialty?->specialty->specialty_name ?? null,
+            'specialty_id' => $course->courseSpecialty?->specialty->id ?? null,
+            'department_name' => $course->courseSpecialty?->specialty->department->department_name ?? null,
             'semester_title' => $course->semester->name ?? null,
             'semester_id' => $course->semester->id ?? null,
-            'level_name' => $course->courseSpecialty[0]->specialty->level->name ?? null,
-            'level_number' => $course->courseSpecialty[0]->specialty->level->level ?? null,
+            'level_name' => $course->courseSpecialty?->specialty->level->name ?? null,
+            'level_number' => $course->courseSpecialty?->specialty->level->level ?? null,
             'status' => $course->status,
-            "joint_course_status" => count($course->courseSpecialty) > 1 ? true : false
+            "joint_course_status" => $course->course_specialties_count > 1
         ]);
     }
     public function getCoursesBySchoolSemester(object $currentSchool, string $semesterId, string $specialtyId)
@@ -416,7 +417,7 @@ class CourseService
             $specialty = Specialty::findOrFail($specialtyId);
             $courses = Courses::where("school_branch_id", $currentSchool->id)
                 ->where("semester_id", $schoolSemester->semester_id)
-                ->whereHas("courseSpecialty", function ($query) use ($specialty) {
+                ->whereHas("courseSpecialties", function ($query) use ($specialty) {
                     $query->where("specialty_id", $specialty->id);
                 })
                 ->where("status", "active")

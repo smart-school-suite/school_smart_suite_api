@@ -200,7 +200,7 @@ class JointCourseService
     public function getJointCourseDetails(string $jointCourseId, object $currentSchool)
     {
         $course = Courses::where("school_branch_id", $currentSchool->id)
-            ->with(['types', 'courseSpecialty.specialty'])
+            ->with(['types', 'courseSpecialties.specialty'])
             ->find($jointCourseId);
 
         if (!$course) {

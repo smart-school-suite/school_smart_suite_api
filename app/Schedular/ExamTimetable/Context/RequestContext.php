@@ -2,234 +2,357 @@
 
 namespace App\Schedular\ExamTimetable\Context;
 
-use App\Schedular\ExamTimetable\Context\ExamTimetableContext;
+use App\Constant\Constraint\ExamTimetable\Assignment\RequestedAssignment;
+use App\Constant\Constraint\ExamTimetable\Course\CourseTimeRequest;
+use App\Constant\Constraint\ExamTimetable\Course\RequiredJointCourseSession;
+use App\Constant\Constraint\ExamTimetable\Hall\HallRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Invigilator\InvigilatorRequestedSlot;
+use App\Constant\Constraint\ExamTimetable\Schedule\OperationalPeriod;
+use App\Constant\Constraint\ExamTimetable\Schedule\SessionDuration;
+use App\Constant\Constraint\ExamTimetable\Student\StudentDailyLoadRange;
+use App\Schedular\ExamTimetable\Placement\Support\Time;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 
-class RequestContext  extends ExamTimetableContext
+/**
+ * Read access to the scheduler input.
+ *
+ * Input shape (all times "HH:MM", all dates "Y-m-d"):
+ *
+ *  exam_id, specialty_id, start_date, end_date, candidate_count,
+ *  candidates_per_invigilator  (optional: one invigilator per N candidates in a hall, default one per hall)
+ *  courses:                  [{course_id, course_title, course_code, candidate_count?}]
+ *  halls:                    [{hall_id, hall_name, capacity}]
+ *  invigilators:             [{invigilator_id, name, courses_taught: [course_id]}]
+ *  hall_busy_periods:        [{hall_id, date, start_time, end_time, candidate_count?, source?}]
+ *  invigilator_busy_periods: [{invigilator_id, date, start_time, end_time, source?}]
+ *  hard_constraints:
+ *    operational_period:            {start_time, end_time, date_exceptions: [{date, start_time, end_time}], date_exclusions: [date]}
+ *    session_duration:              {duration, course_exceptions: [{course_id, duration}]}
+ *    required_joint_course_periods: [{course_id, date, start_time, end_time}]
+ *  soft_constraints:
+ *    requested_assignment:       [{course_id, date, start_time, end_time, hall_ids: [], invigilator_ids: []}]
+ *    course_requested_slot:      [{course_id, date, start_time, end_time}]
+ *    hall_requested_slot:        [{hall_id, date, start_time, end_time}]
+ *    invigilator_requested_slot: [{invigilator_id, date, start_time, end_time}]
+ *    student_daily_load_range:   {min_sessions, max_sessions, date_exceptions: [{date, min_sessions, max_sessions}]}
+ */
+class RequestContext extends ExamTimetableContext
 {
-    private function __construct(private readonly array $parsed) {}
+    public const DEFAULT_START_TIME = '08:00';
+    public const DEFAULT_END_TIME = '17:00';
+    public const DEFAULT_DURATION = 120;
+
+    private array $courses;
+    private array $halls;
+    private array $invigilators;
+    private array $teaching;
+
+    private function __construct(private readonly array $payload)
+    {
+        $this->courses = collect($payload['courses'] ?? [])->keyBy('course_id')->all();
+        $this->halls = collect($payload['halls'] ?? [])
+            ->map(fn(array $hall) => [...$hall, 'capacity' => (int) ($hall['capacity'] ?? 0)])
+            ->keyBy('hall_id')
+            ->all();
+        $this->invigilators = collect($payload['invigilators'] ?? [])->keyBy('invigilator_id')->all();
+        $this->teaching = collect($this->invigilators)
+            ->map(fn(array $invigilator) => array_flip($invigilator['courses_taught'] ?? $invigilator['course_taught'] ?? []))
+            ->all();
+    }
 
     public static function fromPayload(): self
     {
-        return new self([
-            'hard' => self::parseHard(self::$requestPayload['hard_constraints']  ?? [], self::$requestPayload),
-            'soft' => self::parseSoft(self::$requestPayload['soft_constraints'] ?? []),
-        ]);
+        return self::$context ??= new self(self::$requestPayload);
     }
-    private static function parseHard(array $hc, array $requestPayload): array
+
+    /** A context over any input, independent of the run in progress. */
+    public static function for(array $payload): self
     {
-        return [
-            'startDate'        => $requestPayload['start_date']                  ?? [],
-            'endDate'           => $requestPayload['end_date']                     ?? [],
-            'invigs'      => $requestPayload['invigilators']      ?? [],
-            'invigBusySlots'      => $requestPayload['invigilator_busy_slots']         ?? [],
-            'courses'        => $requestPayload['courses']           ?? [],
-            'halls' => $requestPayload['halls'] ?? [],
-            'hBusySlots' => $requestPayload['hall_busy_slots'] ?? [],
-            'cCount' => $requestPayload['candidate_count'] ?? 0,
-            'specialty' => $requestPayload['specialty_id'] ?? null,
-
-            'opStartTime'     => $hc['operational_hours']['start_time']      ?? '08:00',
-            'opEndTime'       => $hc['operational_hours']['end_time']         ?? '17:00',
-            'opDayExceptions' => $hc['operational_hours']['date_exceptions'] ?? [],
-            'opDateExclusion'  => $hc['operational_hours']['date_exclusions'] ?? [],
-
-            'sessionDuration'  => (int) ($hc['session_duration']['duration_minutes'] ?? 60),
-            'sdExceptions'    => $hc['session_duration']['course_exceptions'] ?? [],
-
-            'jointCourses'    => $hc['required_joint_course_periods'] ?? [],
-        ];
+        return new self($payload);
     }
-    private static function parseSoft(array $sc): array
+
+    private function hard(string $key, mixed $default = []): mixed
     {
-        return [
-            'requestedAssignments'   => $sc['requested_assignments']          ?? [],
-            'iRequestedSlot'            => $sc['invigilator_requested_slot']            ?? null,
-            'cRequestedSlot'      => $sc['requested_course_slot'] ?? [],
-            'sDailyLoadRange'           => $sc['student_daily_load_range']       ?? null
-        ];
+        return $this->payload['hard_constraints'][$key] ?? $default;
     }
 
-    //soft constraints
+    private function soft(string $key, mixed $default = []): mixed
+    {
+        return $this->payload['soft_constraints'][$key] ?? $default;
+    }
+
+    // ── Exam ──────────────────────────────────────────────────────────────
+
+    public function examId(): ?string
+    {
+        return $this->payload['exam_id'] ?? null;
+    }
 
     public function specialty(): ?string
     {
-        return $this->parsed['hard']['specialty'] ?? null;
+        return $this->payload['specialty_id'] ?? null;
     }
-    public function sDailyLoadRange(): ?array
-    {
-        $sDailyLoadRange = $this->parsed['soft']['sDailyLoadRange'];
 
-        return [
-            'min_sessions' => $sDailyLoadRange['min_sessions'] ?? null,
-            'max_sessions' => $sDailyLoadRange['max_sessions'] ?? null,
-        ];
-    }
-    public function sDailyLoadRangeDate(string $date): ?array
+    public function examStartDate(): ?string
     {
-        $sDailyLoadRange = $this->sDailyLoadRange();
+        return $this->payload['start_date'] ?? null;
+    }
 
-        if (!$sDailyLoadRange) {
-            return null;
-        }
-
-        $dateException = collect($sDailyLoadRange['date_exceptions'] ?? [])->firstWhere('date', $date);
-
-        return $dateException ? [
-            'min_sessions' => $dateException['min_sessions'] ?? null,
-            'max_sessions' => $dateException['max_sessions'] ?? null,
-        ] : $sDailyLoadRange;
-    }
-    public function courseRequestedSlots(): Collection
+    public function examEndDate(): ?string
     {
-        return collect($this->parsed['soft']['cRequestedSlot']);
+        return $this->payload['end_date'] ?? null;
     }
-    public function courseRequestedSlotDate(string $date): Collection
-    {
-        return collect($this->courseRequestedSlots())->where('date', $date) ?? collect([]);
-    }
-    public function requestedAssignments(): Collection
-    {
-        return collect($this->parsed['soft']['requestedAssignments']);
-    }
-    public function requestedAssignmentDate(string $date): Collection
-    {
-        return collect($this->requestedAssignments())->where('date', $date) ?? collect([]);
-    }
-    public function invigilatorRequestedSlot(): Collection
-    {
-        return collect($this->parsed['soft']['iRequestedSlot']);
-    }
-    public function invigRequestedSlotDate(string $date): ?array
-    {
-        $slot = $this->invigilatorRequestedSlot();
-        return ($slot && $slot['date'] === $date) ? $slot : null;
-    }
-    public function invigRequestedSlot(): Collection
-    {
-        return collect($this->invigRequestedSlot() ? [$this->invigRequestedSlot()] : []);
-    }
-    //hard constraints
 
     public function candidateCount(): int
     {
-        return $this->parsed['hard']['cCount'] ?? 0;
+        return (int) ($this->payload['candidate_count'] ?? 0);
     }
-    public function invigilators(): Collection
+
+    public function candidateCountFor(string $courseId): int
     {
-        return collect($this->parsed['hard']['invigs']);
+        $count = $this->courses[$courseId]['candidate_count'] ?? null;
+        return $count !== null ? (int) $count : $this->candidateCount();
     }
-    public function invigilator(string $invigilatorId): ?array
+
+    /** How many invigilators a hall seating $candidates needs. */
+    public function invigilatorsNeeded(int $candidates): int
     {
-        return $this->invigilators()->firstWhere('invigilator_id', $invigilatorId);
+        $ratio = (int) ($this->payload['candidates_per_invigilator'] ?? 0);
+        if ($ratio <= 0) {
+            return 1;
+        }
+        return max(1, (int) ceil($candidates / $ratio));
     }
-    public function invigCoursesTaught(string $invigilatorId): Collection
+
+    // ── Courses, halls and invigilators ──────────────────────────────────
+
+    public function courses(): Collection
     {
-        return collect($this->invigilators()->firstWhere('invigilator_id', $invigilatorId)['courses_taught'] ?? []);
+        return collect(array_values($this->courses));
     }
+
+    public function course(string $courseId): ?array
+    {
+        return $this->courses[$courseId] ?? null;
+    }
+
+    public function hasCourse(string $courseId): bool
+    {
+        return isset($this->courses[$courseId]);
+    }
+
     public function halls(): Collection
     {
-        return collect($this->parsed['hard']['halls']);
+        return collect(array_values($this->halls));
+    }
+
+    public function hall(string $hallId): ?array
+    {
+        return $this->halls[$hallId] ?? null;
     }
 
     public function hallCapacity(string $hallId): int
     {
-        return $this->halls()->firstWhere('hall_id', $hallId)['capacity'] ?? 0;
-    }
-    public function hall(string $hallId): ?array
-    {
-        return $this->halls()->firstWhere('hall_id', $hallId);
-    }
-    public function hallBusySlots(string $hallId): Collection
-    {
-        return collect($this->parsed['hard']['hBusySlots'])->where('hall_id', $hallId) ?? collect([]);
-    }
-    public function courses(): Collection
-    {
-        return collect($this->parsed['hard']['courses']);
-    }
-    public function examDuration(): array
-    {
-        return [
-            'start_date' => $this->parsed['hard']['startDate'],
-            'end_date' => $this->parsed['hard']['endDate'],
-        ];
-    }
-    public function examStartDate(): string
-    {
-        return $this->parsed['hard']['startDate'];
-    }
-    public function examEndDate(): string
-    {
-        return $this->parsed['hard']['endDate'];
-    }
-    public function sessionDuration(): int
-    {
-        return $this->parsed['hard']['sessionDuration'];
+        return $this->halls[$hallId]['capacity'] ?? 0;
     }
 
-    public function sessionDurationCourse(string $courseId): ?int
+    public function invigilators(): Collection
     {
-        return collect($this->parsed['hard']['sdExceptions'])->firstWhere('course_id', $courseId)['duration']
-            ?? $this->sessionDuration();
+        return collect(array_values($this->invigilators));
     }
+
+    public function invigilator(string $invigilatorId): ?array
+    {
+        return $this->invigilators[$invigilatorId] ?? null;
+    }
+
+    /** True when the invigilator teaches the course, so must not invigilate its exam. */
+    public function teaches(string $invigilatorId, string $courseId): bool
+    {
+        return isset($this->teaching[$invigilatorId][$courseId]);
+    }
+
+    /** @return string[] invigilators who teach the course */
+    public function teachersOf(string $courseId): array
+    {
+        return collect($this->teaching)
+            ->filter(fn(array $courses) => isset($courses[$courseId]))
+            ->keys()
+            ->all();
+    }
+
+    public function hallBusyPeriods(): array
+    {
+        return $this->payload['hall_busy_periods'] ?? [];
+    }
+
+    public function invigilatorBusyPeriods(): array
+    {
+        return $this->payload['invigilator_busy_periods'] ?? [];
+    }
+
+    // ── Operational period ───────────────────────────────────────────────
+
     public function operationalHours(): array
     {
+        $period = $this->hard(OperationalPeriod::KEY);
+
         return [
-            'start_time' => $this->parsed['hard']['opStartTime'],
-            'end_time' => $this->parsed['hard']['opEndTime'],
+            'start_time' => Time::normalize($period['start_time'] ?? null) ?? self::DEFAULT_START_TIME,
+            'end_time' => Time::normalize($period['end_time'] ?? null) ?? self::DEFAULT_END_TIME,
         ];
     }
+
+    public function dateExclusions(): array
+    {
+        return array_values($this->hard(OperationalPeriod::KEY)['date_exclusions'] ?? []);
+    }
+
+    public function dateExceptions(): Collection
+    {
+        return collect($this->hard(OperationalPeriod::KEY)['date_exceptions'] ?? []);
+    }
+
+    /** Opening hours of a date, or null when the date has no exams. */
     public function operationalHourDate(string $date): ?array
     {
-        if (collect($this->parsed['hard']['opDateExclusion'])->contains($date)) {
+        if (!$this->isOperationalDate($date)) {
             return null;
         }
-        return collect($this->parsed['hard']['opDayExceptions'])->firstWhere('date', $date)
-            ?? $this->operationalHours();
+
+        $exception = $this->dateExceptions()->firstWhere('date', $date);
+
+        return $exception
+            ? ['start_time' => Time::normalize($exception['start_time']), 'end_time' => Time::normalize($exception['end_time'])]
+            : $this->operationalHours();
+    }
+
+    public function isWithinExamPeriod(string $date): bool
+    {
+        $start = $this->examStartDate();
+        $end = $this->examEndDate();
+
+        return $start && $end && $date >= $start && $date <= $end;
     }
 
     public function isOperationalDate(string $date): bool
     {
-        return collect($this->operationalDates())->contains($date);
+        return $this->isWithinExamPeriod($date) && !in_array($date, $this->dateExclusions(), true);
     }
 
+    /** Every date of the exam period that can hold exams. */
     public function operationalDates(): array
     {
-        $exludedDates = collect($this->parsed['hard']['opDateExclusion']);
-        $startDate = $this->parsed['hard']['startDate'];
-        $endDate = $this->parsed['hard']['endDate'];
+        $start = $this->examStartDate();
+        $end = $this->examEndDate();
 
-        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+        if (!$start || !$end || $start > $end) {
+            return [];
+        }
 
+        $excluded = array_flip($this->dateExclusions());
         $dates = [];
 
-        foreach ($period as $date) {
-            $formattedDate = $date->format('Y-m-d');
-            if (!$exludedDates->contains($formattedDate)) {
-                $dates[] = $formattedDate;
+        foreach (CarbonPeriod::create($start, $end) as $date) {
+            $formatted = $date->format('Y-m-d');
+            if (!isset($excluded[$formatted])) {
+                $dates[] = $formatted;
             }
         }
 
         return $dates;
     }
 
-    public function invigilatorBusySlots(string $invigilatorId): Collection
+    // ── Session duration ─────────────────────────────────────────────────
+
+    public function sessionDuration(): int
     {
-        return collect($this->parsed['hard']['invigBusySlots'])->where('invigilator_id', $invigilatorId) ?? collect([]);
+        $duration = $this->hard(SessionDuration::KEY);
+        return (int) ($duration['duration'] ?? $duration['duration_minutes'] ?? self::DEFAULT_DURATION);
     }
 
-    public function invigilatorBusySlotDate(string $invigilatorId, string $date): Collection
+    public function sessionDurationCourse(string $courseId): int
     {
-        return collect($this->invigilatorBusySlots($invigilatorId))->where('date', $date) ?? collect([]);
+        $exception = collect($this->hard(SessionDuration::KEY)['course_exceptions'] ?? [])
+            ->firstWhere('course_id', $courseId);
+
+        return $exception
+            ? (int) ($exception['duration'] ?? $exception['duration_minutes'])
+            : $this->sessionDuration();
     }
 
-    public function jointCourseDate(string $date): Collection
-    {
-        return collect($this->parsed['hard']['jointCourses'])->where('date', $date) ?? collect([]);
-    }
+    // ── Joint courses ────────────────────────────────────────────────────
+
     public function jointCourses(): Collection
     {
-        return collect($this->parsed['hard']['jointCourses']);
+        return collect($this->hard(RequiredJointCourseSession::KEY))->map(fn(array $period) => [
+            ...$period,
+            'start_time' => Time::normalize($period['start_time'] ?? null),
+            'end_time' => Time::normalize($period['end_time'] ?? null),
+        ]);
+    }
+
+    // ── Soft requests ────────────────────────────────────────────────────
+
+    public function requestedAssignments(): Collection
+    {
+        return collect($this->soft(RequestedAssignment::KEY))->map(fn(array $request) => [
+            ...$this->normalizeWindow($request),
+            'hall_ids' => array_values(array_filter($request['hall_ids'] ?? [$request['hall_id'] ?? null])),
+            'invigilator_ids' => array_values(array_filter($request['invigilator_ids'] ?? [$request['invigilator_id'] ?? null])),
+        ]);
+    }
+
+    public function courseRequestedSlots(): Collection
+    {
+        return collect($this->soft(CourseTimeRequest::KEY))->map(fn(array $request) => $this->normalizeWindow($request));
+    }
+
+    public function hallRequestedSlots(): Collection
+    {
+        return collect($this->soft(HallRequestedSlot::KEY))->map(fn(array $request) => $this->normalizeWindow($request));
+    }
+
+    public function invigilatorRequestedSlots(): Collection
+    {
+        return collect($this->soft(InvigilatorRequestedSlot::KEY))->map(fn(array $request) => $this->normalizeWindow($request));
+    }
+
+    /** Requests overlapping a window, used to rank preferred halls or invigilators. */
+    public function requestsOverlapping(Collection $requests, string $date, int $start, int $end): Collection
+    {
+        return $requests->filter(fn(array $request) => ($request['date'] ?? null) === $date
+            && $request['start_time'] && $request['end_time']
+            && Time::overlaps($start, $end, Time::toMinutes($request['start_time']), Time::toMinutes($request['end_time'])));
+    }
+
+    // ── Student daily load ───────────────────────────────────────────────
+
+    public function hasDailyLoadRange(): bool
+    {
+        return !empty($this->soft(StudentDailyLoadRange::KEY, null));
+    }
+
+    /** @return array{min_sessions: ?int, max_sessions: ?int} */
+    public function dailyLoadFor(string $date): array
+    {
+        $range = $this->soft(StudentDailyLoadRange::KEY, null) ?? [];
+        $exception = collect($range['date_exceptions'] ?? [])->firstWhere('date', $date);
+        $source = $exception ?? $range;
+
+        return [
+            'min_sessions' => isset($source['min_sessions']) ? (int) $source['min_sessions'] : null,
+            'max_sessions' => isset($source['max_sessions']) ? (int) $source['max_sessions'] : null,
+        ];
+    }
+
+    private function normalizeWindow(array $request): array
+    {
+        return [
+            ...$request,
+            'start_time' => Time::normalize($request['start_time'] ?? null),
+            'end_time' => Time::normalize($request['end_time'] ?? null),
+        ];
     }
 }

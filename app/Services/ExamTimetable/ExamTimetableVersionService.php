@@ -59,6 +59,15 @@ class ExamTimetableVersionService
             );
         }
 
+        if ($version->activeTimetable()->exists()) {
+            throw new AppException(
+                "Exam timetable version {$versionId} is active and cannot be deleted.",
+                422,
+                "Version In Use",
+                "This version is the active exam timetable. Activate another version first, then delete this one."
+            );
+        }
+
         $version->delete();
         return $version;
     }

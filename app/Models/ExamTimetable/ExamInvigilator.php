@@ -38,6 +38,6 @@ class ExamInvigilator extends Model
     }
     public function examSessionInvig(): HasMany
     {
-        return $this->hasMany(ExamSessionInvigilator::class);
+        return $this->hasMany(ExamSessionInvigilator::class, 'invigilator_id');
     }
 }

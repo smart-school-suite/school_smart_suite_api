@@ -10,7 +10,7 @@ class CourseTimeRequest
     // public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Course\CourseDailyFrequencyInterpreter::class;
     // public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Course\CourseDailyFrequencySuggestion::class;
     public const TYPE = "soft";
-    public const DESCRIPTION = "Allows courses to request specific time slots for their exams. This constraint can be used to accommodate special needs, avoid conflicts with other courses, or align with students' preferences.";
+    public const DESCRIPTION = "Asks for a course's exam to take place at a specific date and time. The scheduler places it there when the students, halls and invigilators are free.";
     public const EXAMPLE = [
         [
             "date" => "2026-10-15",

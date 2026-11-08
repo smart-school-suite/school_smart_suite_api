@@ -24,11 +24,11 @@ class ExamJointCourse extends Model
     public $keyType = 'string';
     public function examJcRef(): HasMany
     {
-        return $this->hasMany(ExamJointCourseRef::class);
+        return $this->hasMany(ExamJointCourseRef::class, 'exam_js_id');
     }
     public function examJointCourseSlot(): HasMany
     {
-        return $this->hasMany(ExamJointCourseSlot::class);
+        return $this->hasMany(ExamJointCourseSlot::class, 'exam_jc_id');
     }
     public function course(): BelongsTo
     {

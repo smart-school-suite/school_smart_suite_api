@@ -6,7 +6,7 @@ class SessionDuration
 {
     public const KEY = "session_duration";
     public const TITLE = "Session Duration";
-    public const DESCRIPTION = "Specifies break periods during which no exams can be scheduled. This can include lunch breaks, recesses, or any other designated free periods.";
+    public const DESCRIPTION = "Sets how long each exam lasts in minutes, with optional exceptions for specific courses.";
     public const TYPE = "hard";
     public const CATEGORY = "schedule_constraint";
     public const BLOCKERS = ["operational_period"];

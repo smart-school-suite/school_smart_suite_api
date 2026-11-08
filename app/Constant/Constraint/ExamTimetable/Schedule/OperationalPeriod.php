@@ -6,7 +6,7 @@ class OperationalPeriod
 {
     public const KEY = "operational_period";
     public const TITLE = "Operational Period";
-    public const DESCRIPTION = "Defines the daily opening-to-closing hours of the institution. No classes, exams, activities or any scheduling is allowed outside these hours on any day (unless exceptions are specified).";
+    public const DESCRIPTION = "Sets the daily hours during which exams can take place, with optional hours for specific dates and dates without exams. No exam is placed outside these hours.";
     public const TYPE = "hard";
     public const CATEGORY = "schedule_constraint";
     public const BLOCKERS = [];
@@ -19,13 +19,14 @@ class OperationalPeriod
         [
             "start_time" => "08:00",
             "end_time"   => "17:00",
-            "day_exceptions" => [
+            "date_exceptions" => [
                 [
                     "date"        => "2026-10-15",
                     "start_time" => "08:00",
                     "end_time"   => "16:00"
                 ]
-            ]
+            ],
+            "date_exclusions" => ["2026-10-18"]
         ],
     ];
 
