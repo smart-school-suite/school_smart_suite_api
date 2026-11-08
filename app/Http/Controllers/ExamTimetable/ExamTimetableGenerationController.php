@@ -9,6 +9,7 @@ use App\Services\ApiResponseService;
 use App\Services\ExamTimetable\ActivateExamTimetableService;
 use App\Services\ExamTimetable\ExamApplySolutionService;
 use App\Services\ExamTimetable\ExamTimetableInsightService;
+use App\Services\ExamTimetable\ExamTimetableSetupService;
 use App\Services\ExamTimetable\ExamTimetableGenerationDispatcher;
 use App\Services\ExamTimetable\ExamTimetableResultService;
 use Illuminate\Http\Request;
@@ -58,6 +59,17 @@ class ExamTimetableGenerationController extends Controller
     {
         $errors = $this->results->getErrors($versionId, $request->attributes->get('currentSchool'));
         return ApiResponseService::success("Exam Timetable Errors Fetched Successfully", $errors, null, 200);
+    }
+
+    public function getConstraints(ExamTimetableSetupService $setup)
+    {
+        return ApiResponseService::success("Exam Timetable Constraints Fetched Successfully", $setup->constraints(), null, 200);
+    }
+
+    public function getSchedulingData(Request $request, ExamTimetableSetupService $setup, string $examId)
+    {
+        $data = $setup->schedulingData($request->attributes->get('currentSchool'), $examId);
+        return ApiResponseService::success("Exam Scheduling Data Fetched Successfully", $data, null, 200);
     }
 
     public function getTimetableSolutions(Request $request, ExamTimetableInsightService $insights, string $versionId)

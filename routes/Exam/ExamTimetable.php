@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ExamEvaluation\ExamEvaluationController;
 use App\Http\Controllers\ExamTimetable\ExamTimetableGenerationController;
 
+// Registered before GET /{examId}, which would otherwise catch them.
+Route::get('/constraints', [ExamTimetableGenerationController::class, 'getConstraints'])->name('examTimetable.constraints');
+Route::get('/exam/{examId}/scheduling-data', [ExamTimetableGenerationController::class, 'getSchedulingData'])->name('examTimetable.schedulingData');
+
 Route::post('/exam/{examId}/timetable', [ExamEvaluationController::class, 'createTimetable'])
     ->name('exams.timetable.store');
 
