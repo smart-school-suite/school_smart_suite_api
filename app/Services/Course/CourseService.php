@@ -200,6 +200,7 @@ class CourseService
             ->having('specialties_count', '=', 1)
             ->get();
 
+
         return $courses->map(fn($course) => [
             "id" => $course->id ?? null,
             "course_code" => $course->course_code ?? null,
