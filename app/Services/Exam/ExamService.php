@@ -3,6 +3,7 @@
 namespace App\Services\Exam;
 
 use App\Jobs\Exam\CreateExamCandidateJob;
+use App\Jobs\ExamJointCourse\CreateExamJointCourseJob;
 use App\Models\Exam\Exam;
 use App\Models\GradeScale\Grade;
 use Illuminate\Support\Str;
@@ -111,6 +112,7 @@ class ExamService
                 $exam->id,
                 $currentSchool->id
             );
+            CreateExamJointCourseJob::dispatch($exam->id, $currentSchool->id);
 
             return $exam;
         } catch (AppException $e) {
