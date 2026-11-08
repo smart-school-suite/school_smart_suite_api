@@ -157,4 +157,42 @@ class ExamJointCourseTimetableTest extends TestCase
         $this->expectException(ExamJointCourseSlotConflict::class);
         $this->service->saveSlot($this->school, $this->jointCourse()->id, ['date' => '2099-12-07', 'start_time' => '09:00', 'end_time' => '11:00']);
     }
+
+    public function test_terms_list_every_exam_even_before_it_has_joint_exams(): void
+    {
+        // A mid-semester exam whose exams were created before joint exams
+        // existed: no joint exam records yet, so it used to be missing.
+        DB::table('exam_types')->insert(['id' => 'ca', 'exam_name' => 'Continuous Assessment', 'semester' => 'first', 'type' => 'ca', 'program_name' => 'HND', 'semester_id' => 'sem-1']);
+        DB::table('exams')->insert(['id' => 'exam-ca-swe', 'school_branch_id' => 'branch-1', 'exam_type_id' => 'ca', 'school_year_id' => 'sy-swe', 'start_date' => '2099-11-02', 'end_date' => '2099-11-03']);
+
+        $terms = collect($this->service->terms($this->school))->keyBy('id');
+
+        $this->assertSame(['year-2099:ca', 'year-2099:final'], $terms->keys()->sort()->values()->all());
+
+        $final = $terms['year-2099:final'];
+        $this->assertSame('First Semester Exam · 2099/2100', $final['label']);
+        $this->assertSame(2, $final['exam_count']);
+        $this->assertSame(1, $final['joint_course_count']);
+        $this->assertSame(0, $final['configured_count']);
+        $this->assertSame(1, $final['not_configured_count']);
+
+        $ca = $terms['year-2099:ca'];
+        $this->assertSame('Continuous Assessment · 2099/2100', $ca['label']);
+        $this->assertSame('First Semester', $ca['semester']);
+        $this->assertSame(1, $ca['exam_count']);
+        $this->assertSame(0, $ca['joint_course_count']);
+
+        // Linking the exam afterwards turns its shared course into a joint exam.
+        app(ExamJointCourseSync::class)->forExam('branch-1', 'exam-ca-swe');
+        $this->assertSame(1, collect($this->service->terms($this->school))->firstWhere('id', 'year-2099:ca')['joint_course_count']);
+    }
+
+    public function test_terms_are_empty_only_when_there_are_no_exams(): void
+    {
+        DB::table('exam_jc_refs')->delete();
+        DB::table('exam_jcs')->delete();
+        DB::table('exams')->delete();
+
+        $this->assertSame([], $this->service->terms($this->school));
+    }
 }
