@@ -81,9 +81,9 @@ class TeacherCoursePreferenceService
             }
 
             $validCourseIds = Courses::where('school_branch_id', $schoolBranchId)
-                ->with(['courseSpecialties', function ($query) use ($allowedSpecialties) {
+                ->whereHas('courseSpecialties', function ($query) use ($allowedSpecialties) {
                     $query->whereIn('specialty_id', $allowedSpecialties);
-                }])
+                })
                 ->whereIn('id', $requestedCourseIds)
                 ->pluck('id')
                 ->toArray();

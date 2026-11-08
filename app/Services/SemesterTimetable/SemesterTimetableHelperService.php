@@ -503,10 +503,10 @@ class SemesterTimetableHelperService
             $courses = TeacherCoursePreference::where("school_branch_id", $currentSchool->id)
                 ->where('teacher_id', $teacherId)
                 ->whereHas('course', function ($q) use ($schoolSemester) {
-                    $q->where("semester_id", $schoolSemester->id)
-                        ->with(['courseSpecialties', function ($query) use ($schoolSemester) {
+                    $q->where("semester_id", $schoolSemester->semester_id)
+                        ->whereHas('courseSpecialties', function ($query) use ($schoolSemester) {
                             $query->where("specialty_id", $schoolSemester->specialty_id);
-                        }]);
+                        });
                 })
                 ->with(['course.types'])
                 ->get()
