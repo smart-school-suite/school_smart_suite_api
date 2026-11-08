@@ -5,7 +5,6 @@ namespace App\Services\ExamTimetable;
 use App\Exceptions\AppException;
 use App\Exceptions\ExamTimetable\ExamTimetableActivationConflict;
 use App\Models\Exams;
-use App\Models\ExamTimetable\ActiveExamTimetable;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\ExamTimetable\ExamSessionHall;
 use App\Models\ExamTimetable\ExamSessionInvigilator;
@@ -25,7 +24,9 @@ use Illuminate\Support\Str;
  *
  * The generated sessions (stored in Mongo) are written to the exam timetable
  * tables: one slot per exam, its halls with their candidates, and the
- * invigilators of each hall. The exam's previous active version is replaced.
+ * invigilators of each hall. The exam's previous active version is replaced:
+ * only the active version of an exam has slots, so there is no separate
+ * "active timetable" record (the same as semester timetables).
  * From then on its halls and invigilators count as busy when other exams
  * are generated.
  *
@@ -70,13 +71,6 @@ class ActivateExamTimetableService
 
             $this->clearExamSlots($currentSchool->id, $exam->id);
             $this->writeSessions($currentSchool->id, $exam->id, $version->id, $input['specialty_id'] ?? null, $sessions);
-
-            ActiveExamTimetable::where('school_branch_id', $currentSchool->id)->where('exam_id', $exam->id)->delete();
-            ActiveExamTimetable::create([
-                'version_id' => $version->id,
-                'exam_id' => $exam->id,
-                'school_branch_id' => $currentSchool->id,
-            ]);
 
             return [
                 'version' => $this->versionSummary($version),
@@ -263,7 +257,7 @@ class ActivateExamTimetableService
             ->where('exam_id', '!=', $examId)
             ->whereDate('date', '>=', min($dates))
             ->whereDate('date', '<=', max($dates))
-            ->whereHas('version.activeTimetable')
+            ->whereHas('version')
             ->with(['course', 'examSessionHall.hall', 'examSessionInvig.invigilator'])
             ->get()
             ->map(function (ExamTimetableSlot $slot) {
@@ -417,15 +411,12 @@ class ActivateExamTimetableService
 
     private function currentlyActive(object $currentSchool, string $examId, ?string $exceptId = null): ?ExamTimetableVersion
     {
-        $active = ActiveExamTimetable::where('school_branch_id', $currentSchool->id)
+        return ExamTimetableVersion::where('school_branch_id', $currentSchool->id)
             ->where('exam_id', $examId)
-            ->with('version')
+            ->when($exceptId, fn($query) => $query->where('id', '!=', $exceptId))
+            ->active()
             ->latest('updated_at')
             ->first();
-
-        $version = $active?->version;
-
-        return $version && $version->id !== $exceptId ? $version : null;
     }
 
     private function versionSummary(?ExamTimetableVersion $version): ?array

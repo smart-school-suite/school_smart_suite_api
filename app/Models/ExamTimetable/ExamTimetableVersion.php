@@ -3,6 +3,7 @@
 namespace App\Models\ExamTimetable;
 
 use App\Models\Exams;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -62,8 +63,13 @@ class ExamTimetableVersion extends Model
         return $this->belongsTo(Exams::class, 'exam_id');
     }
 
-    public function activeTimetable(): HasMany
+    /**
+     * The version in use for its exam. Activation writes the version's
+     * sessions to exam_timetable_slots and removes the exam's other slots,
+     * so the version that has slots is the active one.
+     */
+    public function scopeActive(Builder $query): Builder
     {
-        return $this->hasMany(ActiveExamTimetable::class, 'version_id');
+        return $query->whereHas('examTimetableSlot');
     }
 }
