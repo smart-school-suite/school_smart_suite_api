@@ -83,4 +83,37 @@ class CreateSchoolSemesterTest extends TestCase
 
         $this->service->createSchoolSemester($this->data(['school_year_id' => 'missing']), $this->school, null);
     }
+
+    public function test_a_semester_can_sit_anywhere_inside_the_school_year(): void
+    {
+        // School year runs 2099-09-01 to 2100-06-30; this semester touches neither end.
+        DB::table('semesters')->insert(['id' => 'sem-2', 'name' => 'Second Semester', 'count' => 2, 'program_name' => 'HND']);
+
+        $semester = $this->service->createSchoolSemester(
+            $this->data(['semester_id' => 'sem-2', 'start_date' => '2100-02-10', 'end_date' => '2100-05-20']),
+            $this->school,
+            null
+        );
+
+        $this->assertDatabaseHas('school_semesters', ['id' => $semester->id, 'start_date' => '2100-02-10', 'end_date' => '2100-05-20']);
+    }
+
+    public function test_a_semester_may_also_use_the_exact_school_year_boundaries(): void
+    {
+        $semester = $this->service->createSchoolSemester(
+            $this->data(['start_date' => '2099-09-01', 'end_date' => '2100-06-30']),
+            $this->school,
+            null
+        );
+
+        $this->assertDatabaseHas('school_semesters', ['id' => $semester->id]);
+    }
+
+    public function test_a_semester_starting_before_the_school_year_is_rejected(): void
+    {
+        $this->expectException(AppException::class);
+        $this->expectExceptionCode(400);
+
+        $this->service->createSchoolSemester($this->data(['start_date' => '2099-08-31']), $this->school, null);
+    }
 }
