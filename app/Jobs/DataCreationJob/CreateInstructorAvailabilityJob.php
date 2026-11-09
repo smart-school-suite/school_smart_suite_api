@@ -4,59 +4,78 @@ namespace App\Jobs\DataCreationJob;
 
 use App\Models\InstructorAvailability;
 use App\Models\SchoolSemester;
-use App\Models\TeacherSpecailtyPreference;
+use App\Models\Teacher;
+use App\Models\Teacher\TeacherSpecialty;
 use App\Notifications\TeacherNewSemesterAvailable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
+/**
+ * Opens an availability record for every teacher who teaches the
+ * semester's specialty, then tells those teachers the semester exists.
+ */
 class CreateInstructorAvailabilityJob implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new job instance.
-     */
     protected string $schoolBranchId;
     protected string $schoolSemesterId;
+
     public function __construct(string $schoolBranchId, string $schoolSemesterId)
     {
         $this->schoolBranchId = $schoolBranchId;
         $this->schoolSemesterId = $schoolSemesterId;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-       $schoolSemester = SchoolSemester::where("school_branch_id", $this->schoolBranchId)
-                                         ->with(['specialty.level', 'semester'])
-                                         ->find($this->schoolSemesterId);
-       $teachers = $this->getTeachers($schoolSemester->specialty->id, $this->schoolBranchId);
-       foreach($teachers as $teacher){
-          InstructorAvailability::create([
-             'school_branch_id' => $this->schoolBranchId,
-             'teacher_id' => $teacher->id,
-             'level_id' => $schoolSemester->specialty->level->id,
-             'school_semester_id' => $schoolSemester->id,
-             'specialty_id' => $schoolSemester->specialty->id
-          ]);
-       }
-       $semesterData = [
-          'schoolYear' => $schoolSemester->school_year,
-          'semester' => $schoolSemester->semester->name,
-          'specialty' => $schoolSemester->specialty->specialty_name,
-          'level' => $schoolSemester->specialty->level->name
-       ];
-       Notification::send($teachers, new TeacherNewSemesterAvailable($semesterData));
+        $schoolSemester = SchoolSemester::where('school_branch_id', $this->schoolBranchId)
+            ->with(['schoolYear.specialty.level', 'schoolYear.systemAcademicYear', 'semester'])
+            ->find($this->schoolSemesterId);
+
+        if (!$schoolSemester) {
+            Log::warning("School semester {$this->schoolSemesterId} not found; no instructor availability created.");
+            return;
+        }
+
+        // A semester belongs to a school year, and the school year carries the specialty.
+        $specialty = $schoolSemester->schoolYear?->specialty;
+        if (!$specialty) {
+            Log::warning("School semester {$this->schoolSemesterId} has no specialty; no instructor availability created.");
+            return;
+        }
+
+        $teachers = $this->getTeachers($specialty->id);
+        if ($teachers->isEmpty()) {
+            Log::info("No teachers found for specialty {$specialty->id} in school branch {$this->schoolBranchId}.");
+            return;
+        }
+
+        foreach ($teachers as $teacher) {
+            InstructorAvailability::firstOrCreate([
+                'school_branch_id' => $this->schoolBranchId,
+                'teacher_id' => $teacher->id,
+                'school_semester_id' => $schoolSemester->id,
+            ]);
+        }
+
+        Notification::send($teachers, new TeacherNewSemesterAvailable([
+            'schoolYear' => $schoolSemester->schoolYear?->systemAcademicYear?->name,
+            'semester' => $schoolSemester->semester?->name,
+            'specialty' => $specialty->specialty_name,
+            'level' => $specialty->level?->name,
+        ]));
     }
 
-    public function getTeachers($specialtyId, $schoolBranchId){
-        $teacherPrefrences = TeacherSpecailtyPreference::where("school_branch_id", $schoolBranchId)
-                                               ->where("specialty_id", $specialtyId)
-                                               ->with(["teacher"])
-                                               ->get();
-        return $teacherPrefrences->teacher;
+    private function getTeachers(string $specialtyId)
+    {
+        $teacherIds = TeacherSpecialty::where('school_branch_id', $this->schoolBranchId)
+            ->where('specialty_id', $specialtyId)
+            ->pluck('teacher_id')
+            ->unique();
+
+        return Teacher::whereIn('id', $teacherIds)->get();
     }
 }
