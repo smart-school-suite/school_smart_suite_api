@@ -4,10 +4,11 @@ namespace App\Services\Semester;
 
 use App\Constant\Enums\SystemState;
 use App\Jobs\DataCreationJob\CreateInstructorAvailabilityJob;
-use App\Jobs\DataCreationJob\CreateTeacherAvailabilityJob;
 use App\Models\SchoolSemester;
 use App\Models\SchoolBranchSetting;
 use Exception;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\AppException;
@@ -21,103 +22,105 @@ class SchoolSemesterService
 {
     public function createSchoolSemester(array $semesterData, object $currentSchool, $authAdmin)
     {
-        try {
-            DB::beginTransaction();
+        $schoolYear = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
+            ->with(['systemAcademicYear', 'specialty.level'])
+            ->find($semesterData['school_year_id']);
 
-            $schoolSemester = new SchoolSemester();
-
-            $schoolYear = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
-                ->with(['systemAcademicYear', 'specialty.level'])
-                ->findOrFail($semesterData['school_year_id']);
-
-            if ($semesterData['end_date'] > $schoolYear->end_date || $semesterData['start_date'] < $schoolYear->start_date) {
-                throw new AppException(
-                    "The semester dates must fall within the start and end dates of the associated school academic year.",
-                    400,
-                    "Invalid Semester Dates",
-                    "Please ensure that the semester's start and end dates are within the range of the school academic year's start and end dates.",
-                    null
-                );
-            }
-
-            $specialty = $schoolYear->specialty;
-
-            $existingSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
-                ->where("semester_id", $semesterData['semester_id'])
-                ->where("school_year_id", $semesterData['school_year_id'])
-                ->first();
-
-            if ($existingSemester) {
-                throw new AppException(
-                    "A semester with the same specialty, semester, and school year already exists.",
-                    409,
-                    "Duplicate Semester",
-                    "You are trying to create a semester that already exists. Please check the details and try again.",
-                    null
-                );
-            }
-
-            $schoolSemester->start_date = $semesterData["start_date"];
-            $schoolSemester->end_date = $semesterData["end_date"];
-            $schoolSemester->school_year_id = $semesterData["school_year_id"];
-            $schoolSemester->semester_id = $semesterData["semester_id"];
-            $schoolSemester->school_branch_id = $currentSchool->id;
-            $schoolSemester->timetable_published = false;
-
-            $schoolSemester->save();
-
-
-
-            CreateTeacherAvailabilityJob::dispatch([
-                'specialty_id' => $specialty->id,
-                'school_branch_id' => $currentSchool->id,
-                'school_semester_id' => $schoolSemester->id,
-                'level_id' => $specialty->level_id
-            ]);
-
-            DB::commit();
-
-            CreateInstructorAvailabilityJob::dispatch(
-                $currentSchool->id,
-                $schoolSemester->id
-            );
-
-            CreateJointCourseSemesterJob::dispatch(
-                $schoolSemester->id,
-                $currentSchool
-            );
-
-            return $schoolSemester;
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
+        if (!$schoolYear) {
             throw new AppException(
-                "The specified specialty was not found. Please verify the specialty ID.",
+                "The specified school academic year was not found. Please verify the school year ID.",
                 404,
-                "Specialty Not Found",
-                "We could not find the specialty associated with the provided ID. Please check and try again.",
+                "School Year Not Found",
+                "We could not find the school academic year associated with the provided ID. Please check and try again.",
                 null
             );
-        } catch (Exception $e) {
-            DB::rollBack();
+        }
 
-            // Get detailed error information
-            $errorDetails = [
+        $startDate = Carbon::parse($semesterData['start_date'])->startOfDay();
+        $endDate = Carbon::parse($semesterData['end_date'])->startOfDay();
+
+        if ($endDate->lte($startDate)) {
+            throw new AppException(
+                "The semester end date must be after its start date.",
+                400,
+                "Invalid Semester Dates",
+                "Please make sure the semester ends after it starts.",
+                null
+            );
+        }
+
+        if (
+            $startDate->lt(Carbon::parse($schoolYear->start_date)->startOfDay()) ||
+            $endDate->gt(Carbon::parse($schoolYear->end_date)->startOfDay())
+        ) {
+            throw new AppException(
+                "The semester dates must fall within the start and end dates of the associated school academic year.",
+                400,
+                "Invalid Semester Dates",
+                "Please ensure that the semester's start and end dates are within the range of the school academic year's start and end dates.",
+                null
+            );
+        }
+
+        $existingSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
+            ->where("semester_id", $semesterData['semester_id'])
+            ->where("school_year_id", $schoolYear->id)
+            ->exists();
+
+        if ($existingSemester) {
+            throw new AppException(
+                "This semester already exists for the selected school year.",
+                409,
+                "Duplicate Semester",
+                "You are trying to create a semester that already exists. Please check the details and try again.",
+                null
+            );
+        }
+
+        try {
+            $schoolSemester = DB::transaction(function () use ($semesterData, $schoolYear, $currentSchool, $startDate, $endDate) {
+                $schoolSemester = new SchoolSemester();
+                $schoolSemester->start_date = $startDate->toDateString();
+                $schoolSemester->end_date = $endDate->toDateString();
+                $schoolSemester->school_year_id = $schoolYear->id;
+                $schoolSemester->semester_id = $semesterData["semester_id"];
+                $schoolSemester->school_branch_id = $currentSchool->id;
+                $schoolSemester->timetable_published = false;
+                $schoolSemester->save();
+
+                return $schoolSemester;
+            });
+        } catch (Throwable $e) {
+            Log::error("Failed to create school semester", [
+                'school_branch_id' => $currentSchool->id,
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'code' => $e->getCode()
-            ];
-
+            ]);
 
             throw new AppException(
                 "An error occurred while creating the semester. Please try again.",
                 500,
                 "Creation Error",
-                "We encountered an issue while trying to create the semester. Error: " . $e->getMessage() . " in " . basename($e->getFile()) . " on line " . $e->getLine(),
+                "We encountered an issue while trying to create the semester. Please try again later.",
                 null
             );
         }
+
+        // Follow-up work runs only once the semester is committed, and a failure
+        // there must not turn a successful creation into an error response.
+        try {
+            CreateInstructorAvailabilityJob::dispatch($currentSchool->id, $schoolSemester->id);
+            CreateJointCourseSemesterJob::dispatch($schoolSemester->id, $currentSchool);
+        } catch (Throwable $e) {
+            Log::error("School semester {$schoolSemester->id} was created but its follow-up jobs failed", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
+
+        return $schoolSemester;
     }
     public function updateSchoolSemester(array $semesterData, object $currentSchool, string $schoolSemesterId, $authAdmin)
     {
