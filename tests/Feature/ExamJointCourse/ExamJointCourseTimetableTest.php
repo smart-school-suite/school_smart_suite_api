@@ -235,4 +235,42 @@ class ExamJointCourseTimetableTest extends TestCase
         $this->assertSame('Joint Courses', $joint['name']);
         $this->assertTrue($joint['read_only']);
     }
+
+    public function test_times_are_found_when_only_one_specialty_has_its_exam_and_no_invigilators_yet(): void
+    {
+        // Networking takes Mathematics but has no exam yet; Software Engineering's
+        // exam was just created, so it has candidates but no invigilators.
+        DB::table('exam_jc_refs')->where('exam_id', 'exam-net')->delete();
+        DB::table('exams')->where('id', 'exam-net')->delete();
+        DB::table('exam_invigilators')->delete();
+
+        $proposal = $this->service->generate($this->school, $this->jointCourse()->id, [
+            'duration' => 120, 'start_time' => '08:00', 'end_time' => '12:00',
+        ]);
+
+        $this->assertSame(['Networking'], array_column($proposal['specialties_without_exam'], 'label'));
+        $this->assertSame(50, $proposal['candidates']['total']);
+        $this->assertFalse($proposal['checks']['invigilators']);
+        $this->assertNotNull($proposal['checks']['invigilators_message']);
+        $this->assertGreaterThan(0, $proposal['summary']['option_count']);
+
+        $option = $proposal['dates'][0]['times'][0];
+        $this->service->confirmProposal($this->school, $this->jointCourse()->id, $proposal['proposal_id'], $option['option_id']);
+        $this->assertSame(1, ExamJointCourseSlot::count());
+    }
+
+    public function test_when_no_time_works_the_reason_is_given(): void
+    {
+        // The only invigilators left teach Mathematics, so none may invigilate it.
+        DB::table('exam_invigilators')->where('actorable_id', '!=', 't-math')->delete();
+
+        $proposal = $this->service->generate($this->school, $this->jointCourse()->id, [
+            'duration' => 120, 'start_time' => '08:00', 'end_time' => '12:00',
+        ]);
+
+        $this->assertTrue($proposal['checks']['invigilators']);
+        $this->assertSame(0, $proposal['summary']['option_count']);
+        $this->assertStringContainsString('invigilators', $proposal['dates'][0]['message']);
+        $this->assertStringContainsString('teach the course', $proposal['summary']['message']);
+    }
 }
