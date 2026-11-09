@@ -273,4 +273,29 @@ class ExamJointCourseTimetableTest extends TestCase
         $this->assertStringContainsString('invigilators', $proposal['dates'][0]['message']);
         $this->assertStringContainsString('teach the course', $proposal['summary']['message']);
     }
+
+    public function test_an_exam_period_that_has_ended_is_named_as_the_reason(): void
+    {
+        DB::table('exam_jc_refs')->where('exam_id', 'exam-net')->delete();
+        DB::table('exams')->where('id', 'exam-swe')->update(['start_date' => '2020-10-05', 'end_date' => '2020-10-09']);
+
+        $proposal = $this->service->generate($this->school, $this->jointCourse()->id, [
+            'duration' => 120, 'start_time' => '08:00', 'end_time' => '12:00',
+        ]);
+
+        $this->assertSame([], $proposal['dates']);
+        $this->assertStringContainsString('ended on', $proposal['summary']['message']);
+        $this->assertStringNotContainsString('no date in common', $proposal['summary']['message']);
+    }
+
+    public function test_exam_periods_without_a_common_date_are_named_as_the_reason(): void
+    {
+        DB::table('exams')->where('id', 'exam-net')->update(['start_date' => '2099-12-14', 'end_date' => '2099-12-15']);
+
+        $proposal = $this->service->generate($this->school, $this->jointCourse()->id, [
+            'duration' => 120, 'start_time' => '08:00', 'end_time' => '12:00',
+        ]);
+
+        $this->assertStringContainsString('no date in common', $proposal['summary']['message']);
+    }
 }

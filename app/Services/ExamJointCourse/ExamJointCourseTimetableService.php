@@ -267,7 +267,7 @@ class ExamJointCourseTimetableService
                 'option_count' => count($proposalOptions),
                 'free_date_count' => $freeDates,
                 'message' => match (true) {
-                    empty($data['dates']) => "The exam periods of the linked specialties have no date in common, so {$title} can't be examined together. Align the exam dates first.",
+                    empty($data['dates']) => $this->noDateReason($exams, $params['dates'] ?? null, $title),
                     empty($proposalOptions) => "No time works for {$title}. Most often: " . ($finder->mainRefusal() ?? 'the exam does not fit in the exam hours.') . ' Try a shorter exam or longer exam hours, or free some exam halls or invigilators.',
                     default => "Free times on {$freeDates} of " . count($dates) . " date(s) for {$title}. Pick one and confirm.",
                 },
@@ -447,6 +447,31 @@ class ExamJointCourseTimetableService
     }
 
     /** Dates inside every linked exam's period, from today on. */
+    /** Why commonDates() found no date to search. */
+    private function noDateReason(Collection $exams, ?array $only, string $title): string
+    {
+        $withoutDates = $exams->filter(fn(Exams $exam) => !$exam->start_date || !$exam->end_date);
+        if ($withoutDates->isNotEmpty()) {
+            return 'The exam of ' . $withoutDates->map(fn(Exams $exam) => $this->specialtyLabel($exam))->implode(', ')
+                . ' has no exam period yet. Set its start and end dates first.';
+        }
+
+        $from = $exams->map(fn(Exams $exam) => Carbon::parse($exam->start_date)->format('Y-m-d'))->max();
+        $to = $exams->map(fn(Exams $exam) => Carbon::parse($exam->end_date)->format('Y-m-d'))->min();
+
+        if ($from > $to) {
+            return "The exam periods of the linked specialties have no date in common, so {$title} can't be examined together. Align the exam dates first.";
+        }
+        if ($to < now()->format('Y-m-d')) {
+            return ($exams->count() === 1 ? 'The exam period' : 'The shared exam period') . ' ended on ' . Text::date($to)
+                . ". Joint exam times are only found from today on, so move the exam period forward to schedule {$title}.";
+        }
+
+        return $only
+            ? 'None of the chosen dates is still to come inside the exam period. Choose dates from today on.'
+            : "No date of the exam period is left to schedule {$title}.";
+    }
+
     private function commonDates(Collection $exams, ?array $only): array
     {
         $start = $exams->map(fn(Exams $exam) => $exam->start_date ? Carbon::parse($exam->start_date)->format('Y-m-d') : null);
