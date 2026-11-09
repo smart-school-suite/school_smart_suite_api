@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ExamTimetable;
 
 use App\Http\Controllers\Controller;
 use App\Exceptions\ExamTimetable\ExamTimetableActivationConflict;
+use App\Exceptions\ExamTimetable\JointCoursesWithoutTime;
 use App\Http\Requests\ExamTimetable\GenerateExamTimetableRequest;
 use App\Services\ApiResponseService;
 use App\Services\ExamTimetable\ActivateExamTimetableService;
@@ -21,7 +22,16 @@ class ExamTimetableGenerationController extends Controller
     public function generateTimetable(GenerateExamTimetableRequest $request, ExamTimetableGenerationDispatcher $dispatcher)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $version = $dispatcher->dispatch($currentSchool, $request->validated(), $this->resolveUser());
+        try {
+            $version = $dispatcher->dispatch($currentSchool, $request->validated(), $this->resolveUser());
+        } catch (JointCoursesWithoutTime $missing) {
+            return ApiResponseService::error($missing->getMessage(), null, 422, [
+                'title' => $missing->getTitle(),
+                'description' => $missing->getDescription(),
+                'path' => $missing->getPath(),
+                'joint_courses' => $missing->courses(),
+            ]);
+        }
 
         return ApiResponseService::success(
             "Exam timetable generation initiated successfully",

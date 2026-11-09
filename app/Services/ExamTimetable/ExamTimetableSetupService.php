@@ -52,6 +52,11 @@ class ExamTimetableSetupService
                 'type' => $class::TYPE,
             ], $constraints);
 
+            // Joint course times are set on the Joint Course Timetable page; here they are only shown.
+            $items = array_map(fn(array $item) => $item['key'] === RequiredJointCourseSession::KEY
+                ? [...$item, 'name' => 'Joint Courses', 'description' => 'Courses shared with other specialties are examined at the time set on the Joint Course Timetable page. Generation waits until every one has a time.', 'read_only' => true]
+                : $item, $items);
+
             if ($key === 'invigilator_constraint') {
                 $items[] = [
                     'id' => self::CANDIDATES_PER_INVIGILATOR,
