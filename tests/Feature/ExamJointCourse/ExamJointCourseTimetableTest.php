@@ -3,14 +3,19 @@
 namespace Tests\Feature\ExamJointCourse;
 
 use App\Exceptions\ExamJointCourse\ExamJointCourseSlotConflict;
+use App\Exceptions\ExamTimetable\JointCoursesWithoutTime;
+use App\Jobs\ExamTimetable\GenerateExamTimetable;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\ExamJointCourse\ExamJointCourseRef;
 use App\Models\ExamJointCourse\ExamJointCourseSlot;
 use App\Models\Teacher;
 use App\Services\ExamJointCourse\ExamJointCourseSync;
 use App\Services\ExamJointCourse\ExamJointCourseTimetableService;
+use App\Services\ExamTimetable\ExamTimetableGenerationDispatcher;
+use App\Services\ExamTimetable\ExamTimetableSetupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -194,5 +199,40 @@ class ExamJointCourseTimetableTest extends TestCase
         DB::table('exams')->delete();
 
         $this->assertSame([], $this->service->terms($this->school));
+    }
+
+    public function test_exam_timetable_generation_waits_until_every_joint_course_has_a_time(): void
+    {
+        Queue::fake();
+        $dispatcher = app(ExamTimetableGenerationDispatcher::class);
+        $user = (object) ['id' => 'admin-1'];
+
+        try {
+            $dispatcher->dispatch($this->school, ['exam_id' => 'exam-swe'], $user);
+            $this->fail('Generation should be refused while Mathematics has no joint exam time.');
+        } catch (JointCoursesWithoutTime $missing) {
+            $this->assertSame('/exam/joint-course-timetable', $missing->getPath());
+            $this->assertSame(['math'], array_column($missing->courses(), 'course_id'));
+            $this->assertStringContainsString('Mathematics', $missing->getDescription());
+        }
+        // Refused before anything was created.
+        $this->assertSame(0, DB::table('exam_timetable_versions')->count());
+        Queue::assertNothingPushed();
+
+        $this->service->saveSlot($this->school, $this->jointCourse()->id, ['date' => '2099-12-07', 'start_time' => '08:00', 'end_time' => '10:00']);
+
+        $version = $dispatcher->dispatch($this->school, ['exam_id' => 'exam-swe'], $user);
+        $this->assertSame('exam-swe', $version->exam_id);
+        Queue::assertPushed(GenerateExamTimetable::class);
+    }
+
+    public function test_joint_courses_are_listed_as_a_read_only_constraint(): void
+    {
+        $joint = collect(app(ExamTimetableSetupService::class)->constraints())
+            ->flatMap(fn(array $category) => $category['constraints'])
+            ->firstWhere('key', 'required_joint_course_periods');
+
+        $this->assertSame('Joint Courses', $joint['name']);
+        $this->assertTrue($joint['read_only']);
     }
 }
