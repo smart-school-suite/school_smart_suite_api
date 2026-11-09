@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('fee_schedules', function (Blueprint $table) {
-             $table->uuid('school_year_id');
+            $table->uuid('school_year_id');
             $table->foreign('school_year_id')->references('id')->on('school_academic_years');
             $table->string('school_branch_id')->index();
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('fee_schedule_slots', function (Blueprint $table) {
+        Schema::table('fee_sched_installments', function (Blueprint $table) {
             $table->string('installment_id')->index();
             $table->foreign('installment_id')->references('id')->on('installments');
             $table->string('fee_schedule_id')->index();
@@ -27,22 +27,22 @@ return new class extends Migration
             $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
         });
 
-        Schema::table('student_fee_schedules', function (Blueprint $table) {
-            $table->string('tuition_fee_id')->index();
-            $table->foreign('tuition_fee_id')->references('id')->on('tuition_fees');
-            $table->string('student_id')->index();
-            $table->foreign('student_id')->references('id')->on('students');
-            $table->string('level_id')->index();
-            $table->foreign('level_id')->references('id')->on('levels');
-            $table->string('specialty_id')->index();
-            $table->foreign('specialty_id')->references('id')->on('specialties');
-            $table->string('fee_schedule_slot_id')->index();
-            $table->foreign('fee_schedule_slot_id')->references('id')->on('fee_schedule_slots')->onDelete('cascade');
-            $table->string('fee_schedule_id')->index();
-            $table->foreign('fee_schedule_id')->references('id')->on('fee_schedules');
-            $table->string('school_branch_id')->index();
-            $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
-        });
+        // Schema::table('student_fee_schedules', function (Blueprint $table) {
+        //     $table->string('tuition_fee_id')->index();
+        //     $table->foreign('tuition_fee_id')->references('id')->on('tuition_fees');
+        //     $table->string('student_id')->index();
+        //     $table->foreign('student_id')->references('id')->on('students');
+        //     $table->string('level_id')->index();
+        //     $table->foreign('level_id')->references('id')->on('levels');
+        //     $table->string('specialty_id')->index();
+        //     $table->foreign('specialty_id')->references('id')->on('specialties');
+        //     $table->string('fee_schedule_slot_id')->index();
+        //     $table->foreign('fee_schedule_slot_id')->references('id')->on('fee_schedule_slots')->onDelete('cascade');
+        //     $table->string('fee_schedule_id')->index();
+        //     $table->foreign('fee_schedule_id')->references('id')->on('fee_schedules');
+        //     $table->string('school_branch_id')->index();
+        //     $table->foreign('school_branch_id')->references('id')->on('school_branches')->onDelete('cascade');
+        // });
     }
 
     /**
@@ -50,17 +50,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('student_fee_schedules')) {
-            Schema::table('student_fee_schedules', function (Blueprint $table) {
-                $table->dropForeign(['tuition_fee_id']);
-                $table->dropForeign(['student_id']);
-                $table->dropForeign(['level_id']);
-                $table->dropForeign(['specialty_id']);
-                $table->dropForeign(['fee_schedule_slot_id']);
-                $table->dropForeign(['fee_schedule_id']);
-                $table->dropForeign(['school_branch_id']);
-            });
-        }
+        // if (Schema::hasTable('student_fee_schedules')) {
+        //     Schema::table('student_fee_schedules', function (Blueprint $table) {
+        //         $table->dropForeign(['tuition_fee_id']);
+        //         $table->dropForeign(['student_id']);
+        //         $table->dropForeign(['level_id']);
+        //         $table->dropForeign(['specialty_id']);
+        //         $table->dropForeign(['fee_schedule_slot_id']);
+        //         $table->dropForeign(['fee_schedule_id']);
+        //         $table->dropForeign(['school_branch_id']);
+        //     });
+        // }
 
         if (Schema::hasTable('fee_schedule_slots')) {
             Schema::table('fee_schedule_slots', function (Blueprint $table) {

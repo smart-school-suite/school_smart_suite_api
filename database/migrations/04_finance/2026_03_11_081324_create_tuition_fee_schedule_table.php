@@ -23,24 +23,33 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('fee_schedule_slots', function (Blueprint $table) {
+        Schema::create('fee_sched_installments', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->date('due_date');
-            $table->decimal('fee_percentage', 5, 2);
-            $table->decimal('amount', 15, 2);
+            $table->decimal('percentage', 5, 2);
+            // $table->decimal('fee_percentage', 5, 2);
+            // $table->decimal('amount', 15, 2);
             $table->timestamps();
         });
 
-        Schema::create('student_fee_schedules', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->decimal('expected_amount', 15, 2);
-            $table->decimal('amount_paid', 8, 2)->default(0.0);
-            $table->decimal('amount_left', 8, 2);
-            $table->decimal('percentage_paid', 6, 2)->default(0.0);
-            $table->enum('status', ['completed', 'unpaid', 'inprogress'])->default('unpaid');
-            $table->enum('gramification', ['late', 'paypunctual', 'pending'])->default('pending');
-            $table->timestamps();
-        });
+        // Schema::create('fee_schedule_slots', function (Blueprint $table) {
+        //     $table->uuid('id')->primary();
+        //     $table->date('due_date');
+        //     $table->decimal('fee_percentage', 5, 2);
+        //     $table->decimal('amount', 15, 2);
+        //     $table->timestamps();
+        // });
+
+        // Schema::create('student_fee_schedules', function (Blueprint $table) {
+        //     $table->uuid('id')->primary();
+        //     $table->decimal('expected_amount', 15, 2);
+        //     $table->decimal('amount_paid', 8, 2)->default(0.0);
+        //     $table->decimal('amount_left', 8, 2);
+        //     $table->decimal('percentage_paid', 6, 2)->default(0.0);
+        //     $table->enum('status', ['completed', 'unpaid', 'inprogress'])->default('unpaid');
+        //     $table->enum('gramification', ['late', 'paypunctual', 'pending'])->default('pending');
+        //     $table->timestamps();
+        // });
     }
 
     public function down(): void

@@ -18,6 +18,7 @@ class CreateJointCourseRequest extends FormRequest
         return [
             'course_code' => 'required|string|max:255',
             'course_title' => 'required|string|max:255',
+            'description' => 'sometimes|nullable|string',
             'credit' => 'required|numeric|min:0',
             'semester_id' => 'required|exists:semesters,id',
             'specialtyIds' => 'required|array|min:2',
