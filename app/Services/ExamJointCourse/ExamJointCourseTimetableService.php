@@ -226,7 +226,9 @@ class ExamJointCourseTimetableService
                 'date_label' => Text::date($date),
                 'other_exams_that_day' => count($data['student_busy'][$date] ?? []),
                 'times' => $times,
-                'message' => $times ? count($times) . ' free time(s)' : 'No free time on this date for every linked specialty.',
+                'message' => $times
+                    ? count($times) . ' free time(s)'
+                    : 'No free time on this date. ' . ($finder->mainRefusal($date) ?? 'The exam does not fit in the exam hours.'),
             ];
         }
 
@@ -253,13 +255,20 @@ class ExamJointCourseTimetableService
             'candidates' => $data['candidate_summary'],
             'specialties_without_exam' => $this->specialtiesWithoutExam($jointCourse, $exams),
             'recommended_option_id' => $recommendedId,
+            // What the times were checked against; invigilators only once some are assigned.
+            'checks' => [
+                'invigilators' => $data['check_invigilators'],
+                'invigilators_message' => $data['check_invigilators']
+                    ? null
+                    : 'No invigilator is assigned to the linked exams yet, so invigilators were not checked. The exam timetable assigns them when it is generated.',
+            ],
             'dates' => $dates,
             'summary' => [
                 'option_count' => count($proposalOptions),
                 'free_date_count' => $freeDates,
                 'message' => match (true) {
                     empty($data['dates']) => "The exam periods of the linked specialties have no date in common, so {$title} can't be examined together. Align the exam dates first.",
-                    empty($proposalOptions) => "No time works for every linked specialty. Try a shorter exam, longer exam hours, or free some exam halls or invigilators.",
+                    empty($proposalOptions) => "No time works for {$title}. Most often: " . ($finder->mainRefusal() ?? 'the exam does not fit in the exam hours.') . ' Try a shorter exam or longer exam hours, or free some exam halls or invigilators.',
                     default => "Free times on {$freeDates} of " . count($dates) . " date(s) for {$title}. Pick one and confirm.",
                 },
             ],
@@ -417,11 +426,14 @@ class ExamJointCourseTimetableService
             ->values()
             ->all();
 
+        $invigilators = $this->invigilators($jointCourse, $examIds, $sessions->reject($isThisCourse));
+
         return [
             'dates' => collect($dates)->mapWithKeys(fn(string $date) => [$date => [$windowStart, $windowEnd]])->all(),
             'student_busy' => $studentBusy,
             'halls' => $halls,
-            'invigilators' => $this->invigilators($jointCourse, $examIds, $sessions->reject($isThisCourse)),
+            'invigilators' => $invigilators,
+            'check_invigilators' => !empty($invigilators),
             'candidates' => (int) $candidates->sum(),
             'candidate_summary' => [
                 'total' => (int) $candidates->sum(),

@@ -20,7 +20,31 @@ class JointExamSlotFinder
 {
     public const STEP_MINUTES = 30;
 
+    /** Per date, why times were refused: [date => [type => [count, message]]]. Filled by options(). */
+    private array $refusals = [];
+
     public function __construct(private array $input) {}
+
+    /**
+     * The most common reason times were refused on a date (or on every date
+     * when $date is null), or null when nothing was refused.
+     */
+    public function mainRefusal(?string $date = null): ?string
+    {
+        $counts = [];
+        foreach ($date === null ? $this->refusals : [$this->refusals[$date] ?? []] as $types) {
+            foreach ($types as $type => [$count, $message]) {
+                $counts[$type] ??= [0, $message];
+                $counts[$type][0] += $count;
+            }
+        }
+        if (!$counts) {
+            return null;
+        }
+        uasort($counts, fn(array $a, array $b) => $b[0] <=> $a[0]);
+
+        return reset($counts)[1];
+    }
 
     /** @return array[] every workable time, best first */
     public function options(int $duration, int $step = self::STEP_MINUTES): array
@@ -33,6 +57,11 @@ class JointExamSlotFinder
                 $check = $this->check($date, $start, $start + $duration);
                 if ($check['ok']) {
                     $options[] = $check;
+                    continue;
+                }
+                foreach ($check['problems'] as $problem) {
+                    $this->refusals[$date][$problem['type']] ??= [0, $problem['message']];
+                    $this->refusals[$date][$problem['type']][0]++;
                 }
             }
         }
@@ -80,7 +109,10 @@ class JointExamSlotFinder
 
         [$free, $teaching] = $this->invigilators($date, $start, $end);
         $invigilatorsNeeded = max(1, $hallsNeeded);
-        if ($free < $invigilatorsNeeded) {
+        // With no invigilator assigned to the linked exams yet, there is nothing to check:
+        // the exam timetable assigns them when it is generated.
+        $checkInvigilators = $this->input['check_invigilators'] ?? true;
+        if ($checkInvigilators && $free < $invigilatorsNeeded) {
             $problems[] = ['type' => 'invigilators', 'message' => "Only {$free} of the {$invigilatorsNeeded} invigilators needed are free"
                 . ($teaching ? " ({$teaching} more are free but teach the course)." : '.')];
         }
