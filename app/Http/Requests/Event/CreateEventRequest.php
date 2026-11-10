@@ -34,6 +34,9 @@ class CreateEventRequest extends FormRequest
 
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|mimes:jpeg,jpg,png,webp|max:2048',
+            // display order: saved image ids and "new:N" for images[N]; the first is the cover
+            'image_order' => 'nullable|array|max:5',
+            'image_order.*' => ['string', 'regex:/^(new:[0-4]|[0-9a-fA-F-]{36})$/'],
 
             'school_wide' => 'nullable|boolean',
 

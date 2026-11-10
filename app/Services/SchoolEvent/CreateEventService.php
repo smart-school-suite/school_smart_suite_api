@@ -85,6 +85,7 @@ class CreateEventService
                 ]);
 
                 $uploadedImages = $this->imageService->uploadImages($schoolEvent, $data['images'] ?? [], $currentSchool->id);
+                $this->imageService->applyOrder($schoolEvent, $currentSchool->id, $data['image_order'] ?? [], $uploadedImages);
 
                 $this->publishing->dispatchScheduleNotifications($schoolEvent, $authenticatedUser, $currentSchool);
 

@@ -61,10 +61,16 @@ class SchoolEvent extends Model
     }
     public function images(): HasMany
     {
-        return $this->hasMany(SchoolEventImage::class, 'event_id');
+        return $this->hasMany(SchoolEventImage::class, 'event_id')
+            ->orderBy('position')
+            ->orderBy('created_at');
     }
+    // Current images in display order; the first one is the cover.
     public function currentImages(): HasMany
     {
-        return $this->hasMany(SchoolEventImage::class, 'event_id')->where('is_current', true);
+        return $this->hasMany(SchoolEventImage::class, 'event_id')
+            ->where('is_current', true)
+            ->orderBy('position')
+            ->orderBy('created_at');
     }
 }

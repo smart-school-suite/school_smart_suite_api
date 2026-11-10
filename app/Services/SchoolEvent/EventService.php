@@ -399,6 +399,7 @@ class EventService
 
                 $this->imageService->removeImages($schoolEvent, $currentSchool->id, $eventData['remove_image_ids'] ?? []);
                 $uploadedImages = $this->imageService->uploadImages($schoolEvent, $eventData['images'] ?? [], $currentSchool->id);
+                $this->imageService->applyOrder($schoolEvent, $currentSchool->id, $eventData['image_order'] ?? [], $uploadedImages);
 
                 return $schoolEvent->load(['currentImages', 'eventCategory']);
             });

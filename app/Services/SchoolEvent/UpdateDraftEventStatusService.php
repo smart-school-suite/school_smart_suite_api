@@ -57,6 +57,7 @@ class UpdateDraftEventStatusService
 
                 $this->imageService->removeImages($schoolEvent, $currentSchool->id, $data['remove_image_ids'] ?? []);
                 $uploadedImages = $this->imageService->uploadImages($schoolEvent, $data['images'] ?? [], $currentSchool->id);
+                $this->imageService->applyOrder($schoolEvent, $currentSchool->id, $data['image_order'] ?? [], $uploadedImages);
 
                 if (($data['status'] ?? 'draft') === 'draft') {
                     $schoolEvent->save();
