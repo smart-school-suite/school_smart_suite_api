@@ -19,6 +19,7 @@ class SchoolEventImage extends Model
         'height',
         'width',
         'is_current',
+        'position',
         'created_at',
         'replaced_at',
         'school_branch_id',
@@ -27,6 +28,7 @@ class SchoolEventImage extends Model
 
     protected $casts = [
         'is_current' => "boolean",
+        'position' => 'integer',
         'replaced_at' => "datetime",
         'size_bytes' => "integer",
         'height' => 'integer',

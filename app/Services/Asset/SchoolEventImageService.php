@@ -66,7 +66,17 @@ class SchoolEventImageService
                     );
                 }
 
-                return collect($uploaded)->map(fn($file) => SchoolEventImage::create([
+                $nextPosition = (int) SchoolEventImage::query()
+                    ->where('school_branch_id', $schoolBranchId)
+                    ->where('event_id', $lockedEvent->id)
+                    ->where('is_current', true)
+                    ->max('position') + 1;
+
+                if ($this->currentImageCount($lockedEvent, $schoolBranchId) === 0) {
+                    $nextPosition = 0;
+                }
+
+                return collect($uploaded)->values()->map(fn($file, $index) => SchoolEventImage::create([
                     'school_branch_id' => $schoolBranchId,
                     'event_id' => $lockedEvent->id,
                     'object_key' => $file['object_key'],
@@ -75,6 +85,7 @@ class SchoolEventImageService
                     'width' => $file['width'],
                     'height' => $file['height'],
                     'is_current' => true,
+                    'position' => $nextPosition + $index,
                     'created_at' => now(),
                 ]));
             });
@@ -82,6 +93,53 @@ class SchoolEventImageService
             $this->deleteObjects(array_column($uploaded, 'object_key'));
             throw $exception;
         }
+    }
+
+    /**
+     * Applies the display order chosen in the form. Each entry is either a saved
+     * image id or "new:N", the N-th image uploaded in the same request
+     * ($newImages, in upload order). Unknown entries are ignored and images left
+     * out keep their relative order after the listed ones. Position 0 is the cover.
+     */
+    public function applyOrder(SchoolEvent $schoolEvent, string $schoolBranchId, array $order, ?Collection $newImages = null): void
+    {
+        if (empty($order)) {
+            return;
+        }
+
+        $this->ensureBranch($schoolEvent, $schoolBranchId);
+        $newImages = ($newImages ?? collect())->values();
+
+        $current = SchoolEventImage::query()
+            ->where('school_branch_id', $schoolBranchId)
+            ->where('event_id', $schoolEvent->id)
+            ->where('is_current', true)
+            ->orderBy('position')
+            ->orderBy('created_at')
+            ->get()
+            ->keyBy('id');
+
+        $orderedIds = collect($order)
+            ->map(function ($entry) use ($newImages) {
+                $entry = (string) $entry;
+                if (preg_match('/^new:(\d+)$/', $entry, $matches)) {
+                    return $newImages->get((int) $matches[1])?->id;
+                }
+                return $entry;
+            })
+            ->filter(fn($id) => $id && $current->has($id))
+            ->unique()
+            ->values();
+
+        $finalOrder = $orderedIds->merge($current->keys()->diff($orderedIds))->values();
+
+        DB::transaction(function () use ($finalOrder, $current) {
+            $finalOrder->each(function ($id, $position) use ($current) {
+                if ($current[$id]->position !== $position) {
+                    SchoolEventImage::whereKey($id)->update(['position' => $position]);
+                }
+            });
+        });
     }
 
     public function removeImages(SchoolEvent $schoolEvent, string $schoolBranchId, array $imageIds): void

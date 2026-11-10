@@ -107,6 +107,18 @@ class SchoolEventController extends Controller
         $schoolEvents = $this->eventService->getSchoolEvents($currentSchool, $this->getAuthenticatedUser());
         return ApiResponseService::success("School Events Fetched Successfully", $schoolEvents, null, 200);
     }
+    public function getSchoolEventsByStatus(Request $request, string $status)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $schoolEvents = $this->eventService->getSchoolEventsByStatus($currentSchool, $status);
+        return ApiResponseService::success("School Events Fetched Successfully", $schoolEvents, null, 200);
+    }
+    public function getSchoolEventSummary(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $summary = $this->eventService->schoolEventSummary($currentSchool);
+        return ApiResponseService::success("School Event Summary Fetched Successfully", $summary, null, 200);
+    }
     public function getScheduledSchoolEventsByCategory(Request $request, string $eventCategoryId)
     {
         $currentSchool = $request->attributes->get('currentSchool');

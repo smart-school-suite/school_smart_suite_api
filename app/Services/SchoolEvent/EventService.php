@@ -17,6 +17,7 @@ use Throwable;
 class EventService
 {
     private const CONTENT_FIELDS = ['title', 'description', 'organizer', 'location', 'start_date', 'end_date', 'event_category_id'];
+    private const STATUSES = ['all', 'active', 'scheduled', 'draft', 'expired'];
 
     public function __construct(
         private EventPublishingService $publishing,
@@ -256,6 +257,56 @@ class EventService
         return $schoolEvents->values()->all();
     }
 
+    public function getSchoolEventsByStatus(object $currentSchool, string $status)
+    {
+        $status = strtolower($status);
+
+        if (!in_array($status, self::STATUSES, true)) {
+            throw new AppException(
+                "Invalid school event status provided",
+                400,
+                "Invalid Status",
+                "The provided status '{$status}' is not a valid school event state. Valid states are: " . implode(', ', self::STATUSES) . ".",
+                null
+            );
+        }
+
+        $schoolEvents = $this->eventQuery($currentSchool)
+            ->when($status !== 'all', fn(Builder $query) => $query->where('status', $status))
+            ->with(['eventAuthor.autorable'])
+            ->withCount('invitees as invitee_count')
+            ->latest()
+            ->get();
+
+        if ($schoolEvents->isEmpty()) {
+            $label = $status === 'all' ? '' : "{$status} ";
+            throw new AppException(
+                "No {$label}school events found for school branch ID '{$currentSchool->id}'.",
+                404,
+                ucwords("{$label}School Events Missing"),
+                "There are no {$label}school events available for this school branch.",
+                null
+            );
+        }
+
+        return $schoolEvents->map(fn(SchoolEvent $event) => $this->formatEventRow($event))->values();
+    }
+
+    public function schoolEventSummary(object $currentSchool): array
+    {
+        $counts = SchoolEvent::where('school_branch_id', $currentSchool->id)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return [
+            'draft' => (int) ($counts['draft'] ?? 0),
+            'scheduled' => (int) ($counts['scheduled'] ?? 0),
+            'active' => (int) ($counts['active'] ?? 0),
+            'expired' => (int) ($counts['expired'] ?? 0),
+        ];
+    }
+
     public function deleteSchoolEvent(object $currentSchool, string $eventId, $authAdmin)
     {
         $schoolEvent = SchoolEvent::where("school_branch_id", $currentSchool->id)
@@ -282,6 +333,7 @@ class EventService
     public function getSchoolEventDetails(object $currentSchool, string $eventId, ?array $authUser = null)
     {
         $schoolEvent = $this->eventQuery($currentSchool, $authUser)
+            ->with(['eventAuthor.autorable'])
             ->withCount('invitees as invitee_count')
             ->find($eventId);
 
@@ -347,6 +399,7 @@ class EventService
 
                 $this->imageService->removeImages($schoolEvent, $currentSchool->id, $eventData['remove_image_ids'] ?? []);
                 $uploadedImages = $this->imageService->uploadImages($schoolEvent, $eventData['images'] ?? [], $currentSchool->id);
+                $this->imageService->applyOrder($schoolEvent, $currentSchool->id, $eventData['image_order'] ?? [], $uploadedImages);
 
                 return $schoolEvent->load(['currentImages', 'eventCategory']);
             });
@@ -459,6 +512,38 @@ class EventService
         }
 
         return $eventCategory;
+    }
+
+    private function formatEventRow(SchoolEvent $event): array
+    {
+        $author = $event->eventAuthor?->autorable;
+
+        return [
+            'id' => $event->id,
+            'title' => $event->title,
+            'description' => $event->description,
+            'organizer' => $event->organizer,
+            'location' => $event->location,
+            'status' => $event->status,
+            'event_category_id' => $event->event_category_id,
+            'category_name' => $event->eventCategory?->name,
+            'tags' => $event->tags ?? [],
+            'invitee_count' => $event->invitee_count ?? 0,
+            'likes_count' => $event->likes_count ?? 0,
+            'image_count' => $event->currentImages->count(),
+            'cover_image' => $event->currentImages->first()?->object_key,
+            'start_date' => $event->start_date?->toDateTimeString(),
+            'end_date' => $event->end_date?->toDateTimeString(),
+            'published_at' => $event->published_at?->toDateTimeString(),
+            'expires_at' => $event->expires_at?->toDateTimeString(),
+            'created_at' => $event->created_at?->toDateTimeString(),
+            'updated_at' => $event->updated_at?->toDateTimeString(),
+            'author_name' => $author?->name,
+            'author_username' => $author?->username,
+            'author_first_name' => $author?->first_name,
+            'author_last_name' => $author?->last_name,
+            'author_profile' => $author?->profile_picture,
+        ];
     }
 
     private function groupByCategory(Collection $schoolEvents): Collection
