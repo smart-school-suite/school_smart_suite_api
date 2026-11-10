@@ -42,5 +42,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CourseTypeSeeder::class);
         $this->call(QualificationSeeder::class);
         $this->call(TagSeeder::class);
+        $this->call(EventTagSeeder::class);
     }
 }
