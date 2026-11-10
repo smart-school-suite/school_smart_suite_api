@@ -17,18 +17,25 @@ class CreateEventRequest extends FormRequest
         }
     }
 
+    // Fields of which a draft must have at least one; a published event needs them all.
+    public const DRAFT_DETAIL_FIELDS = ['title', 'description', 'organizer', 'location', 'start_date', 'end_date', 'event_category_id'];
+
     public function rules(): array
     {
+        // Drafts may leave any detail empty; publishing (active / scheduled) needs every one.
+        $required = $this->input('status') === 'draft' ? 'nullable' : 'required';
+        $hasStart = filled($this->input('start_date'));
+
         return [
-            'title' => 'required|string|max:150',
-            'description' => 'required|string|max:5000',
-            'organizer' => 'required|string|max:200',
-            'location' => 'required|string|max:150',
+            'title' => "{$required}|string|max:150",
+            'description' => "{$required}|string|max:5000",
+            'organizer' => "{$required}|string|max:200",
+            'location' => "{$required}|string|max:150",
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'scheduled'])],
-            'start_date' => 'required|date_format:Y-m-d H:i',
-            'end_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
-            'published_at' => 'nullable|date_format:Y-m-d H:i|before_or_equal:start_date',
-            'event_category_id' => 'required|uuid|exists:event_categories,id',
+            'start_date' => "{$required}|date_format:Y-m-d H:i",
+            'end_date' => "{$required}|date_format:Y-m-d H:i" . ($hasStart ? '|after_or_equal:start_date' : ''),
+            'published_at' => 'nullable|date_format:Y-m-d H:i' . ($hasStart ? '|before_or_equal:start_date' : ''),
+            'event_category_id' => "{$required}|uuid|exists:event_categories,id",
             'tag_ids' => 'nullable|array',
             'tag_ids.*.tag_id' => 'required|uuid|exists:event_tags,id',
 
@@ -69,7 +76,17 @@ class CreateEventRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            if ($this->input('status') === 'draft' || $this->boolean('school_wide')) {
+            if ($this->input('status') === 'draft') {
+                if (!$this->hasDraftContent()) {
+                    $validator->errors()->add(
+                        'draft',
+                        'Add at least one detail (for example a title, description, date, image or invitee) before saving a draft.'
+                    );
+                }
+                return;
+            }
+
+            if ($this->boolean('school_wide')) {
                 return;
             }
 
@@ -88,10 +105,28 @@ class CreateEventRequest extends FormRequest
         });
     }
 
+    private function hasDraftContent(): bool
+    {
+        foreach (self::DRAFT_DETAIL_FIELDS as $field) {
+            if (filled($this->input($field))) {
+                return true;
+            }
+        }
+
+        $hasAudience = collect(['admin_audience', 'student_audience', 'teacher_audience'])
+            ->contains(fn($key) => collect($this->input($key, []))->flatten()->filter()->isNotEmpty());
+
+        return $this->boolean('school_wide')
+            || $hasAudience
+            || collect($this->input('tag_ids', []))->pluck('tag_id')->filter()->isNotEmpty()
+            || !empty(array_filter((array) $this->file('images', [])));
+    }
+
     public function attributes(): array
     {
         return [
             'audience' => 'Invitee Audience',
+            'draft' => 'Draft',
             'images' => 'Event Images',
             'images.*' => 'Event Image',
         ];

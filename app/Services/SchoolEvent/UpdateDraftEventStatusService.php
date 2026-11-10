@@ -118,6 +118,20 @@ class UpdateDraftEventStatusService
             );
         }
 
+        $audience = $this->storedAudience($schoolEvent->audience);
+        $hasInvitees = !empty($audience['school_wide'])
+            || collect($audience)->except('school_wide')->flatten()->filter()->isNotEmpty();
+
+        if (!$hasInvitees) {
+            throw new AppException(
+                "Draft event has no invitees.",
+                422,
+                "Invitees Required",
+                "Choose who is invited to this event (or make it school wide) before publishing it.",
+                null
+            );
+        }
+
         if (Carbon::parse($schoolEvent->end_date)->isPast()) {
             throw new AppException(
                 "Event End Date In The Past",

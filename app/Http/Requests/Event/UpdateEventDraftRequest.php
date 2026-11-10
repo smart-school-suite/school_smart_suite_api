@@ -27,7 +27,7 @@ class UpdateEventDraftRequest extends FormRequest
             'location' => 'sometimes|nullable|string|max:150',
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'scheduled'])],
             'start_date' => 'sometimes|nullable|date_format:Y-m-d H:i',
-            'end_date' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:start_date',
+            'end_date' => 'sometimes|nullable|date_format:Y-m-d H:i' . (filled($this->input('start_date')) ? '|after_or_equal:start_date' : ''),
             'published_at' => 'nullable|date_format:Y-m-d H:i',
             'event_category_id' => 'sometimes|nullable|uuid|exists:event_categories,id',
             'tag_ids' => 'sometimes|nullable|array',

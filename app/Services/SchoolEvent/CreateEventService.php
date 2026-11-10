@@ -24,7 +24,7 @@ class CreateEventService
         $isDraft = ($data['status'] ?? null) === 'draft';
         $tags = $this->publishing->getTags($data);
 
-        if (!$isDraft && Carbon::parse($data['end_date'])->isPast()) {
+        if (!$isDraft && !empty($data['end_date']) && Carbon::parse($data['end_date'])->isPast()) {
             throw new AppException(
                 "Event End Date In The Past",
                 400,
@@ -57,16 +57,16 @@ class CreateEventService
         try {
             return DB::transaction(function () use ($currentSchool, $authenticatedUser, $data, $tags, $audience, $status, $publishedAt, &$uploadedImages) {
                 $schoolEvent = SchoolEvent::create([
-                    'title' => $data['title'],
-                    'description' => $data['description'],
-                    'location' => $data['location'],
-                    'organizer' => $data['organizer'],
-                    'start_date' => $data['start_date'],
-                    'end_date' => $data['end_date'],
+                    'title' => $data['title'] ?? null,
+                    'description' => $data['description'] ?? null,
+                    'location' => $data['location'] ?? null,
+                    'organizer' => $data['organizer'] ?? null,
+                    'start_date' => $data['start_date'] ?? null,
+                    'end_date' => $data['end_date'] ?? null,
                     'status' => $status,
                     'published_at' => $publishedAt,
-                    'expires_at' => $data['end_date'],
-                    'event_category_id' => $data['event_category_id'],
+                    'expires_at' => $data['end_date'] ?? null,
+                    'event_category_id' => $data['event_category_id'] ?? null,
                     'notification_sent_at' => null,
                     'audience' => $this->publishing->audiencePayload($data),
                     'tags' => $tags->toArray(),
