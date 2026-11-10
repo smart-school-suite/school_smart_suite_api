@@ -7,6 +7,8 @@ use App\Http\Controllers\SchoolEvent\SchoolEventController;
 Route::post('/create', [SchoolEventController::class, 'createSchoolEvent'])
     ->name('school-event.store');
 Route::get('/', [SchoolEventController::class, 'getSchoolEvents'])->name("get.school-events");
+Route::get('/status/{status}', [SchoolEventController::class, 'getSchoolEventsByStatus'])->name("get.school-events.by.status");
+Route::get('/stats/summary', [SchoolEventController::class, 'getSchoolEventSummary'])->name("school-event.summary");
 Route::post('/{schoolEventId}/like', [SchoolEventController::class, 'likeSchoolEvent'])->name("like.school.event");
 Route::get('/event-category/{eventCategoryId}', [SchoolEventController::class, 'getSchoolEventByCategory'])->name('get.school.events.by.category');
 Route::get('/expired', [SchoolEventController::class, 'getExpiredSchoolEvents'])->name("get.expired.school-events");
