@@ -359,32 +359,32 @@ class SettingDefinationSeeder extends Seeder
 
         $settingDefs = [
             [
-                'key' => 'semester.sync_mode',
-                'label' => 'Semester Synchronization Mode',
+                'key' => 'semester.auto_create_mode',
+                'label' => 'Automatic Semester Creation',
                 'data_type' => 'string',
                 'default_value' => 'disabled',
-                'description' => 'Determines how newly created semesters are automatically distributed. Disabled: create the semester only for the selected academic level. Same Programme: automatically create the semester for the other eligible levels of the same specialty. Across Programmes: automatically create the semester for eligible levels of other specialties, within the synchronization scope. Only one mode can be selected at a time.',
+                'description' => 'Determines whether newly created semesters are automatically created for other academic levels. Disabled: create the semester only for the selected academic level. Within the Same Specialty: automatically create it for the other applicable levels of the same specialty. Across Specialties: also create it for applicable levels of other specialties in the same department. Only one option can be selected at a time.',
             ],
             [
-                'key' => 'semester.sync_allowed_levels',
-                'label' => 'Allowed Synchronization Levels',
+                'key' => 'semester.auto_create_levels',
+                'label' => 'Applicable Academic Levels',
                 'data_type' => 'json',
                 'default_value' => $levelIds,
-                'description' => 'Determines which academic levels can receive automatically created semesters. Only the selected levels receive synchronized semesters. The level a semester is created for always receives it, regardless of this setting. Only applies when synchronization is enabled.',
+                'description' => 'Determines which academic levels receive automatically created semesters. Only the selected levels receive them. The level a semester is created for always receives it, regardless of this setting. Only applies when Automatic Semester Creation is enabled.',
             ],
             [
-                'key' => 'semester.sync_scope',
-                'label' => 'Synchronization Scope',
-                'data_type' => 'string',
-                'default_value' => 'same_specialty',
-                'description' => 'Determines which specialties can take part in semester synchronization. Same Specialty: levels of specialties with the same name, in any department. Across Specialties: all specialties in the same department. Entire Institution: all specialties in the institution. Only applies when the synchronization mode is Across Programmes.',
-            ],
-            [
-                'key' => 'semester.sync_require_students',
-                'label' => 'Synchronize Only to Levels With Students',
+                'key' => 'semester.auto_create_across_specialties',
+                'label' => 'Across Specialties',
                 'data_type' => 'boolean',
                 'default_value' => false,
-                'description' => 'When enabled, a synchronized semester is only created for a specialty level that currently has active students. Only applies when synchronization is enabled.',
+                'description' => 'When enabled, semesters are also created for other specialties in the department, at the applicable levels the original specialty also has. When disabled, creation stays within the original specialty unless Across All Specialties\' Levels is enabled. Only applies when Automatic Semester Creation is enabled.',
+            ],
+            [
+                'key' => 'semester.auto_create_across_all_levels',
+                'label' => 'Across All Specialties\' Levels',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, semesters are created for every applicable level of the other specialties in the department, even levels the original specialty does not have. Can be enabled together with Across Specialties. Only applies when Automatic Semester Creation is enabled.',
             ],
         ];
 

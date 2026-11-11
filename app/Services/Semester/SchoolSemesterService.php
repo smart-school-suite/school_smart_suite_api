@@ -16,11 +16,14 @@ use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Events\Actions\StudentActionEvent;
 use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
-use App\Jobs\Semester\SynchronizeSemesterJob;
 use App\Models\AcademicYear\SchoolAcademicYear;
 
 class SchoolSemesterService
 {
+    public function __construct(
+        private SemesterAutoCreationService $semesterAutoCreation,
+    ) {}
+
     public function createSchoolSemester(array $semesterData, object $currentSchool, $authAdmin)
     {
         $schoolYear = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
@@ -79,7 +82,8 @@ class SchoolSemesterService
         }
 
         try {
-            $schoolSemester = DB::transaction(function () use ($semesterData, $schoolYear, $currentSchool, $startDate, $endDate) {
+            // The original and its automatically created copies commit or roll back together.
+            [$schoolSemester, $autoCreated] = DB::transaction(function () use ($semesterData, $schoolYear, $currentSchool, $startDate, $endDate) {
                 $schoolSemester = new SchoolSemester();
                 $schoolSemester->start_date = $startDate->toDateString();
                 $schoolSemester->end_date = $endDate->toDateString();
@@ -89,7 +93,9 @@ class SchoolSemesterService
                 $schoolSemester->timetable_published = false;
                 $schoolSemester->save();
 
-                return $schoolSemester;
+                $autoCreated = $this->semesterAutoCreation->createFor($schoolSemester, $schoolYear);
+
+                return [$schoolSemester, $autoCreated];
             });
         } catch (Throwable $e) {
             Log::error("Failed to create school semester", [
@@ -110,21 +116,20 @@ class SchoolSemesterService
 
         // Follow-up work runs only once the semester is committed, and a failure
         // there must not turn a successful creation into an error response.
-        try {
-            CreateInstructorAvailabilityJob::dispatch($currentSchool->id, $schoolSemester->id);
-            CreateJointCourseSemesterJob::dispatch($schoolSemester->id, $currentSchool);
-            // Copies this semester to other levels and specialties when the
-            // branch's semester synchronization mode is enabled.
-            SynchronizeSemesterJob::dispatch($currentSchool->id, $schoolSemester->id);
-        } catch (Throwable $e) {
-            Log::error("School semester {$schoolSemester->id} was created but its follow-up jobs failed", [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
+        foreach (collect([$schoolSemester])->concat($autoCreated) as $createdSemester) {
+            try {
+                CreateInstructorAvailabilityJob::dispatch($currentSchool->id, $createdSemester->id);
+                CreateJointCourseSemesterJob::dispatch($createdSemester->id, $currentSchool);
+            } catch (Throwable $e) {
+                Log::error("School semester {$createdSemester->id} was created but its follow-up jobs failed", [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]);
+            }
         }
 
-        return $schoolSemester;
+        return $schoolSemester->setRelation('autoCreatedSemesters', $autoCreated);
     }
     public function updateSchoolSemester(array $semesterData, object $currentSchool, string $schoolSemesterId, $authAdmin)
     {
