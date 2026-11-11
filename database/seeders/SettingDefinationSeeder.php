@@ -28,6 +28,7 @@ class SettingDefinationSeeder extends Seeder
         $this->electionTieBreakerSettingDefination();
         $this->levelSetting();
         $this->graduationSetting();
+        $this->semesterSetting();
 
         $this->removeUndefinedSettings();
     }
@@ -349,6 +350,52 @@ class SettingDefinationSeeder extends Seeder
         ];
 
         $this->seedDefinitions('Graduation Settings', $settingDefs);
+    }
+    public function semesterSetting(): void
+    {
+        $levelIds = Educationlevels::whereHas("levelType", function ($query) {
+            $query->where("program_name", "level_start_100");
+        })->pluck('id')->values()->all();
+
+        $settingDefs = [
+            [
+                'key' => 'semester.auto_create_mode',
+                'label' => 'Automatic Semester Creation',
+                'data_type' => 'string',
+                'default_value' => 'disabled',
+                'description' => 'Determines whether newly created semesters are automatically created for other academic levels. Disabled: create the semester only for the selected academic level. Within the Same Specialty: automatically create it for the other applicable levels of the same specialty. Across Specialties: also create it for applicable levels of other specialties in the same department. Only one option can be selected at a time.',
+            ],
+            [
+                'key' => 'semester.auto_create_levels',
+                'label' => 'Applicable Academic Levels',
+                'data_type' => 'json',
+                'default_value' => $levelIds,
+                'description' => 'Determines which academic levels receive automatically created semesters. Only the selected levels receive them. The level a semester is created for always receives it, regardless of this setting. Only applies when Automatic Semester Creation is enabled.',
+            ],
+            [
+                'key' => 'semester.auto_create_across_specialties',
+                'label' => 'Across Specialties',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, semesters are also created for other specialties in the department, at the applicable levels the original specialty also has. When disabled, creation stays within the original specialty unless Across All Specialties\' Levels is enabled. Only applies when Automatic Semester Creation is enabled.',
+            ],
+            [
+                'key' => 'semester.auto_create_across_all_levels',
+                'label' => 'Across All Specialties\' Levels',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, semesters are created for every applicable level of the other specialties in the department, even levels the original specialty does not have. Can be enabled together with Across Specialties. Only applies when Automatic Semester Creation is enabled.',
+            ],
+            [
+                'key' => 'semester.auto_create_require_students',
+                'label' => 'Only Include Specialties with Enrolled Students',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, automatically created semesters are only created for specialty levels that have at least one enrolled student; levels without enrolled students are skipped. When disabled, semesters are created regardless of student enrolment. The level a semester is created for always receives it. Only applies when Automatic Semester Creation is enabled.',
+            ],
+        ];
+
+        $this->seedDefinitions('Semester Settings', $settingDefs);
     }
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {
