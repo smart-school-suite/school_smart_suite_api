@@ -8,6 +8,7 @@ use App\Models\SchoolBranchSetting;
 use App\SchoolBranchSetting\Handlers\Graduation\LevelGraduationFeeBillingHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\RespectTeacherPreferenceHandler;
+use App\SchoolBranchSetting\Handlers\SemesterTimetable\SchoolDayHoursHandler;
 use App\SchoolBranchSetting\Registry\SettingUpdateRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,8 @@ class MutuallyExclusiveSettingsTest extends TestCase
             'graduation.level_graduation_fee_enabled' => ['boolean', false],
             'graduation.level_graduation_fee' => ['json', '[]'],
             'level.start' => ['string', 'level_start_100'],
+            'timetable.school_day_start' => ['string', '08:00'],
+            'timetable.school_day_end' => ['string', '17:00'],
         ] as $key => [$type, $value]) {
             DB::table('setting_definations')->insert(['id' => "def-$key", 'name' => $key, 'key' => $key, 'data_type' => $type, 'setting_category_id' => 'cat']);
             SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => "def-$key", 'value' => $value]);
@@ -95,5 +98,22 @@ class MutuallyExclusiveSettingsTest extends TestCase
         $this->assertSame(60000.0, $amount('lvl-2'));
         $this->assertSame(50000.0, $amount('lvl-1'), 'A level without its own fee falls back to the standard fee.');
         $this->assertSame(50000.0, $amount(null));
+    }
+
+    public function test_the_school_day_must_open_before_it_closes(): void
+    {
+        $handler = new SchoolDayHoursHandler();
+
+        $this->assertSame('16:30', $handler->handle($this->setting('timetable.school_day_end'), '16:30', $this->school, null)->value);
+
+        foreach ([['timetable.school_day_end', '07:00'], ['timetable.school_day_start', '18:00'], ['timetable.school_day_start', '8am']] as [$key, $time]) {
+            try {
+                $handler->handle($this->setting($key), $time, $this->school, null);
+                $this->fail("Expected $key = $time to be rejected.");
+            } catch (AppException $e) {
+                $this->assertSame(400, $e->getCode());
+            }
+        }
+        $this->assertSame('08:00', $this->setting('timetable.school_day_start')->value);
     }
 }

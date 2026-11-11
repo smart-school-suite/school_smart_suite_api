@@ -152,7 +152,8 @@ class AlumniService
         );
 
         return Specialty::where("school_branch_id", $specialty->school_branch_id)
-            ->where("name", $specialty->name)
+            ->where("specialty_name", $specialty->specialty_name)
+            ->where("department_id", $specialty->department_id)
             ->where("level_id", $nextEducationLevel->id)
             ->first();
     }

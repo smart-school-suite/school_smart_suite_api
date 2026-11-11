@@ -123,7 +123,7 @@ class StudentGraduationJob implements ShouldQueue
                 if ($isGraduationFeeEnabled && $additionalFeeCategory) {
                     $processedGraduationFees[] = [
                         'id'                        => Str::uuid()->toString(),
-                        'reason'                    => "Graduation Fee - {$batchName} ({$specialty->name})",
+                        'reason'                    => "Graduation Fee - {$batchName} ({$specialty->specialty_name})",
                         'amount'                    => $feeAmount,
                         'status'                    => 'unpaid',
                         'school_branch_id'          => $schoolBranchId,

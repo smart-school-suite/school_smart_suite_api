@@ -4,6 +4,7 @@ namespace App\Services\Specialty;
 
 use App\Exceptions\AppException;
 use App\Models\Specialty;
+use App\Services\Level\LevelFeeSettings;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -34,10 +35,17 @@ class SpecialtyService
             $specialty->school_branch_id = $currentSchool->id;
             $specialty->department_id = $data["department_id"];
             $specialty->specialty_name = $data["specialty_name"];
-            $specialty->registration_fee = $data["registration_fee"];
-            $specialty->school_fee = $data["school_fee"];
+            // Fees not given default to the level's fee from the level fee settings.
+            $levelFees = app(LevelFeeSettings::class);
+            $specialty->registration_fee = $this->givenFee($data, "registration_fee")
+                ?? $levelFees->feeFor($currentSchool->id, $data["level_id"], LevelFeeSettings::REGISTRATION)
+                ?? 0;
+            $specialty->school_fee = $this->givenFee($data, "school_fee")
+                ?? $levelFees->feeFor($currentSchool->id, $data["level_id"], LevelFeeSettings::TUITION)
+                ?? 0;
             $specialty->description = $data["description"] ?? null;
             $specialty->level_id = $data["level_id"];
+            $specialty->status = "active";
             $specialty->save();
 
             return $specialty;
@@ -489,5 +497,11 @@ class SpecialtyService
             })
             ->values();
         return $groupedSpecialties;
+    }
+    private function givenFee(array $data, string $key): ?float
+    {
+        $value = $data[$key] ?? null;
+
+        return $value === null || $value === '' ? null : (float) $value;
     }
 }
