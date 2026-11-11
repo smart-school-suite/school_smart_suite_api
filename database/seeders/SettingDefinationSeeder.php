@@ -28,6 +28,7 @@ class SettingDefinationSeeder extends Seeder
         $this->electionTieBreakerSettingDefination();
         $this->levelSetting();
         $this->graduationSetting();
+        $this->semesterSetting();
 
         $this->removeUndefinedSettings();
     }
@@ -349,6 +350,27 @@ class SettingDefinationSeeder extends Seeder
         ];
 
         $this->seedDefinitions('Graduation Settings', $settingDefs);
+    }
+    public function semesterSetting(): void
+    {
+        $settingDefs = [
+            [
+                'key' => 'semester.auto_create_all_levels',
+                'label' => 'Automatically Create Semesters for All Levels',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, creating a semester for one level of a specialty (for example, First Semester for Software Engineering Level 1) automatically creates the same semester, with the same dates, for every other level of that specialty in the same academic year. Cannot be enabled together with creating semesters only for levels with students.',
+            ],
+            [
+                'key' => 'semester.auto_create_levels_with_students',
+                'label' => 'Automatically Create Semesters Only for Levels With Students',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, creating a semester for one level of a specialty automatically creates the same semester for the other levels of that specialty in the same academic year, but only for levels that currently have active students. Cannot be enabled together with creating semesters for all levels.',
+            ],
+        ];
+
+        $this->seedDefinitions('Semester Settings', $settingDefs);
     }
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {

@@ -48,6 +48,10 @@ class SettingCategorySeeder extends Seeder
                 'key' => 'setting.category.level'
             ],
             [
+                'name' => 'Semester Settings',
+                'key' => 'setting.category.semester'
+            ],
+            [
                 'name' => 'Graduation Settings',
                 'key' => 'setting.graduation'
             ]

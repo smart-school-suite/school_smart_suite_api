@@ -28,6 +28,7 @@ use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingHandler;
+use App\SchoolBranchSetting\Handlers\Semester\AutoCreateSemesterHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\RespectTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\SchoolDayHoursHandler;
@@ -73,6 +74,10 @@ class SettingUpdateRegistry
           'exam.ca_default_max_score' => CaDefaultScoreHandler::class,
           'exam.exam_default_max_score' => ExamDefaultScoreHandler::class,
           'exam.resit_exam_default_max_score' => ResitDefaultScoreHandler::class,
+
+          //
+          'semester.auto_create_all_levels' => AutoCreateSemesterHandler::class,
+          'semester.auto_create_levels_with_students' => AutoCreateSemesterHandler::class,
 
           //
           'timetable.respect_teacher_preference' => RespectTeacherPreferenceHandler::class,

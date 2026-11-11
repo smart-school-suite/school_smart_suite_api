@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Events\Actions\StudentActionEvent;
 use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
+use App\Jobs\Semester\AutoCreateLevelSemestersJob;
 use App\Models\AcademicYear\SchoolAcademicYear;
 
 class SchoolSemesterService
@@ -112,6 +113,9 @@ class SchoolSemesterService
         try {
             CreateInstructorAvailabilityJob::dispatch($currentSchool->id, $schoolSemester->id);
             CreateJointCourseSemesterJob::dispatch($schoolSemester->id, $currentSchool);
+            // Creates this semester for the specialty's other levels when the
+            // branch's automatic semester creation setting is enabled.
+            AutoCreateLevelSemestersJob::dispatch($currentSchool->id, $schoolSemester->id);
         } catch (Throwable $e) {
             Log::error("School semester {$schoolSemester->id} was created but its follow-up jobs failed", [
                 'message' => $e->getMessage(),
