@@ -13,6 +13,7 @@ use App\SchoolBranchSetting\Handlers\GradeScale\MaxGpaHandler;
 use App\SchoolBranchSetting\Handlers\GradeScale\PassingGpaHandler;
 use App\SchoolBranchSetting\Handlers\Graduation\GraduationFeeHandler;
 use App\SchoolBranchSetting\Handlers\Graduation\GraduationGeneralBillingFee;
+use App\SchoolBranchSetting\Handlers\Graduation\LevelGraduationFeeBillingHandler;
 use App\SchoolBranchSetting\Handlers\Graduation\LevelGraduationFeeHandler;
 use App\SchoolBranchSetting\Handlers\Level\LevelRegistrationFeeHandler;
 use App\SchoolBranchSetting\Handlers\Level\LevelSpecialtyAutoCreateHandler;
@@ -64,7 +65,7 @@ class SettingUpdateRegistry
           'graduation.fee_enabled' => GraduationFeeHandler::class,
           'graduation.fee' => GraduationGeneralBillingFee::class,
           'graduation.level_graduation_fee_enabled' => LevelGraduationFeeHandler::class,
-          'graduation.level_graduation_fee' => LevelGraduationFeeHandler::class,
+          'graduation.level_graduation_fee' => LevelGraduationFeeBillingHandler::class,
           //
 
           'level.start' => LevelStartHandler::class,

@@ -77,8 +77,7 @@ class StudentGraduationJob implements ShouldQueue
             $feeAmount = 0;
 
             if ($isGraduationFeeEnabled) {
-                $graduationFeeSetting = $this->graduationFee($schoolBranchId);
-                $feeAmount = $graduationFeeSetting ? (float) $graduationFeeSetting->value : 0;
+                $feeAmount = $this->graduationFeeAmount($schoolBranchId, $specialty?->level_id);
 
                 $additionalFeeCategory = AdditionalFeesCategory::firstOrCreate(
                     [
@@ -145,6 +144,35 @@ class StudentGraduationJob implements ShouldQueue
                 DB::table('additional_fees')->insert($processedGraduationFees);
             }
         });
+    }
+
+    /**
+     * The standard graduation fee, or, when "Use Different Graduation Fees by
+     * Academic Level" is on, the fee configured for this level (falling back
+     * to the standard fee when the level has none).
+     */
+    private function graduationFeeAmount(string $schoolBranchId, ?string $levelId): float
+    {
+        $standardFee = $this->graduationFee($schoolBranchId);
+        $standardAmount = $standardFee ? (float) $standardFee->value : 0;
+
+        $levelSetting = fn(string $key) => SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
+            ->whereHas('settingDefination', fn($query) => $query->where('key', $key))
+            ->first()?->value;
+
+        if (!$levelId || !filter_var($levelSetting('graduation.level_graduation_fee_enabled'), FILTER_VALIDATE_BOOLEAN)) {
+            return $standardAmount;
+        }
+
+        $levelFees = $levelSetting('graduation.level_graduation_fee');
+        if (is_string($levelFees)) {
+            $levelFees = json_decode($levelFees, true);
+        }
+
+        $levelFee = collect(is_array($levelFees) ? $levelFees : [])
+            ->first(fn($item) => is_array($item) && ($item['level_id'] ?? null) === $levelId);
+
+        return isset($levelFee['fee']) && is_numeric($levelFee['fee']) ? (float) $levelFee['fee'] : $standardAmount;
     }
 
     private function graduationFee(string $schoolBranchId)
