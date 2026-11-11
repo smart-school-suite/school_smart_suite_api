@@ -52,6 +52,10 @@ class SettingCategorySeeder extends Seeder
                 'key' => 'setting.category.semester'
             ],
             [
+                'name' => 'Academic Year Settings',
+                'key' => 'setting.category.academic_year'
+            ],
+            [
                 'name' => 'Graduation Settings',
                 'key' => 'setting.graduation'
             ]

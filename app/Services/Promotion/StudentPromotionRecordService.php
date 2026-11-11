@@ -6,6 +6,9 @@ use App\Models\Promotion\StudentPromotionRecord;
 use App\Models\SchoolBranchSetting;
 use App\Models\Promotion\StudentPromotionLog;
 use App\Models\Specialty;
+use App\Models\RegistrationFee;
+use App\Models\Student;
+use App\Models\TuitionFees;
 use App\Models\Educationlevels;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
@@ -123,7 +126,9 @@ class StudentPromotionRecordService
             );
         }
 
-        return DB::transaction(function () use ($promotionRecord, $student, $nextSpecialty, $payload, $actor) {
+        $billRegistrationFee = $this->billsRegistrationFeeOnPromotion($currentSchool->id);
+
+        return DB::transaction(function () use ($promotionRecord, $student, $nextSpecialty, $payload, $actor, $billRegistrationFee) {
             $promotionRecord->update([
                 'outcome' => 'promoted',
                 'status' => 'completed',
@@ -138,6 +143,8 @@ class StudentPromotionRecordService
             $student->update([
                 'specialty_id' => $nextSpecialty->id,
             ]);
+
+            $this->billPromotedStudent($student, $nextSpecialty, $billRegistrationFee);
 
             return $promotionRecord->fresh();
         });
@@ -246,11 +253,55 @@ class StudentPromotionRecordService
         );
 
         return Specialty::where("school_branch_id", $specialty->school_branch_id)
-            ->where("name", $specialty->name)
+            ->where("specialty_name", $specialty->specialty_name)
+            ->where("department_id", $specialty->department_id)
             ->with(['level'])
             ->where("level_id", $nextEducationLevel->id)
             ->first();
     }
+    /**
+     * Bills a promoted student for their new level, as a new student is
+     * billed: the new specialty's tuition always, and its registration fee
+     * when "Charge Registration Fee Upon Promotion" is on. Records that
+     * already exist for that specialty are left as they are.
+     */
+    private function billPromotedStudent(Student $student, Specialty $specialty, bool $billRegistrationFee): void
+    {
+        $existing = fn(string $model) => $model::where('school_branch_id', $student->school_branch_id)
+            ->where('student_id', $student->id)
+            ->where('specialty_id', $specialty->id)
+            ->exists();
+
+        if ($billRegistrationFee && !$existing(RegistrationFee::class)) {
+            RegistrationFee::create([
+                'specialty_id' => $specialty->id,
+                'school_branch_id' => $student->school_branch_id,
+                'amount' => $specialty->registration_fee,
+                'status' => 'not paid',
+                'student_id' => $student->id,
+            ]);
+        }
+
+        if (!$existing(TuitionFees::class)) {
+            TuitionFees::create([
+                'specialty_id' => $specialty->id,
+                'amount_paid' => 0.00,
+                'school_branch_id' => $student->school_branch_id,
+                'tution_fee_total' => $specialty->school_fee,
+                'student_id' => $student->id,
+            ]);
+        }
+    }
+
+    private function billsRegistrationFeeOnPromotion(string $schoolBranchId): bool
+    {
+        $value = SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
+            ->whereHas('settingDefination', fn($query) => $query->where('key', 'promotion.bill_student_registration_fee'))
+            ->first()?->value;
+
+        return $value === null ? true : filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
     private function levelSetting(string $schoolBranchId)
     {
         return  SchoolBranchSetting::where("school_branch_id", $schoolBranchId)
@@ -280,6 +331,7 @@ class StudentPromotionRecordService
 
         return Specialty::where("school_branch_id", $specialty->school_branch_id)
             ->where("specialty_name", $specialty->specialty_name)
+            ->where("department_id", $specialty->department_id)
             ->where("level_id", $nextEducationLevel->id)
             ->first();
     }

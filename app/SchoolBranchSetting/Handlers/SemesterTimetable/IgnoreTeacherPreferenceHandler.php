@@ -28,9 +28,9 @@ class IgnoreTeacherPreferenceHandler implements SettingUpdateHandler
             );
         }
 
-        if ($filteredValue) {
-            $this->updateMutuallyExclusiveSetting($currentSchool->id, 'timetable.respect_teacher_preference', false);
-        }
+        // Exactly one of the two preference options is on: the other one
+        // always takes the opposite value.
+        $this->updateMutuallyExclusiveSetting($currentSchool->id, 'timetable.respect_teacher_preference', !$filteredValue);
 
         $setting->update(['value' => $filteredValue]);
 

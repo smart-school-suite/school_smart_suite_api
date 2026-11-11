@@ -1,23 +1,25 @@
 <?php
 
-namespace App\SchoolBranchSetting\Handlers\Semester;
+namespace App\SchoolBranchSetting\Handlers\AutoCreation;
 
 use App\Exceptions\AppException;
 use App\Models\SchoolBranchSetting;
 use App\SchoolBranchSetting\Contracts\SettingUpdateHandler;
-use App\Services\Semester\SemesterAutoCreationSettings as Settings;
+use App\Services\AutoCreation\AutoCreationSettings as Settings;
 use Illuminate\Support\Facades\DB;
 use Override;
 
 /**
- * Automatic Semester Creation: disabled, same_specialty or across_specialties.
- * Keeps the two "across" switches in step: Within the Same Specialty turns
- * both off, and Across Specialties turns "Across Specialties" on when
- * neither switch is on yet. Disabled leaves them as they are (they are
- * ignored, and hidden, until creation is enabled again).
+ * Automatic Semester/Academic Year Creation: disabled, same_specialty or
+ * across_specialties. Keeps the group's two "across" switches in step:
+ * Within the Same Specialty turns both off, and Across Specialties turns
+ * "Across Specialties" on when neither switch is on yet. Disabled leaves
+ * them as they are (they are ignored until creation is enabled again).
  */
 class AutoCreateModeHandler implements SettingUpdateHandler
 {
+    use AutoCreationPrefix;
+
     #[Override]
     public function handle(
         SchoolBranchSetting $setting,
@@ -25,20 +27,22 @@ class AutoCreateModeHandler implements SettingUpdateHandler
         object $currentSchool,
         mixed $authAdmin
     ): SchoolBranchSetting {
+        $prefix = $this->prefixOf($setting);
+
         if (!is_string($value) || !in_array($value, Settings::MODES, true)) {
             throw new AppException(
-                "Automatic semester creation must be one of: " . implode(', ', Settings::MODES) . ".",
+                Settings::label($prefix) . " must be one of: " . implode(', ', Settings::MODES) . ".",
                 400,
-                "Invalid Automatic Semester Creation Option",
+                "Invalid " . Settings::label($prefix) . " Option",
                 "Choose Disabled, Within the Same Specialty or Across Specialties.",
                 "value"
             );
         }
 
-        DB::transaction(function () use ($setting, $value, $currentSchool) {
+        DB::transaction(function () use ($setting, $value, $currentSchool, $prefix) {
             $setting->update(['value' => $value]);
 
-            $switches = Settings::settings($currentSchool->id, Settings::SWITCHES);
+            $switches = Settings::settings($currentSchool->id, $prefix, Settings::SWITCHES);
 
             if ($value === Settings::MODE_SAME_SPECIALTY) {
                 $switches->each(fn($switch) => $switch->update(['value' => false]));

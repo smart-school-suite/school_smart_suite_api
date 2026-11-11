@@ -22,8 +22,10 @@ class CreateSpecialtyRequest extends FormRequest
         return [
             'specialty_name' => 'required|string',
             'department_id' => 'required|string|exists:departments,id',
-            'registration_fee' => 'required|decimal:0, 2',
-            'school_fee' => 'required|decimal:0, 2',
+            // When left out, they default to the level's fee from the
+            // "Registration/Tuition Fees by Academic Level" settings.
+            'registration_fee' => 'sometimes|nullable|decimal:0, 2',
+            'school_fee' => 'sometimes|nullable|decimal:0, 2',
             'level_id' => 'required|string|exists:levels,id',
             'description' => 'sometimes|nullable|string',
         ];
