@@ -1,6 +1,6 @@
 <?php
 
-namespace App\SchoolBranchSetting\Handlers\Semester;
+namespace App\SchoolBranchSetting\Handlers\AutoCreation;
 
 use App\Exceptions\AppException;
 use App\Models\Educationlevels;

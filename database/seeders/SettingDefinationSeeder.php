@@ -29,6 +29,7 @@ class SettingDefinationSeeder extends Seeder
         $this->levelSetting();
         $this->graduationSetting();
         $this->semesterSetting();
+        $this->academicYearSetting();
 
         $this->removeUndefinedSettings();
     }
@@ -396,6 +397,52 @@ class SettingDefinationSeeder extends Seeder
         ];
 
         $this->seedDefinitions('Semester Settings', $settingDefs);
+    }
+    public function academicYearSetting(): void
+    {
+        $levelIds = Educationlevels::whereHas("levelType", function ($query) {
+            $query->where("program_name", "level_start_100");
+        })->pluck('id')->values()->all();
+
+        $settingDefs = [
+            [
+                'key' => 'academic_year.auto_create_mode',
+                'label' => 'Automatic Academic Year Creation',
+                'data_type' => 'string',
+                'default_value' => 'disabled',
+                'description' => 'Determines whether a newly created school academic year is automatically created for other academic levels. Disabled: create the academic year only for the selected specialty level. Within the Same Specialty: automatically create it for the other applicable levels of the same specialty. Across Specialties: also create it for applicable levels of other specialties in the same department. Only one option can be selected at a time.',
+            ],
+            [
+                'key' => 'academic_year.auto_create_levels',
+                'label' => 'Applicable Academic Levels for Academic Years',
+                'data_type' => 'json',
+                'default_value' => $levelIds,
+                'description' => 'Determines which academic levels receive automatically created academic years. Only the selected levels receive them. The level an academic year is created for always receives it, regardless of this setting. Only applies when Automatic Academic Year Creation is enabled.',
+            ],
+            [
+                'key' => 'academic_year.auto_create_across_specialties',
+                'label' => 'Academic Years Across Specialties',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, academic years are also created for other specialties in the department, at the applicable levels the original specialty also has. Only applies when Automatic Academic Year Creation is enabled.',
+            ],
+            [
+                'key' => 'academic_year.auto_create_across_all_levels',
+                'label' => 'Academic Years Across All Specialties\' Levels',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, academic years are created for every applicable level of the other specialties in the department, even levels the original specialty does not have. Can be enabled together with Academic Years Across Specialties. Only applies when Automatic Academic Year Creation is enabled.',
+            ],
+            [
+                'key' => 'academic_year.auto_create_require_students',
+                'label' => 'Academic Years Only for Specialties with Enrolled Students',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, automatically created academic years are only created for specialty levels that have at least one enrolled student. The level an academic year is created for always receives it. Only applies when Automatic Academic Year Creation is enabled.',
+            ],
+        ];
+
+        $this->seedDefinitions('Academic Year Settings', $settingDefs);
     }
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {

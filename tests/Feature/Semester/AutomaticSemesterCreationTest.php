@@ -6,10 +6,10 @@ use App\Exceptions\AppException;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\SchoolBranchSetting;
 use App\Models\SchoolSemester;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateAcrossSwitchHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateLevelsHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateModeHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateRequireStudentsHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateAcrossSwitchHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateLevelsHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateModeHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateRequireStudentsHandler;
 use App\Services\Semester\SchoolSemesterService;
 use App\Services\Semester\SemesterAutoCreationService;
 use App\Services\Semester\SemesterAutoCreationSettings as Settings;
@@ -239,7 +239,7 @@ class AutomaticSemesterCreationTest extends TestCase
     public function test_a_failure_rolls_back_the_original_and_every_copy(): void
     {
         $this->configure('same_specialty');
-        $this->app->instance(SemesterAutoCreationService::class, new class extends SemesterAutoCreationService {
+        $this->app->instance(SemesterAutoCreationService::class, new class(app(\App\Services\AutoCreation\AutoCreationTargets::class)) extends SemesterAutoCreationService {
             public function createFor(SchoolSemester $original, SchoolAcademicYear $originalYear): Collection
             {
                 parent::createFor($original, $originalYear);
