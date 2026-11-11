@@ -24,6 +24,10 @@ use App\Models\SchoolBranchSetting;
  * other specialties receive the semester at every applicable level, whether
  * or not the original specialty has that level.
  *
+ * Only include specialties with enrolled students
+ * (semester.auto_create_require_students): a target only receives the
+ * semester when it has at least one enrolled (non dropped out) student.
+ *
  * The two switches are independent, and are kept in step with the mode by
  * the setting handlers: either switch on means mode across_specialties.
  */
@@ -33,8 +37,9 @@ class SemesterAutoCreationSettings
     public const LEVELS = 'semester.auto_create_levels';
     public const ACROSS_SPECIALTIES = 'semester.auto_create_across_specialties';
     public const ACROSS_ALL_LEVELS = 'semester.auto_create_across_all_levels';
+    public const REQUIRE_STUDENTS = 'semester.auto_create_require_students';
 
-    public const KEYS = [self::MODE, self::LEVELS, self::ACROSS_SPECIALTIES, self::ACROSS_ALL_LEVELS];
+    public const KEYS = [self::MODE, self::LEVELS, self::ACROSS_SPECIALTIES, self::ACROSS_ALL_LEVELS, self::REQUIRE_STUDENTS];
     public const SWITCHES = [self::ACROSS_SPECIALTIES, self::ACROSS_ALL_LEVELS];
 
     public const MODE_DISABLED = 'disabled';
@@ -47,6 +52,7 @@ class SemesterAutoCreationSettings
         public readonly array $levelIds = [],
         public readonly bool $acrossSpecialties = false,
         public readonly bool $acrossAllLevels = false,
+        public readonly bool $requireStudents = false,
     ) {}
 
     public static function forBranch(string $schoolBranchId): self
@@ -59,6 +65,7 @@ class SemesterAutoCreationSettings
             levelIds: self::levelIds($values[self::LEVELS] ?? []),
             acrossSpecialties: filter_var($values[self::ACROSS_SPECIALTIES] ?? false, FILTER_VALIDATE_BOOLEAN),
             acrossAllLevels: filter_var($values[self::ACROSS_ALL_LEVELS] ?? false, FILTER_VALIDATE_BOOLEAN),
+            requireStudents: filter_var($values[self::REQUIRE_STUDENTS] ?? false, FILTER_VALIDATE_BOOLEAN),
         );
     }
 

@@ -5,6 +5,7 @@ namespace App\Services\Semester;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
+use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -25,6 +26,9 @@ use Illuminate\Support\Collection;
  *    levels the original specialty also has;
  *  - with Across All Specialties' Levels: other specialties in the
  *    department, at every applicable level.
+ *
+ * With Only Include Specialties with Enrolled Students, a target without
+ * at least one enrolled (non dropped out) student is skipped.
  *
  * A target is skipped when it has no school year for the original's
  * academic year (none is created), when that school year does not cover the
@@ -49,6 +53,10 @@ class SemesterAutoCreationService
         $created = collect();
 
         foreach ($this->targets($specialty, $settings) as $target) {
+            if ($settings->requireStudents && !$this->hasEnrolledStudents($target)) {
+                continue;
+            }
+
             $schoolYear = SchoolAcademicYear::where('school_branch_id', $branchId)
                 ->where('specialty_id', $target->id)
                 ->where('system_academic_year_id', $originalYear->system_academic_year_id)
@@ -113,6 +121,14 @@ class SemesterAutoCreationService
             ->where('department_id', $specialty->department_id)
             ->when(!$includeOriginal, fn($query) => $query->where('id', '!=', $specialty->id))
             ->where(fn($query) => $query->whereNull('status')->orWhere('status', '!=', 'inactive'));
+    }
+
+    private function hasEnrolledStudents(Specialty $specialty): bool
+    {
+        return Student::where('school_branch_id', $specialty->school_branch_id)
+            ->where('specialty_id', $specialty->id)
+            ->where(fn($query) => $query->whereNull('dropout_status')->orWhere('dropout_status', false))
+            ->exists();
     }
 
     private function covers(SchoolAcademicYear $schoolYear, Carbon $startDate, Carbon $endDate): bool

@@ -9,6 +9,7 @@ use App\Models\SchoolSemester;
 use App\SchoolBranchSetting\Handlers\Semester\AutoCreateAcrossSwitchHandler;
 use App\SchoolBranchSetting\Handlers\Semester\AutoCreateLevelsHandler;
 use App\SchoolBranchSetting\Handlers\Semester\AutoCreateModeHandler;
+use App\SchoolBranchSetting\Handlers\Semester\AutoCreateRequireStudentsHandler;
 use App\Services\Semester\SchoolSemesterService;
 use App\Services\Semester\SemesterAutoCreationService;
 use App\Services\Semester\SemesterAutoCreationSettings as Settings;
@@ -69,6 +70,7 @@ class AutomaticSemesterCreationTest extends TestCase
             Settings::LEVELS => ['json', ['lvl-1', 'lvl-2', 'lvl-3', 'lvl-4']],
             Settings::ACROSS_SPECIALTIES => ['boolean', false],
             Settings::ACROSS_ALL_LEVELS => ['boolean', false],
+            Settings::REQUIRE_STUDENTS => ['boolean', false],
             'level.start' => ['string', 'level_start_100'],
         ];
         foreach ($defaults as $key => [$type, $value]) {
@@ -87,6 +89,11 @@ class AutomaticSemesterCreationTest extends TestCase
     private function schoolYear(string $id, string $specialtyId, string $branch = 'branch-1', string $year = 'year-2099'): void
     {
         DB::table('school_academic_years')->insert(['id' => $id, 'start_date' => '2099-09-01', 'end_date' => '2100-06-30', 'specialty_id' => $specialtyId, 'system_academic_year_id' => $year, 'school_branch_id' => $branch]);
+    }
+
+    private function student(string $id, string $specialtyId, bool $dropout = false, string $branch = 'branch-1'): void
+    {
+        DB::table('students')->insert(['id' => $id, 'name' => $id, 'first_name' => $id, 'last_name' => 'S', 'email' => "$id@example.com", 'password' => 'x', 'username' => $id, 'school_branch_id' => $branch, 'specialty_id' => $specialtyId, 'dropout_status' => $dropout, 'guardian_id' => 'g-1', 'student_batch_id' => 'batch-1', 'gender_id' => 'gen-1', 'relationship_id' => 'rel-1', 'student_source_id' => 'src-1']);
     }
 
     private function setting(string $key): SchoolBranchSetting
@@ -320,5 +327,64 @@ class AutomaticSemesterCreationTest extends TestCase
                 $this->assertSame(400, $e->getCode());
             }
         }
+    }
+
+    public function test_only_specialty_levels_with_enrolled_students_receive_copies_when_required(): void
+    {
+        $this->configure('across_specialties', acrossAllLevels: true);
+        $this->setting(Settings::REQUIRE_STUDENTS)->update(['value' => true]);
+        $this->student('stu-swe-2', 'swe-2');
+        $this->student('stu-net-4', 'net-4');
+        $this->student('stu-swe-3', 'swe-3', dropout: true);
+
+        $semester = $this->create();
+
+        // The original level has no students and still gets its semester.
+        $this->assertDatabaseHas('school_semesters', ['id' => $semester->id, 'school_year_id' => 'sy-swe-1']);
+        $this->assertSame(['sy-net-4', 'sy-swe-2'], $this->createdFor());
+    }
+
+    public function test_enrolment_is_ignored_when_not_required_or_creation_is_disabled(): void
+    {
+        $this->configure('same_specialty');
+        $this->create();
+        $this->assertSame(['sy-swe-2', 'sy-swe-3'], $this->createdFor());
+
+        SchoolSemester::query()->delete();
+        $this->configure('disabled');
+        $this->setting(Settings::REQUIRE_STUDENTS)->update(['value' => true]);
+        $this->create();
+        $this->assertSame([], $this->createdFor());
+    }
+
+    public function test_students_in_another_branch_do_not_count(): void
+    {
+        $this->configure('same_specialty');
+        $this->setting(Settings::REQUIRE_STUDENTS)->update(['value' => true]);
+        $this->student('stu-elsewhere', 'swe-2', branch: 'branch-2');
+
+        $this->create();
+
+        $this->assertSame([], $this->createdFor());
+    }
+
+    public function test_require_students_can_only_be_turned_on_while_creation_is_enabled(): void
+    {
+        $handler = new AutoCreateRequireStudentsHandler();
+
+        try {
+            $handler->handle($this->setting(Settings::REQUIRE_STUDENTS), true, $this->school, null);
+            $this->fail('Expected the setting to be refused while creation is disabled.');
+        } catch (AppException $e) {
+            $this->assertSame(400, $e->getCode());
+        }
+        $this->assertFalse($this->value(Settings::REQUIRE_STUDENTS));
+
+        $this->configure('same_specialty');
+        $this->assertTrue($handler->handle($this->setting(Settings::REQUIRE_STUDENTS), 'true', $this->school, null)->value);
+        $this->assertFalse($handler->handle($this->setting(Settings::REQUIRE_STUDENTS), false, $this->school, null)->value);
+
+        $this->expectException(AppException::class);
+        $handler->handle($this->setting(Settings::REQUIRE_STUDENTS), 'maybe', $this->school, null);
     }
 }

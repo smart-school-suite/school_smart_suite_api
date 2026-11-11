@@ -386,6 +386,13 @@ class SettingDefinationSeeder extends Seeder
                 'default_value' => false,
                 'description' => 'When enabled, semesters are created for every applicable level of the other specialties in the department, even levels the original specialty does not have. Can be enabled together with Across Specialties. Only applies when Automatic Semester Creation is enabled.',
             ],
+            [
+                'key' => 'semester.auto_create_require_students',
+                'label' => 'Only Include Specialties with Enrolled Students',
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => 'When enabled, automatically created semesters are only created for specialty levels that have at least one enrolled student; levels without enrolled students are skipped. When disabled, semesters are created regardless of student enrolment. The level a semester is created for always receives it. Only applies when Automatic Semester Creation is enabled.',
+            ],
         ];
 
         $this->seedDefinitions('Semester Settings', $settingDefs);
