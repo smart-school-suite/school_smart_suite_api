@@ -29,10 +29,10 @@ use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateAcrossSwitchHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateLevelsHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateModeHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateRequireStudentsHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateAcrossSwitchHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateLevelsHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateModeHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateRequireStudentsHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\RespectTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\SchoolDayHoursHandler;
@@ -86,6 +86,13 @@ class SettingUpdateRegistry
           'semester.auto_create_across_specialties' => AutoCreateAcrossSwitchHandler::class,
           'semester.auto_create_across_all_levels' => AutoCreateAcrossSwitchHandler::class,
           'semester.auto_create_require_students' => AutoCreateRequireStudentsHandler::class,
+          //
+
+          'academic_year.auto_create_mode' => AutoCreateModeHandler::class,
+          'academic_year.auto_create_levels' => AutoCreateLevelsHandler::class,
+          'academic_year.auto_create_across_specialties' => AutoCreateAcrossSwitchHandler::class,
+          'academic_year.auto_create_across_all_levels' => AutoCreateAcrossSwitchHandler::class,
+          'academic_year.auto_create_require_students' => AutoCreateRequireStudentsHandler::class,
 
           //
           'timetable.respect_teacher_preference' => RespectTeacherPreferenceHandler::class,

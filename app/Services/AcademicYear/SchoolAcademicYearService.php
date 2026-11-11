@@ -15,7 +15,9 @@ class SchoolAcademicYearService
 {
     public function createSchoolAcademicYear(array $data, object $currentSchool): SchoolAcademicYear
     {
-        $specialty = Specialty::with(['student'])->find($data['specialty_id']);
+        $specialty = Specialty::with(['student'])
+            ->where('school_branch_id', $currentSchool->id)
+            ->find($data['specialty_id']);
 
         if (!$specialty) {
             throw new AppException(
@@ -61,6 +63,7 @@ class SchoolAcademicYearService
             );
         }
 
+        // The original and its automatically created copies commit or roll back together.
         return DB::transaction(function () use ($data, $currentSchool, $specialty) {
             $academicYear = SchoolAcademicYear::create([
                 'specialty_id' => $data['specialty_id'],
@@ -81,7 +84,9 @@ class SchoolAcademicYearService
                 'total_students' => $specialty->student->count(),
             ]);
 
-            return $academicYear;
+            $autoCreated = app(SchoolAcademicYearAutoCreationService::class)->createFor($academicYear, $specialty);
+
+            return $academicYear->setRelation('autoCreatedAcademicYears', $autoCreated);
         });
     }
 
