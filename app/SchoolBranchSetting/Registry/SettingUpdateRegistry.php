@@ -28,7 +28,10 @@ use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingHandler;
-use App\SchoolBranchSetting\Handlers\Semester\AutoCreateSemesterHandler;
+use App\SchoolBranchSetting\Handlers\Semester\SemesterSyncAllowedLevelsHandler;
+use App\SchoolBranchSetting\Handlers\Semester\SemesterSyncModeHandler;
+use App\SchoolBranchSetting\Handlers\Semester\SemesterSyncRequireStudentsHandler;
+use App\SchoolBranchSetting\Handlers\Semester\SemesterSyncScopeHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\RespectTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\SchoolDayHoursHandler;
@@ -76,8 +79,10 @@ class SettingUpdateRegistry
           'exam.resit_exam_default_max_score' => ResitDefaultScoreHandler::class,
 
           //
-          'semester.auto_create_all_levels' => AutoCreateSemesterHandler::class,
-          'semester.auto_create_levels_with_students' => AutoCreateSemesterHandler::class,
+          'semester.sync_mode' => SemesterSyncModeHandler::class,
+          'semester.sync_allowed_levels' => SemesterSyncAllowedLevelsHandler::class,
+          'semester.sync_scope' => SemesterSyncScopeHandler::class,
+          'semester.sync_require_students' => SemesterSyncRequireStudentsHandler::class,
 
           //
           'timetable.respect_teacher_preference' => RespectTeacherPreferenceHandler::class,

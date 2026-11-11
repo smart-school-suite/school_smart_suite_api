@@ -353,20 +353,38 @@ class SettingDefinationSeeder extends Seeder
     }
     public function semesterSetting(): void
     {
+        $levelIds = Educationlevels::whereHas("levelType", function ($query) {
+            $query->where("program_name", "level_start_100");
+        })->pluck('id')->values()->all();
+
         $settingDefs = [
             [
-                'key' => 'semester.auto_create_all_levels',
-                'label' => 'Automatically Create Semesters for All Levels',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, creating a semester for one level of a specialty (for example, First Semester for Software Engineering Level 1) automatically creates the same semester, with the same dates, for every other level of that specialty in the same academic year. Cannot be enabled together with creating semesters only for levels with students.',
+                'key' => 'semester.sync_mode',
+                'label' => 'Semester Synchronization Mode',
+                'data_type' => 'string',
+                'default_value' => 'disabled',
+                'description' => 'Determines how newly created semesters are automatically distributed. Disabled: create the semester only for the selected academic level. Same Programme: automatically create the semester for the other eligible levels of the same specialty. Across Programmes: automatically create the semester for eligible levels of other specialties, within the synchronization scope. Only one mode can be selected at a time.',
             ],
             [
-                'key' => 'semester.auto_create_levels_with_students',
-                'label' => 'Automatically Create Semesters Only for Levels With Students',
+                'key' => 'semester.sync_allowed_levels',
+                'label' => 'Allowed Synchronization Levels',
+                'data_type' => 'json',
+                'default_value' => $levelIds,
+                'description' => 'Determines which academic levels can receive automatically created semesters. Only the selected levels receive synchronized semesters. The level a semester is created for always receives it, regardless of this setting. Only applies when synchronization is enabled.',
+            ],
+            [
+                'key' => 'semester.sync_scope',
+                'label' => 'Synchronization Scope',
+                'data_type' => 'string',
+                'default_value' => 'same_specialty',
+                'description' => 'Determines which specialties can take part in semester synchronization. Same Specialty: levels of specialties with the same name, in any department. Across Specialties: all specialties in the same department. Entire Institution: all specialties in the institution. Only applies when the synchronization mode is Across Programmes.',
+            ],
+            [
+                'key' => 'semester.sync_require_students',
+                'label' => 'Synchronize Only to Levels With Students',
                 'data_type' => 'boolean',
                 'default_value' => false,
-                'description' => 'When enabled, creating a semester for one level of a specialty automatically creates the same semester for the other levels of that specialty in the same academic year, but only for levels that currently have active students. Cannot be enabled together with creating semesters for all levels.',
+                'description' => 'When enabled, a synchronized semester is only created for a specialty level that currently has active students. Only applies when synchronization is enabled.',
             ],
         ];
 
