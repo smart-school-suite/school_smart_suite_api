@@ -175,4 +175,9 @@ class Schoolbranches extends Model
     {
         return $this->hasMany(SchoolSubscription::class);
     }
+
+    public function elections(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Election\Election::class, 'school_branch_id');
+    }
 }

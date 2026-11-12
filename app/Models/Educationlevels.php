@@ -42,10 +42,6 @@ class Educationlevels extends Model
     {
         return $this->hasMany(FeeSchedule::class);
     }
-    public function electionParticipants(): HasMany
-    {
-        return $this->hasMany(ElectionParticipants::class);
-    }
     public function resitResults(): HasMany
     {
         return $this->hasMany(ResitResults::class);

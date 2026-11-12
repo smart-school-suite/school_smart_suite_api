@@ -103,10 +103,6 @@ class Specialty extends Model
         return $this->hasMany(FeeSchedule::class);
     }
 
-    public function electionParticipants(): HasMany
-    {
-        return $this->hasMany(ElectionParticipants::class);
-    }
     public function feeWaiver(): HasMany
     {
         return $this->hasMany(FeeWaiver::class, 'specialty_id');

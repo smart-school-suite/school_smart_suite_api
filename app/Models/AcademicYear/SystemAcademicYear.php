@@ -3,7 +3,8 @@
 namespace App\Models\AcademicYear;
 
 use App\Models\Course\SemesterJointCourse;
-use App\Models\Elections;
+use App\Models\Election\Election;
+use App\Models\Election\ElectionOfficeYear;
 use App\Models\ExamJointCourse\ExamJointCourse;
 use App\Models\Graduation\GraduationBatch;
 use App\Traits\GeneratesUuid;
@@ -37,7 +38,11 @@ class SystemAcademicYear extends Model
     }
     public function election(): HasMany
     {
-        return $this->hasMany(Elections::class, "academic_year_id");
+        return $this->hasMany(Election::class, "academic_year_id");
+    }
+    public function electionOfficeYears(): HasMany
+    {
+        return $this->hasMany(ElectionOfficeYear::class, "system_academic_year_id");
     }
 
     public function graduationBatch(): HasMany

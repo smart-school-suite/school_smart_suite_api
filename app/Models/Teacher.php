@@ -26,9 +26,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\SchoolEvent\SchoolEventInvitee;
 use App\Models\SchoolEvent\SchoolEventLike;
 
+use App\Models\Election\Concerns\ParticipatesInElections;
+
 class Teacher extends Model
 {
-    use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency, HasUuids;
+    use HasFactory, HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency, HasUuids, ParticipatesInElections;
 
     protected $fillable = [
         'school_branch_id',
@@ -101,15 +103,7 @@ class Teacher extends Model
     {
         return $this->morphMany(OTP::class, 'actorable');
     }
-    public function vote()
-    {
-        return $this->morphMany(ElectionVotes::class, 'votable');
-    }
 
-    public function voteStatus()
-    {
-        return $this->morphMany(VoterStatus::class, 'votableStatus');
-    }
 
     public function instructorAvailability(): HasMany
     {

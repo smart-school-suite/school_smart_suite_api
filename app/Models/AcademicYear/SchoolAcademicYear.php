@@ -3,6 +3,7 @@
 namespace App\Models\AcademicYear;
 
 use App\Models\Course\SemesterJointCourse;
+use App\Models\Election\ElectionOfficeYear;
 use App\Models\Exam\Exam;
 use App\Models\FeeSchedule;
 use App\Models\Promotion\PromotionRun;
@@ -65,5 +66,10 @@ class SchoolAcademicYear extends Model
     public function schoolBranch(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
+    }
+
+    public function electionOfficeYears(): HasMany
+    {
+        return $this->hasMany(ElectionOfficeYear::class, 'school_academic_year_id');
     }
 }
