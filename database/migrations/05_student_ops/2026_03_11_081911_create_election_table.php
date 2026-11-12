@@ -43,12 +43,30 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('elections_results', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->integer('vote_count')->default(0);
-            $table->enum('election_status', ['won', 'lost', 'pending'])->default('pending');
-            $table->timestamps();
-        });
+        // Schema::create('elections_results', function (Blueprint $table) {
+        //     $table->string('id')->primary();
+        //     $table->integer('vote_count')->default(0);
+        //     $table->enum('election_status', ['won', 'lost', 'pending'])->default('pending');
+        //     $table->timestamps();
+        // });
+
+        //         Schema::create('election_participants', function (Blueprint $table) {
+        //     $table->uuid('id')->primary();
+
+        //     $table->foreignUuid('school_branch_id')
+        //         ->constrained('school_branches');
+
+        //     $table->foreignUuid('election_id')
+        //         ->constrained('elections');
+
+        //     $table->nullableMorphs('participantable');
+
+        //     $table->boolean('can_vote')->default(true);
+
+        //     $table->boolean('can_apply')->default(false);
+
+        //     $table->timestamps();
+        // });
 
         Schema::create('election_candidates', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -56,13 +74,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('voter_status', function (Blueprint $table) {
-            $table->string('id');
-            $table->string('votable_id');
-            $table->string('votable_type');
-            $table->boolean('status')->default(false);
-            $table->timestamps();
-        });
+        // Schema::create('voter_status', function (Blueprint $table) {
+        //     $table->string('id');
+        //     $table->string('votable_id');
+        //     $table->string('votable_type');
+        //     $table->boolean('status')->default(false);
+        //     $table->timestamps();
+        // });
 
         Schema::create('election_participants', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -77,26 +95,27 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('past_election_winners', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->integer('total_votes');
-            $table->timestamps();
-        });
+        // Schema::create('past_election_winners', function (Blueprint $table) {
+        //     $table->string('id')->primary();
+        //     $table->integer('total_votes');
+        //     $table->timestamps();
+        // });
 
-        Schema::create('current_election_winners', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->integer('total_votes');
-            $table->timestamps();
-        });
+        // Schema::create('current_election_winners', function (Blueprint $table) {
+        //     $table->string('id')->primary();
+        //     $table->integer('total_votes');
+        //     $table->timestamps();
+        // });
+
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('current_election_winners');
-        Schema::dropIfExists('past_election_winners');
+        // Schema::dropIfExists('current_election_winners');
+        // Schema::dropIfExists('past_election_winners');
         Schema::dropIfExists('election_participants');
-        Schema::dropIfExists('voter_status');
-        Schema::dropIfExists('elections_results');
+        // Schema::dropIfExists('voter_status');
+        //Schema::dropIfExists('elections_results');
         Schema::dropIfExists('election_votes');
         Schema::dropIfExists('election_candidates');
         Schema::dropIfExists('election_applications');
