@@ -2,8 +2,8 @@
 
 namespace App\Services\Stats;
 
-use App\Models\ElectionRoles;
-use App\Models\Elections;
+use App\Models\Election\ElectionRole;
+use App\Models\Election\Election;
 use Illuminate\Support\Facades\DB;
 use App\Models\StatTypes;
 
@@ -50,9 +50,9 @@ class ElectionStatService
         $electionAcceptanceCountKpiId = $kpis->get('total_application_acceptance_count')->id;
 
 
-        $electionRoleData = ElectionRoles::where("school_branch_id", $currentSchool->id)->get();
+        $electionRoleData = ElectionRole::where("school_branch_id", $currentSchool->id)->get();
 
-        $elections = Elections::where("school_branch_id", $currentSchool->id)
+        $elections = Election::where("school_branch_id", $currentSchool->id)
             ->whereYear("created_at", $year)
             ->with(['electionType'])
             ->get();
@@ -117,12 +117,12 @@ class ElectionStatService
 
     public function upcomingElectionData($elections)
     {
-        return $elections->where("status", "upcoming")->sortBy('start_date')->take(5)->values();
+        return $elections->whereIn("status", ["upcoming", "application_open", "application_closed"])->sortBy('application_start')->take(5)->values();
     }
 
     public function getLiveElections($elections)
     {
-        return $elections->where("status", "ongoing")->sortByDesc('created_at')
+        return $elections->where("status", "voting_open")->sortByDesc('created_at')
         ->take(5)->values();
     }
     public function totalNumberOfApplications($electionApplicationData, $applicationCountKpiId)

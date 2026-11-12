@@ -2,260 +2,98 @@
 
 namespace App\Services\Election;
 
-use App\Models\ElectionCandidates;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Throwable;
-use App\Exceptions\AppException;
+use App\Models\Election\Election;
+use App\Models\Election\ElectionCandidate;
+use App\Services\Election\Support\ElectionParticipantType;
+use App\Services\Election\Support\FindsElectionRecords;
 use Illuminate\Support\Facades\DB;
 
 class ElectionCandidateService
 {
-    public function getElectionCandidatesByElection(string $electionId, object $currentSchool)
+    use FindsElectionRecords;
+
+    private const RELATIONS = ['candidateable', 'position:id,name,seats', 'application', 'election:id,title,status'];
+
+    public function getCandidates(object $currentSchool, array $filters = [])
     {
-        $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-            ->where("election_id", $electionId)
-            ->with(['student', 'electionApplication'])
-            ->get();
-
-        if ($getElectionCandidates->isEmpty()) {
-            throw new AppException(
-                "No candidates found for election ID $electionId",
-                404,
-                "Candidates Missing",
-                "There are no candidates registered for the specified election in this school branch.",
-                "/elections/$electionId/candidates"
-            );
-        }
-
-        return $getElectionCandidates;
+        return ElectionCandidate::where('school_branch_id', $currentSchool->id)
+            ->when($filters['election_id'] ?? null, fn($q, $id) => $q->where('election_id', $id))
+            ->when($filters['election_role_id'] ?? null, fn($q, $id) => $q->where('election_role_id', $id))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->with(self::RELATIONS)
+            ->get()
+            ->map(fn($candidate) => $this->present($candidate));
     }
-    public function getElectionCandidates(object $currentSchool)
+
+    /**
+     * Active candidates of an election grouped by position (ballot view).
+     */
+    public function getBallot(object $currentSchool, string $electionId): array
     {
-        $getElectionCandidates = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-            ->with(['student.specialty.level', 'electionApplication', 'electionRole.electionType'])
-            ->get();
+        $election = $this->findInBranch(Election::class, $electionId, $currentSchool);
 
-        if ($getElectionCandidates->isEmpty()) {
-            throw new AppException(
-                "No election candidates found",
-                404,
-                "Candidates Missing",
-                "There are no election candidates available for this school branch.",
-                "/elections/candidates"
-            );
-        }
-
-        return $getElectionCandidates;
+        return ElectionCandidate::where('election_id', $election->id)
+            ->where('status', ElectionCandidate::STATUS_ACTIVE)
+            ->with(['candidateable', 'position:id,name,seats,description', 'application:id,manifesto,personal_vision,commitment_statement'])
+            ->get()
+            ->groupBy('election_role_id')
+            ->map(fn($candidates) => [
+                'position' => $candidates->first()->position,
+                'candidates' => $candidates->map(fn($candidate) => $this->present($candidate))->values(),
+            ])
+            ->values()
+            ->all();
     }
-    public function getElectionCandidateDetails(object $currentSchool, string $candidateId)
-    {
-        try {
-            $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-                ->with(['student.specialty.level', 'electionRole', 'electionApplication.election'])
-                ->where('id', $candidateId)
-                ->first();
 
-            return $candidate;
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Candidate not found",
-                404,
-                "Candidate Details Missing",
-                "The election candidate with ID $candidateId could not be found in this school branch.",
-                "/elections/candidates"
-            );
-        }
+    public function getCandidateDetails(object $currentSchool, string $candidateId): array
+    {
+        $candidate = $this->findInBranch(ElectionCandidate::class, $candidateId, $currentSchool, self::RELATIONS);
+        return $this->present($candidate) + ['vote_count' => $candidate->election->is_results_published ? $candidate->votes()->count() : null];
     }
-    public function disqualifyCandidate(object $currentSchool, string $candidateId, $authAdmin)
-    {
-        try {
-            $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-                ->findOrFail($candidateId);
 
-            $candidate->isActive = false;
-            $candidate->save();
-            return $candidate;
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Candidate not found for disqualification",
-                404,
-                "Candidate Missing",
-                "The election candidate with ID $candidateId could not be found in this school branch.",
-                "/elections/candidates"
-            );
-        } catch (Throwable $e) {
-            throw new AppException(
-                "Failed to disqualify candidate",
-                500,
-                "Disqualification Error",
-                "An unexpected error occurred while attempting to disqualify the candidate.",
-                "/elections/candidates/" . $candidateId
-            );
-        }
+    public function disqualifyCandidates(object $currentSchool, array $candidateIds, ?string $reason = null): array
+    {
+        return $this->setStatus($currentSchool, $candidateIds, ElectionCandidate::STATUS_DISQUALIFIED, $reason);
     }
-    public function reinstateCandidate(object $currentSchool, string $candidateId, $authAdmin)
-    {
-        try {
-            $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-                ->findOrFail($candidateId);
 
-            $candidate->isActive = true;
-            $candidate->save();
-            return $candidate;
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Candidate not found for reinstatement",
-                404,
-                "Candidate Missing",
-                "The election candidate with ID $candidateId could not be found in this school branch.",
-                "/elections/candidates"
-            );
-        } catch (Throwable $e) {
-            throw new AppException(
-                "Failed to reinstate candidate",
-                500,
-                "Reinstatement Error",
-                "An unexpected error occurred while attempting to reinstate the candidate.",
-                "/elections/candidates/" . $candidateId
-            );
-        }
+    public function reinstateCandidates(object $currentSchool, array $candidateIds): array
+    {
+        return $this->setStatus($currentSchool, $candidateIds, ElectionCandidate::STATUS_ACTIVE, null);
     }
-    public function bulkDisqualifyCandidate(object $currentSchool, array $candidateIds, $authAdmin)
+
+    private function setStatus(object $currentSchool, array $candidateIds, string $status, ?string $reason): array
     {
-        $result = [];
-        try {
+        return DB::transaction(fn() => collect($candidateIds)->map(function ($id) use ($currentSchool, $status, $reason) {
+            $candidate = $this->findInBranch(ElectionCandidate::class, $id, $currentSchool, ['election', 'application']);
 
-            DB::beginTransaction();
-
-            foreach ($candidateIds as $candidateItem) {
-                $candidateId = $candidateItem['candidate_id'] ?? null;
-
-                if (is_null($candidateId)) {
-                    DB::rollBack();
-                    throw new AppException(
-                        "Missing candidate ID in bulk disqualification list",
-                        400,
-                        "Invalid Input Structure",
-                        "One of the items is missing the required 'candidate_id' key.",
-                        "/elections/candidates"
-                    );
-                }
-
-                try {
-                    $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-                        ->findOrFail($candidateId);
-
-                    $candidate->isActive = false;
-                    $candidate->save();
-
-                    $result[] = $candidate;
-                } catch (ModelNotFoundException $e) {
-                    DB::rollBack();
-                    throw new AppException(
-                        "Candidate not found for disqualification",
-                        404,
-                        "Candidate Missing in Bulk",
-                        "The election candidate with ID $candidateId could not be found in this school branch, halting bulk process.",
-                        "/elections/candidates"
-                    );
-                }
+            if (in_array($candidate->election->status, [Election::STATUS_COMPLETED, Election::STATUS_CANCELLED], true)) {
+                $this->fail("Election closed", "Candidates cannot be changed after the election has ended.", 409);
+            }
+            if ($status === ElectionCandidate::STATUS_ACTIVE && $candidate->status === ElectionCandidate::STATUS_WITHDRAWN) {
+                $this->fail("Candidate withdrew", "A candidate who withdrew cannot be reinstated.", 409);
             }
 
-            if (empty($result) && !empty($candidateIds)) {
-                DB::rollBack();
-                throw new AppException(
-                    "Bulk disqualification failed to process any valid ID",
-                    400,
-                    "Processing Error",
-                    "The provided list of IDs resulted in no successful disqualifications.",
-                    "/elections/candidates"
-                );
-            }
-
-            DB::commit();
-            return $result;
-        } catch (Throwable $e) {
-            DB::rollBack();
-
-            if ($e instanceof AppException) {
-                throw $e;
-            }
-            throw new AppException(
-                "Bulk disqualification failed due to a system error",
-                500,
-                "System Error",
-                "An unexpected error occurred during the bulk disqualification process.",
-                "/elections/candidates"
-            );
-        }
+            $candidate->update(['status' => $status, 'status_reason' => $reason]);
+            return $this->present($candidate->load(self::RELATIONS));
+        })->all());
     }
-    public function bulkReinstateCandidate(object $currentSchool, array $candidateIds, $authAdmin)
+
+    public function present(ElectionCandidate $candidate): array
     {
-        $result = [];
-        try {
-            DB::beginTransaction();
-
-            foreach ($candidateIds as $candidateItem) {
-                $candidateId = $candidateItem['candidate_id'] ?? null;
-
-                if (is_null($candidateId)) {
-                    DB::rollBack();
-                    throw new AppException(
-                        "Missing candidate ID in bulk reinstatement list",
-                        400,
-                        "Invalid Input Structure",
-                        "One of the items is missing the required 'candidate_id' key.",
-                        "/elections/candidates"
-                    );
-                }
-
-                try {
-                    $candidate = ElectionCandidates::where("school_branch_id", $currentSchool->id)
-                        ->findOrFail($candidateId);
-
-                    $candidate->isActive = true;
-                    $candidate->save();
-
-                    $result[] = $candidate;
-                } catch (ModelNotFoundException $e) {
-                    DB::rollBack();
-                    throw new AppException(
-                        "Candidate not found for reinstatement",
-                        404,
-                        "Candidate Missing in Bulk",
-                        "The election candidate with ID $candidateId could not be found in this school branch, halting bulk process.",
-                        "/elections/candidates"
-                    );
-                }
-            }
-
-            if (empty($result) && !empty($candidateIds)) {
-                DB::rollBack();
-                throw new AppException(
-                    "Bulk reinstatement failed to process any valid ID",
-                    400,
-                    "Processing Error",
-                    "The provided list of IDs resulted in no successful reinstatements.",
-                    "/elections/candidates"
-                );
-            }
-
-            DB::commit();
-
-            return $result;
-        } catch (Throwable $e) {
-            DB::rollBack();
-
-            if ($e instanceof AppException) {
-                throw $e;
-            }
-            throw new AppException(
-                "Bulk reinstatement failed due to a system error",
-                500,
-                "System Error",
-                "An unexpected error occurred during the bulk reinstatement process.",
-                "/elections/candidates"
-            );
-        }
+        return [
+            'id' => $candidate->id,
+            'election_id' => $candidate->election_id,
+            'position' => $candidate->position,
+            'candidate_type' => ElectionParticipantType::keyFor($candidate->candidateable_type),
+            'candidate_id' => $candidate->candidateable_id,
+            'name' => ElectionParticipantType::displayName($candidate->candidateable),
+            'candidate' => $candidate->candidateable,
+            'status' => $candidate->status,
+            'status_reason' => $candidate->status_reason,
+            'application_id' => $candidate->application_id,
+            'manifesto' => $candidate->application?->manifesto,
+            'personal_vision' => $candidate->application?->personal_vision,
+            'commitment_statement' => $candidate->application?->commitment_statement,
+        ];
     }
 }

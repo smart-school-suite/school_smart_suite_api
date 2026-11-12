@@ -3,81 +3,66 @@
 namespace App\Http\Controllers\Election;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Election\Concerns\ResolvesElectionUser;
 use App\Http\Requests\ElectionCandidate\ElectionCandidateIdRequest;
-use App\Http\Resources\ElectionCandidateResource;
 use App\Services\ApiResponseService;
-use Illuminate\Http\Request;
 use App\Services\Election\ElectionCandidateService;
+use Illuminate\Http\Request;
 
 class ElectionCandidateController extends Controller
 {
-    protected ElectionCandidateService $electionCandidateService;
-    public function __construct(ElectionCandidateService $electionCandidateService)
+    use ResolvesElectionUser;
+
+    public function __construct(protected ElectionCandidateService $candidateService) {}
+
+    public function getElectionCandidates(Request $request)
     {
-        $this->electionCandidateService  = $electionCandidateService;
+        $candidates = $this->candidateService->getCandidates($this->currentSchool($request), $request->only(['election_id', 'election_role_id', 'status']));
+        return ApiResponseService::success("Election Candidates Fetched Successfully", $candidates, null, 200);
     }
 
     public function getCandidatesByElection(Request $request, string $electionId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $candidates = $this->electionCandidateService->getElectionCandidatesByElection($electionId, $currentSchool);
-        return ApiResponseService::success("Election Candidates Fetched Successfully", $candidates, null, 200);
+        $filters = array_merge($request->only(['election_role_id', 'status']), ['election_id' => $electionId]);
+        return ApiResponseService::success("Election Candidates Fetched Successfully", $this->candidateService->getCandidates($this->currentSchool($request), $filters), null, 200);
     }
 
-    public function getElectionCadidates(Request $request)
+    /** Active candidates grouped by position, for the voting screen. */
+    public function getBallot(Request $request, string $electionId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $candidates = $this->electionCandidateService->getElectionCandidates($currentSchool);
-        return ApiResponseService::success("Election Candidates Fetched Successfully", ElectionCandidateResource::collection($candidates), null, 200);
+        return ApiResponseService::success("Election Ballot Fetched Successfully", $this->candidateService->getBallot($this->currentSchool($request), $electionId), null, 200);
     }
 
     public function getElectionCandidateDetails(Request $request, string $candidateId)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $candidateDetails = $this->electionCandidateService->getElectionCandidateDetails($currentSchool, $candidateId);
-        return ApiResponseService::success("Candidate Details Fetched Successfully", $candidateDetails, null, 200);
+        return ApiResponseService::success("Election Candidate Details Fetched Successfully", $this->candidateService->getCandidateDetails($this->currentSchool($request), $candidateId), null, 200);
     }
 
     public function disqualifyCandidate(Request $request, string $candidateId)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionCandidateService->disqualifyCandidate($currentSchool, $candidateId, $authAdmin);
-        return ApiResponseService::success("Candidate Disqualified Successfully", null, null, 200);
+        $this->adminUser();
+        $candidates = $this->candidateService->disqualifyCandidates($this->currentSchool($request), [$candidateId], $request->input('reason'));
+        return ApiResponseService::success("Candidate Disqualified Successfully", $candidates[0], null, 200);
     }
 
     public function reinstateCandidate(Request $request, string $candidateId)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionCandidateService->reinstateCandidate($currentSchool, $candidateId, $authAdmin);
-        return ApiResponseService::success("Candidate Reinstated Succesfully", null, null, 200);
+        $this->adminUser();
+        $candidates = $this->candidateService->reinstateCandidates($this->currentSchool($request), [$candidateId]);
+        return ApiResponseService::success("Candidate Reinstated Successfully", $candidates[0], null, 200);
     }
 
-    public function bulkReinstateCandidate(ElectionCandidateIdRequest $request, $candidateId)
+    public function bulkDisqualifyCandidate(ElectionCandidateIdRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionCandidateService->bulkReinstateCandidate($currentSchool, $request->candidateIds, $authAdmin);
-        return ApiResponseService::success("Candidates Reinstated Successfully", null, null, 200);
+        $this->adminUser();
+        $candidates = $this->candidateService->disqualifyCandidates($this->currentSchool($request), $this->ids($request, 'candidateIds', 'candidate_id'), $request->validated()['reason'] ?? null);
+        return ApiResponseService::success("Candidates Disqualified Successfully", $candidates, null, 200);
     }
 
-    public function bulkDisQualifyCandidate(ElectionCandidateIdRequest $request, $candidateId)
+    public function bulkReinstateCandidate(ElectionCandidateIdRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionCandidateService->bulkDisqualifyCandidate($currentSchool, $request->candidateIds, $authAdmin);
-        return ApiResponseService::success("Candidates Disqualified Successfully", null, null, 200);
-    }
-
-    protected function resolveUser()
-    {
-        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
-            $user = request()->user($guard);
-            if ($user !== null) {
-                return $user;
-            }
-        }
-        return null;
+        $this->adminUser();
+        $candidates = $this->candidateService->reinstateCandidates($this->currentSchool($request), $this->ids($request, 'candidateIds', 'candidate_id'));
+        return ApiResponseService::success("Candidates Reinstated Successfully", $candidates, null, 200);
     }
 }

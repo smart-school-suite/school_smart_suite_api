@@ -65,3 +65,10 @@ Schedule::command('exams:create-missing-candidates')
     ->withoutOverlapping(3600)
     ->runInBackground()
     ->onOneServer();
+
+Schedule::command('elections:update-statuses')
+    ->everyFifteenMinutes()
+    ->timezone('Africa/Douala')
+    ->withoutOverlapping(900)
+    ->runInBackground()
+    ->onOneServer();

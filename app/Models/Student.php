@@ -26,9 +26,11 @@ use App\Models\SchoolEvent\SchoolEventInvitee;
 use App\Models\SchoolEvent\SchoolEventLike;
 
 
+use App\Models\Election\Concerns\ParticipatesInElections;
+
 class Student extends Model
 {
-    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency, HasUuids;
+    use HasFactory,  HasApiTokens, Notifiable, HasRoles, HasPermissions, Currency, HasUuids, ParticipatesInElections;
     protected $fillable = [
         'name',
         'first_name',
@@ -124,14 +126,6 @@ class Student extends Model
     {
         return $this->morphMany(UserDevices::class, 'devicesable');
     }
-    public function pastElectionWinners(): HasMany
-    {
-        return $this->hasMany(PastElectionWinners::class);
-    }
-    public function currentElectionWinners(): BelongsTo
-    {
-        return $this->belongsTo(CurrentElectionWinners::class);
-    }
 
     public function studentResults(): HasMany
     {
@@ -179,18 +173,6 @@ class Student extends Model
     {
         return $this->morphMany(OTP::class, 'otpable');
     }
-    public function electionVotes(): HasMany
-    {
-        return $this->hasMany(ElectionVotes::class);
-    }
-    public function electionCandidate(): HasMany
-    {
-        return $this->hasMany(ElectionCandidates::class);
-    }
-    public function electionApplication(): HasMany
-    {
-        return $this->hasMany(ElectionApplication::class, 'student_id');
-    }
     public function courses(): HasMany
     {
         return $this->hasMany(Courses::class);
@@ -217,15 +199,7 @@ class Student extends Model
     }
 
 
-    public function vote()
-    {
-        return $this->morphMany(ElectionVotes::class, 'votable');
-    }
 
-    public function voteStatus()
-    {
-        return $this->morphMany(VoterStatus::class, 'votableStatus');
-    }
 
     public function school(): BelongsTo
     {

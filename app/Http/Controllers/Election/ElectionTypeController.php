@@ -3,105 +3,89 @@
 namespace App\Http\Controllers\Election;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Election\Concerns\ResolvesElectionUser;
+use App\Http\Requests\ElectionType\BulkUpdateElectionTypeRequest;
 use App\Http\Requests\ElectionType\CreateElectionTypeRequest;
 use App\Http\Requests\ElectionType\ElectionTypeIdRequest;
 use App\Http\Requests\ElectionType\UpdateElectionTypeRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Http\Request;
 use App\Services\Election\ElectionTypeService;
+use Illuminate\Http\Request;
 
 class ElectionTypeController extends Controller
 {
-    protected ElectionTypeService $electionTypeService;
-    public function __construct(ElectionTypeService $electionTypeService)
-    {
-        $this->electionTypeService = $electionTypeService;
-    }
+    use ResolvesElectionUser;
+
+    public function __construct(protected ElectionTypeService $electionTypeService) {}
 
     public function createElectionType(CreateElectionTypeRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->createElectionType($request->validated(), $currentSchool, $authAdmin);
-        return ApiResponseService::success("Election Type Created Successfully", null, null, 200);
+        $this->adminUser();
+        $type = $this->electionTypeService->createElectionType($request->validated(), $this->currentSchool($request));
+        return ApiResponseService::success("Election Type Created Successfully", $type, null, 201);
     }
 
-    public function updateElectionType(UpdateElectionTypeRequest $request, $electionTypeId)
+    public function updateElectionType(UpdateElectionTypeRequest $request, string $electionTypeId)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->UpdateElectionType($request->validated(), $electionTypeId, $currentSchool, $authAdmin);
-        return ApiResponseService::success("Election Type Updated Successfully", null, null, 200);
+        $this->adminUser();
+        $type = $this->electionTypeService->updateElectionType($request->validated(), $electionTypeId, $this->currentSchool($request));
+        return ApiResponseService::success("Election Type Updated Successfully", $type, null, 200);
     }
 
-    public function deleteElectionType(Request $request, $electionTypeId)
+    public function bulkUpdateElectionType(BulkUpdateElectionTypeRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->deleteElectionType($electionTypeId, $currentSchool, $authAdmin);
-        return ApiResponseService::success("Election Type Deleted Successfully", null, null, 200);
+        $this->adminUser();
+        $types = $this->electionTypeService->bulkUpdateElectionTypes($request->validated()['election_types'], $this->currentSchool($request));
+        return ApiResponseService::success("Election Types Updated Successfully", $types, null, 200);
+    }
+
+    public function deleteElectionType(Request $request, string $electionTypeId)
+    {
+        $this->adminUser();
+        $type = $this->electionTypeService->deleteElectionType($electionTypeId, $this->currentSchool($request));
+        return ApiResponseService::success("Election Type Deleted Successfully", $type, null, 200);
     }
 
     public function getElectionType(Request $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $electionTypes = $this->electionTypeService->getElectionType($currentSchool);
-        return ApiResponseService::success("Election Type Fetched Successfully", $electionTypes, null, 200);
-    }
-
-    public function activateElectionType(Request $request, $electionTypeId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->activateElectionType($electionTypeId, $currentSchool, $authAdmin);
-        return ApiResponseService::success("Election Type Activated Successfully", null, null, 200);
-    }
-
-    public function deactivateElectionType(Request $request, $electionTypeId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->deactivateElectionType($currentSchool, $electionTypeId, $authAdmin);
-        return ApiResponseService::success("Election Type Deactivated Successfully", null, null, 200);
+        return ApiResponseService::success("Election Types Fetched Successfully", $this->electionTypeService->getElectionTypes($this->currentSchool($request)), null, 200);
     }
 
     public function getActiveElectionType(Request $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $electionTypes = $this->electionTypeService->getActiveElectionType($currentSchool);
-        return ApiResponseService::success("Active Election Types Fetched Successfully", $electionTypes, null,  200);
+        return ApiResponseService::success("Active Election Types Fetched Successfully", $this->electionTypeService->getActiveElectionTypes($this->currentSchool($request)), null, 200);
+    }
+
+    public function getElectionTypeDetails(Request $request, string $electionTypeId)
+    {
+        return ApiResponseService::success("Election Type Details Fetched Successfully", $this->electionTypeService->getElectionTypeDetails($electionTypeId, $this->currentSchool($request)), null, 200);
+    }
+
+    public function activateElectionType(Request $request, string $electionTypeId)
+    {
+        $this->adminUser();
+        $types = $this->electionTypeService->setStatus([$electionTypeId], 'active', $this->currentSchool($request));
+        return ApiResponseService::success("Election Type Activated Successfully", $types[0], null, 200);
+    }
+
+    public function deactivateElectionType(Request $request, string $electionTypeId)
+    {
+        $this->adminUser();
+        $types = $this->electionTypeService->setStatus([$electionTypeId], 'inactive', $this->currentSchool($request));
+        return ApiResponseService::success("Election Type Deactivated Successfully", $types[0], null, 200);
     }
 
     public function bulkActivateElectionType(ElectionTypeIdRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->bulkActivateElectionType($currentSchool, $request->electionTypeIds, $authAdmin);
-        return ApiResponseService::success("Election Types Activated Successfully", null, null, 200);
+        $this->adminUser();
+        $types = $this->electionTypeService->setStatus($this->ids($request, 'electionTypeIds', 'election_type_id'), 'active', $this->currentSchool($request));
+        return ApiResponseService::success("Election Types Activated Successfully", $types, null, 200);
     }
 
     public function bulkDeactivateElectionType(ElectionTypeIdRequest $request)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $this->electionTypeService->bulkDeactivateElectionType($currentSchool, $request->electionTypeIds, $authAdmin);
-        return ApiResponseService::success("Election Types Deactivated Successfully", null, null, 200);
-    }
-
-    public function getElectionTypeDetails(Request $request, $electionTypeId)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $details =  $this->electionTypeService->getElectionTypeDetails($electionTypeId, $currentSchool);
-        return ApiResponseService::success("Election Type Details Fetched Successfully", $details, null, 200);
-    }
-    protected function resolveUser()
-    {
-        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
-            $user = request()->user($guard);
-            if ($user !== null) {
-                return $user;
-            }
-        }
-        return null;
+        $this->adminUser();
+        $types = $this->electionTypeService->setStatus($this->ids($request, 'electionTypeIds', 'election_type_id'), 'inactive', $this->currentSchool($request));
+        return ApiResponseService::success("Election Types Deactivated Successfully", $types, null, 200);
     }
 }

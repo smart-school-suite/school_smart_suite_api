@@ -3,59 +3,35 @@
 namespace App\Http\Controllers\Election;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Election\Concerns\ResolvesElectionUser;
+use App\Http\Requests\Election\PublishElectionResultsRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Http\Request;
 use App\Services\Election\ElectionResultService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 class ElectionResultController extends Controller
 {
-    protected ElectionResultService $electionResultService;
-    public function __construct(ElectionResultService $electionResultService)
+    use ResolvesElectionUser;
+
+    public function __construct(protected ElectionResultService $resultService) {}
+
+    /** Live results for admins, published results for everyone. */
+    public function getElectionResults(Request $request, string $electionId)
     {
-        $this->electionResultService = $electionResultService;
-    }
-    public function getElectionResults(Request $request, $electionId)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $electionResults = $this->electionResultService->fetchElectionResults($electionId, $currentSchool);
-        return ApiResponseService::success("Election Results Fetched Successfully", $electionResults, null, 200);
-    }
-    public function getLiveElectionResults(Request $request, $electionId)
-    {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $electionResults = $this->electionResultService->getLiveElectionResults($electionId, $currentSchool, $this->getAuthenticatedUser());
-        return ApiResponseService::success("Live Election Results Fetched Successfully", $electionResults, null, 200);
+        $results = $this->resultService->getResults($electionId, $this->currentSchool($request), $this->authUser());
+        return ApiResponseService::success("Election Results Fetched Successfully", $results, null, 200);
     }
 
-    public function getPastElectionResult(Request $request, $electionId){
-         $currentSchool = $request->attributes->get("currentSchool");
-         $pastElectionResult = $this->electionResultService->getPastElectionResults($electionId, $currentSchool);
-         return ApiResponseService::success("Past Election Results Fetched Successfully", $pastElectionResult, null, 200);
-    }
-
-    public function getCurrentElectionResult(Request $request, $electionId){
-         $currentSchool = $request->attributes->get("currentSchool");
-         $currentElectionResult = $this->electionResultService->getCurrentElectionWinners($electionId, $currentSchool);
-         return ApiResponseService::success("Current Election Results Fetched Successfully", $currentElectionResult, null, 200);
-    }
-    private function getAuthenticatedUser()
+    public function publishResults(PublishElectionResultsRequest $request, string $electionId)
     {
-        $user = Auth::user();
+        $this->adminUser();
+        $results = $this->resultService->publishResults($electionId, $this->currentSchool($request), $request->tieResolutions());
+        return ApiResponseService::success("Election Results Published Successfully", $results, null, 200);
+    }
 
-        if ($user instanceof Model) {
-            return [
-                'userId' => $user->id,
-                'userType' => get_class($user),
-                'authUser' => $user
-            ];
-        }
-
-        return [
-            'userId' => null,
-            'userType' => null,
-            'authUser' => $user
-        ];
+    public function getElectionHistory(Request $request)
+    {
+        $history = $this->resultService->getElectionHistory($this->currentSchool($request), $request->query('election_type_id'));
+        return ApiResponseService::success("Election History Fetched Successfully", $history, null, 200);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Jobs\NotificationJobs;
 
-use App\Models\Elections;
+use App\Models\Election\Election;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -50,7 +50,7 @@ class SendAdminElectionConcludedNotificationJob implements ShouldQueue
     {
         $electionId = $this->electionId;
         $schoolBranchId = $this->schoolBranchId;
-        $election = Elections::with('electionType')->find($electionId);
+        $election = Election::with('electionType')->find($electionId);
         $schoolAdmins = $this->getElectionManagers($schoolBranchId);
         Notification::send($schoolAdmins, new AdminElectionConcluded($election->electionType->election_title));
     }

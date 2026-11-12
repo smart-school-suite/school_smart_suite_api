@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // How long a position (election_roles) may be held and re-election rules.
         Schema::create('election_office_terms', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->unsignedTinyInteger('duration_academic_years')->default(1);
@@ -16,9 +17,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Actual occupants of a position (elected, appointed or replacement).
         Schema::create('election_office_holders', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->nullableMorphs('holderable');
+            // Student / Teacher / Schooladmin (string ids, so morph columns are strings).
+            $table->string('holderable_type');
+            $table->string('holderable_id');
+            $table->index(['holderable_type', 'holderable_id'], 'election_office_holders_holderable_index');
             $table->date('started_at');
             $table->date('expected_end_at');
             $table->date('ended_at')->nullable();
@@ -33,12 +38,15 @@ return new class extends Migration
                 'completed',
                 'terminated',
             ])->default('scheduled');
+            $table->unsignedInteger('vote_count')->nullable();
             $table->text('remarks')->nullable();
             $table->timestamps();
         });
 
+        // The school academic years (specialty specific) that make up a tenure.
         Schema::create('election_office_years', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unsignedTinyInteger('term_year_number')->default(1);
             $table->timestamps();
         });
     }

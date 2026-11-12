@@ -6,24 +6,22 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CreateApplicationRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'manifesto' => 'required|string',
-            'personal_vision' => 'required|string',
-            'commitment_statement' => 'required|string',
             'election_id' => 'required|string|exists:elections,id',
             'election_role_id' => 'required|string|exists:election_roles,id',
-            'student_id' => 'required|string|exists:students,id',
+            'manifesto' => 'required|string|max:10000',
+            'personal_vision' => 'required|string|max:5000',
+            'commitment_statement' => 'required|string|max:5000',
+            // Optional: a school admin submitting on behalf of a participant.
+            'applicant_type' => 'nullable|required_with:applicant_id|in:student,teacher,school_admin',
+            'applicant_id' => 'nullable|required_with:applicant_type|string',
         ];
     }
 }

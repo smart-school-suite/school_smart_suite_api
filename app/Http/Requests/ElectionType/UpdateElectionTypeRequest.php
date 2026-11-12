@@ -6,22 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateElectionTypeRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'election_title' => 'sometimes|nullable|string',
-            'description' => 'sometimes|nullable|string'
+            'election_title' => 'sometimes|nullable|string|max:150',
+            'description' => 'sometimes|nullable|string|max:2000',
         ];
     }
 }

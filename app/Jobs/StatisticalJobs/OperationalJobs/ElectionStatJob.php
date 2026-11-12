@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
-use App\Models\Elections;
+use App\Models\Election\Election;
 use App\Models\StatTypes;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,7 +59,7 @@ class ElectionStatJob implements ShouldQueue
         $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
 
         try {
-            $electionDetails = Elections::findOrFail($this->electionId);
+            $electionDetails = Election::findOrFail($this->electionId);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::error("Election with ID '{$this->electionId}' not found. Skipping ElectionStatJob.");
             return;

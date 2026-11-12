@@ -6,32 +6,26 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class BulkUpdateElectionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
-        return true; // Update this as needed
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'elections' => 'required|array',
+            'elections' => 'required|array|min:1',
             'elections.*.election_id' => 'required|string|exists:elections,id',
+            'elections.*.title' => 'sometimes|nullable|string|max:150',
+            'elections.*.description' => 'sometimes|nullable|string|max:2000',
             'elections.*.election_type_id' => 'sometimes|nullable|string|exists:election_types,id',
-            'elections.*.application_start' => 'nullable|date_format:Y-m-d H:i|after_or_equal:now',
-            'elections.*.application_end' => 'nullable|date_format:Y-m-d H:i|after:elections.*.application_start',
-            'elections.*.voting_start' => 'nullable|date_format:Y-m-d H:i|after_or_equal:elections.*.application_end',
-            'elections.*.voting_end' => 'nullable|date_format:Y-m-d H:i|after:elections.*.voting_start',
-            'elections.*.school_year' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
+            'elections.*.system_academic_year_id' => 'sometimes|nullable|string|exists:system_academic_years,id',
+            'elections.*.application_start' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'elections.*.application_end' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'elections.*.voting_start' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'elections.*.voting_end' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'elections.*.max_applications_per_participant' => 'sometimes|nullable|integer|min:1|max:10',
+            'elections.*.allow_candidate_self_vote' => 'sometimes|nullable|boolean',
         ];
     }
 }

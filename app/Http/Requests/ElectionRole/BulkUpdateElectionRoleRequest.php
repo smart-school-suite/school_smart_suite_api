@@ -6,25 +6,20 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class BulkUpdateElectionRoleRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'election_roles' => 'required|array',
+            'election_roles' => 'required|array|min:1',
             'election_roles.*.election_role_id' => 'required|string|exists:election_roles,id',
-            'election_roles.*.name' => 'sometimes|nullable|string',
-            'election_roles.*.election_type_id' => 'sometimes|nullable|exists:election_types,id',
-            'election_roles.*.description' => 'sometimes|nullable|string'
+            'election_roles.*.name' => 'sometimes|nullable|string|max:150',
+            'election_roles.*.election_type_id' => 'sometimes|nullable|string|exists:election_types,id',
+            'election_roles.*.description' => 'sometimes|nullable|string|max:2000',
+            'election_roles.*.seats' => 'sometimes|nullable|integer|min:1|max:50',
         ];
     }
 }

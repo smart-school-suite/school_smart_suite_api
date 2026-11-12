@@ -6,17 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ElectionTypeIdRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'electionTypeIds' => 'required|array',
-            'electionTypeIds.*.election_type_id' => 'required|string|exists:election_types,id'
+            'electionTypeIds' => 'required|array|min:1',
+            'electionTypeIds.*.election_type_id' => 'required|string|exists:election_types,id',
         ];
     }
 }

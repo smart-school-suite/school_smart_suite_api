@@ -3,45 +3,27 @@
 namespace App\Http\Controllers\Election;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Election\CreateVoteRequest;
-use App\Services\Election\ElectionVoteService;
+use App\Http\Controllers\Election\Concerns\ResolvesElectionUser;
+use App\Http\Requests\Election\CastVoteRequest;
 use App\Services\ApiResponseService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Model;
+use App\Services\Election\ElectionVoteService;
+use Illuminate\Http\Request;
 
 class ElectionVoteController extends Controller
 {
-    protected ElectionVoteService $electionVoteService;
+    use ResolvesElectionUser;
 
-    public function __construct(ElectionVoteService $electionVoteService)
+    public function __construct(protected ElectionVoteService $voteService) {}
+
+    public function castVote(CastVoteRequest $request)
     {
-        $this->electionVoteService = $electionVoteService;
+        $result = $this->voteService->castVote($request->validated()['election_id'], $request->ballot(), $this->currentSchool($request), $this->authUser());
+        return ApiResponseService::success("Vote Cast Successfully", $result, null, 201);
     }
 
-    public function castVote(CreateVoteRequest $request)
+    public function getMyBallotStatus(Request $request, string $electionId)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authUser = $this->getAuthenticatedUser();
-        $castVote = $this->electionVoteService->castVote($request->validated(), $currentSchool, $authUser);
-        return ApiResponseService::success('Voted Casted Succfully', $castVote, null, 200);
-    }
-
-    private function getAuthenticatedUser()
-    {
-        $user = Auth::user();
-
-        if ($user instanceof Model) {
-            return [
-                'userId' => $user->id,
-                'userType' => get_class($user),
-                'authUser' => $user
-            ];
-        }
-
-        return [
-            'userId' => null,
-            'userType' => null,
-            'authUser' => $user
-        ];
+        $status = $this->voteService->getVoterBallotStatus($electionId, $this->currentSchool($request), $this->authUser());
+        return ApiResponseService::success("Ballot Status Fetched Successfully", $status, null, 200);
     }
 }

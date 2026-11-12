@@ -6,26 +6,24 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateElectionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
+            'title' => 'sometimes|nullable|string|max:150',
+            'description' => 'sometimes|nullable|string|max:2000',
             'election_type_id' => 'sometimes|nullable|string|exists:election_types,id',
-            'application_start' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:now',
-            'application_end' => 'sometimes|nullable|date_format:Y-m-d H:i|after:application_start',
-            'voting_start' => 'sometimes|nullable|date_format:Y-m-d H:i|after_or_equal:application_end',
-            'voting_end' => 'sometimes|nullable|date_format:Y-m-d H:i|after:voting_start',
-            'school_year' => 'sometimes|nullable|string|regex:/^\d{4}-\d{4}$/',
+            'system_academic_year_id' => 'sometimes|nullable|string|exists:system_academic_years,id',
+            'application_start' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'application_end' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'voting_start' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'voting_end' => 'sometimes|nullable|date_format:Y-m-d H:i',
+            'max_applications_per_participant' => 'sometimes|nullable|integer|min:1|max:10',
+            'allow_candidate_self_vote' => 'sometimes|nullable|boolean',
         ];
     }
 }

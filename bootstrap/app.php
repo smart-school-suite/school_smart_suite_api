@@ -173,6 +173,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election-application')
                 ->group(base_path("routes/Election/ElectionApplication.php"));
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/election-office')
+                ->group(base_path('routes/Election/ElectionOffice.php'));
 
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/fee-schedule')
                 ->group(base_path('routes/Fee/FeePaymentSchedule.php'));

@@ -3,108 +3,109 @@
 namespace App\Http\Controllers\Election;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Services\Election\ElectionApplicationService;
-use App\Http\Requests\ElectionApplication\ElectionApplicationIdRequest;
-use App\Http\Resources\ElectionApplicationResource;
+use App\Http\Controllers\Election\Concerns\ResolvesElectionUser;
 use App\Http\Requests\ElectionApplication\CreateApplicationRequest;
+use App\Http\Requests\ElectionApplication\ElectionApplicationIdRequest;
+use App\Http\Requests\ElectionApplication\ReviewElectionApplicationRequest;
 use App\Http\Requests\ElectionApplication\UpdateElectionApplicationRequest;
+use App\Models\Election\ElectionApplication;
 use App\Services\ApiResponseService;
+use App\Services\Election\ElectionApplicationService;
+use Illuminate\Http\Request;
 
 class ElectionApplicationController extends Controller
 {
-    protected ElectionApplicationService $electionApplicationService;
-    public function __construct(ElectionApplicationService $electionApplicationService)
-    {
-        $this->electionApplicationService = $electionApplicationService;
-    }
+    use ResolvesElectionUser;
+
+    public function __construct(protected ElectionApplicationService $applicationService) {}
 
     public function createElectionApplication(CreateApplicationRequest $request)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $electionApplication = $this->electionApplicationService->createApplication($request->validated(), $currentSchool);
-        return ApiResponseService::success("Election Application Created Succesfully", $electionApplication, null, 201);
+        $application = $this->applicationService->createApplication($request->validated(), $this->currentSchool($request), $this->authUser());
+        return ApiResponseService::success("Election Application Submitted Successfully", $this->applicationService->present($application), null, 201);
     }
 
-    public function approveApplication(Request $request)
+    public function updateApplication(UpdateElectionApplicationRequest $request, string $applicationId)
     {
-        $applicationId = $request->route('applicationId');
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $approveApplication = $this->electionApplicationService->approveApplication($applicationId, $currentSchool, $authAdmin);
-        return ApiResponseService::success('Application Approved Successfully', $approveApplication, null, 200);
+        $application = $this->applicationService->updateApplication($request->validated(), $applicationId, $this->currentSchool($request), $this->authUser());
+        return ApiResponseService::success("Election Application Updated Successfully", $this->applicationService->present($application), null, 200);
     }
 
-    public function deleteApplication(Request $request)
+    public function withdrawApplication(Request $request, string $applicationId)
     {
-        $applicationId = $request->route('applicationId');
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $application = $this->electionApplicationService->deleteApplication($applicationId, $currentSchool, $authAdmin);
-        return ApiResponseService::success('Application Deleted Succefully', $application, null, 200);
+        $application = $this->applicationService->withdrawApplication($applicationId, $this->currentSchool($request), $this->authUser());
+        return ApiResponseService::success("Election Application Withdrawn Successfully", $this->applicationService->present($application), null, 200);
+    }
+
+    public function deleteApplication(Request $request, string $applicationId)
+    {
+        $this->adminUser();
+        $application = $this->applicationService->deleteApplication($applicationId, $this->currentSchool($request));
+        return ApiResponseService::success("Election Application Deleted Successfully", $application, null, 200);
+    }
+
+    public function bulkDeleteApplication(ElectionApplicationIdRequest $request)
+    {
+        $this->adminUser();
+        $applications = $this->applicationService->bulkDeleteApplications($this->ids($request, 'electionApplicationIds', 'election_application_id'), $this->currentSchool($request));
+        return ApiResponseService::success("Election Applications Deleted Successfully", $applications, null, 200);
+    }
+
+    public function approveApplication(ReviewElectionApplicationRequest $request, string $applicationId)
+    {
+        $application = $this->applicationService->approveApplication($applicationId, $this->currentSchool($request), $this->adminUser(), $request->validated()['remarks'] ?? null);
+        return ApiResponseService::success("Election Application Approved Successfully", $this->applicationService->present($application), null, 200);
+    }
+
+    public function rejectApplication(ReviewElectionApplicationRequest $request, string $applicationId)
+    {
+        $application = $this->applicationService->rejectApplication($applicationId, $this->currentSchool($request), $this->adminUser(), $request->validated()['remarks'] ?? null);
+        return ApiResponseService::success("Election Application Rejected Successfully", $this->applicationService->present($application), null, 200);
+    }
+
+    public function bulkApproveApplication(ElectionApplicationIdRequest $request)
+    {
+        return $this->bulkReview($request, ElectionApplication::STATUS_APPROVED, "Election Applications Approved Successfully");
+    }
+
+    public function bulkRejectApplication(ElectionApplicationIdRequest $request)
+    {
+        return $this->bulkReview($request, ElectionApplication::STATUS_REJECTED, "Election Applications Rejected Successfully");
+    }
+
+    public function getAllElectionApplication(Request $request)
+    {
+        $applications = $this->applicationService->getApplications($this->currentSchool($request), $request->only(['election_id', 'election_role_id', 'status', 'applicant_type']));
+        return ApiResponseService::success("Election Applications Fetched Successfully", $applications, null, 200);
     }
 
     public function getApplications(Request $request, string $electionId)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $electionApplications = $this->electionApplicationService->getApplicationsByElection($currentSchool, $electionId);
-        return ApiResponseService::success('Election Applications Fetched Succefully', ElectionApplicationResource::collection($electionApplications), null, 200);
+        $filters = array_merge($request->only(['election_role_id', 'status', 'applicant_type']), ['election_id' => $electionId]);
+        return ApiResponseService::success("Election Applications Fetched Successfully", $this->applicationService->getApplications($this->currentSchool($request), $filters), null, 200);
     }
-    public function updateApplication(UpdateElectionApplicationRequest $request)
-    {
-        $applicationId = $request->route('applicationId');
-        $updateElectionApplication = $this->electionApplicationService->updateApplication($request->validated(), $applicationId);
-        return ApiResponseService::success('Election Application Updated Successfully', $updateElectionApplication, null, 200);
-    }
-    public function getAllElectionApplication(Request $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $electionApplication = $this->electionApplicationService->getAllApplications($currentSchool);
-        return ApiResponseService::success('Election Application Fetched Succesfully', ElectionApplicationResource::collection($electionApplication), null, 200);
-    }
-    public function bulkDeleteApplication(ElectionApplicationIdRequest $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $bulkDeleteApplication = $this->electionApplicationService->bulkDeleteApplication($request->electionApplicationIds, $currentSchool, $authAdmin);
-        return ApiResponseService::success("Application Deleted Successfully", $bulkDeleteApplication, null, 200);
-    }
-    public function bulkApproveApplication(ElectionApplicationIdRequest $request)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $authAdmin = $this->resolveUser();
-        $bulkApproveApplication = $this->electionApplicationService->bulkApproveApplication($request->electionApplicationIds, $currentSchool, $authAdmin);
-        return ApiResponseService::success("Applications Approved Successfully", $bulkApproveApplication, null, 200);
-    }
-    public function getApplicationsByStudentId(Request $request, string $studentId)
-    {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $getMyApplications = $this->electionApplicationService->getApplicationsByStudent($currentSchool, $studentId);
-        return ApiResponseService::success("Applications Fetched Successfully", $getMyApplications, null, 200);
-    }
+
     public function getApplicationDetails(Request $request, string $applicationId)
     {
-        $currentSchool = $request->attributes->get('currentSchool');
-        $applicationDetails = $this->electionApplicationService->getApplicationDetails($applicationId, $currentSchool);
-        return ApiResponseService::success("Application Details Fetched Successfully", $applicationDetails, null, 200);
+        return ApiResponseService::success("Election Application Details Fetched Successfully", $this->applicationService->getApplicationDetails($applicationId, $this->currentSchool($request)), null, 200);
     }
 
-    public function getStudentElectionApplication(Request $request, string $electionId)
+    /** Applications of the signed-in participant (optionally for one election). */
+    public function getMyApplications(Request $request, ?string $electionId = null)
     {
-        $currentSchool = $request->attributes->get("currentSchool");
-        $student = $this->resolveUser();
-        $electionApplications = $this->electionApplicationService->getStudentElectionApplications($currentSchool, $student, $electionId);
-        return ApiResponseService::success("Election Applications Fetched Successfully", $electionApplications, null, 200);
+        $applications = $this->applicationService->getParticipantApplications($this->currentSchool($request), $this->authUser(), $electionId);
+        return ApiResponseService::success("Election Applications Fetched Successfully", $applications, null, 200);
     }
 
-    protected function resolveUser()
+    private function bulkReview(ElectionApplicationIdRequest $request, string $decision, string $message)
     {
-        foreach (['student', 'teacher', 'schooladmin'] as $guard) {
-            $user = request()->user($guard);
-            if ($user !== null) {
-                return $user;
-            }
-        }
-        return null;
+        $applications = $this->applicationService->bulkReview(
+            $this->ids($request, 'electionApplicationIds', 'election_application_id'),
+            $decision,
+            $this->currentSchool($request),
+            $this->adminUser(),
+            $request->validated()['remarks'] ?? null
+        );
+        return ApiResponseService::success($message, $applications, null, 200);
     }
 }

@@ -25,9 +25,11 @@ use App\Models\SchoolEvent\SchoolEventAuthor;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+use App\Models\Election\Concerns\ParticipatesInElections;
+
 class Schooladmin extends Authenticatable
 {
-    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency, HasUuids;
+    use HasFactory, HasApiTokens, HasRoles, HasPermissions, Notifiable, Currency, HasUuids, ParticipatesInElections;
 
     protected $fillable = [
         'name',
@@ -91,15 +93,7 @@ class Schooladmin extends Authenticatable
     {
         return $this->morphMany(PromotionRun::class, 'authorable');
     }
-    public function vote()
-    {
-        return $this->morphMany(ElectionVotes::class, 'votable');
-    }
 
-    public function voteStatus()
-    {
-        return $this->morphMany(VoterStatus::class, 'votableStatus');
-    }
 
     public function schoolAdminAnnouncement(): HasMany
     {

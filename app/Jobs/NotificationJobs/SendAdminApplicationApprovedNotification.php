@@ -2,7 +2,7 @@
 
 namespace App\Jobs\NotificationJobs;
 
-use App\Models\ElectionApplication;
+use App\Models\Election\ElectionApplication;
 use App\Notifications\AdminApplicationApproved;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -43,18 +43,18 @@ class SendAdminApplicationApprovedNotification implements ShouldQueue
             }
 
             $applicationModel = ElectionApplication::where("school_branch_id", $this->schoolBranchId)
-                ->with(['election.electionType', 'electionRole', 'student'])
+                ->with(['election.electionType', 'position', 'applicantable'])
                 ->find($applicationId);
 
-            if (!$applicationModel || !$applicationModel->student) {
+            if (!$applicationModel || !$applicationModel->applicantable) {
                 continue;
             }
 
             Notification::send(
                 $schoolAdminsToNotify,
                 new AdminApplicationApproved(
-                    $applicationModel->student->name,
-                    $applicationModel->electionRole->name,
+                    $applicationModel->applicantable->name ?? trim(($applicationModel->applicantable->first_name ?? '') . ' ' . ($applicationModel->applicantable->last_name ?? '')),
+                    $applicationModel->position->name,
                     $applicationModel->election->electionType->election_title
                 )
             );

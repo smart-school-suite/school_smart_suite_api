@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
-use App\Models\ElectionVotes; // Ensure this model is correctly configured
+use App\Models\Election\ElectionVote;
 use App\Models\StatTypes;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,8 +59,8 @@ class ElectionVoteStatJob implements ShouldQueue
 
         $kpis = StatTypes::whereIn('program_name', $kpiNames)->get()->keyBy('program_name');
 
-        $voteDetails = ElectionVotes::where("school_branch_id", $this->schoolBranchId)
-            ->with(['election', 'student.department', 'student.specialty'])
+        $voteDetails = ElectionVote::where("school_branch_id", $this->schoolBranchId)
+            ->with(['election', 'votable'])
             ->find($this->voteId);
 
         if (!$voteDetails) {
@@ -91,14 +91,14 @@ class ElectionVoteStatJob implements ShouldQueue
 
         $votesByDepartmentKpi = $kpis->get('total_election_votes_by_department');
         if ($votesByDepartmentKpi) {
-            if ($voteDetails->student && $voteDetails->student->department_id) {
+            if ($voteDetails->votable && $voteDetails->votable->department_id) {
                 $this->upsertElectionVoteStat(
                     $year,
                     $month,
                     $this->schoolBranchId,
                     $votesByDepartmentKpi,
                     $voteDetails->election_id,
-                    $voteDetails->student->department_id,
+                    $voteDetails->votable->department_id,
                     null
                 );
             } else {
@@ -111,7 +111,7 @@ class ElectionVoteStatJob implements ShouldQueue
 
         $votesBySpecialtyKpi = $kpis->get('total_election_votes_by_specialty');
         if ($votesBySpecialtyKpi) {
-            if ($voteDetails->student && $voteDetails->student->specialty_id) {
+            if ($voteDetails->votable && $voteDetails->votable->specialty_id) {
                 $this->upsertElectionVoteStat(
                     $year,
                     $month,
@@ -119,7 +119,7 @@ class ElectionVoteStatJob implements ShouldQueue
                     $votesBySpecialtyKpi,
                     $voteDetails->election_id,
                     null,
-                    $voteDetails->student->specialty_id
+                    $voteDetails->votable->specialty_id
                 );
             } else {
                 Log::info("Student or Specialty ID not found for vote '{$this->voteId}'. Skipping specialty-based vote count.");

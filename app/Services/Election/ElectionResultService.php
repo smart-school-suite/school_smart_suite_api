@@ -2,310 +2,249 @@
 
 namespace App\Services\Election;
 
-use App\Exceptions\AppException;
-use App\Models\Elections;
-use App\Models\ElectionResults;
-use App\Models\PastElectionWinners;
-use App\Models\CurrentElectionWinners;
-use App\Http\Resources\ElectionResultResource;
-use App\Models\VoterStatus;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\Election\Election;
+use App\Models\Election\ElectionCandidate;
+use App\Models\Election\ElectionOfficeHolder;
+use App\Models\Election\ElectionRole;
+use App\Models\Election\ElectionVote;
+use App\Models\Schooladmin;
+use App\Services\Election\Support\ElectionParticipantType;
+use App\Services\Election\Support\FindsElectionRecords;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * Results are always derived from election_votes; there is no results table.
+ */
 class ElectionResultService
 {
-    public function fetchElectionResults($electionId, $currentSchool)
+    use FindsElectionRecords;
+
+    public function __construct(
+        private ElectionService $electionService,
+        private ElectionOfficeHolderService $officeHolderService,
+    ) {}
+
+    /**
+     * Results for an election. Administrators may follow live results once
+     * voting started; other participants only see published results.
+     */
+    public function getResults(string $electionId, object $currentSchool, ?Model $viewer = null): array
     {
+        $election = $this->findInBranch(Election::class, $electionId, $currentSchool, ['electionType', 'systemAcademicYear']);
+        $this->electionService->sync($election);
 
-        $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
+        $isAdmin = $viewer instanceof Schooladmin;
+        $votingStarted = in_array($election->status, [Election::STATUS_VOTING_OPEN, Election::STATUS_VOTING_CLOSED, Election::STATUS_COMPLETED], true);
 
-        if (is_null($election)) {
-            throw new AppException(
-                "Election not found",
-                404,
-                "Election Missing",
-                "The election with ID $electionId could not be found in this school branch.",
-                "/elections"
-            );
+        if (!$election->is_results_published && !($isAdmin && $votingStarted)) {
+            $this->fail("Results not available", "The results of this election have not been published yet.", 403);
         }
 
-        if ($election->status == "finished") {
-            throw new AppException(
-                "Election results not yet published",
-                403,
-                "Results Unavailable",
-                "The results for election ID $electionId are not yet finalized or published.",
-                "/elections/" . $electionId
-            );
-        }
+        $results = $this->tally($election);
 
-        $electionResults = ElectionResults::where('school_branch_id', $currentSchool->id)
-            ->where('election_id', $electionId)
-            ->with([
-                'electionCandidate.student:id,name,profile_picture,specialty_id,level_id',
-                'electionCandidate.student.specialty:id,specialty_name',
-                'electionCandidate.student.level:id,level,name',
-                'electionCandidate.electionRole:id,name',
-            ])
-            ->orderBy('position_id')
-            ->orderByDesc('vote_count')
-            ->get();
-
-        if ($electionResults->isEmpty()) {
-            throw new AppException(
-                "No final results found for this election",
-                404,
-                "Results Missing",
-                "The election has finished, but no results records were generated or found.",
-                "/elections/" . $electionId
-            );
-        }
-
-        $formattedResults = [];
-
-        foreach ($electionResults as $result) {
-            $roleName = $result->electionCandidate->electionRole->name ?? 'Unknown Role';
-            $roleId = $result->position_id;
-
-            if (!isset($formattedResults[$roleId])) {
-                $formattedResults[$roleId] = [
-                    'role_name' => $roleName,
-                    'role_id' => $roleId,
-                    'candidates' => []
-                ];
-            }
-
-            $candidate = $result->electionCandidate;
-            $student = $candidate->student;
-
-            $isWinner = false;
-
-            $formattedResults[$roleId]['candidates'][] = [
-                'candidate_id' => $candidate->id,
-                "position_id" => $roleId,
-                'student_name' => $student->name ?? null,
-                'student_profile_picture' => $student->profile_picture ?? null,
-                'specialty_name' => $student->specialty->specialty_name ?? null,
-                'level_name' => $student->level->name ?? null,
-                'level' => $student->level->level ?? null,
-                'vote_count' => $result->vote_count,
-                'is_winner' => $isWinner,
-            ];
-        }
-
-        foreach ($formattedResults as $roleId => &$roleGroup) {
-            if (!empty($roleGroup['candidates'])) {
-                $maxVotes = $roleGroup['candidates'][0]['vote_count'];
-                foreach ($roleGroup['candidates'] as &$candidate) {
-                    if ($candidate['vote_count'] === $maxVotes) {
-                        $candidate['is_winner'] = true;
-                    }
+        if ($viewer && !$isAdmin) {
+            $choices = ElectionVote::where('election_id', $election->id)
+                ->where('votable_type', $viewer->getMorphClass())
+                ->where('votable_id', $viewer->getKey())
+                ->get(['position_id', 'candidate_id']);
+            foreach ($results as &$position) {
+                $mine = $choices->where('position_id', $position['position_id'])->pluck('candidate_id');
+                $position['has_voted'] = $mine->isNotEmpty();
+                foreach ($position['candidates'] as &$candidate) {
+                    $candidate['voted_by_me'] = $mine->contains($candidate['candidate_id']);
                 }
             }
-        }
-        unset($roleGroup);
-
-        $finalResults = array_values($formattedResults);
-
-
-        return [
-            'election' => $election->load(['electionType']),
-            'election_result' => $finalResults
-        ];
-    }
-
-    public function getLiveElectionResults($electionId, $currentSchool, $authUser)
-    {
-        $election = Elections::where("school_branch_id", $currentSchool->id)->find($electionId);
-
-        if (is_null($election)) {
-            throw new AppException(
-                "Election not found",
-                404,
-                "Election Missing",
-                "The election with ID $electionId could not be found in this school branch.",
-                "/elections"
-            );
-        }
-
-        if ($election->status == "ongoing") {
-            throw new AppException(
-                "Election has not yet started",
-                403,
-                "Live Results Unavailable",
-                "The election with ID $electionId has not yet begun.",
-                "/elections/" . $electionId
-            );
-        }
-
-
-        $liveResults = ElectionResults::where('school_branch_id', $currentSchool->id)
-            ->where('election_id', $electionId)
-            ->with([
-                'electionCandidate.student:id,name,profile_picture,specialty_id,level_id',
-                'electionCandidate.student.specialty:id,specialty_name',
-                'electionCandidate.student.level:id,level,name',
-                'electionCandidate.electionRole:id,name',
-            ])
-            ->orderBy('position_id')
-            ->orderByDesc('vote_count')
-            ->get();
-
-        if ($liveResults->isEmpty() && $election->status === 'finished') {
-            throw new AppException(
-                "No results found for this election",
-                404,
-                "Results Missing",
-                "The election has finished, but no results records were generated or found.",
-                "/elections/" . $electionId
-            );
-        }
-
-        $userVotes = VoterStatus::where("school_branch_id", $currentSchool->id)
-            ->where("election_id", $electionId)
-            ->where("votable_id", $authUser['userId'])
-            ->pluck('candidate_id', 'position_id')
-            ->toArray();
-
-        $formattedResults = [];
-
-        foreach ($liveResults as $result) {
-            $roleName = $result->electionCandidate->electionRole->name ?? 'Unknown Role';
-            $roleId = $result->position_id;
-            $candidateId = $result->electionCandidate->id;
-
-            if (!isset($formattedResults[$roleId])) {
-                $formattedResults[$roleId] = [
-                    'role_name' => $roleName,
-                    'role_id' => $roleId,
-                    'has_user_voted' => isset($userVotes[$roleId]),
-                    'candidates' => []
-                ];
-            }
-
-            $candidate = $result->electionCandidate;
-            $student = $candidate->student;
-
-            $hasUserVotedForCandidate = (
-                isset($userVotes[$roleId]) &&
-                $userVotes[$roleId] == $candidateId
-            );
-
-            $formattedResults[$roleId]['candidates'][] = [
-                'candidate_id' => $candidateId,
-                "position_id" => $roleId,
-                'student_name' => $student->name ?? null,
-                'student_profile_picture' => $student->profile_picture ?? null,
-                'specialty_name' => $student->specialty->specialty_name ?? null,
-                'level_name' => $student->level->name ?? null,
-                'level' => $student->level->level ?? null,
-                'vote_count' => $result->vote_count,
-                'user_voted_for_candidate' => $hasUserVotedForCandidate,
-            ];
-        }
-        $finalResults = array_values($formattedResults);
-        return [
-            'election' => $election->load(['electionType']),
-            'election_result' => $finalResults
-        ];
-    }
-
-    public function getPastElectionResults($electionId, $currentSchool)
-    {
-        try {
-            $election = Elections::where("school_branch_id", $currentSchool->id)
-                ->with(['electionType'])
-                ->findOrFail($electionId);
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Election not found",
-                404,
-                "Election Missing",
-                "The election with ID $electionId could not be found in this school branch to retrieve its past results.",
-                "/elections"
-            );
-        }
-
-        if ($election->status !== "finished") {
-            throw new AppException(
-                "Election results not available",
-                403,
-                "Election Not Finished",
-                "The election with ID $electionId is not yet marked as 'finished', so results are not available.",
-                "/elections/" . $electionId
-            );
-        }
-
-        $electionWinners = PastElectionWinners::where("school_branch_id", $currentSchool->id)
-            ->where("election_id", $electionId)
-            ->with(['student.specialty.level', 'electionRole', 'electionType', 'election'])
-            ->get();
-
-        if ($electionWinners->isEmpty()) {
-            $electionWinners = CurrentElectionWinners::where("school_branch_id", $currentSchool->id)
-                ->where("election_id", $electionId)
-                ->with(['student.specialty.level', 'electionRole', 'electionType', 'election'])
-                ->get();
-        }
-
-        if ($electionWinners->isEmpty()) {
-            throw new AppException(
-                "No election results found",
-                404,
-                "Results Missing",
-                "The election with ID $electionId is finished, but no winner records were found in either the past or current tables.",
-                "/elections/" . $electionId . "/results"
-            );
+            unset($position, $candidate);
         }
 
         return [
             'election' => $election,
-            'election_results' => ElectionResultResource::collection($electionWinners)
+            'is_final' => (bool) $election->is_results_published,
+            'turnout' => $this->electionService->turnout($election),
+            'results' => $results,
         ];
     }
-    public function getCurrentElectionWinners($electionId, $currentSchool)
+
+    /**
+     * Vote counts per candidate grouped by position, with winners resolved by seats.
+     */
+    public function tally(Election $election): array
     {
-        try {
-            $election = Elections::where("school_branch_id", $currentSchool->id)
-                ->with(['electionType'])
-                ->findOrFail($electionId);
-        } catch (ModelNotFoundException $e) {
-            throw new AppException(
-                "Election not found",
-                404,
-                "Election Missing",
-                "The election with ID $electionId could not be found in this school branch to retrieve current winners.",
-                "/elections"
-            );
-        }
+        $counts = ElectionVote::where('election_id', $election->id)
+            ->select('candidate_id', DB::raw('COUNT(*) as votes'))
+            ->groupBy('candidate_id')
+            ->pluck('votes', 'candidate_id');
 
-        if ($election->status !== "finished") {
-            throw new AppException(
-                "Election results not finalized",
-                403,
-                "Election Not Finished",
-                "The {$election->school_year}, {$election->electionType->election_title} election is not yet marked as 'finished', so current winners are not finalized or available.",
-                "/elections/" . $electionId
-            );
-        }
+        $holders = $election->is_results_published
+            ? ElectionOfficeHolder::where('election_id', $election->id)->pluck('election_candidate_id')->flip()
+            : collect();
 
-        $currentElectionWinners = CurrentElectionWinners::where("school_branch_id", $currentSchool->id)
-            ->where("election_id", $electionId)
-            ->with(['student.specialty.level', 'electionRole', 'electionType', 'election'])
+        $candidates = ElectionCandidate::where('election_id', $election->id)
+            ->with('candidateable')
+            ->get()
+            ->groupBy('election_role_id');
+
+        $positions = ElectionRole::where('school_branch_id', $election->school_branch_id)
+            ->where('election_type_id', $election->election_type_id)
+            ->whereIn('id', $candidates->keys())
+            ->orderBy('name')
             ->get();
 
-        if ($currentElectionWinners->isEmpty()) {
-            throw new AppException(
-                "No current election winners found",
-                404,
-                "Winners Missing",
-                "The {$election->school_year}, {$election->electionType->election_title} election is finished, but no current winner records were found.",
-                "/elections/" . $electionId . "/winners"
-            );
+        $totalVoters = ElectionVote::where('election_id', $election->id)
+            ->select('position_id', DB::raw("COUNT(DISTINCT CONCAT(votable_type, '|', votable_id)) as voters"))
+            ->groupBy('position_id')
+            ->pluck('voters', 'position_id');
+
+        return $positions->map(function (ElectionRole $position) use ($candidates, $counts, $holders, $totalVoters) {
+            $rows = $candidates->get($position->id, collect())
+                ->map(fn(ElectionCandidate $candidate) => [
+                    'candidate_id' => $candidate->id,
+                    'candidate_type' => ElectionParticipantType::keyFor($candidate->candidateable_type),
+                    'participant_id' => $candidate->candidateable_id,
+                    'name' => ElectionParticipantType::displayName($candidate->candidateable),
+                    'participant' => $candidate->candidateable,
+                    'status' => $candidate->status,
+                    'vote_count' => (int) ($counts[$candidate->id] ?? 0),
+                ])
+                ->sortByDesc('vote_count')
+                ->values();
+
+            $outcome = $this->resolveWinners($rows->where('status', ElectionCandidate::STATUS_ACTIVE)->values(), max(1, $position->seats));
+            $positionVoters = (int) ($totalVoters[$position->id] ?? 0);
+
+            return [
+                'position_id' => $position->id,
+                'position_name' => $position->name,
+                'seats' => $position->seats,
+                'total_votes' => $rows->sum('vote_count'),
+                'total_voters' => $positionVoters,
+                'requires_tie_resolution' => $outcome['tied'] !== [],
+                'tied_candidate_ids' => $outcome['tied'],
+                'candidates' => $rows->map(function ($row) use ($outcome, $holders, $positionVoters) {
+                    $row['vote_percentage'] = $positionVoters ? round($row['vote_count'] / $positionVoters * 100, 2) : 0;
+                    $row['is_winner'] = $holders->isNotEmpty()
+                        ? $holders->has($row['candidate_id'])
+                        : in_array($row['candidate_id'], $outcome['winners'], true);
+                    $row['is_tied'] = in_array($row['candidate_id'], $outcome['tied'], true);
+                    return $row;
+                })->all(),
+            ];
+        })->all();
+    }
+
+    /**
+     * @return array{winners: array<int, string>, tied: array<int, string>}
+     */
+    private function resolveWinners($ranked, int $seats): array
+    {
+        if ($ranked->count() <= $seats) {
+            return ['winners' => $ranked->pluck('candidate_id')->all(), 'tied' => []];
         }
 
-        return [
-            'elections' => $election,
-            'election_winners' => ElectionResultResource::collection($currentElectionWinners)
-        ];
+        $cutoff = $ranked[$seats - 1]['vote_count'];
+        $above = $ranked->filter(fn($r) => $r['vote_count'] > $cutoff)->pluck('candidate_id');
+        $atCutoff = $ranked->filter(fn($r) => $r['vote_count'] === $cutoff)->pluck('candidate_id');
+
+        if ($above->count() + $atCutoff->count() === $seats) {
+            return ['winners' => $above->merge($atCutoff)->all(), 'tied' => []];
+        }
+
+        // The remaining seats cannot be filled without breaking a tie.
+        return ['winners' => $above->all(), 'tied' => $atCutoff->values()->all()];
+    }
+
+    /**
+     * Finalise the election: confirm winners, create their office tenure and
+     * mark the election completed. Ties must be resolved explicitly with
+     * $tieResolutions = [position_id => [candidate_id, ...]].
+     */
+    public function publishResults(string $electionId, object $currentSchool, array $tieResolutions = []): array
+    {
+        $result = DB::transaction(function () use ($electionId, $currentSchool, $tieResolutions) {
+            $election = $this->findInBranch(Election::class, $electionId, $currentSchool, ['systemAcademicYear'], true);
+            $this->electionService->sync($election);
+
+            if ($election->is_results_published) {
+                $this->fail("Results already published", "The results of this election have already been published.", 409);
+            }
+            if ($election->status !== Election::STATUS_VOTING_CLOSED) {
+                $this->fail("Voting not closed", "Results can only be published after voting has closed.", 409);
+            }
+
+            $tally = $this->tally($election);
+            $positions = ElectionRole::whereIn('id', collect($tally)->pluck('position_id'))->with('officeTerm')->get()->keyBy('id');
+
+            foreach ($tally as $position) {
+                $winners = collect($position['candidates'])->where('is_winner', true)->pluck('candidate_id');
+
+                if ($position['requires_tie_resolution']) {
+                    $chosen = collect($tieResolutions[$position['position_id']] ?? []);
+                    $open = $position['seats'] - $winners->count();
+                    if ($chosen->count() !== $open || $chosen->diff($position['tied_candidate_ids'])->isNotEmpty()) {
+                        $this->fail(
+                            "Tie must be resolved",
+                            "Position {$position['position_name']} has a tie. Choose {$open} winner(s) among the tied candidates.",
+                            422
+                        );
+                    }
+                    $winners = $winners->merge($chosen);
+                }
+
+                foreach ($winners as $candidateId) {
+                    $candidate = ElectionCandidate::with('candidateable')->find($candidateId);
+                    $voteCount = collect($position['candidates'])->firstWhere('candidate_id', $candidateId)['vote_count'];
+                    $this->officeHolderService->createElectedHolder($election, $positions[$position['position_id']], $candidate, $voteCount);
+                }
+            }
+
+            $election->update([
+                'status' => Election::STATUS_COMPLETED,
+                'is_results_published' => true,
+                'results_published_at' => Carbon::now(),
+            ]);
+            $this->electionService->notifyTransition($election, Election::STATUS_COMPLETED);
+
+            return $election;
+        });
+
+        return $this->getResults($result->id, $currentSchool);
+    }
+
+    /**
+     * Completed elections of a branch with their winners (election history).
+     */
+    public function getElectionHistory(object $currentSchool, ?string $electionTypeId = null)
+    {
+        return Election::where('school_branch_id', $currentSchool->id)
+            ->where('status', Election::STATUS_COMPLETED)
+            ->when($electionTypeId, fn($q) => $q->where('election_type_id', $electionTypeId))
+            ->with([
+                'electionType:id,election_title',
+                'systemAcademicYear:id,name',
+                'officeHolders' => fn($q) => $q->where('appointment_type', ElectionOfficeHolder::APPOINTMENT_ELECTED),
+                'officeHolders.holderable',
+                'officeHolders.position:id,name',
+            ])
+            ->withCount(['candidates', 'votes'])
+            ->orderByDesc('voting_end')
+            ->get()
+            ->map(fn(Election $election) => [
+                'election' => $election->only(['id', 'title', 'status', 'voting_start', 'voting_end', 'results_published_at']),
+                'election_type' => $election->electionType,
+                'system_academic_year' => $election->systemAcademicYear,
+                'candidates_count' => $election->candidates_count,
+                'votes_count' => $election->votes_count,
+                'winners' => $election->officeHolders->map(fn($holder) => [
+                    'office_holder_id' => $holder->id,
+                    'position' => $holder->position,
+                    'holder_type' => ElectionParticipantType::keyFor($holder->holderable_type),
+                    'holder_id' => $holder->holderable_id,
+                    'name' => ElectionParticipantType::displayName($holder->holderable),
+                    'vote_count' => $holder->vote_count,
+                    'status' => $holder->status,
+                ])->values(),
+            ]);
     }
 }
