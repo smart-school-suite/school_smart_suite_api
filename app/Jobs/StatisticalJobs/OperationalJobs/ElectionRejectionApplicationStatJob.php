@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatisticalJobs\OperationalJobs;
 
-use App\Models\ElectionApplication;
+use App\Models\Election\ElectionApplication;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;

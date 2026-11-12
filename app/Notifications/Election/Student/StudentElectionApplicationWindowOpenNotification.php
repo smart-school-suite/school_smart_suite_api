@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Elections;
+use App\Models\Election\Election;
 class StudentElectionApplicationWindowOpenNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -18,7 +18,7 @@ class StudentElectionApplicationWindowOpenNotification extends Notification impl
      * Create a new notification instance.
      */
     protected $election;
-    public function __construct(Elections $election)
+    public function __construct(Election $election)
     {
         $this->election = $election;
     }

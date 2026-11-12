@@ -2,54 +2,38 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use App\Models\ElectionResults;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Live tally update for a candidate, derived from election_votes.
+ */
 class VoteCastEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
-    public $result;
+    public function __construct(
+        public string $schoolBranchId,
+        public string $electionId,
+        public string $positionId,
+        public string $candidateId,
+        public int $voteCount,
+    ) {}
 
-    public function __construct(ElectionResults $result)
+    public function broadcastOn(): array
     {
-        $this->result = $result;
+        return [new PrivateChannel("election.results.{$this->schoolBranchId}.{$this->electionId}")];
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
-    public function broadcastOn()
+    public function broadcastWith(): array
     {
-        $channelName = 'election.results.' . $this->result->school_branch_id . '.' . $this->result->election_id;
         return [
-            new PrivateChannel($channelName)
+            'candidate_id' => $this->candidateId,
+            'position_id' => $this->positionId,
+            'vote_count' => $this->voteCount,
         ];
-    }
-
-    /**
-     * Get the data to broadcast.
-     *
-     * @return array
-     */
-    public function broadcastWith()
-    {
-        $data = [
-            'candidate_id' => $this->result->candidate_id,
-            'position_id' => $this->result->position_id,
-            'vote_count' => $this->result->vote_count,
-        ];
-        return $data;
     }
 }

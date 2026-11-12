@@ -8,8 +8,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\ElectionParticipants;
-use App\Models\Elections;
+use App\Models\Election\ElectionParticipant;
+use App\Models\Election\Election;
 use App\Models\Schooladmin;
 use App\Models\Student;
 use App\Models\PermissionCategory;
@@ -45,7 +45,7 @@ class SendElectionConcludedNotificationJob implements ShouldQueue
     {
         $electionId = $this->electionId;
         $schoolBranchId = $this->schoolBranchId;
-        $election = Elections::with(['electionType'])->find($electionId);
+        $election = Election::with(['electionType'])->find($electionId);
         $students = $this->getEligibleStudents($electionId, $schoolBranchId);
         Notification::send($students, new ElectionConcluded($election->electionType->election_title));
     }
@@ -56,15 +56,15 @@ class SendElectionConcludedNotificationJob implements ShouldQueue
      * @param string $schoolBranchId
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    private function getEligibleStudents(string $electionId, string $schoolBranchId): \Illuminate\Database\Eloquent\Collection
+    private function getEligibleStudents(string $electionId, string $schoolBranchId): \Illuminate\Support\Collection
     {
-        $allowedSpecialtyIds = ElectionParticipants::where('school_branch_id', $schoolBranchId)
+        // Resolved participants (students, teachers and school admins) of the election.
+        return ElectionParticipant::where('school_branch_id', $schoolBranchId)
             ->where('election_id', $electionId)
-            ->pluck('specialty_id');
-
-        return Student::where('school_branch_id', $schoolBranchId)
-            ->whereIn('specialty_id', $allowedSpecialtyIds)
-            ->get();
+            ->with('participantable')
+            ->get()
+            ->pluck('participantable')
+            ->filter();
     }
 
 

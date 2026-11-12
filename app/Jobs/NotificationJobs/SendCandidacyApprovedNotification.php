@@ -2,7 +2,7 @@
 
 namespace App\Jobs\NotificationJobs;
 
-use App\Models\ElectionApplication;
+use App\Models\Election\ElectionApplication;
 use App\Models\Student;
 use App\Notifications\CandidacyApproved;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,19 +36,18 @@ class SendCandidacyApprovedNotification implements ShouldQueue
         $schoolBranchId = $this->schoolBranchId;
 
         foreach ($applicationData as $application) {
-            $student = Student::where("school_branch_id", $schoolBranchId)
-                ->find($application['student_id']);
-
             $application = ElectionApplication::where("school_branch_id", $schoolBranchId)
-                ->with(['election.electionType', 'electionRole'])
+                ->with(['election.electionType', 'position', 'applicantable'])
                 ->find($application['application_id']);
+            // The applicant may be a student, teacher or school admin.
+            $student = $application?->applicantable;
 
             if (!$student || !$application) {
                 continue;
             }
 
             $student->notify(new CandidacyApproved(
-                $application->electionRole->name,
+                $application->position->name,
                 $application->election->electionType->election_title,
             ));
         }

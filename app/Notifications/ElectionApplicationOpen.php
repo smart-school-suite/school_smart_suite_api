@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\Elections;
+use App\Models\Election\Election;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -19,7 +19,7 @@ class ElectionApplicationOpen extends Notification
      * Create a new notification instance.
      */
     protected $election;
-    public function __construct(Elections $election)
+    public function __construct(Election $election)
     {
         $this->election = $election;
     }

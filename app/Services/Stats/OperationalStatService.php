@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection; // Added for type hinting
 use App\Models\Announcement;
 use App\Models\SchoolEvent\SchoolEvent;
-use App\Models\Elections;
+use App\Models\Election\Election;
 use App\Models\StatTypes;
 use App\Models\Department; // Added for fetching department names
 
@@ -124,10 +124,9 @@ class OperationalStatService
             ->get();
 
         // Elections (ongoing and pending)
-        $electionData = Elections::where("school_branch_id", $currentSchool->id)
+        $electionData = Election::where("school_branch_id", $currentSchool->id)
             ->where(function ($query) {
-                $query->where("status", "ongoing")
-                      ->orWhere("status", "pending");
+                $query->whereIn("status", ["voting_open", "upcoming", "application_open", "application_closed"]);
             })
             ->with(['electionType'])
             ->get();
@@ -232,8 +231,8 @@ class OperationalStatService
      */
     private function getElectionData(Collection $electionData): array
     {
-        $activeElections = $electionData->filter(fn ($election) => $election->status === "ongoing")->take(3);
-        $upcomingElections = $electionData->filter(fn ($election) => $election->status === 'pending')->take(3);
+        $activeElections = $electionData->filter(fn ($election) => $election->status === "voting_open")->take(3);
+        $upcomingElections = $electionData->filter(fn ($election) => in_array($election->status, ['upcoming', 'application_open', 'application_closed'], true))->take(3);
 
         return [
             'active_elections' => [
