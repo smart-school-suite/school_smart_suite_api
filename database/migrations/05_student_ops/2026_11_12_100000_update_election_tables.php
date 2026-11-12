@@ -379,12 +379,27 @@ return new class extends Migration
         $this->dropIndexKeepingForeignKey('election_votes', 'election_votes_unique_ballot', 'election_id', true);
         $this->dropIndexKeepingForeignKey('election_votes', 'election_votes_voter_index', 'election_id');
 
+        // The legacy schema only supports student applicants/candidates, so
+        // teacher and admin records (and what depends on them) are discarded.
+        $nonStudentCandidates = Schema::hasColumn('election_candidates', 'candidateable_type')
+            ? DB::table('election_candidates')->where('candidateable_type', '!=', self::STUDENT_MORPH)->pluck('id')
+            : collect();
+        if ($nonStudentCandidates->isNotEmpty()) {
+            DB::table('election_votes')->whereIn('candidate_id', $nonStudentCandidates)->delete();
+            if (Schema::hasTable('election_office_holders')) {
+                DB::table('election_office_holders')->whereIn('election_candidate_id', $nonStudentCandidates)
+                    ->update(['election_candidate_id' => null]);
+            }
+        }
+
         // election_candidates
-        if (!Schema::hasColumn('election_candidates', 'student_id')) {
-            Schema::table('election_candidates', function (Blueprint $table) {
-                $table->uuid('student_id')->nullable();
-                $table->boolean('isActive')->default(true);
-            });
+        if (Schema::hasColumn('election_candidates', 'candidateable_type')) {
+            if (!Schema::hasColumn('election_candidates', 'student_id')) {
+                Schema::table('election_candidates', function (Blueprint $table) {
+                    $table->uuid('student_id')->nullable();
+                    $table->boolean('isActive')->default(true);
+                });
+            }
             DB::table('election_candidates')->where('candidateable_type', self::STUDENT_MORPH)
                 ->update(['student_id' => DB::raw('candidateable_id')]);
             DB::table('election_candidates')->where('status', '!=', 'active')->update(['isActive' => false]);
@@ -398,13 +413,17 @@ return new class extends Migration
         }
 
         // election_applications
-        if (!Schema::hasColumn('election_applications', 'student_id')) {
-            Schema::table('election_applications', function (Blueprint $table) {
-                $table->uuid('student_id')->nullable();
-            });
+        if (Schema::hasColumn('election_applications', 'applicantable_type')) {
+            if (!Schema::hasColumn('election_applications', 'student_id')) {
+                Schema::table('election_applications', function (Blueprint $table) {
+                    $table->uuid('student_id')->nullable();
+                });
+            }
             DB::table('election_applications')->where('applicantable_type', self::STUDENT_MORPH)
                 ->update(['student_id' => DB::raw('applicantable_id')]);
-            DB::table('election_applications')->whereNull('student_id')->delete();
+            $orphaned = DB::table('election_applications')->whereNull('student_id')->pluck('id');
+            DB::table('election_candidates')->whereIn('application_id', $orphaned)->delete();
+            DB::table('election_applications')->whereIn('id', $orphaned)->delete();
             DB::table('election_applications')->where('application_status', 'withdrawn')
                 ->update(['application_status' => 'rejected']);
             $this->dropIndexKeepingForeignKey('election_applications', 'election_applications_unique_applicant', 'election_id', true);
