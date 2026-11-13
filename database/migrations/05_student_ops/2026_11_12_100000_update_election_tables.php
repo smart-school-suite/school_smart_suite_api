@@ -24,11 +24,18 @@ use Illuminate\Support\Str;
  *    election_roles (positions), and a duplicate-vote guard on election_votes.
  *
  * Every step is guarded so the migration is safe on production databases
- * (where the legacy tables/columns exist) and on fresh installs.
+ * (where the legacy tables/columns exist), on fresh installs, and when
+ * re-run after a partial failure.
+ *
+ * Morph columns are kept compact (ASCII, 100/64 chars): they only hold class
+ * names and UUIDs, and full-size utf8mb4 varchar(255) pairs make the unique
+ * keys exceed MySQL's index size limit (767/1000 bytes on some servers).
  */
 return new class extends Migration
 {
     private const STUDENT_MORPH = 'App\\Models\\Student';
+    private const MORPH_TYPE_LENGTH = 100;
+    private const MORPH_ID_LENGTH = 64;
 
     private array $droppedTables = [
         'current_election_winners',
@@ -142,9 +149,7 @@ return new class extends Migration
         // 1. Add the polymorphic participant columns.
         Schema::table('election_participants', function (Blueprint $table) {
             if (!Schema::hasColumn('election_participants', 'participantable_type')) {
-                $table->string('participantable_type')->nullable();
-                $table->string('participantable_id')->nullable();
-                $table->index(['participantable_type', 'participantable_id'], 'election_participants_participantable_index');
+                $this->addMorphColumns($table, 'participantable');
             }
             if (!Schema::hasColumn('election_participants', 'can_vote')) {
                 $table->boolean('can_vote')->default(true);
@@ -153,6 +158,9 @@ return new class extends Migration
                 $table->boolean('can_apply')->default(false);
             }
         });
+
+        $this->compactMorphColumns('election_participants', 'participantable', true);
+        $this->ensureIndex('election_participants', ['participantable_type', 'participantable_id'], 'election_participants_participantable_index');
 
         // 2. Convert the legacy specialty/level rows into the JSON audience on
         //    elections and materialise one participant row per student.
@@ -230,9 +238,7 @@ return new class extends Migration
     {
         Schema::table('election_applications', function (Blueprint $table) {
             if (!Schema::hasColumn('election_applications', 'applicantable_type')) {
-                $table->string('applicantable_type')->nullable();
-                $table->string('applicantable_id')->nullable();
-                $table->index(['applicantable_type', 'applicantable_id'], 'election_applications_applicantable_index');
+                $this->addMorphColumns($table, 'applicantable');
             }
             if (!Schema::hasColumn('election_applications', 'reviewed_at')) {
                 $table->timestamp('reviewed_at')->nullable();
@@ -241,6 +247,9 @@ return new class extends Migration
                 $table->text('review_remarks')->nullable();
             }
         });
+
+        $this->compactMorphColumns('election_applications', 'applicantable', true);
+        $this->ensureIndex('election_applications', ['applicantable_type', 'applicantable_id'], 'election_applications_applicantable_index');
 
         Schema::table('election_applications', function (Blueprint $table) {
             $table->enum('application_status', ['pending', 'approved', 'rejected', 'withdrawn'])
@@ -278,15 +287,16 @@ return new class extends Migration
     {
         Schema::table('election_candidates', function (Blueprint $table) {
             if (!Schema::hasColumn('election_candidates', 'candidateable_type')) {
-                $table->string('candidateable_type')->nullable();
-                $table->string('candidateable_id')->nullable();
-                $table->index(['candidateable_type', 'candidateable_id'], 'election_candidates_candidateable_index');
+                $this->addMorphColumns($table, 'candidateable');
             }
             if (!Schema::hasColumn('election_candidates', 'status')) {
                 $table->enum('status', ['active', 'disqualified', 'withdrawn'])->default('active');
                 $table->text('status_reason')->nullable();
             }
         });
+
+        $this->compactMorphColumns('election_candidates', 'candidateable', true);
+        $this->ensureIndex('election_candidates', ['candidateable_type', 'candidateable_id'], 'election_candidates_candidateable_index');
 
         if (Schema::hasColumn('election_candidates', 'isActive')) {
             DB::table('election_candidates')->where('isActive', false)->update(['status' => 'disqualified']);
@@ -320,6 +330,8 @@ return new class extends Migration
 
     private function updateElectionVotes(): void
     {
+        $this->compactMorphColumns('election_votes', 'votable', false);
+
         // Remove any duplicated ballots (same voter, same candidate, same position)
         // so the unique guard can be created; the earliest ballot is kept.
         $duplicates = DB::table('election_votes')
@@ -341,15 +353,71 @@ return new class extends Migration
             DB::table('election_votes')->whereIn('id', $ids->slice(1)->all())->delete();
         }
 
-        if (!$this->hasIndex('election_votes', 'election_votes_unique_ballot')) {
-            Schema::table('election_votes', function (Blueprint $table) {
-                $table->unique(
-                    ['election_id', 'position_id', 'candidate_id', 'votable_type', 'votable_id'],
-                    'election_votes_unique_ballot'
-                );
-                $table->index(['election_id', 'votable_type', 'votable_id'], 'election_votes_voter_index');
-            });
+        $this->ensureIndex(
+            'election_votes',
+            ['election_id', 'position_id', 'candidate_id', 'votable_type', 'votable_id'],
+            'election_votes_unique_ballot',
+            true
+        );
+        $this->ensureIndex('election_votes', ['election_id', 'votable_type', 'votable_id'], 'election_votes_voter_index');
+
+        // Office holders are created by an earlier migration; keep their morph compact too.
+        if (Schema::hasTable('election_office_holders')) {
+            $this->compactMorphColumns('election_office_holders', 'holderable', false);
         }
+    }
+
+    // ---------------------------------------------------------- helpers
+
+    private function supportsCharsets(): bool
+    {
+        return in_array(DB::getDriverName(), ['mysql', 'mariadb'], true);
+    }
+
+    /** Compact morph columns: class names and UUIDs only need ASCII. */
+    private function addMorphColumns(Blueprint $table, string $name, bool $nullable = true): void
+    {
+        foreach (["{$name}_type" => self::MORPH_TYPE_LENGTH, "{$name}_id" => self::MORPH_ID_LENGTH] as $column => $length) {
+            $definition = $table->string($column, $length)->nullable($nullable);
+            if ($this->supportsCharsets()) {
+                $definition->charset('ascii')->collation('ascii_bin');
+            }
+        }
+    }
+
+    /** Shrink existing morph columns (e.g. varchar(255) utf8mb4) before indexing them. */
+    private function compactMorphColumns(string $table, string $name, bool $nullable): void
+    {
+        if (!Schema::hasColumn($table, "{$name}_type")) {
+            return;
+        }
+        $columns = collect(Schema::getColumns($table))->keyBy('name');
+        $type = $columns["{$name}_type"] ?? null;
+        $id = $columns["{$name}_id"] ?? null;
+        $isCompact = fn($column, $length) => $column
+            && str_contains(strtolower((string) $column['type']), "({$length})")
+            && (!$this->supportsCharsets() || str_starts_with(strtolower((string) $column['collation']), 'ascii'));
+
+        if ($isCompact($type, self::MORPH_TYPE_LENGTH) && $isCompact($id, self::MORPH_ID_LENGTH)) {
+            return;
+        }
+        Schema::table($table, function (Blueprint $blueprint) use ($name, $nullable) {
+            foreach (["{$name}_type" => self::MORPH_TYPE_LENGTH, "{$name}_id" => self::MORPH_ID_LENGTH] as $column => $length) {
+                $definition = $blueprint->string($column, $length)->nullable($nullable);
+                if ($this->supportsCharsets()) {
+                    $definition->charset('ascii')->collation('ascii_bin');
+                }
+                $definition->change();
+            }
+        });
+    }
+
+    private function ensureIndex(string $table, array $columns, string $name, bool $unique = false): void
+    {
+        if ($this->hasIndex($table, $name)) {
+            return;
+        }
+        Schema::table($table, fn(Blueprint $t) => $unique ? $t->unique($columns, $name) : $t->index($columns, $name));
     }
 
     private function hasIndex(string $table, string $index): bool
