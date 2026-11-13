@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -21,14 +20,9 @@ return new class extends Migration
         // Actual occupants of a position (elected, appointed or replacement).
         Schema::create('election_office_holders', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            // Student / Teacher / Schooladmin. Class names and UUIDs only, so the
-            // columns are compact ASCII to keep the index within MySQL's key limit.
-            $type = $table->string('holderable_type', 100);
-            $id = $table->string('holderable_id', 64);
-            if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-                $type->charset('ascii')->collation('ascii_bin');
-                $id->charset('ascii')->collation('ascii_bin');
-            }
+            // Student / Teacher / Schooladmin (string ids, so morph columns are strings).
+            $table->string('holderable_type');
+            $table->string('holderable_id');
             $table->index(['holderable_type', 'holderable_id'], 'election_office_holders_holderable_index');
             $table->date('started_at');
             $table->date('expected_end_at');
