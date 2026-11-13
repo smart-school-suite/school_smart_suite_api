@@ -150,6 +150,7 @@ class AudienceService
         return Schooladmin::where("school_branch_id", $currentSchool->id)
             ->get()
             ->map(fn($a) => [
+                "id" => $a->id,
                 "profile_picture" => $a->profile_picture,
                 'username' => $a->username,
                 'name' => $a->name,
