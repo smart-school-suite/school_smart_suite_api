@@ -5,6 +5,7 @@ namespace App\Services\ExamTimetable\Support;
 use App\Models\ExamTimetable\ExamInvigilator;
 use App\Models\ExamTimetable\ExamTimetableSlot;
 use App\Schedular\ExamTimetable\Placement\Support\Time;
+use App\Services\ResitTimetable\Support\ActiveExamSessions;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -15,6 +16,8 @@ use Illuminate\Support\Collection;
  * Invigilator rows are per exam, so the same teacher has a different
  * invigilator id in every exam. Busy periods are matched through the person
  * (actorable type and id) and given this exam's invigilator id.
+ *
+ * Active resit timetables count too: their halls and invigilators are busy.
  */
 class ExamActiveCommitments
 {
@@ -88,6 +91,27 @@ class ExamActiveCommitments
                     'course_id' => $slot->course_id,
                     'source' => 'other_exam',
                 ];
+            }
+        }
+
+        // Active resit timetables share the same halls and people.
+        foreach (app(ActiveExamSessions::class)->resits($schoolBranchId, $startDate, $endDate) as $session) {
+            $window = [
+                'date' => $session['date'],
+                'start_time' => $session['start_time'],
+                'end_time' => $session['end_time'],
+                'course_id' => $session['course_id'],
+                'source' => 'other_exam',
+            ];
+            foreach ($session['halls'] ?? [] as $hallId => $candidates) {
+                if (isset($hallIds[$hallId])) {
+                    $hallBusy[] = ['hall_id' => $hallId, ...$window, 'candidate_count' => $candidates];
+                }
+            }
+            foreach ($session['people'] ?? [] as $person) {
+                if ($ours = $personToInvigilator->get($person)) {
+                    $invigilatorBusy[] = ['invigilator_id' => $ours, ...$window];
+                }
             }
         }
 

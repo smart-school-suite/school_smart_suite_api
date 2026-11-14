@@ -21,11 +21,16 @@ use Illuminate\Support\Collection;
  *
  *  exam_id, specialty_id, start_date, end_date, candidate_count,
  *  candidates_per_invigilator  (optional: one invigilator per N candidates in a hall, default one per hall)
- *  courses:                  [{course_id, course_title, course_code, candidate_count?}]
+ *  courses:                  [{course_id, course_title, course_code, candidate_count?, student_ids?: [student_id]}]
+ *                            When any course lists its student_ids (resit exams), two exams only clash when
+ *                            they share a candidate, and the daily load is counted per candidate. Without
+ *                            them every course has the same candidates (one specialty's exam).
  *  halls:                    [{hall_id, hall_name, capacity}]
  *  invigilators:             [{invigilator_id, name, courses_taught: [course_id]}]
  *  hall_busy_periods:        [{hall_id, date, start_time, end_time, candidate_count?, source?}]
  *  invigilator_busy_periods: [{invigilator_id, date, start_time, end_time, source?}]
+ *  candidate_busy_periods:   [{student_id, date, start_time, end_time, source?, course_id?}]
+ *                            candidates sitting another exam then (other active timetables)
  *  hard_constraints:
  *    operational_period:            {start_time, end_time, date_exceptions: [{date, start_time, end_time}], date_exclusions: [date]}
  *    session_duration:              {duration, course_exceptions: [{course_id, duration}]}
@@ -48,6 +53,14 @@ class RequestContext extends ExamTimetableContext
     private array $invigilators;
     private array $teaching;
 
+    /** @var array<string, array<string, int>> course_id => flipped student ids, only with candidate groups */
+    private array $candidates = [];
+    private bool $grouped = false;
+    private array $sharesCache = [];
+
+    /** @var array<string, array<string, array[]>> course_id => date => [{start, end, students, source}] */
+    private array $courseBusy = [];
+
     private function __construct(private readonly array $payload)
     {
         $this->courses = collect($payload['courses'] ?? [])->keyBy('course_id')->all();
@@ -59,6 +72,52 @@ class RequestContext extends ExamTimetableContext
         $this->teaching = collect($this->invigilators)
             ->map(fn(array $invigilator) => array_flip($invigilator['courses_taught'] ?? $invigilator['course_taught'] ?? []))
             ->all();
+
+        foreach ($this->courses as $courseId => $course) {
+            if (array_key_exists('student_ids', $course)) {
+                $this->grouped = true;
+                $this->candidates[$courseId] = array_flip(array_map('strval', $course['student_ids'] ?? []));
+            }
+        }
+
+        $this->indexCandidateBusyPeriods($payload['candidate_busy_periods'] ?? []);
+    }
+
+    private function indexCandidateBusyPeriods(array $periods): void
+    {
+        if (empty($periods) || !$this->grouped) {
+            return;
+        }
+
+        $byStudent = [];
+        foreach ($periods as $period) {
+            $start = Time::normalize($period['start_time'] ?? null);
+            $end = Time::normalize($period['end_time'] ?? null);
+            if (!$start || !$end || empty($period['student_id']) || empty($period['date'])) {
+                continue;
+            }
+            $byStudent[(string) $period['student_id']][] = [
+                'date' => $period['date'],
+                'start' => Time::toMinutes($start),
+                'end' => Time::toMinutes($end),
+                'source' => $period['source'] ?? 'other_exam',
+                'course_id' => $period['course_id'] ?? null,
+            ];
+        }
+
+        foreach ($this->candidates as $courseId => $students) {
+            $windows = [];
+            foreach (array_intersect_key($byStudent, $students) as $studentPeriods) {
+                foreach ($studentPeriods as $period) {
+                    $key = "{$period['date']}|{$period['start']}|{$period['end']}|{$period['course_id']}";
+                    $windows[$key] ??= [...$period, 'students' => 0];
+                    $windows[$key]['students']++;
+                }
+            }
+            foreach ($windows as $window) {
+                $this->courseBusy[$courseId][$window['date']][] = $window;
+            }
+        }
     }
 
     public static function fromPayload(): self
@@ -123,6 +182,80 @@ class RequestContext extends ExamTimetableContext
             return 1;
         }
         return max(1, (int) ceil($candidates / $ratio));
+    }
+
+    // ── Candidates ───────────────────────────────────────────────────────
+
+    /** True when courses list their own candidates, so only exams sharing a candidate clash. */
+    public function hasCandidateGroups(): bool
+    {
+        return $this->grouped;
+    }
+
+    /** @return array<string, int> flipped student ids of a course (candidate groups only) */
+    public function candidatesOf(string $courseId): array
+    {
+        return $this->candidates[$courseId] ?? [];
+    }
+
+    /**
+     * True when the two courses' exams must not overlap: always for one
+     * specialty's exam (same students), else when they share a candidate.
+     */
+    public function sharesCandidates(string $courseA, string $courseB): bool
+    {
+        if (!$this->grouped || $courseA === $courseB) {
+            return true;
+        }
+
+        $key = $courseA < $courseB ? "{$courseA}|{$courseB}" : "{$courseB}|{$courseA}";
+        if (!isset($this->sharesCache[$key])) {
+            $a = $this->candidates[$courseA] ?? [];
+            $b = $this->candidates[$courseB] ?? [];
+            [$small, $large] = count($a) <= count($b) ? [$a, $b] : [$b, $a];
+            $shared = false;
+            foreach ($small as $student => $_) {
+                if (isset($large[$student])) {
+                    $shared = true;
+                    break;
+                }
+            }
+            $this->sharesCache[$key] = $shared;
+        }
+
+        return $this->sharesCache[$key];
+    }
+
+    /**
+     * Times on a date when some of the course's candidates sit another exam.
+     *
+     * @return array[] [{start, end, students, source, course_id}] in minutes
+     */
+    public function candidateBusyWindows(string $courseId, string $date): array
+    {
+        return $this->courseBusy[$courseId][$date] ?? [];
+    }
+
+    /** @return ?array the first window keeping the course's candidates busy, or null */
+    public function candidateBusyConflict(string $courseId, string $date, int $start, int $end): ?array
+    {
+        foreach ($this->candidateBusyWindows($courseId, $date) as $window) {
+            if (Time::overlaps($start, $end, $window['start'], $window['end'])) {
+                return $window;
+            }
+        }
+        return null;
+    }
+
+    public function hasCandidateBusyPeriods(string $courseId): bool
+    {
+        return !empty($this->courseBusy[$courseId]);
+    }
+
+    /** @return array<string, array[]> date => windows of the course */
+    public function candidateBusyPeriodsOf(string $courseId): array
+    {
+        return $this->courseBusy[$courseId] ?? [];
     }
 
     // ── Courses, halls and invigilators ──────────────────────────────────

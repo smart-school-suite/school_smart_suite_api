@@ -45,3 +45,9 @@ Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.ex
     return (string) $user->school_branch_id === (string) $schoolBranchId
         && (string) $user->id === (string) $schoolAdminId;
 }, ['guards' => ['schooladmin']]);
+
+// Resit timetable generation progress, sent to the admin who started it.
+Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.resitTimetable', function ($user, $schoolBranchId, $schoolAdminId) {
+    return (string) $user->school_branch_id === (string) $schoolBranchId
+        && (string) $user->id === (string) $schoolAdminId;
+}, ['guards' => ['schooladmin']]);

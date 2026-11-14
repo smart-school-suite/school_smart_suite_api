@@ -22,6 +22,7 @@ class Resitexamtimetable extends Model
         'end_time',
         'duration',
         'level_id',
+        'version_id',
       ];
 
       protected $casts = [
@@ -40,8 +41,24 @@ class Resitexamtimetable extends Model
           return $this->belongsTo(ResitExam::class, 'resit_exam_id');
       }
 
-      public function course(): HasMany {
-          return $this->hasMany(Courses::class, 'course_id');
+      public function course(): BelongsTo {
+          return $this->belongsTo(Courses::class, 'course_id');
+      }
+
+      /** The generated version these sessions come from (only the active version has slots). */
+      public function version(): BelongsTo
+      {
+          return $this->belongsTo(\App\Models\ResitTimetable\ResitTimetableVersion::class, 'version_id');
+      }
+
+      public function sessionHalls(): HasMany
+      {
+          return $this->hasMany(\App\Models\ResitTimetable\ResitSessionHall::class, 'resit_slot_id');
+      }
+
+      public function sessionInvigilators(): HasMany
+      {
+          return $this->hasMany(\App\Models\ResitTimetable\ResitSessionInvigilator::class, 'resit_slot_id');
       }
 
       public function exam(): BelongsTo {

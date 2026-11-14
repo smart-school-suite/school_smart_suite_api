@@ -20,6 +20,7 @@ use App\Schedular\ExamTimetable\Solution\Definitions\Invigilator\InvigilatorUnav
 use App\Schedular\ExamTimetable\Solution\Definitions\Schedule\NoExamSessionDefinition;
 use App\Schedular\ExamTimetable\Solution\Definitions\Schedule\OperationalPeriodDefinition;
 use App\Schedular\ExamTimetable\Solution\Definitions\Schedule\SessionDurationDefinition;
+use App\Schedular\ExamTimetable\Solution\Definitions\Student\CandidateBusyDefinition;
 use App\Schedular\ExamTimetable\Solution\Definitions\Student\StudentDailyLoadDefinition;
 
 /** Every constraint and blocker key the solution engine knows how to explain and fix. */
@@ -43,6 +44,7 @@ class ConstraintCatalog
         InvigilatorTeachesCourseDefinition::class,
         InvigilatorUnavailableDefinition::class,
         StudentDailyLoadDefinition::class,
+        CandidateBusyDefinition::class,
     ];
 
     private ?array $byKey = null;
