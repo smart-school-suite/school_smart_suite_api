@@ -22,7 +22,7 @@ class PlanRecCondition extends Model
 
     public function planRecCopy(): HasMany
     {
-        return $this->hasMany(PlanRecCopy::class);
+        return $this->hasMany(PlanRecCopy::class, 'plan_rec_cond_id');
     }
     public function planRecommendation(): BelongsTo
     {

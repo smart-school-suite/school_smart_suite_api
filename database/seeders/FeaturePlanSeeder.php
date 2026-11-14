@@ -14,63 +14,28 @@ class FeaturePlanSeeder extends Seeder
      */
     public function run(): void
     {
-        $featValueMap = [
-            "starter.plan" => [
-                ["key" => "timetable.generation", "limit" => 20, "type" => "integer"],
-                ["key" => "school.admins", "limit" => 20, "type" => "integer"],
-                ["key" => "rate.limit", "limit" => 20, "type" => "integer"],
-                ["key" => "school.announcements", "limit" => 20, "type" => "integer"],
-                ["key" => "school.events", "limit" => 20, "type" => "integer"],
-                ["key" => "school.elections", "limit" => 20, "type" => "integer"],
-                ["key" => "school.departments", "limit" => 20, "type" => "integer"],
-                ["key" => "school.specialties", "limit" => 20, "type" => "integer"],
-                ["key" => "school.courses", "limit" => 10, "type" => "integer"],
-            ],
-            "growth.plan" => [
-                ["key" => "timetable.generation", "limit" => 20, "type" => "integer"],
-                ["key" => "school.admins", "limit" => 20, "type" => "integer"],
-                ["key" => "rate.limit", "limit" => 20, "type" => "integer"],
-                ["key" => "school.announcements", "limit" => 20, "type" => "integer"],
-                ["key" => "school.events", "limit" => 20, "type" => "integer"],
-                ["key" => "school.elections", "limit" => 20, "type" => "integer"],
-                ["key" => "school.departments", "limit" => 20, "type" => "integer"],
-                ["key" => "school.specialties", "limit" => 20, "type" => "integer"],
-                ["key" => "school.courses", "limit" => 10, "type" => "integer"],
-            ],
-            "professional.plan" => [
-                ["key" => "timetable.generation", "limit" => 20, "type" => "integer"],
-                ["key" => "school.admins", "limit" => 20, "type" => "integer"],
-                ["key" => "rate.limit", "limit" => 20, "type" => "integer"],
-                ["key" => "school.announcements", "limit" => 20, "type" => "integer"],
-                ["key" => "school.events", "limit" => 20, "type" => "integer"],
-                ["key" => "school.elections", "limit" => 20, "type" => "integer"],
-                ["key" => "school.departments", "limit" => 20, "type" => "integer"],
-                ["key" => "school.specialties", "limit" => 20, "type" => "integer"],
-                ["key" => "school.courses", "limit" => 10, "type" => "integer"],
-            ],
-            "enterpise.plan" => [
-                ["key" => "timetable.generation", "limit" => 20, "type" => "integer"],
-                ["key" => "school.admins", "limit" => 20, "type" => "integer"],
-                ["key" => "rate.limit", "limit" => 20, "type" => "integer"],
-                ["key" => "school.announcements", "limit" => 20, "type" => "integer"],
-                ["key" => "school.events", "limit" => 20, "type" => "integer"],
-                ["key" => "school.elections", "limit" => 20, "type" => "integer"],
-                ["key" => "school.departments", "limit" => 20, "type" => "integer"],
-                ["key" => "school.specialties", "limit" => 20, "type" => "integer"],
-                ["key" => "school.courses", "limit" => 10, "type" => "integer"],
-            ],
-            "ultimate.plan" => [
-                ["key" => "timetable.generation", "limit" => 20, "type" => "integer"],
-                ["key" => "school.admins", "limit" => 20, "type" => "integer"],
-                ["key" => "rate.limit", "limit" => 20, "type" => "integer"],
-                ["key" => "school.announcements", "limit" => 20, "type" => "integer"],
-                ["key" => "school.events", "limit" => 20, "type" => "integer"],
-                ["key" => "school.elections", "limit" => 20, "type" => "integer"],
-                ["key" => "school.departments", "limit" => 20, "type" => "integer"],
-                ["key" => "school.specialties", "limit" => 20, "type" => "integer"],
-                ["key" => "school.courses", "limit" => 10, "type" => "integer"],
-            ],
+        // Limits climb with each plan so every upgrade buys real headroom.
+        // -1 means unlimited.
+        $ladder = [
+            //                         starter growth professional enterprise ultimate
+            "timetable.generation" => [10, 30, 80, 200, -1],
+            "school.admins"        => [3, 8, 20, 50, -1],
+            "rate.limit"           => [60, 120, 300, 600, 1200],
+            "school.announcements" => [50, 200, 600, 2000, -1],
+            "school.events"        => [20, 60, 150, 400, -1],
+            "school.elections"     => [2, 5, 15, 40, -1],
+            "school.departments"   => [5, 12, 30, 80, -1],
+            "school.specialties"   => [10, 30, 80, 200, -1],
+            "school.courses"       => [60, 200, 600, 1500, -1],
         ];
+        $planKeys = ["starter.plan", "growth.plan", "professional.plan", "enterpise.plan", "ultimate.plan"];
+
+        $featValueMap = [];
+        foreach ($planKeys as $tier => $planKey) {
+            foreach ($ladder as $featureKey => $limits) {
+                $featValueMap[$planKey][] = ["key" => $featureKey, "limit" => $limits[$tier], "type" => "integer"];
+            }
+        }
 
         $plans = Plan::all();
 

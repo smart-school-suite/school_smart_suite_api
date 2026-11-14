@@ -10,6 +10,7 @@ use App\Models\School;
 use App\Models\GradesCategory;
 use App\Models\Plan;
 use App\Models\SchoolGradesConfig;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Models\SettingDefination;
@@ -179,58 +180,75 @@ class SchoolSubscriptionService
     public function renewSubscription(array $data, object $currentSchool): array
     {
         return DB::transaction(function () use ($data, $currentSchool) {
-            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
-            $branch = Schoolbranches::with([
-                'schoolSubscription.plan.country'
-            ])
-                ->where('id', $currentSchool->id)
-                ->whereHas('schoolSubscription')
-                ->lockForUpdate()
-                ->firstOrFail();
+            $paymentMethod = PaymentMethod::find($data['payment_method_id'] ?? null);
+            if (!$paymentMethod) {
+                throw new AppException(
+                    'Payment Method Not Found',
+                    400,
+                    'Payment Method Not Found',
+                    'The selected payment method is invalid or does not exist.'
+                );
+            }
 
-            $subscription = $branch->schoolSubscription;
+            $subscription = SchoolSubscription::where('school_branch_id', $currentSchool->id)
+                ->whereIn('status', ['active', 'expired'])
+                ->latest('end_date')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$subscription) {
+                throw new AppException(
+                    'NO_SUBSCRIPTION',
+                    400,
+                    'Renewal failed',
+                    'Your school has no subscription to renew. Choose a plan to subscribe instead.'
+                );
+            }
 
             $plan = Plan::with('country')
                 ->where('id', $data['plan_id'] ?? $subscription->plan_id)
                 ->where('status', 'active')
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
 
-            $startsAt = $subscription->end_date->isFuture()
-                ? $subscription->end_date
-                : now();
+            if (!$plan) {
+                throw new AppException(
+                    'Plan Not Found',
+                    400,
+                    'Plan Not Found',
+                    'The selected plan does not exist or is no longer active.'
+                );
+            }
 
+            $currentEnd = Carbon::parse($subscription->end_date);
+            // renewing early adds a full period after the current one ends
+            $startsAt = $currentEnd->isFuture() ? $currentEnd : now();
             $endsAt = $startsAt->clone()->addDays($plan->duration_days ?? 365);
 
             $subscription->update([
-                'plan_id'     => $plan->id,
-                'country_id'  => $plan->country_id,
-                'status'      => 'active',
-                'start_date'  => $startsAt,
-                'end_date'    => $endsAt,
-                //'auto_renew'  => $data['auto_renew'] ?? $subscription->auto_renew,
+                'plan_id'    => $plan->id,
+                'country_id' => $plan->country_id,
+                'status'     => 'active',
+                'end_date'   => $endsAt,
             ]);
 
             $transactionId = (string) Str::uuid();
 
             SchoolTransaction::create([
-                'id'               => $transactionId,
-                'school_branch_id' => $branch->id,
-                'country_id'       => $plan->country_id,
-                'plan_id'          => $plan->id,
-                'subscription_id'  => $subscription->id,
-                'amount'           => $plan->price,
-                'currency'         => $plan->country->currency ?? 'USD',
-                'type'             => 'subscription_renewal',
-                'status'           => 'completed',
-                'payment_method_id'   => $paymentMethod->id,
-                'payment_ref'      => $data['payment_ref'] ?? (string) Str::uuid(),
+                'school_branch_id'  => $currentSchool->id,
+                'country_id'        => $plan->country_id,
+                'amount'            => $plan->price,
+                'type'              => 'subscription_renewal',
+                'status'            => 'completed',
+                'payment_method_id' => $paymentMethod->id,
+                'payment_ref'       => $data['payment_ref'] ?? (string) Str::uuid(),
+                'transaction_id'    => $transactionId,
             ]);
 
             return [
                 'subscription_id' => $subscription->id,
                 'plan_id'         => $plan->id,
-                'start_date'      => $startsAt->toDateString(),
+                'start_date'      => Carbon::parse($subscription->start_date)->toDateString(),
                 'end_date'        => $endsAt->toDateString(),
                 'expires_at'      => $endsAt->toDateString(),
             ];
@@ -262,10 +280,16 @@ class SchoolSubscriptionService
                 throw new AppException('NO_ACTIVE_SUBSCRIPTION', 400, 'Upgrade failed', 'No active subscription found to upgrade.');
             }
 
-            $newPlan = Plan::where('id', $data['new_plan_id'])
+            $newPlan = Plan::with('country')
+                ->where('id', $data['new_plan_id'])
                 ->where('status', 'active')
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $paymentMethod = PaymentMethod::find($data['payment_method_id'] ?? null);
+            if (!$paymentMethod) {
+                throw new AppException('Payment Method Not Found', 400, 'Payment Method Not Found', 'The selected payment method is invalid or does not exist.');
+            }
 
             if ($currentSubscription->plan_id === $newPlan->id) {
                 throw new AppException('SAME_PLAN', 400, 'Invalid Upgrade', 'You are already on this plan.');
@@ -300,18 +324,14 @@ class SchoolSubscriptionService
             $transactionId = (string) Str::uuid();
 
             $transaction = SchoolTransaction::create([
-                'id'               => $transactionId,
-                'school_branch_id' => $branch->id,
-                'country_id'       => $newPlan->country_id,
-                'plan_id'          => $newPlan->id,
-                'subscription_id'  => $newSubscription->id,
-                'amount'           => $newPlanPrice,
-                'currency'         => $newPlan->country->currency ?? 'XAF',
-                'type'             => 'subscription_upgrade',
-                'status'           => 'completed',
-                'payment_method'   => $data['payment_method'] ?? 'mtn_mobile_money',
-                'payment_ref'      => $data['payment_ref'] ?? (string) Str::uuid(),
-                'transaction_id'   => $transactionId,
+                'school_branch_id'  => $branch->id,
+                'country_id'        => $newPlan->country_id,
+                'amount'            => $newPlanPrice,
+                'type'              => 'subscription_upgrade',
+                'status'            => 'completed',
+                'payment_method_id' => $paymentMethod->id,
+                'payment_ref'       => $data['payment_ref'] ?? (string) Str::uuid(),
+                'transaction_id'    => $transactionId,
             ]);
 
             $oldSub = [

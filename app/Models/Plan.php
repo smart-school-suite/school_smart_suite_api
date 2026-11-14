@@ -20,7 +20,7 @@ class Plan extends Model
         'status'
     ];
 
-    public $incrementing = 'false';
+    public $incrementing = false;
     public $table = 'plans';
     public $keyType = 'string';
 
@@ -43,11 +43,11 @@ class Plan extends Model
 
     public function sourcePlan(): HasMany
     {
-        return $this->hasMany(Plan::class, 'source_plan_id');
+        return $this->hasMany(PlanRecommendation::class, 'source_plan_id');
     }
 
     public function targetPlan(): HasMany
     {
-        return $this->hasMany(Plan::class, 'target_plan_id');
+        return $this->hasMany(PlanRecommendation::class, 'target_plan_id');
     }
 }
