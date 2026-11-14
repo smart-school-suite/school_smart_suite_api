@@ -15,6 +15,7 @@ use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Invigilator\Inv
 use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Schedule\NoExamSessionBlocker;
 use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Schedule\OperationalPeriodBlocker;
 use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Schedule\SessionDurationBlocker;
+use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Student\CandidateBusyBlocker;
 use App\Schedular\ExamTimetable\Builders\BlockerBuilder\Blockers\Student\StudentDailyLoadBlocker;
 use Illuminate\Support\Collection;
 
@@ -35,6 +36,7 @@ class BlockerRegistry
         OperationalPeriodBlocker::class,
         SessionDurationBlocker::class,
         StudentDailyLoadBlocker::class,
+        CandidateBusyBlocker::class,
     ];
 
     public function map(): array

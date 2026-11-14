@@ -14,6 +14,7 @@ use App\Models\ExamTimetable\ExamTimetableVersion;
 use App\Models\Schoolbranches;
 use App\Schedular\ExamTimetable\Placement\Support\Time;
 use App\Schedular\ExamTimetable\Solution\Support\Text;
+use App\Services\ResitTimetable\Support\ActiveExamSessions;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -285,6 +286,10 @@ class ActivateExamTimetableService
                 ];
             })
             ->filter(fn(array $session) => in_array($session['date'], $dates, true))
+            // Active resit timetables use the same halls and people.
+            ->concat(app(ActiveExamSessions::class)->resits($schoolBranchId, min($dates), max($dates))
+                ->filter(fn(array $session) => in_array($session['date'], $dates, true))
+                ->map(fn(array $session) => [...$session, 'halls' => $session['halls'] ?? [], 'people' => $session['people'] ?? []]))
             ->values();
     }
 
