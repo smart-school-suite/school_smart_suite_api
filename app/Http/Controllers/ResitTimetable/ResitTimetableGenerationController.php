@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\ResitTimetable;
 
 use App\Exceptions\ExamTimetable\ExamTimetableActivationConflict;
+use App\Exceptions\ResitTimetable\ResitJointCoursesWithoutTime;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ResitTimetable\GenerateResitTimetableRequest;
 use App\Services\ApiResponseService;
@@ -38,7 +39,16 @@ class ResitTimetableGenerationController extends Controller
 
     public function generateTimetable(GenerateResitTimetableRequest $request, ResitTimetableGenerationDispatcher $dispatcher)
     {
-        $version = $dispatcher->dispatch($this->school($request), $request->validated(), $this->resolveUser());
+        try {
+            $version = $dispatcher->dispatch($this->school($request), $request->validated(), $this->resolveUser());
+        } catch (ResitJointCoursesWithoutTime $missing) {
+            return ApiResponseService::error($missing->getMessage(), null, 422, [
+                'title' => $missing->getTitle(),
+                'description' => $missing->getDescription(),
+                'path' => $missing->getPath(),
+                'joint_courses' => $missing->courses(),
+            ]);
+        }
 
         return ApiResponseService::success(
             'Resit timetable generation initiated successfully',

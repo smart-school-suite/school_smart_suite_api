@@ -291,32 +291,24 @@ class ResitTimetableTest extends TestCase
         $this->assertContains($examInvigilator->id, array_column($busy['invigilator_busy_periods'], 'invigilator_id'));
     }
 
-    public function test_a_course_resat_by_another_specialty_keeps_its_active_time(): void
+    public function test_a_joint_resit_is_placed_at_its_set_time(): void
     {
-        // spec-2 also resits c1; its resit timetable is active first.
+        // spec-2 also resits c1, so c1 is a joint resit; its time is set on the joint course timetable.
         $this->exam('exam-3', 'year-spec-2');
         $this->resitExam('resit-2', 'year-spec-2', ['exam-3']);
         $this->resits('exam-3', ['s7' => ['c1']]);
-        $other = $this->resitInvigilators('resit-2', ['t9']);
-        $this->resitActivation->activate($this->school, $this->generateResitVersion('resit-2', $this->resitInput('resit-2', $other))->id);
-        $theirs = Resitexamtimetable::where('resit_exam_id', 'resit-2')->first();
+        app(\App\Services\ResitJointCourse\ResitJointCourseSync::class)->forResitExam('branch-1', 'resit-1');
+        $joint = \App\Models\ResitJointCourse\ResitJointCourse::where('course_id', 'c1')->firstOrFail();
+        \App\Models\ResitJointCourse\ResitJointCourseSlot::query()->insert(['id' => (string) Str::uuid(), 'school_branch_id' => 'branch-1', 'resit_jc_id' => $joint->id, 'date' => '2099-12-08', 'start_time' => '10:00:00', 'end_time' => '12:00:00']);
 
-        $joint = app(JointResitCourses::class)->periodsFor('branch-1', ResitExam::find('resit-1'), ['c1', 'c2', 'c3'], '2099-12-07', '2099-12-08');
-
-        $this->assertCount(1, $joint);
-        $this->assertSame('c1', $joint[0]['course_id']);
-        $this->assertSame(Time::normalize($theirs->getRawOriginal('start_time')), $joint[0]['start_time']);
+        $periods = app(JointResitCourses::class)->periodsFor('branch-1', 'resit-1');
+        $this->assertSame([['course_id' => 'c1', 'date' => '2099-12-08', 'start_time' => '10:00', 'end_time' => '12:00']], $periods);
 
         $invigilators = $this->resitInvigilators('resit-1', ['t1', 't2', 't3']);
-        $busy = app(ResitActiveCommitments::class)->busyPeriodsForGeneration(
-            'branch-1', 'resit-1', '2099-12-07', '2099-12-08', ['h-a', 'h-b'],
-            ResitInvigilator::where('resit_exam_id', 'resit-1')->get(), ['s1', 's2', 's3'],
-        );
-        $version = $this->generateResitVersion('resit-1', $this->resitInput('resit-1', $invigilators, $busy, $joint));
+        $version = $this->generateResitVersion('resit-1', $this->resitInput('resit-1', $invigilators, [], $periods));
         $c1 = $this->sessions($version)['c1'];
 
-        $this->assertSame($joint[0]['date'], $c1['date']);
-        $this->assertSame($joint[0]['start_time'], $c1['start_time']);
+        $this->assertSame(['2099-12-08', '10:00'], [$c1['date'], $c1['start_time']]);
         $this->assertTrue($this->resitActivation->check($this->school, $version->id)['can_activate']);
     }
 

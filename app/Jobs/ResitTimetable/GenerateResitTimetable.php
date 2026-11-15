@@ -50,8 +50,7 @@ use Throwable;
  *    not given a resit then;
  *  - halls and invigilators busy in any active exam or resit timetable stay busy;
  *  - a course resat by several specialties (same academic year and resit type)
- *    is examined at the time another specialty's active resit timetable
- *    already gives it, so the paper is sat once.
+ *    is sat once, at the time set on the resit joint course timetable.
  */
 class GenerateResitTimetable implements ShouldQueue
 {
@@ -140,7 +139,7 @@ class GenerateResitTimetable implements ShouldQueue
         );
         $systemJob->systemJobEvent()->create(['event_type' => 'info', 'message' => 'Hall, invigilator and candidate busy periods fetched']);
 
-        $jointCourses = app(JointResitCourses::class)->periodsFor($branchId, $resitExam, $courses->pluck('id')->all(), $startDate, $endDate);
+        $jointCourses = app(JointResitCourses::class)->periodsFor($branchId, $resitExam->id);
 
         $body = $this->buildRequestBody($resitExam, $startDate, $endDate, $studentIds, $candidates, $courses, $halls, $invigilators, $busy, $jointCourses);
 

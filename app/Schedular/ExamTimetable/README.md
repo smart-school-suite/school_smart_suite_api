@@ -155,9 +155,14 @@ activate, versions, active timetable, invigilators). On top of the exam rules:
 - active exam **and** resit timetables share halls, invigilators and candidates
   (`Support/ActiveExamSessions`): resit generation and activation respect active exams, and exam generation and
   activation respect active resits;
-- a course resat by several specialties (same academic year and resit exam type) is sat once: once one of
-  their resit timetables is active, the others place it at that time (`Support/JointResitCourses`, sent as
-  `required_joint_course_periods`);
+- a course resat by several specialties (same academic year and resit exam type) is a **joint resit**, sat once
+  at one time, like a joint exam. Its time is set on the resit joint course timetable
+  (`/api/v1/resit-joint-course-timetable`, same endpoints as the exam one: terms, term, generate free times,
+  confirm a proposal, save or remove a time). Free times are found with `JointExamSlotFinder`: inside every
+  linked resit period, when none of the course's candidates sits another exam or resit, with enough exam hall
+  seats and free invigilators who don't teach the course. Joint resits are re-synced from `student_resits`
+  whenever a term is read; generation is refused until each has a time (`ResitJointCoursesWithoutTime`) and then
+  places it there (`required_joint_course_periods`);
 - invigilators are per resit exam (`resit_invigilators`), never invigilate a course they teach, and can't be
   removed while the active resit timetable uses them.
 
