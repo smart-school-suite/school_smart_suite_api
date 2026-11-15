@@ -18,7 +18,8 @@ class StudentDailyLoadValidator extends BaseValidator
         }
 
         $max = RequestContext::fromPayload()->dailyLoadFor($date)['max_sessions'];
-        $load = $state->load($date);
+        $courseId = $params['course_id'] ?? null;
+        $load = $state->load($date, $courseId);
 
         if ($max === null || $load + 1 <= $max) {
             return [];
@@ -30,7 +31,7 @@ class StudentDailyLoadValidator extends BaseValidator
             'breach' => 'max',
             'max_sessions' => $max,
             'sessions' => $load,
-            'course_ids' => array_column($state->sessions($date), 'course_id'),
+            'course_ids' => array_column($state->sessions($date, $courseId), 'course_id'),
             'conflict' => $this->conflict($params),
         ]];
     }

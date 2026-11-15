@@ -19,15 +19,16 @@ use App\Schedular\ExamTimetable\Core\State;
 class ExamDateScoring
 {
     /** @return array<int, array{date: string, overflow: bool}> */
-    public function rank(State $state): array
+    public function rank(State $state, ?string $courseId = null): array
     {
         $context = RequestContext::fromPayload();
-        $examDays = array_keys(array_filter($state->dateGrid, fn($day) => !empty($day->allocations)));
+        // With candidate groups only exams sharing candidates with the course count.
+        $examDays = array_keys(array_filter($state->dateGrid, fn($day) => !empty($state->sessions($day->date, $courseId))));
         $examDayTimes = array_map('strtotime', $examDays);
         $ranked = [];
 
         foreach (array_keys($state->dateGrid) as $date) {
-            $load = $state->load($date);
+            $load = $state->load($date, $courseId);
             $limits = $context->dailyLoadFor($date);
             $min = $limits['min_sessions'] ?? 0;
             $max = $limits['max_sessions'] ?? PHP_INT_MAX;

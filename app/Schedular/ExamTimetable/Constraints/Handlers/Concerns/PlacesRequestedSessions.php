@@ -8,6 +8,7 @@ use App\Schedular\ExamTimetable\Constraints\Validator\Course\CourseRequestedSlot
 use App\Schedular\ExamTimetable\Constraints\Validator\Course\RequiredJointCourseSlotValidator;
 use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\OperationalPeriodValidator;
 use App\Schedular\ExamTimetable\Constraints\Validator\Schedule\SessionDurationValidator;
+use App\Schedular\ExamTimetable\Constraints\Validator\Student\CandidateBusyValidator;
 use App\Schedular\ExamTimetable\Constraints\Validator\Student\StudentDailyLoadValidator;
 use App\Schedular\ExamTimetable\Context\RequestContext;
 use App\Schedular\ExamTimetable\Core\State;
@@ -43,6 +44,7 @@ trait PlacesRequestedSessions
             ...app(RequiredJointCourseSlotValidator::class)->check($params, $state),
             ...app(RequestedAssignmentValidator::class)->check($params, $state),
             ...app(CourseRequestedSlotValidator::class)->check($params, $state),
+            ...app(CandidateBusyValidator::class)->check($params, $state),
             ...app(StudentDailyLoadValidator::class)->check($params, $state),
         ];
 

@@ -49,6 +49,41 @@ class ExamTimetableInsightService
         private ExamApplySolutionService $solutions,
     ) {}
 
+    // ── Storage hooks (the resit timetable overrides these) ───────────────
+
+    protected function findVersion(object $currentSchool, string $versionId): ?object
+    {
+        return ExamTimetableVersion::where('school_branch_id', $currentSchool->id)->find($versionId);
+    }
+
+    protected function latestTimetable(object $currentSchool, string $versionId): ?object
+    {
+        return ExamTimetable::where('school_branch_id', $currentSchool->id)
+            ->where('timetable_version_id', $versionId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    protected function latestSetupErrors(object $currentSchool, string $versionId): ?object
+    {
+        return ExamTimetableError::where('school_branch_id', $currentSchool->id)
+            ->where('timetable_version_id', $versionId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    /** What the timetable is for, in the messages ("exam", "resit"). */
+    protected function noun(): string
+    {
+        return 'exam';
+    }
+
+    /** @return string[] version fields returned with the solutions */
+    protected function versionFields(): array
+    {
+        return ['id', 'label', 'version_number', 'scheduler_status', 'exam_id'];
+    }
+
     public function solutions(object $currentSchool, string $versionId): array
     {
         $run = $this->load($currentSchool, $versionId);
@@ -61,7 +96,7 @@ class ExamTimetableInsightService
                 ->groupBy('date')
                 ->map(fn(Collection $problems, string $date) => [
                     'date' => $date === Issue::NO_DATE ? null : $date,
-                    'date_label' => $date === Issue::NO_DATE ? 'Whole exam period' : Text::date($date),
+                    'date_label' => $date === Issue::NO_DATE ? 'Whole ' . $this->noun() . ' period' : Text::date($date),
                     'issue_count' => $problems->sum(fn(array $problem) => count($problem['issues'])),
                     'problem_count' => $problems->count(),
                     'problems' => $problems->values()->all(),
@@ -74,28 +109,22 @@ class ExamTimetableInsightService
 
     private function load(object $currentSchool, string $versionId): array
     {
-        $version = ExamTimetableVersion::where('school_branch_id', $currentSchool->id)->find($versionId);
+        $version = $this->findVersion($currentSchool, $versionId);
 
         if (!$version) {
             throw new AppException(
                 "Exam timetable version {$versionId} not found for school branch {$currentSchool->id}.",
                 404,
                 'Timetable Version Not Found',
-                "We couldn't find this exam timetable version. It may have been deleted.",
+                "We couldn't find this {$this->noun()} timetable version. It may have been deleted.",
                 null
             );
         }
 
-        $timetable = ExamTimetable::where('school_branch_id', $currentSchool->id)
-            ->where('timetable_version_id', $versionId)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $timetable = $this->latestTimetable($currentSchool, $versionId);
 
         $setupErrors = $version->scheduler_status === ExamTimetableVersion::STATUS_FAILED
-            ? ExamTimetableError::where('school_branch_id', $currentSchool->id)
-                ->where('timetable_version_id', $versionId)
-                ->orderBy('created_at', 'desc')
-                ->first()
+            ? $this->latestSetupErrors($currentSchool, $versionId)
             : null;
 
         $raw = $this->asArray($timetable?->raw_diagnostics ?? []);
@@ -107,7 +136,7 @@ class ExamTimetableInsightService
             ->values();
 
         return [
-            'version' => $version->only(['id', 'label', 'version_number', 'scheduler_status', 'exam_id']),
+            'version' => $version->only($this->versionFields()),
             'status' => $version->scheduler_status,
             'issues' => $this->issueList($diagnostics, $context, $paths)->concat($this->setupIssues($setupErrors)),
             'paths' => $paths,
@@ -334,12 +363,12 @@ class ExamTimetableInsightService
         $warnings = $run['issues']->where('severity', 'warning')->count();
 
         [$headline, $message] = match ($run['status']) {
-            ExamTimetableVersion::STATUS_PENDING => ['Not generated yet', 'Generate this version to see its exam timetable and any problems.'],
-            ExamTimetableVersion::STATUS_GENERATING => ['Generating the exam timetable', 'This usually takes a few seconds. Problems and solutions will appear here when it finishes.'],
-            ExamTimetableVersion::STATUS_OPTIMAL => ['Exam timetable generated with no problems', 'Every rule and request was respected.'],
-            ExamTimetableVersion::STATUS_PARTIAL => ['Exam timetable generated with ' . $warnings . ' request(s) not honoured', 'The timetable is usable. Review the requests below and pick a solution if you want them honoured.'],
+            ExamTimetableVersion::STATUS_PENDING => ['Not generated yet', 'Generate this version to see its ' . $this->noun() . ' timetable and any problems.'],
+            ExamTimetableVersion::STATUS_GENERATING => ['Generating the ' . $this->noun() . ' timetable', 'This usually takes a few seconds. Problems and solutions will appear here when it finishes.'],
+            ExamTimetableVersion::STATUS_OPTIMAL => [ucfirst($this->noun()) . ' timetable generated with no problems', 'Every rule and request was respected.'],
+            ExamTimetableVersion::STATUS_PARTIAL => [ucfirst($this->noun()) . ' timetable generated with ' . $warnings . ' request(s) not honoured', 'The timetable is usable. Review the requests below and pick a solution if you want them honoured.'],
             ExamTimetableVersion::STATUS_FAILED => ['Generation could not start', 'Fix the setup problem(s) below, then generate again.'],
-            default => ['The exam timetable is not complete', $blocking . ' problem(s) must be fixed first. Each one has suggested solutions.'],
+            default => ['The ' . $this->noun() . ' timetable is not complete', $blocking . ' problem(s) must be fixed first. Each one has suggested solutions.'],
         };
 
         return [

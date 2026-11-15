@@ -131,3 +131,34 @@ the specialties' exam timetables are generated, like the semester joint course t
 
 Endpoints are under `/api/v1/exam-joint-course-timetable`; `GET /terms` and `GET /term/{schoolYearId}/{examTypeId}`
 list the joint exams and which still need a time.
+
+## Candidate groups and resit timetables
+
+The same scheduler generates resit timetables (`Jobs/ResitTimetable/GenerateResitTimetable`). A resit exam
+differs from an exam in who sits what: each course has its own candidates, the students resitting it. When
+any course in the input lists its `student_ids`, the scheduler works per candidate instead of per specialty:
+
+- two exams only clash when they share a candidate, so resits of different students can run side by side
+  (each still gets its own halls and invigilators);
+- the daily load range counts the exams of the busiest candidate, not every session of the date;
+- `candidate_busy_periods` (`{student_id, date, start_time, end_time}`) are times candidates sit another exam;
+  a resit is never placed then, and a resit that fits nowhere because of them reports `candidate_busy_violation`.
+
+Without `student_ids` nothing changes: every exam of one specialty has the same students.
+
+The resit pipeline mirrors the exam one under `/api/v1/resit-timetable-generation` (constraints, scheduling
+data, generate, version status / slots / payload / diagnostics / errors / solutions / apply / activation check /
+activate, versions, active timetable, invigilators). On top of the exam rules:
+
+- candidates of each course come from `student_resits` of the exams the resit exam refers to
+  (`Services/ResitTimetable/Support/ResitCandidates`);
+- active exam **and** resit timetables share halls, invigilators and candidates
+  (`Support/ActiveExamSessions`): resit generation and activation respect active exams, and exam generation and
+  activation respect active resits;
+- a course resat by several specialties (same academic year and resit exam type) is sat once: once one of
+  their resit timetables is active, the others place it at that time (`Support/JointResitCourses`, sent as
+  `required_joint_course_periods`);
+- invigilators are per resit exam (`resit_invigilators`), never invigilate a course they teach, and can't be
+  removed while the active resit timetable uses them.
+
+Activation writes `resit_exam_timetable_slots` (with `version_id`), `resit_session_halls` and `resit_session_invigs`.

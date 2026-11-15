@@ -35,7 +35,7 @@ abstract class BaseValidator implements ValidatorInterface
         }
 
         return array_values(array_filter(
-            $state->sessionsOverlapping($params['date'], Time::toMinutes($params['start_time']), Time::toMinutes($params['end_time'])),
+            $state->sessionsOverlapping($params['date'], Time::toMinutes($params['start_time']), Time::toMinutes($params['end_time']), $params['course_id'] ?? null),
             fn(array $session) => $session['source'] === $source
         ));
     }

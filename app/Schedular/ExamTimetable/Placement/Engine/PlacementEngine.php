@@ -8,6 +8,7 @@ use App\Constant\Violation\ExamTimetable\Hall\HallUnavailable;
 use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorTeachesCourse;
 use App\Constant\Violation\ExamTimetable\Invigilator\InvigilatorUnavailable;
 use App\Constant\Violation\ExamTimetable\Schedule\OperationalPeriod;
+use App\Constant\Violation\ExamTimetable\Student\CandidateBusy;
 use App\Constant\Violation\ExamTimetable\Student\StudentDailyLoad;
 use App\Schedular\ExamTimetable\Context\RequestContext;
 use App\Schedular\ExamTimetable\Core\State;
@@ -73,7 +74,7 @@ class PlacementEngine
     {
         $duration = $context->sessionDurationCourse($courseId);
         $allocator = app(ResourceAllocator::class);
-        $dates = app(ExamDateScoring::class)->rank($state);
+        $dates = app(ExamDateScoring::class)->rank($state, $courseId);
         $failures = ['times_tried' => 0, 'hall' => null, 'invigilator' => null];
 
         // Dates within the daily maximum first; over-full dates only as a last resort.
@@ -84,7 +85,7 @@ class PlacementEngine
                 }
 
                 $date = $entry['date'];
-                $slots = app(ExamSlotScore::class)->suggestSlots($state->dateGrid[$date], $duration);
+                $slots = app(ExamSlotScore::class)->suggestSlots($state->dateGrid[$date], $duration, $courseId);
 
                 foreach ($slots as $slot) {
                     $failures['times_tried']++;
@@ -159,7 +160,12 @@ class PlacementEngine
     {
         $conflict = ['course_id' => $courseId, 'slot_type' => CoursePlacement::KEY];
 
+        $candidateBusy = $this->candidateBusyBlocker($context, $courseId, $conflict);
+
         if ($failures['times_tried'] === 0) {
+            if ($candidateBusy) {
+                return [$candidateBusy];
+            }
             return [[
                 'key' => OperationalPeriod::KEY,
                 'entity_type' => 'operational_hour',
@@ -189,7 +195,39 @@ class PlacementEngine
             }
         }
 
+        if ($candidateBusy) {
+            $blockers[] = $candidateBusy;
+        }
+
         return $blockers;
+    }
+
+    /** When some of the course's candidates sit other exams in the period, those times were off limits. */
+    private function candidateBusyBlocker(RequestContext $context, string $courseId, array $conflict): ?array
+    {
+        $periods = [];
+        foreach ($context->candidateBusyPeriodsOf($courseId) as $date => $windows) {
+            foreach ($windows as $window) {
+                $periods[] = [
+                    'date' => $date,
+                    'start_time' => Time::toTime($window['start']),
+                    'end_time' => Time::toTime($window['end']),
+                    'student_count' => $window['students'],
+                ];
+            }
+        }
+
+        if (!$periods) {
+            return null;
+        }
+
+        return [
+            'key' => CandidateBusy::KEY,
+            'course_id' => $courseId,
+            'student_count' => max(array_column($periods, 'student_count')),
+            'busy_periods' => array_slice($periods, 0, 20),
+            'conflict' => $conflict,
+        ];
     }
 
     private function recordDailyLoadBreach(State $state, RequestContext $context, string $date, string $courseId): void
@@ -212,15 +250,15 @@ class PlacementEngine
                 'date' => $date,
                 'breach' => 'max',
                 'max_sessions' => $max,
-                'sessions' => $state->load($date) + 1,
+                'sessions' => $state->load($date, $courseId) + 1,
             ],
             'blockers' => [[
                 'key' => StudentDailyLoad::KEY,
                 'date' => $date,
                 'breach' => 'max',
                 'max_sessions' => $max,
-                'sessions' => $state->load($date),
-                'course_ids' => [...array_column($state->sessions($date), 'course_id'), $courseId],
+                'sessions' => $state->load($date, $courseId),
+                'course_ids' => [...array_column($state->sessions($date, $courseId), 'course_id'), $courseId],
                 'conflict' => ['course_id' => $courseId, 'date' => $date, 'slot_type' => CoursePlacement::KEY],
             ]],
         ];

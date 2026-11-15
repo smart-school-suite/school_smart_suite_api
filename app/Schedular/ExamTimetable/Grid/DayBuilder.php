@@ -177,7 +177,7 @@ class DayBuilder
                 $start = Time::toMinutes($params['start_time']);
                 $end = Time::toMinutes($params['end_time']);
 
-                foreach ($state->sessionsOverlapping($params['date'], $start, $end) as $session) {
+                foreach ($state->sessionsOverlapping($params['date'], $start, $end, $params['course_id']) as $session) {
                     $blockers[] = [
                         'key' => RequiredJointCourse::KEY,
                         'course_id' => $session['course_id'],

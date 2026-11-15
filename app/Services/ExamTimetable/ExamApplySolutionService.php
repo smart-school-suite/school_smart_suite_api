@@ -24,6 +24,44 @@ class ExamApplySolutionService
         private ExamTimetableGenerationDispatcher $dispatcher,
     ) {}
 
+    // ── Hooks (the resit timetable overrides these) ───────────────────────
+
+    /** Generates a new version from the adjusted request. */
+    protected function dispatchNew(object $currentSchool, array $request, object $user): object
+    {
+        return $this->dispatcher->dispatch($currentSchool, $request, $user);
+    }
+
+    protected function latestTimetable(object $currentSchool, string $versionId): ?object
+    {
+        return ExamTimetable::where('school_branch_id', $currentSchool->id)
+            ->where('timetable_version_id', $versionId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    /** The request field naming what the timetable is for. */
+    protected function ownerKey(): string
+    {
+        return 'exam_id';
+    }
+
+    /** Validation rules of a generation request. */
+    protected function requestRules(): array
+    {
+        return (new GenerateExamTimetableRequest())->rules();
+    }
+
+    protected function findVersion(object $currentSchool, string $versionId): ?object
+    {
+        return ExamTimetableVersion::where('school_branch_id', $currentSchool->id)->find($versionId);
+    }
+
+    protected function versionFields(): array
+    {
+        return ['id', 'label', 'version_number', 'scheduler_status', 'exam_id'];
+    }
+
     public function apply(object $currentSchool, string $versionId, array $solutionIds, object $user): array
     {
         $plan = $this->plan($currentSchool, $versionId, $solutionIds);
@@ -42,7 +80,7 @@ class ExamApplySolutionService
             );
         }
 
-        $newVersion = $this->dispatcher->dispatch($currentSchool, [...$plan['request'], 'version_id' => null], $user);
+        $newVersion = $this->dispatchNew($currentSchool, [...$plan['request'], 'version_id' => null], $user);
 
         return [
             'source_version' => $this->versionSummary($plan['version']),
@@ -102,10 +140,7 @@ class ExamApplySolutionService
     private function plan(object $currentSchool, string $versionId, array $solutionIds): array
     {
         $version = $this->version($currentSchool, $versionId);
-        $timetable = ExamTimetable::where('school_branch_id', $currentSchool->id)
-            ->where('timetable_version_id', $versionId)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $timetable = $this->latestTimetable($currentSchool, $versionId);
 
         $suggestions = collect($this->asArray($timetable?->raw_suggestions ?? []))
             ->flatten(1)
@@ -138,7 +173,7 @@ class ExamApplySolutionService
         $request = $this->asArray($timetable->request_payload ?? []);
         unset($request['version_id']);
 
-        if (empty($request['exam_id'])) {
+        if (empty($request[$this->ownerKey()])) {
             throw new AppException(
                 "Exam timetable version {$versionId} has no stored generation settings.",
                 422,
@@ -157,7 +192,7 @@ class ExamApplySolutionService
             array_push($changes, ...array_map(fn(array $change) => [...$change, 'solution_id' => $path['id']], $pathChanges));
         }
 
-        $validator = Validator::make($adjusted, collect((new GenerateExamTimetableRequest())->rules())->except('version_id')->all());
+        $validator = Validator::make($adjusted, collect($this->requestRules())->except('version_id')->all());
         $errors = $validator->fails() ? $validator->errors()->toArray() : [];
 
         return [
@@ -170,9 +205,9 @@ class ExamApplySolutionService
         ];
     }
 
-    private function version(object $currentSchool, string $versionId): ExamTimetableVersion
+    private function version(object $currentSchool, string $versionId): object
     {
-        return ExamTimetableVersion::where('school_branch_id', $currentSchool->id)->find($versionId)
+        return $this->findVersion($currentSchool, $versionId)
             ?? throw new AppException(
                 "Exam timetable version {$versionId} not found for school branch {$currentSchool->id}.",
                 404,
@@ -182,9 +217,9 @@ class ExamApplySolutionService
             );
     }
 
-    private function versionSummary(ExamTimetableVersion $version): array
+    private function versionSummary(object $version): array
     {
-        return $version->only(['id', 'label', 'version_number', 'scheduler_status', 'exam_id']);
+        return $version->only($this->versionFields());
     }
 
     private function asArray(mixed $value): array
