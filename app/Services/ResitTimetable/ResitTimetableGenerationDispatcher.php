@@ -2,15 +2,26 @@
 
 namespace App\Services\ResitTimetable;
 
+use App\Exceptions\ResitTimetable\ResitJointCoursesWithoutTime;
 use App\Jobs\ResitTimetable\GenerateResitTimetable;
 use App\Models\Job\SystemJob;
 use App\Models\ResitExam;
 use App\Models\ResitTimetable\ResitTimetableVersion;
+use App\Services\ResitTimetable\Support\JointResitCourses;
 
 class ResitTimetableGenerationDispatcher
 {
+    public function __construct(private JointResitCourses $jointCourses) {}
+
     public function dispatch(object $currentSchool, array $payload, object $user): ResitTimetableVersion
     {
+        // Checked before a version is created, so a refused request leaves nothing behind.
+        $this->jointCourses->sync($currentSchool->id, $payload['resit_exam_id']);
+        $unscheduled = $this->jointCourses->withoutTime($currentSchool->id, $payload['resit_exam_id']);
+        if ($unscheduled) {
+            throw new ResitJointCoursesWithoutTime($unscheduled);
+        }
+
         $version = !empty($payload['version_id'])
             ? ResitTimetableVersion::where('school_branch_id', $currentSchool->id)
                 ->where('resit_exam_id', $payload['resit_exam_id'])

@@ -65,6 +65,11 @@ class ResitExam extends Model
         return $this->belongsTo(SchoolGradeScaleCategory::class, 'grades_category_id');
     }
 
+    public function timetableVersions(): HasMany
+    {
+        return $this->hasMany(\App\Models\ResitTimetable\ResitTimetableVersion::class, 'resit_exam_id');
+    }
+
     public function examType(): BelongsTo
     {
         return $this->belongsTo(Examtype::class, "exam_type_id");
