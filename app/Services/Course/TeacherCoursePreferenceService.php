@@ -247,6 +247,27 @@ class TeacherCoursePreferenceService
             ];
         });
     }
+    /**
+     * Unassign many teacher/course pairs at once, all or nothing.
+     * Pairs are grouped per teacher and handed to removeTeacherAssignedCourses.
+     */
+    public function bulkRemoveTeacherAssignedCourses(object $currentSchool, array $assignments, $authAdmin): array
+    {
+        $byTeacher = collect($assignments)
+            ->groupBy('teacher_id')
+            ->map(fn($rows) => $rows->pluck('course_id')->unique()->values());
+
+        return DB::transaction(function () use ($currentSchool, $byTeacher, $authAdmin) {
+            $results = [];
+            foreach ($byTeacher as $teacherId => $courseIds) {
+                $results[] = $this->removeTeacherAssignedCourses($currentSchool, [
+                    'teacher_id' => $teacherId,
+                    'courseIds'  => $courseIds->map(fn($id) => ['course_id' => $id])->all(),
+                ], $authAdmin);
+            }
+            return $results;
+        });
+    }
     public function getAssignedTeacherCourses(object $currentSchool, string $teacherId)
     {
         $schoolBranchId = $currentSchool->id;

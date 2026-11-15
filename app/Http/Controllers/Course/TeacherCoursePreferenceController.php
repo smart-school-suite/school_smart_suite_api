@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Course;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Course\ChangeTeacherCourseRequest;
 use App\Http\Requests\Course\CreateTeacherCoursePreferenceRequest;
+use App\Http\Requests\Course\BulkRemoveTeacherCourseRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\Course\TeacherCoursePreferenceService;
@@ -32,6 +33,13 @@ class TeacherCoursePreferenceController extends Controller
         return ApiResponseService::success("Course Assigned to teacher successfully", $assignTeacherCourse, null, 201);
     }
 
+    public function bulkRemoveTeacherAssignedCourses(BulkRemoveTeacherCourseRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $removed = $this->teacherCoursePreferenceService->bulkRemoveTeacherAssignedCourses($currentSchool, $request->validated()['assignments'], $authAdmin);
+        return ApiResponseService::success("Teacher Course Assignments Removed Successfully", $removed, null, 200);
+    }
     public function removeTeacherAssignedCourse(CreateTeacherCoursePreferenceRequest $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
