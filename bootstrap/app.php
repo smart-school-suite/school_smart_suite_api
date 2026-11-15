@@ -212,6 +212,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-timetable-generation')
                 ->group(base_path('routes/Resit/ResitTimetableGeneration.php'));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-joint-course-timetable')
+                ->group(base_path('routes/ResitJointCourse/ResitJointCourseTimetable.php'));
+
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/student-resit')
                 ->group(base_path("routes/Resit/StudentResit.php"));
 

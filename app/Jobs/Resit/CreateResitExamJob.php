@@ -108,5 +108,8 @@ class CreateResitExamJob implements ShouldQueue
                 'school_branch_id' => $this->schoolBranchId,
             ]);
         }
+
+        // Courses other specialties resit too become joint resits.
+        app(\App\Services\ResitJointCourse\ResitJointCourseSync::class)->forResitExam($this->schoolBranchId, $resitExam->id);
     }
 }

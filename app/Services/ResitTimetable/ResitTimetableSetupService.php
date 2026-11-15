@@ -35,7 +35,7 @@ class ResitTimetableSetupService
                 ...$category,
                 'constraints' => array_values(array_map(
                     fn(array $item) => $item['key'] === RequiredJointCourseSession::KEY
-                        ? [...$item, 'name' => 'Shared Resit Courses', 'description' => 'A course resat by several specialties is sat once: once another specialty\'s active resit timetable examines it, it is placed at that same time here.', 'read_only' => true]
+                        ? [...$item, 'name' => 'Joint Resits', 'description' => 'Courses resat by several specialties are sat once, at the time set on the Resit Joint Course Timetable page. Generation waits until every one has a time.', 'read_only' => true]
                         : $item,
                     $category['constraints']
                 )),
@@ -54,9 +54,8 @@ class ResitTimetableSetupService
             ->orderBy('course_title')
             ->get();
 
-        $joint = $this->jointCourses->sessions($currentSchool->id, $resitExam, $courses->pluck('id')->all())
-            ->unique('course_id')
-            ->keyBy('course_id');
+        $this->jointCourses->sync($currentSchool->id, $resitExam->id);
+        $joint = collect($this->jointCourses->byCourse($currentSchool->id, $resitExam->id));
 
         $invigilators = ResitInvigilator::where('school_branch_id', $currentSchool->id)
             ->where('resit_exam_id', $resitExam->id)
@@ -78,15 +77,7 @@ class ResitTimetableSetupService
                 'course_code' => $course->course_code,
                 'candidate_count' => count($byCourse[$course->id] ?? []),
                 'is_joint' => $joint->has($course->id),
-                'joint' => $joint->has($course->id) ? [
-                    'resit_exam_id' => $joint[$course->id]['resit_exam_id'],
-                    'specialty_name' => $joint[$course->id]['specialty_name'],
-                    'slot' => [
-                        'date' => $joint[$course->id]['date'],
-                        'start_time' => $joint[$course->id]['start_time'],
-                        'end_time' => $joint[$course->id]['end_time'],
-                    ],
-                ] : null,
+                'joint' => $joint->get($course->id),
             ])->values()->all(),
             'halls' => Hall::where('school_branch_id', $currentSchool->id)
                 ->where('status', 'available')
