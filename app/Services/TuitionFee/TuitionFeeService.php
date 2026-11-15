@@ -5,6 +5,7 @@ namespace App\Services\TuitionFee;
 use App\Models\Student;
 use App\Models\TuitionFees;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 use App\Exceptions\AppException;
 use App\Events\Actions\AdminActionEvent;
@@ -101,6 +102,67 @@ class TuitionFeeService
                 null
             );
         }
+    }
+    public function bulkDeleteFeePayment(array $tuitionFeeIds, object $currentSchool, object $authAdmin)
+    {
+        $ids = collect($tuitionFeeIds)->pluck('tuition_fee_id')->unique()->values();
+        $tuitionFees = TuitionFees::where('school_branch_id', $currentSchool->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        if ($tuitionFees->count() !== $ids->count()) {
+            throw new AppException(
+                "Some tuition fee records were not found for school branch ID '{$currentSchool->id}'.",
+                404,
+                "Tuition Fee Not Found",
+                "One or more of the selected tuition fee records could not be found. They might have been deleted, please refresh and try again.",
+                null
+            );
+        }
+
+        try {
+            DB::transaction(function () use ($tuitionFees) {
+                foreach ($tuitionFees as $tuitionFee) {
+                    $tuitionFee->delete();
+                }
+            });
+        } catch (Throwable $e) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
+                throw new AppException(
+                    "Failed to bulk delete tuition fees. Error: " . $e->getMessage(),
+                    409,
+                    "Deletion Blocked",
+                    "One or more of the selected tuition fees are linked to other financial records. Please ensure all associations are removed first.",
+                    null
+                );
+            }
+            throw new AppException(
+                "Failed to bulk delete tuition fees. Error: " . $e->getMessage(),
+                500,
+                "Deletion Failed",
+                "A system error occurred while deleting the selected tuition fees. Please try again or contact support.",
+                null
+            );
+        }
+
+        AdminActionEvent::dispatch([
+            "permissions" =>  ["schoolAdmin.tuitionFee.delete"],
+            "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+            "schoolBranch" =>  $currentSchool->id,
+            "feature" => "tuitionFeeManagement",
+            "authAdmin" => $authAdmin,
+            "data" => $tuitionFees,
+            "message" => "Tuition Fee Payments Deleted",
+        ]);
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'studentIds'   => $tuitionFees->pluck('student_id')->unique()->values()->all(),
+            'feature'      => 'tuitionFeeDelete',
+            'message'      => 'Tuition Fees Deleted',
+            'data'         => $tuitionFees,
+        ]);
+
+        return $tuitionFees;
     }
     public function getFeeDebtors(object $currentSchool)
     {

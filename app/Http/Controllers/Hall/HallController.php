@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hall;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hall\CreateHallRequest;
 use App\Http\Requests\Hall\ImportHallRequest;
+use App\Http\Requests\Hall\HallIdRequest;
 use App\Http\Requests\Hall\UpdateHallRequest;
 use App\Jobs\Hall\HallImportJob;
 use App\Models\Hall;
@@ -75,6 +76,30 @@ class HallController extends Controller
         $currentSchool = $request->attributes->get("currentSchool");
         $deactivateHall = $this->hallService->deactivateHall($currentSchool, $hallId, $authAdmin);
         return ApiResponseService::success("Hall Deactivated Successfully", $deactivateHall, null, 200);
+    }
+
+    public function bulkDeleteHall(HallIdRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $halls = $this->hallService->bulkDeleteHall($currentSchool, $request->validated()['hallIds'], $authAdmin);
+        return ApiResponseService::success("Halls Deleted Successfully", $halls, null, 200);
+    }
+
+    public function bulkActivateHall(HallIdRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $halls = $this->hallService->bulkActivateHall($currentSchool, $request->validated()['hallIds'], $authAdmin);
+        return ApiResponseService::success("Halls Activated Successfully", $halls, null, 200);
+    }
+
+    public function bulkDeactivateHall(HallIdRequest $request)
+    {
+        $authAdmin = $this->resolveUser();
+        $currentSchool = $request->attributes->get('currentSchool');
+        $halls = $this->hallService->bulkDeactivateHall($currentSchool, $request->validated()['hallIds'], $authAdmin);
+        return ApiResponseService::success("Halls Deactivated Successfully", $halls, null, 200);
     }
 
     public function getHallDetails(Request $request, string $hallId)

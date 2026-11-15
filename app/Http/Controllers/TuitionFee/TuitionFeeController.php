@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\TuitionFee\TuitionFeeService;
 use App\Services\ApiResponseService;
+use App\Http\Requests\TuitionFee\TuitionFeeIdRequest;
 use App\Http\Resources\TuitionFeeResource;
 use App\Http\Resources\FeeDebtorResource;
 
@@ -34,6 +35,14 @@ class TuitionFeeController extends Controller
         $authAdmin = $this->resolveUser();
         $deleteFeePayment = $this->tuitionFeeService->deleteFeePayment($feeId, $currentSchool, $authAdmin);
         return ApiResponseService::success('Record Deleted Sucessfully', $deleteFeePayment, null, 200);
+    }
+
+    public function bulkDeleteFeePaid(TuitionFeeIdRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $deleted = $this->tuitionFeeService->bulkDeleteFeePayment($request->validated()['tuitionFeeIds'], $currentSchool, $authAdmin);
+        return ApiResponseService::success('Tuition Fees Deleted Successfully', $deleted, null, 200);
     }
 
     public function getFeeDebtors(Request $request)

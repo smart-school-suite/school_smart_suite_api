@@ -8,6 +8,7 @@ use App\Services\TuitionFee\TuitionFeeScheduleService;
 use App\Http\Requests\TuitionFeeSchedule\AutoCreateFeePaymentScheduleRequest;
 use App\Http\Resources\FeeScheduleResource;
 use App\Services\ApiResponseService;
+use App\Http\Requests\TuitionFeeSchedule\FeeScheduleIdRequest;
 
 class TuitionFeeScheduleController extends Controller
 {
@@ -36,6 +37,14 @@ class TuitionFeeScheduleController extends Controller
         $authAdmin = $this->resolveUser();
         $deleteFeeSchedule = $this->tuitionFeeScheduleService->deleteFeeShedule($currentSchool, $feeScheduleId, $authAdmin);
         return ApiResponseService::success("Fee Schedule Deleted Successfully", $deleteFeeSchedule, null, 200);
+    }
+
+    public function bulkDeleteFeeSchedule(FeeScheduleIdRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $authAdmin = $this->resolveUser();
+        $deleted = $this->tuitionFeeScheduleService->bulkDeleteFeeSchedule($currentSchool, $request->validated()['feeScheduleIds'], $authAdmin);
+        return ApiResponseService::success("Fee Schedules Deleted Successfully", $deleted, null, 200);
     }
 
     public function getFeeScheduleStudentId(Request $request, $studentId)

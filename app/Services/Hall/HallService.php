@@ -5,6 +5,7 @@ namespace App\Services\Hall;
 use App\Exceptions\AppException;
 use App\Models\Hall;
 use App\Events\Actions\AdminActionEvent;
+use Illuminate\Support\Facades\DB;
 
 class HallService
 {
@@ -172,6 +173,49 @@ class HallService
         $hall->status = 'unavailable';
         $hall->save();
         return $hall;
+    }
+    public function bulkDeleteHall($currentSchool, array $hallIds, $authAdmin)
+    {
+        $halls = $this->findHallsOrFail($currentSchool, $hallIds);
+        DB::transaction(function () use ($halls) {
+            foreach ($halls as $hall) {
+                $hall->delete();
+            }
+        });
+        return $halls;
+    }
+    public function bulkActivateHall($currentSchool, array $hallIds, $authAdmin)
+    {
+        return $this->bulkSetHallStatus($currentSchool, $hallIds, 'available');
+    }
+    public function bulkDeactivateHall($currentSchool, array $hallIds, $authAdmin)
+    {
+        return $this->bulkSetHallStatus($currentSchool, $hallIds, 'unavailable');
+    }
+    protected function bulkSetHallStatus($currentSchool, array $hallIds, string $status)
+    {
+        $halls = $this->findHallsOrFail($currentSchool, $hallIds);
+        Hall::where('school_branch_id', $currentSchool->id)
+            ->whereIn('id', $halls->pluck('id'))
+            ->update(['status' => $status]);
+        return $halls->each(fn($hall) => $hall->status = $status);
+    }
+    protected function findHallsOrFail($currentSchool, array $hallIds)
+    {
+        $ids = collect($hallIds)->pluck('hall_id')->unique()->values();
+        $halls = Hall::where('school_branch_id', $currentSchool->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        if ($halls->count() !== $ids->count()) {
+            throw new AppException(
+                "Some halls were not found for this school branch",
+                404,
+                "Hall Not Found",
+                "One or more of the selected halls could not be found. They might have been deleted, please refresh and try again."
+            );
+        }
+        return $halls;
     }
     public function getHallDetails($currentSchool, $hallId)
     {

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TuitionFee\TuitionFeeScheduleController;
 Route::get('/', [TuitionFeeScheduleController::class, 'getFeeSchedule'])->name('fee-schedule.index');
+Route::post('/bulk-delete', [TuitionFeeScheduleController::class, 'bulkDeleteFeeSchedule'])->name('fee-schedule.bulk-delete');
 Route::delete('/{feeScheduleId}', [TuitionFeeScheduleController::class, 'deleteFeeSchedule'])->name('fee-schedule.delete');
 Route::get('/student/{studentId}', [TuitionFeeScheduleController::class, 'getFeeScheduleStudentId'])->name('student-fee-schedule.get');
 Route::get('{feeScheduleId}/slots/', [TuitionFeeScheduleController::class, 'getFeeScheduleSlots'])->name('fee-schedule-slots.details');

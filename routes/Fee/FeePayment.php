@@ -14,6 +14,9 @@ use App\Http\Controllers\TuitionFee\TuitionFeeTransactionController;
     Route::middleware(['permission:schoolAdmin.tuitionFee.view'])->get('/', [TuitionFeeController::class, 'getTuitionFees'])
         ->name('tuition-fees.index');
 
+    Route::middleware(['permission:schoolAdmin.tuitionFee.delete'])->post('/bulk-delete', [TuitionFeeController::class, 'bulkDeleteFeePaid'])
+        ->name('tuition-fee-payments.bulk-destroy');
+
     Route::middleware(['permission:schoolAdmin.tuitionFee.delete'])->delete('/{feeId}', [TuitionFeeController::class, 'deleteFeePaid'])
         ->name('tuition-fee-payments.destroy');
 

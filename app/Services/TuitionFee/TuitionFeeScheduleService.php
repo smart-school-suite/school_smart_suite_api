@@ -8,6 +8,7 @@ use App\Models\StudentFeeSchedule;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use App\Models\Installment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
@@ -182,6 +183,48 @@ class TuitionFeeScheduleService
             'data'         => $feeSchedule,
         ]);
         return $feeSchedule;
+    }
+    public function bulkDeleteFeeSchedule(object $currentSchool, array $feeScheduleIds, object $authAdmin)
+    {
+        $ids = collect($feeScheduleIds)->pluck('fee_schedule_id')->unique()->values();
+        $feeSchedules = FeeSchedule::where("school_branch_id", $currentSchool->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        if ($feeSchedules->count() !== $ids->count()) {
+            throw new AppException(
+                "Some fee schedules were not found for school branch ID '{$currentSchool->id}'.",
+                404,
+                "Fee Schedule Not Found",
+                "One or more of the selected fee schedules could not be found. They might have been deleted, please refresh and try again."
+            );
+        }
+
+        DB::transaction(function () use ($feeSchedules) {
+            foreach ($feeSchedules as $feeSchedule) {
+                $feeSchedule->delete();
+            }
+        });
+
+        AdminActionEvent::dispatch(
+            [
+                "permissions" =>  ["schoolAdmin.feeSchedule.delete"],
+                "roles" => ["schoolSuperAdmin", "schoolAdmin"],
+                "schoolBranch" =>  $currentSchool->id,
+                "feature" => "tuitionFeeScheduleManagement",
+                "authAdmin" => $authAdmin,
+                "data" => $feeSchedules,
+                "message" => "Tuition Fee Schedules Deleted",
+            ]
+        );
+        StudentActionEvent::dispatch([
+            'schoolBranch' => $currentSchool->id,
+            'specialtyIds'   => $feeSchedules->pluck('specialty_id')->unique()->values()->all(),
+            'feature'      => 'tuitionFeeScheduleDelete',
+            'message'      => 'Tuition Fee Schedule Deleted',
+            'data'         => $feeSchedules,
+        ]);
+        return $feeSchedules;
     }
     public function getFeeScheduleStudentId(object $currentSchool, string $studentId): Collection
     {
