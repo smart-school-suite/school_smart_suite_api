@@ -135,11 +135,26 @@ class ExamService
         try {
 
             $exam = Exam::where("school_branch_id", $currentSchool->id)
+                ->with('examType')
                 ->findorFail($examId);
-            $this->deleteExamCandidate($examId, $currentSchool);
 
-            $exam->delete();
+            if ($this->examIdsWithScores($currentSchool, [$exam->id])->isNotEmpty()) {
+                $examName = $exam->examType->exam_name ?? 'This exam';
+                throw new AppException(
+                    "The exam cannot be deleted because scores have already been recorded for it.",
+                    409,
+                    "Exam Has Recorded Scores",
+                    "{$examName} already has student scores recorded. Delete those scores first if you really want to remove this exam."
+                );
+            }
+
+            DB::transaction(function () use ($exam, $examId, $currentSchool) {
+                $this->deleteExamCandidate($examId, $currentSchool);
+                $exam->delete();
+            });
             return $exam;
+        } catch (AppException $e) {
+            throw $e;
         } catch (ModelNotFoundException $e) {
             throw new AppException(
                 "The exam you are trying to delete was not found. Please verify the exam ID.",
@@ -158,6 +173,13 @@ class ExamService
             );
         }
     }
+    private function examIdsWithScores(object $currentSchool, array $examIds)
+    {
+        return ExamScore::where('school_branch_id', $currentSchool->id)
+            ->whereIn('exam_id', $examIds)
+            ->distinct()
+            ->pluck('exam_id');
+    }
     private function deleteExamCandidate(string $examId, object $currentSchool)
     {
         AccessedStudent::where("school_branch_id", $currentSchool->id)
@@ -167,6 +189,23 @@ class ExamService
     public function bulkDeleteExam(array $examIds, object $currentSchool, object $authAdmin): array
     {
         $deletedExams = [];
+
+        $requestedIds = collect($examIds)->pluck('exam_id')->filter()->unique()->values();
+        $examsWithScores = $this->examIdsWithScores($currentSchool, $requestedIds->all());
+        if ($examsWithScores->isNotEmpty()) {
+            $examNames = Exam::where("school_branch_id", $currentSchool->id)
+                ->whereIn('id', $examsWithScores)
+                ->with('examType')
+                ->get()
+                ->map(fn($exam) => $exam->examType->exam_name ?? $exam->id)
+                ->implode(', ');
+            throw new AppException(
+                "Some of the selected exams cannot be deleted because scores have already been recorded for them.",
+                409,
+                "Exams Have Recorded Scores",
+                "These exams already have student scores recorded: {$examNames}. Deselect them, or delete their scores first, then try again. No exams were deleted."
+            );
+        }
 
         try {
             DB::beginTransaction();
@@ -183,6 +222,9 @@ class ExamService
 
             DB::commit();
             return $deletedExams;
+        } catch (AppException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             throw new AppException(
