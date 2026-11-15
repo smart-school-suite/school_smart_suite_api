@@ -148,6 +148,18 @@ class ExamService
                 );
             }
 
+            $dependentExams = $this->dependentSemesterExams($currentSchool, collect([$exam]));
+            if ($dependentExams->isNotEmpty()) {
+                $examName = $exam->examType->exam_name ?? 'This CA exam';
+                $dependentNames = $dependentExams->map(fn($dependent) => $dependent->examType->exam_name ?? $dependent->id)->implode(', ');
+                throw new AppException(
+                    "The CA exam cannot be deleted because a semester exam's max score includes it.",
+                    409,
+                    "CA Exam In Use",
+                    "{$examName} is combined into the max score of: {$dependentNames}. Delete that exam first (or delete them together), then try again."
+                );
+            }
+
             DB::transaction(function () use ($exam, $examId, $currentSchool) {
                 $this->deleteExamCandidate($examId, $currentSchool);
                 $exam->delete();
@@ -172,6 +184,33 @@ class ExamService
                 $e->getMessage()
             );
         }
+    }
+    /**
+     * Semester (non-CA) exams whose stored max score includes one of the given CA exams,
+     * excluding exams that are themselves being deleted.
+     */
+    private function dependentSemesterExams(object $currentSchool, $exams, array $excludeIds = [])
+    {
+        $caExams = $exams->filter(fn($exam) => strtolower($exam->examType->type ?? '') === 'ca');
+        if ($caExams->isEmpty()) {
+            return collect();
+        }
+
+        return Exam::where('school_branch_id', $currentSchool->id)
+            ->whereNotIn('id', array_merge($excludeIds, $caExams->pluck('id')->all()))
+            ->where(function ($query) use ($caExams) {
+                foreach ($caExams as $caExam) {
+                    $query->orWhere(function ($inner) use ($caExam) {
+                        $inner->where('school_year_id', $caExam->school_year_id)
+                            ->whereHas('examType', function ($typeQuery) use ($caExam) {
+                                $typeQuery->where('semester', $caExam->examType->semester)
+                                    ->where('type', '!=', 'ca');
+                            });
+                    });
+                }
+            })
+            ->with('examType')
+            ->get();
     }
     private function examIdsWithScores(object $currentSchool, array $examIds)
     {
@@ -204,6 +243,21 @@ class ExamService
                 409,
                 "Exams Have Recorded Scores",
                 "These exams already have student scores recorded: {$examNames}. Deselect them, or delete their scores first, then try again. No exams were deleted."
+            );
+        }
+
+        $requestedExams = Exam::where("school_branch_id", $currentSchool->id)
+            ->whereIn('id', $requestedIds)
+            ->with('examType')
+            ->get();
+        $dependentExams = $this->dependentSemesterExams($currentSchool, $requestedExams, $requestedIds->all());
+        if ($dependentExams->isNotEmpty()) {
+            $dependentNames = $dependentExams->map(fn($dependent) => $dependent->examType->exam_name ?? $dependent->id)->implode(', ');
+            throw new AppException(
+                "Some of the selected CA exams cannot be deleted because semester exams' max scores include them.",
+                409,
+                "CA Exams In Use",
+                "The selected CA exams are combined into the max score of: {$dependentNames}. Select those exams too, or delete them first, then try again. No exams were deleted."
             );
         }
 
