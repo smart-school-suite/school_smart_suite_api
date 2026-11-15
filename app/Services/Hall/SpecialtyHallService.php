@@ -288,6 +288,33 @@ class SpecialtyHallService
         });
     }
 
+    public function bulkRemoveAllAssignedHalls(object $currentSchool, array $specialtyIds, object $authAdmin): int
+    {
+        $ids = collect($specialtyIds)->pluck('specialty_id')->unique()->values();
+
+        return DB::transaction(function () use ($currentSchool, $ids, $authAdmin) {
+            $withAssignments = SpecialtyHall::where('school_branch_id', $currentSchool->id)
+                ->whereIn('specialty_id', $ids)
+                ->distinct()
+                ->pluck('specialty_id');
+
+            if ($withAssignments->isEmpty()) {
+                throw new AppException(
+                    "None of the selected specialties have assigned halls.",
+                    404,
+                    "No Assignments Found",
+                    "There are no hall assignments to remove for the selected specialties."
+                );
+            }
+
+            $deleted = 0;
+            foreach ($withAssignments as $specialtyId) {
+                $deleted += $this->removeAllAssignedHalls($currentSchool, $specialtyId, $authAdmin);
+            }
+            return $deleted;
+        });
+    }
+
     public function getSpecialties(object $currentSchool)
     {
         return Specialty::where("school_branch_id", $currentSchool->id)
