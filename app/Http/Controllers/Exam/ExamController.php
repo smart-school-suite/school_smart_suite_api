@@ -95,7 +95,7 @@ class ExamController extends Controller
     {
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();
-        $bulkUpdateExam = $this->examService->bulkUpdateExam($request->exams, $currentSchool, $authAdmin);
+        $bulkUpdateExam = $this->examService->bulkUpdateExam($request->validated()['exams'], $currentSchool, $authAdmin);
         return ApiResponseService::success("Exam Updated Successfully", $bulkUpdateExam, null, 200);
     }
     public function getAllExamsByStudentId(Request $request, string $studentId)

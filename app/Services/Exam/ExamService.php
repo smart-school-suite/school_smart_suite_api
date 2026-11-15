@@ -160,7 +160,7 @@ class ExamService
     }
     private function deleteExamCandidate(string $examId, object $currentSchool)
     {
-        AccessedStudent::where("school_branch_id", $currentSchool)
+        AccessedStudent::where("school_branch_id", $currentSchool->id)
             ->where("exam_id", $examId)
             ->delete();
     }
@@ -312,8 +312,8 @@ class ExamService
                 ExamJointCourseRef::where('school_branch_id', $currentSchool->id)
                     ->where('exam_id', $exam->id)
                     ->delete();
-                CreateExamCandidateJob::dispatch($exam->id, $currentSchool->id);
-                CreateExamJointCourseJob::dispatch($exam->id, $currentSchool->id);
+                CreateExamCandidateJob::dispatch($exam->id, $currentSchool->id)->afterCommit();
+                CreateExamJointCourseJob::dispatch($exam->id, $currentSchool->id)->afterCommit();
             }
 
             return $exam->fresh([
@@ -410,28 +410,19 @@ class ExamService
             );
         }
     }
-    public function bulkUpdateExam(array $examUpdateList, object $currentSchool, object $authAdmin)
+    public function bulkUpdateExam(array $examUpdateList, object $currentSchool, ?object $authAdmin)
     {
-        $result = [];
-        $specialtyIds = [];
-        try {
-            DB::beginTransaction();
+        // Each exam goes through the same rules as a single update (date order, CA-combined
+        // max scores, type/year change checks); any failure rolls the whole batch back.
+        return DB::transaction(function () use ($examUpdateList, $currentSchool, $authAdmin) {
+            $result = [];
             foreach ($examUpdateList as $examUpdate) {
-                $exam = Exam::where("school_branch_id", $currentSchool->id)
-                    ->findOrFail($examUpdate['exam_id']);
-                $filterData = array_filter($examUpdate);
-                $exam->update($filterData);
-                $specialtyIds[] = $exam->specialty_id;
-                $result[] = [
-                    $exam
-                ];
+                $examId = $examUpdate['exam_id'];
+                unset($examUpdate['exam_id']);
+                $result[] = $this->updateExam($examId, $currentSchool, $examUpdate, $authAdmin);
             }
-            DB::commit();
             return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
     public function getExams(object $currentSchool)
     {
