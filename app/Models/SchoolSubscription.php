@@ -29,7 +29,7 @@ class SchoolSubscription extends Model
     public $table = 'school_subscriptions';
 
     public function subscriptionUsage(): HasMany {
-         return $this->hasMany(SchoolSubscription::class);
+         return $this->hasMany(SubscriptionUsage::class, 'subscription_id');
     }
     public function country(): BelongsTo {
          return $this->belongsTo(Country::class, 'country_id');

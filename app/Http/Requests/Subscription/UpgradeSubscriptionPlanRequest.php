@@ -17,7 +17,9 @@ class UpgradeSubscriptionPlanRequest extends FormRequest
         return [
             "new_plan_id" => 'required|string|exists:plans,id',
             'promo_code' => 'sometimes|nullable|string|exists:affiliates,promo_code',
-            'payment_method' => 'required|string',
+            'payment_method_id' => 'required|string|exists:payment_method,id',
+            'phone_number' => 'sometimes|nullable|string|max:20',
+            'payment_ref' => 'sometimes|nullable|string|max:150',
         ];
     }
 }

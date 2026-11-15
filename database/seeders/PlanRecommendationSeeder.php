@@ -28,9 +28,11 @@ class PlanRecommendationSeeder extends Seeder
             ["key" => "school.courses", "priority" => 6, "name" => "Courses"],
         ];
 
-        $featuresByKey = Feature::whereIn('key', array_column($features, 'key'))
+        // features are per country; a plan's rules must use its country's features
+        $featuresByCountry = Feature::whereIn('key', array_column($features, 'key'))
             ->get()
-            ->keyBy('key');
+            ->groupBy('country_id')
+            ->map(fn($group) => $group->keyBy('key'));
 
         foreach ($plans as $plan) {
             $targetPlan = Plan::where('price', '>', $plan->price)
@@ -41,6 +43,8 @@ class PlanRecommendationSeeder extends Seeder
             if (!$targetPlan) {
                 continue;
             }
+
+            $featuresByKey = $featuresByCountry->get($plan->country_id, collect());
 
             foreach ($features as $featureData) {
                 $feature = $featuresByKey->get($featureData['key']);
@@ -84,7 +88,7 @@ class PlanRecommendationSeeder extends Seeder
                     ],
                     [
                         'title' => "You're reaching your {$featureData['name']} limit",
-                        'description' => "Your current plan allows a limited {$featureData['name']}. Upgrade to the {$targetPlan->name} plan to increase this limit and continue uninterrupted.",
+                        'description' => "You've used most of the {$featureData['name']} included in the {$plan->name}. The {$targetPlan->name} raises this limit so your school keeps running without interruptions.",
                         'cta_text' => "Upgrade to {$targetPlan->name}",
                     ]
                 );

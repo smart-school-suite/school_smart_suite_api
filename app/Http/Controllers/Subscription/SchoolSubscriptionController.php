@@ -30,6 +30,17 @@ class SchoolSubscriptionController extends Controller
         $recommendedPlan = $this->planRecommendationService->recommendPlan($currentSchool);
         return ApiResponseService::success("Recommended Plan Fetched Successfully", $recommendedPlan, null, 200);
     }
+
+    /**
+     * Current subscription, usage per feature, every plan compared with the
+     * current one and the usage-based recommendation, in one payload.
+     */
+    public function getPlanInsights(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $insights = $this->planRecommendationService->getPlanInsights($currentSchool);
+        return ApiResponseService::success("Plan Insights Fetched Successfully", $insights, null, 200);
+    }
     public function subscribe(SchoolSubscriptionRequest $request)
     {
         $schoolSubcription = $this->schoolSubcriptionService->subscribe($request->validated());
