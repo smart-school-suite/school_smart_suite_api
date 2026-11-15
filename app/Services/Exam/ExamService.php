@@ -5,6 +5,10 @@ namespace App\Services\Exam;
 use App\Jobs\Exam\CreateExamCandidateJob;
 use App\Jobs\ExamJointCourse\CreateExamJointCourseJob;
 use App\Models\Exam\Exam;
+use App\Models\Exam\ExamCandidate;
+use App\Models\Exam\ExamScore;
+use App\Models\ExamJointCourse\ExamJointCourseRef;
+use App\Models\ExamTimetable\ExamTimetable;
 use App\Models\GradeScale\Grade;
 use Illuminate\Support\Str;
 use App\Models\SchoolGradesConfig;
@@ -199,10 +203,11 @@ class ExamService
             );
         }
     }
-    public function updateExam(string $examId, object $currentSchool, array $data, array  $authAdmin)
+    public function updateExam(string $examId, object $currentSchool, array $data, ?object $authAdmin)
     {
         try {
             $exam = Exam::where("school_branch_id", $currentSchool->id)
+                ->with(['examType'])
                 ->find($examId);
 
             if (!$exam) {
@@ -215,19 +220,193 @@ class ExamService
                 );
             }
 
-            $filteredData = array_filter($data);
+            // Keep legitimate falsy values such as a max score of 0; only drop empty input.
+            $data = array_filter($data, fn($value) => !is_null($value) && $value !== '');
 
-            $exam->update($filteredData);
-            return $exam;
+            $newExamTypeId = $data['exam_type_id'] ?? $exam->exam_type_id;
+            $newSchoolYearId = $data['school_year_id'] ?? $exam->school_year_id;
+            $examTypeChanged = $newExamTypeId !== $exam->exam_type_id;
+            $schoolYearChanged = $newSchoolYearId !== $exam->school_year_id;
+
+            $newExamType = $examTypeChanged ? Examtype::find($newExamTypeId) : $exam->examType;
+            if (!$newExamType) {
+                throw new AppException(
+                    "Exam Type Not Found",
+                    404,
+                    "Exam Type Not Found",
+                    "The selected exam type could not be found. Please ensure the exam type exists and has not been deleted before proceeding."
+                );
+            }
+
+            $startDate = Carbon::parse($data['start_date'] ?? $exam->start_date)->startOfDay();
+            $endDate = Carbon::parse($data['end_date'] ?? $exam->end_date)->startOfDay();
+            if ($endDate->lt($startDate)) {
+                throw new AppException(
+                    "The exam end date cannot be before its start date.",
+                    422,
+                    "Invalid Exam Dates",
+                    "The end date ({$endDate->toDateString()}) must be on or after the start date ({$startDate->toDateString()}). Please adjust the dates and try again."
+                );
+            }
+
+            if ($examTypeChanged || $schoolYearChanged) {
+                $this->assertExamTypeOrSchoolYearCanChange($exam, $currentSchool, $newExamTypeId, $newSchoolYearId);
+            }
+
+            $isCaExam = strtolower($exam->examType->type) === 'ca';
+            $willBeCaExam = strtolower($newExamType->type) === 'ca';
+
+            // Non-CA exams store their max score combined with the related CA's max score
+            // (see createExam), so the user-entered value is only the exam's own portion.
+            $currentCaMaxScore = $isCaExam
+                ? 0
+                : (float) ($this->findRelatedCaExam($currentSchool, $exam->school_year_id, $exam->examType)?->max_score ?? 0);
+            $examPortion = array_key_exists('max_score', $data)
+                ? (float) $data['max_score']
+                : (float) $exam->max_score - $currentCaMaxScore;
+
+            if ($willBeCaExam) {
+                $newMaxScore = $examPortion;
+            } else {
+                $relatedCa = $this->findRelatedCaExam($currentSchool, $newSchoolYearId, $newExamType);
+                if (!$relatedCa) {
+                    throw new AppException(
+                        "Missing CA Exam Prerequisite",
+                        422,
+                        "Continuous Assessment Required",
+                        "You must create a Continuous Assessment (CA) exam for semester '{$newExamType->semester}' before assigning this exam type."
+                    );
+                }
+                $newMaxScore = $examPortion + (float) $relatedCa->max_score;
+            }
+
+            $oldMaxScore = (float) $exam->max_score;
+
+            DB::transaction(function () use ($exam, $data, $newExamTypeId, $newSchoolYearId, $newMaxScore, $oldMaxScore, $isCaExam, $currentSchool) {
+                $exam->fill(collect($data)->only(['start_date', 'end_date'])->toArray());
+                $exam->exam_type_id = $newExamTypeId;
+                $exam->school_year_id = $newSchoolYearId;
+                $exam->max_score = $newMaxScore;
+                $exam->save();
+
+                // A CA's max score is folded into its semester exams' max scores, so keep them in sync.
+                $delta = $newMaxScore - $oldMaxScore;
+                if ($isCaExam && abs($delta) > 0.0001) {
+                    $exam->load('examType');
+                    Exam::where('school_branch_id', $currentSchool->id)
+                        ->where('school_year_id', $exam->school_year_id)
+                        ->where('id', '!=', $exam->id)
+                        ->whereHas('examType', function ($query) use ($exam) {
+                            $query->where('semester', $exam->examType->semester)
+                                ->where('type', '!=', 'ca');
+                        })
+                        ->increment('max_score', $delta);
+                }
+            });
+
+            if ($examTypeChanged || $schoolYearChanged) {
+                // Candidates and joint-course links depend on the exam type and school year.
+                ExamCandidate::where('school_branch_id', $currentSchool->id)
+                    ->where('exam_id', $exam->id)
+                    ->delete();
+                ExamJointCourseRef::where('school_branch_id', $currentSchool->id)
+                    ->where('exam_id', $exam->id)
+                    ->delete();
+                CreateExamCandidateJob::dispatch($exam->id, $currentSchool->id);
+                CreateExamJointCourseJob::dispatch($exam->id, $currentSchool->id);
+            }
+
+            return $exam->fresh([
+                'examType.semesters',
+                'schoolYear.specialty.level',
+                'schoolYear.systemAcademicYear',
+                'examGradeScale',
+            ]);
         } catch (AppException $e) {
             throw $e;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             throw new AppException(
                 "An unexpected error occurred while updating the exam. Please try again later.",
                 500,
                 "Update Error",
                 "We encountered a server-side issue while attempting to update the exam. " . $e->getMessage(),
                 null
+            );
+        }
+    }
+
+    private function findRelatedCaExam(object $currentSchool, string $schoolYearId, Examtype $examType): ?Exam
+    {
+        return Exam::where("school_branch_id", $currentSchool->id)
+            ->where("school_year_id", $schoolYearId)
+            ->whereHas('examType', function ($query) use ($examType) {
+                $query->where('semester', $examType->semester)
+                    ->where('type', 'ca');
+            })
+            ->first();
+    }
+
+    private function assertExamTypeOrSchoolYearCanChange(Exam $exam, object $currentSchool, string $newExamTypeId, string $newSchoolYearId): void
+    {
+        $hasScores = ExamScore::where('school_branch_id', $currentSchool->id)
+            ->where('exam_id', $exam->id)
+            ->exists();
+        $hasTimetable = ExamTimetable::where('school_branch_id', $currentSchool->id)
+            ->where('exam_id', $exam->id)
+            ->exists();
+
+        if ($hasScores || $hasTimetable) {
+            throw new AppException(
+                "The exam type or academic year cannot be changed for this exam.",
+                409,
+                "Exam Already In Use",
+                "Scores or a timetable have already been recorded for this exam. You can still update its dates and max score, but to change the exam type or academic year, delete and recreate the exam."
+            );
+        }
+
+        if (strtolower($exam->examType->type) === 'ca') {
+            $hasDependentExams = Exam::where('school_branch_id', $currentSchool->id)
+                ->where('school_year_id', $exam->school_year_id)
+                ->where('id', '!=', $exam->id)
+                ->whereHas('examType', function ($query) use ($exam) {
+                    $query->where('semester', $exam->examType->semester)
+                        ->where('type', '!=', 'ca');
+                })
+                ->exists();
+
+            if ($hasDependentExams) {
+                throw new AppException(
+                    "This CA exam is linked to a semester exam.",
+                    409,
+                    "CA Exam In Use",
+                    "A semester exam's max score depends on this Continuous Assessment. Update or remove that exam before changing this CA's exam type or academic year."
+                );
+            }
+        }
+
+        $schoolYearExists = SchoolAcademicYear::where("school_branch_id", $currentSchool->id)
+            ->where("id", $newSchoolYearId)
+            ->exists();
+        if (!$schoolYearExists) {
+            throw new AppException(
+                "Academic Year Not Found",
+                404,
+                "Academic Year Not Found",
+                "The selected academic year or term could not be found within your school branch. Please verify the academic year and try again."
+            );
+        }
+
+        $duplicate = Exam::where("school_branch_id", $currentSchool->id)
+            ->where("exam_type_id", $newExamTypeId)
+            ->where("school_year_id", $newSchoolYearId)
+            ->where("id", '!=', $exam->id)
+            ->exists();
+        if ($duplicate) {
+            throw new AppException(
+                "Duplicate Exam Details",
+                409,
+                "Exam Already Exists",
+                "An exam with this exact type and academic year already exists for this school branch. Please review your selection or update the existing exam."
             );
         }
     }
