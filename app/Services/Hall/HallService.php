@@ -5,6 +5,7 @@ namespace App\Services\Hall;
 use App\Exceptions\AppException;
 use App\Models\Hall;
 use App\Events\Actions\AdminActionEvent;
+use Illuminate\Support\Facades\DB;
 
 class HallService
 {
@@ -190,5 +191,130 @@ class HallService
         }
 
         return $hall;
+    }
+
+    public function bulkDeleteHall($currentSchool, array $hallIds, $authAdmin)
+    {
+        $halls = $this->findBranchHallsOrFail($currentSchool, $hallIds, 'delete');
+
+        DB::transaction(function () use ($halls) {
+            foreach ($halls as $hall) {
+                $hall->delete();
+            }
+        });
+
+        return $halls;
+    }
+
+    public function bulkActivateHall($currentSchool, array $hallIds, $authAdmin)
+    {
+        return $this->bulkSetHallStatus($currentSchool, $hallIds, 'available', 'activate');
+    }
+
+    public function bulkDeactivateHall($currentSchool, array $hallIds, $authAdmin)
+    {
+        return $this->bulkSetHallStatus($currentSchool, $hallIds, 'unavailable', 'deactivate');
+    }
+
+    public function bulkUpdateHall($currentSchool, array $updateDataList, $authAdmin)
+    {
+        $halls = $this->findBranchHallsOrFail(
+            $currentSchool,
+            array_map(fn($item) => ['hall_id' => $item['hall_id']], $updateDataList),
+            'update'
+        )->keyBy('id');
+
+        $requestedNames = [];
+        foreach ($updateDataList as $updateData) {
+            if (empty($updateData['name'])) {
+                continue;
+            }
+            $key = mb_strtolower($updateData['name']);
+            if (isset($requestedNames[$key])) {
+                throw new AppException(
+                    "Duplicate hall names in request",
+                    400,
+                    "Duplicate Hall",
+                    "More than one hall in this update uses the name '{$updateData['name']}'. Each hall must have a unique name."
+                );
+            }
+            $requestedNames[$key] = $updateData['hall_id'];
+
+            $duplicate = Hall::where('school_branch_id', $currentSchool->id)
+                ->where('name', $updateData['name'])
+                ->whereNotIn('id', array_column($updateDataList, 'hall_id'))
+                ->exists();
+
+            if ($duplicate) {
+                throw new AppException(
+                    "Hall already exists with this name",
+                    400,
+                    "Duplicate Hall",
+                    "Another hall already uses the name '{$updateData['name']}'. Please choose a different name."
+                );
+            }
+        }
+
+        return DB::transaction(function () use ($halls, $updateDataList, $currentSchool) {
+            $result = [];
+            foreach ($updateDataList as $updateData) {
+                $hall = $halls[$updateData['hall_id']];
+
+                if (!empty($updateData['typeIds'])) {
+                    $syncData = collect($updateData['typeIds'])
+                        ->pluck('type_id')
+                        ->filter()
+                        ->mapWithKeys(fn($typeId) => [
+                            $typeId => ['school_branch_id' => $currentSchool->id],
+                        ])
+                        ->toArray();
+
+                    $hall->types()->sync($syncData);
+                }
+
+                $filteredUpdateData = collect($updateData)
+                    ->only(['name', 'capacity', 'location'])
+                    ->filter(fn($value) => !is_null($value) && $value !== '')
+                    ->toArray();
+
+                if (!empty($filteredUpdateData)) {
+                    $hall->update($filteredUpdateData);
+                }
+
+                $result[] = $hall->load('types');
+            }
+            return $result;
+        });
+    }
+
+    private function bulkSetHallStatus($currentSchool, array $hallIds, string $status, string $action)
+    {
+        $halls = $this->findBranchHallsOrFail($currentSchool, $hallIds, $action);
+
+        Hall::where('school_branch_id', $currentSchool->id)
+            ->whereIn('id', $halls->pluck('id'))
+            ->update(['status' => $status]);
+
+        return $halls->each(fn($hall) => $hall->status = $status);
+    }
+
+    private function findBranchHallsOrFail($currentSchool, array $hallIds, string $action)
+    {
+        $ids = collect($hallIds)->pluck('hall_id')->unique()->values();
+
+        $halls = Hall::where('school_branch_id', $currentSchool->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        if ($halls->count() !== $ids->count()) {
+            throw new AppException(
+                "One or more halls you are trying to {$action} were not found.",
+                404,
+                "Hall Not Found",
+                "Some halls may have already been deleted or do not exist. Please refresh and try again."
+            );
+        }
+
+        return $halls;
     }
 }
