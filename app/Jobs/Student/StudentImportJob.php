@@ -3,6 +3,7 @@
 namespace App\Jobs\Student;
 
 use App\Events\Job\JobEvent;
+use App\Events\Student\StudentRegistered;
 use App\Models\Job\SystemJob;
 use App\Models\Job\SystemJobError;
 use App\Models\Parents;
@@ -180,6 +181,7 @@ class StudentImportJob implements ShouldQueue
                         $updated++;
                     } else {
                         $student = Student::create([...$normalizePayload, "school_branch_id" => $schoolBranch->id]);
+                        StudentRegistered::dispatch($student);
                         $created++;
                     }
                 });

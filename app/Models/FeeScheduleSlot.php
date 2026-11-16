@@ -2,42 +2,46 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\GeneratesUuid;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * One installment of an academic year's fee schedule: the share of the
+ * tuition (percentage) due by due_date. Amounts are not stored: a slot's
+ * amount is that percentage of each student's own tuition fee total, and
+ * what a student has paid towards it is derived from their tuition fee
+ * transactions (see TuitionFeeProgressService).
+ */
 class FeeScheduleSlot extends Model
 {
-    use HasFactory, GeneratesUuid;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'due_date',
-        'fee_percentage',
-        'amount',
+        'percentage',
         'installment_id',
-        'fee_schedule_id'
+        'fee_schedule_id',
+        'school_branch_id',
     ];
 
-    protected $cast = [
-         'due_date' => 'date',
-         'amount' => 'decimal:2',
-         'fee_percentage' => 'decimal:2'
+    protected $casts = [
+        'due_date' => 'date',
+        'percentage' => 'float',
     ];
-    public $incrementing = 'false';
+
+    public $incrementing = false;
     public $keyType = 'string';
-    public $table = 'fee_schedule_slots';
+    public $table = 'fee_sched_installments';
 
-    public function studentFeeSchedule(): HasMany {
-        return $this->hasMany(StudentFeeSchedule::class);
-    }
-
-    public function feeSchedule(): BelongsTo {
+    public function feeSchedule(): BelongsTo
+    {
         return $this->belongsTo(FeeSchedule::class, 'fee_schedule_id');
     }
 
-    public function installment(): BelongsTo {
+    public function installment(): BelongsTo
+    {
         return $this->belongsTo(Installment::class, 'installment_id');
     }
 }

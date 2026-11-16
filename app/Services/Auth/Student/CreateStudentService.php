@@ -4,8 +4,7 @@ namespace App\Services\Auth\Student;
 
 use App\Models\Specialty;
 use App\Models\Student;
-use App\Models\TuitionFees;
-use App\Models\RegistrationFee;
+use App\Events\Student\StudentRegistered;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\AuthException;
@@ -81,21 +80,9 @@ class CreateStudentService
             $student->save();
             $student->assignRole('student');
 
-            RegistrationFee::create([
-                'specialty_id' => $specialty->id,
-                'school_branch_id' => $currentSchool->id,
-                'amount' => $specialty->registration_fee,
-                'status' => "not paid",
-                'student_id' => $student->id,
-            ]);
-
-            TuitionFees::create([
-                'specialty_id' => $specialty->id,
-                'amount_paid' => 0.00,
-                'school_branch_id' => $currentSchool->id,
-                'tution_fee_total' => $specialty->school_fee,
-                'student_id' => $student->id,
-            ]);
+            // Generates the registration fee, and the tuition fee when the
+            // specialty already has an applicable academic year.
+            StudentRegistered::dispatch($student);
 
             DB::commit();
 

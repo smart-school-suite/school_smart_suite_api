@@ -20,21 +20,13 @@ class CreateFeeScheduleSlotsRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Whole-schedule rules (100% total, dates within the academic year and
+        // in installment order) are checked by TuitionFeeScheduleSlotService.
         return [
             'slots' => ['required', 'array', 'min:1'],
-            'slots.*.due_date' => ['required', 'date', 'after_or_equal:today'],
-            'slots.*.fee_percentage' => ['required', 'numeric', 'min:0.01', 'max:100.00'],
-            'slots.*.amount' => ['required', 'numeric', 'min:0'],
-            'slots.*.installment_id' => [
-                'required',
-                'string',
-                Rule::exists('installments', 'id'),
-            ],
-            'slots.*.fee_schedule_id' => [
-                'required',
-                'string',
-                Rule::exists('fee_schedules', 'id'),
-            ],
+            'slots.*.installment_id' => ['required', 'string', 'distinct', Rule::exists('installments', 'id')],
+            'slots.*.due_date' => ['required', 'date_format:Y-m-d'],
+            'slots.*.fee_percentage' => ['required', 'numeric', 'gt:0', 'max:100'],
         ];
     }
 
@@ -46,25 +38,18 @@ class CreateFeeScheduleSlotsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'slots.required' => 'At least one slot must be provided.',
-            'slots.array' => 'The slots must be an array.',
-            'slots.min' => 'At least one fee schedule slot is required.',
-            'slots.*.due_date.required' => 'Each slot must have a due date.',
-            'slots.*.due_date.date' => 'Each slot\'s due date must be a valid date.',
-            'slots.*.due_date.after_or_equal' => 'Each slot\'s due date cannot be in the past.',
-            'slots.*.fee_percentage.required' => 'Each slot must have a fee percentage.',
-            'slots.*.fee_percentage.numeric' => 'The fee percentage must be a number.',
-            'slots.*.fee_percentage.min' => 'The fee percentage must be at least 0.01.',
-            'slots.*.fee_percentage.max' => 'The fee percentage cannot exceed 100.',
-            'slots.*.amount.required' => 'Each slot must have an amount.',
-            'slots.*.amount.numeric' => 'The amount must be a number.',
-            'slots.*.amount.min' => 'The amount cannot be negative.',
-            'slots.*.installment_id.required' => 'Each slot must have an installment ID.',
-            'slots.*.installment_id.string' => 'The installment ID must be a string.',
-            'slots.*.installment_id.exists' => 'The selected installment ID is invalid.',
-            'fee_schedule_id.required' => 'The fee schedule ID is required.',
-            'fee_schedule_id.string' => 'The fee schedule ID must be a string.',
-            'fee_schedule_id.exists' => 'The selected fee schedule ID is invalid.',
+            'slots.required' => 'Add at least one installment to the schedule.',
+            'slots.min' => 'Add at least one installment to the schedule.',
+            'slots.*.installment_id.required' => 'Each row must have an installment.',
+            'slots.*.installment_id.distinct' => 'Each installment can only appear once in a schedule.',
+            'slots.*.installment_id.exists' => 'The selected installment does not exist.',
+            'slots.*.slot_id.distinct' => 'An installment was sent twice. Reload the schedule and try again.',
+            'slots.*.due_date.required' => 'Each installment must have a due date.',
+            'slots.*.due_date.date_format' => 'Each due date must be a valid date (YYYY-MM-DD).',
+            'slots.*.fee_percentage.required' => 'Each installment must have a percentage.',
+            'slots.*.fee_percentage.numeric' => 'The percentage must be a number.',
+            'slots.*.fee_percentage.gt' => 'Each installment must be more than 0% of the tuition.',
+            'slots.*.fee_percentage.max' => 'An installment cannot exceed 100% of the tuition.',
         ];
     }
 
