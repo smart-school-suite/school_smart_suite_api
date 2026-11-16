@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Fees;
 
+use App\Events\Actions\AdminActionEvent;
+use App\Events\Actions\StudentActionEvent;
+use App\Exceptions\AppException;
 use App\Models\FeeScheduleSlot;
 use App\Models\Student;
 use App\Models\TuitionFees;
@@ -10,6 +13,7 @@ use App\Services\TuitionFee\TuitionFeeScheduleService;
 use App\Services\TuitionFee\TuitionFeeScheduleSlotService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -123,25 +127,88 @@ class TuitionFeeProgressTest extends TestCase
         $this->assertSame('completed', $current[0]['status']);
     }
 
-    public function test_slots_are_stored_as_percentages_and_listed_with_the_specialtys_amount(): void
+    private function slotService(): TuitionFeeScheduleSlotService
     {
         Bus::fake();
-        Event::fake();
-        $service = app(TuitionFeeScheduleSlotService::class);
-        $school = new \App\Models\Schoolbranches(['id' => 'branch-1']);
-        $school->id = 'branch-1';
+        Event::fake([AdminActionEvent::class, StudentActionEvent::class]);
 
-        $service->createFeeScheduleSlots($school, 'sched-swe-2', [
-            ['due_date' => '2026-12-01', 'fee_percentage' => 25, 'amount' => 999, 'installment_id' => 'inst-1'],
-        ], $admin = (object) ['id' => 'admin-1']);
+        return app(TuitionFeeScheduleSlotService::class);
+    }
 
-        $slot = FeeScheduleSlot::where('fee_schedule_id', 'sched-swe-2')->sole();
-        $this->assertSame(25.0, $slot->percentage);
+    public function test_a_schedule_is_created_as_percentages_and_listed_with_the_specialtys_amounts(): void
+    {
+        $service = $this->slotService();
 
-        $service->updateFeeScheduleSlots($school, 'sched-swe-2', [['slot_id' => $slot->id, 'fee_percentage' => 40]], $admin);
+        $service->createFeeScheduleSlots($this->school, 'sched-swe-2', [
+            ['due_date' => '2027-01-15', 'fee_percentage' => 40, 'installment_id' => 'inst-2'],
+            ['due_date' => '2026-10-01', 'fee_percentage' => 60, 'installment_id' => 'inst-1'],
+        ], (object) ['id' => 'admin-1']);
 
-        $listed = $service->getFeeScheduleSlots('sched-swe-2', $school)->sole();
-        $this->assertSame(40.0, $listed['fee_percentage']);
-        $this->assertSame(40000.0, $listed['amount']);
+        $listed = $service->getFeeScheduleSlots('sched-swe-2', $this->school);
+        $this->assertSame(['inst-1', 'inst-2'], $listed->pluck('installment_id')->all());
+        $this->assertSame([60.0, 40.0], $listed->pluck('fee_percentage')->all());
+        $this->assertSame([60000.0, 40000.0], $listed->pluck('amount')->all());
+        $this->assertSame('2026-10-01', $listed[0]['due_date']);
+    }
+
+    public function test_a_configured_schedule_cannot_be_created_again(): void
+    {
+        $this->expectExceptionObject(new AppException('This fee schedule is already configured.', 409));
+
+        $this->slotService()->createFeeScheduleSlots($this->school, 'sched-swe-1', [
+            ['due_date' => '2026-10-01', 'fee_percentage' => 100, 'installment_id' => 'inst-1'],
+        ], (object) ['id' => 'admin-1']);
+    }
+
+    public function test_updating_replaces_the_whole_schedule(): void
+    {
+        $this->slotService()->updateFeeScheduleSlots($this->school, 'sched-swe-1', [
+            ['slot_id' => 's1', 'due_date' => '2026-10-15', 'fee_percentage' => 70, 'installment_id' => 'inst-1'],
+            ['due_date' => '2027-02-01', 'fee_percentage' => 30, 'installment_id' => 'inst-3'],
+        ], (object) ['id' => 'admin-1']);
+
+        $slots = FeeScheduleSlot::where('fee_schedule_id', 'sched-swe-1')->orderBy('due_date')->get();
+        $this->assertSame('s1', $slots[0]->id, 'Kept installments keep their id.');
+        $this->assertSame([70.0, 30.0], $slots->pluck('percentage')->all());
+        $this->assertSame(['2026-10-15', '2027-02-01'], $slots->map(fn($slot) => $slot->due_date->toDateString())->all());
+        $this->assertNull(FeeScheduleSlot::find('s2'), 'Installments left out are removed.');
+    }
+
+    #[DataProvider('invalidSchedules')]
+    public function test_invalid_schedules_are_rejected(array $slots, string $title): void
+    {
+        try {
+            $this->slotService()->updateFeeScheduleSlots($this->school, 'sched-swe-1', $slots, (object) ['id' => 'admin-1']);
+            $this->fail('The schedule was accepted.');
+        } catch (AppException $e) {
+            $this->assertSame(422, $e->getCode());
+            $this->assertSame($title, $e->getTitle());
+        }
+
+        $this->assertSame(3, FeeScheduleSlot::where('fee_schedule_id', 'sched-swe-1')->count(), 'Nothing was changed.');
+    }
+
+    public static function invalidSchedules(): array
+    {
+        return [
+            'not 100%' => [[
+                ['due_date' => '2026-10-01', 'fee_percentage' => 50, 'installment_id' => 'inst-1'],
+                ['due_date' => '2026-12-01', 'fee_percentage' => 40, 'installment_id' => 'inst-2'],
+            ], 'Percentages Must Total 100%'],
+            'outside the academic year' => [[
+                ['due_date' => '2026-08-01', 'fee_percentage' => 100, 'installment_id' => 'inst-1'],
+            ], 'Due Date Outside Academic Year'],
+            'out of order' => [[
+                ['due_date' => '2026-12-01', 'fee_percentage' => 50, 'installment_id' => 'inst-1'],
+                ['due_date' => '2026-11-01', 'fee_percentage' => 50, 'installment_id' => 'inst-2'],
+            ], 'Due Dates Out Of Order'],
+            'duplicate installment' => [[
+                ['due_date' => '2026-10-01', 'fee_percentage' => 50, 'installment_id' => 'inst-1'],
+                ['due_date' => '2026-12-01', 'fee_percentage' => 50, 'installment_id' => 'inst-1'],
+            ], 'Duplicate Installment'],
+            'unknown slot' => [[
+                ['slot_id' => 'elsewhere', 'due_date' => '2026-10-01', 'fee_percentage' => 100, 'installment_id' => 'inst-1'],
+            ], 'Unknown Installment'],
+        ];
     }
 }
