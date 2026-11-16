@@ -28,8 +28,9 @@ class Exam extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        // Calendar dates: serialise as Y-m-d so they are not shifted into UTC timestamps.
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
         'max_score' => 'float',
     ];
 

@@ -796,8 +796,8 @@ class ExamService
                 "student_batch_id"  => $exam->student_batch_id,
                 "timetable_created" => (bool) $exam->timetable_published,
                 "result_released"   => (bool) $exam->result_released,
-                "start_date"        => $exam->start_date,
-                "end_date"          => $exam->end_date,
+                "start_date"        => $exam->start_date?->toDateString(),
+                "end_date"          => $exam->end_date?->toDateString(),
                 "result_message"    => null,
             ];
 
@@ -907,8 +907,8 @@ class ExamService
                 "exam_name"          => $exam->examtype?->exam_name ?? "Upcoming Exam",
                 'description'        => $exam->examtype?->description ?? null,
                 "semester"           => $exam->semester?->name ?? "Unknown Semester",
-                "start_date"         => $exam->start_date,
-                "end_date"           => $exam->end_date,
+                "start_date"         => $exam->start_date?->toDateString(),
+                "end_date"           => $exam->end_date?->toDateString(),
                 "timetable_published" => (bool) $exam->timetable_published,
             ]);
         });
@@ -919,8 +919,8 @@ class ExamService
                 "exam_name"          => $exam->examtype?->exam_name ?? "Resit Exam",
                 'description'        => $exam->examtype?->description ?? null,
                 "semester"           => $exam->semester?->name ?? "Unknown Semester",
-                "start_date"         => $exam->start_date,
-                "end_date"           => $exam->end_date,
+                "start_date"         => $exam->start_date?->toDateString(),
+                "end_date"           => $exam->end_date?->toDateString(),
                 "timetable_published" => (bool) $exam->timetable_published,
             ]);
         });
@@ -970,8 +970,8 @@ class ExamService
                     "student_batch_id"  => $exam->student_batch_id,
                     "timetable_created" => (bool) $exam->timetable_published,
                     "result_released"   => (bool) $exam->result_released,
-                    "start_date"        => $exam->start_date,
-                    "end_date"          => $exam->end_date,
+                    "start_date"        => $exam->start_date?->toDateString(),
+                    "end_date"          => $exam->end_date?->toDateString(),
                     "result_message"    => null,
                 ];
 
