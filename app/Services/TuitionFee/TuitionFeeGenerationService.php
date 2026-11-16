@@ -125,7 +125,6 @@ class TuitionFeeGenerationService
                 'school_branch_id' => $student->school_branch_id,
                 'specialty_id' => $specialty->id,
                 'school_academic_year_id' => $academicYear->id,
-                'amount_paid' => 0.00,
                 'tution_fee_total' => $specialty->school_fee,
             ]));
         } catch (UniqueConstraintViolationException) {
