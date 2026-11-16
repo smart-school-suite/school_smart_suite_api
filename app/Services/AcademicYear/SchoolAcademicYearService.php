@@ -2,6 +2,7 @@
 
 namespace App\Services\AcademicYear;
 
+use App\Events\AcademicYear\SchoolAcademicYearCreated;
 use App\Exceptions\AppException;
 use App\Models\Specialty;
 use App\Models\AcademicYear\SchoolAcademicYear;
@@ -85,6 +86,11 @@ class SchoolAcademicYearService
             ]);
 
             $autoCreated = app(SchoolAcademicYearAutoCreationService::class)->createFor($academicYear, $specialty);
+
+            // Bills each academic year's students once the transaction commits.
+            foreach ([$academicYear, ...$autoCreated] as $created) {
+                SchoolAcademicYearCreated::dispatch($created);
+            }
 
             return $academicYear->setRelation('autoCreatedAcademicYears', $autoCreated);
         });

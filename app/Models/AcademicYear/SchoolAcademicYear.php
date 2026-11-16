@@ -11,6 +11,8 @@ use App\Models\ResitExam;
 use App\Models\Schoolbranches;
 use App\Models\SchoolSemester;
 use App\Models\Specialty;
+use App\Models\Student;
+use App\Models\TuitionFees;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,6 +68,16 @@ class SchoolAcademicYear extends Model
     public function schoolBranch(): BelongsTo
     {
         return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
+    }
+
+    public function tuitionFees(): HasMany
+    {
+        return $this->hasMany(TuitionFees::class, 'school_academic_year_id');
+    }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class, 'school_academic_year_id');
     }
 
     public function electionOfficeYears(): HasMany

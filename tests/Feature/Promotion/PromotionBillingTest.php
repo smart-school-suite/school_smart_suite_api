@@ -42,6 +42,8 @@ class PromotionBillingTest extends TestCase
             DB::table('specialties')->insert(['id' => $id, 'specialty_name' => 'Software Engineering', 'registration_fee' => $registration, 'school_fee' => $tuition, 'status' => 'active', 'school_branch_id' => 'branch-1', 'department_id' => 'computing', 'level_id' => $level]);
         }
         DB::table('students')->insert(['id' => 'stu-1', 'name' => 'S', 'first_name' => 'S', 'last_name' => 'S', 'email' => 's@example.com', 'password' => 'x', 'username' => 's', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'guardian_id' => 'g', 'student_batch_id' => 'b', 'gender_id' => 'g', 'relationship_id' => 'r', 'student_source_id' => 's']);
+        DB::table('system_academic_years')->insert(['id' => 'sys-1', 'name' => 'Current', 'year_start' => 2026, 'year_end' => 2027]);
+        DB::table('school_academic_years')->insert(['id' => 'year-swe-2', 'specialty_id' => 'swe-2', 'school_branch_id' => 'branch-1', 'system_academic_year_id' => 'sys-1', 'start_date' => now()->subMonth()->toDateString(), 'end_date' => now()->addMonths(10)->toDateString()]);
         DB::table('student_promotion_records')->insert(['id' => 'rec-1', 'school_branch_id' => 'branch-1', 'student_id' => 'stu-1', 'from_specialty_id' => 'swe-1', 'promotion_run_id' => 'run-1', 'outcome' => 'pending_review', 'status' => 'pending']);
     }
 
@@ -56,7 +58,19 @@ class PromotionBillingTest extends TestCase
 
         $this->assertSame('swe-2', DB::table('students')->value('specialty_id'));
         $this->assertSame(60000.0, RegistrationFee::where('student_id', 'stu-1')->where('specialty_id', 'swe-2')->value('amount'));
-        $this->assertEquals(400000, TuitionFees::where('student_id', 'stu-1')->where('specialty_id', 'swe-2')->value('tution_fee_total'));
+        $this->assertEquals(400000, TuitionFees::where('student_id', 'stu-1')->where('specialty_id', 'swe-2')->where('school_academic_year_id', 'year-swe-2')->value('tution_fee_total'));
+        $this->assertSame('year-swe-2', DB::table('students')->value('school_academic_year_id'));
+    }
+
+    public function test_tuition_is_deferred_when_the_new_level_has_no_academic_year_yet(): void
+    {
+        DB::table('school_academic_years')->delete();
+
+        $this->promote();
+
+        $this->assertSame(1, RegistrationFee::where('specialty_id', 'swe-2')->count());
+        $this->assertSame(0, TuitionFees::count());
+        $this->assertNull(DB::table('students')->value('school_academic_year_id'));
     }
 
     public function test_no_registration_fee_is_charged_when_the_setting_is_off(): void

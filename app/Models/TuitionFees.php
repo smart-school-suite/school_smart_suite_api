@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\AcademicYear\SchoolAcademicYear;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TuitionFees extends Model
@@ -15,6 +17,7 @@ class TuitionFees extends Model
         'student_id',
         'school_branch_id',
         'specialty_id',
+        'school_academic_year_id',
         'amount_paid',
         'tution_fee_total'
     ];
@@ -36,6 +39,11 @@ class TuitionFees extends Model
 
     public function specialty(){
         return $this->belongsTo(Specialty::class, 'specialty_id');
+    }
+
+    public function schoolAcademicYear(): BelongsTo
+    {
+        return $this->belongsTo(SchoolAcademicYear::class, 'school_academic_year_id');
     }
 
     public function level() {

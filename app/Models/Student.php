@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Asset\StudentAvatar;
 use App\Models\Badge\UserBadge;
 use App\Models\Graduation\GraduationRecord;
@@ -41,6 +42,7 @@ class Student extends Model
         'phone',
         'school_branch_id',
         'specialty_id',
+        'school_academic_year_id',
         'guardian_id',
         'student_batch_id',
         'account_status',
@@ -220,6 +222,11 @@ class Student extends Model
     {
         return $this->hasMany(ResitResults::class);
     }
+    public function schoolAcademicYear(): BelongsTo
+    {
+        return $this->belongsTo(SchoolAcademicYear::class, 'school_academic_year_id');
+    }
+
     public function studentBatch(): BelongsTo
     {
         return $this->belongsTo(Studentbatch::class, 'student_batch_id');

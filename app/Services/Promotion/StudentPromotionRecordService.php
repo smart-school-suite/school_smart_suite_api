@@ -6,9 +6,9 @@ use App\Models\Promotion\StudentPromotionRecord;
 use App\Models\SchoolBranchSetting;
 use App\Models\Promotion\StudentPromotionLog;
 use App\Models\Specialty;
-use App\Models\RegistrationFee;
 use App\Models\Student;
-use App\Models\TuitionFees;
+use App\Services\RegistrationFee\RegistrationFeeGenerationService;
+use App\Services\TuitionFee\TuitionFeeGenerationService;
 use App\Models\Educationlevels;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
@@ -261,36 +261,19 @@ class StudentPromotionRecordService
     }
     /**
      * Bills a promoted student for their new level, as a new student is
-     * billed: the new specialty's tuition always, and its registration fee
-     * when "Charge Registration Fee Upon Promotion" is on. Records that
-     * already exist for that specialty are left as they are.
+     * billed: the new specialty's registration fee when "Charge Registration
+     * Fee Upon Promotion" is on, and its tuition for the new specialty's
+     * applicable academic year, which becomes the student's academic year.
+     * Without one, tuition is deferred until that academic year is created.
+     * Records that already exist are left as they are.
      */
     private function billPromotedStudent(Student $student, Specialty $specialty, bool $billRegistrationFee): void
     {
-        $existing = fn(string $model) => $model::where('school_branch_id', $student->school_branch_id)
-            ->where('student_id', $student->id)
-            ->where('specialty_id', $specialty->id)
-            ->exists();
-
-        if ($billRegistrationFee && !$existing(RegistrationFee::class)) {
-            RegistrationFee::create([
-                'specialty_id' => $specialty->id,
-                'school_branch_id' => $student->school_branch_id,
-                'amount' => $specialty->registration_fee,
-                'status' => 'not paid',
-                'student_id' => $student->id,
-            ]);
+        if ($billRegistrationFee) {
+            app(RegistrationFeeGenerationService::class)->generate($student, $specialty);
         }
 
-        if (!$existing(TuitionFees::class)) {
-            TuitionFees::create([
-                'specialty_id' => $specialty->id,
-                'amount_paid' => 0.00,
-                'school_branch_id' => $student->school_branch_id,
-                'tution_fee_total' => $specialty->school_fee,
-                'student_id' => $student->id,
-            ]);
-        }
+        app(TuitionFeeGenerationService::class)->syncStudent($student);
     }
 
     private function billsRegistrationFeeOnPromotion(string $schoolBranchId): bool
