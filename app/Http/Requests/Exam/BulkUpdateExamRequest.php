@@ -19,12 +19,12 @@ class BulkUpdateExamRequest extends FormRequest
     public function rules()
     {
         return [
-            'exams' => 'required|array',
-            'exams.*.exam_id' => 'required|string|exists:exams,id',
+            'exams' => 'required|array|min:1',
+            'exams.*.exam_id' => 'required|string|distinct|exists:exams,id',
             'exams.*.start_date' => 'sometimes|nullable|date',
             'exams.*.end_date' => 'sometimes|nullable|date',
             'exams.*.exam_type_id' => 'sometimes|nullable|string|exists:exam_types,id',
-            'exams.*.weighted_mark' =>  [
+            'exams.*.max_score' =>  [
                 'sometimes',
                 'nullable',
                 'numeric',
