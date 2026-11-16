@@ -30,10 +30,6 @@ class FeeSchedule extends Model
     {
         return $this->hasMany(FeeScheduleSlot::class);
     }
-    public function studentFeeSchedule(): HasMany
-    {
-        return $this->hasMany(StudentFeeSchedule::class);
-    }
     public function schoolSemester(): BelongsTo
     {
         return $this->belongsTo(SchoolSemester::class, 'school_semester_id');

@@ -2,8 +2,6 @@
 
 namespace App\Services\TuitionFee;
 
-use App\Jobs\DataCreationJob\CreateStudentFeeScheduleJob;
-use App\Jobs\DataCreationJob\UpdateStudentFeeScheduleJob;
 use App\Jobs\NotificationJobs\SendAdminFeeScheduleNotificationJob;
 use App\Jobs\NotificationJobs\SendFeeScheduleNotificationJob;
 use App\Models\FeeSchedule;
@@ -24,25 +22,18 @@ class TuitionFeeScheduleSlotService
         DB::beginTransaction();
         try {
 
-            $feeSchedule = FeeSchedule::where('school_branch_id', $currentSchool->id)
-                ->with(['specialty', 'level', 'schoolSemester.semester'])
-                ->findOrFail($feeScheduleId);
+            $feeSchedule = $this->feeSchedule($currentSchool, $feeScheduleId);
+            $specialty = $feeSchedule->schoolYear->specialty;
             $scheduleData = [
-                'schoolYear' => $feeSchedule->schoolSemester->school_year,
-                'specialty' => $feeSchedule->specialty->specialty_name,
-                'level' => $feeSchedule->level->level,
-                'semester' => $feeSchedule->schoolSemester->semester->name
+                'schoolYear' => $feeSchedule->schoolYear->systemAcademicYear?->name,
+                'specialty' => $specialty->specialty_name,
+                'level' => $specialty->level?->level,
+                'semester' => null,
             ];
-            if (!$feeSchedule->specialty || !isset($feeSchedule->specialty->school_fee)) {
-                throw new \InvalidArgumentException('Fee Schedule or associated Specialty/School Fee data is incomplete.');
-            }
-
-            $baseSchoolFee = floatval($feeSchedule->specialty->school_fee);
 
             $slotsToCreate = [];
 
             foreach ($slotsData as $index => $slotData) {
-
                 if (!isset($slotData['due_date'], $slotData['fee_percentage'], $slotData['installment_id'])) {
                     throw new \InvalidArgumentException("Missing required data for slot #{$index}. Required: due_date, fee_percentage, installment_id.");
                 }
@@ -51,17 +42,12 @@ class TuitionFeeScheduleSlotService
                     throw new \InvalidArgumentException("Invalid fee_percentage for slot #{$index}. Must be numeric.");
                 }
 
-                $percentage = floatval($slotData['fee_percentage']);
-
-                $amount = round($baseSchoolFee * ($percentage / 100), 2);
-
                 $slotsToCreate[] = [
                     'id'               => (string) Str::uuid(),
                     'due_date'         => $slotData['due_date'],
-                    'fee_percentage'   => $percentage,
-                    'amount'           => $amount,
+                    'percentage'       => (float) $slotData['fee_percentage'],
                     'installment_id'   => $slotData['installment_id'],
-                    'fee_schedule_id'  => $feeScheduleId,
+                    'fee_schedule_id'  => $feeSchedule->id,
                     'school_branch_id' => $currentSchool->id,
                     'created_at'       => now(),
                     'updated_at'       => now(),
@@ -69,18 +55,14 @@ class TuitionFeeScheduleSlotService
             }
 
             FeeScheduleSlot::insert($slotsToCreate);
-            $feeSchedule->update([
-                'config_status' => 'configured'
-            ]);
             DB::commit();
-            CreateStudentFeeScheduleJob::dispatch($feeScheduleId, $currentSchool->id,  $feeSchedule->specialty->id);
             SendAdminFeeScheduleNotificationJob::dispatch(
                 $currentSchool->id,
                 $scheduleData
             );
             SendFeeScheduleNotificationJob::dispatch(
                 $currentSchool->id,
-                $feeSchedule->specialty->id,
+                $specialty->id,
                 $scheduleData
             );
             AdminActionEvent::dispatch(
@@ -89,6 +71,7 @@ class TuitionFeeScheduleSlotService
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "tuitionFeeSheduleSlotMangement",
+                    "action" => "tuitionFeeScheduleSlot.created",
                     "authAdmin" => $authAdmin,
                     "data" => $feeSchedule,
                     "message" => "Tuition Fee Schedule Slots Created",
@@ -96,7 +79,7 @@ class TuitionFeeScheduleSlotService
             );
             StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => [$feeSchedule->specialty_id],
+                'specialtyIds'   => [$specialty->id],
                 'feature'      => 'tuitionFeeScheduleCreate',
                 'message'      => 'Tuition Fee Schedule Created',
                 'data'         => $feeSchedule,
@@ -122,16 +105,7 @@ class TuitionFeeScheduleSlotService
 
         try {
 
-            $feeSchedule = FeeSchedule::where('school_branch_id', $currentSchool->id)
-                ->with('specialty')
-                ->findOrFail($feeScheduleId);
-
-            if (!$feeSchedule->specialty || !isset($feeSchedule->specialty->school_fee)) {
-                throw new \InvalidArgumentException('Fee Schedule or associated Specialty/School Fee data is incomplete. Cannot determine base amount for calculations.');
-            }
-
-            $baseSchoolFee = (float) $feeSchedule->specialty->school_fee;
-
+            $feeSchedule = $this->feeSchedule($currentSchool, $feeScheduleId);
 
             foreach ($slotsData as $index => $slotData) {
                 if (!isset($slotData['slot_id'])) {
@@ -158,10 +132,7 @@ class TuitionFeeScheduleSlotService
                         throw new \InvalidArgumentException("Fee percentage for slot ID {$slot->id} must be between 0 and 100.");
                     }
 
-                    $amount = round($baseSchoolFee * ($percentage / 100), 2);
-
-                    $updatePayload['fee_percentage'] = $percentage;
-                    $updatePayload['amount'] = $amount;
+                    $updatePayload['percentage'] = $percentage;
                 }
 
                 if (isset($slotData['installment_id']) && !is_null($slotData['installment_id'])) {
@@ -175,14 +146,13 @@ class TuitionFeeScheduleSlotService
 
             DB::commit();
 
-            //review this worker its incomplete
-            UpdateStudentFeeScheduleJob::dispatch($feeScheduleId, $currentSchool->id,  $feeSchedule->specialty->id);
             AdminActionEvent::dispatch(
                 [
                     "permissions" =>  ["schoolAdmin.feeScheduleSlot.update"],
                     "roles" => ["schoolSuperAdmin", "schoolAdmin"],
                     "schoolBranch" =>  $currentSchool->id,
                     "feature" => "tuitionFeeSheduleSlotMangement",
+                    "action" => "tuitionFeeScheduleSlot.updated",
                     "authAdmin" => $authAdmin,
                     "data" => $feeSchedule,
                     "message" => "Tuition Fee Schedule Slots Updated",
@@ -190,7 +160,7 @@ class TuitionFeeScheduleSlotService
             );
             StudentActionEvent::dispatch([
                 'schoolBranch' => $currentSchool->id,
-                'specialtyIds'   => [$feeSchedule->specialty_id],
+                'specialtyIds'   => [$feeSchedule->schoolYear->specialty_id],
                 'feature'      => 'tuitionFeeScheduleUpdate',
                 'message'      => 'Tuition Fee Schedule Updated',
                 'data'         => $feeSchedule,
@@ -237,12 +207,32 @@ class TuitionFeeScheduleSlotService
             'data'         => $feeSchedule,
         ]);
     }
+    /**
+     * The schedule's installments in due date order. Each carries the amount
+     * due for the specialty's tuition; a student's own amounts follow their
+     * tuition fee total (see TuitionFeeProgressService).
+     */
     public function getFeeScheduleSlots($feeScheduleId, $currentSchool)
     {
-        $getFeeScheduleSlots = FeeScheduleSlot::where("school_branch_id", $currentSchool->id)
-            ->where("fee_schedule_id", $feeScheduleId)
+        $feeSchedule = $this->feeSchedule($currentSchool, $feeScheduleId);
+        $tuition = (float) $feeSchedule->schoolYear->specialty->school_fee;
+
+        return FeeScheduleSlot::where("school_branch_id", $currentSchool->id)
+            ->where("fee_schedule_id", $feeSchedule->id)
             ->with(['installment'])
-            ->get();
-        return $getFeeScheduleSlots;
+            ->orderBy('due_date')
+            ->get()
+            ->map(fn(FeeScheduleSlot $slot) => [
+                ...$slot->toArray(),
+                'fee_percentage' => (float) $slot->percentage,
+                'amount' => round($tuition * ((float) $slot->percentage / 100), 2),
+            ]);
+    }
+
+    private function feeSchedule(object $currentSchool, string $feeScheduleId): FeeSchedule
+    {
+        return FeeSchedule::where('school_branch_id', $currentSchool->id)
+            ->with(['schoolYear.specialty.level', 'schoolYear.systemAcademicYear'])
+            ->findOrFail($feeScheduleId);
     }
 }

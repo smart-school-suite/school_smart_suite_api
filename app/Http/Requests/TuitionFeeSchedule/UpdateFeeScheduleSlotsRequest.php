@@ -31,8 +31,8 @@ class UpdateFeeScheduleSlotsRequest extends FormRequest
     {
         return [
             'slots' => ['required', 'array', 'min:1'],
-            'slots.*.slot_id' => ['required', 'string', Rule::exists('fee_schedule_slots', 'id')],
-            'slots.*.due_date' => ['somtimes', 'nullable', 'date', 'after_or_equal:today'],
+            'slots.*.slot_id' => ['required', 'string', Rule::exists('fee_sched_installments', 'id')],
+            'slots.*.due_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:today'],
             'slots.*.fee_percentage' => ['sometimes', 'nullable', 'numeric', 'min:0.01', 'max:100.00'],
             'slots.*.amount' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'slots.*.installment_id' => [

@@ -30,9 +30,6 @@ class TuitionFees extends Model
     public $keyType = 'string';
     public $table = 'tuition_fees';
 
-    public function studentFeeSchedule(): HasMany {
-         return $this->hasMany(StudentFeeSchedule::class);
-    }
     public function student(){
         return $this->belongsTo(Student::class, 'student_id');
     }

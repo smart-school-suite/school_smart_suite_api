@@ -47,10 +47,6 @@ class Educationlevels extends Model
         return $this->hasMany(ResitResults::class);
     }
 
-    public function studentFeeSchedule(): HasMany
-    {
-        return $this->hasMany(StudentFeeSchedule::class);
-    }
     public function feeWaiver(): HasMany
     {
         return $this->hasMany(FeeWaiver::class, 'level_id');

@@ -24,14 +24,15 @@ class CreateFeeScheduleSlotsRequest extends FormRequest
             'slots' => ['required', 'array', 'min:1'],
             'slots.*.due_date' => ['required', 'date', 'after_or_equal:today'],
             'slots.*.fee_percentage' => ['required', 'numeric', 'min:0.01', 'max:100.00'],
-            'slots.*.amount' => ['required', 'numeric', 'min:0'],
+            // Accepted for compatibility; amounts are derived from each student's tuition.
+            'slots.*.amount' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'slots.*.installment_id' => [
                 'required',
                 'string',
                 Rule::exists('installments', 'id'),
             ],
             'slots.*.fee_schedule_id' => [
-                'required',
+                'sometimes',
                 'string',
                 Rule::exists('fee_schedules', 'id'),
             ],

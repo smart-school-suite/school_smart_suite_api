@@ -116,10 +116,6 @@ class Student extends Model
     {
         return $this->hasMany(StudentAnnouncement::class);
     }
-    public function studentFeeSchedule(): HasMany
-    {
-        return $this->hasMany(StudentFeeSchedule::class);
-    }
     public function resitCandidates(): HasMany
     {
         return $this->hasMany(ResitCandidates::class, 'resit_id');

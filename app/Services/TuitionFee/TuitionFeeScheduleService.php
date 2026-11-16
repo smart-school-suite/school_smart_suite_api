@@ -4,7 +4,7 @@ namespace App\Services\TuitionFee;
 
 use App\Models\FeeSchedule;
 use App\Models\Student;
-use App\Models\StudentFeeSchedule;
+use App\Models\TuitionFees;
 use Illuminate\Support\Collection;
 use App\Exceptions\AppException;
 use Exception;
@@ -183,136 +183,82 @@ class TuitionFeeScheduleService
         ]);
         return $feeSchedule;
     }
+    /**
+     * The installments of the student's current tuition fee: the one for
+     * their school academic year, else their latest one.
+     */
     public function getFeeScheduleStudentId(object $currentSchool, string $studentId): Collection
     {
         $student = Student::where("school_branch_id", $currentSchool->id)
             ->findOrFail($studentId);
 
-        $schedule = StudentFeeSchedule::where("school_branch_id", $currentSchool->id)
-            ->where("specialty_id", $student->specialty_id)
-            ->where("level_id", $student->level_id)
-            ->with(['student', 'feeScheduleSlot.installment', 'level', 'specialty'])
-            ->get();
+        $tuitionFee = TuitionFees::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->orderByRaw("school_academic_year_id = ? desc", [$student->school_academic_year_id ?? ''])
+            ->orderByDesc("created_at")
+            ->first();
 
-        $sortedSchedule = $schedule->sortBy(function ($item) {
-            return $item->feeScheduleSlot->installment->count ?? PHP_INT_MAX;
-        })->values();
-
-        $formattedSchedule = $sortedSchedule->map(function ($item) {
-            $installmentName = $item->feeScheduleSlot->installment->name ?? null;
-            $dueDate = $item->feeScheduleSlot->due_date ?? null;
-            $status = $item->status;
-            $amount = $item->expected_amount;
-            $gramification = $item->gramification;
-
-            return [
-                'installment' => $installmentName,
-                'amount' => $amount,
-                'due_date' => $dueDate,
-                'status' => $status,
-                'gramification' => $gramification,
-            ];
-        });
-
-        return $formattedSchedule;
-    }
-    public function getStudentFeeSchedule(object $currentSchool, object $student): array
-    {
-        $studentFeeSchedule = StudentFeeSchedule::select('student_fee_schedules.*')
-            ->join('levels', 'levels.id', '=', 'student_fee_schedules.level_id')
-
-            ->where("student_fee_schedules.school_branch_id", $currentSchool->id)
-            ->where("student_fee_schedules.student_id", $student->id)
-
-            ->orderBy('levels.level', 'asc')
-
-            ->with(['specialty', 'level', 'feeScheduleSlot.installment'])
-
-            ->get();
-
-        $groupedByLevel = $studentFeeSchedule->groupBy('level_id');
-
-
-        $formattedOutput = $groupedByLevel->map(function ($feeSlots, $levelId) {
-
-            $level = $feeSlots->first()->level;
-
-            return [
-                'level_id' => $level->id,
-                'level_name' => "Level {$level->level} - {$level->name}",
-
-                'installment_slots' => $feeSlots->map(function ($slot) {
-                    $feeScheduleSlot = $slot->feeScheduleSlot;
-                    $installment = $feeScheduleSlot->installment;
-
-                    return [
-                        'slot_id' => $slot->id,
-                        'status' => $slot->status,
-                        'gramification' => $slot->gramification,
-                        'installment' => optional($installment)->name,
-                        'installment_id' => optional($installment)->id,
-                        'amount_paid' => (float) $slot->amount_paid,
-                        'amount_left' => (float) $slot->amount_left,
-                        'expected_amount' => (float) $slot->expected_amount,
-                        'percentage_paid' => (float) round($slot->percentage_paid, 2),
-                        'due_date' => $feeScheduleSlot->due_date ?: null,
-                    ];
-                })->values()->all(),
-            ];
-        })->values()->all();
-
-        return $formattedOutput;
-    }
-    public function getStudentFeeScheduleLevelId(object $currentSchool, object $student, string $levelId): array
-    {
-        $studentFeeSchedule = StudentFeeSchedule::select('student_fee_schedules.*')
-            ->join('levels', 'levels.id', '=', 'student_fee_schedules.level_id')
-
-            ->where("student_fee_schedules.school_branch_id", $currentSchool->id)
-            ->where("student_fee_schedules.student_id", $student->id)
-
-            ->where("student_fee_schedules.level_id", $levelId)
-
-            ->orderBy('levels.level', 'asc')
-
-            ->with(['specialty', 'level', 'feeScheduleSlot.installment'])
-
-            ->get();
-
-        if ($studentFeeSchedule->isEmpty()) {
-            return [];
+        if (!$tuitionFee) {
+            return collect();
         }
 
-        $groupedByLevel = $studentFeeSchedule->groupBy('level_id');
+        return collect(app(TuitionFeeProgressService::class)->forTuitionFee($tuitionFee)['installments'])
+            ->map(fn(array $slot) => [...$slot, 'amount' => $slot['expected_amount']]);
+    }
 
-        $formattedOutput = $groupedByLevel->map(function ($feeSlots, $levelId) {
+    /** The student's fee schedule progress for every level they have been billed tuition at. */
+    public function getStudentFeeSchedule(object $currentSchool, object $student): array
+    {
+        return $this->studentFeeScheduleByLevel($currentSchool, $student);
+    }
 
-            $level = $feeSlots->first()->level;
+    public function getStudentFeeScheduleLevelId(object $currentSchool, object $student, string $levelId): array
+    {
+        return $this->studentFeeScheduleByLevel($currentSchool, $student, $levelId);
+    }
 
-            return [
-                'level_id' => $level->id,
-                'level_name' => "Level {$level->level} - {$level->name}",
+    /**
+     * The student's tuition fees with their derived installment progress,
+     * grouped by the level billed, lowest level first. Within a level, each
+     * academic year's installments follow the previous year's.
+     */
+    private function studentFeeScheduleByLevel(object $currentSchool, object $student, ?string $levelId = null): array
+    {
+        $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+            ->where("student_id", $student->id)
+            ->when($levelId, fn($query) => $query->whereHas("specialty", fn($q) => $q->where("level_id", $levelId)))
+            ->with(["specialty.level", "schoolAcademicYear.systemAcademicYear"])
+            ->get()
+            ->filter(fn(TuitionFees $fee) => $fee->specialty?->level !== null)
+            ->sortBy(fn(TuitionFees $fee) => [(int) $fee->specialty->level->level, (string) $fee->schoolAcademicYear?->start_date])
+            ->values();
 
-                'installment_slots' => $feeSlots->map(function ($slot) {
-                    $feeScheduleSlot = $slot->feeScheduleSlot;
-                    $installment = optional($feeScheduleSlot)->installment;
+        $progress = app(TuitionFeeProgressService::class)->forTuitionFees($tuitionFees);
 
-                    return [
-                        'slot_id' => $slot->id,
-                        'status' => $slot->status,
-                        'gramification' => $slot->gramification,
-                        'installment' => optional($installment)->name,
-                        'installment_id' => optional($installment)->id,
-                        'amount_paid' => (float) $slot->amount_paid,
-                        'amount_left' => (float) $slot->amount_left,
-                        'expected_amount' => (float) $slot->expected_amount,
-                        'percentage_paid' => (float) round($slot->percentage_paid, 2),
-                        'due_date' => optional($feeScheduleSlot)->due_date ? optional($feeScheduleSlot)->due_date->format('d-m-Y') : null,
-                    ];
-                })->values()->all(),
-            ];
-        })->values()->all();
+        return $tuitionFees
+            ->groupBy(fn(TuitionFees $fee) => $fee->specialty->level_id)
+            ->map(function (Collection $fees) use ($progress) {
+                $level = $fees->first()->specialty->level;
 
-        return $formattedOutput;
+                return [
+                    'level_id' => $level->id,
+                    'level_name' => "Level {$level->level} - {$level->name}",
+                    'tuition_fees' => $fees->map(fn(TuitionFees $fee) => [
+                        ...collect($progress[$fee->id])->except('installments')->all(),
+                        'academic_year' => $fee->schoolAcademicYear?->systemAcademicYear?->name,
+                    ])->values()->all(),
+                    'installment_slots' => $fees
+                        ->flatMap(fn(TuitionFees $fee) => collect($progress[$fee->id]['installments'])
+                            ->map(fn(array $slot) => [
+                                ...$slot,
+                                'tuition_fee_id' => $fee->id,
+                                'school_academic_year_id' => $fee->school_academic_year_id,
+                            ]))
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }
