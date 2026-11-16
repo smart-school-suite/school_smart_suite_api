@@ -25,6 +25,7 @@ use App\Models\ResitExam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Grades;
+use App\Models\StudentResults;
 
 class ExamService
 {
@@ -212,12 +213,61 @@ class ExamService
             ->with('examType')
             ->get();
     }
+    /**
+     * Exams (from the given ids) that already have evaluated candidates,
+     * i.e. recorded scores or computed results.
+     */
     private function examIdsWithScores(object $currentSchool, array $examIds)
     {
-        return ExamScore::where('school_branch_id', $currentSchool->id)
+        $scored = ExamScore::where('school_branch_id', $currentSchool->id)
             ->whereIn('exam_id', $examIds)
             ->distinct()
             ->pluck('exam_id');
+        $withResults = StudentResults::where('school_branch_id', $currentSchool->id)
+            ->whereIn('exam_id', $examIds)
+            ->distinct()
+            ->pluck('exam_id');
+
+        return $scored->merge($withResults)->unique()->values();
+    }
+
+    private function semesterExamsUsingCa(object $currentSchool, Exam $caExam)
+    {
+        return Exam::where('school_branch_id', $currentSchool->id)
+            ->where('school_year_id', $caExam->school_year_id)
+            ->where('id', '!=', $caExam->id)
+            ->whereHas('examType', function ($query) use ($caExam) {
+                $query->where('semester', $caExam->examType->semester)
+                    ->where('type', '!=', 'ca');
+            })
+            ->with(['examType', 'examGradeScale'])
+            ->get();
+    }
+
+    private function assertExamNotEvaluated(object $currentSchool, Exam $exam, string $action): void
+    {
+        if ($this->examIdsWithScores($currentSchool, [$exam->id])->isNotEmpty()) {
+            $examName = $exam->examType->exam_name ?? 'This exam';
+            throw new AppException(
+                "The {$action} cannot be changed because candidates have already been evaluated for this exam.",
+                409,
+                "Exam Already Evaluated",
+                "{$examName} already has recorded scores. The {$action} can only be changed before any candidate is evaluated. You can still update the exam dates."
+            );
+        }
+    }
+
+    /** Detach a grade scale whose max score no longer matches the exam's. */
+    private function detachMismatchedGradeScale(Exam $exam): void
+    {
+        if (!$exam->grades_category_id) {
+            return;
+        }
+        $category = SchoolGradeScaleCategory::find($exam->grades_category_id);
+        if (!$category || abs((float) $category->max_score - (float) $exam->max_score) > 0.0001) {
+            $exam->grades_category_id = null;
+            $exam->save();
+        }
     }
     private function deleteExamCandidate(string $examId, object $currentSchool)
     {
@@ -377,8 +427,31 @@ class ExamService
             }
 
             $oldMaxScore = (float) $exam->max_score;
+            $maxScoreChanging = abs($newMaxScore - $oldMaxScore) > 0.0001;
 
-            DB::transaction(function () use ($exam, $data, $newExamTypeId, $newSchoolYearId, $newMaxScore, $oldMaxScore, $isCaExam, $currentSchool) {
+            $dependentExams = collect();
+            if ($maxScoreChanging) {
+                $this->assertExamNotEvaluated($currentSchool, $exam, 'max score');
+
+                if ($isCaExam) {
+                    // The CA's max score is part of its semester exams' totals.
+                    $dependentExams = $this->semesterExamsUsingCa($currentSchool, $exam);
+                    $evaluatedDependents = $this->examIdsWithScores($currentSchool, $dependentExams->pluck('id')->all());
+                    if ($evaluatedDependents->isNotEmpty()) {
+                        $names = $dependentExams->whereIn('id', $evaluatedDependents)
+                            ->map(fn($dependent) => $dependent->examType->exam_name ?? $dependent->id)
+                            ->implode(', ');
+                        throw new AppException(
+                            "The CA max score cannot be changed because a semester exam that includes it has already been evaluated.",
+                            409,
+                            "Semester Exam Already Evaluated",
+                            "This CA's max score is part of the total for: {$names}, which already has recorded scores. The CA max score can only be changed before those candidates are evaluated."
+                        );
+                    }
+                }
+            }
+
+            DB::transaction(function () use ($exam, $data, $newExamTypeId, $newSchoolYearId, $newMaxScore, $oldMaxScore, $isCaExam, $currentSchool, $dependentExams) {
                 $exam->fill(collect($data)->only(['start_date', 'end_date'])->toArray());
                 $exam->exam_type_id = $newExamTypeId;
                 $exam->school_year_id = $newSchoolYearId;
@@ -397,7 +470,15 @@ class ExamService
                                 ->where('type', '!=', 'ca');
                         })
                         ->increment('max_score', $delta);
+
+                    // Their grade scales were matched to the old totals.
+                    foreach ($dependentExams as $dependent) {
+                        $this->detachMismatchedGradeScale($dependent->fresh());
+                    }
                 }
+
+                // A grade scale can only be attached when its max score matches the exam's.
+                $this->detachMismatchedGradeScale($exam);
             });
 
             if ($examTypeChanged || $schoolYearChanged) {
@@ -563,6 +644,8 @@ class ExamService
             }
 
             $exam->status = $status;
+            // Max score and grade scale can only change before any candidate is evaluated.
+            $exam->has_evaluated_candidates = $this->examIdsWithScores($currentSchool, [$exam->id])->isNotEmpty();
 
             return $exam;
         } catch (AppException $e) {
@@ -657,6 +740,8 @@ class ExamService
                 );
             }
 
+            $this->assertExamNotEvaluated($currentSchool, $exam, 'grade scale');
+
             if (strtolower($exam->examType->type) !== strtolower($gradeScaleCategory->systemGradeCategory->exam_type)) {
                 throw new AppException(
                     "Mismatched Exam Type and Grading Category",
@@ -726,7 +811,9 @@ class ExamService
                     );
                 }
 
-                $exam = Exam::where("school_branch_id", $currentSchool->id)->find($examId);
+                $exam = Exam::where("school_branch_id", $currentSchool->id)
+                    ->with('examType')
+                    ->find($examId);
 
                 if (!$exam) {
                     throw new AppException(
@@ -737,6 +824,8 @@ class ExamService
                         null
                     );
                 }
+
+                $this->assertExamNotEvaluated($currentSchool, $exam, 'grade scale');
 
                 $exam->grades_category_id = $gradesConfig->grades_category_id;
                 $exam->grading_added = true;
@@ -749,6 +838,9 @@ class ExamService
             }
             DB::commit();
             return $result;
+        } catch (AppException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (Exception $e) {
             DB::rollBack();
             throw new AppException(
