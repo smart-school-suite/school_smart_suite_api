@@ -18,9 +18,9 @@ class BulkBillStudentAdditionalFeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'fee_details' => "required|array",
-            'fee_details.*.student_id' => 'required|string|exists:student,id',
-            'fee_details.*.reason' => 'required|string|max:500',
+            'fee_details' => 'required|array|min:1',
+            'fee_details.*.student_id' => 'required|string|distinct|exists:students,id',
+            'fee_details.*.reason' => 'required|string|max:1000',
             'fee_details.*.additionalfee_category_id' => 'required|string|exists:additional_fee_categories,id',
              'fee_details.*.amount' => [
                 'required',
