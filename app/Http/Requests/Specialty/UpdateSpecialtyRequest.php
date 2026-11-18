@@ -3,9 +3,12 @@
 namespace App\Http\Requests\Specialty;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class UpdateSpecialtyRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     /**
      * Determine if the user is authorized to make this request.
      *

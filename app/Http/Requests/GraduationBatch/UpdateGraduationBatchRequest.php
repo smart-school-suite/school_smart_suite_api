@@ -3,9 +3,12 @@
 namespace App\Http\Requests\GraduationBatch;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class UpdateGraduationBatchRequest extends FormRequest
 {
+    use SanitizesRichText;
+
 
 
     /**

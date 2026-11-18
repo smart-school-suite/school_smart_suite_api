@@ -3,11 +3,15 @@
 namespace App\Http\Requests\Event;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RichTextMax;
+use App\Http\Requests\Concerns\SanitizesRichText;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateEventDraftRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     protected function prepareForValidation(): void
     {
         if ($this->has('school_wide')) {
@@ -22,7 +26,7 @@ class UpdateEventDraftRequest extends FormRequest
         return [
             'school_event_id' => 'required|uuid|exists:school_events,id',
             'title' => 'sometimes|nullable|string|max:150',
-            'description' => 'sometimes|nullable|string|max:5000',
+            'description' => ['sometimes', 'nullable', 'string', new RichTextMax(5000)],
             'organizer' => 'sometimes|nullable|string|max:200',
             'location' => 'sometimes|nullable|string|max:150',
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'scheduled'])],

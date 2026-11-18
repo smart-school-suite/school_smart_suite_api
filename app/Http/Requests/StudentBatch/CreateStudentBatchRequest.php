@@ -3,9 +3,12 @@
 namespace App\Http\Requests\StudentBatch;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class CreateStudentBatchRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     /**
      * Determine if the user is authorized to make this request.
      *

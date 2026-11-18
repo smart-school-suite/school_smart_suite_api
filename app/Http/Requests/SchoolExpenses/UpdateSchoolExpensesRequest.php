@@ -3,9 +3,12 @@
 namespace App\Http\Requests\SchoolExpenses;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class UpdateSchoolExpensesRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     /**
      * Determine if the user is authorized to make this request.
      *

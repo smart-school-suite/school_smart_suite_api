@@ -3,9 +3,17 @@
 namespace App\Http\Requests\StudentBatch;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class BulkUpdateStudentBatchRequest extends FormRequest
 {
+    use SanitizesRichText;
+
+    protected function richTextFields(): array
+    {
+        return ['student_batches.*.description'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *

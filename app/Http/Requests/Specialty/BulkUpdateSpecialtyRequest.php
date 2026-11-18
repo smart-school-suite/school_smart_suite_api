@@ -3,9 +3,17 @@
 namespace App\Http\Requests\Specialty;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class BulkUpdateSpecialtyRequest extends FormRequest
 {
+    use SanitizesRichText;
+
+    protected function richTextFields(): array
+    {
+        return ['specialties.*.description'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *

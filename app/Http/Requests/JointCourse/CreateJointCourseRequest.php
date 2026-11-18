@@ -3,9 +3,12 @@
 namespace App\Http\Requests\JointCourse;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class CreateJointCourseRequest extends FormRequest
 {
+    use SanitizesRichText;
+
 
 
     /**

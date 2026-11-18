@@ -3,9 +3,18 @@
 namespace App\Http\Requests\Election;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RichTextMax;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class BulkUpdateElectionRequest extends FormRequest
 {
+    use SanitizesRichText;
+
+    protected function richTextFields(): array
+    {
+        return ['elections.*.description'];
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -17,7 +26,7 @@ class BulkUpdateElectionRequest extends FormRequest
             'elections' => 'required|array|min:1',
             'elections.*.election_id' => 'required|string|exists:elections,id',
             'elections.*.title' => 'sometimes|nullable|string|max:150',
-            'elections.*.description' => 'sometimes|nullable|string|max:2000',
+            'elections.*.description' => ['sometimes', 'nullable', 'string', new RichTextMax(2000)],
             'elections.*.election_type_id' => 'sometimes|nullable|string|exists:election_types,id',
             'elections.*.system_academic_year_id' => 'sometimes|nullable|string|exists:system_academic_years,id',
             'elections.*.application_start' => 'sometimes|nullable|date_format:Y-m-d H:i',

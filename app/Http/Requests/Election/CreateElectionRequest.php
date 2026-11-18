@@ -3,10 +3,14 @@
 namespace App\Http\Requests\Election;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RichTextMax;
+use App\Http\Requests\Concerns\SanitizesRichText;
 use App\Http\Requests\Election\Concerns\ValidatesElectionParticipants;
 
 class CreateElectionRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     use ValidatesElectionParticipants;
 
     protected function prepareForValidation(): void
@@ -26,7 +30,7 @@ class CreateElectionRequest extends FormRequest
     {
         return array_merge([
             'title' => 'nullable|string|max:150',
-            'description' => 'nullable|string|max:2000',
+            'description' => ['nullable', 'string', new RichTextMax(2000)],
             'election_type_id' => 'required|string|exists:election_types,id',
             'system_academic_year_id' => 'required|string|exists:system_academic_years,id',
             'application_start' => 'required|date_format:Y-m-d H:i|after_or_equal:now',
