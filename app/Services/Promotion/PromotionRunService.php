@@ -20,38 +20,44 @@ class PromotionRunService
                 'schoolYear.specialty.department',
             ])
             ->get()
-            ->map(function ($r) {
-                $schoolYear = $r->schoolYear;
-                $specialty  = $schoolYear?->specialty;
-                $level      = $specialty?->level;
-                $department = $specialty?->department;
-                $systemYear = $schoolYear?->systemAcademicYear;
+            ->map(fn(PromotionRun $run) => $this->present($run));
+    }
 
-                return [
-                    'id'                 => $r->id,
-                    'ac_start_date'      => $schoolYear?->start_date,
-                    'ac_end_date'        => $schoolYear?->end_date,
-                    'academic_year'      => $systemYear?->name,
-                    'level'              => $level?->level,
-                    'level_name'         => $level?->name,
-                    'specialty'          => $specialty?->specialty_name,
-                    'department'         => $department?->department_name,
-                    'status'             => $r->status,
-                    'current_stage'      => $r->current_stage,
-                    'total_students'     => $r->total_students,
-                    'processed_students' => $r->processed_students,
-                    'promoted_count'     => $r->promoted_count,
-                    'repeated_count'     => $r->repeated_count,
-                    'graduated_count'    => $r->graduated_count,
-                    'review_count'       => $r->review_count,
-                    'excluded_count'     => $r->excluded_count,
-                    'failed_count'       => $r->failed_count,
-                    'created_at'         => $r->created_at,
-                    'updated_at'         => $r->updated_at,
-                    // What the run allows now, and why not (PromotionRunActionPolicy).
-                    'available_actions'  => $this->policy()->describe($r),
-                ];
-            });
+    /** A run as the list and the details drawer show it. */
+    private function present(PromotionRun $r): array
+    {
+        $schoolYear = $r->schoolYear;
+        $specialty  = $schoolYear?->specialty;
+        $level      = $specialty?->level;
+        $department = $specialty?->department;
+        $systemYear = $schoolYear?->systemAcademicYear;
+
+        return [
+            'id'                 => $r->id,
+            'ac_start_date'      => $schoolYear?->start_date,
+            'ac_end_date'        => $schoolYear?->end_date,
+            'academic_year'      => $systemYear?->name,
+            'level'              => $level?->level,
+            'level_name'         => $level?->name,
+            'specialty'          => $specialty?->specialty_name,
+            'department'         => $department?->department_name,
+            'status'             => $r->status,
+            'current_stage'      => $r->current_stage,
+            'total_students'     => $r->total_students,
+            'processed_students' => $r->processed_students,
+            'promoted_count'     => $r->promoted_count,
+            'repeated_count'     => $r->repeated_count,
+            'graduated_count'    => $r->graduated_count,
+            'review_count'       => $r->review_count,
+            'excluded_count'     => $r->excluded_count,
+            'failed_count'       => $r->failed_count,
+            'started_at'         => $r->started_at,
+            'completed_at'       => $r->completed_at,
+            'created_at'         => $r->created_at,
+            'updated_at'         => $r->updated_at,
+            // What the run allows now, and why not (PromotionRunActionPolicy).
+            'available_actions'  => $this->policy()->describe($r),
+        ];
     }
     public function triggerPromotion(object $currentSchool, object $authUser, array $payload)
     {
@@ -147,7 +153,14 @@ class PromotionRunService
             );
         }
 
-        return $promotion;
+        // The relation is declared under another morph name, so resolve directly.
+        $type = $promotion->authorable_type;
+        $author = $type && class_exists($type) ? $type::find($promotion->authorable_id) : null;
+        return $this->present($promotion) + [
+            'initiated_by' => $author
+                ? ($author->name ?? trim(($author->first_name ?? '') . ' ' . ($author->last_name ?? '')) ?: null)
+                : null,
+        ];
     }
     public function cancelPromotionRun(object $currentSchool, string $runId)
     {

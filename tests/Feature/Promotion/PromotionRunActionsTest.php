@@ -141,4 +141,17 @@ class PromotionRunActionsTest extends TestCase
         $this->assertSame('cancelled', $this->runStatus('run-cancelled'));
         $this->assertNull(PromotionRun::find('run-cancelled')->started_at);
     }
+
+    public function test_the_details_show_the_run_flat_with_who_started_it_and_what_it_allows(): void
+    {
+        $this->postJson('/api/v1/promotion-run/bulk-trigger', ['promotion_run_ids' => ['run-pending'], 'status' => 'active'])->assertOk();
+
+        $details = $this->getJson('/api/v1/promotion-run/run-pending')->assertOk()->json('data');
+
+        $this->assertSame(['run-pending', 'processing', 'A'], [$details['id'], $details['status'], $details['initiated_by']]);
+        $this->assertNotNull($details['started_at']);
+        $this->assertTrue($details['available_actions']['cancel']['allowed']);
+        $this->assertFalse($details['available_actions']['trigger']['allowed']);
+        $this->getJson('/api/v1/promotion-run/run-other-branch')->assertNotFound();
+    }
 }
