@@ -127,12 +127,16 @@ class UpdateCaScoreService
                 $updatedCount++;
             }
 
+            // The candidate's GPA against the minimum passing GPA, stored in student_results.
+            $result = app(CandidateResultService::class)->record($candidate);
+
             DB::commit();
 
             return [
                 'status' => 'success',
                 'message' => 'CA scores updated successfully.',
                 'records_updated' => $updatedCount,
+                'result' => CandidateResultService::withoutDetails($result),
             ];
 
         } catch (AppException|ModelNotFoundException $e) {

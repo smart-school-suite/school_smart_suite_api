@@ -194,11 +194,15 @@ class AddCaScoresService
 
             DB::table("exam_scores")->insert($examScores);
 
+            // The candidate's GPA against the minimum passing GPA, stored in student_results.
+            $result = app(CandidateResultService::class)->record($candidate);
+
             DB::commit();
 
             return [
                 'candidate_id' => $candidate->id,
                 'exam_id' => $exam->id,
+                'result' => CandidateResultService::withoutDetails($result),
                 'courses_submitted' => $submittedCourseIds->count(),
                 'total_score' => collect($scores)->sum(fn($s) => (float) $s['score']),
                 'average_score' => round(collect($scores)->avg(fn($s) => (float) $s['score']), 2),

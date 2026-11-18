@@ -255,6 +255,10 @@ class AddExamScoreService
             }
 
             DB::table("exam_scores")->insert($examScores);
+
+            // The candidate's GPA against the minimum passing GPA, stored in student_results.
+            $result = app(CandidateResultService::class)->record($candidate);
+
             if ($this->isExamFullyEvaluated($exam->id)) {
                 CreateResitExamJob::dispatch($exam->id, $currentSchool->id)->afterCommit();
             }
@@ -264,6 +268,7 @@ class AddExamScoreService
             return [
                 'candidate_id' => $candidate->id,
                 'exam_id' => $exam->id,
+                'result' => CandidateResultService::withoutDetails($result),
                 'courses_submitted' => count($examScores),
                 'total_score' => round($totalFinalScore, 2),
                 'average_score' => round($totalFinalScore / count($examScores), 2),

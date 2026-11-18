@@ -163,8 +163,9 @@ class UpdateExamScoreService
                     );
                 }
 
+                // Exam scores are stored with the CA included, as when they are added.
                 $targetScoreRecord->update([
-                    'score' => $scoreValue,
+                    'score' => $finalScore,
                     'grade_id' => $grade->id,
                 ]);
 
@@ -185,6 +186,9 @@ class UpdateExamScoreService
                 $updatedCount++;
             }
 
+            // The candidate's GPA against the minimum passing GPA, stored in student_results.
+            $result = app(CandidateResultService::class)->record($candidate);
+
             DB::commit();
             if ($this->isExamFullyEvaluated($exam->id)) {
                 SyncResitExamJob::dispatch($exam->id, $currentSchool->id)->afterCommit();
@@ -192,6 +196,7 @@ class UpdateExamScoreService
 
             return [
                 'records_updated' => $updatedCount,
+                'result' => CandidateResultService::withoutDetails($result),
                 'resits_created' => $resitsCreated,
                 'resits_removed' => $resitsRemoved,
             ];
