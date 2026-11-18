@@ -3,9 +3,13 @@
 namespace App\Http\Requests\AnnouncementCategory;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RichTextMax;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class UpdateAnnouncementCategoryRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -18,7 +22,7 @@ class UpdateAnnouncementCategoryRequest extends FormRequest
     {
         return [
            'name' => 'nullable|sometimes|string|max:100',
-           'description' => 'nullable|sometimes|string|max:1000'
+           'description' => ['nullable', 'sometimes', 'string', new RichTextMax(1000)]
         ];
     }
 }

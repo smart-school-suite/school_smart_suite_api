@@ -3,9 +3,17 @@
 namespace App\Http\Requests\Department;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class BulkUpdateDepartmentRequest extends FormRequest
 {
+    use SanitizesRichText;
+
+    protected function richTextFields(): array
+    {
+        return ['departments.*.description'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *

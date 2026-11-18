@@ -3,9 +3,13 @@
 namespace App\Http\Requests\Election;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RichTextMax;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class UpdateElectionRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     public function authorize(): bool
     {
         return true;
@@ -15,7 +19,7 @@ class UpdateElectionRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|nullable|string|max:150',
-            'description' => 'sometimes|nullable|string|max:2000',
+            'description' => ['sometimes', 'nullable', 'string', new RichTextMax(2000)],
             'election_type_id' => 'sometimes|nullable|string|exists:election_types,id',
             'system_academic_year_id' => 'sometimes|nullable|string|exists:system_academic_years,id',
             'application_start' => 'sometimes|nullable|date_format:Y-m-d H:i',

@@ -3,9 +3,17 @@
 namespace App\Http\Requests\SchoolExpenses;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class BulkUpdateSchoolExpensesRequest extends FormRequest
 {
+    use SanitizesRichText;
+
+    protected function richTextFields(): array
+    {
+        return ['school_expenses.*.description'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *

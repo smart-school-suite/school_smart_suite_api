@@ -3,9 +3,17 @@
 namespace App\Http\Requests\Course;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\SanitizesRichText;
 
 class BulkUpdateCourseRequest extends FormRequest
 {
+    use SanitizesRichText;
+
+    protected function richTextFields(): array
+    {
+        return ['courses.*.description'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *

@@ -3,11 +3,15 @@
 namespace App\Http\Requests\Event;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RichTextMax;
+use App\Http\Requests\Concerns\SanitizesRichText;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class CreateEventRequest extends FormRequest
 {
+    use SanitizesRichText;
+
     protected function prepareForValidation(): void
     {
         if ($this->has('school_wide')) {
@@ -28,7 +32,7 @@ class CreateEventRequest extends FormRequest
 
         return [
             'title' => "{$required}|string|max:150",
-            'description' => "{$required}|string|max:5000",
+            'description' => [$required, 'string', new RichTextMax(5000)],
             'organizer' => "{$required}|string|max:200",
             'location' => "{$required}|string|max:150",
             'status' => ['required', 'string', Rule::in(['draft', 'active', 'scheduled'])],
