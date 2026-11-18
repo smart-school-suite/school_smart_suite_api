@@ -227,6 +227,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/exam-results')
                 ->group(base_path("routes/Exam/ExamResults.php"));
 
+            Route::middleware(['auth:sanctum', IdentifyTenant::class])->prefix('api/v1/resit-results')
+                ->group(base_path("routes/Resit/ResitResults.php"));
+
             Route::middleware(['auth:sanctum'])->prefix('api/v1/student-parent-relationship')
                 ->group(base_path("routes/Student/StudentParentRelationship.php"));
 
