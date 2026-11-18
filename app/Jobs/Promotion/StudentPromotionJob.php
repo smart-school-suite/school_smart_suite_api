@@ -2,13 +2,10 @@
 
 namespace App\Jobs\Promotion;
 
-use App\DTOs\Promotion\PromotionRunLogReasonDTO;
-use App\DTOs\Promotion\PromotionRunLogDTO;
 use App\Models\AdditionalFees;
 use App\Models\Exam\ExamScore;
 use App\Models\Examtype;
 use App\Models\Promotion\PromotionRun;
-use App\Models\Promotion\StudentPromotionLog;
 use App\Models\SchoolBranchSetting;
 use App\Models\Studentresit;
 use App\Models\TuitionFees;
@@ -22,6 +19,10 @@ use App\Services\PromotionRules\EvaluationRuleService;
 use App\Services\PromotionRules\ExamScoreRuleService;
 use App\Services\PromotionRules\ResitRuleService;
 use App\Services\PromotionRules\TuitionFeeRuleService;
+use App\Services\Promotion\PromotionRunActionPolicy;
+use App\Services\Promotion\PromotionRunLogBuilder;
+use App\Services\Promotion\PromotionRunLogStore;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,6 +34,7 @@ class StudentPromotionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $tries = 3;
+    private const CANCEL_CHECK_EVERY = 20;
     public $timeout = 300;
     protected string $schoolBranchId;
     protected string $runId;
@@ -45,124 +47,34 @@ class StudentPromotionJob implements ShouldQueue
     {
         $schoolBranchId = $this->schoolBranchId;
         $runId = $this->runId;
-        $reasons = [];
 
         $promotionRun = PromotionRun::where("school_branch_id", $schoolBranchId)
             ->where("id", $runId)
-            ->with(['schoolYear.specialty.student', 'schoolYear.specialty.level'])
+            ->with(['schoolYear.specialty.student', 'schoolYear.specialty.level', 'schoolYear.systemAcademicYear'])
             ->first();
 
+        // Nothing to log against: the run no longer exists.
         if (!$promotionRun) {
-            $reasons[] = new PromotionRunLogReasonDTO(
-                reason: "Promotion run record not found.",
-                details: ['promotion_run_id' => $runId, 'school_branch_id' => $schoolBranchId]
-            );
-            $this->failAndLog($runId, $schoolBranchId, "Promotion Run Initialization Failed", $reasons);
             return;
         }
 
-        $specialty = $promotionRun->schoolYear?->specialty;
-        $students = $specialty?->student ?? collect();
-
-        if ($students->isEmpty()) {
-            $reasons[] = new PromotionRunLogReasonDTO(
-                reason: "No students found attached to the current specialty/school year.",
-                details: ['specialty' => $specialty ?? null]
-            );
-            $this->failAndLog($runId, $schoolBranchId, "No Students Found", $reasons, $promotionRun);
+        // Only a run that is still scheduled, queued or running is processed:
+        // a run cancelled (or finished) after this job was queued is left alone.
+        if (!in_array($promotionRun->status, PromotionRunActionPolicy::IN_PROGRESS, true)) {
             return;
         }
+        $promotionRun->update(['status' => 'processing']);
 
-        $levelSettings = $this->levelSetting($schoolBranchId);
+        $log = new PromotionRunLogBuilder();
+        [$specialty, $students, $nextSpecialty] = $this->checkCanRun($promotionRun, $log);
 
-        $levels = Educationlevels::whereHas(
-            "levelType",
-            fn($query) => $query->where("program_name", $levelSettings?->value)
-        )->get();
-
-        if ($levels->isEmpty()) {
-            $reasons[] = new PromotionRunLogReasonDTO(
-                reason: "No education levels found matching program name.",
-                details: ['program_name' => $levelSettings?->value]
-            );
-            $this->failAndLog($runId, $schoolBranchId, "Level Settings Misconfiguration", $reasons, $promotionRun);
+        if ($log->hasErrors()) {
+            $promotionRun->update(['status' => 'failed', 'completed_at' => now()]);
+            $log->save($promotionRun, 'failed', 'Promotion run could not start', [
+                'total' => $students->count(), 'processed' => 0, 'promoted' => 0, 'retained' => 0, 'needs_review' => 0,
+            ]);
             return;
         }
-
-        $nextSpecialty = $this->getNextSpecialty($specialty, $levels);
-
-        if (!$nextSpecialty) {
-            $reasons[] = new PromotionRunLogReasonDTO(
-                reason: "Target next specialty could not be determined.",
-                details: [
-                    'current_specialty' =>  [
-                        'id' => $specialty->id ?? null,
-                        "name" => $specialty->specialty_name ?? null,
-                        "level_name" => $specialty->level->name ?? null,
-                        "level_number" => $specialty->level->level ?? null
-                    ] ?? null,
-                ]
-            );
-            $this->failAndLog($runId, $schoolBranchId, "Next Specialty Missing", $reasons, $promotionRun);
-            return;
-        }
-
-        $nextSpecialtySchoolYear = SchoolAcademicYear::where("school_branch_id", $schoolBranchId)
-            ->with(["specialty", "level", 'systemAcademicYear'])
-            ->where("specialty_id", $nextSpecialty->id)
-            ->where("end_date", ">=", now())
-            ->first();
-
-        $nextSpecialtyName = $nextSpecialty->specialty_name ?? 'Unknown Specialty';
-        $currentSpecialtyName = $specialty->specialty_name ?? 'Unknown Specialty';
-
-        if ($nextSpecialtySchoolYear) {
-            $reasons[] = new PromotionRunLogReasonDTO(
-                reason: "Active academic year already exists for target specialty '{$nextSpecialtyName}'. Unable to promote from '{$currentSpecialtyName}'.",
-                details: [
-                    'next_specialty' => [
-                        'id' => $nextSpecialty->id ?? null,
-                        "name" => $nextSpecialty->specialty_name ?? null,
-                        "level_name" => $nextSpecialty->level->name ?? null,
-                        "level_number" => $nextSpecialty->level->level ?? null
-                    ] ?? null,
-                    'current_specialty' =>  [
-                        'id' => $specialty->id ?? null,
-                        "name" => $specialty->specialty_name ?? null,
-                        "level_name" => $specialty->level->name ?? null,
-                        "level_number" => $specialty->level->level ?? null
-                    ] ?? null,
-                    'academic_year' => [
-                        'id' => $nextSpecialtySchoolYear->id ?? null,
-                        'start_date' => $nextSpecialtySchoolYear->start_date ?? null,
-                        'end_date' => $nextSpecialtySchoolYear->end_date ?? null,
-                        'academic_year' => $nextSpecialtySchoolYear->systemAcademicYear->name ?? null
-
-                    ] ?? null,
-                ]
-            );
-            $this->failAndLog($runId, $schoolBranchId, "Target Specialty Currently Active", $reasons, $promotionRun);
-            return;
-        }
-
-        $reasons[] = new PromotionRunLogReasonDTO(
-            reason: "Target specialty '{$nextSpecialtyName}' is free (no active academic year found). Proceeding with promotion.",
-            details: [
-                'next_specialty' => [
-                    'id' => $nextSpecialty->id ?? null,
-                    "name" => $nextSpecialty->specialty_name ?? null,
-                    "level_name" => $nextSpecialty->level->name ?? null,
-                    "level_number" => $nextSpecialty->level->level ?? null
-                ] ?? null,
-                'current_specialty' =>  [
-                    'id' => $specialty->id ?? null,
-                    "name" => $specialty->specialty_name ?? null,
-                    "level_name" => $specialty->level->name ?? null,
-                    "level_number" => $specialty->level->level ?? null
-                ] ?? null,
-                'academic_year' => $nextSpecialtySchoolYear ?? null,
-            ]
-        );
 
         $studentIds = $students->pluck('id');
 
@@ -202,7 +114,15 @@ class StudentPromotionJob implements ShouldQueue
         $failedCount = 0;
         $needsReviewCount = 0;
 
+        $processed = 0;
         foreach ($students as $student) {
+            // Stop between students when the run is cancelled while running.
+            if ($processed > 0 && $processed % self::CANCEL_CHECK_EVERY === 0 && $this->wasCancelled($promotionRun)) {
+                $this->stopCancelled($promotionRun, $log, $students->count(), $processed, $passedCount, $failedCount, $needsReviewCount);
+                return;
+            }
+            $processed++;
+
             $scores = $studentMarks->filter(fn($marks) => $marks->candidate?->student_id === $student->id);
             $resits = $studentResits->where("student_id", $student->id);
             $tuitionFees = $studentTuitionFees->where("student_id", $student->id);
@@ -236,6 +156,8 @@ class StudentPromotionJob implements ShouldQueue
                 $toSpecialtyId = $specialty->id;
             }
 
+            $log->student($student->id, $student->name, $outcome, $rules);
+
             $studentPromotionRecord = StudentPromotionRecord::updateOrCreate(
                 [
                     'promotion_run_id' => $runId,
@@ -243,7 +165,8 @@ class StudentPromotionJob implements ShouldQueue
                     'school_branch_id' => $schoolBranchId,
                 ],
                 [
-                    'outcome'           => $outcome,
+                    // The records table calls a retained student "repeated".
+                    'outcome'           => $outcome === 'retained' ? 'repeated' : $outcome,
                     'status'            => $status,
                     'processed_at'      => now(),
                     'from_specialty_id' => $specialty->id,
@@ -251,90 +174,181 @@ class StudentPromotionJob implements ShouldQueue
                 ]
             );
 
-            StudentPromotionLog::updateOrCreate(
-                [
-                    'record_id'        => $studentPromotionRecord->id,
-                    'student_id'       => $student->id,
-                    'school_branch_id' => $schoolBranchId,
-                ],
-                [
-                    'rule_logs' => $rules
-                        ->map(fn($rule) => $rule->toArray())
-                        ->values()
-                        ->all(),
-                ]
+            app(PromotionRunLogStore::class)->putStudent(
+                $studentPromotionRecord->id,
+                $student->id,
+                $schoolBranchId,
+                $rules->map(fn($rule) => $rule->toArray())->values()->all(),
             );
         }
 
+        if ($this->wasCancelled($promotionRun)) {
+            $this->stopCancelled($promotionRun, $log, $students->count(), $processed, $passedCount, $failedCount, $needsReviewCount);
+            return;
+        }
+
         $promotionRun->update([
-            'passed_count' => $passedCount,
-            'failed_count' => $failedCount,
-            'needs_review_count' => $needsReviewCount,
+            'total_students' => $students->count(),
+            'processed_students' => $processed,
+            'promoted_count' => $passedCount,
+            'repeated_count' => $failedCount,
+            'review_count' => $needsReviewCount,
             'status' => 'completed',
             'completed_at' => now(),
         ]);
 
-        $reasons[] = new PromotionRunLogReasonDTO(
-            reason: "Promotion run completed successfully.",
-            details: [
-                'total_students' => $students->count(),
-                'passed' => $passedCount,
-                'failed' => $failedCount,
-                'needs_review' => $needsReviewCount,
-            ]
-        );
-
-        $logDto = new PromotionRunLogDTO(
-            status: 'success',
-            title: 'Promotion Run Execution Completed',
-            reasons: $reasons
-        );
-
-        PromotionRunLog::updateOrCreate(
-            [
-                'promotion_run_id' => $runId,
-                'school_branch_id' => $schoolBranchId,
-            ],
-            [
-                'rule_logs' => $logDto->toArray(),
-            ]
-        );
+        $log->save($promotionRun, 'completed', 'Promotion run completed', [
+            'total' => $students->count(),
+            'processed' => $processed,
+            'promoted' => $passedCount,
+            'retained' => $failedCount,
+            'needs_review' => $needsReviewCount,
+        ]);
 
         if ($specialty->graduation_level) {
             StudentGraduationJob::dispatch($runId, $schoolBranchId);
         }
     }
 
-    private function failAndLog(
-        int|string $runId,
-        int|string $schoolBranchId,
-        string $title,
-        array $reasons,
-        ?PromotionRun $promotionRun = null
-    ): void {
-        if ($promotionRun) {
-            $promotionRun->update([
-                'status' => 'failed',
-                'completed_at' => now(),
-            ]);
+    /**
+     * Checks everything the run needs before evaluating anyone, and records
+     * every problem found rather than stopping at the first.
+     *
+     * @return array{0: ?Specialty, 1: Collection, 2: ?Specialty}
+     */
+    private function checkCanRun(PromotionRun $promotionRun, PromotionRunLogBuilder $log): array
+    {
+        $schoolYear = $promotionRun->schoolYear;
+        $specialty = $schoolYear?->specialty;
+        $students = $specialty?->student ?? collect();
+
+        if (!$schoolYear || !$specialty) {
+            $log->error(
+                'Academic year not found',
+                'The academic year or specialty this run promotes from no longer exists.',
+                ['school_year_id' => $promotionRun->school_year_id]
+            );
+            return [$specialty, $students, null];
         }
 
-        $logDto = new PromotionRunLogDTO(
-            status: 'failed',
-            title: $title,
-            reasons: $reasons
-        );
+        $from = $this->describeSpecialty($specialty);
 
-        PromotionRunLog::updateOrCreate(
-            [
-                'promotion_run_id' => $runId,
-                'school_branch_id' => $schoolBranchId,
-            ],
-            [
-                'rule_logs' => $logDto,
-            ]
-        );
+        if ($students->isEmpty()) {
+            $log->error(
+                'No students to promote',
+                "{$from} has no enrolled students, so there is no one to promote.",
+                ['specialty' => $this->specialtyDetails($specialty)]
+            );
+        }
+
+        $levelSettings = $this->levelSetting($promotionRun->school_branch_id);
+        $levels = $levelSettings?->value
+            ? Educationlevels::whereHas("levelType", fn($query) => $query->where("program_name", $levelSettings->value))->get()
+            : collect();
+
+        if (!$levelSettings?->value) {
+            $log->error(
+                'Level setup missing',
+                'The school has not chosen its level system (Level settings), so the next level cannot be worked out.',
+                ['setting' => 'level.start']
+            );
+            return [$specialty, $students, null];
+        }
+
+        if ($levels->isEmpty()) {
+            $log->error(
+                'Level setup has no levels',
+                "No levels exist for the chosen level system '{$levelSettings->value}', so the next level cannot be worked out.",
+                ['level_system' => $levelSettings->value]
+            );
+            return [$specialty, $students, null];
+        }
+
+        $currentLevel = (int) $specialty->level?->level;
+        $nextLevel = $levels->filter(fn($level) => (int) $level->level > $currentLevel)->sortBy(fn($level) => (int) $level->level)->first();
+
+        if (!$nextLevel) {
+            $log->error(
+                'No next level',
+                "{$from} is at the highest level of the school's level system, so there is no level to promote to.",
+                ['specialty' => $this->specialtyDetails($specialty)]
+            );
+            return [$specialty, $students, null];
+        }
+
+        $nextSpecialty = $this->getNextSpecialty($specialty, $levels);
+
+        if (!$nextSpecialty) {
+            $log->error(
+                'Next level specialty missing',
+                "There is no {$specialty->specialty_name} specialty at {$nextLevel->name} to promote students into. Create it, then retry the run.",
+                ['specialty' => $this->specialtyDetails($specialty), 'next_level' => ['name' => $nextLevel->name, 'level' => $nextLevel->level]]
+            );
+            return [$specialty, $students, null];
+        }
+
+        $activeYear = SchoolAcademicYear::where("school_branch_id", $promotionRun->school_branch_id)
+            ->with(['systemAcademicYear'])
+            ->where("specialty_id", $nextSpecialty->id)
+            ->where("end_date", ">=", now())
+            ->first();
+
+        if ($activeYear) {
+            $yearName = $activeYear->systemAcademicYear?->name ?? 'an academic year';
+            $log->error(
+                'Next level is already running',
+                "{$this->describeSpecialty($nextSpecialty)} already has {$yearName} in progress or planned (until "
+                    . Carbon::parse($activeYear->end_date)->format('j M Y')
+                    . '). Students can only be promoted into it once it ends.',
+                [
+                    'next_specialty' => $this->specialtyDetails($nextSpecialty),
+                    'academic_year' => [
+                        'name' => $activeYear->systemAcademicYear?->name,
+                        'start_date' => substr((string) $activeYear->start_date, 0, 10),
+                        'end_date' => substr((string) $activeYear->end_date, 0, 10),
+                    ],
+                ]
+            );
+        }
+
+        return [$specialty, $students, $nextSpecialty];
     }
+
+    private function describeSpecialty(Specialty $specialty): string
+    {
+        return trim("{$specialty->specialty_name} " . ($specialty->level?->name ?? ''));
+    }
+
+    private function specialtyDetails(Specialty $specialty): array
+    {
+        return [
+            'name' => $specialty->specialty_name,
+            'level_name' => $specialty->level?->name,
+            'level' => $specialty->level?->level,
+        ];
+    }
+
+    private function wasCancelled(PromotionRun $promotionRun): bool
+    {
+        return PromotionRun::whereKey($promotionRun->id)->value('status') === 'cancelled';
+    }
+
+    /** Saves how far a cancelled run got and logs it; its records so far are kept. */
+    private function stopCancelled(PromotionRun $promotionRun, PromotionRunLogBuilder $log, int $total, int $processed, int $passed, int $failed, int $review): void
+    {
+        $promotionRun->forceFill([
+            'total_students' => $total,
+            'processed_students' => $processed,
+            'promoted_count' => $passed,
+            'repeated_count' => $failed,
+            'review_count' => $review,
+        ])->save();
+
+        $log->save($promotionRun, 'cancelled', 'Promotion run cancelled', [
+            'total' => $total, 'processed' => $processed, 'promoted' => $passed, 'retained' => $failed, 'needs_review' => $review,
+        ]);
+    }
+
     private function getNextSpecialty(Specialty $specialty, Collection $levels): ?Specialty
     {
         $currentLevel = (int) $specialty->level->level;

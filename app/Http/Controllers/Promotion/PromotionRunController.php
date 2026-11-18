@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Promotion;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PromotionRun\BulkTriggerPromotionRunRequest;
+use App\Http\Requests\PromotionRun\PromotionRunIdsRequest;
 use App\Http\Requests\PromotionRun\TriggerPromotionRunRequest;
 use App\Services\ApiResponseService;
 use App\Services\Promotion\PromotionRunService;
@@ -54,6 +56,34 @@ class PromotionRunController extends Controller
         $cancelRun = $this->promotionRunService->cancelPromotionRun($currentSchool, $runId);
         return ApiResponseService::success("Promotion Run Cancelled Successfully", $cancelRun, null, 200);
     }
+    public function bulkTriggerPromotionRuns(BulkTriggerPromotionRunRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $this->promotionRunService->bulkTriggerPromotionRuns($currentSchool, $this->resolveUser(), $request->validated());
+        return ApiResponseService::success($this->summary($result, 'triggered'), $result, null, 200);
+    }
+
+    public function bulkRetryPromotionRuns(PromotionRunIdsRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $this->promotionRunService->bulkRetryPromotionRuns($currentSchool, $request->validated()['promotion_run_ids']);
+        return ApiResponseService::success($this->summary($result, 'retried'), $result, null, 200);
+    }
+
+    public function bulkCancelPromotionRuns(PromotionRunIdsRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $this->promotionRunService->bulkCancelPromotionRuns($currentSchool, $request->validated()['promotion_run_ids']);
+        return ApiResponseService::success($this->summary($result, 'cancelled'), $result, null, 200);
+    }
+
+    private function summary(array $result, string $verb): string
+    {
+        $done = count($result['done']);
+        $skipped = count($result['skipped']);
+        return "{$done} promotion run" . ($done === 1 ? '' : 's') . " {$verb}" . ($skipped ? ", {$skipped} skipped" : '') . '.';
+    }
+
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {

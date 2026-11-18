@@ -15,7 +15,7 @@ class PromoteStudentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'record_id' => 'uuid|exists:student_promotion_records,id',
+            'record_id' => 'required|string',
             'admin_note' => [
                 'nullable',
                 'string',
