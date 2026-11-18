@@ -28,4 +28,11 @@ class PromotionRunLogStore
             ['rule_logs' => $ruleLogs],
         );
     }
+
+    /** The student's stored rule logs for a record, or null when there are none. */
+    public function getStudent(string $recordId, string $schoolBranchId): ?array
+    {
+        $log = StudentPromotionLog::where('record_id', $recordId)->where('school_branch_id', $schoolBranchId)->first();
+        return $log ? (array) $log->rule_logs : null;
+    }
 }

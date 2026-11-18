@@ -113,7 +113,7 @@ class PromotionRunLogBuilder
         foreach ($shared as $sharedKey) {
             [$rule, $message] = explode('|', $sharedKey, 2);
             $this->warning(
-                $this->ruleTitle($rule),
+                self::ruleTitle($rule),
                 $message,
                 ['rule' => $rule, 'affected_students' => count($students), 'applies_to_all_students' => true]
             );
@@ -144,7 +144,7 @@ class PromotionRunLogBuilder
         };
     }
 
-    private function ruleTitle(string $rule): string
+    public static function ruleTitle(string $rule): string
     {
         return [
             'gpa' => 'GPA requirement',

@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Promotion\StudentPromotionRecordController;
 
 Route::post('/promote', [StudentPromotionRecordController::class, 'promoteStudent'])->name('promote.promoteStudent');
+Route::post('/bulk-promote', [StudentPromotionRecordController::class, 'bulkPromoteStudents'])->name('bulk.promoteStudents');
+Route::post('/bulk-repeat', [StudentPromotionRecordController::class, 'bulkRepeatStudents'])->name('bulk.repeatStudents');
 Route::post('/repeat', [StudentPromotionRecordController::class, 'repeatStudent'])->name('repeat.promoteStudent');
 Route::get('/{recordId}/log', [StudentPromotionRecordController::class, 'getStudentPromotionLog'])->name('get.studentPromotionLog');
 Route::get('specialty/{specialty}/next-specialty', [StudentPromotionRecordController::class, 'getNextPromotionSpecialty'])->name('get.nextSpecialty');

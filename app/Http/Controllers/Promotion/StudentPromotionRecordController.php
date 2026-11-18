@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Promotion;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Promotion\BulkPromotionDecisionRequest;
 use App\Http\Requests\Promotion\PromoteStudentRequest;
 use App\Http\Resources\Promotion\PromotionRecordResource;
 use App\Services\ApiResponseService;
@@ -53,6 +54,24 @@ class StudentPromotionRecordController extends Controller
         $authUser = $this->resolveUser();
         $promoteStudent = $this->studentPromotionRecordService->promoteStudent($currentSchool, $request->validated(), $authUser);
         return ApiResponseService::success("Student Promoted Successfully", $promoteStudent, null, 200);
+    }
+    public function bulkPromoteStudents(BulkPromotionDecisionRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $this->studentPromotionRecordService->bulkPromoteStudents($currentSchool, $request->validated(), $this->resolveUser());
+        return ApiResponseService::success($this->summary($result, 'promoted'), $result, null, 200);
+    }
+    public function bulkRepeatStudents(BulkPromotionDecisionRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $result = $this->studentPromotionRecordService->bulkRepeatStudents($currentSchool, $request->validated(), $this->resolveUser());
+        return ApiResponseService::success($this->summary($result, 'set to repeat'), $result, null, 200);
+    }
+    private function summary(array $result, string $verb): string
+    {
+        $done = count($result['done']);
+        $skipped = count($result['skipped']);
+        return "{$done} student" . ($done === 1 ? '' : 's') . " {$verb}" . ($skipped ? ", {$skipped} skipped" : '') . '.';
     }
     protected function resolveUser()
     {

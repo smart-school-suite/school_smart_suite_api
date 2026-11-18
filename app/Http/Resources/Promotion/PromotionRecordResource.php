@@ -36,6 +36,10 @@ class PromotionRecordResource extends JsonResource
             'to_spec_name' => $this->toSpecialty?->specialty_name ?? null,
             'to_level_name' => $this->toSpecialty?->level?->name ?? null,
             'to_level_number' => $this->toSpecialty?->level?->level ?? null,
+            'run_status' => $this->promotionRun?->status,
+            // What the record allows now, and why not (PromotionRecordDecisionPolicy).
+            'available_actions' => $this->resource->getAttribute('available_actions')
+                ?? app(\App\Services\Promotion\PromotionRecordDecisionPolicy::class)->describe($this->resource),
         ];
     }
 }

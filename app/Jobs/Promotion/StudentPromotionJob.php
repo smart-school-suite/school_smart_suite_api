@@ -165,7 +165,8 @@ class StudentPromotionJob implements ShouldQueue
                     'school_branch_id' => $schoolBranchId,
                 ],
                 [
-                    'outcome'           => $outcome,
+                    // The records table calls a retained student "repeated".
+                    'outcome'           => $outcome === 'retained' ? 'repeated' : $outcome,
                     'status'            => $status,
                     'processed_at'      => now(),
                     'from_specialty_id' => $specialty->id,
