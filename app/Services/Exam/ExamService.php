@@ -349,7 +349,7 @@ class ExamService
             );
         }
     }
-    public function updateExam(string $examId, object $currentSchool, array $data, ?object $authAdmin)
+    public function updateExam(string $examId, object $currentSchool, array $data, ?object $authAdmin, bool $allowNoChanges = false)
     {
         try {
             $exam = Exam::where("school_branch_id", $currentSchool->id)
@@ -368,6 +368,11 @@ class ExamService
 
             // Keep legitimate falsy values such as a max score of 0; only drop empty input.
             $data = array_filter($data, fn($value) => !is_null($value) && $value !== '');
+
+            // Status, date window, timetable, exam type and academic year rules (ExamUpdatePolicy).
+            if (!app(ExamUpdatePolicy::class)->validatedChanges($exam, $data, $allowNoChanges)) {
+                return $exam->fresh(['examType.semesters', 'schoolYear.specialty.level', 'schoolYear.systemAcademicYear', 'examGradeScale']);
+            }
 
             $newExamTypeId = $data['exam_type_id'] ?? $exam->exam_type_id;
             $newSchoolYearId = $data['school_year_id'] ?? $exam->school_year_id;
@@ -596,10 +601,30 @@ class ExamService
             foreach ($examUpdateList as $examUpdate) {
                 $examId = $examUpdate['exam_id'];
                 unset($examUpdate['exam_id']);
-                $result[] = $this->updateExam($examId, $currentSchool, $examUpdate, $authAdmin);
+                try {
+                    $result[] = $this->updateExam($examId, $currentSchool, $examUpdate, $authAdmin, true);
+                } catch (AppException $e) {
+                    $name = Exam::with('examType')->find($examId)?->examType?->exam_name ?? 'An exam';
+                    throw new AppException($e->getMessage(), $e->getCode(), $e->getTitle(), "{$name}: {$e->getDescription()}");
+                }
             }
             return $result;
         });
+    }
+    /** What can change on the exam, why the rest can't, and the allowed ranges. */
+    public function getUpdateRules(object $currentSchool, string $examId): array
+    {
+        $exam = Exam::where('school_branch_id', $currentSchool->id)->find($examId);
+        if (!$exam) {
+            throw new AppException(
+                "The exam was not found.",
+                404,
+                "Exam Not Found",
+                "We could not find the exam with the provided ID for this school. Please verify the ID and try again."
+            );
+        }
+
+        return app(ExamUpdatePolicy::class)->describe($exam);
     }
     public function getExams(object $currentSchool)
     {

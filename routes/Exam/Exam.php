@@ -15,6 +15,9 @@ Route::get('/{examId}', [ExamController::class, 'getExamDetails'])
 Route::get('/related-ca/school-year/{schoolYearId}/exam-type/{examTypeId}', [ExamController::class, 'getRelatedCaExam'])
     ->name('get.relatedExams');
 
+Route::get('/{examId}/update-rules', [ExamController::class, 'getUpdateRules'])
+    ->name('exams.update-rules');
+
 Route::put('/{examId}', [ExamController::class, 'updateExam'])
     ->name('exams.update');
 
