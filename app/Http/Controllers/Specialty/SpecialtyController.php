@@ -30,7 +30,11 @@ class SpecialtyController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $authAdmin = $this->resolveUser();
         $createSpecailty = $this->specialtyService->createSpecialty($request->validated(), $currentSchool, $authAdmin);
-        return ApiResponseService::success("specialty created sucessfully", $createSpecailty, null, 200);
+        $otherLevels = collect($createSpecailty->created_for_levels ?? [])->pluck('name')->filter();
+        $message = $otherLevels->isEmpty()
+            ? "Specialty Created Successfully"
+            : "Specialty Created Successfully, also for " . $otherLevels->implode(', ');
+        return ApiResponseService::success($message, $createSpecailty, null, 200);
     }
     public function deleteSpecialty(Request $request, string $specialtyId)
     {

@@ -3,6 +3,9 @@
 namespace App\Services\Specialty;
 
 use App\Exceptions\AppException;
+use App\Models\Educationlevels;
+use App\Models\SchoolBranchSetting;
+use App\Models\SettingDefination;
 use App\Models\Specialty;
 use App\Services\Level\LevelFeeSettings;
 use Exception;
@@ -12,16 +15,27 @@ use App\Events\Actions\AdminActionEvent;
 
 class SpecialtyService
 {
+    /**
+     * Creates a specialty at the chosen level. When "Automatically Create
+     * Specialties Across All Levels" (specialties.auto_generate_levels) is
+     * on, it is also created at every other level of the school's level
+     * system (level.start), so creating Software Engineering at Level 200
+     * also creates it at Level 100, 300 and so on. Levels where it already
+     * exists are left as they are.
+     *
+     * Fees: the chosen level takes the fees given, or the level's fees from
+     * "Registration/Tuition Fees by Academic Level" when none are given. The
+     * other levels always take their own level's fees, since the fees given
+     * were for the chosen level.
+     *
+     * The created specialty carries created_for_levels: the other levels it
+     * was created at.
+     */
     public function createSpecialty(array $data, object $currentSchool, $authAdmin)
     {
         try {
-            $existingSpecialty = Specialty::where("school_branch_id", $currentSchool->id)
-                ->where("specialty_name", $data['specialty_name'])
-                ->where("level_id", $data['level_id'])
-                ->where("department_id", $data['department_id'])
-                ->first();
-
-            if ($existingSpecialty) {
+            $name = trim($data['specialty_name']);
+            if ($this->specialtyExists($currentSchool->id, $name, $data['department_id'], $data['level_id'])) {
                 throw new AppException(
                     "A specialty with the same name, level, and department already exists.",
                     409,
@@ -31,24 +45,35 @@ class SpecialtyService
                 );
             }
 
-            $specialty = new Specialty();
-            $specialty->school_branch_id = $currentSchool->id;
-            $specialty->department_id = $data["department_id"];
-            $specialty->specialty_name = $data["specialty_name"];
-            // Fees not given default to the level's fee from the level fee settings.
-            $levelFees = app(LevelFeeSettings::class);
-            $specialty->registration_fee = $this->givenFee($data, "registration_fee")
-                ?? $levelFees->feeFor($currentSchool->id, $data["level_id"], LevelFeeSettings::REGISTRATION)
-                ?? 0;
-            $specialty->school_fee = $this->givenFee($data, "school_fee")
-                ?? $levelFees->feeFor($currentSchool->id, $data["level_id"], LevelFeeSettings::TUITION)
-                ?? 0;
-            $specialty->description = $data["description"] ?? null;
-            $specialty->level_id = $data["level_id"];
-            $specialty->status = "active";
-            $specialty->save();
+            return DB::transaction(function () use ($data, $currentSchool, $name) {
+                $levelFees = app(LevelFeeSettings::class);
+                $specialty = $this->newSpecialty($currentSchool->id, $name, $data, $data['level_id'],
+                    $this->givenFee($data, "registration_fee")
+                        ?? $levelFees->feeFor($currentSchool->id, $data["level_id"], LevelFeeSettings::REGISTRATION),
+                    $this->givenFee($data, "school_fee")
+                        ?? $levelFees->feeFor($currentSchool->id, $data["level_id"], LevelFeeSettings::TUITION),
+                );
 
-            return $specialty;
+                $createdFor = [];
+                if ($this->autoGeneratesLevels($currentSchool->id)) {
+                    $levels = $this->levelSystem($currentSchool->id);
+                    if ($levels->contains('id', $data['level_id'])) {
+                        foreach ($levels->where('id', '!=', $data['level_id']) as $level) {
+                            if ($this->specialtyExists($currentSchool->id, $name, $data['department_id'], $level->id)) {
+                                continue;
+                            }
+                            $this->newSpecialty($currentSchool->id, $name, $data, $level->id,
+                                $levelFees->feeFor($currentSchool->id, $level->id, LevelFeeSettings::REGISTRATION),
+                                $levelFees->feeFor($currentSchool->id, $level->id, LevelFeeSettings::TUITION),
+                            );
+                            $createdFor[] = ['level_id' => $level->id, 'name' => $level->name, 'level' => $level->level];
+                        }
+                    }
+                }
+
+                $specialty->setAttribute('created_for_levels', $createdFor);
+                return $specialty;
+            });
         } catch (AppException $e) {
             throw $e;
         } catch (Exception $e) {
@@ -60,6 +85,61 @@ class SpecialtyService
                 null
             );
         }
+    }
+
+    private function newSpecialty(string $schoolBranchId, string $name, array $data, string $levelId, ?float $registrationFee, ?float $tuitionFee): Specialty
+    {
+        $specialty = new Specialty();
+        $specialty->school_branch_id = $schoolBranchId;
+        $specialty->department_id = $data["department_id"];
+        $specialty->specialty_name = $name;
+        $specialty->registration_fee = $registrationFee ?? 0;
+        $specialty->school_fee = $tuitionFee ?? 0;
+        $specialty->description = $data["description"] ?? null;
+        $specialty->level_id = $levelId;
+        $specialty->status = "active";
+        $specialty->save();
+
+        return $specialty;
+    }
+
+    private function specialtyExists(string $schoolBranchId, string $name, string $departmentId, string $levelId): bool
+    {
+        return Specialty::where("school_branch_id", $schoolBranchId)
+            ->where("specialty_name", $name)
+            ->where("level_id", $levelId)
+            ->where("department_id", $departmentId)
+            ->exists();
+    }
+
+    /** specialties.auto_generate_levels for the branch, else the setting's default. */
+    private function autoGeneratesLevels(string $schoolBranchId): bool
+    {
+        $setting = SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
+            ->whereHas('settingDefination', fn($query) => $query->where('key', 'specialties.auto_generate_levels'))
+            ->first();
+        $value = $setting
+            ? $setting->value
+            : SettingDefination::where('key', 'specialties.auto_generate_levels')->value('default_value');
+
+        return filter_var($value ?? false, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /** The levels of the branch's level system (level.start), lowest first. */
+    private function levelSystem(string $schoolBranchId)
+    {
+        $system = SchoolBranchSetting::where('school_branch_id', $schoolBranchId)
+            ->whereHas('settingDefination', fn($query) => $query->where('key', 'level.start'))
+            ->first()?->value;
+
+        if (!$system) {
+            return collect();
+        }
+
+        return Educationlevels::whereHas('levelType', fn($query) => $query->where('program_name', $system))
+            ->get()
+            ->sortBy(fn($level) => (int) $level->level)
+            ->values();
     }
     public function updateSpecialty(array $data, object $currentSchool, string $specialtyId, object $authAdmin)
     {
