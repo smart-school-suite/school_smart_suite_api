@@ -16,7 +16,7 @@ class SettingCategorySeeder extends Seeder
     {
         $data = [
             [
-                'name' => 'Additional Fee Settings',
+                'name' => 'Student Additional Fee Settings',
                 'key' => 'setting.category.additionalFee'
             ],
             [

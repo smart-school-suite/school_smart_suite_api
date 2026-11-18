@@ -3,6 +3,7 @@
 namespace App\Jobs\Promotion;
 
 use App\Models\AdditionalFeesCategory;
+use App\Services\AdditionalFee\AdditionalFeeDueDate;
 use App\Models\Graduation\GraduationBatch;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -130,6 +131,8 @@ class StudentGraduationJob implements ShouldQueue
                         'specialty_id'              => $specialty->id,
                         'student_id'                => $promotionRecord->student->id,
                         'additionalfee_category_id' => $additionalFeeCategory->id,
+                        // The billing day plus the default due period setting.
+                        'due_date'                  => app(AdditionalFeeDueDate::class)->resolve($schoolBranchId),
                         'created_at'                => now(),
                         'updated_at'                => now(),
                     ];
