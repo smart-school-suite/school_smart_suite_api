@@ -30,7 +30,7 @@ class GraduationBatchService
     {
         $graduationDetails = GraduationBatch::where("school_branch_id", $currentSchool->id)
             ->where("id", $batchId)
-            ->with(['academicYear', 'graduationRecord'])
+            ->with(['academicYear', 'graduationRecord.specialty.level'])
             ->first();
 
         if (!$graduationDetails) {
@@ -42,7 +42,56 @@ class GraduationBatchService
             );
         }
 
-        return $graduationDetails;
+        return $this->presentDetails($graduationDetails);
+    }
+
+    /**
+     * The batch for the details drawer: its own fields, its academic year,
+     * how many graduates it has by status, eligibility and clearance, and by
+     * specialty.
+     */
+    private function presentDetails(GraduationBatch $batch): array
+    {
+        $records = $batch->graduationRecord;
+        $countBy = fn(string $column, array $values) => collect($values)
+            ->mapWithKeys(fn($value) => [$value => $records->where($column, $value)->count()])
+            ->all();
+
+        $start = $batch->graduation_start_date;
+        $end = $batch->graduation_end_date;
+        $now = now();
+
+        return [
+            'id' => $batch->id,
+            'name' => $batch->name,
+            'description' => $batch->description,
+            'location' => $batch->location,
+            'graduation_start_date' => $start,
+            'graduation_end_date' => $end,
+            'ceremony_status' => match (true) {
+                !$start => 'not_scheduled',
+                $end && $end->lt($now) => 'held',
+                $start->lte($now) => 'in_progress',
+                default => 'upcoming',
+            },
+            'academic_year' => $batch->academicYear?->only(['id', 'name', 'year_start', 'year_end']),
+            'total_graduates' => $records->count(),
+            'status_counts' => $countBy('status', ['pending', 'continuing', 'alumni']),
+            'eligibility_counts' => $countBy('eligibility_status', ['eligible', 'pending_review', 'ineligible']),
+            'clearance_counts' => $countBy('clearance_status', ['cleared', 'pending', 'blocked']),
+            'specialties' => $records->groupBy('specialty_id')
+                ->map(fn($group) => [
+                    'specialty_id' => $group->first()->specialty_id,
+                    'specialty_name' => $group->first()->specialty?->specialty_name,
+                    'level_name' => $group->first()->specialty?->level?->name,
+                    'graduates' => $group->count(),
+                ])
+                ->sortByDesc('graduates')
+                ->values()
+                ->all(),
+            'created_at' => $batch->created_at,
+            'updated_at' => $batch->updated_at,
+        ];
     }
 
     public function updateGraduationBatch(object $currentSchool, array $payload, string $batchId): GraduationBatch
