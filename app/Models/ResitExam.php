@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ResitExam extends Model
 {
@@ -73,5 +74,9 @@ class ResitExam extends Model
     public function examType(): BelongsTo
     {
         return $this->belongsTo(Examtype::class, "exam_type_id");
+    }
+    public function resultPublication(): HasOne
+    {
+        return $this->hasOne(ResitResultPublication::class, 'resit_exam_id');
     }
 }

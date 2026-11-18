@@ -63,12 +63,69 @@ class ResitService
             );
         }
     }
+    /**
+     * A student's resit for the details drawer: the student, the course and
+     * the exam they are resitting it from, the fee with what has been paid,
+     * and the latest resit score.
+     */
     public function getStudentResitDetails($currentSchool, $studentResitId)
     {
-        $getResitData = Studentresit::where('school_branch_id', $currentSchool->id)
-            ->with(['courses', 'level', 'specialty', 'student', 'exam.examtype'])
+        // The resit has no level or specialty of its own; both come from the exam's academic year.
+        $resit = Studentresit::where('school_branch_id', $currentSchool->id)
+            ->with([
+                'courses',
+                'student',
+                'exam.examType.semesters',
+                'exam.schoolYear.specialty.level',
+                'exam.schoolYear.systemAcademicYear',
+                'studentResitTransactions',
+                'resitMark.grade.grade',
+            ])
             ->find($studentResitId);
-        return $getResitData;
+
+        if (!$resit) {
+            throw new AppException(
+                "Student resit not found.",
+                404,
+                "Resit Not Found",
+                "The requested resit could not be found or does not belong to the current school branch.",
+                null
+            );
+        }
+
+        $specialty = $resit->exam?->schoolYear?->specialty;
+        $transactions = $resit->studentResitTransactions;
+        $paid = round((float) $transactions->sum('amount'), 2);
+        $fee = (float) $resit->fee;
+        $mark = $resit->resitMark->sortByDesc('created_at')->first();
+
+        return [
+            'id' => $resit->id,
+            'student_name' => $resit->student?->name,
+            'student_username' => $resit->student?->username,
+            'course_title' => $resit->courses?->course_title,
+            'course_code' => $resit->courses?->course_code,
+            'course_credit' => $resit->courses ? (float) $resit->courses->credit : null,
+            'exam_name' => $resit->exam?->examType?->exam_name,
+            'semester' => $resit->exam?->examType?->semesters?->name,
+            'academic_year' => $resit->exam?->schoolYear?->systemAcademicYear?->name,
+            'specialty_name' => $specialty?->specialty_name,
+            'level_name' => $specialty?->level?->name,
+            'level_number' => $specialty?->level?->level,
+            'resit_fee' => $fee,
+            'amount_paid' => $paid,
+            'balance' => max(round($fee - $paid, 2), 0),
+            'payment_status' => $resit->payment_status,
+            'transactions' => $transactions->count(),
+            'last_paid_at' => $transactions->max('created_at'),
+            'attempts' => (int) $resit->attempts,
+            'is_carry_over' => (bool) $resit->iscarry_over,
+            'resit_score' => $mark ? (float) $mark->score : null,
+            'resit_grade' => $mark?->grade?->grade?->letter_grade,
+            'resit_grade_status' => $mark?->grade?->grade_status,
+            'created_at' => $resit->created_at,
+            'updated_at' => $resit->updated_at,
+        ];
     }
     public function getMyResits($currentSchool, $studentId)
     {
