@@ -10,6 +10,7 @@ use App\Models\Exam\ExamScore;
 use App\Models\Examtype;
 use App\Models\Grades;
 use App\Models\Studentresit;
+use App\Services\Resit\ResitFeeResolver;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -246,6 +247,8 @@ class UpdateExamScoreService
                     'student_id' => $studentId,
                     'course_id' => $courseId,
                     'exam_id' => $examId,
+                    // Standard or level-specific, from the resit fee settings.
+                    'fee' => app(ResitFeeResolver::class)->feeForExam($schoolBranchId, $examId),
                 ]);
 
                 return 'created';

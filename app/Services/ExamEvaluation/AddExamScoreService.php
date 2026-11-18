@@ -13,6 +13,7 @@ use App\Exceptions\AppException;
 use App\Models\Course\CourseSpecialty;
 use Illuminate\Support\Collection;
 use App\Models\Studentresit;
+use App\Services\Resit\ResitFeeResolver;
 use Illuminate\Support\Str;
 use App\Jobs\Resit\CreateResitExamJob;
 use Illuminate\Support\Facades\Log;
@@ -334,6 +335,8 @@ class AddExamScoreService
                 'student_id' => $studentId,
                 'course_id' => $courseId,
                 'exam_id' => $examId,
+                // Standard or level-specific, from the resit fee settings.
+                'fee' => app(ResitFeeResolver::class)->feeForExam($schoolBranchId, $examId),
             ]);
         }
     }
