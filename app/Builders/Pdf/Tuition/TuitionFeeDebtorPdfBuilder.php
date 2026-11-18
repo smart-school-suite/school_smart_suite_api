@@ -9,35 +9,27 @@ class TuitionFeeDebtorPdfBuilder extends BasePdfBuilder
 {
     public function getData(): array
     {
+        // Debtors are the records whose transactions do not cover the tuition.
         $query = TuitionFees::query()
-        ->with(['student', 'specialty', 'level'])
-            ->select([
-                'student_id',
-                'school_branch_id',
-                'specialty_id',
-                'level_id',
-                'amount_paid',
-                'amount_left',
-                'tution_fee_total',
-                'status'
-            ]);
+            ->withAmountPaid()
+            ->owing()
+            ->with(['student', 'specialty.level']);
 
         if (!empty($this->context['school_branch_id'])) {
             $query->where('school_branch_id', $this->context['school_branch_id']);
         }
 
-        if(!empty($this->context['specialty_id'])){
-             $query->where('specialty_id', $this->context['specialty_id']);
+        if (!empty($this->context['specialty_id'])) {
+            $query->where('specialty_id', $this->context['specialty_id']);
         }
-        $tuitionFees = $query->get();
 
-        $tuitionFees = $tuitionFees->map(fn($tuitionFee) => [
-            'student_name'            => $tuitionFee->student->name,
-            'specialty_name'      => $tuitionFee->specialty->specialty_name,
-            'level'       => $tuitionFee->level->level,
-            'amount_paid'           => $tuitionFee->amount_paid,
-            'amount_left'       => $tuitionFee->amount_left,
-            'fee_total'         => $tuitionFee->fee_total
+        $tuitionFees = $query->get()->map(fn(TuitionFees $tuitionFee) => [
+            'student_name'   => $tuitionFee->student?->name,
+            'specialty_name' => $tuitionFee->specialty?->specialty_name,
+            'level'          => $tuitionFee->specialty?->level?->level,
+            'amount_paid'    => $tuitionFee->amount_paid,
+            'amount_left'    => $tuitionFee->amount_left,
+            'fee_total'      => (float) $tuitionFee->tution_fee_total,
         ]);
 
         $columns = $this->options['columns'] ?? [

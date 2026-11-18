@@ -16,6 +16,7 @@ class TuitionFeeService
     {
         try {
             $paidFeesData = TuitionFees::where('school_branch_id', $currentSchool->id)
+                ->withAmountPaid()
                 ->with(['student.specialty.level', 'student.specialty.department'])
                 ->get();
 
@@ -115,6 +116,7 @@ class TuitionFeeService
     {
         try {
             $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+                ->withAmountPaid()
                 ->with(['specialty.level', 'student', 'specialty.department'])
                 ->get();
 
@@ -143,9 +145,10 @@ class TuitionFeeService
     }
     public function getTuitionFeeDetails(object $currentSchool, string $feeId)
     {
-        $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
-            ->with(['student.specialty.level'])
-            ->find($feeId);
-        return $tuitionFees;
+        return TuitionFees::where("school_branch_id", $currentSchool->id)
+            ->withAmountPaid()
+            ->with(['student', 'specialty.level'])
+            ->find($feeId)
+            ?->append(['amount_left', 'payment_status']);
     }
 }

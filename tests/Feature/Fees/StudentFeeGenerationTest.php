@@ -219,7 +219,8 @@ class StudentFeeGenerationTest extends TestCase
     public function test_a_tuition_record_created_before_academic_years_were_tracked_is_linked_not_duplicated(): void
     {
         $this->student('stu-1');
-        $legacy = TuitionFees::create(['student_id' => 'stu-1', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'amount_paid' => 1000, 'tution_fee_total' => 250000]);
+        $legacy = TuitionFees::create(['student_id' => 'stu-1', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'tution_fee_total' => 250000]);
+        DB::table('tuition_fee_transactions')->insert(['id' => 'txn-1', 'transaction_id' => 'TXN-1', 'amount' => 1000, 'payment_method' => 'cash', 'tuition_id' => $legacy->id, 'school_branch_id' => 'branch-1']);
 
         $year = $this->createYear('swe-1', 'sys-2026', now()->subWeek()->toDateString(), $this->future(11));
 

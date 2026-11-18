@@ -26,7 +26,11 @@ class TuitionFeePaymentService
         DB::beginTransaction();
 
         try {
-            $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)->findOrFail($data['tuition_id']);
+            // Locked so concurrent payments against the same tuition are checked
+            // one after the other against the transaction total.
+            $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+                ->lockForUpdate()
+                ->findOrFail($data['tuition_id']);
             $tuitionId = $studentTuitionFees->id;
 
             $student = Student::where('school_branch_id', $currentSchool->id)
@@ -44,9 +48,8 @@ class TuitionFeePaymentService
             }
 
             $paymentAmount = (float) $data['amount'];
-            $tuitionTotal = (float) ($studentTuitionFees->tuition_fee_total ?? $studentTuitionFees->tution_fee_total ?? 0);
-            $currentAmountPaid = (float) ($studentTuitionFees->amount_paid ?? 0);
-            $amountLeft = max(0, $tuitionTotal - $currentAmountPaid);
+            $tuitionTotal = (float) $studentTuitionFees->tution_fee_total;
+            $amountLeft = $studentTuitionFees->amount_left;
 
             if ($paymentAmount <= 0) {
                 throw new AppException(
@@ -78,11 +81,6 @@ class TuitionFeePaymentService
                 );
             }
 
-            $studentTuitionFees->amount_paid = $currentAmountPaid + $paymentAmount;
-            $studentTuitionFees->save();
-
-            $newAmountLeft = max(0, $tuitionTotal - $studentTuitionFees->amount_paid);
-
             $paymentId = Str::uuid();
             $transactionId = 'TXN-' . strtoupper(Str::random(10));
 
@@ -94,6 +92,8 @@ class TuitionFeePaymentService
                 'tuition_id' => $tuitionId,
                 'school_branch_id' => $currentSchool->id,
             ]);
+
+            $newAmountLeft = round(max(0, $amountLeft - $paymentAmount), 2);
 
             DB::commit();
 

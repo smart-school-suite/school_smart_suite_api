@@ -96,13 +96,42 @@ class SchoolAcademicYearService
         });
     }
 
+    /**
+     * Applies the changes SchoolAcademicYearUpdatePolicy allows, and returns
+     * the updated academic year with its rules after the change.
+     */
     public function updateSchoolAcademicYear(
         object $currentSchool,
         string $schoolAcademicYearId,
         array $data
     ) {
+        $academicYear = $this->findForBranch($currentSchool, $schoolAcademicYearId);
+        $policy = app(SchoolAcademicYearUpdatePolicy::class);
+
+        DB::transaction(function () use ($academicYear, $policy, $data) {
+            // Locked so two admins editing at once are checked one after the other.
+            $locked = SchoolAcademicYear::lockForUpdate()->find($academicYear->id);
+            $locked->update($policy->validatedChanges($locked, $data));
+        });
+
+        $academicYear->refresh()->load(['systemAcademicYear', 'specialty.level']);
+
+        return [
+            ...$academicYear->toArray(),
+            'update_rules' => $policy->describe($academicYear),
+        ];
+    }
+
+    public function getUpdateRules(object $currentSchool, string $schoolAcademicYearId): array
+    {
+        return app(SchoolAcademicYearUpdatePolicy::class)
+            ->describe($this->findForBranch($currentSchool, $schoolAcademicYearId));
+    }
+
+    private function findForBranch(object $currentSchool, string $schoolAcademicYearId): SchoolAcademicYear
+    {
         $academicYear = SchoolAcademicYear::where('school_branch_id', $currentSchool->id)
-            ->with(['systemAcademicYear', 'specialty'])
+            ->with(['systemAcademicYear', 'specialty.level'])
             ->find($schoolAcademicYearId);
 
         if (!$academicYear) {
@@ -114,86 +143,8 @@ class SchoolAcademicYearService
             );
         }
 
-        $now = now();
-
-        if ($academicYear->end_date->lt($now)) {
-            throw new AppException(
-                'Academic year closed',
-                409,
-                'Academic Year Locked',
-                'This academic year has ended and can no longer be modified.'
-            );
-        }
-
-        if ($academicYear->start_date->lte($now)) {
-            foreach (['specialty_id', 'system_academic_year_id', 'system_academic_year_id', 'start_date'] as $field) {
-                if (array_key_exists($field, $data) && $data[$field] != $academicYear->{$field}) {
-                    throw new AppException(
-                        'Invalid academic year modification',
-                        409,
-                        'Immutable Academic Year Field',
-                        "The field '{$field}' cannot be modified once the academic year has started."
-                    );
-                }
-            }
-        }
-
-        if (isset($data['system_academic_year_id'])) {
-            $systemAcademicYear = SystemAcademicYear::find($data['system_academic_year_id']);
-
-            if (!$systemAcademicYear) {
-                throw new AppException(
-                    'Invalid system academic year',
-                    404,
-                    'System Academic Year Not Found',
-                    'The selected system academic year does not exist.'
-                );
-            }
-
-            if ($systemAcademicYear->year_end < $now->year) {
-                throw new AppException(
-                    'System academic year expired',
-                    409,
-                    'Invalid System Academic Year',
-                    'The selected system academic year has already passed.'
-                );
-            }
-        }
-
-        if (
-            isset($data['specialty_id']) &&
-            $data['specialty_id'] != $academicYear->specialty_id
-        ) {
-            $conflictingAcademicYear = SchoolAcademicYear::where('school_branch_id', $currentSchool->id)
-                ->where('specialty_id', $data['specialty_id'])
-                ->where(function ($query) use ($academicYear) {
-                    $query
-                        ->whereBetween('start_date', [$academicYear->start_date, $academicYear->end_date])
-                        ->orWhereBetween('end_date', [$academicYear->start_date, $academicYear->end_date]);
-                })
-                ->first();
-
-            if ($conflictingAcademicYear) {
-                if (
-                    $conflictingAcademicYear->start_date->lte($now) ||
-                    $conflictingAcademicYear->end_date->lt($now)
-                ) {
-                    throw new AppException(
-                        'Invalid specialty reassignment',
-                        409,
-                        'Specialty Academic Year Conflict',
-                        'You cannot move this academic year to a specialty that already has an active or completed academic year for the same period.'
-                    );
-                }
-            }
-        }
-
-        $academicYear->fill($data);
-        $academicYear->save();
-
-        return $academicYear->fresh(['systemAcademicYear', 'specialty']);
+        return $academicYear;
     }
-
 
     public function deleteSchoolAcademicYear(
         object $currentSchool,

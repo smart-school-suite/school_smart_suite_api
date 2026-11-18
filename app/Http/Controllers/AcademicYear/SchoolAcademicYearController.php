@@ -27,8 +27,14 @@ class SchoolAcademicYearController extends Controller
     public function updateSchoolAcademicYear(UpdateSchoolAcademicYearRequest $request, string $schoolAcademicYearId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $updateSchoolAcademicYear = $this->schoolAcademicYearService->updateSchoolAcademicYear($currentSchool, $schoolAcademicYearId, $request->all());
+        $updateSchoolAcademicYear = $this->schoolAcademicYearService->updateSchoolAcademicYear($currentSchool, $schoolAcademicYearId, $request->validated());
         return ApiResponseService::success( 'School Academic Year updated successfully.', $updateSchoolAcademicYear, null, 200);
+    }
+    public function getUpdateRules(Request $request, string $schoolAcademicYearId)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $rules = $this->schoolAcademicYearService->getUpdateRules($currentSchool, $schoolAcademicYearId);
+        return ApiResponseService::success('Academic year update rules retrieved successfully.', $rules, null, 200);
     }
     public function getSchoolAcademicYears(Request $request)
     {

@@ -36,8 +36,8 @@ class SyncStudentFeesSeederTest extends TestCase
         foreach (['old', 'promoted', 'dropped'] as $id) {
             DB::table('registration_fees')->insert(['id' => "reg-$id", 'amount' => 1, 'status' => 'paid', 'student_id' => $id, 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1']);
         }
-        DB::table('tuition_fees')->insert(['id' => 'legacy-old', 'student_id' => 'old', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'amount_paid' => 250000, 'tution_fee_total' => 250000, 'created_at' => now()->subMonths(15), 'updated_at' => now()->subMonths(15)]);
-        DB::table('tuition_fees')->insert(['id' => 'legacy-promoted', 'student_id' => 'promoted', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-2', 'amount_paid' => 1000, 'tution_fee_total' => 400000, 'created_at' => now()->subMonths(1), 'updated_at' => now()->subMonths(1)]);
+        DB::table('tuition_fees')->insert(['id' => 'legacy-old', 'student_id' => 'old', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'tution_fee_total' => 250000, 'created_at' => now()->subMonths(15), 'updated_at' => now()->subMonths(15)]);
+        DB::table('tuition_fees')->insert(['id' => 'legacy-promoted', 'student_id' => 'promoted', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-2', 'tution_fee_total' => 400000, 'created_at' => now()->subMonths(1), 'updated_at' => now()->subMonths(1)]);
     }
 
     public function test_it_links_legacy_records_bills_open_years_and_assigns_academic_years(): void

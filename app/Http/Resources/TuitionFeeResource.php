@@ -14,18 +14,13 @@ class TuitionFeeResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $tuitionFeeTotal = (float) ($this->tuition_fee_total ?? $this->tution_fee_total ?? 0);
-        $amountPaid = (float) ($this->amount_paid ?? 0);
-
-        $amountLeft = max(0, $tuitionFeeTotal - $amountPaid);
-        $status = $amountLeft <= 0 ? 'completed' : 'owing';
-
+        // Paid amounts are derived from the tuition fee transactions.
         return [
             'id' => $this->id,
-            'amount_paid' => $amountPaid,
-            'amount_left' => $amountLeft,
-            'tuition_fee_total' => $tuitionFeeTotal,
-            'status' => $status,
+            'amount_paid' => $this->amount_paid,
+            'amount_left' => $this->amount_left,
+            'tuition_fee_total' => (float) $this->tution_fee_total,
+            'status' => $this->payment_status,
 
             // Nested relationships using optional() or null-safe operators
             'name' => $this->student?->name,
