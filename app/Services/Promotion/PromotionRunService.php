@@ -82,23 +82,41 @@ class PromotionRunService
         return $this->bulk($currentSchool, $runIds, 'cancel', fn(PromotionRun $run) => $this->cancel($run));
     }
 
+    /**
+     * The run's latest log in the current shape (see PromotionRunLogBuilder),
+     * with the run's own status, so the UI can say what happened and why.
+     */
     public function getPromotionRunLogs(object $currentSchool, string $runId)
     {
-        $logs = PromotionRunLog::where("school_branch_id", $currentSchool->id)
-            ->where("promotion_run_id", $runId)
-            ->get();
-
-        if ($logs->isEmpty()) {
+        $run = PromotionRun::where('school_branch_id', $currentSchool->id)->find($runId);
+        if (!$run) {
             throw new AppException(
-                "Promotion run logs not found.",
+                "Promotion run not found.",
                 404,
-                "Logs Not Found",
-                "No logs were found for the specified promotion run under this school branch.",
+                "Promotion Run Not Found",
+                "The promotion run does not exist or does not belong to this school branch.",
                 null
             );
         }
 
-        return $logs;
+        $stored = PromotionRunLog::where("school_branch_id", $currentSchool->id)
+            ->where("promotion_run_id", $runId)
+            ->first();
+
+        if (!$stored) {
+            throw new AppException(
+                "Promotion run logs not found.",
+                404,
+                "No Log Yet",
+                "This run has not run yet, so there is nothing to show. Trigger it to see what happens.",
+                null
+            );
+        }
+
+        $log = $stored->rule_logs;
+        $log = is_array($log) ? $log : (json_decode(json_encode($log), true) ?? []);
+
+        return [...PromotionRunLogBuilder::normalize($log), 'run_status' => $run->status];
     }
     public function retryPromotionRun(object $currentSchool, string $runId)
     {
