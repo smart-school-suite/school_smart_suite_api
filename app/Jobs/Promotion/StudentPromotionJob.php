@@ -22,6 +22,7 @@ use App\Services\PromotionRules\EvaluationRuleService;
 use App\Services\PromotionRules\ExamScoreRuleService;
 use App\Services\PromotionRules\ResitRuleService;
 use App\Services\PromotionRules\TuitionFeeRuleService;
+use App\Services\Promotion\PromotionRunActionPolicy;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,6 +34,7 @@ class StudentPromotionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $tries = 3;
+    private const CANCEL_CHECK_EVERY = 20;
     public $timeout = 300;
     protected string $schoolBranchId;
     protected string $runId;
@@ -60,6 +62,13 @@ class StudentPromotionJob implements ShouldQueue
             $this->failAndLog($runId, $schoolBranchId, "Promotion Run Initialization Failed", $reasons);
             return;
         }
+
+        // Only a run that is still scheduled, queued or running is processed:
+        // a run cancelled (or finished) after this job was queued is left alone.
+        if (!in_array($promotionRun->status, PromotionRunActionPolicy::IN_PROGRESS, true)) {
+            return;
+        }
+        $promotionRun->update(['status' => 'processing']);
 
         $specialty = $promotionRun->schoolYear?->specialty;
         $students = $specialty?->student ?? collect();
@@ -202,7 +211,15 @@ class StudentPromotionJob implements ShouldQueue
         $failedCount = 0;
         $needsReviewCount = 0;
 
+        $processed = 0;
         foreach ($students as $student) {
+            // Stop between students when the run is cancelled while running.
+            if ($processed > 0 && $processed % self::CANCEL_CHECK_EVERY === 0 && $this->wasCancelled($promotionRun)) {
+                $this->stopCancelled($promotionRun, $students->count(), $processed, $passedCount, $failedCount, $needsReviewCount);
+                return;
+            }
+            $processed++;
+
             $scores = $studentMarks->filter(fn($marks) => $marks->candidate?->student_id === $student->id);
             $resits = $studentResits->where("student_id", $student->id);
             $tuitionFees = $studentTuitionFees->where("student_id", $student->id);
@@ -266,10 +283,19 @@ class StudentPromotionJob implements ShouldQueue
             );
         }
 
+        if ($this->wasCancelled($promotionRun)) {
+            $this->stopCancelled($promotionRun, $students->count(), $processed, $passedCount, $failedCount, $needsReviewCount);
+            return;
+        }
+
+        // The run's count columns (passed_count etc. are not columns, so they
+        // were silently dropped before).
         $promotionRun->update([
-            'passed_count' => $passedCount,
-            'failed_count' => $failedCount,
-            'needs_review_count' => $needsReviewCount,
+            'total_students' => $students->count(),
+            'processed_students' => $processed,
+            'promoted_count' => $passedCount,
+            'repeated_count' => $failedCount,
+            'review_count' => $needsReviewCount,
             'status' => 'completed',
             'completed_at' => now(),
         ]);
@@ -303,6 +329,35 @@ class StudentPromotionJob implements ShouldQueue
         if ($specialty->graduation_level) {
             StudentGraduationJob::dispatch($runId, $schoolBranchId);
         }
+    }
+
+    private function wasCancelled(PromotionRun $promotionRun): bool
+    {
+        return PromotionRun::whereKey($promotionRun->id)->value('status') === 'cancelled';
+    }
+
+    /** Saves how far a cancelled run got and logs it; its records so far are kept. */
+    private function stopCancelled(PromotionRun $promotionRun, int $total, int $processed, int $passed, int $failed, int $review): void
+    {
+        $promotionRun->forceFill([
+            'total_students' => $total,
+            'processed_students' => $processed,
+            'promoted_count' => $passed,
+            'repeated_count' => $failed,
+            'review_count' => $review,
+        ])->save();
+
+        PromotionRunLog::updateOrCreate(
+            ['promotion_run_id' => $promotionRun->id, 'school_branch_id' => $promotionRun->school_branch_id],
+            ['rule_logs' => (new PromotionRunLogDTO(
+                status: 'cancelled',
+                title: 'Promotion Run Cancelled',
+                reasons: [new PromotionRunLogReasonDTO(
+                    reason: "The run was cancelled after {$processed} of {$total} students were evaluated.",
+                    details: ['processed_students' => $processed, 'total_students' => $total]
+                )]
+            ))->toArray()]
+        );
     }
 
     private function failAndLog(
