@@ -299,6 +299,8 @@ class SchoolSemesterService
                 'semester_id',
                 'timetable_published',
                 'school_year_id',
+                'created_at',
+                'updated_at',
             ])
             ->with([
                 'schoolYear.specialty:id,specialty_name,level_id',

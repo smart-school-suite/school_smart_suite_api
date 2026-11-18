@@ -174,4 +174,17 @@ class UpdateSchoolSemesterTest extends TestCase
         ], $this->school, null);
         $this->assertSame('2027-02-05', substr(SchoolSemester::find('running')->end_date, 0, 10));
     }
+
+    public function test_the_semester_list_includes_created_and_updated_timestamps(): void
+    {
+        DB::table('school_semesters')->update(['created_at' => '2026-08-01 09:00:00', 'updated_at' => '2026-08-02 10:30:00']);
+
+        $listed = $this->service()->getSchoolSemesters($this->school);
+
+        $this->assertCount(2, $listed);
+        foreach ($listed as $semester) {
+            $this->assertNotNull($semester['created_at'], 'created_at was not selected.');
+            $this->assertSame('2026-08-02', $semester['updated_at']->toDateString());
+        }
+    }
 }
