@@ -29,7 +29,24 @@ class SchoolAcademicYear extends Model
         'end_date',
     ];
 
+    // Calendar dates: serialise as Y-m-d so they are not shifted into UTC timestamps.
+    protected $casts = [
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
+    ];
+
     protected $table = 'school_academic_years';
+
+    // Stored as plain dates whatever the caller passes (string or Carbon).
+    public function setStartDateAttribute($value): void
+    {
+        $this->attributes['start_date'] = $value ? \Carbon\Carbon::parse($value)->toDateString() : null;
+    }
+
+    public function setEndDateAttribute($value): void
+    {
+        $this->attributes['end_date'] = $value ? \Carbon\Carbon::parse($value)->toDateString() : null;
+    }
     public $incrementing = false;
     public $keyType = 'string';
 

@@ -21,7 +21,7 @@ class TuitionFeeRuleService
         $unpaidFeeDetails = [];
 
         foreach ($tuitionFees as $fee) {
-            $requiredAmount = (float) ($fee->amount ?? 0);
+            $requiredAmount = (float) $fee->tution_fee_total;
             $totalPaid = (float) $fee->tuitionFeeTransactions->sum('amount');
             $remainingBalance = max(0.0, $requiredAmount - $totalPaid);
 

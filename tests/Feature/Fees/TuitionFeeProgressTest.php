@@ -49,7 +49,7 @@ class TuitionFeeProgressTest extends TestCase
         }
 
         DB::table('students')->insert(['id' => 'stu-1', 'name' => 'S', 'first_name' => 'S', 'last_name' => 'S', 'email' => 's@example.com', 'password' => 'x', 'username' => 's', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'school_academic_year_id' => 'year-swe-1', 'guardian_id' => 'g', 'student_batch_id' => 'b', 'gender_id' => 'g', 'relationship_id' => 'r', 'student_source_id' => 's']);
-        DB::table('tuition_fees')->insert(['id' => 'fee-1', 'student_id' => 'stu-1', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'school_academic_year_id' => 'year-swe-1', 'amount_paid' => 0, 'tution_fee_total' => 80000]);
+        DB::table('tuition_fees')->insert(['id' => 'fee-1', 'student_id' => 'stu-1', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-1', 'school_academic_year_id' => 'year-swe-1', 'tution_fee_total' => 80000]);
     }
 
     protected function tearDown(): void
@@ -107,7 +107,7 @@ class TuitionFeeProgressTest extends TestCase
 
     public function test_the_student_schedule_endpoints_group_derived_progress_by_level(): void
     {
-        DB::table('tuition_fees')->insert(['id' => 'fee-2', 'student_id' => 'stu-1', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-2', 'school_academic_year_id' => 'year-swe-2', 'amount_paid' => 0, 'tution_fee_total' => 100000]);
+        DB::table('tuition_fees')->insert(['id' => 'fee-2', 'student_id' => 'stu-1', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-2', 'school_academic_year_id' => 'year-swe-2', 'tution_fee_total' => 100000]);
         DB::table('fee_sched_installments')->insert(['id' => 'l2', 'due_date' => '2027-01-01', 'percentage' => 100, 'installment_id' => 'inst-1', 'fee_schedule_id' => 'sched-swe-2', 'school_branch_id' => 'branch-1']);
         $this->pay(40000, '2026-09-15 09:00:00');
         $service = app(TuitionFeeScheduleService::class);

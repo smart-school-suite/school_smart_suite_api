@@ -10,6 +10,13 @@ Route::post('/', [SchoolSemesterController::class, 'createSchoolSemester'])
 Route::put('/{schoolSemesterId}', [SchoolSemesterController::class, 'updateSchoolSemester'])
 ->name('school-semesters.update');
 
+// Before /{schoolSemesterId}, which would otherwise capture "active".
+Route::get('/active', [SchoolSemesterController::class, 'getActiveSchoolSemesters'])
+->name('school-semesters.active');
+
+Route::get('/{schoolSemesterId}/update-rules', [SchoolSemesterController::class, 'getUpdateRules'])
+->name('school-semesters.update-rules');
+
 Route::get('/', [SchoolSemesterController::class, 'getSchoolSemester'])
 ->name('school-semesters.index');
 
@@ -24,6 +31,3 @@ Route::post('/bulk-delete', [SchoolSemesterController::class, 'bulkDeleteSchoolS
 
 Route::patch('/bulk-update', [SchoolSemesterController::class, 'bulkUpdateSchoolSemester'])
 ->name('school-semesters.bulk-update');
-
-Route::get('/active', [SchoolSemesterController::class, 'getActiveSchoolSemesters'])
-->name('school-semesters.active');

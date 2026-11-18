@@ -58,6 +58,7 @@ class TuitionFeeTransactionService
         $results = [];
         $studentIds = [];
         try {
+            DB::beginTransaction();
             foreach ($transactionIds as $transactionId) {
                 $transaction = TuitionFeeTransactions::where('school_branch_id', $currentSchool->id)
                     ->with(['tuition'])
@@ -66,30 +67,15 @@ class TuitionFeeTransactionService
                 if (!$transaction) {
                     throw new Exception("Payment record not found", 404);
                 }
-                $studentTuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
-                    ->where("student_id", $transaction->tuition->student_id)
-                    ->where("level_id", $transaction->tuition->level_id)
-                    ->where("specialty_id", $transaction->tuition->specialty_id)
-                    ->first();
 
-                if (!$studentTuitionFees) {
-                    throw new Exception("Tuition fees record not found", 404);
-                }
-                $studentTuitionFees->amount_paid -= $transaction->amount;
-                $studentTuitionFees->amount_left += $transaction->amount;
-                if ($studentTuitionFees->amount_left > 0) {
-                    $studentTuitionFees->status = "owing";
-                } else {
-                    $studentTuitionFees->status = "completed";
-                }
-
-                $studentTuitionFees->save();
+                // Transactions are the record of what was paid: removing one
+                // is the whole reversal, the balance follows from the rest.
                 $transaction->delete();
                 $results[] = [
                     $transaction
                 ];
                 $studentIds[] = [
-                    $transaction->tuition->student_id
+                    $transaction->tuition?->student_id
                 ];
             }
             DB::commit();
@@ -257,7 +243,6 @@ class TuitionFeeTransactionService
                 );
             }
 
-            $reversalAmount = $transaction->amount;
             $tuitionId = $transaction->tuition_id;
 
             $studentTuitionFees = $transaction->tuition;
@@ -271,28 +256,6 @@ class TuitionFeeTransactionService
                     null
                 );
             }
-
-            if (bccomp($studentTuitionFees->amount_paid, $reversalAmount, 2) < 0) {
-                throw new AppException(
-                    "Reversal amount ({$reversalAmount}) exceeds the current total amount paid on the tuition record.",
-                    400,
-                    "Reversal Error 🛑",
-                    "The transaction cannot be reversed as it would result in a negative amount paid. Data inconsistency detected.",
-                    null
-                );
-            }
-
-            $studentTuitionFees->amount_paid -= $reversalAmount;
-            $studentTuitionFees->amount_left += $reversalAmount;
-
-            if (bccomp($studentTuitionFees->amount_left, 0, 2) > 0) {
-                $studentTuitionFees->status = "owing";
-            } else {
-                $studentTuitionFees->status = "completed";
-                $studentTuitionFees->amount_left = 0;
-            }
-
-            $studentTuitionFees->save();
 
             $transaction->delete();
 
