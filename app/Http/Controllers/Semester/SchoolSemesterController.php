@@ -52,6 +52,12 @@ class SchoolSemesterController extends Controller
         $getSchoolSemesterDetails = $this->schoolSemesterService->getSchoolSemesterDetail($currentSchool, $schoolSemesterId);
         return ApiResponseService::success("School Semester Details Fetched Successfully", $getSchoolSemesterDetails, null, 200);
     }
+    public function getUpdateRules(Request $request, string $schoolSemesterId)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $rules = $this->schoolSemesterService->getUpdateRules($currentSchool, $schoolSemesterId);
+        return ApiResponseService::success("Semester update rules fetched successfully", $rules, null, 200);
+    }
     public function bulkUpdateSchoolSemester(BulkUpdateSchoolSemesterRequest $request)
     {
         $authAdmin = $this->resolveUser();

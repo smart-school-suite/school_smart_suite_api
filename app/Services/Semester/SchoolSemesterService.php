@@ -134,46 +134,97 @@ class SchoolSemesterService
 
         return $schoolSemester->setRelation('autoCreatedSemesters', $autoCreated);
     }
+    /**
+     * Applies the changes SchoolSemesterUpdatePolicy allows, and returns the
+     * updated semester with its rules after the change.
+     */
     public function updateSchoolSemester(array $semesterData, object $currentSchool, string $schoolSemesterId, $authAdmin)
     {
-        $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->find($schoolSemesterId);
-        if (!$schoolSemester) {
-            return ApiResponseService::error("School Semester Not Found", null, 404);
-        }
+        $schoolSemester = $this->findForBranch($currentSchool, $schoolSemesterId);
+        $policy = app(SchoolSemesterUpdatePolicy::class);
 
-        $filteredData = array_filter($semesterData);
-        $schoolSemester->update($filteredData);
+        DB::transaction(function () use ($schoolSemester, $policy, $semesterData) {
+            // Locked so two admins editing at once are checked one after the other.
+            $locked = SchoolSemester::lockForUpdate()->find($schoolSemester->id);
+            $locked->update($policy->validatedChanges($locked, $semesterData));
+        });
+
+        $schoolSemester->refresh();
         StudentActionEvent::dispatch([
             'schoolBranch' => $currentSchool->id,
-            'specialtyIds'   => [$schoolSemester->specialty_id],
+            'specialtyIds'   => [$schoolSemester->schoolYear?->specialty_id],
             'feature'      => 'semesterUpdate',
             'message'      => 'Semester  Updated',
             'data'         => $schoolSemester,
         ]);
-        return $schoolSemester;
+
+        return [
+            ...$schoolSemester->toArray(),
+            'update_rules' => $policy->describe($schoolSemester),
+        ];
     }
+
+    /**
+     * Updates several semesters under the same rules as a single update. All
+     * or nothing: one refused change rolls back the whole batch, and the
+     * error names the semester. Rows that change nothing are skipped.
+     */
     public function bulkUpdateSchoolSemester(array $updateSemesterList, object $currentSchool, $authAdmin)
     {
-        $result = [];
-        $specialtyIds = [];
-        try {
-            DB::beginTransaction();
+        $policy = app(SchoolSemesterUpdatePolicy::class);
+
+        return DB::transaction(function () use ($updateSemesterList, $currentSchool, $policy) {
+            $result = [];
             foreach ($updateSemesterList as $updateSemester) {
-                $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->findOrFail($updateSemester['school_semester_id']);
-                $filteredData = array_filter($updateSemester);
-                $schoolSemester->update($filteredData);
-                $result[] = [
-                    $schoolSemester
-                ];
-                $specialtyIds[] = $schoolSemester->specialty_id;
+                $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)
+                    ->with('semester')
+                    ->lockForUpdate()
+                    ->find($updateSemester['school_semester_id'] ?? null);
+
+                if (!$schoolSemester) {
+                    throw new AppException(
+                        "School semester not found.",
+                        404,
+                        "Semester Not Found",
+                        "One of the semesters no longer exists or belongs to another school branch."
+                    );
+                }
+
+                try {
+                    $changes = $policy->validatedChanges($schoolSemester, $updateSemester, true);
+                } catch (AppException $e) {
+                    $name = $schoolSemester->semester?->name ?? 'A semester';
+                    throw new AppException($e->getMessage(), $e->getCode(), $e->getTitle(), "{$name}: {$e->getDescription()}");
+                }
+
+                if ($changes) {
+                    $schoolSemester->update($changes);
+                }
+                $result[] = $schoolSemester;
             }
-            DB::commit();
             return $result;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
+
+    public function getUpdateRules(object $currentSchool, string $schoolSemesterId): array
+    {
+        return app(SchoolSemesterUpdatePolicy::class)->describe($this->findForBranch($currentSchool, $schoolSemesterId));
+    }
+
+    private function findForBranch(object $currentSchool, string $schoolSemesterId): SchoolSemester
+    {
+        $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)->find($schoolSemesterId);
+        if (!$schoolSemester) {
+            throw new AppException(
+                "The school semester was not found.",
+                404,
+                "Semester Not Found",
+                "The specified school semester does not exist or may have already been deleted."
+            );
+        }
+        return $schoolSemester;
+    }
+
     public function deleteSchoolSemester(string $schoolSemesterId, object $currentSchool, $authAdmin)
     {
         $schoolSemester = SchoolSemester::where("school_branch_id", $currentSchool->id)

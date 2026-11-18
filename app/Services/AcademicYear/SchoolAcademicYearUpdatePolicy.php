@@ -14,6 +14,7 @@ use App\Models\SchoolSemester;
 use App\Models\Student;
 use App\Models\TuitionFees;
 use App\Models\TuitionFeeTransactions;
+use App\Services\Helpers\DateRules\DateRangeRules;
 use Carbon\Carbon;
 
 /**
@@ -35,6 +36,8 @@ use Carbon\Carbon;
  */
 class SchoolAcademicYearUpdatePolicy
 {
+    use DateRangeRules;
+
     private const PROMOTION_STARTED = ['evaluating', 'processing', 'completed', 'completed_with_issues', 'scheduled'];
 
     /** The rules for the year as it is now, for the update drawer. */
@@ -247,37 +250,6 @@ class SchoolAcademicYearUpdatePolicy
         return $this->bounds($min, $max);
     }
 
-    private function bounds(array $min, array $max): array
-    {
-        $tightestMin = collect($min)->sortByDesc('date')->first();
-        $tightestMax = collect($max)->sortBy('date')->first();
-
-        $limit = fn(array $item) => ['date' => $item['date'], 'reason' => $item['why'], 'kind' => $item['kind'] ?? 'other'];
-
-        return [
-            'min' => $tightestMin['date'] ?? null,
-            'max' => $tightestMax['date'] ?? null,
-            'min_reason' => $tightestMin['why'] ?? null,
-            'max_reason' => $tightestMax['why'] ?? null,
-            // Every limit, so a client can re-derive the range when the
-            // system academic year (kind "system_year") is changed.
-            'limits' => ['min' => array_map($limit, $min), 'max' => array_map($limit, $max)],
-        ];
-    }
-
-    private function assertWithin(string $label, string $value, array $bounds): void
-    {
-        if ($bounds['min'] && $bounds['max'] && $bounds['min'] > $bounds['max']) {
-            $this->fail('No Valid Date', "There is no valid {$label}: {$bounds['min_reason']}, but {$bounds['max_reason']}.");
-        }
-        if ($bounds['min'] && $value < $bounds['min']) {
-            $this->fail('Date Too Early', "The {$label} must be on or after {$this->human($bounds['min'])}: {$bounds['min_reason']}.");
-        }
-        if ($bounds['max'] && $value > $bounds['max']) {
-            $this->fail('Date Too Late', "The {$label} must be on or before {$this->human($bounds['max'])}: {$bounds['max_reason']}.");
-        }
-    }
-
     /** What depends on the academic year, and the specialty's neighbouring years. */
     private function context(SchoolAcademicYear $year): array
     {
@@ -348,34 +320,4 @@ class SchoolAcademicYearUpdatePolicy
         };
     }
 
-    private function fail(string $title, string $description, int $code = 422): never
-    {
-        throw new AppException($description, $code, $title, $description);
-    }
-
-    private function plural(int $count, string $noun): string
-    {
-        return $count . ' ' . $noun . ($count === 1 ? '' : 's');
-    }
-
-    private function today(): string
-    {
-        return now()->toDateString();
-    }
-
-    /** "1 May 2027", for messages. */
-    private function human($date): string
-    {
-        return Carbon::parse($this->date($date))->format('j M Y');
-    }
-
-    private function shift(string $date, int $days): string
-    {
-        return Carbon::parse($date)->addDays($days)->toDateString();
-    }
-
-    private function date($value): ?string
-    {
-        return $value ? substr((string) ($value instanceof \DateTimeInterface ? $value->format('Y-m-d') : $value), 0, 10) : null;
-    }
 }
