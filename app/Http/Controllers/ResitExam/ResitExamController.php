@@ -65,7 +65,7 @@ class ResitExamController extends Controller
 
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get('currentSchool');
-        $bulkAddExamGrading = $this->resitExamService->bulkAddExamGrading($request->exam_grading, $currentSchool, $authAdmin);
+        $bulkAddExamGrading = $this->resitExamService->bulkAddGradeScale($request->validated()['exam_grading'], $currentSchool, $authAdmin);
         return ApiResponseService::success("Exam Grading Added Successfully", $bulkAddExamGrading, null, 200);
     }
     public function bulkUpdateResitExam(BulkUpdateResitExamRequest $request)
