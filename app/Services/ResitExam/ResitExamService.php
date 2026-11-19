@@ -287,14 +287,13 @@ class ResitExamService
                 }
 
                 $exam->grades_category_id = $gradeScaleCategory->id;
-                $exam->grading_added = true;
                 $exam->save();
 
                 $updatedExams[] = [
                     'id'                 => $exam->id,
                     'title'              => $exam->title ?? $exam->name ?? null,
                     'grades_category_id' => $exam->grades_category_id,
-                    'grading_added'      => $exam->grading_added,
+                    'grading_added'      => (bool) $exam->grades_category_id,
                 ];
             }
 

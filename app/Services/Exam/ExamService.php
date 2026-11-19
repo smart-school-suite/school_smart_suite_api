@@ -803,79 +803,29 @@ class ExamService
             );
         }
     }
+    /**
+     * Attaches a grade scale to several exams, each under the same checks as
+     * a single attach (addExamGradeScale): a complete configuration of the
+     * exam's type and max score, before any candidate is evaluated. All or
+     * nothing. grades_config_Id is the school's grade scale category id
+     * (school_grade_scale_categories.id), which is what exams reference.
+     */
     public function bulkAddExamGrading(array $examGradingList, object $currentSchool, object $authAdmin)
     {
-        $result = [];
-        try {
-            DB::beginTransaction();
-            $specialtyIds = [];
+        return DB::transaction(function () use ($examGradingList, $currentSchool, $authAdmin) {
+            $result = [];
             foreach ($examGradingList as $examGrading) {
-                $gradesConfigId = $examGrading['grades_config_Id'] ?? null;
+                $gradeScaleCategoryId = $examGrading['grades_config_Id'] ?? null;
                 $examId = $examGrading['exam_id'] ?? null;
 
-                $gradesConfig = SchoolGradesConfig::where("school_branch_id", $currentSchool->id)
-                    ->find($gradesConfigId);
-
-                if (!$gradesConfig) {
-                    throw new AppException(
-                        "A grading configuration was not found for one of the exams.",
-                        404,
-                        "Grading Configuration Not Found",
-                        "We could not find the specified grading configuration for exam ID: {$examId}.",
-                        null
-                    );
-                }
-
-                if ($gradesConfig->isgrades_configured === false) {
-                    throw new AppException(
-                        "The selected grading configuration is incomplete.",
-                        400,
-                        "Incomplete Configuration",
-                        "The grading configuration with ID: {$gradesConfigId} has not been fully set up.",
-                        null
-                    );
-                }
-
-                $exam = Exam::where("school_branch_id", $currentSchool->id)
-                    ->with('examType')
-                    ->find($examId);
-
-                if (!$exam) {
-                    throw new AppException(
-                        "An exam was not found.",
-                        404,
-                        "Exam Not Found",
-                        "We could not find the exam with ID: {$examId}.",
-                        null
-                    );
-                }
-
-                $this->assertExamNotEvaluated($currentSchool, $exam, 'grade scale');
-
-                $exam->grades_category_id = $gradesConfig->grades_category_id;
-                $exam->grading_added = true;
-                $exam->save();
-                $specialtyIds[] = $exam->specialty_id;
+                $exam = $this->addExamGradeScale($examId, $currentSchool, (string) $gradeScaleCategoryId, $authAdmin);
                 $result[] = [
-                    'grades_config' => $gradesConfig,
+                    'grades_config' => SchoolGradeScaleCategory::find($gradeScaleCategoryId),
                     'exam' => $exam,
                 ];
             }
-            DB::commit();
             return $result;
-        } catch (AppException $e) {
-            DB::rollBack();
-            throw $e;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw new AppException(
-                "An unexpected error occurred during the bulk grading assignment. Please try again.",
-                500,
-                "Bulk Grading Error",
-                "A server-side issue prevented the grading from being applied to all exams. Error: " . $e->getMessage(),
-                null
-            );
-        }
+        });
     }
     public function getExamsByStudentIdSemesterId(object $currentSchool, string $studentId, string $semesterId)
     {
