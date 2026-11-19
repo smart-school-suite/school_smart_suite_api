@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
         $this->call(PaymentMethodSeeder::class);
         $this->call(AssetPolicySeeder::class);
         $this->call(CourseTypeSeeder::class);
+        $this->call(HallTypeSeeder::class);
         $this->call(QualificationSeeder::class);
         $this->call(TagSeeder::class);
         $this->call(EventTagSeeder::class);
