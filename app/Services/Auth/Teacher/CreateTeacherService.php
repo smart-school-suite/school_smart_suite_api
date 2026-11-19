@@ -33,7 +33,8 @@ class CreateTeacherService
                 );
             }
 
-            $levelIds = $teacherData['level_ids'] ?? [];
+            // CreateTeacherRequest validates allowed_level_ids; only validated keys reach here.
+            $levelIds = $teacherData['allowed_level_ids'] ?? $teacherData['level_ids'] ?? [];
             $qualifications = $teacherData['qualifications'] ?? [];
 
             DB::beginTransaction();

@@ -127,7 +127,7 @@ class TeacherSpecialtyService
     public function getAssignableTeachers(object $currentSchool, string $specialtyId)
     {
         try {
-            $specialty = Specialty::findOrFail($specialtyId);
+            $specialty = Specialty::where('school_branch_id', $currentSchool->id)->findOrFail($specialtyId);
             $requiredLevelId = $specialty->level_id;
 
             $teachers = Teacher::where('school_branch_id', $currentSchool->id)
@@ -142,11 +142,19 @@ class TeacherSpecialtyService
                 ->get();
 
             if ($teachers->isEmpty()) {
+                // Say which condition left nobody: no teacher may teach the level, or all who may are assigned.
+                $canTeachLevel = Teacher::where('school_branch_id', $currentSchool->id)
+                    ->whereHas('levels', fn($query) => $query->where('levels.id', $requiredLevelId))
+                    ->count();
+                $levelName = $specialty->level?->name ?? 'this level';
+
                 throw new AppException(
-                    "No eligible or unassigned teachers found for this specialty level at school branch ID '{$currentSchool->id}'.",
+                    "No eligible or unassigned teachers found for {$specialty->specialty_name} ({$levelName}).",
                     404,
                     "No Assignable Instructors Available 🧑‍🏫",
-                    "We could not locate any alternative instructors who are authorized to teach this educational level and aren't already matched with this specialty choice.",
+                    $canTeachLevel === 0
+                        ? "No teacher at this school is allowed to teach {$levelName}. Add {$levelName} to a teacher's teaching levels, then try again."
+                        : "All {$canTeachLevel} teacher(s) allowed to teach {$levelName} are already assigned to {$specialty->specialty_name}.",
                     null
                 );
             }
