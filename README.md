@@ -293,7 +293,7 @@ repository is public.
 | File storage | `FILESYSTEM_DISK`, `AWS_*`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT`, `R2_URL` | |
 | Monitoring | `SENTRY_LARAVEL_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `LOG_CHANNEL`, `LOG_LEVEL` | |
 | Branding | `SSS_EMAIL_LOGO_URL`, `SSS_SUPPORT_EMAIL` | Used by email templates ([`config/sss.php`](config/sss.php)) |
-| Container | `RUN_MIGRATIONS`, `ENABLE_SCHEDULER` | Read by [`docker/entrypoint.sh`](docker/entrypoint.sh) |
+| Container | `RUN_MIGRATIONS`, `ENABLE_SCHEDULER`, `ENABLE_QUEUE_WORKER` | Read by [`docker/entrypoint.sh`](docker/entrypoint.sh) |
 
 When you add a variable, read it through a `config/*.php` file rather than calling `env()` in
 application code (production caches configuration). Add it to `.env.example` with an empty value
@@ -494,7 +494,7 @@ pipeline is documented in [`docs/deployment.md`](docs/deployment.md). In summary
 | Verify | The migration check replays the deployed schema, applies the new migrations, compares with a fresh build, seeds twice and caches routes |
 | Configure | The deploy job writes `.env` from Infisical. The server's `.env` is overwritten on every deploy |
 | Start | [`docker/entrypoint.sh`](docker/entrypoint.sh) runs `migrate --force` and `db:seed --force` (with `RUN_MIGRATIONS=true`), then `config:cache`, `route:cache` and `view:cache` in production |
-| Serve | Supervisor runs php-fpm and nginx on port 80; health check at `/up` |
+| Serve | Supervisor runs php-fpm and nginx on port 80, plus the queue worker and the scheduler; health check at `/up` |
 | Roll back | **Actions → Deploy to VPS** with a previous commit SHA (migrations are not reversed) |
 
 ### Scheduled tasks
@@ -518,9 +518,9 @@ Staging only runs the scheduler when `ENABLE_SCHEDULER=true`.
 
 ### Known limitations
 
-- **No queue worker in the container.** Supervisor doesn't run `queue:work`, so queued work isn't
-  processed unless a worker runs elsewhere or `QUEUE_CONNECTION=sync`. That includes OTP emails,
-  imports, statistics and many listeners.
+- **The queue worker must be running.** OTP emails, notifications and imports are queued. The
+  container runs a worker (see [`docs/deployment.md`](docs/deployment.md#queue-worker)); with
+  `ENABLE_QUEUE_WORKER=false` and a non-`sync` queue, nothing is sent.
 - **The `fcm` notification channel isn't registered.** Seven notifications list `fcm` in `via()`,
   but no driver is registered for it, so they fail with `Driver [fcm] not supported` when sent.
 - **`.env.example` doesn't list `MYSQL_DB_*` or `MONGO_DB_*`** (see

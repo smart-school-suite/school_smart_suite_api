@@ -40,4 +40,15 @@ else
   echo "Laravel scheduler disabled (APP_ENV=$APP_ENV)"
 fi
 
+# Run a queue worker unless jobs run synchronously or it is switched off.
+# Emails (including login OTPs), notifications and imports are queued, so
+# without a worker none of them is sent.
+if [ "$QUEUE_CONNECTION" = "sync" ] || [ "$ENABLE_QUEUE_WORKER" = "false" ] || [ "$ENABLE_QUEUE_WORKER" = "0" ]; then
+  rm -f /etc/supervisor/conf.d/laravel-queue-worker.program.conf
+  echo "Queue worker disabled (QUEUE_CONNECTION=${QUEUE_CONNECTION:-unset}, ENABLE_QUEUE_WORKER=${ENABLE_QUEUE_WORKER:-unset})"
+else
+  cp /usr/local/etc/supervisor/laravel-queue-worker.conf /etc/supervisor/conf.d/laravel-queue-worker.program.conf
+  echo "Queue worker enabled (queue:work)"
+fi
+
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

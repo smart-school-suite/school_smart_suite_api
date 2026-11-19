@@ -70,6 +70,7 @@ COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/php-fpm.program.conf /etc/supervisor/conf.d/php-fpm.program.conf
 COPY docker/nginx.program.conf /etc/supervisor/conf.d/nginx.program.conf
 COPY docker/laravel-scheduler.conf /usr/local/etc/supervisor/laravel-scheduler.conf
+COPY docker/laravel-queue-worker.conf /usr/local/etc/supervisor/laravel-queue-worker.conf
 
 WORKDIR /var/www/html
 
