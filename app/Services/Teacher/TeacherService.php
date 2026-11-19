@@ -25,13 +25,49 @@ class TeacherService
         $teacher->delete();
         return $teacher;
     }
+    /**
+     * Updates a teacher's details and, when they are sent, the levels they
+     * may teach (allowed_level_ids) and their qualifications. Levels and
+     * qualifications are replaced by what is sent.
+     */
     public function updateTeacher(array $data, string $teacherId, object $currentSchool, object $authAdmin)
     {
         $teacher = Teacher::where("school_branch_id", $currentSchool->id)
             ->findOrFail($teacherId);
-        $filterData = array_filter($data);
-        $teacher->update($filterData);
-        return $teacher;
+
+        return DB::transaction(function () use ($teacher, $data, $currentSchool) {
+            // Required details are only changed to a value; phone and address may be cleared.
+            $details = collect($data)
+                ->only(['first_name', 'last_name', 'name', 'email', 'gender_id', 'phone', 'address'])
+                ->reject(fn($value, $field) => $value === null && !in_array($field, ['phone', 'address'], true))
+                ->all();
+            if ($details) {
+                $teacher->update($details);
+            }
+
+            if (array_key_exists('allowed_level_ids', $data)) {
+                $teacher->levels()->sync(
+                    collect($data['allowed_level_ids'])->filter()->unique()
+                        ->mapWithKeys(fn($levelId) => [$levelId => ['school_branch_id' => $currentSchool->id]])
+                        ->all()
+                );
+            }
+
+            if (array_key_exists('qualifications', $data)) {
+                $teacher->qualifications()->sync(
+                    collect($data['qualifications'])->filter(fn($item) => !empty($item['qualification_id']))
+                        ->mapWithKeys(fn($item) => [$item['qualification_id'] => [
+                            'school_branch_id' => $currentSchool->id,
+                            'field_of_study' => $item['field_of_study'] ?? null,
+                            'year' => $item['year'] ?? null,
+                            'institution' => $item['institution'] ?? null,
+                        ]])
+                        ->all()
+                );
+            }
+
+            return $teacher->fresh(['levels', 'qualifications']);
+        });
     }
     public function getTeacherSchedule(string $teacherId, $currentSchool)
     {
