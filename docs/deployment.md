@@ -107,11 +107,17 @@ The Infisical CLI must be installed on the server, because the deploy job runs t
 [docker/entrypoint.sh](../docker/entrypoint.sh) runs each time the container starts:
 
 1. Exits if `APP_KEY` is not set.
-2. If `RUN_MIGRATIONS=true`: runs `php artisan migrate --force`, then `php artisan db:seed --force`.
-3. If `APP_ENV=production`: runs `config:cache`, `route:cache` and `view:cache`.
-4. If `APP_ENV=production` (or `ENABLE_SCHEDULER=true`): enables the Laravel scheduler supervisor
+2. Clears the cached configuration and the application cache (`config:clear`, `cache:clear`), so
+   the values just written to `.env` are the ones in use. The application cache is stored in the
+   database and would otherwise survive deploys. Logs a warning if `MAIL_MAILER=resend` but
+   `RESEND_API_KEY` is empty.
+3. If `RUN_MIGRATIONS=true`: runs `php artisan migrate --force`, then `php artisan db:seed --force`.
+4. If `APP_ENV=production`: runs `config:cache`, `route:cache` and `view:cache`.
+5. If `APP_ENV=production` (or `ENABLE_SCHEDULER=true`): enables the Laravel scheduler supervisor
    program.
-5. Starts supervisor, which runs php-fpm, nginx, and (in production) the scheduler.
+6. Unless `QUEUE_CONNECTION=sync` or `ENABLE_QUEUE_WORKER=false`: enables the queue worker
+   supervisor program.
+7. Starts supervisor, which runs php-fpm, nginx, the queue worker and (in production) the scheduler.
 
 The script stops at the first failing command. A failed migration or seeder therefore stops the
 container, and Docker restarts it in a loop. This is deliberate: the app never serves traffic
@@ -133,10 +139,27 @@ Scheduled commands are registered in [routes/console.php](../routes/console.php)
 Staging does not start the scheduler by default, so production-only jobs do not fire against the
 staging database. Set `ENABLE_SCHEDULER=true` in Infisical staging if you need to test them.
 
-### Known gap: no queue worker
+### Queue worker
 
-Supervisor does not run `php artisan queue:work`. Queued jobs will not process unless a worker is
-started some other way. If the app depends on the queue, add a supervisor program for it.
+Emails (including login OTPs), notifications, imports and statistics are queued on the `database`
+connection, so nothing is sent unless a worker runs. Supervisor runs
+`php artisan queue:work --sleep=3 --tries=3 --timeout=80 --max-time=3600`, defined in
+[docker/laravel-queue-worker.conf](../docker/laravel-queue-worker.conf). `--timeout` stays below
+the queue's `retry_after` (90 seconds), so a slow job isn't started twice. `--max-time` restarts
+the worker every hour.
+
+[docker/entrypoint.sh](../docker/entrypoint.sh) enables it on every environment unless
+`QUEUE_CONNECTION=sync` (jobs then run in the request) or `ENABLE_QUEUE_WORKER=false`. Like the
+scheduler, it ships inside the image, so every deploy restarts it. A worker started by hand with
+`docker exec` stops at the next deploy, because the container is recreated.
+
+Useful checks on the server:
+
+```bash
+docker exec school-smart-app php artisan queue:monitor database:default   # pending jobs
+docker exec school-smart-app php artisan queue:failed                      # failed jobs and their errors
+docker exec school-smart-app php artisan queue:retry all                   # retry failed jobs
+```
 
 ## Database
 
@@ -156,6 +179,7 @@ Run these on the server.
 | Symptom | Likely cause | Where to look |
 |---|---|---|
 | Container status `Restarting` | A migration, seeder or cache command fails at startup | `docker logs --tail 60 school-smart-app` |
+| No emails sent, nothing in Resend | No queue worker, or `RESEND_API_KEY` missing | `docker logs school-smart-app \| grep -i "queue worker\|RESEND"`, then `php artisan queue:failed` |
 | `SQLSTATE[HY000] [2002] Connection refused` | `MYSQL_DB_HOST` is `127.0.0.1` or `localhost` | Set it to `host.docker.internal` in Infisical |
 | `[1045] Access denied` | Wrong database password in Infisical, or the DB user doesn't allow the Docker network | Compare Infisical with the MariaDB user |
 | `[1049] Unknown database` | `MYSQL_DB_DATABASE` names a database that doesn't exist | `mysql -e "SHOW DATABASES;"` |

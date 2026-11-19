@@ -12,6 +12,19 @@ fi
 
 php artisan package:discover --ansi >/dev/null 2>&1 || true
 
+# Start from fresh configuration and caches on every start, so values written
+# to .env by the deploy (from Infisical) are always the ones in use. The
+# application cache lives in the database and would otherwise survive deploys.
+php artisan config:clear
+php artisan cache:clear || echo "WARNING: cache:clear failed (is the cache store reachable?)" >&2
+php artisan clear-compiled >/dev/null 2>&1 || true
+
+# Email is sent through Resend when MAIL_MAILER=resend; without a key every
+# send fails ("Resend::client(): Argument #1 (\$apiKey) must be of type string").
+if [ "$MAIL_MAILER" = "resend" ] && [ -z "$RESEND_API_KEY" ]; then
+  echo "WARNING: MAIL_MAILER=resend but RESEND_API_KEY is empty; no email will be sent" >&2
+fi
+
 if [ "$RUN_MIGRATIONS" = "true" ] || [ "$RUN_MIGRATIONS" = "1" ]; then
   php artisan migrate --force
   # Seeders are idempotent: they only add or update reference data, never duplicate it.
@@ -38,6 +51,17 @@ if [ "$APP_ENV" = "production" ] || [ "$ENABLE_SCHEDULER" = "true" ] || [ "$ENAB
 else
   rm -f /etc/supervisor/conf.d/laravel-scheduler.program.conf
   echo "Laravel scheduler disabled (APP_ENV=$APP_ENV)"
+fi
+
+# Run a queue worker unless jobs run synchronously or it is switched off.
+# Emails (including login OTPs), notifications and imports are queued, so
+# without a worker none of them is sent.
+if [ "$QUEUE_CONNECTION" = "sync" ] || [ "$ENABLE_QUEUE_WORKER" = "false" ] || [ "$ENABLE_QUEUE_WORKER" = "0" ]; then
+  rm -f /etc/supervisor/conf.d/laravel-queue-worker.program.conf
+  echo "Queue worker disabled (QUEUE_CONNECTION=${QUEUE_CONNECTION:-unset}, ENABLE_QUEUE_WORKER=${ENABLE_QUEUE_WORKER:-unset})"
+else
+  cp /usr/local/etc/supervisor/laravel-queue-worker.conf /etc/supervisor/conf.d/laravel-queue-worker.program.conf
+  echo "Queue worker enabled (queue:work)"
 fi
 
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
