@@ -71,7 +71,7 @@ class ResitEvaluationHelperService
 
         $resitableCourses = Studentresit::with('courses')
             ->where('school_branch_id', $currentSchool->id)
-            ->where('student_id', $candidate->student->id)
+            ->where('student_id', $candidate->student_id)
             ->whereIn('exam_id', $examIds)
             ->get();
 
@@ -155,13 +155,13 @@ class ResitEvaluationHelperService
                 "course_title" => $score->resit->courses->course_title ?? null,
                 "course_code" => $score->resit->courses->course_code ?? null,
                 "course_credit" => $score->resit->courses->credit ?? null,
-                "score" => (float) $score->score ?? 0,
-                "grade_points" => (float) $score->grade->grade_points ?? 0,
-                "performance" => $score->grade->performance ?? null,
-                "result" => $score->grade->result ?? null,
-                "resit_result" => $score->grade->resit_result ?? null,
-                "grade" => $score->grade->grade->letter_grade ?? null
-            ]),
+                "score" => (float) ($score->score ?? 0),
+                "grade_points" => (float) ($score->grade?->grade_points ?? 0),
+                "performance" => $score->grade?->performance,
+                "result" => $score->grade?->result,
+                "resit_result" => $score->grade?->resit_result,
+                "grade" => $score->grade?->grade?->letter_grade
+            ])->values(),
             'max_gpa' => 4.00,
             "resit_exam" => $candidate->resitExam->withoutRelations()
         ];
