@@ -107,13 +107,17 @@ The Infisical CLI must be installed on the server, because the deploy job runs t
 [docker/entrypoint.sh](../docker/entrypoint.sh) runs each time the container starts:
 
 1. Exits if `APP_KEY` is not set.
-2. If `RUN_MIGRATIONS=true`: runs `php artisan migrate --force`, then `php artisan db:seed --force`.
-3. If `APP_ENV=production`: runs `config:cache`, `route:cache` and `view:cache`.
-4. If `APP_ENV=production` (or `ENABLE_SCHEDULER=true`): enables the Laravel scheduler supervisor
+2. Clears the cached configuration and the application cache (`config:clear`, `cache:clear`), so
+   the values just written to `.env` are the ones in use. The application cache is stored in the
+   database and would otherwise survive deploys. Logs a warning if `MAIL_MAILER=resend` but
+   `RESEND_API_KEY` is empty.
+3. If `RUN_MIGRATIONS=true`: runs `php artisan migrate --force`, then `php artisan db:seed --force`.
+4. If `APP_ENV=production`: runs `config:cache`, `route:cache` and `view:cache`.
+5. If `APP_ENV=production` (or `ENABLE_SCHEDULER=true`): enables the Laravel scheduler supervisor
    program.
-5. Unless `QUEUE_CONNECTION=sync` or `ENABLE_QUEUE_WORKER=false`: enables the queue worker
+6. Unless `QUEUE_CONNECTION=sync` or `ENABLE_QUEUE_WORKER=false`: enables the queue worker
    supervisor program.
-6. Starts supervisor, which runs php-fpm, nginx, the queue worker and (in production) the scheduler.
+7. Starts supervisor, which runs php-fpm, nginx, the queue worker and (in production) the scheduler.
 
 The script stops at the first failing command. A failed migration or seeder therefore stops the
 container, and Docker restarts it in a loop. This is deliberate: the app never serves traffic
@@ -175,6 +179,7 @@ Run these on the server.
 | Symptom | Likely cause | Where to look |
 |---|---|---|
 | Container status `Restarting` | A migration, seeder or cache command fails at startup | `docker logs --tail 60 school-smart-app` |
+| No emails sent, nothing in Resend | No queue worker, or `RESEND_API_KEY` missing | `docker logs school-smart-app \| grep -i "queue worker\|RESEND"`, then `php artisan queue:failed` |
 | `SQLSTATE[HY000] [2002] Connection refused` | `MYSQL_DB_HOST` is `127.0.0.1` or `localhost` | Set it to `host.docker.internal` in Infisical |
 | `[1045] Access denied` | Wrong database password in Infisical, or the DB user doesn't allow the Docker network | Compare Infisical with the MariaDB user |
 | `[1049] Unknown database` | `MYSQL_DB_DATABASE` names a database that doesn't exist | `mysql -e "SHOW DATABASES;"` |

@@ -274,7 +274,16 @@ php artisan schedule:work  # optional: runs the scheduled commands every minute
 
 Sign-in sends a one-time password by email, and that email is queued. Run a queue worker, or set
 `QUEUE_CONNECTION=sync`, or logins never complete. With `MAIL_MAILER=log`, OTP emails are written
-to `storage/logs/laravel.log`.
+to `storage/logs/laravel.log`; with `MAIL_MAILER=resend`, set `RESEND_API_KEY`.
+
+After changing `.env`, clear cached configuration and **restart the queue worker**. A running worker
+keeps the configuration it started with:
+
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan queue:work     # stop the old worker first (Ctrl+C)
+```
 
 ## Environment configuration
 

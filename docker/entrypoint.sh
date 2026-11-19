@@ -12,6 +12,19 @@ fi
 
 php artisan package:discover --ansi >/dev/null 2>&1 || true
 
+# Start from fresh configuration and caches on every start, so values written
+# to .env by the deploy (from Infisical) are always the ones in use. The
+# application cache lives in the database and would otherwise survive deploys.
+php artisan config:clear
+php artisan cache:clear || echo "WARNING: cache:clear failed (is the cache store reachable?)" >&2
+php artisan clear-compiled >/dev/null 2>&1 || true
+
+# Email is sent through Resend when MAIL_MAILER=resend; without a key every
+# send fails ("Resend::client(): Argument #1 (\$apiKey) must be of type string").
+if [ "$MAIL_MAILER" = "resend" ] && [ -z "$RESEND_API_KEY" ]; then
+  echo "WARNING: MAIL_MAILER=resend but RESEND_API_KEY is empty; no email will be sent" >&2
+fi
+
 if [ "$RUN_MIGRATIONS" = "true" ] || [ "$RUN_MIGRATIONS" = "1" ]; then
   php artisan migrate --force
   # Seeders are idempotent: they only add or update reference data, never duplicate it.
