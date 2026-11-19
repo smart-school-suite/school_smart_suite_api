@@ -20,6 +20,7 @@ class SettingDefinationSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->studentAdditionalFeeSetting();
         $this->studentPromotionSettingDefination();
         $this->timetableSettingDefination();
         $this->resitSettingDefination();
@@ -60,6 +61,20 @@ class SettingDefinationSeeder extends Seeder
     }
 
 
+    public function studentAdditionalFeeSetting(): void
+    {
+        $settingDefs = [
+            [
+                'key' => 'additionalFee.default_due_days',
+                'label' => 'Default Due Period (Days)',
+                'data_type' => 'integer',
+                'default_value' => 30,
+                'description' => 'The number of days from the day a student is billed an additional fee to its due date, used whenever no due date is entered. For example, 10 makes a fee billed today due in 10 days. A due date entered when billing always takes precedence.',
+            ],
+        ];
+
+        $this->seedDefinitions('Student Additional Fee Settings', $settingDefs);
+    }
     public function studentPromotionSettingDefination(): void
     {
         $promotionSettingDefs = [

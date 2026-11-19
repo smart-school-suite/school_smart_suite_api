@@ -6,6 +6,7 @@ use App\Exceptions\AppException;
 use App\Models\Exam\ExamScore;
 use App\Models\Exam\ExamCandidate;
 use App\Models\Studentresit;
+use App\Services\ExamEvaluation\CandidateResultService;
 
 class ExamScoreService
 {
@@ -77,16 +78,22 @@ class ExamScoreService
             ];
         });
 
-        $gpa = $totalCourses > 0 ? round($totalGradePoints / $totalCourses, 2) : 0.0;
+        // Credit-weighted GPA and the result against the minimum passing GPA,
+        // the same as when the scores were recorded (CandidateResultService).
+        $result = CandidateResultService::summarise($scores, app(CandidateResultService::class)->passingGpa($currentSchool->id));
 
         return [
             "exam" => $candidate->exam,
             "candidate" => $candidate,
             "scores" => $formattedScores,
             "summary" => [
-                "gpa" => $gpa,
+                "gpa" => $result['gpa'],
+                "passing_gpa" => $result['passing_gpa'],
+                "result" => $result['result'],
+                "gpa_shortfall" => $result['gpa_shortfall'],
                 "courses_passed" => $coursesPassed,
                 "courses_failed" => $coursesFailed,
+                "total_credits" => $result['total_credits'],
                 "total_grade_points_earned" => round($totalGradePoints, 2),
                 "total_score" => round($totalScore, 2)
             ]
@@ -160,16 +167,22 @@ class ExamScoreService
             ];
         });
 
-        $gpa = $totalCourses > 0 ? round($totalGradePoints / $totalCourses, 2) : 0.0;
+        // Credit-weighted GPA and the result against the minimum passing GPA,
+        // the same as when the scores were recorded (CandidateResultService).
+        $result = CandidateResultService::summarise($scores, app(CandidateResultService::class)->passingGpa($currentSchool->id));
 
         return [
             "exam" => $candidate->exam,
             "candidate" => $candidate,
             "scores" => $formattedScores,
             "summary" => [
-                "gpa" => $gpa,
+                "gpa" => $result['gpa'],
+                "passing_gpa" => $result['passing_gpa'],
+                "result" => $result['result'],
+                "gpa_shortfall" => $result['gpa_shortfall'],
                 "courses_passed" => $coursesPassed,
                 "courses_failed" => $coursesFailed,
+                "total_credits" => $result['total_credits'],
                 "total_grade_points_earned" => round($totalGradePoints, 2),
                 "total_score" => round($totalScore, 2)
             ]
@@ -204,6 +217,8 @@ class ExamScoreService
         $deletedCount = ExamScore::where('candidate_id', $candidateId)
             ->where('school_branch_id', $currentSchool->id)
             ->delete();
+
+        app(CandidateResultService::class)->forget($candidate);
 
         $resitDeleteCount = Studentresit::
                      where("school_branch_id", $currentSchool->id)
@@ -246,6 +261,7 @@ class ExamScoreService
         $deletedCount = ExamScore::where('candidate_id', $candidateId)
             ->where('school_branch_id', $currentSchool->id)
             ->delete();
+        app(CandidateResultService::class)->forget($candidate);
 
         return [
             "message" => "Successfully deleted all exam scores for the candidate.",

@@ -28,7 +28,8 @@ class BulkBillStudentAdditionalFeeRequest extends FormRequest
                 'regex:/^\d{1,6}(\.\d{1,2})?$/',
                 'min:0',
             ],
-            'fee_details.*.due_date' => 'required|date|after_or_equal:today'
+            // Left out: the billing day plus the default due period setting.
+            'fee_details.*.due_date' => 'sometimes|nullable|date|after_or_equal:today'
         ];
     }
 }

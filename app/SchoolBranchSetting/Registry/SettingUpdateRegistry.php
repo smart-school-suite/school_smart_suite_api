@@ -2,6 +2,7 @@
 
 namespace App\SchoolBranchSetting\Registry;
 
+use App\SchoolBranchSetting\Handlers\AdditionalFee\DefaultDueDaysHandler;
 use App\SchoolBranchSetting\Handlers\Election\ElectionVoteTieAdministrativeVoteHandler;
 use App\SchoolBranchSetting\Handlers\Election\ElectionVoteTieHighestGpaHandler;
 use App\SchoolBranchSetting\Handlers\Exam\AutoCreateExamHandler;
@@ -42,6 +43,9 @@ class SettingUpdateRegistry
 {
   public function handlers(): array {
       return [
+
+          'additionalFee.default_due_days' => DefaultDueDaysHandler::class,
+          //
 
           'promotion.max_tuition_fee_debt' => MaxTuitionFeeDebtHandler::class,
           'promotion.max_additional_fee_debt' => MaxAdditionalFeeDebtHandler::class,

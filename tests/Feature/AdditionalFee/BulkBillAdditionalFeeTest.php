@@ -54,9 +54,17 @@ class BulkBillAdditionalFeeTest extends TestCase
         $this->assertEquals([15000, 15000], $fees->pluck('amount')->map(fn($v) => (float) $v)->all());
     }
 
-    public function test_a_missing_due_date_is_rejected_with_a_validation_error(): void
+    public function test_a_missing_due_date_defaults_to_the_due_period_setting(): void
     {
-        $this->bill(['due_date' => null])->assertStatus(422);
+        $this->bill(['due_date' => null])->assertOk();
+
+        // No setting row: the default of 30 days from today.
+        $this->assertSame([now()->addDays(30)->toDateString()], AdditionalFees::pluck('due_date')->map(fn($d) => substr((string) $d, 0, 10))->unique()->values()->all());
+    }
+
+    public function test_a_due_date_in_the_past_is_still_rejected(): void
+    {
+        $this->bill(['due_date' => now()->subDay()->toDateString()])->assertStatus(422);
 
         $this->assertSame(0, AdditionalFees::count());
     }

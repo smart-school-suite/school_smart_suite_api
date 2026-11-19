@@ -13,6 +13,7 @@ use App\Exceptions\AppException;
 use App\Models\Course\CourseSpecialty;
 use Illuminate\Support\Collection;
 use App\Models\Studentresit;
+use App\Services\Resit\ResitFeeResolver;
 use Illuminate\Support\Str;
 use App\Jobs\Resit\CreateResitExamJob;
 use Illuminate\Support\Facades\Log;
@@ -254,6 +255,10 @@ class AddExamScoreService
             }
 
             DB::table("exam_scores")->insert($examScores);
+
+            // The candidate's GPA against the minimum passing GPA, stored in student_results.
+            $result = app(CandidateResultService::class)->record($candidate);
+
             if ($this->isExamFullyEvaluated($exam->id)) {
                 CreateResitExamJob::dispatch($exam->id, $currentSchool->id)->afterCommit();
             }
@@ -263,6 +268,7 @@ class AddExamScoreService
             return [
                 'candidate_id' => $candidate->id,
                 'exam_id' => $exam->id,
+                'result' => CandidateResultService::withoutDetails($result),
                 'courses_submitted' => count($examScores),
                 'total_score' => round($totalFinalScore, 2),
                 'average_score' => round($totalFinalScore / count($examScores), 2),
@@ -334,6 +340,8 @@ class AddExamScoreService
                 'student_id' => $studentId,
                 'course_id' => $courseId,
                 'exam_id' => $examId,
+                // Standard or level-specific, from the resit fee settings.
+                'fee' => app(ResitFeeResolver::class)->feeForExam($schoolBranchId, $examId),
             ]);
         }
     }

@@ -29,7 +29,8 @@ class CreateAdditionalFeeRequest extends FormRequest
             ],
            'additionalfee_category_id' => 'required|string|exists:additional_fee_categories,id',
            'student_id' => 'required|string|exists:students,id',
-           'due_date' => 'required|date|after_or_equal:today'
+           // Left out: the billing day plus the default due period setting.
+           'due_date' => 'sometimes|nullable|date|after_or_equal:today'
         ];
     }
 }

@@ -22,7 +22,7 @@ class AdditionalFeeService
         $additionalFee->reason = $data['reason'];
         $additionalFee->amount = $data['amount'];
         $additionalFee->status = "unpaid";
-        $additionalFee->due_date  = $data['due_date'];
+        $additionalFee->due_date  = app(AdditionalFeeDueDate::class)->resolve($currentSchool->id, $data['due_date'] ?? null);
         $additionalFee->additionalfee_category_id = $data['additionalfee_category_id'];
         $additionalFee->school_branch_id = $currentSchool->id;
         $additionalFee->specialty_id = $student->specialty_id;
@@ -317,6 +317,7 @@ class AdditionalFeeService
             DB::beginTransaction();
 
             $studentsToInsert = [];
+            $dueDates = app(AdditionalFeeDueDate::class);
 
             $studentIds = collect($studentList)->pluck('student_id')->unique()->filter();
             $students = Student::where('school_branch_id', $currentSchool->id)
@@ -342,7 +343,7 @@ class AdditionalFeeService
                     'school_branch_id'            => $currentSchool->id,
                     'specialty_id'                => $student->specialty_id,
                     'student_id'                  => $student->id,
-                    'due_date'                    => $studentData['due_date'],
+                    'due_date'                    => $dueDates->resolve($currentSchool->id, $studentData['due_date'] ?? null),
                     'created_at'                  => now(),
                     'updated_at'                  => now(),
                 ];
