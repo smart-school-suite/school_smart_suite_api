@@ -80,13 +80,14 @@ class ExamCreationPolicyTest extends TestCase
         $this->assertSame([true, 'unused', 'ongoing', 'ca-1'], [$first['recommended'], $first['usage'], $first['status'], $first['next_exam_type_id']]);
         $this->assertSame(['First CA', 'First Exam'], array_column($first['exam_types'], 'name'), 'Resit types are not offered.');
         $this->assertSame([true, false], array_column($first['exam_types'], 'available'));
-        $this->assertStringContainsString('Create First CA first', $first['exam_types'][1]['reasons'][0]);
+        $this->assertSame(['ca_missing', 'First CA comes first', 'create_ca'], [$first['exam_types'][1]['issue']['code'], $first['exam_types'][1]['issue']['title'], $first['exam_types'][1]['issue']['action']]);
         $this->assertSame(['2026-10-01', '2027-01-31'], [$first['fields']['start_date']['min'], $first['fields']['start_date']['max']], 'Today to the end of the semester.');
 
         $this->assertFalse($this->semester($options, 'sem-2')['recommended'], 'One recommendation per academic year.');
         $nurse = $this->semester($options, 'nurse-1');
         $this->assertFalse($nurse['available']);
-        $this->assertStringContainsString('Nursing has no students', $nurse['reasons'][0]);
+        $this->assertSame(['no_students', 'No students in Nursing yet', 'add_students', 'Add or import students into Nursing, then come back to create its exams.'], [$nurse['issue']['code'], $nurse['issue']['title'], $nurse['issue']['action'], $nurse['issue']['next_step']]);
+        $this->assertStringContainsString('We found the First Semester of Nursing · Level 100 (2026/2027), but no students are enrolled in Nursing', $nurse['issue']['message']);
     }
 
     public function test_a_used_semester_recommends_its_next_exam_then_the_next_semester(): void
@@ -121,8 +122,8 @@ class ExamCreationPolicyTest extends TestCase
         $this->postJson('/api/v1/exam', ['school_year_id' => 'sy', 'exam_type_id' => 'ca-1', 'start_date' => '2026-11-02', 'end_date' => '2026-11-06', 'max_score' => 30])
             ->assertStatus(422)->assertJsonValidationErrors('school_semester_id');
         $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'ca-2'])->assertStatus(422)->assertJsonPath('errors.title', 'Exam Type Not In This Semester');
-        $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'exam-1'])->assertStatus(422)->assertJsonPath('errors.title', 'Exam Not Available');
-        $this->create(['school_semester_id' => 'nurse-1', 'exam_type_id' => 'ca-1'])->assertStatus(422)->assertJsonPath('errors.title', 'Semester Not Available');
+        $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'exam-1'])->assertStatus(422)->assertJsonPath('errors.title', 'First CA comes first');
+        $this->create(['school_semester_id' => 'nurse-1', 'exam_type_id' => 'ca-1'])->assertStatus(422)->assertJsonPath('errors.title', 'No students in Nursing yet');
         $this->create(['school_semester_id' => 'missing', 'exam_type_id' => 'ca-1'])->assertStatus(404);
         $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'ca-1', 'end_date' => '2027-02-10'])
             ->assertStatus(422)->assertJsonPath('errors.title', 'End date Not Allowed');
@@ -130,7 +131,7 @@ class ExamCreationPolicyTest extends TestCase
             ->assertStatus(422)->assertJsonPath('errors.description', 'It must be on or after 1 Oct 2026: it cannot be in the past.');
 
         $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'ca-1'])->assertCreated();
-        $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'ca-1'])->assertStatus(409)->assertJsonPath('errors.title', 'Exam Already Exists');
+        $this->create(['school_semester_id' => 'sem-1', 'exam_type_id' => 'ca-1'])->assertStatus(409)->assertJsonPath('errors.title', 'First CA already exists');
         $this->assertSame(1, DB::table('exams')->count());
     }
 
@@ -143,8 +144,37 @@ class ExamCreationPolicyTest extends TestCase
         $first = $this->semester($options, 'sem-1');
 
         $this->assertSame(['ended', false], [$first['status'], $first['available']]);
-        $this->assertStringContainsString('ended on 31 Jan 2027', $first['reasons'][0]);
+        $this->assertSame(['semester_ended', 'The First Semester has ended'], [$first['issue']['code'], $first['issue']['title']]);
+        $this->assertStringContainsString('ended on 31 Jan 2027', $first['issue']['message']);
         $this->assertTrue($this->semester($options, 'sem-2')['recommended'], 'The next semester takes over.');
         $this->assertSame(['sy-bare'], array_column($options['academic_years_without_semesters'], 'id'));
+    }
+
+    public function test_the_summary_says_what_was_found_and_what_to_do_next(): void
+    {
+        DB::table('school_academic_years')->insert(['id' => 'sy-bare', 'start_date' => '2026-09-01', 'end_date' => '2027-07-31', 'specialty_id' => 'nurse', 'system_academic_year_id' => 'sys', 'school_branch_id' => 'branch-1']);
+
+        $summary = $this->creationOptions()['summary'];
+
+        $this->assertSame('We found 3 semesters: 2 can take a new exam.', $summary['headline']);
+        $this->assertSame(['no_students', 'no_semesters'], array_column($summary['findings'], 'code'));
+        $this->assertSame('1 semester is waiting for students: Nursing has no students enrolled yet.', $summary['findings'][0]['text']);
+        $this->assertSame('add_students', $summary['findings'][0]['action']);
+        $this->assertSame('1 academic year has no semesters yet: Nursing · Level 100 (2026/2027).', $summary['findings'][1]['text']);
+    }
+
+    public function test_a_school_without_semesters_is_told_to_create_them(): void
+    {
+        DB::table('school_semesters')->delete();
+
+        $summary = $this->creationOptions()['summary'];
+
+        $this->assertSame("We didn't find any semester to create an exam for.", $summary['headline']);
+        $this->assertSame(['no_semesters', 'manage_semesters'], [$summary['findings'][0]['code'], $summary['findings'][0]['action']]);
+    }
+
+    public function test_an_unknown_exam_path_is_not_read_as_an_exam_id(): void
+    {
+        $this->getJson('/api/v1/exam/creation-optionz')->assertNotFound()->assertJsonMissingPath('errors.title');
     }
 }

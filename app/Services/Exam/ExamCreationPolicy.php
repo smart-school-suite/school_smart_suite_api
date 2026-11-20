@@ -26,6 +26,11 @@ use Illuminate\Support\Collection;
  *   has ended takes no new exams.
  * - Recommended: per academic year, the first semester that can still take
  *   an exam, and in it the next exam type (the CA, then the Exam).
+ *
+ * Whatever can't be used carries an `issue`: what was found, in plain words,
+ * the next step, and an `action` code the client turns into a button
+ * (add_students, manage_semesters, view_exams, create_ca, create_academic_year).
+ * `summary` sums up what was found across the school.
  */
 class ExamCreationPolicy
 {
@@ -57,6 +62,7 @@ class ExamCreationPolicy
             ->all();
 
         return [
+            'summary' => $this->summary($described, $yearsWithout, $currentSchool->id),
             'semesters' => $described,
             // Still-running academic years that need semesters before they can take exams.
             'academic_years_without_semesters' => $yearsWithout,
@@ -86,11 +92,12 @@ class ExamCreationPolicy
         $semesterName = $described['name'];
 
         if (!$described['available']) {
+            $issue = $described['issue'];
             throw new AppException(
                 'Exams cannot be created for this semester.',
                 422,
-                'Semester Not Available',
-                $described['reasons'][0]
+                $issue['title'],
+                "{$issue['message']} {$issue['next_step']}"
             );
         }
 
@@ -100,16 +107,17 @@ class ExamCreationPolicy
                 'The exam type does not belong to the selected semester.',
                 422,
                 'Exam Type Not In This Semester',
-                "Pick one of the {$semesterName}'s exam types: " . collect($described['exam_types'])->pluck('name')->implode(', ') . '.'
+                "That exam type belongs to another semester. Pick one of the {$semesterName}'s exam types: " . collect($described['exam_types'])->pluck('name')->implode(', ') . '.'
             );
         }
 
         if (!$type['available']) {
+            $issue = $type['issue'];
             throw new AppException(
                 $type['created'] ? 'This exam already exists.' : 'This exam cannot be created yet.',
                 $type['created'] ? 409 : 422,
-                $type['created'] ? 'Exam Already Exists' : 'Exam Not Available',
-                $type['reasons'][0]
+                $issue['title'],
+                "{$issue['message']} {$issue['next_step']}"
             );
         }
 
@@ -157,33 +165,76 @@ class ExamCreationPolicy
             ->sortBy(fn($type) => array_search(strtolower($type->type), self::TYPES, true))
             ->values();
 
-        $reasons = [];
+        $specialty = $year?->specialty?->specialty_name;
+        $where = $this->where($year);
+        $issues = [];
         if (!$year || !$year->specialty) {
-            $reasons[] = "The {$name}'s academic year or its specialty no longer exists.";
+            $issues[] = $this->issue(
+                'missing_academic_year',
+                'Academic year not found',
+                "We found the {$name}, but the academic year or specialty it belongs to has been deleted, so there is no one to take an exam.",
+                'Delete this semester, or create the academic year again and add its semesters.',
+                'manage_semesters'
+            );
         } elseif (!in_array($year->specialty_id, $context['specialties_with_students'], true)) {
-            $reasons[] = "{$year->specialty->specialty_name} has no students yet. An exam's candidates are the specialty's students, so add students first.";
+            $issues[] = $this->issue(
+                'no_students',
+                "No students in {$specialty} yet",
+                "We found the {$name} of {$where}, but no students are enrolled in {$specialty}. An exam is taken by the specialty's students, so nobody would sit it.",
+                "Add or import students into {$specialty}, then come back to create its exams.",
+                'add_students',
+                ['specialty_id' => $year->specialty_id, 'specialty' => $specialty]
+            );
         }
         if ($status === 'ended') {
-            $reasons[] = "The {$name} ended on {$this->human($window['end_date'])}. Exams can only be created for semesters that are ongoing or upcoming.";
+            $issues[] = $this->issue(
+                'semester_ended',
+                "The {$name} has ended",
+                "The {$name} of {$where} ended on {$this->human($window['end_date'])}, and a new exam can't be dated in the past.",
+                'Pick an ongoing or upcoming semester. If the next semester is missing, create it first.',
+                'manage_semesters'
+            );
         }
         if ($types->isEmpty()) {
-            $reasons[] = "No CA or exam types are set up for the {$name}.";
+            $issues[] = $this->issue(
+                'no_exam_types',
+                "No exams are set up for the {$name}",
+                "The {$name} has no CA or exam type, so there is nothing to create for it.",
+                'Exam types are shared by every school. Contact support to have them added.',
+                null
+            );
         }
+        $semesterIssue = $issues[0] ?? null;
 
         $examTypes = [];
         $ca = null;
         foreach ($types as $type) {
             $kind = strtolower($type->type);
             $exam = $context['exams']->get($semester->school_year_id . '|' . $type->id);
-            $typeReasons = [];
+            $typeIssue = null;
             $requires = null;
 
             if ($exam) {
-                $typeReasons[] = "{$type->exam_name} already exists for this academic year ({$this->human($exam->start_date)} – {$this->human($exam->end_date)}).";
+                $typeIssue = $this->issue(
+                    'already_created',
+                    "{$type->exam_name} already exists",
+                    "{$type->exam_name} was already created for {$where}: {$this->human($exam->start_date)} – {$this->human($exam->end_date)}, out of " . (float) $exam->max_score . '. Each exam is created once per academic year.',
+                    'Open it from the exams list to change its dates or score.',
+                    'view_exams',
+                    ['exam_id' => $exam->id]
+                );
             } elseif ($kind === 'exam') {
                 if (!$ca) {
-                    $caName = $types->first(fn($t) => strtolower($t->type) === 'ca')?->exam_name ?? 'the CA';
-                    $typeReasons[] = "Create {$caName} first: the {$type->exam_name}'s max score includes the CA's.";
+                    $caType = $types->first(fn($t) => strtolower($t->type) === 'ca');
+                    $caName = $caType?->exam_name ?? 'the CA';
+                    $typeIssue = $this->issue(
+                        'ca_missing',
+                        "{$caName} comes first",
+                        "The {$type->exam_name}'s max score includes the CA's, and {$caName} hasn't been created for {$where} yet.",
+                        "Create {$caName} first, then come back for the {$type->exam_name}.",
+                        $caType ? 'create_ca' : null,
+                        ['exam_type_id' => $caType?->id]
+                    );
                 } else {
                     $requires = $ca;
                 }
@@ -204,8 +255,10 @@ class ExamCreationPolicy
                     'end_date' => $this->date($exam->end_date),
                     'max_score' => (float) $exam->max_score,
                 ] : null,
-                'available' => empty($reasons) && empty($typeReasons),
-                'reasons' => $typeReasons ?: $reasons,
+                'available' => !$semesterIssue && !$typeIssue,
+                // Why it can't be created (its own reason first, else the semester's).
+                'issue' => $typeIssue ?? $semesterIssue,
+                'reasons' => array_values(array_filter([($typeIssue ?? $semesterIssue)['message'] ?? null])),
                 // An Exam's max score adds the CA's to the exam's own part.
                 'requires_exam_id' => $requires?->id,
                 'ca_max_score' => $requires ? (float) $requires->max_score : null,
@@ -216,6 +269,16 @@ class ExamCreationPolicy
         $created = collect($examTypes)->where('created', true);
         $usage = $created->isEmpty() ? 'unused' : ($created->count() === count($examTypes) ? 'complete' : 'partial');
         $next = collect($examTypes)->firstWhere('available', true);
+        if (!$semesterIssue && !$next) {
+            $semesterIssue = $this->issue(
+                'all_created',
+                "Every exam of the {$name} exists",
+                'Its ' . $created->pluck('name')->implode(' and ') . " were already created for {$where}.",
+                'Open them from the exams list to change dates or scores, or pick another semester.',
+                'view_exams'
+            );
+            $issues[] = $semesterIssue;
+        }
 
         return [
             'id' => $semester->id,
@@ -227,8 +290,10 @@ class ExamCreationPolicy
             'window' => $window,
             'academic_year' => $this->academicYear($year),
             'usage' => $usage,
-            'available' => empty($reasons) && (bool) $next,
-            'reasons' => $reasons ?: ($next ? [] : ["Every exam of the {$name} has been created."]),
+            'available' => !$semesterIssue,
+            'issue' => $semesterIssue,
+            'issues' => $issues,
+            'reasons' => array_column($issues, 'message'),
             'next_exam_type_id' => $next['id'] ?? null,
             'used' => $created->pluck('name')->values()->all(),
             'missing' => collect($examTypes)->where('created', false)->pluck('name')->values()->all(),
@@ -337,6 +402,112 @@ class ExamCreationPolicy
         }
 
         return $this->bounds($min, $max);
+    }
+
+    /**
+     * What was found across the school, for the top of the drawer:
+     * a headline and one finding per kind of problem, with its next step.
+     */
+    private function summary(array $semesters, array $yearsWithout, string $schoolBranchId): array
+    {
+        $total = count($semesters);
+        $usable = count(array_filter($semesters, fn($semester) => $semester['available']));
+        $findings = [];
+
+        $blocked = collect($semesters)->reject(fn($semester) => $semester['available'])->groupBy(fn($semester) => $semester['issue']['code']);
+        $copy = [
+            'no_students' => fn($n, $list) => [
+                ($n === 1 ? '1 semester is' : "{$n} semesters are") . ' waiting for students: ' . $this->names($list->pluck('issue.data.specialty')->unique()) . (
+                    $list->pluck('issue.data.specialty')->unique()->count() === 1 ? ' has' : ' have'
+                ) . ' no students enrolled yet.',
+                'Add or import students into those specialties to create their exams.',
+                'add_students',
+            ],
+            'semester_ended' => fn($n) => [
+                ($n === 1 ? '1 semester has' : "{$n} semesters have") . ' already ended, so they can\'t take a new exam.',
+                'Create the next semester if it is missing.',
+                'manage_semesters',
+            ],
+            'all_created' => fn($n) => [
+                ($n === 1 ? '1 semester already has' : "{$n} semesters already have") . ' all of their exams.',
+                'Manage those from the exams list.',
+                'view_exams',
+            ],
+            'missing_academic_year' => fn($n) => [
+                ($n === 1 ? '1 semester belongs' : "{$n} semesters belong") . ' to an academic year or specialty that was deleted.',
+                'Delete those semesters or recreate their academic year.',
+                'manage_semesters',
+            ],
+            'no_exam_types' => fn($n) => [
+                ($n === 1 ? '1 semester has' : "{$n} semesters have") . ' no exam types set up.',
+                'Contact support to have them added.',
+                null,
+            ],
+        ];
+        foreach ($copy as $code => $describe) {
+            if (!$blocked->has($code)) {
+                continue;
+            }
+            [$text, $next, $action] = $describe($blocked[$code]->count(), $blocked[$code]);
+            $findings[] = ['code' => $code, 'count' => $blocked[$code]->count(), 'text' => $text, 'next_step' => $next, 'action' => $action];
+        }
+
+        if ($yearsWithout) {
+            $n = count($yearsWithout);
+            $findings[] = [
+                'code' => 'no_semesters',
+                'count' => $n,
+                'text' => ($n === 1 ? '1 academic year has' : "{$n} academic years have") . ' no semesters yet: '
+                    . $this->names(collect($yearsWithout)->map(fn($year) => trim("{$year['specialty']} · {$year['level']} ({$year['name']})"))) . '.',
+                'next_step' => 'Exams are created for a semester, so create their semesters first.',
+                'action' => 'manage_semesters',
+            ];
+        }
+
+        if ($total === 0 && !$yearsWithout) {
+            $running = SchoolAcademicYear::where('school_branch_id', $schoolBranchId)->whereDate('end_date', '>=', $this->today())->exists();
+            $findings[] = $running
+                ? ['code' => 'no_semesters', 'count' => 0, 'text' => 'No school semesters were found.', 'next_step' => 'Create the semesters of your academic years first.', 'action' => 'manage_semesters']
+                : ['code' => 'no_academic_years', 'count' => 0, 'text' => 'No academic year is running.', 'next_step' => 'Create an academic year and its semesters first.', 'action' => 'create_academic_year'];
+        }
+
+        $headline = match (true) {
+            $total === 0 => "We didn't find any semester to create an exam for.",
+            $usable === 0 => 'We found ' . $this->count($total, 'semester') . ", but none can take a new exam right now.",
+            $usable === $total => 'We found ' . $this->count($total, 'semester') . ($total === 1 ? ', and it can take a new exam.' : ', and all of them can take a new exam.'),
+            default => 'We found ' . $this->count($total, 'semester') . ": {$usable} can take a new exam.",
+        };
+
+        return ['semesters' => $total, 'available' => $usable, 'headline' => $headline, 'findings' => $findings];
+    }
+
+    private function issue(string $code, string $title, string $message, string $nextStep, ?string $action, array $data = []): array
+    {
+        return ['code' => $code, 'title' => $title, 'message' => $message, 'next_step' => $nextStep, 'action' => $action, 'data' => $data];
+    }
+
+    /** "Software Engineering · Level 100 (2026/2027)". */
+    private function where(?SchoolAcademicYear $year): string
+    {
+        $parts = array_filter([$year?->specialty?->specialty_name, $year?->specialty?->level?->name]);
+        $label = implode(' · ', $parts) ?: 'this specialty';
+        $name = $year?->systemAcademicYear?->name;
+        return $name ? "{$label} ({$name})" : $label;
+    }
+
+    /** "Nursing", "Nursing and Accounting", "Nursing, Accounting and 2 more". */
+    private function names(Collection $names): string
+    {
+        $names = $names->filter()->values();
+        if ($names->count() <= 2) {
+            return $names->implode(' and ');
+        }
+        return $names->take(2)->implode(', ') . ' and ' . ($names->count() - 2) . ' more';
+    }
+
+    private function count(int $n, string $word): string
+    {
+        return "{$n} {$word}" . ($n === 1 ? '' : 's');
     }
 
     private function status(array $window): string
