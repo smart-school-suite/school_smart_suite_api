@@ -159,7 +159,7 @@ class ExamCreationPolicyTest extends TestCase
         $this->assertSame('We found 3 semesters: 2 can take a new exam.', $summary['headline']);
         $this->assertSame(['no_students', 'no_semesters'], array_column($summary['findings'], 'code'));
         $this->assertSame('1 semester is waiting for students: Nursing has no students enrolled yet.', $summary['findings'][0]['text']);
-        $this->assertSame('add_students', $summary['findings'][0]['action']);
+        $this->assertSame(['add_students', 'Add or import students into Nursing to create its exams.'], [$summary['findings'][0]['action'], $summary['findings'][0]['next_step']]);
         $this->assertSame('1 academic year has no semesters yet: Nursing · Level 100 (2026/2027).', $summary['findings'][1]['text']);
     }
 

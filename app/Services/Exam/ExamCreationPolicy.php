@@ -420,11 +420,11 @@ class ExamCreationPolicy
                 ($n === 1 ? '1 semester is' : "{$n} semesters are") . ' waiting for students: ' . $this->names($list->pluck('issue.data.specialty')->unique()) . (
                     $list->pluck('issue.data.specialty')->unique()->count() === 1 ? ' has' : ' have'
                 ) . ' no students enrolled yet.',
-                'Add or import students into those specialties to create their exams.',
+                'Add or import students into ' . ($list->pluck('issue.data.specialty')->unique()->count() === 1 ? $list->first()['issue']['data']['specialty'] : 'those specialties') . ' to create ' . ($n === 1 ? 'its' : 'their') . ' exams.',
                 'add_students',
             ],
             'semester_ended' => fn($n) => [
-                ($n === 1 ? '1 semester has' : "{$n} semesters have") . ' already ended, so they can\'t take a new exam.',
+                ($n === 1 ? '1 semester has already ended, so it' : "{$n} semesters have already ended, so they") . ' can\'t take a new exam.',
                 'Create the next semester if it is missing.',
                 'manage_semesters',
             ],
@@ -459,7 +459,7 @@ class ExamCreationPolicy
                 'count' => $n,
                 'text' => ($n === 1 ? '1 academic year has' : "{$n} academic years have") . ' no semesters yet: '
                     . $this->names(collect($yearsWithout)->map(fn($year) => trim("{$year['specialty']} · {$year['level']} ({$year['name']})"))) . '.',
-                'next_step' => 'Exams are created for a semester, so create their semesters first.',
+                'next_step' => 'Exams are created for a semester, so create ' . ($n === 1 ? 'its' : 'their') . ' semesters first.',
                 'action' => 'manage_semesters',
             ];
         }
