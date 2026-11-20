@@ -9,6 +9,10 @@ Route::post('/', [ExamController::class, 'createExam'])
 Route::get('/', [ExamController::class, 'getExams'])
     ->name('exams.index');
 
+// Before /{examId}, which would otherwise match it.
+Route::get('/creation-options', [ExamController::class, 'getCreationOptions'])
+    ->name('exams.creation-options');
+
 Route::get('/{examId}', [ExamController::class, 'getExamDetails'])
     ->name('exams.show');
 
