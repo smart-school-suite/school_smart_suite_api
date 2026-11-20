@@ -225,7 +225,8 @@ class ResitExamService
 
         try {
             foreach ($examGradingList as $item) {
-                $gradeScaleCategoryId = $item['grade_scale_category_id'] ?? null;
+                // BulkAddResitExamGradingRequest validates grades_config_Id (the school grade scale category id).
+                $gradeScaleCategoryId = $item['grades_config_Id'] ?? $item['grade_scale_category_id'] ?? null;
                 $resitExamId = $item['resit_exam_id'] ?? null;
 
                 $gradeScaleCategory = SchoolGradeScaleCategory::where("school_branch_id", $currentSchool->id)
@@ -287,14 +288,13 @@ class ResitExamService
                 }
 
                 $exam->grades_category_id = $gradeScaleCategory->id;
-                $exam->grading_added = true;
                 $exam->save();
 
                 $updatedExams[] = [
                     'id'                 => $exam->id,
                     'title'              => $exam->title ?? $exam->name ?? null,
                     'grades_category_id' => $exam->grades_category_id,
-                    'grading_added'      => $exam->grading_added,
+                    'grading_added'      => (bool) $exam->grades_category_id,
                 ];
             }
 

@@ -37,7 +37,6 @@ class ExamGradeService
             $exam = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
 
             $exam->grades_category_id = null;
-            $exam->grading_added = false;
             $exam->save();
             return $exam;
         } catch (ModelNotFoundException $e) {
@@ -66,7 +65,6 @@ class ExamGradeService
             foreach ($examIds as $examId) {
                 $exam = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
                 $exam->grades_category_id = null;
-                $exam->grading_added = false;
                 $exam->save();
                 $results[] = [
                     'exam' => $exam
@@ -99,7 +97,6 @@ class ExamGradeService
         try {
             $exams = Exams::where('school_branch_id', $currentSchool->id)->findOrFail($examId);
             $exams->grades_category_id = $updateData['grades_category_id'];
-            $exams->grading_added = true;
             $exams->save();
             return $exams;
         } catch (ModelNotFoundException $e) {

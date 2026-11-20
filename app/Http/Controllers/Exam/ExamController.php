@@ -35,6 +35,12 @@ class ExamController extends Controller
         $updateExam = $this->examService->updateExam($examId, $currentSchool,  $request->validated(), $authAdmin);
         return ApiResponseService::success("Exam Updated Successfully", $updateExam, null, 200);
     }
+    public function getCreationOptions(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $options = $this->examService->getCreationOptions($currentSchool);
+        return ApiResponseService::success("Exam Creation Options Fetched Successfully", $options, null, 200);
+    }
     public function getUpdateRules(Request $request, string $examId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
