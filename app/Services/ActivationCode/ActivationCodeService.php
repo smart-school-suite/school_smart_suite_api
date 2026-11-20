@@ -469,12 +469,14 @@ class ActivationCodeService
         }
         return [
             "id" => $teacher->id,
-            "teacher_name" => $teacher->name,
+            "name" => $teacher->name,
             "first_name" => $teacher->first_name,
             "last_name" => $teacher->last_name,
             "avatar" => $teacher->profile_picture ?? null,
             "sub_status" => $teacher->sub_status,
-            "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null
+            "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null,
+            'created_at' => $teacher->created_at,
+            'updated_at' => $teacher->updated_at
         ];
     }
 }
