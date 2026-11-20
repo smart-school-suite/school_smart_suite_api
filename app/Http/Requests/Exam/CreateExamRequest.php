@@ -20,7 +20,7 @@ class CreateExamRequest extends FormRequest
     {
         return [
             'start_date' => 'required|date',
-            'end_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'exam_type_id' => 'required|string|exists:exam_types,id',
             'max_score' => [
                 'required',
@@ -29,7 +29,8 @@ class CreateExamRequest extends FormRequest
                 'min:0',
                 'max:999.99'
             ],
-            'school_year_id' => 'required|string|exists:school_academic_years,id',
+            // The academic year is the semester's (ExamCreationPolicy).
+            'school_semester_id' => 'required|string',
         ];
     }
 }

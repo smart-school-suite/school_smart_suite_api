@@ -86,22 +86,30 @@ class ExamEvalutionHelperService
             );
         }
 
+        // Exam scores are stored as CA + exam; the dialog edits the exam part.
+        // A course without a CA score counts its CA as 0, and a deleted course
+        // or grade leaves those fields empty instead of failing the request.
+        $caByCourse = $caScores->keyBy('course_id');
+
         return [
             'grade_scale' => $exam->examGradeScale->schoolGradeScale,
-            'scores' => $candidate->examScores->map(fn($score) => [
-                "id" => $score->id,
-                "course_id" => $score->course->id ?? null,
-                "course_title" => $score->course->course_title ?? null,
-                "course_code" => $score->course->course_code ?? null,
-                "course_credit" => $score->course->credit ?? null,
-                "score" => (float) $score->score - $caScores->where("course_id", $score->course->id)->first()->score ?? 0,
-                "grade_points" => (float) $score->grade->grade_points ?? 0,
-                "performance" => $score->grade->performance ?? null,
-                "result" => $score->grade->result ?? null,
-                "resit_result" => $score->grade->resit_result ?? null,
-                "grade" => $score->grade->grade->letter_grade ?? null,
-                "ca_score" => (float) $caScores->where("course_id", $score->course->id)->first()->score ?? 0
-            ]),
+            'scores' => $candidate->examScores->map(function ($score) use ($caByCourse) {
+                $caScore = (float) ($caByCourse->get($score->course_id)?->score ?? 0);
+                return [
+                    "id" => $score->id,
+                    "course_id" => $score->course?->id ?? $score->course_id,
+                    "course_title" => $score->course?->course_title,
+                    "course_code" => $score->course?->course_code,
+                    "course_credit" => $score->course?->credit,
+                    "score" => round((float) $score->score - $caScore, 2),
+                    "grade_points" => (float) ($score->grade?->grade_points ?? 0),
+                    "performance" => $score->grade?->performance,
+                    "result" => $score->grade?->result,
+                    "resit_result" => $score->grade?->resit_result,
+                    "grade" => $score->grade?->grade?->letter_grade,
+                    "ca_score" => $caScore,
+                ];
+            })->values(),
             'max_gpa' => $currentSchool->max_gpa ?? 4.00,
             "exam" => $candidate->exam->withoutRelations(),
             "ca_exam" => $relatedCA
@@ -176,17 +184,17 @@ class ExamEvalutionHelperService
             'grade_scale' => $exam->examGradeScale->schoolGradeScale,
             'courses' => $candidate->examScores->map(fn($score) => [
                 "id" => $score->id,
-                "course_id" => $score->course->id ?? null,
-                "course_title" => $score->course->course_title ?? null,
-                "course_code" => $score->course->course_code ?? null,
-                "course_credit" => $score->course->credit ?? null,
-                "score" => (float) $score->score ?? 0,
-                "grade_points" => (float) $score->grade->grade_points ?? 0,
-                "performance" => $score->grade->performance ?? null,
-                "result" => $score->grade->result ?? null,
-                "resit_result" => $score->grade->resit_result ?? null,
-                "grade" => $score->grade->grade->letter_grade ?? null
-            ]),
+                "course_id" => $score->course?->id ?? $score->course_id,
+                "course_title" => $score->course?->course_title,
+                "course_code" => $score->course?->course_code,
+                "course_credit" => $score->course?->credit,
+                "score" => (float) ($score->score ?? 0),
+                "grade_points" => (float) ($score->grade?->grade_points ?? 0),
+                "performance" => $score->grade?->performance,
+                "result" => $score->grade?->result,
+                "resit_result" => $score->grade?->resit_result,
+                "grade" => $score->grade?->grade?->letter_grade
+            ])->values(),
             'max_gpa' => 4.00,
             "exam" => $candidate->exam->withoutRelations()
         ];
@@ -353,7 +361,8 @@ class ExamEvalutionHelperService
 
         return [
             'grade_scale' => $exam->examGradeScale->schoolGradeScale,
-            'ca_scores' => $caScores,
+            // a CA score of a deleted course can't be built on
+            'ca_scores' => $caScores->filter(fn($score) => $score->course)->values(),
             'max_gpa' => $currentSchool->max_gpa ?? 4.00,
             "exam" => $candidate->exam->withoutRelations(),
             "ca_exam" => $relatedCA
@@ -361,7 +370,7 @@ class ExamEvalutionHelperService
     }
     private function getRelatedCa(Exam $exam, string $schoolBranchId)
     {
-        if ($exam->examType->type !== 'exam') {
+        if ($exam->examType?->type !== 'exam') {
             throw new AppException(
                 'Invalid Exam Type',
                 400,
