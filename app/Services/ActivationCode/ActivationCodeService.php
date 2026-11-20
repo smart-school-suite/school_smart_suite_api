@@ -393,7 +393,9 @@ class ActivationCodeService
             ->get();
         return $activationStatus->map(fn($student) => [
             "id" => $student->id,
-            "student_name" => $student->name,
+            "name" => $student->name,
+            "first_name" => $student->first_name,
+            "last_name" => $student->last_name,
             "username" => $student->username,
             "profile_picture" => $student->profile_picture,
             "department" => $student->specialty?->department?->department_name,
@@ -401,7 +403,9 @@ class ActivationCodeService
             "level_name" => $student->specialty->level->name,
             "level" =>   $student->specialty->level->level,
             "sub_status" => $student->sub_status,
-            "activation_code" => $student->activationCode->first()->activationCode->code ?? null
+            "activation_code" => $student->activationCode->first()->activationCode->code ?? null,
+            "created_at" => $student->created_at,
+            "updated_at" => $student->updated_at,
         ]);
     }
     public function getStudentSubscriptionDetail(object $currentSchool, string $studentId)
@@ -419,13 +423,17 @@ class ActivationCodeService
         }
         return [
             "id" => $student->id,
-            "student_name" => $student->name,
+            "name" => $student->name ?? null,
+            "first_name" => $student->first_name ?? null,
+            "last_name" => $student->last_name ?? null,
             "avatar" => $student->profile_picture ?? null,
             "specialty_name" => $student->specialty->specialty_name,
             "level_name" => $student->specialty->level->name,
             "level" =>   $student->specialty->level->level,
             "sub_status" => $student->sub_status,
-            "activation_code" => $student->activationCode->first()->activationCode->code ?? null
+            "activation_code" => $student->activationCode->first()->activationCode->code ?? null,
+            "created_at" => $student->created_at,
+            "updated_at" => $student->updated_at,
         ];
     }
     public function getTeacherActivationStatuses(object $currentSchool)
@@ -435,13 +443,15 @@ class ActivationCodeService
             ->get();
         return $activationStatus->map(fn($teacher) => [
             "id" => $teacher->id,
-            "teacher_name" => $teacher->name,
+            "name" => $teacher->name,
             "username" => $teacher->username,
             "first_name" => $teacher->first_name,
             "last_name" => $teacher->last_name,
             "profile_picture" => $teacher->profile_picture ?? null,
             "sub_status" => $teacher->sub_status,
-            "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null
+            "activation_code" => $teacher->activationCode->first()->activationCode->code ?? null,
+            'created_at' => $teacher->created_at,
+            'updated_at' => $teacher->updated_at
         ]);
     }
     public function getTeacherSubscriptionDetail(object $currentSchool, string $teacherId)

@@ -15,7 +15,7 @@ class TeacherService
 {
     public function getTeacherDetails(string $teacherId)
     {
-        $teacher = Teacher::with(['qualifications', 'levels'])->findOrFail($teacherId);
+        $teacher = Teacher::with(['qualifications', 'levels', 'gender'])->findOrFail($teacherId);
         return $teacher;
     }
     public function deletetTeacher(string $teacherId, object $currentSchool, object $authAdmin)

@@ -51,14 +51,15 @@ class SchoolAdminService
             'role' => $admin->roles->first()?->name ?? 'No Role',
             "gender" => $admin->gender->name ?? null,
             "created_at" => $admin->created_at ?? null,
-            "update_at" => $admin->updated_at ?? null,
+            "updated_at" => $admin->updated_at ?? null,
         ]);
     }
 
     public function getSchoolAdminDetails(object $currentSchool, string $schoolAdminId)
     {
         $SchoolAdminExists =  Schooladmin::where("school_branch_id", $currentSchool->id)
-            ->with(['currentAvatar'])->find($schoolAdminId);
+            ->with(['currentAvatar', 'gender'])
+            ->find($schoolAdminId);
         if (!$SchoolAdminExists) {
             return ApiResponseService::error("School Admin Not Found", null, 404);
         }

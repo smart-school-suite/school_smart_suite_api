@@ -39,7 +39,6 @@ class Schooladmin extends Authenticatable
         'email',
         'password',
         'address',
-        'phone',
         'school_branch_id',
         'status',
         'gender_id',
