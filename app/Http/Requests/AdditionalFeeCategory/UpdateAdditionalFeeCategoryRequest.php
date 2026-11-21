@@ -21,7 +21,8 @@ class UpdateAdditionalFeeCategoryRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|nullable|string',
-            'status' => 'sometimes|nullable|in:active,inactive'
+            'status' => 'sometimes|nullable|in:active,inactive',
+            'description' => 'sometimes|nullable|string'
         ];
     }
 }

@@ -4,7 +4,6 @@ namespace App\Services\AdditionalFee;
 
 use App\Models\AdditionalFeesCategory;
 use App\Exceptions\AppException;
-use App\Events\Actions\AdminActionEvent;
 
 class AdditionalFeeCategoryService
 {
@@ -25,6 +24,7 @@ class AdditionalFeeCategoryService
         $additionalFeeCategory = new AdditionalFeesCategory();
         $additionalFeeCategory->school_branch_id = $currentSchool->id;
         $additionalFeeCategory->title = $categoryData["title"];
+        $additionalFeeCategory->description = $categoryData["description"];
         $additionalFeeCategory->save();
         return $additionalFeeCategory;
     }

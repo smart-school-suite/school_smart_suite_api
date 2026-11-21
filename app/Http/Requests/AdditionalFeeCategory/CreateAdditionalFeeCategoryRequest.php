@@ -21,6 +21,7 @@ class CreateAdditionalFeeCategoryRequest extends FormRequest
     {
         return [
             'title' => 'required|string|max:150',
+            'description' => 'required|string'
         ];
     }
 }
