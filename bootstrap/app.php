@@ -400,6 +400,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // An AppException with a 4xx code is an expected answer (not found,
+        // already exists, not allowed yet), not a bug: keep it out of Sentry
+        // and the error log so real failures stand out. Registered before
+        // Sentry because returning false stops the callbacks after it.
+        // Unexpected failures (5xx) are still reported, with their cause.
+        $exceptions->report(function (AppException $e) {
+            $code = $e->getCode();
+            if (is_int($code) && $code >= 400 && $code < 500) {
+                return false;
+            }
+        });
+
         Integration::handles($exceptions);
 
         $exceptions->render(function (AuthException $e, Request $request) {

@@ -2,7 +2,11 @@
 
 namespace Tests\Feature\SchoolExpenses;
 
+use App\Exceptions\AppException;
 use App\Models\Schooladmin;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
@@ -142,5 +146,40 @@ class ExpenseCategoryTest extends TestCase
 
         $this->assertSame(['c-lone' => null, 'c-used' => 'branch-2'], DB::table('expense_categories')->orderBy('id')->pluck('school_branch_id', 'id')->all());
         $this->assertSame('active', DB::table('expense_categories')->where('id', 'c-used')->value('status'));
+    }
+
+    /** What the exception handler reports, seen from after Sentry's callback (so what Sentry gets). */
+    private function reported(): \ArrayObject
+    {
+        $reported = new \ArrayObject();
+        app(ExceptionHandler::class)->reportable(function (\Throwable $e) use ($reported) {
+            $reported[] = $e;
+        });
+        return $reported;
+    }
+
+    public function test_an_unexpected_failure_is_reported_with_its_real_cause(): void
+    {
+        $reported = $this->reported();
+        Schema::rename('expense_categories', 'expense_categories_gone');
+
+        $this->getJson(self::URL)->assertStatus(500)->assertJsonPath('errors.title', 'Something Went Wrong');
+
+        $this->assertCount(1, $reported);
+        $this->assertInstanceOf(AppException::class, $reported[0]);
+        $cause = $reported[0]->getPrevious();
+        $this->assertInstanceOf(QueryException::class, $cause, 'The database error travels with the report.');
+        $this->assertStringContainsString('expense_categories', $cause->getMessage());
+    }
+
+    public function test_expected_refusals_are_not_reported_as_errors(): void
+    {
+        $reported = $this->reported();
+        $this->category('c-util', 'Utilities');
+
+        $this->postJson(self::URL, ['name' => 'Utilities'])->assertStatus(409);
+        $this->deleteJson(self::URL . '/missing')->assertNotFound();
+
+        $this->assertCount(0, $reported, 'A 409 or 404 answer is not a bug, so Sentry should not see it.');
     }
 }

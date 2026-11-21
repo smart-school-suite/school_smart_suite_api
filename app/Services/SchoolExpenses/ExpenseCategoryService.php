@@ -5,7 +5,6 @@ namespace App\Services\SchoolExpenses;
 use App\Exceptions\AppException;
 use App\Models\Schoolexpensescategory;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -190,19 +189,20 @@ class ExpenseCategoryService
         return $description === '' ? null : $description;
     }
 
-    /** A failure we didn't foresee: logged with its cause, reported without internals. */
+    /**
+     * A failure we didn't foresee. The user gets a plain message; the original
+     * error is kept as the previous exception, so the logs and Sentry show
+     * its real cause (e.g. the SQL error) and stack trace, not just this one.
+     */
     private function unexpected(string $action, Throwable $e, object $currentSchool): AppException
     {
-        Log::error("Failed to {$action}.", [
-            'school_branch_id' => $currentSchool->id ?? null,
-            'exception' => $e,
-        ]);
-
         return new AppException(
             "An unexpected error occurred while trying to {$action}.",
             500,
             'Something Went Wrong',
-            "We couldn't {$action} because of a server problem. Please try again; if it keeps happening, contact support."
+            "We couldn't {$action} because of a server problem. Please try again; if it keeps happening, contact support.",
+            null,
+            $e
         );
     }
 }
