@@ -112,35 +112,20 @@ class TuitionFeeService
 
         return $feeDebtors;
     }
+    /**
+     * The branch's tuition fee records with what each student has paid. An
+     * empty list is a normal answer (no student billed yet), not an error.
+     * An unexpected failure keeps its cause, so Sentry shows what went wrong.
+     */
     public function getTuitionFees(object $currentSchool)
     {
         try {
-            $tuitionFees = TuitionFees::where("school_branch_id", $currentSchool->id)
+            return TuitionFees::where("school_branch_id", $currentSchool->id)
                 ->withAmountPaid()
                 ->with(['specialty.level', 'student', 'specialty.department'])
                 ->get();
-
-            if ($tuitionFees->isEmpty()) {
-                throw new AppException(
-                    "No tuition fee records were found for this school branch.",
-                    404,
-                    "No Tuition Fees Found",
-                    "There are no student tuition fee records available in the system for your school branch.",
-                    null
-                );
-            }
-
-            return $tuitionFees;
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new AppException(
-                "An unexpected error occurred while retrieving tuition fee records.",
-                500,
-                "Internal Server Error",
-                "A server-side issue prevented the tuition fee data from being retrieved successfully.",
-                null
-            );
+        } catch (\Throwable $e) {
+            throw AppException::unexpected('load the tuition fees', $e);
         }
     }
     public function getTuitionFeeDetails(object $currentSchool, string $feeId)
