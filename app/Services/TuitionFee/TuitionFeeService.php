@@ -122,7 +122,7 @@ class TuitionFeeService
         try {
             return TuitionFees::where("school_branch_id", $currentSchool->id)
                 ->withAmountPaid()
-                ->with(['specialty.level', 'student', 'specialty.department'])
+                ->with(['specialty.level', 'student', 'specialty.department', 'schoolAcademicYear.systemAcademicYear'])
                 ->get();
         } catch (\Throwable $e) {
             throw AppException::unexpected('load the tuition fees', $e);

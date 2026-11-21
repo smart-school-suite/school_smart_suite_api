@@ -66,34 +66,19 @@ class RegistrationFeeTransactionService
             throw $e;
         }
     }
+    /**
+     * The branch's registration fee payments, with their fee's academic year.
+     * An empty list is a normal answer (nothing paid yet), not an error; an
+     * unexpected failure keeps its cause, so Sentry shows what went wrong.
+     */
     public function getRegistrationFeeTransactions(object $currentSchool)
     {
         try {
-            $transactions = RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
-                ->with(['registrationFee.student', 'registrationFee.specialty.level'])
+            return RegistrationFeeTransactions::where("school_branch_id", $currentSchool->id)
+                ->with(['registrationFee.student', 'registrationFee.specialty.level', 'registrationFee.schoolAcademicYear.systemAcademicYear'])
                 ->get();
-
-            if ($transactions->isEmpty()) {
-                throw new AppException(
-                    "No registration fee transactions were found for this school branch.",
-                    404,
-                    "No Transactions Found",
-                    "There are no registration fee transaction records available in the system for your school branch.",
-                    null
-                );
-            }
-
-            return $transactions;
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new AppException(
-                "An unexpected error occurred while retrieving registration fee transactions.",
-                500,
-                "Internal Server Error",
-                "A server-side issue prevented the list of transactions from being retrieved successfully.",
-                null
-            );
+        } catch (\Throwable $e) {
+            throw AppException::unexpected('load the registration fee transactions', $e);
         }
     }
     public function getRegistrationFeeTransactionDetails($currentSchool, $transactionId)

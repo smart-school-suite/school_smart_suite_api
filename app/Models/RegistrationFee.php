@@ -17,7 +17,8 @@ class RegistrationFee extends Model
         'status',
         'student_id',
         'school_branch_id',
-        'specialty_id'
+        'specialty_id',
+        'school_academic_year_id',
     ];
 
     protected $casts = [
@@ -32,6 +33,12 @@ class RegistrationFee extends Model
     {
         return $this->hasMany(RegistrationFeeTransactions::class, 'registrationfee_id');
     }
+    /** The academic year the fee belongs to: the first one the student is billed in for the specialty. */
+    public function schoolAcademicYear(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\AcademicYear\SchoolAcademicYear::class, 'school_academic_year_id');
+    }
+
     public function student()
     {
         return $this->belongsTo(Student::class, 'student_id');

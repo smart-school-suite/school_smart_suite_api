@@ -63,6 +63,24 @@ class SchoolAcademicYear extends Model
         return $this->hasMany(SchoolSemester::class, 'school_year_id');
     }
 
+    /**
+     * { id, name, start_date, end_date } for API responses: name is the system
+     * academic year's (e.g. "2026/2027"). Null when there is no academic year.
+     */
+    public static function summary(?self $year): ?array
+    {
+        if (!$year) {
+            return null;
+        }
+
+        return [
+            'id' => $year->id,
+            'name' => $year->systemAcademicYear?->name,
+            'start_date' => $year->start_date ? substr((string) $year->start_date, 0, 10) : null,
+            'end_date' => $year->end_date ? substr((string) $year->end_date, 0, 10) : null,
+        ];
+    }
+
     public function systemAcademicYear(): BelongsTo
     {
         return $this->belongsTo(SystemAcademicYear::class, 'system_academic_year_id');

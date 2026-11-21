@@ -29,6 +29,9 @@ class TuitionFeeResource extends JsonResource
             'last_name' => $this->student?->last_name,
             'profile_picture' => $this->student?->profile_picture,
 
+            'academic_year' => \App\Models\AcademicYear\SchoolAcademicYear::summary($this->schoolAcademicYear),
+            'academic_year_name' => $this->schoolAcademicYear?->systemAcademicYear?->name,
+
             'specialty_name' => $this->specialty?->specialty_name,
             'department' => $this->specialty?->department?->department_name,
             'level_name' => $this->specialty?->level?->name,

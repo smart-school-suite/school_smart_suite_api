@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
-/** The tuition and registration fee lists: empty is normal, failures keep their cause. */
+/** The fee and fee transaction lists: empty is normal, failures keep their cause. */
 class FeeListErrorHandlingTest extends TestCase
 {
     use RefreshDatabase;
@@ -20,6 +20,8 @@ class FeeListErrorHandlingTest extends TestCase
     private const LISTS = [
         'tuition' => ['/api/v1/tuition-fee', 'tuition_fees', 'load the tuition fees'],
         'registration' => ['/api/v1/registration-fees', 'registration_fees', 'load the registration fees'],
+        'tuition-transactions' => ['/api/v1/tuition-fee/transaction', 'tuition_fee_transactions', 'load the tuition fee transactions'],
+        'registration-transactions' => ['/api/v1/registration-fees/transactions', 'registration_fee_transactions', 'load the registration fee transactions'],
     ];
 
     protected function setUp(): void
@@ -47,7 +49,11 @@ class FeeListErrorHandlingTest extends TestCase
     private function fee(string $table, string $id, string $branch): void
     {
         $row = ['id' => $id, 'student_id' => 'stu', 'school_branch_id' => $branch, 'specialty_id' => 'swe', 'level_id' => 'lvl-1'];
-        $row += $table === 'tuition_fees' ? ['tution_fee_total' => 100000] : ['amount' => 5000];
+        $row += match ($table) {
+            'tuition_fees' => ['tution_fee_total' => 100000],
+            'registration_fees' => ['amount' => 5000],
+            default => ['transaction_id' => "TX-$id", 'amount' => 500, 'payment_method' => 'cash', 'tuition_id' => 'fee', 'registrationfee_id' => 'fee'],
+        };
         DB::table($table)->insert(array_intersect_key($row, array_flip(Schema::getColumnListing($table))));
     }
 

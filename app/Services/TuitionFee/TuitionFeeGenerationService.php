@@ -98,6 +98,10 @@ class TuitionFeeGenerationService
      */
     private function generate(Student $student, SchoolAcademicYear $academicYear): TuitionFees
     {
+        // A student admitted before their specialty had an academic year:
+        // their registration fee belongs to the first year they are billed in.
+        app(\App\Services\RegistrationFee\RegistrationFeeGenerationService::class)->assignAcademicYear($student, $academicYear);
+
         $existing = $this->existingFor($student, $academicYear);
         if ($existing) {
             return $existing;

@@ -25,6 +25,8 @@ class TuitionFeeTransacResource extends JsonResource
             'level_name' => $this->tuition->specialty->level->name ?? null,
             'level_number' => $this->tuition->specialty->level->level ?? null,
             'student_name' => $this->tuition->student->name ?? null,
+            'academic_year' => \App\Models\AcademicYear\SchoolAcademicYear::summary($this->tuition?->schoolAcademicYear),
+            'academic_year_name' => $this->tuition?->schoolAcademicYear?->systemAcademicYear?->name,
             'created_at' => $this->created_at ?? null,
             'updated_at' => $this->updated_at ?? null
         ];

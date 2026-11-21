@@ -104,34 +104,19 @@ class TuitionFeeTransactionService
             throw $e;
         }
     }
+    /**
+     * The branch's tuition fee payments, with their fee's academic year. An
+     * empty list is a normal answer (nothing paid yet), not an error; an
+     * unexpected failure keeps its cause, so Sentry shows what went wrong.
+     */
     public function getTuitionFeeTransactions(object $currentSchool)
     {
         try {
-            $getTuitionFeeTransactions = TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
-                ->with(['tuition.student', 'tuition.specialty.level', 'tuition.specialty.department'])
+            return TuitionFeeTransactions::where("school_branch_id", $currentSchool->id)
+                ->with(['tuition.student', 'tuition.specialty.level', 'tuition.specialty.department', 'tuition.schoolAcademicYear.systemAcademicYear'])
                 ->get();
-
-            if ($getTuitionFeeTransactions->isEmpty()) {
-                throw new AppException(
-                    "No tuition fee transactions were found for this school branch.",
-                    404,
-                    "No Transactions Found",
-                    "There are no tuition fee transaction records available in the system for your school branch.",
-                    null
-                );
-            }
-
-            return $getTuitionFeeTransactions;
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new AppException(
-                "An unexpected error occurred while retrieving tuition fee transactions.",
-                500,
-                "Internal Server Error",
-                "A server-side issue prevented the list of transactions from being retrieved successfully.",
-                null
-            );
+        } catch (\Throwable $e) {
+            throw AppException::unexpected('load the tuition fee transactions', $e);
         }
     }
     public function deleteTuitionFeeTransaction(string $transactionId, object $currentSchool, object $authAdmin)

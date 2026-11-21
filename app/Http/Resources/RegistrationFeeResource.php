@@ -23,6 +23,8 @@ class RegistrationFeeResource extends JsonResource
             'level_name' => $this->specialty->level->name ?? null,
             'level_number' => $this->specialty->level->level ?? null,
             'specialty_name' => $this->specialty->specialty_name ?? null,
+            'academic_year' => \App\Models\AcademicYear\SchoolAcademicYear::summary($this->schoolAcademicYear),
+            'academic_year_name' => $this->schoolAcademicYear?->systemAcademicYear?->name,
             'created_at' => $this->created_at ?? null,
             'updated_at' => $this->updated_at ?? null
         ];

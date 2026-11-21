@@ -24,6 +24,8 @@ class RegistrationFeeTransResource extends JsonResource
             'level_name' => $this->registrationFee->specialty->level->name ?? null,
             'level' => $this->registrationFee->specialty->level->level ?? null,
             'specialty_name' => $this->registrationFee->specialty->specialty_name ?? null,
+            'academic_year' => \App\Models\AcademicYear\SchoolAcademicYear::summary($this->registrationFee?->schoolAcademicYear),
+            'academic_year_name' => $this->registrationFee?->schoolAcademicYear?->systemAcademicYear?->name,
             'created_at' => $this->created_at ?? null,
             'updated_at' => $this->updated_at ?? null
         ];

@@ -20,7 +20,7 @@ class RegistrationFeeService
     {
         try {
             return RegistrationFee::where("school_branch_id", $currentSchool->id)
-                ->with(['student', 'specialty.level'])
+                ->with(['student', 'specialty.level', 'schoolAcademicYear.systemAcademicYear'])
                 ->get();
         } catch (Throwable $e) {
             throw AppException::unexpected('load the registration fees', $e);
