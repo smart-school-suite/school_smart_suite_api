@@ -14,11 +14,18 @@ class Schoolexpensescategory extends Model
     protected $fillable = [
       'school_branch_id',
       'name',
-      'description'
+      'description',
+      'status',
+    ];
+
+    protected $casts = [
+      'expenses_count' => 'integer',
     ];
 
     public $table = 'expense_categories';
-    public $incrementing = 'false';
+    // A boolean: the string 'false' is truthy, which made Eloquent replace the
+    // UUID with the last insert id after saving a new category.
+    public $incrementing = false;
     public $keyType = 'string';
 
 
