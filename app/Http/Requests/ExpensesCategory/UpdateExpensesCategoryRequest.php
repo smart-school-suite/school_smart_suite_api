@@ -21,7 +21,8 @@ class UpdateExpensesCategoryRequest extends FormRequest
     public function rules()
     {
         return [
-            "name" => "sometimes|nullable|string",
+            "name" => "sometimes|nullable|string|max:150",
+            "description" => "sometimes|nullable|string|max:1000",
             "status" => 'sometimes|nullable|in:active,inactive'
         ];
     }

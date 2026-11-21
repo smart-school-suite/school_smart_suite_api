@@ -14,6 +14,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Makes every student of the exam's specialty a candidate of the exam.
+ *
+ * Idempotent: a student is a candidate of an exam at most once. Students who
+ * already are candidates are skipped, and the unique index on
+ * (exam_id, student_id) makes the insert skip anyone another run added in
+ * the meantime, so retries and overlapping runs never create a duplicate.
+ * Running it again later adds only students who joined the specialty since.
+ */
 class CreateExamCandidateJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -71,11 +80,12 @@ class CreateExamCandidateJob implements ShouldQueue
                 ->pluck('student_id')
                 ->toArray();
 
+            $existing = array_flip($existingStudentIds);
             $candidates = [];
             $duplicateCount = 0;
 
-            foreach ($students as $student) {
-                if (in_array($student->id, $existingStudentIds)) {
+            foreach ($students->unique('id') as $student) {
+                if (isset($existing[$student->id])) {
                     $duplicateCount++;
                     continue;
                 }
@@ -91,16 +101,18 @@ class CreateExamCandidateJob implements ShouldQueue
             }
 
             if (!empty($candidates)) {
-                $chunks = array_chunk($candidates, 100);
-                foreach ($chunks as $chunk) {
-                    DB::table('exam_candidates')->insert($chunk);
+                // insertOrIgnore: the unique (exam_id, student_id) index skips a
+                // student another run made a candidate after the check above.
+                $created = 0;
+                foreach (array_chunk($candidates, 100) as $chunk) {
+                    $created += DB::table('exam_candidates')->insertOrIgnore($chunk);
                 }
 
                 Log::info('Exam candidates created successfully', [
                     'exam_id' => $examId,
                     'total_students' => $students->count(),
-                    'created' => count($candidates),
-                    'duplicates_skipped' => $duplicateCount,
+                    'created' => $created,
+                    'duplicates_skipped' => $duplicateCount + (count($candidates) - $created),
                     'school_branch_id' => $schoolBranchId
                 ]);
             } else {
