@@ -11,34 +11,19 @@ use App\Exceptions\AppException;
 
 class RegistrationFeeService
 {
+    /**
+     * The branch's registration fee records. An empty list is a normal
+     * answer (no student admitted yet), not an error. An unexpected failure
+     * keeps its cause, so Sentry shows what went wrong.
+     */
     public function getRegistrationFees(object $currentSchool)
     {
         try {
-            $registrationFees = RegistrationFee::where("school_branch_id", $currentSchool->id)
+            return RegistrationFee::where("school_branch_id", $currentSchool->id)
                 ->with(['student', 'specialty.level'])
                 ->get();
-
-            if ($registrationFees->isEmpty()) {
-                throw new AppException(
-                    "No registration fees were found for this school branch.",
-                    404,
-                    "No Registration Fees Found",
-                    "There are no student registration fee records available in the system for your school branch.",
-                    null
-                );
-            }
-
-            return $registrationFees;
-        } catch (AppException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new AppException(
-                "An unexpected error occurred while retrieving registration fee records.",
-                500,
-                "Internal Server Error",
-                "A server-side issue prevented the registration fee data from being retrieved successfully.",
-                null
-            );
+        } catch (Throwable $e) {
+            throw AppException::unexpected('load the registration fees', $e);
         }
     }
     public function bulkDeleteRegistrationFee(array $feeIds, object $currentSchool, object $authAdmin)
