@@ -9,7 +9,7 @@ use App\Services\ApiResponseService;
 
 class ExpenseCategoryService
 {
-    public function createSchoolExpense(array $data, $currentSchool, $authAdmin)
+    public function createSchoolExpense(array $data, object $currentSchool, $authAdmin)
     {
         $expensesCategory = new Schoolexpensescategory();
         $expensesCategory->name = $data["name"];
@@ -18,7 +18,7 @@ class ExpenseCategoryService
         return $expensesCategory;
     }
 
-    public function updateSchoolExpenseCategory(array $data, $schoolExpensesId, $currentSchool, $authAdmin)
+    public function updateSchoolExpenseCategory(array $data, string $schoolExpensesId, object $currentSchool, $authAdmin)
     {
         $schoolExpensesExists = Schoolexpensescategory::where("school_branch_id", $currentSchool->id)
             ->find($schoolExpensesId);
@@ -29,7 +29,7 @@ class ExpenseCategoryService
         $schoolExpensesExists->update($filterData);
         return $schoolExpensesExists;
     }
-    public function deleteSchoolExpenseCategory($schoolExpenseCategoryId, $currentSchool, $authAdmin)
+    public function deleteSchoolExpenseCategory(string $schoolExpenseCategoryId, object $currentSchool, $authAdmin)
     {
         $schoolExpensesCategoryExists = Schoolexpensescategory::where("school_branch_id", $currentSchool->id)
             ->find($schoolExpenseCategoryId);
@@ -40,7 +40,7 @@ class ExpenseCategoryService
         return $schoolExpensesCategoryExists;
     }
 
-    public function getSchoolCategoryExpenses($currentSchool)
+    public function getSchoolCategoryExpenses(object $currentSchool)
     {
         try {
             $schoolExpenses = Schoolexpensescategory::where("school_branch_id", $currentSchool->id)->get();
