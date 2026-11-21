@@ -23,7 +23,7 @@ class SchoolExpenseCategoryController extends Controller
         $createCategoryExpenses = $this->schoolExpensesCategoryService->createSchoolExpense($request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success("Category Expenses Created Sucessfully", $createCategoryExpenses, null, 201);
     }
-    public function updateCategory(UpdateExpensesCategoryRequest $request, $categoryId)
+    public function updateCategory(UpdateExpensesCategoryRequest $request, string $categoryId)
     {
         $authAdmin = $this->resolveUser();
         $currentSchool = $request->attributes->get("currentSchool");
@@ -40,7 +40,11 @@ class SchoolExpenseCategoryController extends Controller
     public function getCategory(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $getSchoolExpensesCategory = $this->schoolExpensesCategoryService->getSchoolCategoryExpenses($currentSchool);
+        // Optional filters: ?status=active|inactive&search=...
+        $getSchoolExpensesCategory = $this->schoolExpensesCategoryService->getSchoolCategoryExpenses(
+            $currentSchool,
+            $request->only(['status', 'search'])
+        );
         return ApiResponseService::success("Category Expenses Fetched Successfully", $getSchoolExpensesCategory, null, 200);
     }
     protected function resolveUser()

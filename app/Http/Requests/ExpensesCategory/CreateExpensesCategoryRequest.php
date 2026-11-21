@@ -20,7 +20,9 @@ class CreateExpensesCategoryRequest extends FormRequest
     public function rules()
     {
         return [
-            "name" => "required|string|max:150"
+            "name" => "required|string|max:150",
+            "description" => "sometimes|nullable|string|max:1000",
+            "status" => "sometimes|in:active,inactive"
         ];
     }
 }
