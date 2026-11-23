@@ -5,7 +5,7 @@ namespace App\Services\Asset;
 use App\Exceptions\AppException;
 use App\Models\Asset\SchoolAdminAvatar;
 use App\Models\Asset\AssetUploadPolicy;
-use App\Models\SchoolAdmin;
+use App\Models\Schooladmin;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +15,7 @@ use Throwable;
 class SchoolAdminAvatarService
 {
     public function uploadAvatar(
-        SchoolAdmin $schoolAdmin,
+        Schooladmin $schoolAdmin,
         UploadedFile $picture,
         string $schoolBranchId
     ): SchoolAdminAvatar {
@@ -152,7 +152,7 @@ class SchoolAdminAvatarService
                 $height,
                 $policy
             ) {
-                $lockedSchoolAdmin = SchoolAdmin::query()
+                $lockedSchoolAdmin = Schooladmin::query()
                     ->where('id', $schoolAdmin->id)
                     ->lockForUpdate()
                     ->first();
@@ -262,7 +262,7 @@ class SchoolAdminAvatarService
     }
 
     public function removeAvatar(
-        SchoolAdmin $schoolAdmin,
+        Schooladmin $schoolAdmin,
         string $schoolBranchId
     ): void {
         $objectKey = null;
@@ -279,7 +279,7 @@ class SchoolAdminAvatarService
             }
 
             DB::transaction(function () use ($schoolAdmin, $schoolBranchId, &$objectKey) {
-                $lockedSchoolAdmin = SchoolAdmin::query()
+                $lockedSchoolAdmin = Schooladmin::query()
                     ->whereKey($schoolAdmin->getKey())
                     ->lockForUpdate()
                     ->first();

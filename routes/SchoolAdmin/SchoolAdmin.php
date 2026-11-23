@@ -8,6 +8,7 @@ use App\Http\Controllers\SchoolAdmin\SchoolAdminController;
 Route::get('/', [SchoolAdminController::class, 'getSchoolAdmin'])
     ->name('school-admins.index');
 Route::put('/update-profile', [UpdateSchoolAdminProfileController::class, "UpdateSchoolAdminProfile"])->name('school-admin.update-profile');
+Route::get('/username-availability', [UpdateSchoolAdminProfileController::class, 'checkUsernameAvailability'])->name('school-admin.username-availability');
 
 Route::get('/{schoolAdminId}', [SchoolAdminController::class, 'getSchoolAdminDetails'])
     ->name('school-admins.show');
