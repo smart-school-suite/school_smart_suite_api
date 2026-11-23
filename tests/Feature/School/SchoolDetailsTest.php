@@ -4,6 +4,8 @@ namespace Tests\Feature\School;
 
 use App\Models\Schooladmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
@@ -56,5 +58,53 @@ class SchoolDetailsTest extends TestCase
         $this->getJson('/api/v1/school')
             ->assertOk()
             ->assertJsonPath('data.current_logo', null);
+    }
+
+    private function useFakeR2(): void
+    {
+        Storage::fake('r2');
+        config([
+            'filesystems.disks.r2.key' => 'test-key',
+            'filesystems.disks.r2.secret' => 'test-secret',
+            'filesystems.disks.r2.bucket' => 'test-bucket',
+            'filesystems.disks.r2.endpoint' => 'https://account.r2.cloudflarestorage.com',
+        ]);
+    }
+
+    public function test_a_png_or_webp_logo_uploads_and_becomes_the_current_logo(): void
+    {
+        $this->useFakeR2();
+
+        foreach (['logo.png', 'logo.webp'] as $name) {
+            $upload = $this->post('/api/v1/school-asset/school-logo/upload', [
+                'school_logo' => UploadedFile::fake()->image($name, 256, 256),
+            ], ['Accept' => 'application/json'])->assertOk();
+
+            Storage::disk('r2')->assertExists($upload->json('data.object_key'));
+            $this->assertStringStartsWith('schools/school-1/logo/', $upload->json('data.object_key'));
+            $this->getJson('/api/v1/school')->assertJsonPath('data.current_logo.id', $upload->json('data.id'));
+        }
+    }
+
+    public function test_a_gif_logo_is_rejected_before_upload(): void
+    {
+        $this->useFakeR2();
+
+        $this->post('/api/v1/school-asset/school-logo/upload', [
+            'school_logo' => UploadedFile::fake()->image('logo.gif', 64, 64),
+        ], ['Accept' => 'application/json'])->assertStatus(422);
+    }
+
+    public function test_removing_the_logo_clears_it(): void
+    {
+        $this->useFakeR2();
+        $upload = $this->post('/api/v1/school-asset/school-logo/upload', [
+            'school_logo' => UploadedFile::fake()->image('logo.png', 128, 128),
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $this->deleteJson('/api/v1/school-asset/school-logo/remove')->assertOk();
+
+        Storage::disk('r2')->assertMissing($upload->json('data.object_key'));
+        $this->getJson('/api/v1/school')->assertJsonPath('data.current_logo', null);
     }
 }
