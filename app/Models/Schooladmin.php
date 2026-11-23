@@ -64,9 +64,10 @@ class Schooladmin extends Authenticatable
 
     public function currentAvatar(): HasOne
     {
-        return $this->hasOne(SchoolAdminAvatar::class, 'school_admin_id')
-            ->where('is_current', true)
-            ->latestOfMany('created_at');
+        return $this->hasOne(SchoolAdminAvatar::class, 'school_admin_id')->ofMany(
+            ['created_at' => 'max', 'id' => 'max'],
+            fn ($query) => $query->where('is_current', true)
+        );
     }
     public function gender(): BelongsTo
     {

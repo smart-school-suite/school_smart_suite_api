@@ -221,7 +221,7 @@ class SchoolLogoService
 
         try {
             $branchBelongsToSchool = Schoolbranches::query()
-                ->where($schoolBranchId)
+                ->where('id', $schoolBranchId)
                 ->where('school_id', $school->getKey())
                 ->exists();
 
