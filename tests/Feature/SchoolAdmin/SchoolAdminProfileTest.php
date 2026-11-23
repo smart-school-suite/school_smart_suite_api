@@ -4,6 +4,12 @@ namespace Tests\Feature\SchoolAdmin;
 
 use App\Models\Schooladmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Aws\Handler\GuzzleV6\GuzzleHandler;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -143,5 +149,64 @@ class SchoolAdminProfileTest extends TestCase
 
         Storage::disk('r2')->assertMissing($upload->json('data.object_key'));
         $this->getJson('/api/v1/auth/school-admin/me')->assertJsonPath('data.authSchoolAdmin.current_avatar', null);
+    }
+
+    private array $r2Requests = [];
+
+    private function useR2Endpoint(callable $respond): void
+    {
+        DB::table('asset_upload_policies')->insert([
+            'id' => '00000000-0000-0000-0000-0000000000bb',
+            'asset_type' => 'school_admin_profile_picture',
+            'max_file_size_bytes' => 2 * 1024 * 1024,
+            'allowed_mime_types' => json_encode(['image/jpeg', 'image/png', 'image/webp']),
+            'is_enabled' => true,
+        ]);
+        $stack = HandlerStack::create(new MockHandler(array_fill(0, 10, fn ($request) => $respond($request))));
+        $stack->push(Middleware::history($this->r2Requests));
+        Storage::set('r2', Storage::build(array_merge(config('filesystems.disks.r2'), [
+            'key' => 'key',
+            'secret' => 'secret',
+            'bucket' => 'bucket',
+            'endpoint' => 'https://account.r2.cloudflarestorage.com',
+            'http_handler' => new GuzzleHandler(new Client(['handler' => $stack])),
+        ])));
+    }
+
+    private function uploadPhoto()
+    {
+        return $this->post('/api/v1/school-asset/school-admin/upload', [
+            'picture' => UploadedFile::fake()->image('profile-photo.png', 64, 64),
+        ], ['Accept' => 'application/json']);
+    }
+
+    public function test_r2_uploads_send_no_checksum_headers(): void
+    {
+        $this->useR2Endpoint(fn ($request) => $request->getMethod() === 'HEAD'
+            ? new Response(200, ['Content-Length' => '10'])
+            : new Response(200, ['ETag' => '"etag"']));
+
+        $this->uploadPhoto()->assertOk();
+
+        $put = collect($this->r2Requests)->pluck('request')->first(fn ($request) => $request->getMethod() === 'PUT');
+        $this->assertNotNull($put);
+        foreach (array_keys($put->getHeaders()) as $header) {
+            $this->assertDoesNotMatchRegularExpression('/^x-amz-(checksum|trailer|sdk-checksum)/i', $header);
+        }
+        $this->assertNotSame('aws-chunked', $put->getHeaderLine('Content-Encoding'));
+    }
+
+    public function test_a_storage_rejection_reports_what_r2_said(): void
+    {
+        $this->useR2Endpoint(fn () => new Response(
+            403,
+            ['Content-Type' => 'application/xml'],
+            '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>'
+        ));
+
+        $message = $this->uploadPhoto()->assertStatus(500)->json('message');
+
+        $this->assertStringContainsString('Storage said AccessDenied (HTTP 403): Access Denied', $message);
+        $this->assertSame(0, DB::table('school_admin_avatars')->count());
     }
 }
