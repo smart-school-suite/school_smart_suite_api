@@ -2,6 +2,7 @@
 
 namespace App\Services\Asset;
 
+use App\Support\Storage\StorageError;
 use App\Models\Student;
 use App\Models\Asset\StudentAvatar;
 use Illuminate\Http\UploadedFile;
@@ -210,7 +211,7 @@ class StudentAvatarService
             }
 
             throw new AppException(
-                "An error occurred while uploading the student profile picture: {$e->getMessage()}",
+                "An error occurred while uploading the student profile picture: " . StorageError::describe($e),
                 500,
                 "Upload Error",
                 "We encountered an issue while uploading the profile picture.",
@@ -290,7 +291,7 @@ class StudentAvatarService
             throw $e;
         } catch (Throwable $e) {
             throw new AppException(
-                "An error occurred while removing the student profile picture: {$e->getMessage()}",
+                "An error occurred while removing the student profile picture: " . StorageError::describe($e),
                 500,
                 "Removal Error",
                 "We encountered an issue while removing the profile picture.",

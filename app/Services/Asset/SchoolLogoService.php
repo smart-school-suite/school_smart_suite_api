@@ -2,6 +2,7 @@
 
 namespace App\Services\Asset;
 
+use App\Support\Storage\StorageError;
 use App\Exceptions\AppException;
 use App\Models\Asset\SchoolLogo;
 use App\Models\School;
@@ -198,7 +199,7 @@ class SchoolLogoService
             }
 
             throw new AppException(
-                "An error occurred while uploading the school logo: {$e->getMessage()}",
+                "An error occurred while uploading the school logo: " . StorageError::describe($e),
                 500,
                 "Upload Error",
                 "We encountered an issue while uploading the school logo.",
@@ -272,7 +273,7 @@ class SchoolLogoService
             throw $e;
         } catch (Throwable $e) {
             throw new AppException(
-                "An error occurred while removing the school logo: {$e->getMessage()}",
+                "An error occurred while removing the school logo: " . StorageError::describe($e),
                 500,
                 "Removal Error",
                 "We encountered an issue while removing the school logo.",

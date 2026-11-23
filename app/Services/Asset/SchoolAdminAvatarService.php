@@ -2,6 +2,7 @@
 
 namespace App\Services\Asset;
 
+use App\Support\Storage\StorageError;
 use App\Exceptions\AppException;
 use App\Models\Asset\SchoolAdminAvatar;
 use App\Models\Asset\AssetUploadPolicy;
@@ -252,7 +253,7 @@ class SchoolAdminAvatarService
             }
 
             throw new AppException(
-                "An error occurred while uploading the school admin profile picture: {$e->getMessage()}",
+                "An error occurred while uploading the school admin profile picture: " . StorageError::describe($e),
                 500,
                 "Upload Error",
                 "We encountered an issue while uploading the profile picture.",
@@ -332,7 +333,7 @@ class SchoolAdminAvatarService
             throw $e;
         } catch (Throwable $e) {
             throw new AppException(
-                "An error occurred while removing the school admin profile picture: {$e->getMessage()}",
+                "An error occurred while removing the school admin profile picture: " . StorageError::describe($e),
                 500,
                 "Removal Error",
                 "We encountered an issue while removing the profile picture.",

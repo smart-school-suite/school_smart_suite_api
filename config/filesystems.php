@@ -70,6 +70,8 @@ return [
             'use_path_style_endpoint' => true,
             'url' => env('R2_URL'),
             'throw' => true,
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
         ],
 
 
