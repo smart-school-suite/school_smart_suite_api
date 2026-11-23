@@ -2,6 +2,7 @@
 
 namespace App\Services\Asset;
 
+use App\Support\Storage\R2Config;
 use App\Support\Storage\StorageError;
 use App\Exceptions\AppException;
 use App\Models\Asset\SchoolAdminAvatar;
@@ -20,6 +21,8 @@ class SchoolAdminAvatarService
         UploadedFile $picture,
         string $schoolBranchId
     ): SchoolAdminAvatar {
+        R2Config::ensureConfigured();
+
         $disk = Storage::disk('r2');
         $objectKey = null;
         $avatarSaved = false;
@@ -266,6 +269,8 @@ class SchoolAdminAvatarService
         Schooladmin $schoolAdmin,
         string $schoolBranchId
     ): void {
+        R2Config::ensureConfigured();
+
         $objectKey = null;
 
         try {

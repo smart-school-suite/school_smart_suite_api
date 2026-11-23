@@ -29,7 +29,9 @@ class School extends Model
 
     public function currentLogo(): HasOne
     {
-        return $this->hasOne(SchoolLogo::class, 'school_id');
+        return $this->hasOne(SchoolLogo::class, 'school_id')
+            ->where('is_current', true)
+            ->latestOfMany('created_at');
     }
     public function country(): BelongsTo
     {

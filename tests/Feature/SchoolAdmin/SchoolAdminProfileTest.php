@@ -30,6 +30,13 @@ class SchoolAdminProfileTest extends TestCase
             ['id' => 'admin-2', 'first_name' => 'Ade', 'last_name' => 'Bello', 'name' => 'Ade Bello', 'email' => 'ade@example.com', 'password' => 'x', 'username' => 'Taken.Name', 'school_branch_id' => 'branch-1'],
         ]);
 
+        config([
+            'filesystems.disks.r2.key' => 'test-key',
+            'filesystems.disks.r2.secret' => 'test-secret',
+            'filesystems.disks.r2.bucket' => 'test-bucket',
+            'filesystems.disks.r2.endpoint' => 'https://account.r2.cloudflarestorage.com',
+        ]);
+
         $admin = Schooladmin::find('admin-1');
         Sanctum::actingAs($admin);
         $this->actingAs($admin, 'schooladmin');
@@ -207,6 +214,18 @@ class SchoolAdminProfileTest extends TestCase
         $message = $this->uploadPhoto()->assertStatus(500)->json('message');
 
         $this->assertStringContainsString('Storage said AccessDenied (HTTP 403): Access Denied', $message);
+        $this->assertSame(0, DB::table('school_admin_avatars')->count());
+    }
+
+    public function test_an_upload_without_r2_credentials_names_the_missing_settings_instead_of_hanging(): void
+    {
+        config(['filesystems.disks.r2.key' => null, 'filesystems.disks.r2.secret' => '']);
+
+        $started = microtime(true);
+        $message = $this->uploadPhoto()->assertStatus(500)->json('message');
+
+        $this->assertStringContainsString('R2 storage is not configured. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY', $message);
+        $this->assertLessThan(1, microtime(true) - $started, 'It must not wait on the AWS instance metadata service.');
         $this->assertSame(0, DB::table('school_admin_avatars')->count());
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Asset;
 
+use App\Support\Storage\R2Config;
 use App\Support\Storage\StorageError;
 use App\Exceptions\AppException;
 use App\Models\Asset\SchoolLogo;
@@ -20,6 +21,8 @@ class SchoolLogoService
         UploadedFile $picture,
         string $schoolBranchId
     ): SchoolLogo {
+        R2Config::ensureConfigured();
+
         $disk = Storage::disk('r2');
         $objectKey = null;
         $logoSaved = false;
@@ -212,6 +215,8 @@ class SchoolLogoService
         School $school,
         string $schoolBranchId
     ): void {
+        R2Config::ensureConfigured();
+
         $objectKey = null;
 
         try {
