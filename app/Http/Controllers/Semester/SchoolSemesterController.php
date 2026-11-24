@@ -9,6 +9,7 @@ use App\Http\Requests\SchoolSemester\SchoolSemesterIdRequest;
 use App\Http\Requests\SchoolSemester\UpdateSchoolSemesterRequest;
 use App\Http\Requests\SchoolSemester\BulkUpdateSchoolSemesterRequest;
 use App\Services\ApiResponseService;
+use App\Services\Semester\SchoolSemesterCreationOptions;
 use App\Services\Semester\SchoolSemesterService;
 use Exception;
 
@@ -52,6 +53,13 @@ class SchoolSemesterController extends Controller
         $getSchoolSemesterDetails = $this->schoolSemesterService->getSchoolSemesterDetail($currentSchool, $schoolSemesterId);
         return ApiResponseService::success("School Semester Details Fetched Successfully", $getSchoolSemesterDetails, null, 200);
     }
+    public function getCreationOptions(Request $request)
+    {
+        $currentSchool = $request->attributes->get("currentSchool");
+        $options = app(SchoolSemesterCreationOptions::class)->describe($currentSchool);
+        return ApiResponseService::success("Semester Creation Options Fetched Successfully", $options, null, 200);
+    }
+
     public function getUpdateRules(Request $request, string $schoolSemesterId)
     {
         $currentSchool = $request->attributes->get("currentSchool");
