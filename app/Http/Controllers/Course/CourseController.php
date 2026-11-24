@@ -11,6 +11,7 @@ use App\Http\Requests\Course\ImportCourseRequest;
 use App\Http\Resources\CourseResource;
 use App\Jobs\Course\CourseImportJob;
 use App\Models\Courses;
+use App\Services\Course\CourseCreationOptions;
 use App\Services\Course\CourseService;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
@@ -48,6 +49,12 @@ class CourseController extends Controller
         $authAdmin = $this->resolveUser();
         $updateCourse = $this->courseService->updateCourse($courseId, $request->validated(), $currentSchool, $authAdmin);
         return ApiResponseService::success('Course Update Succefully', $updateCourse, null, 200);
+    }
+    public function getCreationOptions(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $options = app(CourseCreationOptions::class)->describe($currentSchool);
+        return ApiResponseService::success('Course creation options fetched successfully', $options, null, 200);
     }
     public function getCourses(Request $request)
     {

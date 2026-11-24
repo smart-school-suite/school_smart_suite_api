@@ -16,6 +16,8 @@ Route::get('/active', [CourseController::class, 'getActiveCourses'])
 Route::get('/specialty/{specialtyId}', [CourseController::class, 'getCoursesGSemesterBspecialtyId'])
     ->name('course.specialty');
 
+Route::get('/creation-options', [CourseController::class, 'getCreationOptions'])
+    ->name('course.creationOptions');
 Route::get('/{courseId}', [CourseController::class, 'getCourseDetails'])
     ->name('courses.show');
 
