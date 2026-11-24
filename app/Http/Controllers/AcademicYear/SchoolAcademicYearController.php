@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SchoolAcademicYear\CreateSchoolAcademicYearRequest;
 use App\Http\Requests\SchoolAcademicYear\UpdateSchoolAcademicYearRequest;
 use Illuminate\Http\Request;
+use App\Services\AcademicYear\SchoolAcademicYearCreationOptions;
 use App\Services\AcademicYear\SchoolAcademicYearService;
 use App\Services\ApiResponseService;
 
@@ -35,6 +36,12 @@ class SchoolAcademicYearController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $rules = $this->schoolAcademicYearService->getUpdateRules($currentSchool, $schoolAcademicYearId);
         return ApiResponseService::success('Academic year update rules retrieved successfully.', $rules, null, 200);
+    }
+    public function getCreationOptions(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $options = app(SchoolAcademicYearCreationOptions::class)->describe($currentSchool);
+        return ApiResponseService::success('Academic year creation options retrieved successfully.', $options, null, 200);
     }
     public function getSchoolAcademicYears(Request $request)
     {

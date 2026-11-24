@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AcademicYear\SchoolAcademicYearController;
 
 Route::post('/create', [SchoolAcademicYearController::class, 'createSchoolAcademicYear'])->name('schoolAcademicYear.create');
+Route::get('/creation-options', [SchoolAcademicYearController::class, 'getCreationOptions'])->name('schoolAcademicYear.creationOptions');
 Route::put('/{schoolAcademicYearId}/update', [SchoolAcademicYearController::class, 'updateSchoolAcademicYear'])->name('schoolAcademicYear.update');
 Route::get('/{schoolAcademicYearId}/update-rules', [SchoolAcademicYearController::class, 'getUpdateRules'])->name('schoolAcademicYear.updateRules');
 Route::get('/', [SchoolAcademicYearController::class, 'getSchoolAcademicYears'])->name('schoolAcademicYear.getAll');

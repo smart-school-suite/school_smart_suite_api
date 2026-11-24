@@ -29,7 +29,7 @@ class SchoolSemesterCreationOptions
             ->get();
 
         $schoolYears = $years
-            ->map(fn (SchoolAcademicYear $year) => $this->describeYear($year, $semesters, $allSemesters->pluck('count', 'id'), $years, $settings, $today, $limit))
+            ->map(fn (SchoolAcademicYear $year) => $this->describeYear($year, $semesters, $allSemesters->pluck('count', 'id'), $allSemesters->pluck('name', 'id'), $years, $settings, $today, $limit))
             ->sort(fn (array $a, array $b) => [self::STATUS_ORDER[$a['status']], $a['label']] <=> [self::STATUS_ORDER[$b['status']], $b['label']])
             ->values()
             ->all();
@@ -46,6 +46,7 @@ class SchoolSemesterCreationOptions
         SchoolAcademicYear $year,
         Collection $semesters,
         Collection $countOf,
+        Collection $nameOf,
         Collection $allYears,
         AutoCreationSettings $settings,
         Carbon $today,
@@ -57,6 +58,7 @@ class SchoolSemesterCreationOptions
 
         $existingByCount = $existing
             ->map(fn ($semester) => [
+                'name' => $nameOf[$semester->semester_id] ?? null,
                 'count' => (int) ($countOf[$semester->semester_id] ?? 0),
                 'start' => Carbon::parse($semester->start_date)->startOfDay(),
                 'end' => Carbon::parse($semester->end_date)->startOfDay(),
@@ -80,6 +82,7 @@ class SchoolSemesterCreationOptions
                     'end_date' => Carbon::parse($created->end_date)->toDateString(),
                 ] : null,
                 'suggested' => $created ? null : $this->suggest((int) $semester->count, $existingByCount, $start, $end, $plannedTotal),
+                'allowed' => $created ? null : $this->allowed((int) $semester->count, $existingByCount, $start, $end),
             ];
         })->values();
 
@@ -131,6 +134,31 @@ class SchoolSemesterCreationOptions
         }
 
         return ['start_date' => $start->toDateString(), 'end_date' => $end->toDateString()];
+    }
+
+    private function allowed(int $count, Collection $existing, Carbon $yearStart, Carbon $yearEnd): ?array
+    {
+        $previous = $existing->filter(fn ($semester) => $semester['count'] < $count)->last();
+        $next = $existing->first(fn ($semester) => $semester['count'] > $count);
+        $start = $previous ? $previous['end']->copy()->addDay() : $yearStart->copy();
+        $end = $next ? $next['start']->copy()->subDay() : $yearEnd->copy();
+
+        if ($start->lt($yearStart)) {
+            $start = $yearStart->copy();
+        }
+        if ($end->gt($yearEnd)) {
+            $end = $yearEnd->copy();
+        }
+        if ($end->lte($start)) {
+            return null;
+        }
+
+        return [
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'after' => $previous ? ['name' => $previous['name'], 'end_date' => $previous['end']->toDateString()] : null,
+            'before' => $next ? ['name' => $next['name'], 'start_date' => $next['start']->toDateString()] : null,
+        ];
     }
 
     private function copyTargets(SchoolAcademicYear $year, Collection $allYears, AutoCreationSettings $settings): array
