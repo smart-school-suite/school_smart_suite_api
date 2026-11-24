@@ -11,6 +11,9 @@ Route::put('/{schoolSemesterId}', [SchoolSemesterController::class, 'updateSchoo
 ->name('school-semesters.update');
 
 // Before /{schoolSemesterId}, which would otherwise capture "active".
+Route::get('/creation-options', [SchoolSemesterController::class, 'getCreationOptions'])
+->name('school-semesters.creation-options');
+
 Route::get('/active', [SchoolSemesterController::class, 'getActiveSchoolSemesters'])
 ->name('school-semesters.active');
 
