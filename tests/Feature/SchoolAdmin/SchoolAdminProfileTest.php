@@ -228,4 +228,20 @@ class SchoolAdminProfileTest extends TestCase
         $this->assertLessThan(1, microtime(true) - $started, 'It must not wait on the AWS instance metadata service.');
         $this->assertSame(0, DB::table('school_admin_avatars')->count());
     }
+
+    public function test_the_admin_list_includes_each_admins_current_photo(): void
+    {
+        config(['filesystems.disks.r2.url' => 'https://cdn.example.com']);
+        DB::table('school_admin_avatars')->insert([
+            ['id' => '00000000-0000-0000-0000-0000000000c1', 'object_key' => 'schools/branch-1/school-admins/admin-1/profile/old.webp', 'mime_type' => 'image/webp', 'size_bytes' => 10, 'is_current' => false, 'created_at' => now(), 'replaced_at' => now(), 'school_branch_id' => 'branch-1', 'school_admin_id' => 'admin-1'],
+            ['id' => '00000000-0000-0000-0000-0000000000c2', 'object_key' => 'schools/branch-1/school-admins/admin-1/profile/new.webp', 'mime_type' => 'image/webp', 'size_bytes' => 10, 'is_current' => true, 'created_at' => now(), 'replaced_at' => null, 'school_branch_id' => 'branch-1', 'school_admin_id' => 'admin-1'],
+        ]);
+
+        $admins = collect($this->getJson('/api/v1/school-admin')->assertOk()->json('data'))->keyBy('id');
+
+        $this->assertSame('schools/branch-1/school-admins/admin-1/profile/new.webp', $admins['admin-1']['profile_picture']);
+        $this->assertSame('https://cdn.example.com/schools/branch-1/school-admins/admin-1/profile/new.webp', $admins['admin-1']['profile_picture_url']);
+        $this->assertNull($admins['admin-2']['profile_picture']);
+        $this->assertNull($admins['admin-2']['profile_picture_url']);
+    }
 }

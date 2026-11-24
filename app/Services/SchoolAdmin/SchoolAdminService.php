@@ -47,6 +47,7 @@ class SchoolAdminService
             "phone" => $admin->phone ?? null,
             "address" => $admin->address ?? null,
             "profile_picture" => $admin->currentAvatar?->object_key ?? null,
+            "profile_picture_url" => $admin->currentAvatar?->url,
             "status" => $admin->status ?? null,
             'role' => $admin->roles->first()?->name ?? 'No Role',
             "gender" => $admin->gender->name ?? null,
