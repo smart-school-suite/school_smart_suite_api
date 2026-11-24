@@ -29,7 +29,9 @@ class SemesterService
 
     public function getSemester(object $currentSchool)
     {
-        $filteredSemesters = Semester::whereBetween('count', [1, 2])->get();
-        return $filteredSemesters;
+        return Semester::query()
+            ->whereBetween('count', [1, app(SemesterLimit::class)->forBranch($currentSchool->id)])
+            ->orderBy('count')
+            ->get();
     }
 }

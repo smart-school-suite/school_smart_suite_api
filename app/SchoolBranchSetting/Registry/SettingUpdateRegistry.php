@@ -34,6 +34,7 @@ use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateAcrossSwitchHandler;
 use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateLevelsHandler;
 use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateModeHandler;
 use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateRequireStudentsHandler;
+use App\SchoolBranchSetting\Handlers\Semester\MaxSemestersPerYearHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\RespectTeacherPreferenceHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\SchoolDayHoursHandler;
@@ -85,6 +86,7 @@ class SettingUpdateRegistry
 
           //
 
+          'semester.max_per_academic_year' => MaxSemestersPerYearHandler::class,
           'semester.auto_create_mode' => AutoCreateModeHandler::class,
           'semester.auto_create_levels' => AutoCreateLevelsHandler::class,
           'semester.auto_create_across_specialties' => AutoCreateAcrossSwitchHandler::class,

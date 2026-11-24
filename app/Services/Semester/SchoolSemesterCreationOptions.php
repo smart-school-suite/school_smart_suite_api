@@ -13,13 +13,15 @@ class SchoolSemesterCreationOptions
 {
     private const STATUS_ORDER = ['ongoing' => 0, 'upcoming' => 1, 'ended' => 2];
 
-    public function __construct(private AutoCreationTargets $targets) {}
+    public function __construct(private AutoCreationTargets $targets, private SemesterLimit $limit) {}
 
     public function describe(object $currentSchool, ?Carbon $today = null): array
     {
         $today = ($today ?? now())->copy()->startOfDay();
         $settings = SemesterAutoCreationSettings::forBranch($currentSchool->id);
-        $semesters = Semester::query()->orderBy('count')->get(['id', 'name', 'count']);
+        $limit = $this->limit->forBranch($currentSchool->id);
+        $allSemesters = Semester::query()->orderBy('count')->get(['id', 'name', 'count']);
+        $semesters = $allSemesters->filter(fn (Semester $semester) => (int) $semester->count <= $limit)->values();
 
         $years = SchoolAcademicYear::query()
             ->where('school_branch_id', $currentSchool->id)
@@ -27,13 +29,14 @@ class SchoolSemesterCreationOptions
             ->get();
 
         $schoolYears = $years
-            ->map(fn (SchoolAcademicYear $year) => $this->describeYear($year, $semesters, $years, $settings, $today))
+            ->map(fn (SchoolAcademicYear $year) => $this->describeYear($year, $semesters, $allSemesters->pluck('count', 'id'), $years, $settings, $today, $limit))
             ->sort(fn (array $a, array $b) => [self::STATUS_ORDER[$a['status']], $a['label']] <=> [self::STATUS_ORDER[$b['status']], $b['label']])
             ->values()
             ->all();
 
         return [
             'today' => $today->toDateString(),
+            'max_semesters' => $limit,
             'auto_creation' => ['enabled' => $settings->enabled()],
             'school_years' => $schoolYears,
         ];
@@ -42,14 +45,15 @@ class SchoolSemesterCreationOptions
     private function describeYear(
         SchoolAcademicYear $year,
         Collection $semesters,
+        Collection $countOf,
         Collection $allYears,
         AutoCreationSettings $settings,
-        Carbon $today
+        Carbon $today,
+        int $limit
     ): array {
         $start = Carbon::parse($year->start_date)->startOfDay();
         $end = Carbon::parse($year->end_date)->startOfDay();
         $existing = $year->schoolSemester->keyBy('semester_id');
-        $countOf = $semesters->pluck('count', 'id');
 
         $existingByCount = $existing
             ->map(fn ($semester) => [
@@ -60,7 +64,7 @@ class SchoolSemesterCreationOptions
             ->sortBy('count')
             ->values();
 
-        $plannedTotal = max(2, (int) $existingByCount->max('count'));
+        $plannedTotal = $limit;
 
         $semesterOptions = $semesters->map(function (Semester $semester) use ($existing, $existingByCount, $start, $end, $plannedTotal) {
             $created = $existing->get($semester->id);

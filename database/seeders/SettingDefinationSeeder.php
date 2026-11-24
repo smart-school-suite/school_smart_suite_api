@@ -375,6 +375,13 @@ class SettingDefinationSeeder extends Seeder
 
         $settingDefs = [
             [
+                'key' => 'semester.max_per_academic_year',
+                'label' => 'Number of Semesters',
+                'data_type' => 'integer',
+                'default_value' => 2,
+                'description' => 'The maximum number of semesters in an academic year. Semesters beyond this number cannot be created.',
+            ],
+            [
                 'key' => 'semester.auto_create_mode',
                 'label' => 'Automatic Semester Creation',
                 'data_type' => 'string',

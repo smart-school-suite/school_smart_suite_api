@@ -136,6 +136,10 @@ class SchoolSemesterUpdatePolicy
             if (!$type) {
                 $this->fail('Semester Not Found', 'The selected semester does not exist.', 404);
             }
+            $limit = app(SemesterLimit::class)->forBranch($semester->school_branch_id);
+            if ((int) $type->count > $limit) {
+                $this->fail('Semester Limit Reached', "This school allows only {$limit} semesters per academic year.", 422);
+            }
             $taken = SchoolSemester::where('school_year_id', $semester->school_year_id)
                 ->where('semester_id', $type->id)
                 ->where('id', '!=', $semester->id)
@@ -278,6 +282,7 @@ class SchoolSemesterUpdatePolicy
             ->pluck('semester_id');
 
         return Semester::whereNotIn('id', $taken)
+            ->where('count', '<=', app(SemesterLimit::class)->forBranch($semester->school_branch_id))
             ->orderBy('count')
             ->get(['id', 'name', 'count'])
             ->toArray();

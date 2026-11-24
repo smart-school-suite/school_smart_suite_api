@@ -10,11 +10,13 @@ use App\Services\Semester\SchoolSemesterService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Tests\Concerns\SetsSemesterLimit;
 use Tests\TestCase;
 
 class CreateSchoolSemesterTest extends TestCase
 {
     use RefreshDatabase;
+    use SetsSemesterLimit;
 
     private object $school;
     private SchoolSemesterService $service;
@@ -29,7 +31,10 @@ class CreateSchoolSemesterTest extends TestCase
 
         DB::table('school_branches')->insert(['id' => 'branch-1', 'name' => 'Main', 'abbreviation' => 'M', 'school_id' => 'school-1']);
         DB::table('system_academic_years')->insert(['id' => 'year-2099', 'name' => '2099/2100', 'year_start' => 2099, 'year_end' => 2100]);
-        DB::table('semesters')->insert(['id' => 'sem-1', 'name' => 'First Semester', 'count' => 1, 'program_name' => 'HND']);
+        DB::table('semesters')->insert([
+            ['id' => 'sem-1', 'name' => 'First Semester', 'count' => 1, 'program_name' => 'HND'],
+            ['id' => 'sem-3', 'name' => 'Third Semester', 'count' => 3, 'program_name' => 'HND'],
+        ]);
         DB::table('specialties')->insert(['id' => 'swe', 'specialty_name' => 'Software Engineering', 'registration_fee' => 0, 'school_fee' => 0, 'status' => 'active', 'school_branch_id' => 'branch-1', 'department_id' => 'dep', 'level_id' => 'lvl']);
         DB::table('school_academic_years')->insert(['id' => 'sy-swe', 'start_date' => '2099-09-01', 'end_date' => '2100-06-30', 'specialty_id' => 'swe', 'system_academic_year_id' => 'year-2099', 'school_branch_id' => 'branch-1']);
         DB::table('teachers')->insert(['id' => 't-1', 'name' => 'Ada Teacher', 'first_name' => 'Ada', 'last_name' => 'Teacher', 'password' => 'x', 'username' => 'ada', 'email' => 'ada@example.com', 'gender_id' => 'g-1', 'school_branch_id' => 'branch-1']);
@@ -115,5 +120,21 @@ class CreateSchoolSemesterTest extends TestCase
         $this->expectExceptionCode(400);
 
         $this->service->createSchoolSemester($this->data(['start_date' => '2099-08-31']), $this->school, null);
+    }
+
+    public function test_a_semester_beyond_the_schools_limit_is_rejected(): void
+    {
+        try {
+            $this->service->createSchoolSemester($this->data(['semester_id' => 'sem-3']), $this->school, null);
+            $this->fail('Expected the third semester to be rejected.');
+        } catch (AppException $e) {
+            $this->assertSame(422, $e->getCode());
+            $this->assertSame('Semester Limit Reached', $e->getTitle());
+        }
+
+        $this->setSemesterLimit(3);
+        $semester = $this->service->createSchoolSemester($this->data(['semester_id' => 'sem-3']), $this->school, null);
+
+        $this->assertSame('sem-3', $semester->semester_id);
     }
 }

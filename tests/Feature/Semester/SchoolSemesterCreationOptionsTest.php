@@ -10,11 +10,13 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\SetsSemesterLimit;
 use Tests\TestCase;
 
 class SchoolSemesterCreationOptionsTest extends TestCase
 {
     use RefreshDatabase;
+    use SetsSemesterLimit;
 
     private object $school;
 
@@ -80,7 +82,7 @@ class SchoolSemesterCreationOptionsTest extends TestCase
     {
         $year = $this->year($this->creationOptions(), 'sy-1');
 
-        $this->assertSame(['sem-1', 'sem-2', 'sem-3'], array_column($year['semesters'], 'id'));
+        $this->assertSame(['sem-1', 'sem-2'], array_column($year['semesters'], 'id'));
         $this->assertSame('sem-1', $year['recommended_semester_id']);
         $this->assertSame(['start_date' => '2026-09-01', 'end_date' => '2027-01-29'], $this->semester($year, 'sem-1')['suggested']);
         $this->assertSame(['start_date' => '2027-01-30', 'end_date' => '2027-06-30'], $this->semester($year, 'sem-2')['suggested']);
@@ -157,5 +159,25 @@ class SchoolSemesterCreationOptionsTest extends TestCase
             ->assertOk()
             ->assertJsonCount(3, 'data.school_years')
             ->assertJsonPath('data.school_years.0.semesters.0.name', 'First Semester');
+    }
+
+    public function test_only_semesters_within_the_schools_limit_are_offered(): void
+    {
+        $this->assertSame(2, $this->creationOptions()['max_semesters']);
+
+        $this->setSemesterLimit(3);
+        $options = $this->creationOptions();
+        $year = $this->year($options, 'sy-1');
+
+        $this->assertSame(3, $options['max_semesters']);
+        $this->assertSame(['sem-1', 'sem-2', 'sem-3'], array_column($year['semesters'], 'id'));
+        $this->assertSame(['start_date' => '2026-09-01', 'end_date' => '2026-12-10'], $this->semester($year, 'sem-1')['suggested']);
+    }
+
+    public function test_the_limit_cannot_exceed_the_semesters_that_exist(): void
+    {
+        $this->setSemesterLimit(9);
+
+        $this->assertSame(3, $this->creationOptions()['max_semesters']);
     }
 }
