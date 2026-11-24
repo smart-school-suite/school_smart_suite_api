@@ -10,11 +10,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\SetsSemesterLimit;
 use Tests\TestCase;
 
 class UpdateSchoolSemesterTest extends TestCase
 {
     use RefreshDatabase;
+    use SetsSemesterLimit;
 
     private object $school;
 
@@ -34,6 +36,8 @@ class UpdateSchoolSemesterTest extends TestCase
         }
         DB::table('school_academic_years')->insert(['id' => 'sy-swe', 'start_date' => '2026-09-01', 'end_date' => '2027-07-31', 'specialty_id' => 'swe', 'system_academic_year_id' => 'sys-26', 'school_branch_id' => 'branch-1']);
         DB::table('school_academic_years')->insert(['id' => 'sy-net', 'start_date' => '2026-09-01', 'end_date' => '2027-07-31', 'specialty_id' => 'net', 'system_academic_year_id' => 'sys-26', 'school_branch_id' => 'branch-1']);
+
+        $this->setSemesterLimit(3);
 
         // swe: a running first semester and an upcoming second one.
         $this->semester('running', 'first', '2026-09-01', '2027-01-31');
@@ -186,5 +190,15 @@ class UpdateSchoolSemesterTest extends TestCase
             $this->assertNotNull($semester['created_at'], 'created_at was not selected.');
             $this->assertSame('2026-08-02', $semester['updated_at']->toDateString());
         }
+    }
+
+    public function test_a_semester_beyond_the_schools_limit_is_not_offered_or_accepted(): void
+    {
+        $this->setSemesterLimit(2);
+
+        $rules = $this->service()->getUpdateRules($this->school, 'upcoming');
+
+        $this->assertSame(['second'], array_column($rules['fields']['semester_id']['options'], 'id'));
+        $this->assertRefused('upcoming', ['semester_id' => 'third'], 'Semester Limit Reached');
     }
 }

@@ -18,11 +18,13 @@ use App\Events\Actions\StudentActionEvent;
 use App\Jobs\Exam\AutoCreateSemesterExamsJob;
 use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
 use App\Models\AcademicYear\SchoolAcademicYear;
+use App\Models\Semester;
 
 class SchoolSemesterService
 {
     public function __construct(
         private SemesterAutoCreationService $semesterAutoCreation,
+        private SemesterLimit $semesterLimit,
     ) {}
 
     public function createSchoolSemester(array $semesterData, object $currentSchool, $authAdmin)
@@ -63,6 +65,19 @@ class SchoolSemesterService
                 400,
                 "Invalid Semester Dates",
                 "Please ensure that the semester's start and end dates are within the range of the school academic year's start and end dates.",
+                null
+            );
+        }
+
+        $limit = $this->semesterLimit->forBranch($currentSchool->id);
+        $semesterCount = (int) Semester::whereKey($semesterData['semester_id'])->value('count');
+
+        if ($semesterCount > $limit) {
+            throw new AppException(
+                "This school allows only {$limit} semesters per academic year.",
+                422,
+                "Semester Limit Reached",
+                "Your school is set to {$limit} semesters per academic year. Change Number of Semesters in settings to add more.",
                 null
             );
         }
