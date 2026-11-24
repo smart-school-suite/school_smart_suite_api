@@ -86,6 +86,7 @@ class SchoolSemesterCreationOptionsTest extends TestCase
         $this->assertSame('sem-1', $year['recommended_semester_id']);
         $this->assertSame(['start_date' => '2026-09-01', 'end_date' => '2027-01-29'], $this->semester($year, 'sem-1')['suggested']);
         $this->assertSame(['start_date' => '2027-01-30', 'end_date' => '2027-06-30'], $this->semester($year, 'sem-2')['suggested']);
+        $this->assertSame(['start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'after' => null, 'before' => null], $this->semester($year, 'sem-2')['allowed']);
         $this->assertSame('Software Engineering · Level 100', $year['label']);
         $this->assertSame('2026/2027', $year['academic_year']);
         $this->assertSame(['2026-09-01', '2027-06-30'], [$year['start_date'], $year['end_date']]);
@@ -115,6 +116,12 @@ class SchoolSemesterCreationOptionsTest extends TestCase
         $year = $this->year($this->creationOptions(), 'sy-1');
 
         $this->assertSame(['start_date' => '2026-12-16', 'end_date' => '2027-03-31'], $this->semester($year, 'sem-2')['suggested']);
+        $this->assertSame([
+            'start_date' => '2026-12-16',
+            'end_date' => '2027-03-31',
+            'after' => ['name' => 'First Semester', 'end_date' => '2026-12-15'],
+            'before' => ['name' => 'Third Semester', 'start_date' => '2027-04-01'],
+        ], $this->semester($year, 'sem-2')['allowed']);
     }
 
     public function test_years_are_ordered_ongoing_first_and_ended_last(): void
