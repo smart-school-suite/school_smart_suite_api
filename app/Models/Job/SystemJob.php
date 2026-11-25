@@ -27,7 +27,24 @@ class SystemJob extends Model
         'successful_items',
         'failed_items',
         'started_at',
-        'finished_at'
+        'finished_at',
+        'progress',
+        'result',
+        'error_code',
+        'error_message',
+    ];
+
+    public const STATUS_QUEUED = 'queued';
+    public const STATUS_PROCESSING = 'processing';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_COMPLETED_WITH_ISSUES = 'completed_with_issues';
+    public const STATUS_FAILED = 'failed';
+
+    /** Statuses a job never leaves. */
+    public const FINISHED_STATUSES = [
+        self::STATUS_COMPLETED,
+        self::STATUS_COMPLETED_WITH_ISSUES,
+        self::STATUS_FAILED,
     ];
 
     protected $casts = [
@@ -37,6 +54,8 @@ class SystemJob extends Model
         'failed_items' => 'integer',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
+        'progress' => 'integer',
+        'result' => 'array',
     ];
 
     public $incrementing = false;
@@ -52,6 +71,11 @@ class SystemJob extends Model
     {
         return $this->morphTo();
     }
+    public function isFinished(): bool
+    {
+        return in_array(strtolower((string) $this->status), self::FINISHED_STATUSES, true);
+    }
+
     public function systemJobEvent(): HasMany
     {
         return $this->hasMany(SystemJobEvent::class);

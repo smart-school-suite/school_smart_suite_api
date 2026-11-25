@@ -2,520 +2,205 @@
 
 namespace App\Jobs\Teacher;
 
-use App\Events\Job\JobEvent;
-use App\Models\Job\SystemJob;
-use App\Models\Job\SystemJobError;
-use App\Models\Schoolbranches;
+use App\Jobs\Import\BaseImportJob;
 use App\Models\Teacher;
-use App\Models\Educationlevels;
-use App\Models\Qualification;
-use App\Models\LevelTypel;
-use App\Services\Helpers\Actor\ActorHelperService;
-use App\Services\Helpers\Job\JobHelperService;
-use App\Services\Helpers\Job\JobProgressReporterService;
-use App\Services\Helpers\Import\SpreadSheetReadException;
-use App\Services\Helpers\Import\SpreadSheetReaderService;
-use App\Services\Job\JobBroadCastPolicyService;
-use App\Http\Requests\Teacher\CreateTeacherRequest;
-use App\Models\Gender;
-use App\Models\Job\SystemJobDetail;
-use App\Models\LevelType;
-use App\Models\Schooladmin;
-use App\Services\Helpers\Import\ColumnIndexResolverService;
-use App\Services\Helpers\Import\ImportMapRowService;
-use Carbon\Carbon;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Throwable;
+use App\Services\Auth\Teacher\CreateTeacherService;
+use App\Services\Import\ImportLookups;
+use App\Services\Import\ImportRowException;
+use App\Services\Import\ImportType;
+use Illuminate\Support\Str;
 
-class TeacherImportJob implements ShouldQueue
+/**
+ * Creates teachers from a spreadsheet through CreateTeacherService, the same
+ * path as the "Add teacher" form. A teacher whose email or full name is
+ * already used at the school is reported, not overwritten.
+ *
+ * Qualifications and teaching levels come from repeatable column groups
+ * (qualification_1, field_of_study_1, ...). A level cell may also hold
+ * several levels separated by "|", e.g. "Level One|Level Two".
+ */
+class TeacherImportJob extends BaseImportJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public $tries = 3;
-    public $timeout = 300;
-
-    protected string $completedStatus = 'completed';
-    protected string $failedStatus = 'failed';
-    protected string $inProgressStatus = 'processing';
-    protected string $completedWithIssuesStatus = 'completed_with_issues';
-
-    protected string $adminId;
-    protected string $schoolBranchId;
-    protected string $categoryId;
-    protected string $jobId;
-    public array $requiredFields = ['email', 'full_names', 'first_name', 'last_name', 'phone', 'qualifications', 'allowed_levels'];
-    public array $optionalFields = ['address', 'gender'];
-
-    private JobProgressReporterService $progressReporter;
-    private JobBroadCastPolicyService $policy;
-    private JobHelperService $jobHelperService;
-    private SpreadSheetReaderService $spreadsheetService;
-    private ImportMapRowService $importMapRowService;
-
-    private int $lastBroadcastProgress = 0;
-    private ?string $lastBroadcastStatus = null;
-    private ?Carbon $lastBroadcastAt = null;
-
-    private int $batchProcessed = 0;
-    private int $batchCreated = 0;
-    private int $batchUpdated = 0;
-    private int $batchSkipped = 0;
-    private int $batchSize = 50;
-
-    public function __construct(
-        string $adminId,
-        string $schoolBranchId,
-        string $categoryId,
-        string $jobId
-    ) {
-        $this->adminId = $adminId;
-        $this->schoolBranchId = $schoolBranchId;
-        $this->categoryId = $categoryId;
-        $this->jobId = $jobId;
+    public static function importType(): ImportType
+    {
+        return ImportType::TEACHER;
     }
 
-    public function handle(): void
+    protected function requiredColumns(): array
     {
-        $this->jobHelperService = app(JobHelperService::class);
-        $this->progressReporter = app(JobProgressReporterService::class);
-        $this->policy = app(JobBroadCastPolicyService::class);
-        $this->spreadsheetService = app(SpreadSheetReaderService::class);
-        $this->importMapRowService = app(ImportMapRowService::class);
+        return ['email' => 'Email', 'first_name' => 'First Name', 'last_name' => 'Last Name', 'gender' => 'Gender'];
+    }
 
-        $schoolBranch = Schoolbranches::find($this->schoolBranchId);
-        $systemJob = SystemJob::find($this->jobId);
-        $schoolAdmin = Schooladmin::where("school_branch_id", $this->schoolBranchId)->find($this->adminId);
-        $systemJobDetails = SystemJobDetail::where("job_id", $this->jobId)->first();
-        $mapping = $systemJobDetails->input['mapping'];
-        $filePath = $systemJobDetails->input['file_path'];
+    protected function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:150'],
+            'first_name' => ['required', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:100'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:200'],
+            'gender_id' => ['required'],
+            'allowed_level_ids' => ['required', 'array', 'min:1'],
+            'qualifications' => ['required', 'array', 'min:1'],
+            'qualifications.*.field_of_study' => ['required', 'string', 'max:200'],
+            'qualifications.*.institution' => ['required', 'string', 'max:150'],
+            'qualifications.*.year' => ['required', 'string', 'max:50'],
+        ];
+    }
 
-        $this->jobHelperService->updateJobProgress($systemJob, $this->inProgressStatus, 'Reading file', 0);
-        $this->progressReporter->maybeBroadcast($systemJob, 0, $this->inProgressStatus);
+    protected function attributes(): array
+    {
+        return [
+            'name' => 'full name',
+            'first_name' => 'first name',
+            'last_name' => 'last name',
+            'gender_id' => 'gender',
+            'allowed_level_ids' => 'teaching level',
+            'qualifications' => 'qualification',
+            'qualifications.*.field_of_study' => 'qualification field of study',
+            'qualifications.*.institution' => 'qualification institution',
+            'qualifications.*.year' => 'qualification year',
+        ];
+    }
 
-        try {
-            $result = $this->spreadsheetService->read($filePath);
-        } catch (SpreadSheetReadException $e) {
-            $this->jobHelperService->failJob($systemJob, $e->getMessage(), $e->getCode() ?: 422);
-            $this->progressReporter->maybeBroadcast($systemJob, 0, $this->failedStatus);
-            return;
+    protected function messages(): array
+    {
+        return [
+            'allowed_level_ids.required' => 'At least one level the teacher may teach is required.',
+            'qualifications.required' => 'At least one qualification is required.',
+        ];
+    }
+
+    protected function normalize(array $row): array
+    {
+        $fullName = $row['full_names'] ?? trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+        $genderId = $this->lookups->genderId($row['gender'] ?? null);
+
+        if (!empty($row['gender']) && !$genderId) {
+            throw ImportRowException::invalid("Gender must be {$this->lookups->genderNames()}.", 'gender', $row['gender']);
         }
 
-        $header = $result->header;
-        $dataRows = $result->dataRows;
-        $total = $result->total;
+        return [
+            'name' => $fullName !== '' ? $fullName : null,
+            'first_name' => $row['first_name'] ?? null,
+            'last_name' => $row['last_name'] ?? null,
+            'email' => isset($row['email']) ? Str::lower($row['email']) : null,
+            'phone' => $row['phone'] ?? null,
+            'address' => $row['address'] ?? null,
+            'gender_id' => $genderId,
+            'allowed_level_ids' => $this->levelIds($row['allowed_levels'] ?? []),
+            'qualifications' => $this->qualifications($row['qualifications'] ?? []),
+        ];
+    }
 
-        $systemJob->update([
-            'total_items' => $total,
-            'processed_items' => 0,
-            'successful_items' => 0,
-            'failed_items' => 0,
-        ]);
+    protected function duplicateKey(array $row): ?string
+    {
+        return $row['email'];
+    }
 
-        $columnIndexes = ColumnIndexResolverService::resolve(
-            $header,
-            $mapping
+    protected function duplicateField(): ?string
+    {
+        return 'email';
+    }
+
+    protected function importRow(array $row, int $rowNumber): string
+    {
+        $teachers = Teacher::where('school_branch_id', $this->schoolBranchId);
+
+        if ((clone $teachers)->where('email', $row['email'])->exists()) {
+            throw ImportRowException::alreadyExists('A teacher with this email already exists at this school.', 'email', $row['email']);
+        }
+
+        if ((clone $teachers)->where('name', $row['name'])->exists()) {
+            throw ImportRowException::alreadyExists(
+                'A teacher with this full name already exists at this school. If it is a different person, add a middle name or initial.',
+                'full_names',
+                $row['name']
+            );
+        }
+
+        app(CreateTeacherService::class)->createInstructor(
+            $row,
+            (object) ['id' => $this->schoolBranchId],
+            (object) ['id' => $this->systemJob->initiated_by_id]
         );
 
-        if ($columnIndexes === null) {
-            $this->jobHelperService->failJob($systemJob, 'One or more required mapped columns were not found in the file header.', 422);
-            $this->progressReporter->maybeBroadcast($systemJob, 0, $this->failedStatus);
-            event(new JobEvent(
-                $schoolAdmin,
-                $schoolBranch,
-                [
-                    'job_id'   => $systemJob->id,
-                    'status'   => "failed",
-                    'stage'    => $systemJob->stage,
-                    'progress' => 100,
-                    'system_job'   => $systemJob ?? null,
-                ]
-            ));
-            return;
-        }
-
-        $processed = 0;
-        $created = 0;
-        $updated = 0;
-        $skipped = 0;
-        $errors = [];
-
-        $this->jobHelperService->updateJobProgress($systemJob, $this->inProgressStatus, 'Importing teachers', 5);
-        $this->progressReporter->maybeBroadcast($systemJob, 5, $this->inProgressStatus);
-
-        foreach ($dataRows as $index => $row) {
-            $rowNumber = $index + 2;
-            $payload = $this->importMapRowService->mapRow($row->toArray(), $columnIndexes);
-            $normalizedPayload = $this->normalizeRow($payload, $this->schoolBranchId);
-            $validationError = $this->validateRow($normalizedPayload, $rowNumber);
-            if ($validationError !== null) {
-                $skipped++;
-                $errors[] = $validationError;
-                $processed++;
-                $this->batchTrackProgress($systemJob, $processed, $created, $updated, $skipped, $total);
-                continue;
-            }
-
-            try {
-                DB::transaction(function () use (
-                    $normalizedPayload,
-                    &$created,
-                    &$updated,
-                    $schoolBranch
-                ) {
-                    $qualifications = $normalizedPayload['qualifications'] ?? [];
-                    $allowedLevelIds = $normalizedPayload['allowed_level_ids'] ?? [];
-
-                    $teacherData = collect($normalizedPayload)
-                        ->except([
-                            'qualifications',
-                            'allowed_level_ids',
-                            'allowed_levels',
-                        ])
-                        ->all();
-
-                    $teacher = Teacher::query()
-                        ->where('school_branch_id', $schoolBranch->id)
-                        ->where('email', $normalizedPayload['email'])
-                        ->first();
-
-                    if ($teacher) {
-                        $teacher->update($teacherData);
-                        $updated++;
-                    } else {
-                        $teacher = Teacher::create($teacherData);
-                        $created++;
-                    }
-
-                    $qualificationSync = collect($qualifications)
-                        ->mapWithKeys(fn($qualification) => [
-                            $qualification['qualification_id'] => [
-                                'school_branch_id' => $this->schoolBranchId,
-                                'field_of_study' => $qualification['field_of_study'] ?? null,
-                                'year' => $qualification['year'] ?? null,
-                                'institution' => $qualification['institution'] ?? null,
-                                'qualification' => $qualification['qualification'] ?? null
-                            ],
-                        ])
-                        ->all();
-
-                    if ($qualificationSync !== []) {
-                        $teacher->qualifications()->syncWithoutDetaching(
-                            $qualificationSync
-                        );
-                    }
-
-                    if ($allowedLevelIds !== []) {
-                        $teacher->levels()->syncWithoutDetaching(
-                            collect($allowedLevelIds)
-                                ->mapWithKeys(fn($levelId) => [
-                                    $levelId => [
-                                        'school_branch_id' => $this->schoolBranchId,
-                                    ],
-                                ])
-                                ->all()
-                        );
-                    }
-                });
-            } catch (Throwable $e) {
-                $skipped++;
-                $errors[] = [
-                    'code' => 500,
-                    'message' => "Row {$rowNumber}: " . $e->getMessage(),
-                    'stage' => 'import',
-                    'data' => [
-                        'row' => $rowNumber,
-                        'exception' => [
-                            'message' => $e->getMessage(),
-                            'file' => $e->getFile(),
-                            'line' => $e->getLine(),
-                            'trace' => $e->getTraceAsString()
-                        ],
-                        'payload' => $payload,
-                        'timestamp' => Carbon::now()->toISOString()
-                    ]
-                ];
-            }
-
-            $processed++;
-            $this->batchTrackProgress($systemJob, $processed, $created, $updated, $skipped, $total);
-        }
-
-        $this->flushBatchUpdate($systemJob, $processed, $created, $updated, $skipped);
-
-        foreach ($errors as $error) {
-            SystemJobError::create([
-                'job_id' => $systemJob->id,
-                'school_branch_id' => $schoolBranch->id,
-                'code' => $error['code'] ?? 500,
-                'message' => $error['message'] ?? 'Unknown error occurred',
-                'stage' => $error['stage'] ?? 'import',
-                'data' => $error['data'] ?? []
-            ]);
-        }
-
-        $finalStatus = empty($errors) ? $this->completedStatus : $this->completedWithIssuesStatus;
-        $finalStage = empty($errors) ? 'Completed' : 'Completed with issues';
-        $summary = [
-            'total'   => $total,
-            'created' => $created,
-            'updated' => $updated,
-            'skipped' => $skipped,
-            'errors'  => array_slice($errors, 0, 50),
-        ];
-
-        $systemJob->update([
-            'status'      => $finalStatus,
-            'stage'       => $finalStage,
-            'progress'    => 100,
-            'result'      => $summary,
-            'updated_at'  => Carbon::now(),
-            'finished_at' => Carbon::now(),
-        ]);
-
-        $this->progressReporter->maybeBroadcast($systemJob, 100, $finalStatus);
-
-        $this->spreadsheetService->deleteIfExists($filePath);
-
-        event(new JobEvent(
-            $schoolAdmin,
-            $schoolBranch,
-            [
-                'job_id'   => $systemJob->id,
-                'status'   => "completed",
-                'stage'    => $systemJob->stage,
-                'progress' => 100,
-                'system_job'   => $systemJob ?? null,
-            ]
-        ));
-    }
-    private function batchTrackProgress(
-        SystemJob $systemJob,
-        int $processed,
-        int $created,
-        int $updated,
-        int $skipped,
-        int $total
-    ): void {
-        $this->batchProcessed++;
-        $this->batchCreated += $created - ($this->batchCreated ?? 0);
-        $this->batchUpdated += $updated - ($this->batchUpdated ?? 0);
-        $this->batchSkipped += $skipped - ($this->batchSkipped ?? 0);
-
-        if ($this->batchProcessed >= $this->batchSize) {
-            $this->flushBatchUpdate($systemJob, $processed, $created, $updated, $skipped);
-        }
-
-        $this->reportProgress($systemJob, $processed, $total);
+        return self::OUTCOME_CREATED;
     }
 
-    private function flushBatchUpdate(
-        SystemJob $systemJob,
-        int $processed,
-        int $created,
-        int $updated,
-        int $skipped
-    ): void {
-        if ($this->batchProcessed > 0) {
-            $systemJob->update([
-                'processed_items' => $processed,
-                'successful_items' => $created + $updated,
-                'failed_items' => $skipped,
-            ]);
-
-            $this->batchProcessed = 0;
-            $this->batchCreated = 0;
-            $this->batchUpdated = 0;
-            $this->batchSkipped = 0;
-        }
-    }
-    private function normalizeRow(array $payload, string $schoolBranchId): array
+    /** Level names from the level columns, each cell possibly holding several ("Level One|Level Two"). */
+    private function levelIds(array $levels): array
     {
-        $actorHelper = app(ActorHelperService::class);
+        $ids = [];
 
-        $fullName = trim((string) ($payload['full_names'] ?? ''));
+        foreach ($levels as $level) {
+            foreach ($this->split($level['allowed_level'] ?? null) as $name) {
+                $id = $this->lookups->levelId($name);
 
-        $payload['password'] = Hash::make($actorHelper->generateRandomPassword());
-        $payload['username'] = $fullName !== ''
-            ? $actorHelper->generateUsername($fullName, Teacher::class)
-            : null;
-            $payload['school_branch_id'] = $schoolBranchId;
-        $payload['status'] = 'active';
-        $payload['name'] = $fullName;
+                if (!$id) {
+                    $examples = $this->lookups->levels()->sortBy('level')->take(3)->pluck('name')->join(', ');
+                    throw ImportRowException::notFound(
+                        "Teaching level not found in your school's level system. Use level names such as {$examples}.",
+                        'allowed_level',
+                        $name
+                    );
+                }
 
-        $payload['gender_id'] = Gender::where("name", $payload['gender'])->first()->id;
+                $ids[$id] = $id;
+            }
+        }
 
-        $rawLevels = $payload['allowed_levels'] ?? [];
-        $allowedLevelNames = collect($rawLevels)
-            ->pluck('allowed_level')
-            ->filter()
-            ->toArray();
+        return array_values($ids);
+    }
 
-        $payload['allowed_level_ids'] = !empty($allowedLevelNames)
-            ? EducationLevels::whereIn('program_name', $allowedLevelNames)
-            ->whereHas('levelType', function ($query) {
-                $query->where('program_name', 'level_start_200');
-            })
-            ->pluck('id')
-            ->toArray()
-            : [];
+    private function qualifications(array $qualifications): array
+    {
+        return collect($qualifications)
+            ->map(function (array $qualification) {
+                $name = $qualification['qualification'] ?? null;
+                $id = $this->lookups->qualificationId($name);
 
-        $rawQualifications = $payload['qualifications'] ?? [];
+                if (!$name) {
+                    throw ImportRowException::missing(
+                        'A qualification has a field of study, institution or year but no qualification name.',
+                        'qualification'
+                    );
+                }
 
-        $payload['qualifications'] = collect($rawQualifications)
-            ->map(function ($q) {
-                $abbreviation = trim((string) ($q['qualification'] ?? ''));
-
-                $qualId = $abbreviation !== ''
-                    ? Qualification::where('abbreviation', $abbreviation)->value('id')
-                    : null;
+                if ($name && !$id) {
+                    throw ImportRowException::notFound(
+                        'Qualification not found. Use a qualification abbreviation such as BSc, MSc or PhD.',
+                        'qualification',
+                        $name
+                    );
+                }
 
                 return [
-                    'field_of_study'   => $q['field_of_study'] ?? null,
-                    'year'             => $q['year'] ?? null,
-                    'institution'      => $q['institution'] ?? null,
-                    'qualification_id' => $qualId,
+                    'qualification_id' => $id,
+                    'field_of_study' => $qualification['field_of_study'] ?? null,
+                    'institution' => $qualification['institution'] ?? $qualification['university'] ?? null,
+                    'year' => $qualification['year'] ?? $qualification['year_obtained'] ?? null,
                 ];
             })
-            ->reject(fn($q) => $q['qualification_id'] === null)
+            ->filter(fn($qualification) => $qualification['qualification_id'] !== null)
+            ->unique('qualification_id')
             ->values()
-            ->toArray();
-
-        if (isset($payload['gender']) && trim((string) $payload['gender']) !== '') {
-            $payload['gender'] = strtolower(trim((string) $payload['gender']));
-        }
-
-        return $payload;
+            ->all();
     }
 
-    private function validateRow(array $payload, int $rowNumber): ?array
+    /** @return array<int, string> */
+    private function split(?string $value): array
     {
-        $request = new CreateTeacherRequest();
-        $validator = Validator::make($payload, $request->rules());
-
-        if ($validator->fails()) {
-            $messages = collect($validator->errors()->all())
-                ->map(fn($msg) => "Row {$rowNumber}: {$msg}")
-                ->implode('; ');
-
-            return [
-                'code' => 422,
-                'message' => $messages,
-                'stage' => 'validation',
-                'data' => [
-                    'row' => $rowNumber,
-                    'validation_errors' => $validator->errors()->toArray(),
-                    'payload' => $payload,
-                    'timestamp' => Carbon::now()->toISOString()
-                ]
-            ];
+        if ($value === null) {
+            return [];
         }
 
-        return null;
-    }
-
-    private function reportProgress(
-        SystemJob $systemJob,
-        int $processed,
-        int $total
-    ): void {
-        $progress = $total > 0
-            ? (int) min(99, floor(($processed / $total) * 95) + 5)
-            : 5;
-
-        $this->jobHelperService->updateJobProgress($systemJob, $this->inProgressStatus, 'Importing teachers', $progress);
-        $this->maybeBroadcast($systemJob, $progress, $this->inProgressStatus);
-    }
-
-    private function maybeBroadcast(
-        SystemJob $systemJob,
-        int $progress,
-        string $status
-    ): void {
-        $schoolAdmin = Schooladmin::where("school_branch_id", $this->schoolBranchId)->find($this->adminId);
-        $schoolBranch = Schoolbranches::find($this->schoolBranchId);
-
-        if (!$this->policy->shouldBroadcast(
-            $progress,
-            $this->lastBroadcastProgress,
-            $this->lastBroadcastAt,
-            $status,
-            $this->lastBroadcastStatus
-        )) {
-            return;
-        }
-
-        event(new JobEvent(
-            $schoolAdmin,
-            $schoolBranch,
-            [
-                'job_id'   => $systemJob->id,
-                'status'   => $status,
-                'stage'    => $systemJob->stage,
-                'progress' => $progress,
-                'system_job'   => $systemJob ?? null,
-            ]
-        ));
-
-        $this->lastBroadcastProgress = $progress;
-        $this->lastBroadcastStatus = $status;
-        $this->lastBroadcastAt = now();
-    }
-
-    public function failed(Throwable $exception): void
-    {
-        $schoolAdmin = Schooladmin::where("school_branch_id", $this->schoolBranchId)->find($this->adminId);
-        $schoolBranch = Schoolbranches::find($this->schoolBranchId);
-        $systemJob = SystemJob::find($this->jobId);
-
-        Log::error("TeacherImportJob [" . ($systemJob?->id ?? $this->jobId) . "] permanently failed.", [
-            'school_id' => $schoolBranch?->id,
-            'error'     => $exception->getMessage(),
-            'file'      => $exception->getFile(),
-            'line'      => $exception->getLine(),
-            'payload'   => $systemJob?->input['origin'] ?? null,
-            'trace'     => $exception->getTraceAsString(),
-        ]);
-
-        if ($systemJob) {
-            SystemJobError::create([
-                'job_id' => $systemJob->id,
-                'school_branch_id' => $this->schoolBranchId,
-                'code' => 500,
-                'message' => 'Job failed permanently: ' . $exception->getMessage(),
-                'stage' => 'job_failure',
-                'data' => [
-                    'exception' => [
-                        'message' => $exception->getMessage(),
-                        'file' => $exception->getFile(),
-                        'line' => $exception->getLine(),
-                        'trace' => $exception->getTraceAsString()
-                    ],
-                    'timestamp' => Carbon::now()->toISOString()
-                ]
-            ]);
-
-            $jobHelperService = app(JobHelperService::class);
-            $jobHelperService->failJob($systemJob, $exception->getMessage(), 500);
-
-            event(new JobEvent(
-                $schoolAdmin,
-                $schoolBranch,
-                [
-                    'job_id'   => $systemJob->id,
-                    'status'   => 'failed',
-                    'stage'    => 'Failed',
-                    'progress' => 0,
-                    'error'    => $exception->getMessage(),
-                ]
-            ));
-        }
+        return collect(preg_split('/[|;]/', $value))
+            ->map(fn($part) => trim($part))
+            ->filter(fn($part) => $part !== '')
+            ->unique(fn($part) => ImportLookups::key($part))
+            ->values()
+            ->all();
     }
 }

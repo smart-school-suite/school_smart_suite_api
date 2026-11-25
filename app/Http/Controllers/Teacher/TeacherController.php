@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\Teacher;
 
+use App\Services\Import\ImportJobDispatcher;
+
 use App\Http\Controllers\Controller;
 use App\Jobs\Teacher\TeacherImportJob;
-use App\Models\Job\SystemJobDetail;
-use App\Models\Job\SystemJob;
 use Illuminate\Http\Request;
 use App\Http\Requests\Teacher\ImportTeacherRequest;
 use App\Services\ApiResponseService;
 use App\Http\Requests\Teacher\UpdateTeacherRequest;
 use App\Http\Requests\Teacher\TeacherIdRequest;
-use App\Models\Job\SystemJobCategory;
 use App\Models\Teacher;
 use App\Services\Teacher\TeacherService;
 
@@ -102,63 +101,15 @@ class TeacherController extends Controller
 
     public function importTeacher(ImportTeacherRequest $request)
     {
-        $authUser = $this->resolveUser();
-        $currentSchool = $request->attributes->get('currentSchool');
-        $category = SystemJobCategory::where('name', 'teacher')->firstOrFail();
-
-        $filePath = $request->file('file')->store(
-            "imports/teachers/{$currentSchool->id}",
-            'r2'
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            TeacherImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
         );
 
-        $payload = $request->validated();
-        $payload['file_path'] = $filePath;
-        unset($payload['file']);
-
-        $systemJob = SystemJob::create([
-            'type'              => 'teacher_import',
-            'context_type'      => Teacher::class,
-            'stage'             => 'Queued',
-            'status'            => 'queued',
-            'context_id'        => $currentSchool->id,
-            'initiated_by_id'   => $authUser->id,
-            'category_id'       => $category->id,
-            'initiated_by_type' => $authUser::class,
-            'queue'             => 'database',
-            'started_at'        => now(),
-        ]);
-
-         SystemJobDetail::create([
-            'job_id'           => $systemJob->id,
-            'school_branch_id' => $currentSchool->id,
-            'input'            => [
-                'file_path' => $filePath,
-                'mapping'       => $payload['mapping'],
-                'original'  => $payload,
-            ],
-            'summary'          => null,
-            'result'           => null,
-            'metadata'         => [
-                'last_broadcast_progress' => 0,
-                'last_broadcast_status'   => null,
-                'last_broadcast_at'       => null,
-            ],
-        ]);
-
-        TeacherImportJob::dispatch(
-            $authUser->id,
-            $currentSchool->id,
-            $category->id,
-            $systemJob->id,
-            $payload
-        );
-
-        return ApiResponseService::success(
-            'Teacher Importation Process Initiated Successfully',
-            null,
-            null,
-            200
-        );
+        return ApiResponseService::success('Teacher import started', $job, null, 202);
     }
     protected function resolveUser()
     {
