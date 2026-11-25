@@ -232,9 +232,11 @@ class StudentFeeGenerationTest extends TestCase
     public function test_automatically_created_academic_years_bill_their_own_students(): void
     {
         DB::table('setting_categories')->insert(['id' => 'cat', 'name' => 'Academic Year Settings', 'key' => 'setting.category.academic_year']);
-        DB::table('setting_definations')->insert(['id' => 'def-mode', 'name' => 'mode', 'key' => 'academic_year.auto_create_mode', 'data_type' => 'string', 'setting_category_id' => 'cat']);
+        DB::table('setting_definations')->insert(['id' => 'def-enabled', 'name' => 'enabled', 'key' => 'academic_year.auto_create_enabled', 'data_type' => 'boolean', 'setting_category_id' => 'cat']);
+        DB::table('setting_definations')->insert(['id' => 'def-scope', 'name' => 'scope', 'key' => 'academic_year.auto_create_across_department_specialty', 'data_type' => 'boolean', 'setting_category_id' => 'cat']);
         DB::table('setting_definations')->insert(['id' => 'def-levels', 'name' => 'levels', 'key' => 'academic_year.auto_create_levels', 'data_type' => 'json', 'setting_category_id' => 'cat']);
-        SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => 'def-mode', 'value' => 'same_specialty']);
+        SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => 'def-enabled', 'value' => true]);
+        SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => 'def-scope', 'value' => true]);
         SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => 'def-levels', 'value' => ['lvl-1', 'lvl-2']]);
         $this->student('stu-1');
         $this->student('stu-2', 'swe-2');

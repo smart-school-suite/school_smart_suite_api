@@ -37,12 +37,12 @@ class AutoCreateRequireStudentsHandler implements SettingUpdateHandler
             );
         }
 
-        if ($filteredValue && !Settings::forBranch($currentSchool->id, $prefix)->enabled()) {
+        if ($filteredValue && !Settings::forBranch($currentSchool->id, $prefix)->active) {
             throw new AppException(
-                Settings::label($prefix) . " is disabled.",
+                Settings::label($prefix) . " is off.",
                 400,
-                Settings::label($prefix) . " Disabled",
-                "Enable " . Settings::label($prefix) . " before restricting it to specialties with enrolled students.",
+                Settings::label($prefix) . " Is Off",
+                "Turn on " . Settings::label($prefix) . " before restricting it to specialties with enrolled students.",
                 "value"
             );
         }

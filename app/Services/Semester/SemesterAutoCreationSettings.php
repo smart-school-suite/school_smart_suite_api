@@ -13,10 +13,12 @@ final class SemesterAutoCreationSettings
 {
     public const PREFIX = AutoCreationSettings::SEMESTER;
 
-    public const MODE = self::PREFIX . AutoCreationSettings::MODE;
+    public const ENABLED = self::PREFIX . AutoCreationSettings::ENABLED;
     public const LEVELS = self::PREFIX . AutoCreationSettings::LEVELS;
-    public const ACROSS_SPECIALTIES = self::PREFIX . AutoCreationSettings::ACROSS_SPECIALTIES;
-    public const ACROSS_ALL_LEVELS = self::PREFIX . AutoCreationSettings::ACROSS_ALL_LEVELS;
+    public const ACROSS_LEVELS = self::PREFIX . AutoCreationSettings::ACROSS_LEVELS;
+    public const ACROSS_SPECIALTY = self::PREFIX . AutoCreationSettings::ACROSS_SPECIALTY;
+    public const ACROSS_DEPARTMENT_LEVELS = self::PREFIX . AutoCreationSettings::ACROSS_DEPARTMENT_LEVELS;
+    public const ACROSS_DEPARTMENT_SPECIALTY = self::PREFIX . AutoCreationSettings::ACROSS_DEPARTMENT_SPECIALTY;
     public const REQUIRE_STUDENTS = self::PREFIX . AutoCreationSettings::REQUIRE_STUDENTS;
 
     public static function forBranch(string $schoolBranchId): AutoCreationSettings

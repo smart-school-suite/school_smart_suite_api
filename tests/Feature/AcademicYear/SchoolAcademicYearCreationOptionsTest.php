@@ -39,10 +39,12 @@ class SchoolAcademicYearCreationOptionsTest extends TestCase
 
         DB::table('setting_categories')->insert(['id' => 'cat', 'name' => 'Academic Year Settings', 'key' => 'setting.category.academic_year']);
         foreach ([
-            'mode' => ['string', 'disabled'],
+            'enabled' => ['boolean', false],
+            'across_levels' => ['boolean', false],
+            'across_specialty' => ['boolean', false],
+            'across_department_levels' => ['boolean', false],
+            'across_department_specialty' => ['boolean', true],
             'levels' => ['json', ['lvl-1', 'lvl-2']],
-            'across_specialties' => ['boolean', false],
-            'across_all_levels' => ['boolean', false],
             'require_students' => ['boolean', false],
         ] as $name => [$type, $value]) {
             DB::table('setting_definations')->insert(['id' => "def-$name", 'name' => $name, 'key' => self::PREFIX . $name, 'data_type' => $type, 'setting_category_id' => 'cat']);
@@ -122,7 +124,7 @@ class SchoolAcademicYearCreationOptionsTest extends TestCase
     {
         $this->assertSame([], $this->creationOptions()['specialties'][0]['copy_targets']);
 
-        SchoolBranchSetting::where('setting_defination_id', 'def-mode')->first()->update(['value' => 'same_specialty']);
+        SchoolBranchSetting::where('setting_defination_id', 'def-enabled')->first()->update(['value' => true]);
         $this->schoolYear('sy-2', 'swe-2', 'year-26', '2026-09-01', '2027-06-30');
 
         $options = $this->creationOptions();

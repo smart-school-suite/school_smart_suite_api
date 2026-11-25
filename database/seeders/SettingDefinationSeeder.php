@@ -32,6 +32,7 @@ class SettingDefinationSeeder extends Seeder
         $this->semesterSetting();
         $this->academicYearSetting();
 
+        app(AutoCreationSettingsUpgrade::class)->run();
         $this->removeUndefinedSettings();
     }
 
@@ -381,41 +382,7 @@ class SettingDefinationSeeder extends Seeder
                 'default_value' => 2,
                 'description' => 'The maximum number of semesters in an academic year. Semesters beyond this number cannot be created.',
             ],
-            [
-                'key' => 'semester.auto_create_mode',
-                'label' => 'Automatic Semester Creation',
-                'data_type' => 'string',
-                'default_value' => 'disabled',
-                'description' => 'Determines whether newly created semesters are automatically created for other academic levels. Disabled: create the semester only for the selected academic level. Within the Same Specialty: automatically create it for the other applicable levels of the same specialty. Across Specialties: also create it for applicable levels of other specialties in the same department. Only one option can be selected at a time.',
-            ],
-            [
-                'key' => 'semester.auto_create_levels',
-                'label' => 'Applicable Academic Levels',
-                'data_type' => 'json',
-                'default_value' => $levelIds,
-                'description' => 'Determines which academic levels receive automatically created semesters. Only the selected levels receive them. The level a semester is created for always receives it, regardless of this setting. Only applies when Automatic Semester Creation is enabled.',
-            ],
-            [
-                'key' => 'semester.auto_create_across_specialties',
-                'label' => 'Across Specialties',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, semesters are also created for other specialties in the department, at the applicable levels the original specialty also has. When disabled, creation stays within the original specialty unless Across All Specialties\' Levels is enabled. Only applies when Automatic Semester Creation is enabled.',
-            ],
-            [
-                'key' => 'semester.auto_create_across_all_levels',
-                'label' => 'Across All Specialties\' Levels',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, semesters are created for every applicable level of the other specialties in the department, even levels the original specialty does not have. Can be enabled together with Across Specialties. Only applies when Automatic Semester Creation is enabled.',
-            ],
-            [
-                'key' => 'semester.auto_create_require_students',
-                'label' => 'Only Include Specialties with Enrolled Students',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, automatically created semesters are only created for specialty levels that have at least one enrolled student; levels without enrolled students are skipped. When disabled, semesters are created regardless of student enrolment. The level a semester is created for always receives it. Only applies when Automatic Semester Creation is enabled.',
-            ],
+            ...$this->autoCreationDefinitions('semester.auto_create_', 'semesters', 'Semester', '', $levelIds),
         ];
 
         $this->seedDefinitions('Semester Settings', $settingDefs);
@@ -427,45 +394,81 @@ class SettingDefinationSeeder extends Seeder
         })->pluck('id')->values()->all();
 
         $settingDefs = [
-            [
-                'key' => 'academic_year.auto_create_mode',
-                'label' => 'Automatic Academic Year Creation',
-                'data_type' => 'string',
-                'default_value' => 'disabled',
-                'description' => 'Determines whether a newly created school academic year is automatically created for other academic levels. Disabled: create the academic year only for the selected specialty level. Within the Same Specialty: automatically create it for the other applicable levels of the same specialty. Across Specialties: also create it for applicable levels of other specialties in the same department. Only one option can be selected at a time.',
-            ],
-            [
-                'key' => 'academic_year.auto_create_levels',
-                'label' => 'Applicable Academic Levels for Academic Years',
-                'data_type' => 'json',
-                'default_value' => $levelIds,
-                'description' => 'Determines which academic levels receive automatically created academic years. Only the selected levels receive them. The level an academic year is created for always receives it, regardless of this setting. Only applies when Automatic Academic Year Creation is enabled.',
-            ],
-            [
-                'key' => 'academic_year.auto_create_across_specialties',
-                'label' => 'Academic Years Across Specialties',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, academic years are also created for other specialties in the department, at the applicable levels the original specialty also has. Only applies when Automatic Academic Year Creation is enabled.',
-            ],
-            [
-                'key' => 'academic_year.auto_create_across_all_levels',
-                'label' => 'Academic Years Across All Specialties\' Levels',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, academic years are created for every applicable level of the other specialties in the department, even levels the original specialty does not have. Can be enabled together with Academic Years Across Specialties. Only applies when Automatic Academic Year Creation is enabled.',
-            ],
-            [
-                'key' => 'academic_year.auto_create_require_students',
-                'label' => 'Academic Years Only for Specialties with Enrolled Students',
-                'data_type' => 'boolean',
-                'default_value' => false,
-                'description' => 'When enabled, automatically created academic years are only created for specialty levels that have at least one enrolled student. The level an academic year is created for always receives it. Only applies when Automatic Academic Year Creation is enabled.',
-            ],
+            ...$this->autoCreationDefinitions('academic_year.auto_create_', 'academic years', 'Academic Year', 'Academic Years ', $levelIds),
         ];
 
         $this->seedDefinitions('Academic Year Settings', $settingDefs);
     }
+    private function autoCreationDefinitions(string $prefix, string $noun, string $title, string $labelPrefix, array $levelIds): array
+    {
+        $only = "Only one of the four options can be on. Only applies when Automatic {$title} Creation is on.";
+
+        return [
+            [
+                'key' => $prefix . 'enabled',
+                'label' => "Automatic {$title} Creation",
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => "When on, creating one of the {$noun} also creates it for other specialty levels, as chosen below.",
+            ],
+            [
+                'key' => $prefix . 'levels',
+                'label' => $labelPrefix === '' ? 'Applicable Academic Levels' : "Applicable Academic Levels for " . trim($labelPrefix),
+                'data_type' => 'json',
+                'default_value' => $levelIds,
+                'description' => "Only the selected levels receive automatically created {$noun}. The level a record is created for always receives it. Only applies when Automatic {$title} Creation is on.",
+            ],
+            [
+                'key' => $prefix . 'across_levels',
+                'label' => "{$labelPrefix}Across All Levels",
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => "Creates {$noun} for every specialty in the school at the applicable levels, whatever the specialty or department. {$only}",
+            ],
+            [
+                'key' => $prefix . 'across_specialty',
+                'label' => "{$labelPrefix}Across the Same Specialty",
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => "Creates {$noun} for the other applicable levels of the same specialty, in any department. {$only}",
+            ],
+            [
+                'key' => $prefix . 'across_department_levels',
+                'label' => "{$labelPrefix}Across All Levels in the Department",
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => "Creates {$noun} for every specialty in the same department at the applicable levels. {$only}",
+            ],
+            [
+                'key' => $prefix . 'across_department_specialty',
+                'label' => "{$labelPrefix}Across the Same Specialty in the Department",
+                'data_type' => 'boolean',
+                'default_value' => true,
+                'description' => "Creates {$noun} for the other applicable levels of the same specialty in the same department. {$only}",
+            ],
+            [
+                'key' => $prefix . 'require_students',
+                'label' => $labelPrefix === '' ? 'Only Include Specialties with Enrolled Students' : "{$labelPrefix}Only for Specialties with Enrolled Students",
+                'data_type' => 'boolean',
+                'default_value' => false,
+                'description' => "When on, {$noun} are only created automatically for specialty levels with at least one enrolled student. The level a record is created for always receives it. Only applies when Automatic {$title} Creation is on.",
+            ],
+        ];
+    }
+
+    /**
+     * Names are unique. When a definition takes over a name still held by
+     * another key (one being retired), that one is renamed first; it is
+     * removed with the other undefined settings at the end of the run.
+     */
+    private function freeName(string $name, string $key): void
+    {
+        SettingDefination::where('name', $name)
+            ->where('key', '!=', $key)
+            ->get()
+            ->each(fn (SettingDefination $holder) => $holder->update(['name' => "{$holder->name} ({$holder->key})"]));
+    }
+
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {
         // Recorded before the category check so a missing category never
@@ -479,6 +482,7 @@ class SettingDefinationSeeder extends Seeder
         }
 
         foreach ($settingDefs as $settingDef) {
+            $this->freeName($settingDef['label'], $settingDef['key']);
             SettingDefination::updateOrCreate(
                 ['key' => $settingDef['key']],
                 [
