@@ -30,9 +30,9 @@ use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitGeneralBillingHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingFeeHandler;
 use App\SchoolBranchSetting\Handlers\Resit\ResitLevelBillingHandler;
-use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateAcrossSwitchHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateEnabledHandler;
 use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateLevelsHandler;
-use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateModeHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateScopeHandler;
 use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateRequireStudentsHandler;
 use App\SchoolBranchSetting\Handlers\Semester\MaxSemestersPerYearHandler;
 use App\SchoolBranchSetting\Handlers\SemesterTimetable\IgnoreTeacherPreferenceHandler;
@@ -87,17 +87,21 @@ class SettingUpdateRegistry
           //
 
           'semester.max_per_academic_year' => MaxSemestersPerYearHandler::class,
-          'semester.auto_create_mode' => AutoCreateModeHandler::class,
+          'semester.auto_create_enabled' => AutoCreateEnabledHandler::class,
           'semester.auto_create_levels' => AutoCreateLevelsHandler::class,
-          'semester.auto_create_across_specialties' => AutoCreateAcrossSwitchHandler::class,
-          'semester.auto_create_across_all_levels' => AutoCreateAcrossSwitchHandler::class,
+          'semester.auto_create_across_levels' => AutoCreateScopeHandler::class,
+          'semester.auto_create_across_specialty' => AutoCreateScopeHandler::class,
+          'semester.auto_create_across_department_levels' => AutoCreateScopeHandler::class,
+          'semester.auto_create_across_department_specialty' => AutoCreateScopeHandler::class,
           'semester.auto_create_require_students' => AutoCreateRequireStudentsHandler::class,
           //
 
-          'academic_year.auto_create_mode' => AutoCreateModeHandler::class,
+          'academic_year.auto_create_enabled' => AutoCreateEnabledHandler::class,
           'academic_year.auto_create_levels' => AutoCreateLevelsHandler::class,
-          'academic_year.auto_create_across_specialties' => AutoCreateAcrossSwitchHandler::class,
-          'academic_year.auto_create_across_all_levels' => AutoCreateAcrossSwitchHandler::class,
+          'academic_year.auto_create_across_levels' => AutoCreateScopeHandler::class,
+          'academic_year.auto_create_across_specialty' => AutoCreateScopeHandler::class,
+          'academic_year.auto_create_across_department_levels' => AutoCreateScopeHandler::class,
+          'academic_year.auto_create_across_department_specialty' => AutoCreateScopeHandler::class,
           'academic_year.auto_create_require_students' => AutoCreateRequireStudentsHandler::class,
 
           //

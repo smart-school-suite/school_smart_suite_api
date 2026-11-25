@@ -50,10 +50,12 @@ class SchoolSemesterCreationOptionsTest extends TestCase
 
         DB::table('setting_categories')->insert(['id' => 'cat-sem', 'name' => 'Semester Settings', 'key' => 'setting.category.semester']);
         $defaults = [
-            Settings::MODE => ['string', 'disabled'],
+            Settings::ENABLED => ['boolean', false],
+            Settings::ACROSS_LEVELS => ['boolean', false],
+            Settings::ACROSS_SPECIALTY => ['boolean', false],
+            Settings::ACROSS_DEPARTMENT_LEVELS => ['boolean', false],
+            Settings::ACROSS_DEPARTMENT_SPECIALTY => ['boolean', true],
             Settings::LEVELS => ['json', ['lvl-1', 'lvl-2']],
-            Settings::ACROSS_SPECIALTIES => ['boolean', false],
-            Settings::ACROSS_ALL_LEVELS => ['boolean', false],
             Settings::REQUIRE_STUDENTS => ['boolean', false],
             'level.start' => ['string', 'level_start_100'],
         ];
@@ -139,7 +141,7 @@ class SchoolSemesterCreationOptionsTest extends TestCase
     {
         $this->assertSame([], $this->year($this->creationOptions(), 'sy-1')['copy_targets']);
 
-        SchoolBranchSetting::where('setting_defination_id', 'def-' . Settings::MODE)->first()->update(['value' => 'same_specialty']);
+        SchoolBranchSetting::where('setting_defination_id', 'def-' . Settings::ENABLED)->first()->update(['value' => true]);
         DB::table('school_semesters')->insert(['id' => 'ss-2', 'semester_id' => 'sem-1', 'school_year_id' => 'sy-2', 'start_date' => '2026-09-01', 'end_date' => '2027-01-31', 'school_branch_id' => 'branch-1', 'timetable_published' => false]);
 
         $options = $this->creationOptions();

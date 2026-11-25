@@ -6,22 +6,20 @@ use App\Models\SchoolBranchSetting;
 
 /**
  * A school branch's automatic creation settings for one kind of record.
- * The same five settings exist for each kind, under its key prefix:
+ * The same settings exist for each kind, under its key prefix:
  *
  *  - semester.auto_create_*       (Semester Settings)
  *  - academic_year.auto_create_*  (Academic Year Settings)
  *
  * Settings (key = prefix + name):
- *  - mode: disabled | same_specialty | across_specialties.
+ *  - enabled: the main switch.
  *  - levels: the level ids that may receive automatically created records.
- *  - across_specialties: other specialties of the department receive them,
- *    at the levels the original specialty also has.
- *  - across_all_levels: other specialties of the department receive them,
- *    at every applicable level.
- *  - require_students: only specialty levels with enrolled students do.
- *
- * The two "across" switches are independent and are kept in step with the
- * mode by the setting handlers: either switch on means across_specialties.
+ *  - one of four scopes, at most one on at a time:
+ *      across_levels                every specialty of the branch;
+ *      across_specialty             the same specialty, in any department;
+ *      across_department_levels     every specialty of the same department;
+ *      across_department_specialty  the same specialty, same department.
+ *  - require_students: only specialty levels with enrolled students.
  */
 class AutoCreationSettings
 {
@@ -29,21 +27,26 @@ class AutoCreationSettings
     public const ACADEMIC_YEAR = 'academic_year.auto_create_';
     public const PREFIXES = [self::SEMESTER, self::ACADEMIC_YEAR];
 
-    public const MODE = 'mode';
+    public const ENABLED = 'enabled';
     public const LEVELS = 'levels';
-    public const ACROSS_SPECIALTIES = 'across_specialties';
-    public const ACROSS_ALL_LEVELS = 'across_all_levels';
     public const REQUIRE_STUDENTS = 'require_students';
 
-    public const NAMES = [self::MODE, self::LEVELS, self::ACROSS_SPECIALTIES, self::ACROSS_ALL_LEVELS, self::REQUIRE_STUDENTS];
-    public const SWITCHES = [self::ACROSS_SPECIALTIES, self::ACROSS_ALL_LEVELS];
+    public const ACROSS_LEVELS = 'across_levels';
+    public const ACROSS_SPECIALTY = 'across_specialty';
+    public const ACROSS_DEPARTMENT_LEVELS = 'across_department_levels';
+    public const ACROSS_DEPARTMENT_SPECIALTY = 'across_department_specialty';
 
-    public const MODE_DISABLED = 'disabled';
-    public const MODE_SAME_SPECIALTY = 'same_specialty';
-    public const MODE_ACROSS_SPECIALTIES = 'across_specialties';
-    public const MODES = [self::MODE_DISABLED, self::MODE_SAME_SPECIALTY, self::MODE_ACROSS_SPECIALTIES];
+    public const SCOPES = [
+        self::ACROSS_LEVELS,
+        self::ACROSS_SPECIALTY,
+        self::ACROSS_DEPARTMENT_LEVELS,
+        self::ACROSS_DEPARTMENT_SPECIALTY,
+    ];
 
-    /** The name of the setting group, as shown to admins. */
+    public const DEFAULT_SCOPE = self::ACROSS_DEPARTMENT_SPECIALTY;
+
+    public const NAMES = [self::ENABLED, self::LEVELS, ...self::SCOPES, self::REQUIRE_STUDENTS];
+
     public const LABELS = [
         self::SEMESTER => 'Automatic Semester Creation',
         self::ACADEMIC_YEAR => 'Automatic Academic Year Creation',
@@ -51,36 +54,39 @@ class AutoCreationSettings
 
     public function __construct(
         public readonly string $prefix,
-        public readonly string $mode = self::MODE_DISABLED,
+        public readonly bool $active = false,
+        public readonly ?string $scope = null,
         public readonly array $levelIds = [],
-        public readonly bool $acrossSpecialties = false,
-        public readonly bool $acrossAllLevels = false,
         public readonly bool $requireStudents = false,
     ) {}
 
     public static function forBranch(string $schoolBranchId, string $prefix): self
     {
         $values = self::settings($schoolBranchId, $prefix)->map(fn($setting) => $setting->value);
-        $mode = $values[self::MODE] ?? null;
+        $isOn = fn(string $name) => filter_var($values[$name] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         return new self(
             prefix: $prefix,
-            mode: in_array($mode, self::MODES, true) ? $mode : self::MODE_DISABLED,
+            active: $isOn(self::ENABLED),
+            scope: collect(self::SCOPES)->first($isOn),
             levelIds: self::levelIds($values[self::LEVELS] ?? []),
-            acrossSpecialties: filter_var($values[self::ACROSS_SPECIALTIES] ?? false, FILTER_VALIDATE_BOOLEAN),
-            acrossAllLevels: filter_var($values[self::ACROSS_ALL_LEVELS] ?? false, FILTER_VALIDATE_BOOLEAN),
-            requireStudents: filter_var($values[self::REQUIRE_STUDENTS] ?? false, FILTER_VALIDATE_BOOLEAN),
+            requireStudents: $isOn(self::REQUIRE_STUDENTS),
         );
     }
 
     public function enabled(): bool
     {
-        return $this->mode !== self::MODE_DISABLED;
+        return $this->active && $this->scope !== null;
     }
 
-    public function includesOtherSpecialties(): bool
+    public function sameDepartment(): bool
     {
-        return $this->mode === self::MODE_ACROSS_SPECIALTIES && ($this->acrossSpecialties || $this->acrossAllLevels);
+        return in_array($this->scope, [self::ACROSS_DEPARTMENT_LEVELS, self::ACROSS_DEPARTMENT_SPECIALTY], true);
+    }
+
+    public function sameSpecialty(): bool
+    {
+        return in_array($this->scope, [self::ACROSS_SPECIALTY, self::ACROSS_DEPARTMENT_SPECIALTY], true);
     }
 
     public static function key(string $prefix, string $name): string

@@ -7,8 +7,8 @@ use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\FeeSchedule;
 use App\Models\Promotion\PromotionRun;
 use App\Models\SchoolBranchSetting;
-use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateAcrossSwitchHandler;
-use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateModeHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateEnabledHandler;
+use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateScopeHandler;
 use App\SchoolBranchSetting\Handlers\AutoCreation\AutoCreateRequireStudentsHandler;
 use App\Services\AcademicYear\SchoolAcademicYearAutoCreationService;
 use App\Services\AcademicYear\SchoolAcademicYearService;
@@ -45,6 +45,7 @@ class AutomaticAcademicYearCreationTest extends TestCase
             ['net-2', 'Networking', 'lvl-2', 'computing', 'branch-1'],
             ['net-4', 'Networking', 'lvl-4', 'computing', 'branch-1'],
             ['acc-2', 'Accounting', 'lvl-2', 'business', 'branch-1'],
+            ['biz-swe-2', 'Software Engineering', 'lvl-2', 'business', 'branch-1'],
             ['b2-swe-2', 'Software Engineering', 'lvl-2', 'computing', 'branch-2'],
         ] as [$id, $name, $level, $department, $branch]) {
             DB::table('specialties')->insert(['id' => $id, 'specialty_name' => $name, 'registration_fee' => 0, 'school_fee' => 0, 'status' => 'active', 'school_branch_id' => $branch, 'department_id' => $department, 'level_id' => $level]);
@@ -52,10 +53,12 @@ class AutomaticAcademicYearCreationTest extends TestCase
 
         DB::table('setting_categories')->insert(['id' => 'cat', 'name' => 'Academic Year Settings', 'key' => 'setting.category.academic_year']);
         foreach ([
-            'mode' => ['string', 'disabled'],
+            'enabled' => ['boolean', false],
             'levels' => ['json', ['lvl-1', 'lvl-2', 'lvl-3', 'lvl-4']],
-            'across_specialties' => ['boolean', false],
-            'across_all_levels' => ['boolean', false],
+            'across_levels' => ['boolean', false],
+            'across_specialty' => ['boolean', false],
+            'across_department_levels' => ['boolean', false],
+            'across_department_specialty' => ['boolean', true],
             'require_students' => ['boolean', false],
         ] as $name => [$type, $value]) {
             DB::table('setting_definations')->insert(['id' => "def-$name", 'name' => $name, 'key' => self::PREFIX . $name, 'data_type' => $type, 'setting_category_id' => 'cat']);
@@ -70,11 +73,12 @@ class AutomaticAcademicYearCreationTest extends TestCase
         return SchoolBranchSetting::with('settingDefination')->where('school_branch_id', 'branch-1')->where('setting_defination_id', "def-$name")->first();
     }
 
-    private function configure(string $mode, bool $acrossSpecialties = false, bool $acrossAllLevels = false, bool $requireStudents = false, ?array $levels = null): void
+    private function configure(string $scope, bool $requireStudents = false, ?array $levels = null): void
     {
-        $this->setting('mode')->update(['value' => $mode]);
-        $this->setting('across_specialties')->update(['value' => $acrossSpecialties]);
-        $this->setting('across_all_levels')->update(['value' => $acrossAllLevels]);
+        $this->setting('enabled')->update(['value' => true]);
+        foreach (['across_levels', 'across_specialty', 'across_department_levels', 'across_department_specialty'] as $name) {
+            $this->setting($name)->update(['value' => $name === $scope]);
+        }
         $this->setting('require_students')->update(['value' => $requireStudents]);
         if ($levels !== null) {
             $this->setting('levels')->update(['value' => $levels]);
@@ -104,9 +108,9 @@ class AutomaticAcademicYearCreationTest extends TestCase
         $this->assertCount(0, $year->autoCreatedAcademicYears);
     }
 
-    public function test_within_the_same_specialty_creates_its_other_levels_with_fee_schedules_and_promotion_runs(): void
+    public function test_same_specialty_in_the_department_creates_its_other_levels_with_fee_schedules_and_promotion_runs(): void
     {
-        $this->configure('same_specialty');
+        $this->configure('across_department_specialty');
 
         $year = $this->create();
 
@@ -117,28 +121,36 @@ class AutomaticAcademicYearCreationTest extends TestCase
         $this->assertSame(3, PromotionRun::count());
     }
 
-    public function test_across_specialties_uses_the_original_specialtys_levels(): void
+    public function test_same_specialty_reaches_it_in_every_department(): void
     {
-        $this->configure('across_specialties', acrossSpecialties: true);
+        $this->configure('across_specialty');
 
         $this->create();
 
-        // Networking L4 is skipped (Software Engineering has no Level 4); Accounting is another department.
-        $this->assertSame(['net-2', 'swe-2', 'swe-3'], $this->createdFor());
+        $this->assertSame(['biz-swe-2', 'swe-2', 'swe-3'], $this->createdFor());
     }
 
-    public function test_across_all_specialties_levels_includes_every_applicable_level(): void
+    public function test_all_levels_in_the_department_covers_every_specialty_of_the_department(): void
     {
-        $this->configure('across_specialties', acrossAllLevels: true, levels: ['lvl-2', 'lvl-4']);
+        $this->configure('across_department_levels');
 
         $this->create();
 
-        $this->assertSame(['net-2', 'net-4', 'swe-2'], $this->createdFor());
+        $this->assertSame(['net-2', 'net-4', 'swe-2', 'swe-3'], $this->createdFor());
+    }
+
+    public function test_all_levels_covers_every_specialty_of_the_branch_at_the_ticked_levels(): void
+    {
+        $this->configure('across_levels', levels: ['lvl-2']);
+
+        $this->create();
+
+        $this->assertSame(['acc-2', 'biz-swe-2', 'net-2', 'swe-2'], $this->createdFor());
     }
 
     public function test_require_students_skips_specialty_levels_without_enrolled_students(): void
     {
-        $this->configure('same_specialty', requireStudents: true);
+        $this->configure('across_department_specialty', requireStudents: true);
         DB::table('students')->insert(['id' => 'stu-3', 'name' => 'S', 'first_name' => 'S', 'last_name' => 'S', 'email' => 's@example.com', 'password' => 'x', 'username' => 's', 'school_branch_id' => 'branch-1', 'specialty_id' => 'swe-3', 'dropout_status' => false, 'guardian_id' => 'g', 'student_batch_id' => 'b', 'gender_id' => 'g', 'relationship_id' => 'r', 'student_source_id' => 's']);
 
         $this->create();
@@ -148,7 +160,7 @@ class AutomaticAcademicYearCreationTest extends TestCase
 
     public function test_existing_academic_years_are_not_duplicated_and_other_branches_are_untouched(): void
     {
-        $this->configure('across_specialties', acrossSpecialties: true, acrossAllLevels: true);
+        $this->configure('across_levels');
         DB::table('school_academic_years')->insert(['id' => 'existing', 'start_date' => '2099-10-01', 'end_date' => '2100-05-30', 'specialty_id' => 'swe-2', 'system_academic_year_id' => 'year-2099', 'school_branch_id' => 'branch-1']);
 
         $this->create();
@@ -159,7 +171,7 @@ class AutomaticAcademicYearCreationTest extends TestCase
 
     public function test_a_failure_rolls_back_the_original_and_every_copy(): void
     {
-        $this->configure('same_specialty');
+        $this->configure('across_department_specialty');
         $this->app->instance(SchoolAcademicYearAutoCreationService::class, new class(app(\App\Services\AutoCreation\AutoCreationTargets::class)) extends SchoolAcademicYearAutoCreationService {
             public function createFor(SchoolAcademicYear $original, \App\Models\Specialty $specialty): Collection
             {
@@ -186,25 +198,43 @@ class AutomaticAcademicYearCreationTest extends TestCase
         $this->create('b2-swe-2');
     }
 
-    public function test_handlers_keep_the_academic_year_group_in_step_without_touching_semester_settings(): void
+    public function test_only_one_scope_can_be_on_and_semester_settings_are_untouched(): void
     {
-        DB::table('setting_definations')->insert(['id' => 'def-sem-mode', 'name' => 'sem mode', 'key' => 'semester.auto_create_mode', 'data_type' => 'string', 'setting_category_id' => 'cat']);
-        SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => 'def-sem-mode', 'value' => 'disabled']);
+        DB::table('setting_definations')->insert(['id' => 'def-sem-enabled', 'name' => 'sem enabled', 'key' => 'semester.auto_create_enabled', 'data_type' => 'boolean', 'setting_category_id' => 'cat']);
+        SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => 'def-sem-enabled', 'value' => false]);
+        $scope = new AutoCreateScopeHandler();
 
-        try {
-            (new AutoCreateRequireStudentsHandler())->handle($this->setting('require_students'), true, $this->school, null);
-            $this->fail('Expected the setting to be refused while creation is disabled.');
-        } catch (AppException $e) {
-            $this->assertSame(400, $e->getCode());
-            $this->assertStringContainsString('Automatic Academic Year Creation', $e->getMessage());
+        foreach (['require_students' => new AutoCreateRequireStudentsHandler(), 'across_levels' => $scope] as $name => $handler) {
+            try {
+                $handler->handle($this->setting($name), true, $this->school, null);
+                $this->fail("Expected {$name} to be refused while creation is off.");
+            } catch (AppException $e) {
+                $this->assertSame(400, $e->getCode());
+                $this->assertStringContainsString('Automatic Academic Year Creation', $e->getMessage());
+            }
         }
 
-        (new AutoCreateModeHandler())->handle($this->setting('mode'), 'across_specialties', $this->school, null);
-        $this->assertTrue($this->setting('across_specialties')->value);
+        $this->setting('across_department_specialty')->update(['value' => false]);
+        (new AutoCreateEnabledHandler())->handle($this->setting('enabled'), true, $this->school, null);
+        $this->assertTrue($this->setting('across_department_specialty')->value, 'Turning creation on picks the default option.');
 
-        (new AutoCreateAcrossSwitchHandler())->handle($this->setting('across_specialties'), false, $this->school, null);
-        $this->assertSame('same_specialty', $this->setting('mode')->value);
+        $scope->handle($this->setting('across_levels'), true, $this->school, null);
+        $this->assertSame(
+            ['across_levels' => true, 'across_specialty' => false, 'across_department_levels' => false, 'across_department_specialty' => false],
+            collect(['across_levels', 'across_specialty', 'across_department_levels', 'across_department_specialty'])->mapWithKeys(fn($name) => [$name => $this->setting($name)->value])->all()
+        );
 
-        $this->assertSame('disabled', SchoolBranchSetting::where('setting_defination_id', 'def-sem-mode')->first()->value);
+        try {
+            $scope->handle($this->setting('across_levels'), false, $this->school, null);
+            $this->fail('Expected the only option that is on to stay on.');
+        } catch (AppException $e) {
+            $this->assertSame('Pick Another Option', $e->getTitle());
+        }
+
+        (new AutoCreateEnabledHandler())->handle($this->setting('enabled'), false, $this->school, null);
+        $scope->handle($this->setting('across_levels'), false, $this->school, null);
+        $this->assertFalse($this->setting('across_levels')->value);
+
+        $this->assertFalse(SchoolBranchSetting::where('setting_defination_id', 'def-sem-enabled')->first()->value);
     }
 }
