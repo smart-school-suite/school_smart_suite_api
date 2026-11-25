@@ -3,7 +3,10 @@
 namespace App\Services\Import;
 
 use App\Models\Courses;
+use App\Models\Department;
 use App\Models\Educationlevels;
+use App\Models\Hall;
+use App\Models\HallType;
 use App\Models\Gender;
 use App\Models\Qualification;
 use App\Models\SchoolBranchSetting;
@@ -193,6 +196,53 @@ class ImportLookups
         }
 
         return $matches->first();
+    }
+
+    /** A department of the branch by name. */
+    public function department(?string $name): ?Department
+    {
+        if ($name === null || trim($name) === '') {
+            return null;
+        }
+
+        return $this->remember('departments', fn() => Department::where('school_branch_id', $this->schoolBranchId)
+            ->get(['id', 'department_name', 'school_branch_id']))
+            ->first(fn($department) => self::key($department->department_name) === self::key($name));
+    }
+
+    /** A hall of the branch by name. */
+    public function hall(?string $name): ?Hall
+    {
+        if ($name === null || trim($name) === '') {
+            return null;
+        }
+
+        return $this->remember('halls', fn() => Hall::where('school_branch_id', $this->schoolBranchId)
+            ->get(['id', 'name', 'school_branch_id']))
+            ->first(fn($hall) => self::key($hall->name) === self::key($name));
+    }
+
+    /** "Lecture Hall", "lecture" or "lecture.hall" -> the hall type's id. */
+    public function hallTypeId(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $types = $this->remember('hallTypes', fn() => HallType::all(['id', 'name', 'key']));
+        $key = self::key($value);
+
+        return ($types->first(fn($type) => self::key($type->name) === $key)
+            ?? $types->first(fn($type) => self::key($type->key) === $key)
+            ?? $types->first(fn($type) => self::key(str_replace(' hall', '', self::key($type->name))) === $key))?->id;
+    }
+
+    /** Names of the hall types, for messages. */
+    public function hallTypeNames(): string
+    {
+        return $this->remember('hallTypes', fn() => HallType::all(['id', 'name', 'key']))
+            ->pluck('name')
+            ->join(', ', ' or ');
     }
 
     /** Forget a cached list after rows changed it (e.g. a teacher was created). */

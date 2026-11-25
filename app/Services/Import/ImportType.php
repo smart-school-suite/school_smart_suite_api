@@ -19,6 +19,7 @@ enum ImportType: string
     case DEPARTMENT = 'department_import';
     case SPECIALTY = 'specialty_import';
     case HALL = 'hall_import';
+    case SPECIALTY_HALL = 'specialty_hall_import';
     case COURSE = 'course_import';
     case STUDENT = 'student_import';
     case GRADE_SCALE = 'grade_scale_import';
@@ -40,6 +41,7 @@ enum ImportType: string
             self::DEPARTMENT => 'Department',
             self::SPECIALTY => 'Specialty',
             self::HALL => 'Hall',
+            self::SPECIALTY_HALL => 'Specialty Hall',
             self::COURSE => 'Course',
             self::STUDENT => 'Student',
             self::GRADE_SCALE => 'Grade Scale',
@@ -57,7 +59,7 @@ enum ImportType: string
             self::TEACHER, self::TEACHER_SPECIALTY, self::TEACHER_COURSE => 'Teacher',
             self::DEPARTMENT => 'Department',
             self::SPECIALTY => 'Specialty',
-            self::HALL => 'Hall',
+            self::HALL, self::SPECIALTY_HALL => 'Hall',
             self::COURSE => 'Course',
             self::STUDENT => 'Student',
             self::GRADE_SCALE => 'Grade Scale',
@@ -75,6 +77,7 @@ enum ImportType: string
             self::DEPARTMENT => 'departments',
             self::SPECIALTY => 'specialties',
             self::HALL => 'halls',
+            self::SPECIALTY_HALL => 'specialty hall assignments',
             self::COURSE => 'courses',
             self::STUDENT => 'students',
             self::GRADE_SCALE => 'grade scales',

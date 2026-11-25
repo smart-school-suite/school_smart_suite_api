@@ -10,3 +10,4 @@ Route::get("/hall-assigned/{specialtyId}", [SpecialtyHallController::class, "get
 Route::delete("/delete/{specialtyId}", [SpecialtyHallController::class, "removeAllAssignedHalls"])->name("removeAll.AssignedHalls");
 Route::post("/remove/assigned", [SpecialtyHallController::class, 'removeAssignedHalls'])->name("remove.assignedHall");
 Route::get("/specialties", [SpecialtyHallController::class, 'getSpecialties'])->name("get.specialties");
+Route::post("/import", [SpecialtyHallController::class, "importSpecialtyHalls"])->name("import.specialtyHall");
