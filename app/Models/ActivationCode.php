@@ -12,7 +12,6 @@ class ActivationCode extends Model
     use GeneratesUuid;
     protected $fillable = [
         'code',
-        'code_type',
         'price',
         'duration',
         'expires_at',
