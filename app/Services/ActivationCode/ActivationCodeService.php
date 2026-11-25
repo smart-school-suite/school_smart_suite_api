@@ -31,7 +31,7 @@ class ActivationCodeService
             );
         }
 
-        if ($paymentMethod->status === SystemState::INACTIVE) {
+        if ($paymentMethod->status === SystemState::INACTIVE->value) {
             throw new AppException(
                 "Payment Method Unavailable",
                 400,
@@ -52,12 +52,16 @@ class ActivationCodeService
             );
         }
 
-        $pricing = ActivationCodeType::where('country_id', $currentSchool->school->country_id)
+        // One active code type (price) per country and type; each code is
+        // linked to its type through activation_code_type_id.
+        $types = ActivationCodeType::where('country_id', $currentSchool->school->country_id)
             ->whereIn('type', ['teacher', 'student'])
-            ->pluck('price', 'type');
+            ->where('status', SystemState::ACTIVE->value)
+            ->get(['id', 'price', 'type'])
+            ->keyBy('type');
 
-        $teacherPrice = $pricing['teacher'] ?? 0;
-        $studentPrice = $pricing['student'] ?? 0;
+        $teacherPrice = (float) ($types['teacher']->price ?? 0);
+        $studentPrice = (float) ($types['student']->price ?? 0);
 
         if ($teacherCount > 0 && !$teacherPrice) {
             throw new AppException(
@@ -93,9 +97,9 @@ class ActivationCodeService
 
         for ($i = 0; $i < $teacherCount; $i++) {
             $codes[] = [
-                'id' => Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'code' => 'TEA-' . strtoupper(Str::random(8)),
-                'code_type' => 'teacher',
+                'activation_code_type_id' => $types['teacher']->id,
                 'price' => $teacherPrice,
                 'duration' => 365,
                 'expires_at' => $expiresAt,
@@ -108,9 +112,9 @@ class ActivationCodeService
 
         for ($i = 0; $i < $studentCount; $i++) {
             $codes[] = [
-                'id' => Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'code' => 'STU-' . strtoupper(Str::random(8)),
-                'code_type' => 'student',
+                'activation_code_type_id' => $types['student']->id,
                 'price' => $studentPrice,
                 'duration' => 365,
                 'expires_at' => $expiresAt,
@@ -175,7 +179,7 @@ class ActivationCodeService
                 "created_at" => $a->created_at,
                 "updated_at" => $a->updated_at,
                 'code' => $a->code,
-                'code_type' => $a->code_type,
+                'code_type' => $a->activationCodeType?->type,
                 'status' => $isExpired ? 'expired' : 'active',
                 'used_status' => $isUsed ? "used" : "unused",
                 'price' => $a->price,
@@ -217,20 +221,7 @@ class ActivationCodeService
             );
         }
 
-        $code = ActivationCode::where('school_branch_id', $currentSchool->id)
-            ->where('code', $payload['activation_code'])
-            ->where('status', 'active')
-            ->where('used', false)
-            ->first();
-
-        if (!$code) {
-            throw new AppException(
-                "Invalid or Unavailable Code",
-                404,
-                "Code Not Found",
-                "The activation code '{$payload['activation_code']}' is invalid, already used, inactive, or not found. Please check and try again."
-            );
-        }
+        $code = $this->findRedeemableCode($payload['activation_code'] ?? '', $currentSchool, 'student');
 
         if ($code->expires_at <= now()) {
             throw new AppException(
@@ -253,17 +244,9 @@ class ActivationCodeService
             'actorable_type' => Student::class,
         ]);
 
-        $code->update([
-            'used' => true,
-            'used_at' => now(),
-            'used_by' => $student->id,
-        ]);
-
-        $student->update([
-            'sub_status' => 'subscribed',
-            'subscribed_at' => now(),
-            'subscription_expires_at' => $subscriptionExpiresAt,
-        ]);
+        // The usage row is the subscription; sub_status is the only
+        // subscription column students have.
+        $student->update(['sub_status' => 'subscribed']);
 
         $student->notify(new StudentSubscribedNotification(
             $subscriptionExpiresAt->toDateString()
@@ -304,20 +287,7 @@ class ActivationCodeService
             );
         }
 
-        $code = ActivationCode::where('school_branch_id', $currentSchool->id)
-            ->where('code', $payload['activation_code'])
-            ->where('status', 'active')
-            ->where('used', false)
-            ->first();
-
-        if (!$code) {
-            throw new AppException(
-                "Invalid or Unavailable Code",
-                404,
-                "Code Not Found",
-                "The activation code '{$payload['activation_code']}' is invalid, already used, inactive, or not found. Please check and try again."
-            );
-        }
+        $code = $this->findRedeemableCode($payload['activation_code'] ?? '', $currentSchool, 'teacher');
 
         if ($code->expires_at <= now()) {
             throw new AppException(
@@ -340,17 +310,7 @@ class ActivationCodeService
             'actorable_type' => Teacher::class,
         ]);
 
-        $code->update([
-            'used' => true,
-            'used_at' => now(),
-            'used_by' => $teacher->id,
-        ]);
-
-        $teacher->update([
-            'sub_status' => 'subscribed',
-            'subscribed_at' => now(),
-            'subscription_expires_at' => $subscriptionExpiresAt,
-        ]);
+        // Teachers have no subscription columns; the usage row is their subscription.
 
         $teacher->notify(new TeacherSubscribedNotification($subscriptionExpiresAt));
         return [
@@ -359,6 +319,50 @@ class ActivationCodeService
             'teacher' => $teacher->fresh(),
             'expires_at' => $subscriptionExpiresAt,
         ];
+    }
+    /**
+     * A code of the branch that can still be redeemed for this account type:
+     * not used yet (no usage row) and bought for teachers or students.
+     *
+     * @throws AppException naming why the code cannot be used.
+     */
+    private function findRedeemableCode(string $codeValue, object $currentSchool, string $accountType): ActivationCode
+    {
+        $code = ActivationCode::where('school_branch_id', $currentSchool->id)
+            ->where('code', trim($codeValue))
+            ->with('activationCodeType:id,type')
+            ->withExists('activationCodeUsage as is_used')
+            ->first();
+
+        if (!$code) {
+            throw new AppException(
+                "Activation code not found",
+                404,
+                "Code Not Found",
+                "The activation code '{$codeValue}' does not exist at this school. Check the code and try again."
+            );
+        }
+
+        if ($code->is_used) {
+            throw new AppException(
+                "Activation code already used",
+                409,
+                "Code Already Used",
+                "The activation code '{$codeValue}' has already been used. Use another unused code."
+            );
+        }
+
+        $codeType = $code->activationCodeType?->type;
+        if ($codeType !== null && $codeType !== $accountType) {
+            throw new AppException(
+                "Activation code is for {$codeType}s",
+                422,
+                "Wrong Code Type",
+                "The activation code '{$codeValue}' was bought for {$codeType} accounts and cannot activate a {$accountType} account."
+            );
+        }
+
+        return $code;
     }
     public function getActivationCodeUsage(object $currentSchool)
     {
