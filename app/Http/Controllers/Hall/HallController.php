@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Hall;
 
+use App\Services\Import\ImportJobDispatcher;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hall\BulkUpdateHallRequest;
 use App\Http\Requests\Hall\CreateHallRequest;
@@ -13,9 +15,6 @@ use App\Models\Hall;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\Hall\HallService;
-use App\Models\Job\SystemJob;
-use App\Models\Job\SystemJobCategory;
-use App\Models\Job\SystemJobDetail;
 
 class HallController extends Controller
 {
@@ -120,63 +119,15 @@ class HallController extends Controller
 
     public function importHall(ImportHallRequest $request)
     {
-        $authUser = $this->resolveUser();
-        $currentSchool = $request->attributes->get('currentSchool');
-        $category = SystemJobCategory::where('name', 'Hall')->firstOrFail();
-
-        $filePath = $request->file('file')->store(
-            "imports/hall/{$currentSchool->id}",
-            'r2'
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            HallImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
         );
 
-        $payload = $request->validated();
-        $payload['file_path'] = $filePath;
-        unset($payload['file']);
-
-        $systemJob = SystemJob::create([
-            'type'              => 'hall_import',
-            'context_type'      => Hall::class,
-            'stage'             => 'Queued',
-            'status'            => 'queued',
-            'context_id'        => $currentSchool->id,
-            'initiated_by_id'   => $authUser->id,
-            'category_id'       => $category->id,
-            'initiated_by_type' => $authUser::class,
-            'queue'             => 'database',
-            'started_at'        => now(),
-        ]);
-
-        SystemJobDetail::create([
-            'job_id'           => $systemJob->id,
-            'school_branch_id' => $currentSchool->id,
-            'input'            => [
-                'file_path' => $filePath,
-                'mapping'       => $payload['mapping'],
-                'original'  => $payload,
-            ],
-            'summary'          => null,
-            'result'           => null,
-            'metadata'         => [
-                'last_broadcast_progress' => 0,
-                'last_broadcast_status'   => null,
-                'last_broadcast_at'       => null,
-            ],
-        ]);
-
-       HallImportJob::dispatch(
-            $authUser->id,
-            $currentSchool->id,
-            $category->id,
-            $systemJob->id,
-            $payload
-        );
-
-        return ApiResponseService::success(
-            'Hall Importation Process Initiated Successfully',
-            null,
-            null,
-            200
-        );
+        return ApiResponseService::success('Hall import started', $job, null, 202);
     }
     protected function resolveUser()
     {

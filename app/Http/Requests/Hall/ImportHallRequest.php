@@ -2,54 +2,20 @@
 
 namespace App\Http\Requests\Hall;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Import\ImportFileRequest;
 
-class ImportHallRequest extends FormRequest
+class ImportHallRequest extends ImportFileRequest
 {
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    protected function requiredFields(): array
     {
         return [
-            'file' => [
-                'required',
-                'file',
-                'mimes:csv,xlsx,xls',
-                'max:10240',
-            ],
-            'mapping' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.standardFields' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.standardFields.name' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.capacity' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.location' => [
-                'required',
-                'string',
-            ],
-            'mapping.repeatableGroups.types.*' => [
-                'required',
-                'array',
-            ],
-            'mapping.repeatableGroups.types.*.type' => [
-                'required',
-                'string',
-            ],
+            'name' => 'hall name',
+            'capacity' => 'capacity',
         ];
+    }
+
+    protected function requiredGroups(): array
+    {
+        return ['types' => 'hall types'];
     }
 }

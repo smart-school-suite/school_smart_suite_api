@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers\Hall;
 
+use App\Http\Requests\SpecialtyHall\ImportSpecialtyHallRequest;
+
+use App\Jobs\Hall\SpecialtyHallImportJob;
+
+use App\Services\Import\ImportJobDispatcher;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hall\AssignSpecialtyHallRequest;
 use App\Http\Requests\Hall\RemoveAssigedSpecialtyHallRequest;
@@ -60,6 +66,19 @@ class SpecialtyHallController extends Controller
         $specialties = $this->specialtyHallService->getSpecialties($currentSchool);
         return ApiResponseService::success("Specialties Fetched Successfully", $specialties, null, 200);
     }
+    public function importSpecialtyHalls(ImportSpecialtyHallRequest $request)
+    {
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            SpecialtyHallImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
+        );
+
+        return ApiResponseService::success('Specialty hall import started', $job, null, 202);
+    }
+
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {
