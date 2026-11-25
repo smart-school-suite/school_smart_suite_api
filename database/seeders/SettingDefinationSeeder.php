@@ -456,6 +456,19 @@ class SettingDefinationSeeder extends Seeder
         ];
     }
 
+    /**
+     * Names are unique. When a definition takes over a name still held by
+     * another key (one being retired), that one is renamed first; it is
+     * removed with the other undefined settings at the end of the run.
+     */
+    private function freeName(string $name, string $key): void
+    {
+        SettingDefination::where('name', $name)
+            ->where('key', '!=', $key)
+            ->get()
+            ->each(fn (SettingDefination $holder) => $holder->update(['name' => "{$holder->name} ({$holder->key})"]));
+    }
+
     private function seedDefinitions(string $categoryName, array $settingDefs): void
     {
         // Recorded before the category check so a missing category never
@@ -469,6 +482,7 @@ class SettingDefinationSeeder extends Seeder
         }
 
         foreach ($settingDefs as $settingDef) {
+            $this->freeName($settingDef['label'], $settingDef['key']);
             SettingDefination::updateOrCreate(
                 ['key' => $settingDef['key']],
                 [

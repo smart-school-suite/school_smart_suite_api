@@ -16,10 +16,10 @@ class AutoCreationSettingsUpgradeTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function oldSetting(string $key, string $type, array $valuesByBranch): void
+    private function oldSetting(string $key, string $type, array $valuesByBranch, ?string $name = null): void
     {
         $category = DB::table('setting_categories')->where('key', 'setting.category.academic_year')->value('id');
-        DB::table('setting_definations')->insert(['id' => "old-$key", 'name' => $key, 'key' => $key, 'data_type' => $type, 'setting_category_id' => $category]);
+        DB::table('setting_definations')->insert(['id' => "old-$key", 'name' => $name ?? $key, 'key' => $key, 'data_type' => $type, 'setting_category_id' => $category]);
         foreach ($valuesByBranch as $branch => $value) {
             SchoolBranchSetting::create(['school_branch_id' => $branch, 'setting_defination_id' => "old-$key", 'value' => $value]);
         }
@@ -38,7 +38,7 @@ class AutoCreationSettingsUpgradeTest extends TestCase
         foreach (['off', 'same', 'across'] as $branch) {
             DB::table('school_branches')->insert(['id' => $branch, 'name' => $branch, 'abbreviation' => $branch, 'school_id' => 'school-1']);
         }
-        $this->oldSetting('academic_year.auto_create_mode', 'string', ['off' => 'disabled', 'same' => 'same_specialty', 'across' => 'across_specialties']);
+        $this->oldSetting('academic_year.auto_create_mode', 'string', ['off' => 'disabled', 'same' => 'same_specialty', 'across' => 'across_specialties'], 'Automatic Academic Year Creation');
         $this->oldSetting('academic_year.auto_create_across_all_levels', 'boolean', ['across' => true]);
 
         $this->seed(SettingDefinationSeeder::class);
