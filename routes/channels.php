@@ -36,8 +36,10 @@ Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.se
     return (string) $user->school_branch_id === (string) $schoolBranchId;
 }, ['guards' => ['schooladmin']]);
 
-Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.jobs', function ($user, $schoolBranchId) {
-    return (string) $user->school_branch_id === (string) $schoolBranchId;
+// Background job progress (imports...), sent to the admin who started the job.
+Broadcast::channel('schoolBranch.{schoolBranchId}.schoolAdmin.{schoolAdminId}.jobs', function ($user, $schoolBranchId, $schoolAdminId) {
+    return (string) $user->school_branch_id === (string) $schoolBranchId
+        && (string) $user->id === (string) $schoolAdminId;
 }, ['guards' => ['schooladmin']]);
 
 // Exam timetable generation progress, sent to the admin who started it.

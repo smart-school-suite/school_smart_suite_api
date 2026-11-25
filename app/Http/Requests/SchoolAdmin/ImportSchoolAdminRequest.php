@@ -2,73 +2,16 @@
 
 namespace App\Http\Requests\SchoolAdmin;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Import\ImportFileRequest;
 
-class ImportSchoolAdminRequest extends FormRequest
+class ImportSchoolAdminRequest extends ImportFileRequest
 {
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    protected function requiredFields(): array
     {
         return [
-            'file' => [
-                'required',
-                'file',
-                'mimes:csv,xlsx,xls',
-                'max:10240',
-            ],
-            'mapping' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.standardFields' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.repeatableGroups' => [
-                'required',
-                'array',
-            ],
-            'mapping.standardFields.email' => [
-                'nullable',
-                'string',
-            ],
-
-            'mapping.standardFields.full_names' => [
-                'nullable',
-                'string',
-            ],
-
-            'mapping.standardFields.first_name' => [
-                'nullable',
-                'string',
-            ],
-
-            'mapping.standardFields.last_name' => [
-                'nullable',
-                'string',
-            ],
-
-            'mapping.standardFields.phone' => [
-                'nullable',
-                'string',
-            ],
-
-            'mapping.standardFields.gender' => [
-                'nullable',
-                'string',
-            ],
-
-            'mapping.standardFields.address' => [
-                'nullable',
-                'string',
-            ],
+            'email' => 'email',
+            'first_name' => 'first name',
+            'last_name' => 'last name',
         ];
     }
 }

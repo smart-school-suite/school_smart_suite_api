@@ -74,6 +74,36 @@ class ColumnIndexResolverService
         return $resolved;
     }
 
+    /**
+     * The mapped column names that are not in the file's header, so an
+     * import can say which ones are missing instead of failing vaguely.
+     *
+     * @return array<int, string>
+     */
+    public static function missingColumns(array $header, array $mapping): array
+    {
+        $normalizedHeader = array_map(
+            static fn ($value) => strtolower(trim((string) $value)),
+            $header
+        );
+
+        $columns = collect($mapping['standardFields'] ?? [])->values();
+
+        foreach ($mapping['repeatableGroups'] ?? [] as $instances) {
+            foreach ((array) $instances as $instance) {
+                $columns = $columns->merge(array_values((array) $instance));
+            }
+        }
+
+        return $columns
+            ->reject(fn ($column) => self::isEmpty($column))
+            ->filter(fn ($column) => self::findColumnIndex($normalizedHeader, $column) === null)
+            ->map(fn ($column) => trim((string) $column))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     private static function findColumnIndex(
         array $header,
         mixed $columnName

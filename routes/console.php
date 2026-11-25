@@ -72,3 +72,11 @@ Schedule::command('elections:update-statuses')
     ->withoutOverlapping(900)
     ->runInBackground()
     ->onOneServer();
+
+// Imports whose worker died without reporting are marked failed, so the app
+// does not show them as running forever.
+Schedule::command('system-jobs:fail-stalled-imports')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(300)
+    ->runInBackground()
+    ->onOneServer();

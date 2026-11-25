@@ -8,3 +8,4 @@ Route::get("/course/assignable/teacher/{teacherId}", [TeacherCoursePreferenceCon
 Route::post("/remove", [TeacherCoursePreferenceController::class, "removeTeacherAssignedCourse"])->name("remove.teacher.course.preference");
 Route::post("/teacher/change", [TeacherCoursePreferenceController::class, "changeTeacherForCourse"])->name("change.teacher");
 Route::get("/course/assigned/teacher/{teacherId}", [TeacherCoursePreferenceController::class, "getAssignedTeacherCourses"])->name("get.assigned.teacher.courses");
+Route::post("/import", [TeacherCoursePreferenceController::class, "importTeacherCourses"])->name("import.teacherCourse");

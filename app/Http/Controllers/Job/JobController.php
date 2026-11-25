@@ -26,7 +26,7 @@ class JobController extends Controller
     public function getJobDetails(Request $request, string $jobId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $job = $this->jobService->getJobDetails($jobId, $currentSchool);
+        $job = $this->jobService->getJobDetails($jobId, $currentSchool, $this->resolveUser());
         return ApiResponseService::success("Job Details Fetched Successfully", $job, null, 200);
     }
 
@@ -40,7 +40,7 @@ class JobController extends Controller
     public function getJobErrors(Request $request, string $jobId)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $jobErrors = $this->jobService->getJobErrors($jobId, $currentSchool);
+        $jobErrors = $this->jobService->getJobErrors($jobId, $currentSchool, $this->resolveUser());
         return ApiResponseService::success("Job Errors Fetched Successfully", $jobErrors, null, 200);
     }
 

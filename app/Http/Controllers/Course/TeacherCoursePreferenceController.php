@@ -8,6 +8,9 @@ use App\Http\Requests\Course\CreateTeacherCoursePreferenceRequest;
 use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\Course\TeacherCoursePreferenceService;
+use App\Http\Requests\TeacherCourse\ImportTeacherCourseRequest;
+use App\Jobs\Teacher\TeacherCourseImportJob;
+use App\Services\Import\ImportJobDispatcher;
 
 class TeacherCoursePreferenceController extends Controller
 {
@@ -52,6 +55,19 @@ class TeacherCoursePreferenceController extends Controller
         $currentSchool = $request->attributes->get('currentSchool');
         $changeTeacher = $this->teacherCoursePreferenceService->changeTeacherForCourse($currentSchool, $request->validated());
         return ApiResponseService::success("Teacher Changed Successfully", $changeTeacher, null, 200);
+    }
+
+    public function importTeacherCourses(ImportTeacherCourseRequest $request)
+    {
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            TeacherCourseImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
+        );
+
+        return ApiResponseService::success('Teacher course import started', $job, null, 202);
     }
 
     protected function resolveUser()
