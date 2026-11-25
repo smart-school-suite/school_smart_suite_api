@@ -2,70 +2,22 @@
 
 namespace App\Http\Requests\GradeScale;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Import\ImportFileRequest;
 
-class ImportGradeScaleRequest extends FormRequest
+class ImportGradeScaleRequest extends ImportFileRequest
 {
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    protected function requiredFields(): array
     {
         return [
-            'file' => [
-                'required',
-                'file',
-                'mimes:csv,xlsx,xls',
-                'max:10240',
-            ],
-            'mapping' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.standardFields' => [
-                'required',
-                'array',
-            ],
-            'mapping.standardFields.grade_title' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.exam_type' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.grade_max_score' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.max_score' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.min_score' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.grade' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.resit_result' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.result' => [
-                'nullable',
-                'string',
-            ],
-            'mapping.standardFields.performance' => [
-                'nullable',
-                'string',
-            ]
+            'grade_title' => 'grade title',
+            'grade_max_score' => 'grade max score',
+            'grade' => 'grade',
+            'min_score' => 'min score',
+            'max_score' => 'max score',
+            'grade_points' => 'grade points',
+            'result' => 'result',
+            'resit_result' => 'resit result',
+            'performance' => 'performance',
         ];
     }
 }

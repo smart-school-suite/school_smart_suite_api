@@ -19,9 +19,9 @@ class CreateStudentService
         try {
 
             $actorHelper = app(ActorHelperService::class);
-            $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+            $fullName = trim(($studentData['first_name'] ?? '') . ' ' . ($studentData['last_name'] ?? ''));
             if (empty($fullName)) {
-                $fullName = $data['name'] ?? 'Student';
+                $fullName = $studentData['name'] ?? 'Student';
             }
 
             $username = $actorHelper->generateUsername($fullName, Student::class);

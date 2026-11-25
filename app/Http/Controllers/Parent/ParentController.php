@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers\Parent;
 
+use App\Services\Import\ImportJobDispatcher;
+
+use App\Jobs\Parent\ParentImportJob;
+
+use App\Http\Requests\Parent\ImportParentRequest;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Parent\ParentIdRequest;
 use App\Services\ApiResponseService;
@@ -82,6 +88,19 @@ class ParentController extends Controller
         } catch (Exception $e) {
             return ApiResponseService::error($e->getMessage(), null, 400);
         }
+    }
+
+    public function importParents(ImportParentRequest $request)
+    {
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            ParentImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
+        );
+
+        return ApiResponseService::success('Guardian import started', $job, null, 202);
     }
 
     protected function resolveUser()

@@ -16,6 +16,8 @@ class JobCategorySeeder extends Seeder
             ["name" => "Department", "description" => "Manage academic departments, course offerings, and departmental resources", "status" => "active"],
             ["name" => "Course", "description" => "Manage courses, their specialties and teachers", "status" => "active"],
             ["name" => "Hall", "description" => "Manage halls, their types and capacities", "status" => "active"],
+            ["name" => "Parent", "description" => "Manage parents and guardians of students", "status" => "active"],
+            ["name" => "Student Batch", "description" => "Manage student batches", "status" => "active"],
             ["name" => "Grade Scale", "description" => "Manage grading scales and score ranges", "status" => "active"],
             ["name" => "Specialty", "description" => "Handle specialized programs, electives, and subject-specific offerings", "status" => "active"],
             ["name" => "Attendance", "description" => "Track student attendance, generate reports, and manage absence records", "status" => "active"],

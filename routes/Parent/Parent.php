@@ -23,3 +23,4 @@ Route::post('/bulk-delete', [ParentController::class, 'bulkDeleteParents'])
 
 Route::patch('/bulk-update', [ParentController::class, 'BulkUpdateParents'])
     ->name('parents.bulk-update');
+Route::post("/import", [ParentController::class, "importParents"])->name("import.parent");

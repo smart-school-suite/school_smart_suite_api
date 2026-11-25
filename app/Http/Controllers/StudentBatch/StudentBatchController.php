@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers\StudentBatch;
 
+use App\Services\Import\ImportJobDispatcher;
+
+use App\Jobs\StudentBatch\StudentBatchImportJob;
+
+use App\Http\Requests\StudentBatch\ImportStudentBatchRequest;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\StudentBatch\CreateStudentBatchRequest;
@@ -96,6 +102,19 @@ class StudentBatchController extends Controller
         $bulkUpdateBatch = $this->studentBatchService->bulkUpdateStudentBatch($request->student_batches, $currentSchool, $authAdmin);
         return ApiResponseService::success("Student Batch Updated Successfully", $bulkUpdateBatch, null, 200);
     }
+    public function importStudentBatches(ImportStudentBatchRequest $request)
+    {
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            StudentBatchImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
+        );
+
+        return ApiResponseService::success('Student batch import started', $job, null, 202);
+    }
+
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {

@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers\JointCourse;
 
+use App\Services\Import\ImportJobDispatcher;
+
+use App\Jobs\JointCourse\JointCourseImportJob;
+
+use App\Http\Requests\JointCourse\ImportJointCourseRequest;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JointCourse\CreateJointCourseRequest;
 use App\Http\Requests\JointCourse\UpdateJointCourseRequest;
@@ -60,6 +66,19 @@ class JointCourseController extends Controller
         $assignment = $assignmentService->getAssignment($jointCourseId, $currentSchool);
         return ApiResponseService::success("Joint course assignment retrieved successfully", $assignment, null, 200);
     }
+    public function importJointCourses(ImportJointCourseRequest $request)
+    {
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            JointCourseImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
+        );
+
+        return ApiResponseService::success('Joint course import started', $job, null, 202);
+    }
+
     protected function resolveUser()
     {
         foreach (['student', 'teacher', 'schooladmin'] as $guard) {

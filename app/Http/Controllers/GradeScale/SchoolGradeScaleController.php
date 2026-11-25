@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\GradeScale;
 
+use App\Services\Import\ImportJobDispatcher;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GradeScale\BulkDeleteGradeScaleRequest;
 use App\Jobs\GradeScale\GradeScaleImportJob;
@@ -14,9 +16,6 @@ use App\Http\Requests\GradeScale\BulkUpdateGradeScaleCategoryRequest;
 use App\Http\Requests\GradeScale\CreateGradeScaleRequest;
 use App\Http\Requests\GradeScale\UpdateGradeScaleRequest;
 use App\Models\GradeScale\SchoolGradeScale;
-use App\Models\Job\SystemJob;
-use App\Models\Job\SystemJobCategory;
-use App\Models\Job\SystemJobDetail;
 
 
 class SchoolGradeScaleController extends Controller
@@ -130,64 +129,15 @@ class SchoolGradeScaleController extends Controller
     }
     public function importGradeScale(ImportGradeScaleRequest $request)
     {
-
-        $authUser = $this->resolveUser();
-        $currentSchool = $request->attributes->get('currentSchool');
-        $category = SystemJobCategory::where('name', 'grade scale')->firstOrFail();
-
-        $filePath = $request->file('file')->store(
-            "imports/grade-scale/{$currentSchool->id}",
-            'r2'
+        $job = app(ImportJobDispatcher::class)->dispatch(
+            GradeScaleImportJob::class,
+            $request->file('file'),
+            $request->mapping(),
+            $request->attributes->get('currentSchool'),
+            $this->resolveUser()
         );
 
-        $payload = $request->validated();
-        $payload['file_path'] = $filePath;
-        unset($payload['file']);
-
-        $systemJob = SystemJob::create([
-            'type'              => 'grade_scale_import',
-            'context_type'      => SchoolGradeScale::class,
-            'stage'             => 'Queued',
-            'status'            => 'queued',
-            'context_id'        => $currentSchool->id,
-            'initiated_by_id'   => $authUser->id,
-            'category_id'       => $category->id,
-            'initiated_by_type' => $authUser::class,
-            'queue'             => 'database',
-            'started_at'        => now(),
-        ]);
-
-        SystemJobDetail::create([
-            'job_id'           => $systemJob->id,
-            'school_branch_id' => $currentSchool->id,
-            'input'            => [
-                'file_path' => $filePath,
-                'mapping'       => $payload['mapping'],
-                'original'  => $payload,
-            ],
-            'summary'          => null,
-            'result'           => null,
-            'metadata'         => [
-                'last_broadcast_progress' => 0,
-                'last_broadcast_status'   => null,
-                'last_broadcast_at'       => null,
-            ],
-        ]);
-
-        GradeScaleImportJob::dispatch(
-            $authUser->id,
-            $currentSchool->id,
-            $category->id,
-            $systemJob->id,
-            $payload
-        );
-
-        return ApiResponseService::success(
-            'Grade Scale Importation Process Initiated Successfully',
-            null,
-            null,
-            200
-        );
+        return ApiResponseService::success('Grade scale import started', $job, null, 202);
     }
 
     protected function resolveUser()

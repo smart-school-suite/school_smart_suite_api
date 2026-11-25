@@ -21,3 +21,4 @@ Route::get('/{jointCourseId}/assignment', [JointCourseController::class, 'getJoi
 
 Route::get('/', [JointCourseController::class, 'getJointCourses'])
     ->name('joint-courses.index');
+Route::post("/import", [JointCourseController::class, "importJointCourses"])->name("import.jointCourse");
