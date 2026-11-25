@@ -5,6 +5,12 @@ use App\Http\Middleware\IdentifyTenant;
 
 Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
 
+    Route::get('/creation-options', [SchoolBranchController::class, 'getCreationOptions'])
+        ->name('school-branches.creation-options');
+
+    Route::post('/create', [SchoolBranchController::class, 'createSchoolBranch'])
+        ->name('school-branches.store');
+
     Route::delete('/', [SchoolBranchController::class, 'deleteSchoolBranch'])
         ->name('school-branches.destroy');
 

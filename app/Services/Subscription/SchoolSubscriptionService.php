@@ -196,6 +196,10 @@ class SchoolSubscriptionService
                 ->lockForUpdate()
                 ->first();
 
+            if ($subscription) {
+                app(SharedSubscriptions::class)->refuseChangesToCopy($subscription);
+            }
+
             if (!$subscription) {
                 throw new AppException(
                     'NO_SUBSCRIPTION',
@@ -231,6 +235,7 @@ class SchoolSubscriptionService
                 'status'     => 'active',
                 'end_date'   => $endsAt,
             ]);
+            app(SharedSubscriptions::class)->syncCopies($subscription->fresh());
 
             $transactionId = (string) Str::uuid();
 
@@ -279,6 +284,8 @@ class SchoolSubscriptionService
             if (!$currentSubscription) {
                 throw new AppException('NO_ACTIVE_SUBSCRIPTION', 400, 'Upgrade failed', 'No active subscription found to upgrade.');
             }
+
+            app(SharedSubscriptions::class)->refuseChangesToCopy($currentSubscription);
 
             $newPlan = Plan::with('country')
                 ->where('id', $data['new_plan_id'])
@@ -344,6 +351,7 @@ class SchoolSubscriptionService
             ];
 
             $this->handleUpdateSubscriptionUsage($newSub, $oldSub);
+            app(SharedSubscriptions::class)->moveCopies($currentSubscription, $newSubscription);
 
             return [
                 'transaction'          => $transaction,

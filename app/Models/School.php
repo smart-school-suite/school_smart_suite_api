@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Country;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class School extends Model
@@ -95,8 +96,8 @@ class School extends Model
         return $this->hasMany(Teacher::class);
     }
 
-    public function schoolSubscriptions()
+    public function schoolSubscriptions(): HasManyThrough
     {
-        return $this->hasMany(SchoolSubscription::class);
+        return $this->hasManyThrough(SchoolSubscription::class, Schoolbranches::class, 'school_id', 'school_branch_id');
     }
 }
