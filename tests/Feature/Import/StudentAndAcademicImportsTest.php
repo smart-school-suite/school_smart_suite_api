@@ -4,6 +4,7 @@ namespace Tests\Feature\Import;
 
 use App\Models\Job\SystemJob;
 use App\Models\Schooladmin;
+use App\Events\Student\StudentRegistered;
 use App\Models\Student;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -101,7 +102,7 @@ class StudentAndAcademicImportsTest extends TestCase
 
     public function test_student_import(): void
     {
-        Event::fake();
+        Event::fake([StudentRegistered::class]);
         DB::table('student_batches')->insert(['id' => 'b-1', 'name' => '2025/2026', 'description' => 'x', 'school_branch_id' => 'branch-1']);
         DB::table('parents')->insert(['id' => 'p-1', 'name' => 'Paul Biya', 'phone' => '677123456', 'address' => 'Yaounde', 'school_branch_id' => 'branch-1']);
         DB::table('stu_par_relationships')->insert(['id' => 'r-1', 'name' => 'Father']);
