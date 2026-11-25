@@ -72,7 +72,7 @@ class Schoolbranches extends Model
     }
     public function subscriptionUsage(): HasMany
     {
-        return $this->hasMany(SchoolSubscription::class);
+        return $this->hasMany(SubscriptionUsage::class, 'school_branch_id');
     }
     public function affiliateCommission(): HasMany
     {
@@ -173,7 +173,7 @@ class Schoolbranches extends Model
 
     public function schoolSubscription(): HasMany
     {
-        return $this->hasMany(SchoolSubscription::class);
+        return $this->hasMany(SchoolSubscription::class, 'school_branch_id');
     }
 
     public function elections(): \Illuminate\Database\Eloquent\Relations\HasMany

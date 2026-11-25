@@ -19,7 +19,8 @@ class SchoolSubscription extends Model
         'end_date',
         'country_id',
         'school_branch_id',
-        'plan_id'
+        'plan_id',
+        'shared_from_id',
     ];
 
     protected $dates = ['start_date', 'end_date'];
@@ -37,6 +38,18 @@ class SchoolSubscription extends Model
 
     public function schoolBranch(): BelongsTo {
          return $this->belongsTo(Schoolbranches::class, 'school_branch_id');
+    }
+
+    public function sharedFrom(): BelongsTo {
+         return $this->belongsTo(SchoolSubscription::class, 'shared_from_id');
+    }
+
+    public function sharedCopies(): HasMany {
+         return $this->hasMany(SchoolSubscription::class, 'shared_from_id');
+    }
+
+    public function isShared(): bool {
+         return $this->shared_from_id !== null;
     }
 
     public function plan(): BelongsTo {

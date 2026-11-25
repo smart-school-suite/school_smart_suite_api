@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SettingDefinationSeeder::class);
         // New settings reach existing schools; existing values are kept.
         $this->call(SyncSchoolBranchSettingSeeder::class);
+        $this->call(BranchSubscriptionSeeder::class);
         $this->call(StudentParentRelationshipSeeder::class);
         $this->call(LevelSeeder::class);
         $this->call(ActivationCodeTypeSeeder::class);

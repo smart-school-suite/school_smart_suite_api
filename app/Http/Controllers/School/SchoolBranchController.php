@@ -4,7 +4,10 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\SchoolBranch\StoreSchoolBranchRequest;
 use App\Http\Requests\SchoolBranch\UpdateSchoolBranchRequest;
+use App\Services\School\SchoolBranchCreation;
+use App\Services\School\SchoolBranchCreationOptions;
 use App\Services\ApiResponseService;
 use App\Services\School\SchoolBranchService;
 
@@ -14,6 +17,18 @@ class SchoolBranchController extends Controller
     public function __construct(SchoolBranchService $schoolBranchesService)
     {
         $this->schoolBranchesService = $schoolBranchesService;
+    }
+    public function createSchoolBranch(StoreSchoolBranchRequest $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $created = app(SchoolBranchCreation::class)->create($request->validated(), $currentSchool);
+        return ApiResponseService::success("School Branch Created Successfully", $created, null, 201);
+    }
+    public function getCreationOptions(Request $request)
+    {
+        $currentSchool = $request->attributes->get('currentSchool');
+        $options = app(SchoolBranchCreationOptions::class)->describe($currentSchool);
+        return ApiResponseService::success("School Branch Creation Options Fetched Successfully", $options, null, 200);
     }
     public function updateSchoolBranch(UpdateSchoolBranchRequest $request)
     {
