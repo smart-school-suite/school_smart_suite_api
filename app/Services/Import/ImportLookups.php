@@ -13,6 +13,7 @@ use App\Models\SchoolBranchSetting;
 use App\Models\Specialty;
 use App\Models\Teacher;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -245,10 +246,114 @@ class ImportLookups
             ->join(', ', ' or ');
     }
 
+    /**
+     * A row of a reference table matched on any of the given columns,
+     * ignoring case: semesters, course types, relationships, sources...
+     *
+     * @param array<int, string> $columns
+     */
+    public function reference(string $table, array $columns, ?string $value, bool $branchScoped = false): ?object
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $rows = $this->rows($table, $branchScoped);
+        $key = self::key($value);
+
+        foreach ($columns as $column) {
+            $match = $rows->first(fn($row) => isset($row->{$column}) && self::key($row->{$column}) === $key);
+            if ($match) {
+                return $match;
+            }
+        }
+
+        return null;
+    }
+
+    /** Values of a reference table's column, for messages: "Father, Mother or Guardian". */
+    public function referenceNames(string $table, string $column, bool $branchScoped = false, int $limit = 6): string
+    {
+        $names = $this->rows($table, $branchScoped)->pluck($column)->filter()->values();
+        $shown = $names->take($limit);
+
+        return $shown->join(', ', ' or ') . ($names->count() > $limit ? ', ...' : '');
+    }
+
+    /** "First Semester", "first semester", "1" or "Semester 1" -> the semester's id. */
+    public function semesterId(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $match = $this->reference('semesters', ['name', 'program_name'], $value);
+        if (!$match && preg_match('/^(?:semester\s*)?(\d+)$/i', trim($value), $number)) {
+            $match = $this->rows('semesters')->first(fn($row) => (int) $row->count === (int) $number[1]);
+        }
+
+        return $match?->id;
+    }
+
+    /** "Practical", "practical.course" or "practical" (small typos allowed) -> the course type's id. */
+    public function courseTypeId(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $match = $this->reference('course_types', ['name', 'key'], $value);
+        if (!$match) {
+            $key = self::key($value);
+            $match = $this->rows('course_types')->first(function ($row) use ($key) {
+                $base = self::key(explode('.', (string) $row->key)[0]);
+                return levenshtein($base, $key) <= 2 || levenshtein(self::key($row->name), $key) <= 2;
+            });
+        }
+
+        return $match?->id;
+    }
+
+    /** A guardian of the branch by phone number or, when only one has it, by name. */
+    public function guardian(?string $value): ?object
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $rows = $this->rows('parents', true);
+        $digits = preg_replace('/\D/', '', $value);
+
+        if (strlen($digits) >= 6) {
+            $byPhone = $rows->first(fn($row) => preg_replace('/\D/', '', (string) $row->phone) === $digits);
+            if ($byPhone) {
+                return $byPhone;
+            }
+        }
+
+        $byName = $rows->filter(fn($row) => self::key($row->name) === self::key($value));
+        if ($byName->count() > 1) {
+            throw ImportRowException::invalid(
+                'Several guardians have this name. Use the guardian\'s phone number instead.',
+                'guardian',
+                $value
+            );
+        }
+
+        return $byName->first();
+    }
+
     /** Forget a cached list after rows changed it (e.g. a teacher was created). */
     public function forget(string $list): void
     {
         unset($this->cache[$list]);
+    }
+
+    private function rows(string $table, bool $branchScoped = false): Collection
+    {
+        return $this->remember("table:{$table}", fn() => DB::table($table)
+            ->when($branchScoped, fn($query) => $query->where('school_branch_id', $this->schoolBranchId))
+            ->get());
     }
 
     private function remember(string $key, callable $load): Collection

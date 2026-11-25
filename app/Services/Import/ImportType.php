@@ -21,7 +21,10 @@ enum ImportType: string
     case HALL = 'hall_import';
     case SPECIALTY_HALL = 'specialty_hall_import';
     case COURSE = 'course_import';
+    case JOINT_COURSE = 'joint_course_import';
     case STUDENT = 'student_import';
+    case PARENT = 'parent_import';
+    case STUDENT_BATCH = 'student_batch_import';
     case GRADE_SCALE = 'grade_scale_import';
 
     /** Shown as the job's title, e.g. "Teacher Specialty Import". */
@@ -43,7 +46,10 @@ enum ImportType: string
             self::HALL => 'Hall',
             self::SPECIALTY_HALL => 'Specialty Hall',
             self::COURSE => 'Course',
+            self::JOINT_COURSE => 'Joint Course',
             self::STUDENT => 'Student',
+            self::PARENT => 'Guardian',
+            self::STUDENT_BATCH => 'Student Batch',
             self::GRADE_SCALE => 'Grade Scale',
         };
     }
@@ -60,8 +66,10 @@ enum ImportType: string
             self::DEPARTMENT => 'Department',
             self::SPECIALTY => 'Specialty',
             self::HALL, self::SPECIALTY_HALL => 'Hall',
-            self::COURSE => 'Course',
+            self::COURSE, self::JOINT_COURSE => 'Course',
             self::STUDENT => 'Student',
+            self::PARENT => 'Parent',
+            self::STUDENT_BATCH => 'Student Batch',
             self::GRADE_SCALE => 'Grade Scale',
         };
     }
@@ -79,8 +87,11 @@ enum ImportType: string
             self::HALL => 'halls',
             self::SPECIALTY_HALL => 'specialty hall assignments',
             self::COURSE => 'courses',
+            self::JOINT_COURSE => 'joint courses',
             self::STUDENT => 'students',
-            self::GRADE_SCALE => 'grade scales',
+            self::PARENT => 'guardians',
+            self::STUDENT_BATCH => 'student batches',
+            self::GRADE_SCALE => 'grades',
         };
     }
 

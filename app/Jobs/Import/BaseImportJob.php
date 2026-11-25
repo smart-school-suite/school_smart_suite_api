@@ -576,6 +576,11 @@ abstract class BaseImportJob implements ShouldQueue
             }
             if (is_string($value)) {
                 $value = trim($value);
+                // The reader formats decimals with full float precision
+                // ("79.98999999999999" for 79.99); give back the short form.
+                if (preg_match('/^-?\d+\.\d{9,}$/', $value)) {
+                    return (string) (float) $value;
+                }
                 return $value === '' ? null : $value;
             }
             return $value;

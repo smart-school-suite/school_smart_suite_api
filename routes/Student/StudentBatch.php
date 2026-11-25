@@ -37,3 +37,4 @@ use App\Http\Controllers\StudentBatch\StudentBatchController;
         ->name('student-batches.bulk-update');
 
     Route::get('/details/{batchId}', [StudentBatchcontroller::class, 'getStudentBatchDetails'])->name("get.student.batch.details");
+Route::post("/import", [StudentBatchController::class, "importStudentBatches"])->name("import.studentBatch");

@@ -2,91 +2,22 @@
 
 namespace App\Http\Requests\Student;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Import\ImportFileRequest;
 
-class ImportStudentRequest extends FormRequest
+class ImportStudentRequest extends ImportFileRequest
 {
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    protected function requiredFields(): array
     {
         return [
-            'file' => [
-                'required',
-                'file',
-                'mimes:csv,xlsx,xls',
-                'max:10240',
-            ],
-            'mapping' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.standardFields' => [
-                'required',
-                'array',
-            ],
-
-            'mapping.standardFields.email' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.full_names' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.first_name' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.last_name' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.phone' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.gender' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.specialty' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.level' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.batch' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.relationship' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.student_source' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.dob' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.guardian' => [
-                'required',
-                'string',
-            ],
-            'mapping.standardFields.fee_payment_format' => [
-                'nullable',
-                'string',
-            ]
+            'email' => 'email',
+            'first_name' => 'first name',
+            'last_name' => 'last name',
+            'gender' => 'gender',
+            'specialty' => 'specialty',
+            'batch' => 'student batch',
+            'guardian' => 'guardian',
+            'relationship' => 'relationship',
+            'student_source' => 'student source',
         ];
     }
 }

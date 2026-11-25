@@ -2,449 +2,201 @@
 
 namespace App\Jobs\Student;
 
-use App\Events\Job\JobEvent;
-use App\Events\Student\StudentRegistered;
-use App\Models\Job\SystemJob;
-use App\Models\Job\SystemJobError;
-use App\Models\Parents;
-use App\Models\Schoolbranches;
-use App\Models\Schooladmin;
-use App\Models\Specialty;
-use App\Models\Gender;
-use App\Models\Studentbatch;
+use App\Jobs\Import\BaseImportJob;
 use App\Models\Student;
-use App\Services\Helpers\Job\JobHelperService;
-use App\Services\Helpers\Job\JobProgressReporterService;
-use App\Services\Helpers\Import\SpreadSheetReadException;
-use App\Services\Helpers\Import\SpreadSheetReaderService;
-use App\Services\Job\JobBroadCastPolicyService;
-use App\Http\Requests\Student\CreateStudentRequest;
-use App\Models\Job\SystemJobDetail;
-use App\Models\StudentParentRelationship;
-use App\Models\StudentSource;
-use App\Services\Helpers\Import\ColumnIndexResolverService;
-use App\Services\Helpers\Import\ImportMapRowService;
-use Carbon\Carbon;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Throwable;
+use App\Services\Auth\Student\CreateStudentService;
+use App\Services\Import\ImportLookups;
+use App\Services\Import\ImportRowException;
+use App\Services\Import\ImportType;
+use Illuminate\Support\Str;
 
-class StudentImportJob implements ShouldQueue
+/**
+ * Registers students from a spreadsheet through CreateStudentService, the
+ * same path as the "Add student" form, so registration and tuition fees are
+ * generated the same way. A student whose email or full name is already used
+ * at the school is reported, not overwritten.
+ *
+ * Specialty, batch, guardian, relationship and source are given by name; the
+ * guardian may also be given by phone number. Import guardians and batches
+ * first.
+ */
+class StudentImportJob extends BaseImportJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    private const PAYMENT_FORMATS = [
+        'one time' => ['one time', 'one-time', 'onetime', 'full', 'full payment', 'once'],
+        'installmental' => ['installmental', 'installment', 'installments', 'instalment', 'instalments', 'by installment'],
+    ];
 
-    public $tries = 3;
-    public $timeout = 300;
-
-    protected string $completedStatus = 'completed';
-    protected string $failedStatus = 'failed';
-    protected string $inProgressStatus = 'processing';
-    protected string $completedWithIssuesStatus = 'completed_with_issues';
-
-    protected string $adminId;
-    protected string $schoolBranchId;
-    protected string $categoryId;
-    protected string $jobId;
-    public array $requiredFields = ['email', 'full_names', 'first_name', 'last_name', 'phone', 'gender', 'specialty', 'level', 'batch', 'relationship', 'student_source', 'dob', 'guardian'];
-    public array $optionalFields = ['fee_payment_format'];
-
-    private JobProgressReporterService $progressReporter;
-    private JobBroadCastPolicyService $policy;
-    private JobHelperService $jobHelperService;
-    private SpreadSheetReaderService $spreadsheetService;
-    private ImportMapRowService $importMapRowService;
-
-    private int $lastBroadcastProgress = 0;
-    private ?string $lastBroadcastStatus = null;
-    private ?Carbon $lastBroadcastAt = null;
-
-    private int $batchProcessed = 0;
-    private int $batchCreated = 0;
-    private int $batchUpdated = 0;
-    private int $batchSkipped = 0;
-    private int $batchSize = 50;
-
-    public function __construct(
-        string $adminId,
-        string $schoolBranchId,
-        string $categoryId,
-        string $jobId
-    ) {
-        $this->adminId = $adminId;
-        $this->schoolBranchId = $schoolBranchId;
-        $this->categoryId = $categoryId;
-        $this->jobId = $jobId;
-    }
-    public function handle(): void
+    public static function importType(): ImportType
     {
-        $this->jobHelperService = app(JobHelperService::class);
-        $this->progressReporter = app(JobProgressReporterService::class);
-        $this->policy = app(JobBroadCastPolicyService::class);
-        $this->spreadsheetService = app(SpreadSheetReaderService::class);
-        $this->importMapRowService = app(ImportMapRowService::class);
+        return ImportType::STUDENT;
+    }
 
-        $schoolBranch = Schoolbranches::find($this->schoolBranchId);
-        $systemJob = SystemJob::find($this->jobId);
-        $schoolAdmin = Schooladmin::where("school_branch_id", $this->schoolBranchId)->find($this->adminId);
-        $systemJobDetails = SystemJobDetail::where("job_id", $this->jobId)->first();
-        $mapping = $systemJobDetails->input['mapping'];
-        $filePath = $systemJobDetails->input['file_path'];
+    protected function requiredColumns(): array
+    {
+        return [
+            'email' => 'Email',
+            'first_name' => 'First Name',
+            'last_name' => 'Last Name',
+            'gender' => 'Gender',
+            'specialty' => 'Specialty',
+            'batch' => 'Student Batch',
+            'guardian' => 'Guardian',
+            'relationship' => 'Relationship',
+            'student_source' => 'Student Source',
+        ];
+    }
 
-        $this->jobHelperService->updateJobProgress($systemJob, $this->inProgressStatus, 'Reading file', 0);
-        $this->progressReporter->maybeBroadcast($systemJob, 0, $this->inProgressStatus);
+    protected function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:150'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:150'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'gender_id' => ['required'],
+            'specialty_id' => ['required'],
+            'student_batch_id' => ['required'],
+            'guardian_id' => ['required'],
+            'relationship_id' => ['required'],
+            'student_source_id' => ['required'],
+        ];
+    }
 
-        try {
-            $result = $this->spreadsheetService->read($filePath);
-        } catch (SpreadSheetReadException $e) {
-            $this->jobHelperService->failJob($systemJob, $e->getMessage(), $e->getCode() ?: 422);
-            $this->progressReporter->maybeBroadcast($systemJob, 0, $this->failedStatus);
-            return;
+    protected function attributes(): array
+    {
+        return [
+            'name' => 'full name',
+            'first_name' => 'first name',
+            'last_name' => 'last name',
+            'gender_id' => 'gender',
+            'specialty_id' => 'specialty',
+            'student_batch_id' => 'student batch',
+            'guardian_id' => 'guardian',
+            'relationship_id' => 'relationship',
+            'student_source_id' => 'student source',
+        ];
+    }
+
+    protected function normalize(array $row): array
+    {
+        $fullName = $row['full_names'] ?? trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+
+        $genderId = $this->lookups->genderId($row['gender'] ?? null);
+        if (!empty($row['gender']) && !$genderId) {
+            throw ImportRowException::invalid("Gender must be {$this->lookups->genderNames()}.", 'gender', $row['gender']);
         }
 
-        $header = $result->header;
-        $dataRows = $result->dataRows;
-        $total = $result->total;
+        $specialty = $this->lookups->specialty($row['specialty'] ?? null, $row['level'] ?? null);
+        if (!empty($row['specialty']) && !$specialty) {
+            throw ImportRowException::notFound(
+                empty($row['level']) ? 'No specialty with this name at your school.' : 'No specialty with this name at this level at your school.',
+                'specialty',
+                $row['specialty']
+            );
+        }
 
-        $systemJob->update([
-            'total_items' => $total,
-            'processed_items' => 0,
-            'successful_items' => 0,
-            'failed_items' => 0,
-        ]);
+        $batch = $this->lookups->reference('student_batches', ['name'], $row['batch'] ?? null, branchScoped: true);
+        if (!empty($row['batch']) && !$batch) {
+            throw ImportRowException::notFound('No student batch with this name at your school. Create it first, or import student batches before students.', 'batch', $row['batch']);
+        }
 
-        $columnIndexes = ColumnIndexResolverService::resolve(
-            $header,
-            $mapping
+        $guardian = $this->lookups->guardian($row['guardian'] ?? null);
+        if (!empty($row['guardian']) && !$guardian) {
+            throw ImportRowException::notFound('No guardian with this name or phone number at your school. Import guardians before students.', 'guardian', $row['guardian']);
+        }
+
+        $relationship = $this->lookups->reference('stu_par_relationships', ['name'], $row['relationship'] ?? null);
+        if (!empty($row['relationship']) && !$relationship) {
+            throw ImportRowException::invalid(
+                'Relationship not recognised. Use ' . $this->lookups->referenceNames('stu_par_relationships', 'name') . '.',
+                'relationship',
+                $row['relationship']
+            );
+        }
+
+        $source = $this->lookups->reference('student_sources', ['name'], $row['student_source'] ?? null);
+        if (!empty($row['student_source']) && !$source) {
+            throw ImportRowException::invalid(
+                'Student source not recognised. Use ' . $this->lookups->referenceNames('student_sources', 'name') . '.',
+                'student_source',
+                $row['student_source']
+            );
+        }
+
+        return [
+            'name' => $fullName !== '' ? $fullName : null,
+            'first_name' => $row['first_name'] ?? null,
+            'last_name' => $row['last_name'] ?? null,
+            'email' => isset($row['email']) ? Str::lower($row['email']) : null,
+            'phone' => $row['phone'] ?? null,
+            'gender_id' => $genderId,
+            'specialty_id' => $specialty?->id,
+            'student_batch_id' => $batch?->id,
+            'guardian_id' => $guardian?->id,
+            'relationship_id' => $relationship?->id,
+            'student_source_id' => $source?->id,
+            'payment_format' => $this->paymentFormat($row['fee_payment_format'] ?? null),
+        ];
+    }
+
+    protected function duplicateKey(array $row): ?string
+    {
+        return $row['email'];
+    }
+
+    protected function duplicateField(): ?string
+    {
+        return 'email';
+    }
+
+    protected function importRow(array $row, int $rowNumber): string
+    {
+        $students = Student::where('school_branch_id', $this->schoolBranchId);
+
+        if ((clone $students)->where('email', $row['email'])->exists()) {
+            throw ImportRowException::alreadyExists('A student with this email already exists at this school.', 'email', $row['email']);
+        }
+
+        if ((clone $students)->whereRaw('LOWER(name) = ?', [mb_strtolower($row['name'])])->exists()) {
+            throw ImportRowException::alreadyExists(
+                'A student with this full name already exists at this school. If it is a different person, add a middle name or initial.',
+                'full_names',
+                $row['name']
+            );
+        }
+
+        // Phone numbers are unique across all students.
+        if ($row['phone'] && Student::where('phone', $row['phone'])->exists()) {
+            throw ImportRowException::alreadyExists('This phone number is already used by another student.', 'phone', $row['phone']);
+        }
+
+        $student = app(CreateStudentService::class)->createStudent(
+            $row,
+            (object) ['id' => $this->schoolBranchId],
+            (object) ['id' => $this->systemJob->initiated_by_id]
         );
 
-        if ($columnIndexes === null) {
-            $this->jobHelperService->failJob($systemJob, 'One or more required mapped columns were not found in the file header.', 422);
-            $this->progressReporter->maybeBroadcast($systemJob, 0, $this->failedStatus);
-            event(new JobEvent(
-                $schoolAdmin,
-                $schoolBranch,
-                [
-                    'job_id'   => $systemJob->id,
-                    'status'   => "failed",
-                    'stage'    => $systemJob->stage,
-                    'progress' => 100,
-                    'system_job'   => $systemJob ?? null,
-                ]
-            ));
-            return;
+        if ($row['payment_format']) {
+            $student->forceFill(['payment_format' => $row['payment_format']])->save();
         }
 
-        $processed = 0;
-        $created = 0;
-        $updated = 0;
-        $skipped = 0;
-        $errors = [];
+        return self::OUTCOME_CREATED;
+    }
 
-        $this->jobHelperService->updateJobProgress($systemJob, $this->inProgressStatus, 'Importing teachers', 5);
-        $this->progressReporter->maybeBroadcast($systemJob, 5, $this->inProgressStatus);
+    private function paymentFormat(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
 
-        foreach ($dataRows as $index => $row) {
-            $rowNumber = $index + 2;
-            $payload = $this->importMapRowService->mapRow($row->toArray(), $columnIndexes);
-            $normalizePayload = $this->normalizeRow($payload, $schoolBranch->id);
-            $validationError = $this->validateRow($normalizePayload, $rowNumber);
-            if ($validationError !== null) {
-                $skipped++;
-                $errors[] = $validationError;
-                $processed++;
-                $this->batchTrackProgress($systemJob, $processed, $created, $updated, $skipped, $total);
-                continue;
+        foreach (self::PAYMENT_FORMATS as $format => $aliases) {
+            if (in_array(ImportLookups::key($value), $aliases, true)) {
+                return $format;
             }
-
-            try {
-                DB::transaction(function () use (
-                    $normalizePayload,
-                    &$created,
-                    &$updated,
-                    $schoolBranch
-                ) {
-
-
-                    $student = Student::query()
-                        ->where('school_branch_id', $schoolBranch->id)
-                        ->where('name', $normalizePayload['full_names'])
-                        ->first();
-
-                    if ($student) {
-                        $student->update($normalizePayload);
-                        $updated++;
-                    } else {
-                        $student = Student::create([...$normalizePayload, "school_branch_id" => $schoolBranch->id]);
-                        StudentRegistered::dispatch($student);
-                        $created++;
-                    }
-                });
-            } catch (Throwable $e) {
-                $skipped++;
-                $errors[] = [
-                    'code' => 500,
-                    'message' => "Row {$rowNumber}: " . $e->getMessage(),
-                    'stage' => 'import',
-                    'data' => [
-                        'row' => $rowNumber,
-                        'exception' => [
-                            'message' => $e->getMessage(),
-                            'file' => $e->getFile(),
-                            'line' => $e->getLine(),
-                            'trace' => $e->getTraceAsString()
-                        ],
-                        'payload' => $payload,
-                        'timestamp' => Carbon::now()->toISOString()
-                    ]
-                ];
-            }
-
-            $processed++;
-            $this->batchTrackProgress($systemJob, $processed, $created, $updated, $skipped, $total);
         }
 
-        $this->flushBatchUpdate($systemJob, $processed, $created, $updated, $skipped);
-
-        foreach ($errors as $error) {
-            SystemJobError::create([
-                'job_id' => $systemJob->id,
-                'school_branch_id' => $schoolBranch->id,
-                'code' => $error['code'] ?? 500,
-                'message' => $error['message'] ?? 'Unknown error occurred',
-                'stage' => $error['stage'] ?? 'import',
-                'data' => $error['data'] ?? []
-            ]);
-        }
-
-        $finalStatus = empty($errors) ? $this->completedStatus : $this->completedWithIssuesStatus;
-        $finalStage = empty($errors) ? 'Completed' : 'Completed with issues';
-        $summary = [
-            'total'   => $total,
-            'created' => $created,
-            'updated' => $updated,
-            'skipped' => $skipped,
-            'errors'  => array_slice($errors, 0, 50),
-        ];
-
-        $systemJob->update([
-            'status'      => $finalStatus,
-            'stage'       => $finalStage,
-            'progress'    => 100,
-            'result'      => $summary,
-            'updated_at'  => Carbon::now(),
-            'finished_at' => Carbon::now(),
-        ]);
-
-        $this->progressReporter->maybeBroadcast($systemJob, 100, $finalStatus);
-
-        $this->spreadsheetService->deleteIfExists($filePath);
-
-        event(new JobEvent(
-            $schoolAdmin,
-            $schoolBranch,
-            [
-                'job_id'   => $systemJob->id,
-                'status'   => "completed",
-                'stage'    => $systemJob->stage,
-                'progress' => 100,
-                'system_job'   => $systemJob ?? null,
-            ]
-        ));
-    }
-    private function batchTrackProgress(
-        SystemJob $systemJob,
-        int $processed,
-        int $created,
-        int $updated,
-        int $skipped,
-        int $total
-    ): void {
-        $this->batchProcessed++;
-        $this->batchCreated += $created - ($this->batchCreated ?? 0);
-        $this->batchUpdated += $updated - ($this->batchUpdated ?? 0);
-        $this->batchSkipped += $skipped - ($this->batchSkipped ?? 0);
-
-        if ($this->batchProcessed >= $this->batchSize) {
-            $this->flushBatchUpdate($systemJob, $processed, $created, $updated, $skipped);
-        }
-
-        $this->reportProgress($systemJob, $processed, $total);
-    }
-
-    private function flushBatchUpdate(
-        SystemJob $systemJob,
-        int $processed,
-        int $created,
-        int $updated,
-        int $skipped
-    ): void {
-        if ($this->batchProcessed > 0) {
-            $systemJob->update([
-                'processed_items' => $processed,
-                'successful_items' => $created + $updated,
-                'failed_items' => $skipped,
-            ]);
-
-            $this->batchProcessed = 0;
-            $this->batchCreated = 0;
-            $this->batchUpdated = 0;
-            $this->batchSkipped = 0;
-        }
-    }
-
-    private function normalizeRow(array $payload, string $schoolBranchId): array
-    {
-        $specialty = Specialty::where('school_branch_id', $schoolBranchId)
-            ->where('specialty_name', $payload['specialty'])
-            ->whereHas(
-                'level',
-                fn($query) => $query
-                    ->where('program_name', $payload['level'])
-                    ->whereHas('levelType', fn($q) => $q->where('program_name', 'level_start_200'))
-            )
-            ->first();
-
-        $payload['specialty_id'] = $specialty->id;
-        $payload['department_id'] = $specialty->department_id;
-        $payload['level_id'] = $specialty->level_id;
-
-        $payload['gender_id'] = Gender::where("name", $payload['gender'])->first()->id;
-        $payload['student_source_id'] = StudentSource::where("name", $payload['student_source'])->first()->id;
-        $payload['guardian_id'] = Parents::where("school_branch_id", $schoolBranchId)->where("name", $payload['guardian'])->first()->id;
-
-        $payload['relationship_id'] = StudentParentRelationship::where("name", $payload['relationship'])->first()->id;
-        $payload['student_batch_id'] = Studentbatch::where("school_branch_id", $schoolBranchId)->where("name", $payload['batch'])->first()->id;
-
-
-        return $payload;
-    }
-    private function validateRow(array $payload, int $rowNumber): ?array
-    {
-        $request = new CreateStudentRequest();
-        $validator = Validator::make($payload, $request->rules());
-
-        if ($validator->fails()) {
-            $messages = collect($validator->errors()->all())
-                ->map(fn($msg) => "Row {$rowNumber}: {$msg}")
-                ->implode('; ');
-
-            return [
-                'code' => 422,
-                'message' => $messages,
-                'stage' => 'validation',
-                'data' => [
-                    'row' => $rowNumber,
-                    'validation_errors' => $validator->errors()->toArray(),
-                    'payload' => $payload,
-                    'timestamp' => Carbon::now()->toISOString()
-                ]
-            ];
-        }
-
-        return null;
-    }
-
-    private function reportProgress(
-        SystemJob $systemJob,
-        int $processed,
-        int $total
-    ): void {
-        $progress = $total > 0
-            ? (int) min(99, floor(($processed / $total) * 95) + 5)
-            : 5;
-
-        $this->jobHelperService->updateJobProgress($systemJob, $this->inProgressStatus, 'Importing teachers', $progress);
-        $this->maybeBroadcast($systemJob, $progress, $this->inProgressStatus);
-    }
-
-    private function maybeBroadcast(
-        SystemJob $systemJob,
-        int $progress,
-        string $status
-    ): void {
-        $schoolAdmin = Schooladmin::where("school_branch_id", $this->schoolBranchId)->find($this->adminId);
-        $schoolBranch = Schoolbranches::find($this->schoolBranchId);
-
-        if (!$this->policy->shouldBroadcast(
-            $progress,
-            $this->lastBroadcastProgress,
-            $this->lastBroadcastAt,
-            $status,
-            $this->lastBroadcastStatus
-        )) {
-            return;
-        }
-
-        event(new JobEvent(
-            $schoolAdmin,
-            $schoolBranch,
-            [
-                'job_id'   => $systemJob->id,
-                'status'   => $status,
-                'stage'    => $systemJob->stage,
-                'progress' => $progress,
-                'system_job'   => $systemJob ?? null,
-            ]
-        ));
-
-        $this->lastBroadcastProgress = $progress;
-        $this->lastBroadcastStatus = $status;
-        $this->lastBroadcastAt = now();
-    }
-
-    public function failed(Throwable $exception): void
-    {
-        $schoolAdmin = Schooladmin::where("school_branch_id", $this->schoolBranchId)->find($this->adminId);
-        $schoolBranch = Schoolbranches::find($this->schoolBranchId);
-        $systemJob = SystemJob::find($this->jobId);
-
-        Log::error("TeacherImportJob [" . ($systemJob?->id ?? $this->jobId) . "] permanently failed.", [
-            'school_id' => $schoolBranch?->id,
-            'error'     => $exception->getMessage(),
-            'file'      => $exception->getFile(),
-            'line'      => $exception->getLine(),
-            'payload'   => $systemJob?->input['origin'] ?? null,
-            'trace'     => $exception->getTraceAsString(),
-        ]);
-
-        if ($systemJob) {
-            SystemJobError::create([
-                'job_id' => $systemJob->id,
-                'school_branch_id' => $this->schoolBranchId,
-                'code' => 500,
-                'message' => 'Job failed permanently: ' . $exception->getMessage(),
-                'stage' => 'job_failure',
-                'data' => [
-                    'exception' => [
-                        'message' => $exception->getMessage(),
-                        'file' => $exception->getFile(),
-                        'line' => $exception->getLine(),
-                        'trace' => $exception->getTraceAsString()
-                    ],
-                    'timestamp' => Carbon::now()->toISOString()
-                ]
-            ]);
-
-            $jobHelperService = app(JobHelperService::class);
-            $jobHelperService->failJob($systemJob, $exception->getMessage(), 500);
-
-            event(new JobEvent(
-                $schoolAdmin,
-                $schoolBranch,
-                [
-                    'job_id'   => $systemJob->id,
-                    'status'   => 'failed',
-                    'stage'    => 'Failed',
-                    'progress' => 0,
-                    'error'    => $exception->getMessage(),
-                ]
-            ));
-        }
+        throw ImportRowException::invalid('Payment format must be one time or installmental.', 'fee_payment_format', $value);
     }
 }
