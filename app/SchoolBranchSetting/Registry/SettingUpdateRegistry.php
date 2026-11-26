@@ -16,6 +16,7 @@ use App\SchoolBranchSetting\Handlers\Graduation\GraduationFeeHandler;
 use App\SchoolBranchSetting\Handlers\Graduation\GraduationGeneralBillingFee;
 use App\SchoolBranchSetting\Handlers\Graduation\LevelGraduationFeeBillingHandler;
 use App\SchoolBranchSetting\Handlers\Graduation\LevelGraduationFeeHandler;
+use App\SchoolBranchSetting\Handlers\Level\LevelListHandler;
 use App\SchoolBranchSetting\Handlers\Level\LevelRegistrationFeeHandler;
 use App\SchoolBranchSetting\Handlers\Level\LevelSpecialtyAutoCreateHandler;
 use App\SchoolBranchSetting\Handlers\Level\LevelStartHandler;
@@ -74,7 +75,9 @@ class SettingUpdateRegistry
           //
 
           'level.start' => LevelStartHandler::class,
+          'level.allowed_levels' => LevelListHandler::class,
           'specialties.auto_generate_levels' => LevelSpecialtyAutoCreateHandler::class,
+          'specialties.auto_generate_for_levels' => LevelListHandler::class,
           'level.registration_fees' => LevelRegistrationFeeHandler::class,
           'level.tuition_fees' => LevelTuitionFeeHandler::class,
           //
