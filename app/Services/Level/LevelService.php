@@ -85,11 +85,21 @@ class LevelService
         }
     }
 
-    public function getLevelBySchoolBranch(object $currentSchool)
+    /**
+     * The school's levels: the ones it offers (Levels Offered by the School),
+     * or with $scope "system" every level of its level system, which the
+     * setting's own picker needs.
+     */
+    public function getLevelBySchoolBranch(object $currentSchool, ?string $scope = null)
     {
         try {
             $levelSettings = $this->levelSetting($currentSchool->id);
-            $educationLevels = Educationlevels::whereHas("levelType", fn($query) => $query->where("program_name", $levelSettings->value))->get();
+            $schoolLevels = app(SchoolLevels::class);
+            $educationLevels = !$levelSettings?->value
+                ? collect()
+                : ($scope === 'system'
+                    ? $schoolLevels->system($currentSchool->id)
+                    : $schoolLevels->offered($currentSchool->id));
 
             if ($educationLevels->isEmpty()) {
                 throw new AppException(

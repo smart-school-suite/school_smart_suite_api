@@ -45,7 +45,7 @@ class LevelController extends Controller
     public function getEducationLevelBySchoolBranch(Request $request)
     {
         $currentSchool = $request->attributes->get('currentSchool');
-        $levels = $this->levelService->getLevelBySchoolBranch($currentSchool);
+        $levels = $this->levelService->getLevelBySchoolBranch($currentSchool, $request->query('scope'));
         return ApiResponseService::success("Levels Fetched Successfully", $levels, null, 200);
     }
 }

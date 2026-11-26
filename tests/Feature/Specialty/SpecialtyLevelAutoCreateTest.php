@@ -116,11 +116,17 @@ class SpecialtyLevelAutoCreateTest extends TestCase
         $this->assertSame(['lvl-1', 'lvl-2', 'lvl-3'], array_keys($this->created()), 'The setting defaults to on.');
     }
 
-    public function test_a_level_outside_the_schools_level_system_is_created_alone(): void
+    public function test_a_level_outside_the_schools_level_system_is_refused(): void
     {
-        $this->create(['level_id' => 'other-2']);
+        // Specialties are only created at levels the school offers (level.allowed_levels).
+        try {
+            $this->create(['level_id' => 'other-2']);
+            $this->fail('Expected the level to be refused.');
+        } catch (AppException $exception) {
+            $this->assertSame('Level Not Offered', $exception->getTitle());
+        }
 
-        $this->assertSame(['other-2'], array_keys($this->created()));
+        $this->assertSame([], $this->created());
     }
 
     public function test_a_duplicate_at_the_chosen_level_creates_nothing(): void

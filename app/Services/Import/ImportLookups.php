@@ -4,7 +4,7 @@ namespace App\Services\Import;
 
 use App\Models\Courses;
 use App\Models\Department;
-use App\Models\Educationlevels;
+use App\Services\Level\SchoolLevels;
 use App\Models\Hall;
 use App\Models\HallType;
 use App\Models\Gender;
@@ -63,21 +63,10 @@ class ImportLookups
             ->join(', ', ' or ');
     }
 
-    /**
-     * The levels of the branch's level system (the level.start setting),
-     * or every level when the branch has not chosen one.
-     */
+    /** The levels the school offers (Levels Offered by the School), in its level system. */
     public function levels(): Collection
     {
-        return $this->remember('levels', function () {
-            $system = SchoolBranchSetting::where('school_branch_id', $this->schoolBranchId)
-                ->whereHas('settingDefination', fn($query) => $query->where('key', 'level.start'))
-                ->first()?->value;
-
-            return Educationlevels::query()
-                ->when($system, fn($query) => $query->whereHas('levelType', fn($q) => $q->where('program_name', $system)))
-                ->get(['id', 'name', 'level', 'program_name']);
-        });
+        return $this->remember('levels', fn() => app(SchoolLevels::class)->offered($this->schoolBranchId));
     }
 
     /** "Level One", "level_one" or "200" -> the level's id in the branch's level system. */

@@ -303,11 +303,25 @@ class SettingDefinationSeeder extends Seeder
                 'description' => 'The academic level at which students begin their studies at your institution, such as Level 100, Level 200, or Level 300.',
             ],
             [
+                'key' => 'level.allowed_levels',
+                'label' => 'Levels Offered by the School',
+                'data_type' => 'json',
+                'default_value' => $levels->pluck('id')->values()->all(),
+                'description' => 'The academic levels your school runs. Only these levels can be chosen when creating specialties, importing data or setting up other options.',
+            ],
+            [
                 'key' => 'specialties.auto_generate_levels',
                 'label' => 'Automatically Create Specialties Across All Levels',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'When enabled, a new specialty is automatically created for every active academic level. Disable this option if you prefer to create specialties for each level individually.',
+                'description' => 'When enabled, creating a specialty also creates it at the levels chosen in Levels for Automatic Specialty Creation. Disable this option if you prefer to create specialties for each level individually.',
+            ],
+            [
+                'key' => 'specialties.auto_generate_for_levels',
+                'label' => 'Levels for Automatic Specialty Creation',
+                'data_type' => 'json',
+                'default_value' => $levels->pluck('id')->values()->all(),
+                'description' => 'The levels a specialty is also created at automatically. The level a specialty is created for always receives it. Only applies when Automatically Create Specialties Across All Levels is on.',
             ],
             [
                 'key' => 'level.registration_fees',
