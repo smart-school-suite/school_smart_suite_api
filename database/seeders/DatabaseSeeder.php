@@ -47,5 +47,8 @@ class DatabaseSeeder extends Seeder
         $this->call(QualificationSeeder::class);
         $this->call(TagSeeder::class);
         $this->call(EventTagSeeder::class);
+        // Semester timetable constraints and blockers (reference data the
+        // constraint endpoints list); updateOrCreate by key, safe to repeat.
+        $this->call(TimetableConstraintSeeder::class);
     }
 }

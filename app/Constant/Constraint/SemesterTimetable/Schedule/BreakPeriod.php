@@ -6,7 +6,7 @@ class BreakPeriod
 {
     public const KEY = "break_period";
     public const TITLE = "Break Period";
-    public const TYPE = "Hard";
+    public const TYPE = "hard";
     public const DESCRIPTION = "Fixed daily break or lunch time during which no classes, exams, sessions or activities can be scheduled. Applies every operational day unless exceptions are specified.";
     public const INTERPRETER_HANDLER = \App\Interpreter\SemesterTimetable\Interpreters\Schedule\BreakPeriodInterpreter::class;
     public const SUGGESTION_HANDLER = \App\Interpreter\SemesterTimetable\Suggestion\ConstraintSuggestions\Schedule\BreakPeriodSuggestion::class;

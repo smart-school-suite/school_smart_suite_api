@@ -121,8 +121,9 @@ class TimetableConstraintSeeder extends Seeder
         $typesByKey = SemTimetableConstraintType::pluck('id', 'key');
 
         foreach ($constraints as $constraint) {
-            $categoryId = $categoriesByKey[$constraint['category']] ?? null;
-            $typeId = $typesByKey[$constraint['type']] ?? null;
+            // Keys are lower case; a definition written "Hard" still finds its type.
+            $categoryId = $categoriesByKey[strtolower((string) $constraint['category'])] ?? null;
+            $typeId = $typesByKey[strtolower((string) $constraint['type'])] ?? null;
 
             if (!$categoryId) {
                 Log::warning("Constraint category not found: {$constraint['category']} (for constraint {$constraint['key']})");
@@ -153,7 +154,7 @@ class TimetableConstraintSeeder extends Seeder
         $categoriesByKey = SemTimetableBlockerCategory::pluck('id', 'key');
 
         foreach ($violations as $violation) {
-            $categoryId = $categoriesByKey[$violation['category']] ?? null;
+            $categoryId = $categoriesByKey[strtolower((string) $violation['category'])] ?? null;
 
             if (!$categoryId) {
                 Log::warning("Blocker category not found: {$violation['category']} (for violation {$violation['key']})");
