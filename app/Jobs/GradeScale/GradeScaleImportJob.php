@@ -5,6 +5,7 @@ namespace App\Jobs\GradeScale;
 use App\Jobs\Import\BaseImportJob;
 use App\Models\GradeScale\SchoolGradeScale;
 use App\Models\GradeScale\SchoolGradeScaleCategory;
+use App\Services\Grade\GradeSchemeSettings;
 use App\Services\Import\ImportLookups;
 use App\Services\Import\ImportRowException;
 use App\Services\Import\ImportType;
@@ -69,7 +70,8 @@ class GradeScaleImportJob extends BaseImportJob
             'letter_grade_id' => ['required'],
             'minimum_score' => $score,
             'maximum_score' => [...$score, 'gte:minimum_score', 'lte:grade_max_score'],
-            'grade_points' => ['required', 'numeric', 'min:0', 'max:4', 'decimal:0,2'],
+            // The upper bound is the school's Maximum Attainable GPA, checked in importRow().
+            'grade_points' => ['required', 'numeric', 'min:0', 'decimal:0,2'],
             'result' => ['required'],
             'resit_result' => ['required'],
             'performance' => ['required', 'string', 'max:150'],
@@ -133,6 +135,23 @@ class GradeScaleImportJob extends BaseImportJob
 
     protected function importRow(array $row, int $rowNumber): string
     {
+        $scheme = app(GradeSchemeSettings::class);
+        if (!$scheme->isLetterGradeAllowed($this->schoolBranchId, $row['letter_grade_id'])) {
+            throw ImportRowException::notAllowed(
+                'This letter grade is not part of your Defined Letter Grade Scheme (Settings › Grade Settings).',
+                'grade',
+                $row['grade']
+            );
+        }
+        $maxGpa = $scheme->maxGpa($this->schoolBranchId);
+        if ((float) $row['grade_points'] > $maxGpa + 0.00001) {
+            throw ImportRowException::invalid(
+                "Grade points cannot exceed your Maximum Attainable GPA of {$scheme->format($maxGpa)}.",
+                'grade_points',
+                $row['grade_points']
+            );
+        }
+
         $category = SchoolGradeScaleCategory::where('school_branch_id', $this->schoolBranchId)
             ->lockForUpdate()
             ->findOrFail($row['category_id']);

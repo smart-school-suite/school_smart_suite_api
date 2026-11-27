@@ -9,6 +9,8 @@ class GenerateGradeScaleService
     public function generateGradeScale(array $payload)
     {
         $maxScore = (float) $payload['max_score'];
+        // Points below are on a 4.0 scale; scaled to the school's Maximum Attainable GPA.
+        $gpaScale = (float) ($payload['max_gpa'] ?? 4.0) / 4.0;
         $examType = $payload['exam_type'];
         $letterGrades = Grade::all();
 
@@ -115,7 +117,7 @@ class GenerateGradeScaleService
             $result[] = [
                 'letter_grade_id' => $letterGrade->id,
                 'letter_grade' => $letterGrade->letter_grade,
-                'grade_points' => number_format($gradePoints[$grade], 2, '.', ''),
+                'grade_points' => number_format(floor($gradePoints[$grade] * $gpaScale * 100) / 100, 2, '.', ''),
                 'minimum_score' => number_format($minScore, 2, '.', ''),
                 'maximum_score' => number_format($maxScoreForGrade, 2, '.', ''),
                 'result' => $currentGradeStatus,

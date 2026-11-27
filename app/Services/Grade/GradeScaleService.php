@@ -261,6 +261,7 @@ class GradeScaleService
             }
 
             $this->validateGradeScaleOverlaps($payload['grade_scales']);
+            app(GradeSchemeSettings::class)->assertGradesAllowed($currentSchool->id, $payload['grade_scales']);
 
             $insertedGrades = [];
 
@@ -330,6 +331,18 @@ class GradeScaleService
                     }
                 }
             }
+
+            // The grades as they will be after the update must fit the scheme.
+            app(GradeSchemeSettings::class)->assertGradesAllowed(
+                $currentSchool->id,
+                collect($payload['grade_scales'])->map(function ($data) use ($category) {
+                    $existing = $category->schoolGradeScale->firstWhere('id', $data['grade_scale_id']);
+                    return [
+                        'letter_grade_id' => $data['letter_grade_id'] ?? $existing?->letter_grade_id,
+                        'grade_points' => $data['grade_points'] ?? $existing?->grade_points,
+                    ];
+                })
+            );
 
             foreach ($payload['grade_scales'] as $gradeScaleData) {
                 $gradeScale = $category->schoolGradeScale->firstWhere('id', $gradeScaleData['grade_scale_id']);
@@ -424,6 +437,9 @@ class GradeScaleService
                 );
             }
 
+            // The source may predate a change to the scheme.
+            app(GradeSchemeSettings::class)->assertGradesAllowed($currentSchool->id, $sourceGradeScales->map->only(['letter_grade_id', 'grade_points']));
+
             foreach ($sourceGradeScales as $gradeScale) {
                 $newGrade = SchoolGradeScale::create([
                     'school_branch_id' => $currentSchool->id,
@@ -485,6 +501,8 @@ class GradeScaleService
                     null
                 );
             }
+
+            app(GradeSchemeSettings::class)->assertGradesAllowed($currentSchool->id, $sourceGradeScales->map->only(['letter_grade_id', 'grade_points']));
 
             $targetCategories = SchoolGradeScaleCategory::where('school_branch_id', $currentSchool->id)
                 ->whereIn('id', $targetCategoryIds)
@@ -572,7 +590,9 @@ class GradeScaleService
             ->get()
             ->keyBy('letter_grade_id');
 
-        $allLetterGrades = Grade::all();
+        // The form offers only the letters of the Defined Letter Grade Scheme.
+        $scheme = app(GradeSchemeSettings::class);
+        $allLetterGrades = Grade::whereIn('id', $scheme->allowedLetterGradeIds($currentSchool->id))->get();
 
         return $this->formatGradeScaleResponse(
             $allLetterGrades,
@@ -607,7 +627,8 @@ class GradeScaleService
             $generateGradeScaleService = app(GenerateGradeScaleService::class);
             $autoGenScale = $generateGradeScaleService->generateGradeScale([
                 'max_score' => $maxScore,
-                'exam_type' => $examType
+                'exam_type' => $examType,
+                'max_gpa' => app(GradeSchemeSettings::class)->maxGpa($schoolGradeScaleCategory->school_branch_id),
             ]);
 
             $autoGenScaleIndexed = collect($autoGenScale)->keyBy('letter_grade_id');

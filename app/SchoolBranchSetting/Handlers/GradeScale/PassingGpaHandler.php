@@ -38,6 +38,17 @@ class PassingGpaHandler implements SettingUpdateHandler
             );
         }
 
+        $maxGpa = app(\App\Services\Grade\GradeSchemeSettings::class)->maxGpa($currentSchool->id);
+        if ((float) $value > $maxGpa + 0.00001) {
+            throw new AppException(
+                "The passing GPA cannot exceed the maximum attainable GPA ({$maxGpa}).",
+                422,
+                "Above the Maximum GPA",
+                "The Minimum Passing GPA cannot be higher than the Maximum Attainable GPA of " . number_format($maxGpa, 2) . ".",
+                "value"
+            );
+        }
+
         $setting->update(['value' => $value]);
 
         return $setting->fresh();
