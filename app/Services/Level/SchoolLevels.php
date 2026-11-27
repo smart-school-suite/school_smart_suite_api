@@ -16,6 +16,9 @@ use Illuminate\Support\Collection;
  *   autoSpecialtyLevels()  the offered levels automatic specialty creation
  *              uses ("Levels for Automatic Specialty Creation",
  *              specialties.auto_generate_for_levels)
+ *   autoExamLevels()  the offered levels whose matching semesters also get
+ *              an exam when one is created ("Levels for Automatic Exam
+ *              Creation", exam.auto_create_levels)
  *
  * A saved list that matches none of the current system's levels (no setting
  * yet, or the starting level was changed) means "all", so changing the
@@ -26,6 +29,7 @@ class SchoolLevels
     public const SYSTEM = 'level.start';
     public const OFFERED = 'level.allowed_levels';
     public const AUTO_SPECIALTY = 'specialties.auto_generate_for_levels';
+    public const AUTO_EXAM = 'exam.auto_create_levels';
 
     /** @return Collection<int, Educationlevels> lowest level first */
     public function system(string $schoolBranchId): Collection
@@ -49,6 +53,12 @@ class SchoolLevels
     public function autoSpecialtyLevels(string $schoolBranchId): Collection
     {
         return $this->narrow($this->offered($schoolBranchId), $this->value($schoolBranchId, self::AUTO_SPECIALTY));
+    }
+
+    /** @return Collection<int, Educationlevels> */
+    public function autoExamLevels(string $schoolBranchId): Collection
+    {
+        return $this->narrow($this->offered($schoolBranchId), $this->value($schoolBranchId, self::AUTO_EXAM));
     }
 
     public function isOffered(string $schoolBranchId, ?string $levelId): bool

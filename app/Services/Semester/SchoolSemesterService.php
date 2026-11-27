@@ -15,7 +15,6 @@ use App\Exceptions\AppException;
 use Carbon\Carbon;
 use App\Services\ApiResponseService;
 use App\Events\Actions\StudentActionEvent;
-use App\Jobs\Exam\AutoCreateSemesterExamsJob;
 use App\Jobs\JointCourse\CreateJointCourseSemesterJob;
 use App\Models\AcademicYear\SchoolAcademicYear;
 use App\Models\Semester;
@@ -136,8 +135,6 @@ class SchoolSemesterService
             try {
                 CreateInstructorAvailabilityJob::dispatch($currentSchool->id, $createdSemester->id);
                 CreateJointCourseSemesterJob::dispatch($createdSemester->id, $currentSchool);
-                // Creates the semester's CA and Exam when exam.auto_create is on.
-                AutoCreateSemesterExamsJob::dispatch($currentSchool->id, $createdSemester->id);
             } catch (Throwable $e) {
                 Log::error("School semester {$createdSemester->id} was created but its follow-up jobs failed", [
                     'message' => $e->getMessage(),

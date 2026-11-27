@@ -204,13 +204,24 @@ class SettingDefinationSeeder extends Seeder
     }
     public function examSettingDefination(): void
     {
+        $levelIds = Educationlevels::whereHas("levelType", function ($query) {
+            $query->where("program_name", "level_start_100");
+        })->pluck('id')->values()->all();
+
         $settingDefs = [
             [
                 'key' => 'exam.auto_create',
-                'label' => 'Automatically Create Exams Each Semester',
+                'label' => 'Automatically Create Exams for Matching Semesters',
                 'data_type' => 'boolean',
                 'default_value' => true,
-                'description' => 'When enabled, exams are automatically created when a new semester is created, reducing the need to set them up manually.',
+                'description' => 'When on, creating an exam also creates it for every other specialty whose semester has the same start and end dates, at the levels chosen below. Specialties without students, or that already have this exam, are skipped.',
+            ],
+            [
+                'key' => 'exam.auto_create_levels',
+                'label' => 'Levels for Automatic Exam Creation',
+                'data_type' => 'json',
+                'default_value' => $levelIds,
+                'description' => 'Only specialties at the selected levels get the exam automatically. The specialty an exam is created for always gets it. Only applies when Automatically Create Exams for Matching Semesters is on.',
             ],
             [
                 'key' => 'exam.ca_default_max_score',

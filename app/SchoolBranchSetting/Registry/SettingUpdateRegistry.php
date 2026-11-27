@@ -83,6 +83,7 @@ class SettingUpdateRegistry
           //
 
           'exam.auto_create' => AutoCreateExamHandler::class,
+          'exam.auto_create_levels' => LevelListHandler::class,
           'exam.ca_default_max_score' => CaDefaultScoreHandler::class,
           'exam.exam_default_max_score' => ExamDefaultScoreHandler::class,
           'exam.resit_exam_default_max_score' => ResitDefaultScoreHandler::class,
