@@ -224,6 +224,20 @@ class SettingDefinationSeeder extends Seeder
                 'description' => 'Only specialties at the selected levels get the exam automatically. The specialty an exam is created for always gets it. Only applies when Automatically Create Exams for Matching Semesters is on.',
             ],
             [
+                'key' => 'exam.auto_create_types',
+                'label' => 'Exams to Create Automatically',
+                'data_type' => 'string',
+                'default_value' => 'ca_and_exam',
+                'description' => 'Which exams are created automatically for matching semesters: the CA and the Exam, or the CA only. Only applies when Automatically Create Exams for Matching Semesters is on.',
+            ],
+            [
+                'key' => 'exam.auto_attach_grade_scale',
+                'label' => 'Attach Matching Grade Scale',
+                'data_type' => 'boolean',
+                'default_value' => true,
+                'description' => 'When on, a new exam gets your grade scale for its exam type (CA or Exam) with the same max score, when exactly one fits. If none or several fit, attach one by hand.',
+            ],
+            [
                 'key' => 'exam.ca_default_max_score',
                 'label' => 'Maximum Continuous Assessment Score',
                 'data_type' => 'decimal',

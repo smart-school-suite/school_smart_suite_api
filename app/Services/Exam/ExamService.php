@@ -38,7 +38,9 @@ class ExamService
      * is also created for the other specialties whose semester has the same
      * dates (ExamAutoCreationService). The response lists those copies
      * (auto_created_exams) and the specialties skipped, with the reason
-     * (auto_creation_skipped).
+     * (auto_creation_skipped). With "Attach Matching Grade Scale" on, each
+     * gets the one grade scale that fits it (grade_scale_attachment says
+     * what happened for this exam: attached, none, several or off).
      */
     public function createExam(array $data, object $currentSchool, object $authAdmin): Exam
     {
@@ -65,6 +67,13 @@ class ExamService
 
                 $auto = app(ExamAutoCreationService::class)->createFor($exam, $allowed['semester'], $examPart, $currentSchool);
 
+                // "Attach Matching Grade Scale": the exam and each copy get the one grade scale that fits, if any.
+                $matcher = app(ExamGradeScaleMatcher::class);
+                $auto['grade_scale'] = $matcher->attach($exam, $currentSchool->id);
+                foreach ($auto['created'] as $copy) {
+                    $matcher->attach($copy, $currentSchool->id);
+                }
+
                 return [$exam, $auto];
             });
 
@@ -75,6 +84,7 @@ class ExamService
 
             $exam->setRelation('autoCreatedExams', $auto['created']);
             $exam->setAttribute('auto_creation_skipped', $auto['skipped']);
+            $exam->setAttribute('grade_scale_attachment', $auto['grade_scale']);
 
             return $exam;
         } catch (AppException $e) {

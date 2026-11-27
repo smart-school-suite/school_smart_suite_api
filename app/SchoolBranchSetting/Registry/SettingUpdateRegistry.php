@@ -6,6 +6,7 @@ use App\SchoolBranchSetting\Handlers\AdditionalFee\DefaultDueDaysHandler;
 use App\SchoolBranchSetting\Handlers\Election\ElectionVoteTieAdministrativeVoteHandler;
 use App\SchoolBranchSetting\Handlers\Election\ElectionVoteTieHighestGpaHandler;
 use App\SchoolBranchSetting\Handlers\Exam\AutoCreateExamHandler;
+use App\SchoolBranchSetting\Handlers\Exam\AutoCreateExamTypesHandler;
 use App\SchoolBranchSetting\Handlers\Exam\CaDefaultScoreHandler;
 use App\SchoolBranchSetting\Handlers\Exam\ExamDefaultScoreHandler;
 use App\SchoolBranchSetting\Handlers\Exam\ResitDefaultScoreHandler;
@@ -84,6 +85,8 @@ class SettingUpdateRegistry
 
           'exam.auto_create' => AutoCreateExamHandler::class,
           'exam.auto_create_levels' => LevelListHandler::class,
+          'exam.auto_create_types' => AutoCreateExamTypesHandler::class,
+          'exam.auto_attach_grade_scale' => AutoCreateExamHandler::class,
           'exam.ca_default_max_score' => CaDefaultScoreHandler::class,
           'exam.exam_default_max_score' => ExamDefaultScoreHandler::class,
           'exam.resit_exam_default_max_score' => ResitDefaultScoreHandler::class,

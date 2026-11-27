@@ -59,7 +59,12 @@ class ExamAutoCreationTest extends TestCase
         }
 
         DB::table('setting_categories')->insert(['id' => 'cat', 'name' => 'Exam Settings', 'key' => 'setting.category.exam']);
-        foreach (['exam.auto_create' => ['boolean', true], 'exam.auto_create_levels' => ['json', ['lvl-1', 'lvl-2']]] as $key => [$type, $value]) {
+        foreach ([
+            'exam.auto_create' => ['boolean', true],
+            'exam.auto_create_levels' => ['json', ['lvl-1', 'lvl-2']],
+            'exam.auto_create_types' => ['string', 'ca_and_exam'],
+            'exam.auto_attach_grade_scale' => ['boolean', true],
+        ] as $key => [$type, $value]) {
             DB::table('setting_definations')->insert(['id' => "def-$key", 'name' => $key, 'key' => $key, 'data_type' => $type, 'setting_category_id' => 'cat']);
             SchoolBranchSetting::create(['school_branch_id' => 'branch-1', 'setting_defination_id' => "def-$key", 'value' => $value]);
         }
@@ -141,5 +146,59 @@ class ExamAutoCreationTest extends TestCase
         $this->set('exam.auto_create', false);
         $this->create('ca-1', 30)->assertCreated()->assertJsonPath('data.auto_creation_skipped', []);
         $this->assertSame(['sy-swe' => 30.0], $this->exams('ca-1'));
+    }
+
+    public function test_with_ca_only_an_exam_is_not_copied_but_a_ca_is(): void
+    {
+        $this->set('exam.auto_create_types', 'ca_only');
+        DB::table('exams')->insert([
+            ['id' => 'ca-swe', 'school_branch_id' => 'branch-1', 'exam_type_id' => 'ca-1', 'school_year_id' => 'sy-swe', 'max_score' => 30, 'start_date' => '2026-10-05', 'end_date' => '2026-10-09'],
+            ['id' => 'ca-cs', 'school_branch_id' => 'branch-1', 'exam_type_id' => 'ca-1', 'school_year_id' => 'sy-cs', 'max_score' => 30, 'start_date' => '2026-10-05', 'end_date' => '2026-10-09'],
+        ]);
+
+        $this->create('exam-1', 70)->assertCreated()->assertJsonPath('data.auto_created_exams', []);
+        $this->assertSame(['sy-swe' => 100.0], $this->exams('exam-1'));
+
+        DB::table('exams')->delete();
+        $this->create('ca-1', 30)->assertCreated();
+        $this->assertSame(['sy-cs' => 30.0, 'sy-swe' => 30.0], $this->exams('ca-1'));
+    }
+
+    private function gradeScale(string $id, string $examType, float $maxScore, bool $withGrades = true): void
+    {
+        DB::table('grade_scale_categories')->insertOrIgnore(['id' => "sys-$id", 'title' => "Scale $id", 'status' => 'active', 'exam_type' => $examType]);
+        DB::table('school_grade_scale_categories')->insert(['id' => $id, 'max_score' => $maxScore, 'status' => 'active', 'grades_category_id' => "sys-$id", 'school_branch_id' => 'branch-1']);
+        DB::table('letter_grades')->insertOrIgnore(['id' => 'lg-a', 'letter_grade' => 'A']);
+        if ($withGrades) {
+            DB::table('grade_scales')->insert(['id' => "gs-$id", 'grade_points' => 4, 'result' => 'passed', 'resit_result' => 'no_resit', 'minimum_score' => 0, 'maximum_score' => $maxScore, 'performance' => 'A', 'school_branch_id' => 'branch-1', 'letter_grade_id' => 'lg-a', 'grades_category_id' => $id]);
+        }
+    }
+
+    public function test_the_one_grade_scale_that_fits_is_attached_to_the_exam_and_its_copies(): void
+    {
+        $this->gradeScale('ca30', 'ca', 30);
+        $this->gradeScale('ca40', 'ca', 40);
+        $this->gradeScale('exam30', 'exam', 30);
+        $this->gradeScale('empty30', 'ca', 30, withGrades: false);
+
+        $this->create('ca-1', 30)->assertCreated()
+            ->assertJsonPath('data.grade_scale_attachment', ['status' => 'attached', 'grade_scale' => 'Scale ca30']);
+
+        $this->assertSame(['ca30', 'ca30'], DB::table('exams')->orderBy('school_year_id')->pluck('grades_category_id')->all());
+    }
+
+    public function test_no_grade_scale_is_attached_when_several_fit_or_the_setting_is_off(): void
+    {
+        $this->gradeScale('ca30', 'ca', 30);
+        $this->gradeScale('other30', 'ca', 30);
+
+        $this->create('ca-1', 30)->assertCreated()->assertJsonPath('data.grade_scale_attachment.status', 'several');
+        $this->assertSame([null, null], DB::table('exams')->pluck('grades_category_id')->all());
+
+        DB::table('exams')->delete();
+        DB::table('grade_scales')->where('grades_category_id', 'other30')->delete();
+        $this->set('exam.auto_attach_grade_scale', false);
+        $this->create('ca-1', 30)->assertCreated()->assertJsonPath('data.grade_scale_attachment.status', 'off');
+        $this->assertSame([null, null], DB::table('exams')->pluck('grades_category_id')->all());
     }
 }
