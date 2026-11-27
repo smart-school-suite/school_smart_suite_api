@@ -33,33 +33,48 @@ class ExamService
      * Creates an exam for a school semester: the academic year is the
      * semester's and the exam type one of its (see ExamCreationPolicy).
      * A semester exam's max score adds the CA's to the exam's own part.
+     *
+     * With "Automatically Create Exams for Matching Semesters" on, the exam
+     * is also created for the other specialties whose semester has the same
+     * dates (ExamAutoCreationService). The response lists those copies
+     * (auto_created_exams) and the specialties skipped, with the reason
+     * (auto_creation_skipped).
      */
     public function createExam(array $data, object $currentSchool, object $authAdmin): Exam
     {
         try {
             $allowed = app(ExamCreationPolicy::class)->validated($currentSchool, $data);
             $examType = Examtype::find($allowed['exam_type_id']);
+            $examPart = (float) $data["max_score"];
 
-            $calculatedMaxScore = (float) $data["max_score"];
+            $calculatedMaxScore = $examPart;
             if ($allowed['ca']) {
                 $calculatedMaxScore += (float) $allowed['ca']->max_score;
             }
-            $data['school_year_id'] = $allowed['school_year_id'];
 
-            $exam = new Exam();
-            $exam->school_branch_id = $currentSchool->id;
-            $exam->start_date = $data["start_date"];
-            $exam->end_date = $data["end_date"];
-            $exam->max_score = $calculatedMaxScore;
-            $exam->exam_type_id = $examType->id;
-            $exam->school_year_id = $data["school_year_id"];
-            $exam->save();
+            // The exam and its automatically created copies commit or roll back together.
+            [$exam, $auto] = DB::transaction(function () use ($data, $allowed, $examType, $calculatedMaxScore, $examPart, $currentSchool) {
+                $exam = new Exam();
+                $exam->school_branch_id = $currentSchool->id;
+                $exam->start_date = $data["start_date"];
+                $exam->end_date = $data["end_date"];
+                $exam->max_score = $calculatedMaxScore;
+                $exam->exam_type_id = $examType->id;
+                $exam->school_year_id = $allowed['school_year_id'];
+                $exam->save();
 
-            CreateExamCandidateJob::dispatch(
-                $exam->id,
-                $currentSchool->id
-            );
-            CreateExamJointCourseJob::dispatch($exam->id, $currentSchool->id);
+                $auto = app(ExamAutoCreationService::class)->createFor($exam, $allowed['semester'], $examPart, $currentSchool);
+
+                return [$exam, $auto];
+            });
+
+            foreach (collect([$exam])->concat($auto['created']) as $created) {
+                CreateExamCandidateJob::dispatch($created->id, $currentSchool->id);
+                CreateExamJointCourseJob::dispatch($created->id, $currentSchool->id);
+            }
+
+            $exam->setRelation('autoCreatedExams', $auto['created']);
+            $exam->setAttribute('auto_creation_skipped', $auto['skipped']);
 
             return $exam;
         } catch (AppException $e) {
@@ -73,6 +88,7 @@ class ExamService
             );
         }
     }
+
     public function deleteExam(string $examId, Object $currentSchool, object $authAdmin)
     {
         try {
