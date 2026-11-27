@@ -20,7 +20,7 @@ class CreateGradeScaleRequest extends FormRequest
             'grade_scales.*.minimum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grade_scales.*.maximum_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',
             'grade_scales.*.performance' => 'required|string|max:150',
-            'grade_scales.*.grade_points' => "required|numeric|min:0|max:4.00|regex:/^\d+(\.\d{1,2})?$/",
+            'grade_scales.*.grade_points' => "required|numeric|min:0|max:100|regex:/^\d+(\.\d{1,2})?$/",
             'grade_scales.*.resit_result' => 'required|string|in:no_resit,resit,high_resit_potential,low_resit_potential',
             'grade_scales.*.result' => 'required|string|in:passed,failed',
             'grade_max_score' => 'required|numeric|min:0|max:1000|regex:/^\d+(\.\d{1,2})?$/',

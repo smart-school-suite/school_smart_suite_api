@@ -3,6 +3,7 @@
 namespace App\SchoolBranchSetting\Handlers\GradeScale;
 
 use App\Exceptions\AppException;
+use App\Models\GradeScale\SchoolGradeScale;
 use App\Models\SchoolBranchSetting;
 use App\Models\LetterGrade;
 use App\SchoolBranchSetting\Contracts\SettingUpdateHandler;
@@ -47,6 +48,22 @@ class AllowedLetterGradeHandler implements SettingUpdateHandler
                 400,
                 "Invalid Letter Grade",
                 "One or more selected letter grades do not exist.",
+                "value"
+            );
+        }
+
+        // Grade scales only use letters of the scheme: a letter in use stays.
+        $inUse = SchoolGradeScale::where('school_branch_id', $currentSchool->id)
+            ->whereNotIn('letter_grade_id', $valueCollection->all())
+            ->distinct()
+            ->pluck('letter_grade_id');
+        if ($inUse->isNotEmpty()) {
+            $names = LetterGrade::whereIn('id', $inUse)->orderBy('letter_grade')->pluck('letter_grade')->implode(', ');
+            throw new AppException(
+                "Letter grades still used by grade scales: {$names}.",
+                422,
+                "Letter Grades in Use",
+                "{$names} " . ($inUse->count() === 1 ? 'is' : 'are') . " used by your grade scales. Remove " . ($inUse->count() === 1 ? 'it' : 'them') . " from those grade scales before taking " . ($inUse->count() === 1 ? 'it' : 'them') . " out of the scheme.",
                 "value"
             );
         }
