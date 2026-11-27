@@ -20,10 +20,10 @@ class AutoCreateExamHandler implements SettingUpdateHandler
 
        if ($filteredValue === null) {
             throw new AppException(
-                "The auto create exam setting must be a valid boolean.",
+                "This setting must be on or off (true or false).",
                 400,
-                "Invalid Auto Create Exam Format",
-                "The auto create exam setting must be a valid boolean.",
+                "Invalid On/Off Value",
+                "This setting must be on or off (true or false).",
                 "value"
             );
         }

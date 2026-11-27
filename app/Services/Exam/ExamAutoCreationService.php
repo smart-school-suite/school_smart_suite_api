@@ -15,7 +15,9 @@ use Illuminate\Support\Collection;
  * When an exam is created, it is also created for every other specialty
  * whose semester is the same semester (e.g. First Semester) with the same
  * start and end dates, at the levels of "Levels for Automatic Exam
- * Creation" (exam.auto_create_levels). Each copy has the original's dates
+ * Creation" (exam.auto_create_levels), and only for the exams of "Exams
+ * to Create" (exam.auto_create_types: the CA and the Exam, or the CA only).
+ * Each copy has the original's dates
  * and exam part of the max score; an Exam adds its own specialty's CA.
  *
  * Each copy passes the same checks as an exam created by hand
@@ -28,6 +30,11 @@ use Illuminate\Support\Collection;
 class ExamAutoCreationService
 {
     public const ENABLED = 'exam.auto_create';
+    public const TYPES = 'exam.auto_create_types';
+
+    public const CA_AND_EXAM = 'ca_and_exam';
+    public const CA_ONLY = 'ca_only';
+    public const TYPE_OPTIONS = [self::CA_AND_EXAM, self::CA_ONLY];
 
     public function __construct(
         private ExamCreationPolicy $policy,
@@ -43,7 +50,7 @@ class ExamAutoCreationService
         $result = ['created' => collect(), 'skipped' => []];
         $branchId = $currentSchool->id;
 
-        if (!$this->enabled($branchId)) {
+        if (!$this->enabled($branchId) || !$this->createsType($branchId, $original)) {
             return $result;
         }
 
@@ -91,12 +98,27 @@ class ExamAutoCreationService
 
     private function enabled(string $branchId): bool
     {
-        $value = SchoolBranchSetting::where('school_branch_id', $branchId)
-            ->whereHas('settingDefination', fn($query) => $query->where('key', self::ENABLED))
-            ->first()?->value;
+        $value = $this->value($branchId, self::ENABLED);
 
         // On by default, like the setting.
         return $value === null || filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /** With "CA only", an Exam is not copied. */
+    private function createsType(string $branchId, Exam $original): bool
+    {
+        if ($this->value($branchId, self::TYPES) !== self::CA_ONLY) {
+            return true;
+        }
+
+        return strtolower((string) $original->examType()->value('type')) === 'ca';
+    }
+
+    private function value(string $branchId, string $key): mixed
+    {
+        return SchoolBranchSetting::where('school_branch_id', $branchId)
+            ->whereHas('settingDefination', fn($query) => $query->where('key', $key))
+            ->first()?->value;
     }
 
     private function describe(SchoolSemester $semester): array
